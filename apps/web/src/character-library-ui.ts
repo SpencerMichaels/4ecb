@@ -1,17 +1,15 @@
 import type { CharacterMetadata } from "@4ecb/browser-storage";
 
-/** "Level N Race Class": the identity line under a character's name in the
- *  library and the trash. */
+/** "Race Class N" (e.g. "Human Avenger 8"): the identity line under a
+ *  character's name in the library and the trash; just "Level N" until a
+ *  race or class is chosen. */
 export function characterIdentity(
   character: Pick<CharacterMetadata, "effectiveLevel" | "race" | "className">,
 ): string {
-  return [
-    `Level ${character.effectiveLevel}`,
-    character.race,
-    character.className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const kind = [character.race, character.className].filter(Boolean).join(" ");
+  return kind === ""
+    ? `Level ${character.effectiveLevel}`
+    : `${kind} ${character.effectiveLevel}`;
 }
 
 /** Trashed characters, most recently trashed first (ISO timestamps sort as

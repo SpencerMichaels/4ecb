@@ -53,7 +53,7 @@ describe("character library detail pane", () => {
     );
     // Nothing else in the band waits on evaluation.
     expect(loading).toContain("<h2>Ingi</h2>");
-    expect(loading).toContain("Level 7 Dwarf Paladin");
+    expect(loading).toContain("Dwarf Paladin 7");
     expect(loading).toContain("Paragon path: Astral Weapon");
     expect(loading).toContain("Edited ");
     expect(loading).toContain("Edit Ingi build");

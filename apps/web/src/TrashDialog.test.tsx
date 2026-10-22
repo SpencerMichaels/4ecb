@@ -59,8 +59,8 @@ describe("TrashDialog", () => {
     );
     expect(markup).toContain('class="portrait-placeholder trash-portrait"');
     expect(markup).toContain("<strong>Pip Underbough</strong>");
-    expect(markup).toContain("Level 2 Halfling Rogue");
-    expect(markup).toContain("Level 11 Human Paladin");
+    expect(markup).toContain("Halfling Rogue 2");
+    expect(markup).toContain("Human Paladin 11");
     expect(markup).toMatch(/<span title="[^"]+">Trashed today<\/span>/);
     expect(markup).toMatch(/Trashed \d+ years ago/);
     expect(markup).toContain('aria-label="Restore Pip Underbough"');

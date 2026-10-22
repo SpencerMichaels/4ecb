@@ -222,7 +222,7 @@ button.toast-dismiss:not(:disabled):hover {
 }
 
 /* The trash dialog is a compact copy of the library's rows: portrait, name,
-   "Level N Race Class · Trashed …", then Restore and Delete permanently.
+   "Race Class N · Trashed …", then Restore and Delete permanently.
    The list scrolls between the fixed header and the Empty trash footer. */
 .trash-dialog {
   flex-direction: column;

@@ -174,7 +174,7 @@ describe("library helpers", () => {
         race: "Elf",
         className: "Wizard",
       }),
-    ).toBe("Level 3 Elf Wizard");
+    ).toBe("Elf Wizard 3");
     expect(characterIdentity({ effectiveLevel: 1 })).toBe("Level 1");
     expect(
       trashOrder([

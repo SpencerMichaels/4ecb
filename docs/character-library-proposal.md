@@ -40,7 +40,7 @@ styling as the builder's selection table with its detail card.
 ┌ 4E Character Builder ──────── [+ New][Import][Trash 3] | [Update][⚙ Settings] ┐
 ├────────────────────────────────────────────┬──────────────────────────────────┤
 │ ┌──┬──────────────┬────┬───────┬─────────┐ │▓(portrait) Aldric Vey           ▓│
-│ │  │ Name       ▲ │ Lv │ Race  │ Class   │ │▓           Level 11 Human Paladin▓│
+│ │  │ Name       ▲ │ Lv │ Race  │ Class   │ │▓           Human Paladin 11     ▓│
 │ ├──┼──────────────┼────┼───────┼─────────┤ │▓           Divine Defender      ▓│
 │ │◯ │ Aldric Vey   │ 11 │ Human │ Paladin │ │▓           Paragon path: Astral…▓│
 │ │◯ │ Brisa        │  4 │ Elf   │ Ranger  │ │▓           Edited 2 hours ago   ▓│
@@ -163,9 +163,9 @@ characters look like the characters they were.
 ```
 ┌ Trash ───────────────────────────────────────────── [×] ┐
 │ ( ◯ ) Aldric Vey                                        │
-│       Level 11 Human Paladin · Trashed 3 days ago  [↶][🗑]│
+│       Human Paladin 11 · Trashed 3 days ago        [↶][🗑]│
 │ ( ◯ ) Aldric Vey (copy)                                 │
-│       Level 11 Human Paladin · Trashed today       [↶][🗑]│
+│       Human Paladin 11 · Trashed today             [↶][🗑]│
 ├─────────────────────────────────────────────────────────┤
 │                                          [Empty trash]  │
 └─────────────────────────────────────────────────────────┘
@@ -223,6 +223,9 @@ coordinated with it. Slice 2 is web-only and can start immediately.
 
 ## Later simplifications (product-owner decisions, 2026-10-21)
 
+- **Identity line order.** The line under a character's name reads "Race Class
+  N" ("Human Avenger 8"), in the pane and the trash rows; just "Level N" until
+  a race or class is chosen.
 - **Header-only pane.** The pane is just its navy header band; the Play data
   stats below it were removed. The library summary shrank to the role line
   (summary format version 4, so older summaries are misses), and the
