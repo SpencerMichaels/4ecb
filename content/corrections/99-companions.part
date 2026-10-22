@@ -21,6 +21,11 @@
      2026-10-21). The content approximates it with a "Pet Hit Points" running
      total that leaves out Constitution; that chain is removed and the two
      companions carry "_Hit Points" = bloodied, a field only 4ecb reads.
+  5. The sentinel's animal attack steps up at 13th level (Paragon of the
+     Natural Cycle: 1d8 + 2) and again at 23rd (Timeless Body: 2d8 + 4), both
+     as modify overlays of the same fields. Overlays apply in grant order, so
+     the 13th-level ones won and a 25th-level wolf still bit for 1d8 + 2. The
+     13th-level overlays now give way once Timeless Body is gained.
 -->
 <D20Rules game-system="D&amp;D4E">
   <!-- 1. The fake power cards. -->
@@ -223,4 +228,20 @@
   </AppendNodes>
   <AppendNodes internal-id="ID_WOG_COMPANION_1"><specific name="_Hit Points">bloodied</specific></AppendNodes>
   <AppendNodes internal-id="ID_WOG_COMPANION_2"><specific name="_Hit Points">bloodied</specific></AppendNodes>
+
+  <!-- 5. Paragon of the Natural Cycle's step-up gives way to Timeless Body's. -->
+  <RemoveNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_18"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_18">
+    <rules>
+      <modify name="ID_WOG_ANIMAL_ATTACK_1" type="Power" Field="Hit" value="1d8 + 2 + your Wisdom modifier + your Constitution modifier damage." requires="!ID_WOG_SENTINEL_CLASS_FEATURE_25" />
+      <modify name="Wolf Companion" type="Companion" Field="Damage" value="1d8 + 2" requires="!ID_WOG_SENTINEL_CLASS_FEATURE_25" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_19"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_19">
+    <rules>
+      <modify name="ID_WOG_ANIMAL_ATTACK_2" type="Power" Field="Hit" value="1d12 + 2 + your Wisdom modifier + your Constitution modifier damage." requires="!ID_WOG_SENTINEL_CLASS_FEATURE_25" />
+      <modify name="Bear Companion" type="Companion" Field="Damage" value="1d12 + 2" requires="!ID_WOG_SENTINEL_CLASS_FEATURE_25" />
+    </rules>
+  </AppendNodes>
 </D20Rules>
