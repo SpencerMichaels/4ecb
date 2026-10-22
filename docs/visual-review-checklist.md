@@ -52,6 +52,10 @@ wizard, ranger, druid or half-elf.
   - At 140% zoom and in dark theme: headings wrap without clipping, and the
     focus ring is visible.
 
+- [ ] **Class detail card** (e.g. Hexblade on the Class tab): heading line
+      "Arcane Striker", and a "Key abilities" row in the class traits grid
+      (Charisma, Dexterity, …).
+
 ## Printed sheet: cards
 
 - [ ] **Familiar card** after the Skills card (e.g. Sprite with Vigorous
