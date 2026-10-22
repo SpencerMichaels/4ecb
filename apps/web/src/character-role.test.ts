@@ -44,9 +44,9 @@ const evaluated = (...ids: string[]) =>
   }) as unknown as Parameters<typeof characterRoleLine>[0];
 
 describe("character role line", () => {
-  it("reads each class field's one-word label, title-cased", () => {
+  it("reads each class field's first sentence, title-cased", () => {
     expect(classRole(paladin)).toBe("Divine Defender");
-    expect(classRole(content[3]!)).toBe("Martial Striker");
+    expect(classRole(content[3]!)).toBe("Martial and Shadow Striker");
     expect(classRole(content[1]!)).toBeUndefined();
   });
 
@@ -66,6 +66,6 @@ describe("character role line", () => {
         evaluated("ID_HYBRID", "ID_HYBRID_BARD", "ID_HYBRID_EXECUTIONER"),
         content,
       ),
-    ).toBe("Arcane Leader / Martial Striker");
+    ).toBe("Arcane Leader / Martial and Shadow Striker");
   });
 });

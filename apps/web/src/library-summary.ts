@@ -33,7 +33,7 @@ export interface LibrarySummaryValue {
 }
 
 /** Bump when LibrarySummaryValue or how it is computed changes. */
-export const LIBRARY_SUMMARY_VERSION = 2;
+export const LIBRARY_SUMMARY_VERSION = 3;
 
 /** What the library evaluates when it has no fresh summary: the sheet's
  *  input, without powers (the Play data stats don't read them). */
