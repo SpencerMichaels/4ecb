@@ -122,7 +122,10 @@ describe("structured race, class and background cards", () => {
     );
     const markup = render(classEntity, [otherFeature, ownFeature]);
 
-    expect(markup).toContain("Defender · Martial · STR CON");
+    expect(markup).toContain("Martial Defender");
+    expect(markup).toContain(
+      "<dt>Key abilities</dt><dd>Strength, Constitution</dd>",
+    );
     expect(markup).toContain("<dt>HP at 1st</dt>");
     expect(markup).toContain("Mark adjacent enemies.");
     expect(markup).not.toContain("Someone else&#x27;s stance.");

@@ -2,7 +2,6 @@ import { useMemo, type ReactNode } from "react";
 
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 
-import { abilityAbbreviation } from "./ability-abbreviations";
 import {
   classKeyAbilities,
   classTableMetadata,
@@ -257,13 +256,12 @@ function ClassBody({
   readonly references: ReadonlyMap<string, ContentEntity>;
 }) {
   const metadata = classTableMetadata(entity);
-  const summary = [
-    metadata.role.label,
-    metadata.powerSource.label,
-    classKeyAbilities(entity).map(abilityAbbreviation).join(" "),
-  ]
+  // "Arcane Striker", as the books head a class; key abilities get their own
+  // labelled row with the other class traits.
+  const summary = [metadata.powerSource.label, metadata.role.label]
     .filter(Boolean)
-    .join(" · ");
+    .join(" ");
+  const keyAbilities = classKeyAbilities(entity).join(", ");
   const features = useMemo(
     () => namedClassFeatures(entity, references).map(traitOf),
     [entity, references],
@@ -278,10 +276,13 @@ function ClassBody({
         }))}
       />
       <StatGrid
-        rows={CLASS_PROFICIENCIES.map(([field, label]) => ({
-          label,
-          value: contentSpecificValue(entity, field),
-        }))}
+        rows={[
+          { label: "Key abilities", value: keyAbilities },
+          ...CLASS_PROFICIENCIES.map(([field, label]) => ({
+            label,
+            value: contentSpecificValue(entity, field),
+          })),
+        ]}
       />
       <TraitList heading="Class features" traits={features} />
       <CardSection title={`About ${entity.name}`}>
