@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Mis-written `requires` conditions (pnpm audit:requires), fixed in data per
+  D089. Merged after the CBLoader parts by scripts/build-private-content.sh.
+  Structure only; no official text.
+
+  In the rule grammar (native MeetsRequires, packages/rules-engine/src/
+  expressions.ts) a leading `!` negates the whole condition: `!A&B` is
+  NOT(A & B) and `!A|B|C` is "none of A, B, C". A term negated on its own is
+  written `(!A)`, which both engines read as negation (native looks up a bare
+  inner `!A` as an element named "!A"). Only whole rules blocks can be
+  replaced, so each record's rules are restated with the one condition
+  changed.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Level 5 Order Adept Feature: the utility-power select is for a
+       character with a spellbook, and Order Adept powers count as class
+       powers for one without. The latter was written "!A&!B&!C", which reads
+       NOT(A & !B & !C), true for nearly everyone; it is now "none of the
+       three", the complement of the select's condition. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_3873"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3873">
+    <rules>
+      <statadd name="Arcana Misc" value="+2" type="power" />
+      <select type="Power" number="1" Category="ID_FMP_CLASS_9,utility,2" requires="ID_FMP_POWER_MAGES_SPELLBOOK|ID_NWC_POWER_BLADESINGERS_SPELLBOOK|ID_FMP_CLASS_FEATURE_318" />
+      <textstring name="PowersAsClass" value="ID_FMP_CLASS_ORDER_ADEPT" requires="!ID_FMP_POWER_MAGES_SPELLBOOK|ID_NWC_POWER_BLADESINGERS_SPELLBOOK|ID_FMP_CLASS_FEATURE_318" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Spear Expertise [Arena Fighter]: the charging damage bonus scales by
+       tier unless the arena spear category supplies it through the arena
+       group. The paragon and epic steps were written "!SPEAR&Tier", which
+       reads NOT(SPEAR & Tier), so a heroic character got all three steps.
+       They now read "Tier and not SPEAR". -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_3150_V2"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3150_V2">
+    <rules>
+      <statadd name="Spear Expertise" value="+1" />
+      <statadd name="Spear Expertise" value="+1" requires="Paragon Tier" />
+      <statadd name="Spear Expertise" value="+1" requires="Epic Tier" />
+      <statadd name="Spear Expertise 2" value="+1" requires="!ID_INTERNAL_ARENA_WEAPON_CATEGORY_SPEAR" />
+      <statadd name="Spear Expertise 2" value="+1" requires="Paragon Tier&amp;(!ID_INTERNAL_ARENA_WEAPON_CATEGORY_SPEAR)" />
+      <statadd name="Spear Expertise 2" value="+1" requires="Epic Tier&amp;(!ID_INTERNAL_ARENA_WEAPON_CATEGORY_SPEAR)" />
+      <statadd name="weapon,spear group:attack" value="+Spear Expertise" type="Feat" />
+      <statadd name="weapon,spear group:damage" value="+Spear Expertise 2" condition="when you are charging" />
+      <statadd name="weapon,arena group:attack" value="+Spear Expertise" type="Feat" requires="ID_INTERNAL_ARENA_WEAPON_CATEGORY_SPEAR" />
+      <statadd name="weapon,arena group:damage" value="+Spear Expertise" condition="when you are charging" requires="ID_INTERNAL_ARENA_WEAPON_CATEGORY_SPEAR" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Githzerai Blade Master: the arena-weapon alternatives name
+       "(GLAVE)"; the record is ID_INTERNAL_ARENA_WEAPON_(GLAIVE). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1772"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1772">
+    <rules>
+      <grant name="ID_INTERNAL_PROFICIENCY_MILITARY_HEAVY_BLADE" type="Proficiency" />
+      <grant name="ID_INTERNAL_PROFICIENCY_WEAPON_PROFICIENCY_(BASTARD_SWORD)" type="Proficiency" />
+      <grant name="ID_INTERNAL_PROFICIENCY_WEAPON_PROFICIENCY_(FULLBLADE)" type="Proficiency" />
+      <statadd name="Githzerai Blade Master" value="+2" />
+      <statadd name="military,heavy blade group:damage" value="+Githzerai Blade Master" type="Feat" />
+      <statadd name="Bastard sword:damage" value="+Githzerai Blade Master" type="Feat" />
+      <statadd name="arena group:damage" value="+Githzerai Blade Master" type="Feat" requires="ID_INTERNAL_ARENA_WEAPON_(BASTARD_SWORD)|ID_INTERNAL_ARENA_WEAPON_(FULLBLADE)|ID_INTERNAL_ARENA_WEAPON_(BROADSWORD)|ID_INTERNAL_ARENA_WEAPON_(FALCHION)|ID_INTERNAL_ARENA_WEAPON_(GLAIVE)|ID_INTERNAL_ARENA_WEAPON_(GREATSWORD)|ID_INTERNAL_ARENA_WEAPON_(KHOPESH)|ID_INTERNAL_ARENA_WEAPON_(LONGSWORD)|ID_INTERNAL_ARENA_WEAPON_(SCIMITAR)" />
+      <statadd name="Fullblade:damage" value="+Githzerai Blade Master" type="Feat" />
+      <statadd name="Githzerai Blade Master" value="+1" requires="Paragon Tier" />
+      <statadd name="Githzerai Blade Master" value="+1" requires="Epic Tier" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Thundertusk Companion: the hit point bonus requires "beast companion
+       (boar)", which names no record, so it never applied. The ranger's boar
+       beast companion is ID_FMP_COMPANION_2. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_824"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_824">
+    <rules>
+      <statadd name="BEAST.Hit Points" value="+level" requires="ID_FMP_COMPANION_2" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Rose Scythe of Chauntea +1 to +6: the implement bonus requires
+       "divine class or primal class", prose that names no record, so it
+       never applied. It now requires the Divine or Primal power source,
+       which every divine or primal class (hybrids included) grants. -->
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-1"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-1">
+    <rules>
+      <statadd name="implement:attack" value="+1" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+1" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2">
+    <rules>
+      <statadd name="implement:attack" value="+2" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+2" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-3"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-3">
+    <rules>
+      <statadd name="implement:attack" value="+3" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+3" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-4"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-4">
+    <rules>
+      <statadd name="implement:attack" value="+4" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+4" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-5"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-5">
+    <rules>
+      <statadd name="implement:attack" value="+5" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+5" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-6"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-6">
+    <rules>
+      <statadd name="implement:attack" value="+6" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+      <statadd name="implement:damage" value="+6" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
+    </rules>
+  </AppendNodes>
+</D20Rules>

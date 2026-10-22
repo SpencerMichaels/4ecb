@@ -476,7 +476,10 @@ the sum as one additional effect ("+2d10 extra damage."). The upgrades are
 rebuilt on that stat in `content/corrections/97-hybrid-assassins-strike.part`
 (D089: structure, no copied text), so the published `Effect` stays as
 written. Exported `.dnd4e` files keep the upgrade selections; the old
-builder sees the base text (D091).
+builder sees the base text (D091). The upgrades need the power, which a
+hybrid executioner takes as a level-1 encounter attack power: each record's
+prerequisite starts with `Assassin's Strike (Hybrid) Power`, and the five
+optional selects require the power's ID, so they aren't offered without it.
 
 A related content pattern: `requires` follows the legacy grammar, where a
 leading `!` negates everything after it, so `!A|!B|!C` means
@@ -485,6 +488,45 @@ that way meaning "lacks one of the three"; 96-content-fixes.part rewrites it
 as `!A&B&C`. Other `!x|y|z` uses in the corpus (the genasi elemental
 manifestations, `!Psionic First Class|Psionic Second Class`) do mean "none
 of these".
+
+### `requires` grammar audit
+
+Native `MeetsRequires` (D20RulesEngine `-Module-.cs`, around 34612) strips
+one leading `!` and negates the result. It splits on `|` if the string has
+one anywhere, else on `&`, without tracking parentheses. A term wrapped in
+`(...)` recurses, a term with `:` is a `Type:Category` match, and any other
+term is a named-element lookup, so a bare inner `!B` looks up an element
+called "!B" and is never owned. The modern `parseRequires` reads `&` and `|`
+by precedence and nested parentheses, and treats an inner `!B` as negation.
+For content written as `(!B)` both engines agree.
+
+`pnpm audit:requires` (`scripts/audit-requires.ts`, private) parses every
+`requires` in the pack and flags a leading `!` before `&`, a leading `!`
+before negated `|` terms, the "none of" form `!A|B|C`, mixed top-level
+operators, bare inner `!` terms, terms that name no record, unknown
+`Type:` prefixes, and `A&!A` or `A|!A`. It fails on anything not fixed or
+allowlisted with a reason. On the 2026-10-21 pack: 12,983 conditions, 89
+flagged. Of these, 72 are deliberate: 23 "none of" uses (genasi
+manifestations, Bonus Skill, Paragon Multiclassing); dead guards on the Nine
+Swords of Tyr and barding; dead OR alternatives in the arena-weapon
+categories; and our own Scholar rewrite. The other 17 are fixed in
+`content/corrections/95-requires-grammar.part`:
+
+- **Order Adept (level 5).** Its `PowersAsClass` was
+  `!SPELLBOOK&!BLADESINGER&!318`, i.e. NOT(A & !B & !C). It is now "none of
+  the three", the complement of the spellbook select's condition.
+- **Spear Expertise [Arena Fighter].** Its paragon and epic charging-damage
+  steps were `!SPEAR&Tier`, NOT(SPEAR & Tier), which gave +3 at heroic
+  tier. They are now `Tier&(!SPEAR)`.
+- **Githzerai Blade Master.** An arena alternative was misspelled
+  `(GLAVE)`; it is now `(GLAIVE)`.
+- **Thundertusk Companion.** The requirement `beast companion (boar)` named
+  no record. It now names the boar companion, `ID_FMP_COMPANION_2`.
+- **Rose Scythe of Chauntea +1 to +6.** The requirement was the prose
+  `divine class or primal class`. It now requires the Divine or Primal
+  power source.
+
+Legacy applied none of these as intended. Each is a D091 correctness fix.
 
 ### Power requirement restrictions
 

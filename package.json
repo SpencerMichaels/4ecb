@@ -25,6 +25,7 @@
     "audit:native-workflow": "tsx scripts/audit-native-workflow.ts",
     "audit:coverage-matrix": "tsx scripts/audit-coverage-matrix.ts",
     "audit:legacy-special-cases": "tsx scripts/audit-legacy-special-cases.ts",
+    "audit:requires": "tsx scripts/audit-requires.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",
     "regenerate:edited-dnd4e": "tsx scripts/regenerate-edited-dnd4e.ts",
