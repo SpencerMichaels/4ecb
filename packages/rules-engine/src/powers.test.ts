@@ -55,6 +55,47 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("tags a military weapon for military-qualified channels (AddWeaponKeywords)", () => {
+    const weapon = (id: string, category: string) =>
+      entity(id, id, "Weapon", {
+        Damage: "1d8",
+        "Weapon Category": category,
+        Group: "Heavy Blade",
+      });
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      entities: [
+        entity("POWER", "Synthetic strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] damage.",
+        }),
+        weapon("Military blade", "Military Melee"),
+        weapon("Superior blade", "Superior Melee"),
+      ],
+      inventory: ["Military blade", "Superior blade"].map((id) => ({
+        id,
+        definitionIds: [id],
+        quantity: 1,
+        equippedQuantity: 1,
+        acquiredLevel: 1,
+      })),
+      stats: {
+        "military,heavy blade group:damage": combatStat(
+          "military,heavy blade group:damage",
+          2,
+        ),
+      },
+      overlays: [],
+    });
+    const damage = (name: string) =>
+      power?.variants.find((variant) => variant.equipmentName === name)?.damage;
+    expect(damage("Military blade")).toBe("1d8+2");
+    expect(damage("Superior blade")).toBe("1d8");
+  });
+
   it("uses the effective BA flag for eligibility and native basic-specific combat channels", () => {
     const entities = [
       entity("POWER", "Synthetic wisdom strike", "Power", {

@@ -478,6 +478,11 @@ function loadouts(
         ...(weapon === undefined
           ? []
           : [
+              // Native AddWeaponKeywords: "military" when the weapon's
+              // Weapon Category contains it ("military,heavy blade group").
+              ...(/military/iu.test(field(weapon, "Weapon Category") ?? "")
+                ? ["military"]
+                : []),
               ...groups,
               ...groups.map((group) => `${group} group`),
               field(weapon, "Item Slot") ?? "",
