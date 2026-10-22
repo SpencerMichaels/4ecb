@@ -99,7 +99,8 @@ function registryProblems(
               identityTypes.has(type) ||
               ["Hybrid Class", "CountsAsRace", "CountsAsClass"].includes(type)
             : surface === "powers"
-              ? key(type) === "power"
+              ? // A god fragment prints as a power card built from its fields.
+                key(type) === "power" || key(type) === "god fragment"
               : surface === "companions"
                 ? // Familiar cards, and the beast companion card with the
                   // Companion Ability Increase picks its abilities include.
@@ -107,7 +108,8 @@ function registryProblems(
                   key(type) === "companion" ||
                   /^companion ability increase\b/i.test(type)
                 : surface === "items"
-                  ? isItemEntity(sample)
+                  ? // Set benefits print on their Item Set card.
+                    isItemEntity(sample) || key(type) === "item set benefit"
                   : true;
       if (!listed) problems.push(`registry claims ${surface}; code disagrees`);
     }
