@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-pack_path="${1:?usage: evaluate-character-matrix.sh PACK.4ecp [CHARACTER.dnd4e ...]}"
-shift
+# Evaluates every legacy comparison character against an exact pack: the
+# ignored player characters in sample-chars/ plus the supplied SampleHeroes.
+pack_path="${1:-tmp/content/full-local.4ecp}"
+shift || true
 
 if (( $# == 0 )); then
+  # --no-ignore: sample-chars/ is git-ignored private data.
   mapfile -t character_paths < <(
-    rg --files CharacterBuilder/SampleChars/SampleHeroes -g '*.dnd4e' | sort
+    {
+      if [[ -d sample-chars ]]; then
+        rg --files --no-ignore sample-chars -g '*.dnd4e'
+      fi
+      rg --files CharacterBuilder/SampleChars/SampleHeroes -g '*.dnd4e'
+    } | sort
   )
 else
   character_paths=("$@")
@@ -14,7 +22,8 @@ fi
 
 for character_path in "${character_paths[@]}"; do
   pnpm --silent evaluate:character "$character_path" "$pack_path" |
-    jq -c '{
+    jq -c --arg file "$character_path" '{
+      file: $file,
       character,
       evaluation: {
         complete: .evaluation.complete,
