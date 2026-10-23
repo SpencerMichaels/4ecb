@@ -274,4 +274,76 @@ describe("the swap editor", () => {
     expect(html).toContain("Choose the power to replace first.");
     expect(html).not.toContain(">Replace<");
   });
+
+  it("opens on the slot's own trade after a later swap traded its pick away", () => {
+    // Level 15 swapped Press of Steel for Hurricane Strike; level 19 then
+    // traded that Hurricane Strike away, so it is no longer active.
+    const hurricane15 = {
+      id: "hurricane-15",
+      definitionId: "HURRICANE",
+      parentId: "level-15",
+      ruleOrdinal: 0,
+      replacesId: "press",
+      acquiredLevel: 15,
+      kind: "choice",
+    };
+    const decision = (definitionId: string) => ({
+      definitionId,
+      eligible: true,
+      sourceEntitled: true,
+      rulesLegal: true,
+      activeDefinition: false,
+      activeOccurrenceIds: [],
+      providerOccurrenceIds: [],
+      reasons: [],
+    });
+    const swap = swapChoice("level-15", 15, {
+      selectedOccurrenceId: "hurricane-15",
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "press",
+          definitionId: "PRESS",
+          candidates: [decision("HURRICANE"), decision("TOPPLING")],
+        },
+      ],
+    });
+    const traded = {
+      ...evaluation,
+      replacedSelections: [hurricane15],
+      choices: [swap],
+    } as unknown as EvaluatedCharacter;
+    const build = {
+      levels: [
+        {
+          level: 15,
+          root: {
+            id: "level-15",
+            identity: { definitionId: "LEVEL_15" },
+            acquiredLevel: 15,
+            legality: "rules-legal",
+            children: [],
+            unresolved: false,
+          },
+        },
+      ],
+      grabbag: [],
+    } as unknown as CharacterBuild;
+    const html = renderToStaticMarkup(
+      createElement(ChoiceEditor, {
+        choice: swap,
+        evaluation: traded,
+        build,
+        entities: [...byId.values()],
+        byId,
+        disabled: false,
+        rollbackRevision: 0,
+        onDispatch: () => undefined,
+      }),
+    );
+    expect(html).not.toContain("Choose the power to replace first.");
+    expect(html).toContain("Toppling Finish");
+    expect(replacementPickSummary(swap, traded, byId)).toBe(
+      "Press of Steel → Hurricane Strike",
+    );
+  });
 });

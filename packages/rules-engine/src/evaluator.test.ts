@@ -3034,6 +3034,132 @@ describe("character evaluator", () => {
     );
   });
 
+  it("resolves each swap of a power-swap chain at its own level", () => {
+    // Native BuildReplaceList: each swap lists what was held at its own
+    // level plus its own target, and keeps its own pick as its selection
+    // even after a later swap trades that pick away.
+    const level = (value: number): CharacterOccurrence => ({
+      id: `level-${value}`,
+      definitionId: `LEVEL_${value}`,
+      acquiredLevel: value,
+      kind: "root",
+    });
+    const pick = (
+      id: string,
+      definitionId: string,
+      acquiredLevel: number,
+      replacesId?: string,
+    ): CharacterOccurrence => ({
+      id,
+      definitionId,
+      acquiredLevel,
+      parentId: `level-${acquiredLevel}`,
+      ruleOrdinal: 0,
+      choiceIndex: 0,
+      kind: "choice",
+      ...(replacesId === undefined ? {} : { replacesId }),
+    });
+    const daily = (id: string, name: string, powerLevel: number) =>
+      entity(id, name, "Power", {
+        categories: ["Fighter", "daily"],
+        specifics: { Level: String(powerLevel) },
+      });
+    const select = [
+      rule("select", { type: "Power", number: "1", Category: "Fighter" }, 0),
+    ];
+    const swap = (swapLevel: number) =>
+      entity(`LEVEL_${swapLevel}`, String(swapLevel), "Level", {
+        rules: [
+          rule("replace", { powerswap: `Fighter,daily,${swapLevel}` }, 0),
+        ],
+      });
+    const result = evaluateCharacter(
+      {
+        level: 27,
+        baseAbilities: {},
+        occurrences: [
+          level(1),
+          pick("bristling", "BRISTLING", 1),
+          level(5),
+          pick("driving", "DRIVING", 5),
+          level(9),
+          pick("press", "PRESS", 9),
+          level(15),
+          pick("hurricane-15", "HURRICANE", 15, "bristling"),
+          level(19),
+          pick("toppling-19", "TOPPLING", 19, "hurricane-15"),
+          level(25),
+          pick("hurricane-25", "HURRICANE", 25, "toppling-19"),
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", { rules: select }),
+        entity("LEVEL_5", "5", "Level", { rules: select }),
+        entity("LEVEL_9", "9", "Level", { rules: select }),
+        swap(15),
+        swap(19),
+        swap(25),
+        daily("BRISTLING", "Bristling Defense", 1),
+        daily("DRIVING", "Driving Attack", 5),
+        daily("PRESS", "Press of Steel", 9),
+        daily("HURRICANE", "Hurricane Strike", 15),
+        daily("TOPPLING", "Toppling Finish", 19),
+        daily("DOOM", "Time to Die", 25),
+      ],
+    );
+    const swapAt = (swapLevel: number) => {
+      const choice = result.choices.find(
+        (candidate) => candidate.providerOccurrenceId === `level-${swapLevel}`,
+      );
+      return {
+        selected: choice?.selectedOccurrenceId,
+        targets: choice?.replacementOptions?.map(
+          ({ replacesOccurrenceId }) => replacesOccurrenceId,
+        ),
+        legal: (target: string) =>
+          choice?.replacementOptions
+            ?.find(
+              ({ replacesOccurrenceId }) => replacesOccurrenceId === target,
+            )
+            ?.candidates.filter(({ eligible }) => eligible)
+            .map(({ definitionId }) => definitionId),
+      };
+    };
+
+    const at15 = swapAt(15);
+    expect(at15.selected).toBe("hurricane-15");
+    expect(at15.targets).toEqual(["bristling", "driving", "press"]);
+    expect(at15.legal("bristling")).toEqual(["HURRICANE"]);
+    const at19 = swapAt(19);
+    expect(at19.selected).toBe("toppling-19");
+    expect(at19.targets).toEqual(["driving", "press", "hurricane-15"]);
+    // Hurricane Strike is held at 19, so only the swap that trades it may
+    // take it again; Toppling Finish is the pick.
+    expect(at19.legal("driving")).toEqual(["BRISTLING", "TOPPLING"]);
+    expect(at19.legal("hurricane-15")).toEqual(["BRISTLING", "TOPPLING"]);
+    const at25 = swapAt(25);
+    expect(at25.selected).toBe("hurricane-25");
+    expect(at25.targets).toEqual(["driving", "press", "toppling-19"]);
+    expect(at25.legal("toppling-19")).toEqual([
+      "BRISTLING",
+      "HURRICANE",
+      "DOOM",
+    ]);
+
+    expect(result.replacedSelections?.map(({ id }) => id)).toEqual([
+      "hurricane-15",
+      "toppling-19",
+    ]);
+    expect(result.occurrences.map(({ id }) => id)).toContain("hurricane-25");
+    expect(result.occurrences.map(({ id }) => id)).not.toContain(
+      "hurricane-15",
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
   it("applies list, replacement, and die-step overlays without mutating content", () => {
     const power = entity("POWER", "Power", "Power", {
       specifics: { Keywords: "Arcane", Damage: "1d8 + 2" },

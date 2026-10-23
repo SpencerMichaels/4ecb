@@ -1258,12 +1258,7 @@ export function selectedCandidateDecision(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
 ): CandidateDecision | undefined {
-  const selected =
-    choice.selectedOccurrenceId === undefined
-      ? undefined
-      : evaluation.occurrences.find(
-          (occurrence) => occurrence.id === choice.selectedOccurrenceId,
-        );
+  const selected = selectedOccurrence(choice, evaluation);
   if (selected === undefined) return undefined;
   const decisions = (
     choice.type === "Replacement"
@@ -1279,11 +1274,7 @@ export function selectedChoiceIsHouseRule(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
 ): boolean {
-  return evaluation.occurrences.some(
-    (occurrence) =>
-      occurrence.id === choice.selectedOccurrenceId &&
-      occurrence.legality === "houserule",
-  );
+  return selectedOccurrence(choice, evaluation)?.legality === "houserule";
 }
 
 function interveningLevelFrameCommands(
@@ -1804,10 +1795,7 @@ export function selectedDefinitionId(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
 ): string | undefined {
-  if (choice.selectedOccurrenceId === undefined) return undefined;
-  return evaluation.occurrences.find(
-    (occurrence) => occurrence.id === choice.selectedOccurrenceId,
-  )?.definitionId;
+  return selectedOccurrence(choice, evaluation)?.definitionId;
 }
 
 export function choiceForRepeatedCandidate(
@@ -1920,15 +1908,19 @@ export function unresolveEvaluatedChoiceCommand(
   };
 }
 
+/** The choice's selection; a swap pick a later swap traded away is in
+ * `replacedSelections`, not among the active occurrences. */
 export function selectedOccurrence(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
 ) {
-  return choice.selectedOccurrenceId === undefined
-    ? undefined
-    : evaluation.occurrences.find(
-        (occurrence) => occurrence.id === choice.selectedOccurrenceId,
-      );
+  if (choice.selectedOccurrenceId === undefined) return undefined;
+  const matches = (occurrence: { readonly id: string }) =>
+    occurrence.id === choice.selectedOccurrenceId;
+  return (
+    evaluation.occurrences.find(matches) ??
+    evaluation.replacedSelections?.find(matches)
+  );
 }
 
 export function choiceTitle(choice: EvaluatedChoice): string {
@@ -2026,10 +2018,9 @@ export function replacedDefinitionId(
 
 /**
  * A filled replacement as "Replaced → New" (just the new pick when the
- * replaced definition is unknown); undefined while unfilled. The evaluation
- * reports a slot whose pick was swapped again later by its current holder
- * (Hurricane Strike swapped at 19 and back at 25 reads as level 25's pick at
- * 15 and 19 too), so the saved build's own pick for this slot wins.
+ * replaced definition is unknown); undefined while unfilled. The saved
+ * build's own pick for this slot wins when given; the evaluation reports the
+ * same pick, from `replacedSelections` once a later swap traded it away.
  */
 export function replacementPickSummary(
   choice: EvaluatedChoice,

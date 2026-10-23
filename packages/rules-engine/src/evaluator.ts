@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v39-2026-10-22-legacy-loot-names";
+  "evaluated-character-v40-2026-10-22-power-swap-chains";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -137,6 +137,11 @@ export interface EvaluatedChoice {
   /** Legacy alternate-slot name for spellbook/prepared-power choices. */
   readonly spellbook?: string;
   readonly optional: boolean;
+  /**
+   * The slot's selection. A replacement's is its own saved pick, which a
+   * later replacement may have traded away: then it is in
+   * `EvaluatedCharacter.replacedSelections`, not `occurrences`.
+   */
   readonly selectedOccurrenceId?: string;
   readonly candidates: readonly CandidateDecision[];
   readonly replacementOptions?: readonly {
@@ -182,6 +187,12 @@ export interface EvaluatedCharacter {
   readonly complete: boolean;
   readonly legal: boolean;
   readonly occurrences: readonly CharacterOccurrence[];
+  /**
+   * Replacement picks that a later replacement traded away (Hurricane
+   * Strike swapped in at 15 and out at 19). None is active; each is still
+   * its own slot's `selectedOccurrenceId`, so that level shows its pick.
+   */
+  readonly replacedSelections?: readonly CharacterOccurrence[];
   readonly activeDefinitionIds: readonly string[];
   readonly activeDefinitions: readonly ActiveDefinitionMembership[];
   readonly choices: readonly EvaluatedChoice[];
@@ -948,9 +959,11 @@ function evaluateCharacterInternal(
   const displacedBy = (
     active: readonly CharacterOccurrence[],
     context: ExpressionContext,
+    counts: (replacement: CharacterOccurrence) => boolean = () => true,
   ): ReadonlySet<string> => {
     const ids = new Set<string>();
     for (const replacement of savedReplacements) {
+      if (!counts(replacement)) continue;
       if (!activeProviderRule(replacement, active, context)) continue;
       let replacedId = replacement.replacesId;
       while (replacedId !== undefined && !ids.has(replacedId)) {
@@ -1400,6 +1413,65 @@ function evaluateCharacterInternal(
     );
   };
 
+  /** Saved replacement picks whose provider rule is dormant (never held). */
+  const dormantReplacementIds = new Set(
+    savedReplacements
+      .filter(
+        (replacement) =>
+          !activeProviderRule(replacement, occurrences, expressionContext),
+      )
+      .map(({ id }) => id),
+  );
+  /**
+   * A replacement slot at `level` (a retraining or power swap), resolved on
+   * its own even inside a chain of swaps: its selection is its own saved
+   * pick, even when a later swap traded that pick away, and it can trade what
+   * the character held at that level. Native BuildReplaceList walks the
+   * elements present at the choice's level (ElemAtLevel) and re-adds the
+   * choice's own current target (AddReplaceChoice), so a level-15 swap of
+   * Bristling Defense still lists Bristling Defense after a level-19 swap
+   * trades its Hurricane Strike away. Another slot's replacement at the same
+   * or an earlier level has displaced its target by then; a later one, or one
+   * whose provider rule is dormant, hasn't.
+   */
+  const replacementSlot = (
+    provider: CharacterOccurrence,
+    ruleOrdinal: number,
+    level: number,
+  ): {
+    readonly selected: CharacterOccurrence | undefined;
+    readonly held: (candidate: CharacterOccurrence) => boolean;
+    /** Held at `level` but traded away by a later replacement since. */
+    readonly heldThenReplaced: readonly CharacterOccurrence[];
+  } => {
+    const selected = saved.find(
+      (candidate) =>
+        candidate.parentId === provider.id &&
+        candidate.ruleOrdinal === ruleOrdinal &&
+        candidate.replacesId !== undefined,
+    );
+    const displaced = displacedBy(
+      occurrences,
+      expressionContext,
+      (replacement) =>
+        replacement.acquiredLevel <= level && replacement.id !== selected?.id,
+    );
+    const held = (candidate: CharacterOccurrence): boolean =>
+      candidate.id === selected?.replacesId ||
+      (!displaced.has(candidate.id) &&
+        !dormantReplacementIds.has(candidate.id));
+    return {
+      selected,
+      held,
+      heldThenReplaced: saved.filter(
+        (candidate) =>
+          displacedIds.has(candidate.id) &&
+          candidate.acquiredLevel <= level &&
+          held(candidate),
+      ),
+    };
+  };
+
   const occurrencesByDefinition = new Map<string, CharacterOccurrence[]>();
   for (const occurrence of occurrences) {
     const definitionKey = key(occurrence.definitionId);
@@ -1418,10 +1490,16 @@ function evaluateCharacterInternal(
     equivalent: ContentEntity,
     choiceLevel: number,
     excludedIds: readonly string[],
+    alsoOwned: readonly CharacterOccurrence[] = [],
   ): boolean =>
     [definition, ...(equivalent === definition ? [] : [equivalent])].some(
       (entity) =>
-        (occurrencesByDefinition.get(key(entity.id)) ?? []).some(
+        [
+          ...(occurrencesByDefinition.get(key(entity.id)) ?? []),
+          ...alsoOwned.filter(
+            (owned) => key(owned.definitionId) === key(entity.id),
+          ),
+        ].some(
           (owned) =>
             owned.acquiredLevel <= choiceLevel &&
             excludedIds.every(
@@ -1430,11 +1508,13 @@ function evaluateCharacterInternal(
         ),
     );
   /** A gain candidate already owned is marked like a select's (native
-   * UpdateArrays runs for a replacement's gain list too). */
+   * UpdateArrays runs for a replacement's gain list too), counting what was
+   * held then but traded away by a later replacement. */
   const markOwned = (
     candidate: CandidateDecision,
     choiceLevel: number,
     excludedIds: readonly string[],
+    alsoOwned: readonly CharacterOccurrence[] = [],
   ): CandidateDecision => {
     const definition = index.get(candidate.definitionId);
     return definition !== undefined &&
@@ -1444,6 +1524,7 @@ function evaluateCharacterInternal(
         passThroughDefinition(definition),
         choiceLevel,
         excludedIds,
+        alsoOwned,
       )
       ? {
           ...candidate,
@@ -1777,24 +1858,11 @@ function evaluateCharacterInternal(
           const detailedReplacement =
             candidateDetailLevels === undefined ||
             candidateDetailReplacementChoiceIds.has(replacementChoiceId);
-          const directSelection = saved.find(
-            (candidate) =>
-              candidate.parentId === occurrence.id &&
-              candidate.ruleOrdinal === rule.source.ordinal &&
-              candidate.replacesId !== undefined,
+          const { selected, held, heldThenReplaced } = replacementSlot(
+            occurrence,
+            rule.source.ordinal,
+            replacementLevel,
           );
-          const selected =
-            occurrences.find(
-              (candidate) =>
-                candidate.parentId === occurrence.id &&
-                candidate.ruleOrdinal === rule.source.ordinal &&
-                candidate.replacesId !== undefined,
-            ) ??
-            (directSelection === undefined
-              ? undefined
-              : occurrences.find((candidate) =>
-                  replacementIncludes(candidate, directSelection.id),
-                ));
           const replacementOptions = saved
             .filter((candidate) => {
               const candidateType = key(
@@ -1811,8 +1879,7 @@ function evaluateCharacterInternal(
                 ["feat", "power", "skill training"].includes(candidateType) ||
                 isBeastCompanionEntity(index.get(candidate.definitionId));
               return (
-                (!displacedIds.has(candidate.id) ||
-                  candidate.id === selected?.replacesId) &&
+                held(candidate) &&
                 candidate.acquiredLevel < replacementLevel &&
                 candidate.kind === "choice" &&
                 ordinaryRetraining &&
@@ -1893,10 +1960,15 @@ function evaluateCharacterInternal(
                             key(candidate.definitionId),
                         )
                         .map((decision) =>
-                          markOwned(decision, replacementLevel, [
-                            candidate.id,
-                            ...(selected === undefined ? [] : [selected.id]),
-                          ]),
+                          markOwned(
+                            decision,
+                            replacementLevel,
+                            [
+                              candidate.id,
+                              ...(selected === undefined ? [] : [selected.id]),
+                            ],
+                            heldThenReplaced,
+                          ),
                         )
                     : selectedReplacement === undefined
                       ? []
@@ -1982,30 +2054,16 @@ function evaluateCharacterInternal(
       masteryPowerId === undefined ? undefined : index.get(masteryPowerId);
     if (!prerequisiteContextOnly && masteryPower !== undefined) {
       const ruleOrdinal = 0;
-      const directSelection = saved.find(
-        (candidate) =>
-          candidate.parentId === occurrence.id &&
-          candidate.ruleOrdinal === ruleOrdinal &&
-          candidate.replacesId !== undefined,
+      const { selected, held } = replacementSlot(
+        occurrence,
+        ruleOrdinal,
+        occurrence.acquiredLevel,
       );
-      const selected =
-        occurrences.find(
-          (candidate) =>
-            candidate.parentId === occurrence.id &&
-            candidate.ruleOrdinal === ruleOrdinal &&
-            candidate.replacesId !== undefined,
-        ) ??
-        (directSelection === undefined
-          ? undefined
-          : occurrences.find((candidate) =>
-              replacementIncludes(candidate, directSelection.id),
-            ));
       const replacementOptions = saved.flatMap((candidate) => {
         const candidateEntity = index.get(candidate.definitionId);
         return candidate.kind === "choice" &&
           candidate.acquiredLevel <= occurrence.acquiredLevel &&
-          (!displacedIds.has(candidate.id) ||
-            candidate.id === selected?.replacesId) &&
+          held(candidate) &&
           candidateEntity !== undefined &&
           isLeveledRangerAtWillAttack(candidateEntity)
           ? [
@@ -2361,8 +2419,10 @@ function evaluateCharacterInternal(
     const selectedOccurrence = occurrences.find(
       (occurrence) => occurrence.id === choice.selectedOccurrenceId,
     );
+    // A swap pick a later swap traded away is history, not held now.
+    if (selectedOccurrence === undefined) continue;
     if (
-      selectedOccurrence?.replacesId !== undefined &&
+      selectedOccurrence.replacesId !== undefined &&
       (selectedOccurrence.parentId !== choice.providerOccurrenceId ||
         selectedOccurrence.ruleOrdinal !== choice.ruleOrdinal)
     )
@@ -2518,6 +2578,16 @@ function evaluateCharacterInternal(
             ? {}
             : { beastCompanion: beastCompanion.statistics }),
         });
+  const activeOccurrenceIds = new Set(occurrences.map(({ id }) => id));
+  const replacedSelections = choices.flatMap((choice) => {
+    if (choice.type !== "Replacement") return [];
+    const selected =
+      choice.selectedOccurrenceId === undefined ||
+      activeOccurrenceIds.has(choice.selectedOccurrenceId)
+        ? undefined
+        : savedById.get(choice.selectedOccurrenceId);
+    return selected === undefined ? [] : [selected];
+  });
   return {
     level: input.level,
     converged,
@@ -2525,6 +2595,7 @@ function evaluateCharacterInternal(
     complete,
     legal,
     occurrences,
+    ...(replacedSelections.length === 0 ? {} : { replacedSelections }),
     activeDefinitionIds,
     activeDefinitions,
     choices,

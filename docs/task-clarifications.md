@@ -91,6 +91,11 @@ Expect / Wrong if format).
 
 ## Power-swap chain evaluation task (queued 2026-10-22)
 
+Done (commit "Resolve each power swap of a chain at its own level",
+evaluation cache v40): each swap reports its own pick (a traded-away pick is in
+`EvaluatedCharacter.replacedSelections`) and lists what was held at its level.
+The owner check is the checklist's "Essentials power swaps" item.
+
 Found while making the power-swap rows self-explanatory (commit `f1c1f0c`).
 Start it when no other agent is editing `packages/rules-engine/src/evaluator.ts`.
 

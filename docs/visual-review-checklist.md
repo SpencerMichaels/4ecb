@@ -342,19 +342,23 @@ Settings → Builder & Equipment.
     Coward's Reward" (27). Open, a line reads "At 15th level, replace one of
     your daily attack powers with a new one of level 15 or lower." (the level
     and kind change to match), then step "1 Power to replace", a table of only
-    the swapped kind (at 15: Driving Attack and Press of Steel; at 27:
-    Assassin's Strike (Hybrid), Steel Serpent Strike and Bitter Harvest), then
-    step "2 New power": "Choose the power to replace first." until you pick
-    one, then the table of new powers. A status-badge issue for an empty swap
-    reads "Level 15 daily attack power swap". Beatrix's Retraining tab lists
-    levels 2–8; a level's "Retrain a power" item shows the same two steps.
+    the swapped kind held at that level, with the folded trade's first power
+    picked (at 15: Bristling Defense, Driving Attack and Press of Steel; at 19:
+    Driving Attack, Press of Steel and Hurricane Strike; at 25: Driving Attack,
+    Press of Steel and Toppling Finish; at 27: Assassin's Strike (Hybrid),
+    Spinning Sweep, Steel Serpent Strike and Bitter Harvest), then step "2 New
+    power": the level's legal powers of that kind and level cap with the
+    folded trade's second power picked (Hurricane Strike at 15, Toppling
+    Finish at 19). An empty swap shows "Choose the power to replace first."
+    until you pick one. A status-badge issue for an empty swap reads "Level 15
+    daily attack power swap". Beatrix's Retraining tab lists levels 2–8; a
+    level's "Retrain a power" item shows the same two steps.
   - **Wrong if:** the row still reads "Replacement", the help line names the
     wrong level or kind, the first table offers feats, skills or utility
     powers, a pick doesn't stick, a power is listed twice (check Bitter Harvest
-    at 27), or a filled swap still shows as missing in the status badges.
-    Known gap (rules engine): at 15 and 19 the open tables mark the slot's
-    later holder (Hurricane Strike, from 25) as picked, so they can disagree
-    with the folded summary.
+    at 27), an open table's picks disagree with the folded trade, step 2 reads
+    "No matching powers", or a filled swap still shows as missing in the
+    status badges.
 - [ ] **Wizard spellbook**
   - **Where:** `wizard-gnome` → `edit?tab=build&level=1&section=spellbook`. Then
     `warlock-fey` → `edit?tab=build&level=1&section=class`, Eldritch Blast's
