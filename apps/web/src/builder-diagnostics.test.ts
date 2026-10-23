@@ -904,4 +904,29 @@ describe("records matched by name on import", () => {
       ),
     ).toEqual([]);
   });
+
+  it("explain a name the file saved with the character's class appended", () => {
+    const classContent = [
+      { id: "L1", name: "1", type: "Level", rules: [] },
+      { id: "RANGER", name: "Ranger", type: "Class", rules: [] },
+      { id: "OURS_GUIDE", name: "Mountain Guide", type: "Class Feature" },
+    ].map((entity) => ({ rules: [], ...entity }));
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><CharacterSheet/><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Ranger" type="Class" internal-id="RANGER" charelem="c"/><RulesElement name="Mountain Guide (Ranger)" type="Class Feature" internal-id="THEIRS_GUIDE" charelem="g"/></RulesElement></Level></D20Character>`,
+      { matchMissingDefinitionsIn: classContent },
+    );
+    expect(
+      nameMatchedContentIssues(
+        imported.build,
+        new Map(
+          classContent.map((entity) => [
+            entity.id.toLocaleLowerCase(),
+            entity as unknown as ContentEntity,
+          ]),
+        ),
+      ).map((issue) => issue.detail),
+    ).toEqual([
+      "Your file saved “Mountain Guide (Ranger)” as THEIRS_GUIDE, which the game content doesn't have, so it uses OURS_GUIDE, the one record of that type named without your class (Ranger).",
+    ]);
+  });
 });

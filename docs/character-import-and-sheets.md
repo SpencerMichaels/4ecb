@@ -153,13 +153,22 @@ given `FREEBEE` marker, `LOOTNOTE_<id>__<id>__<name>`) follow the match.
 - **Name:** a missing ID takes the one content record of the same type whose
   name matches after decoding XML entities, collapsing whitespace and
   folding case (`matchableName`).
-- **Grant:** a still-missing child of a matched parent takes the one record
+- **Class suffix:** a missing ID no record names exactly, whose saved name
+  ends in "(<Class>)" naming one of the character's classes, takes the one
+  record of its type named without the suffix ("Mountain Guide (Ranger)" →
+  "Mountain Guide"). The character's classes are its saved Class and Hybrid
+  Class records plus every CountsAsClass their records grant (directly or via
+  Grants), so a Hunter is also a Ranger; multiclass feats' CountsAsClass
+  grants don't count. Other parentheticals are never stripped. Basis
+  `class-suffix`, with the class as `className`.
+- **Grant** (approved as implemented, 2026-10-23): a still-missing child of a matched parent takes the one record
   of its type the parent's record grants at the child's saved `Level` (from
   `RulesElementTally`) that the build doesn't already hold. Once a child is
   matched to the ID the parent grants, evaluation adopts the saved child as
   that grant, so nothing is granted twice.
-- **Never on ambiguity:** two or more same-named records leave the ID
-  missing; the report lists the candidates with a warning.
+- **Never on ambiguity:** two or more same-named records (by the exact name,
+  or by the name without its class suffix) leave the ID missing; the report
+  lists the candidates with a warning.
 
 The import report's `definitionMatching` lists `matched` (saved ID, name,
 type, new ID, basis), `ambiguous` and `unmatched`. Changed identities keep

@@ -309,3 +309,85 @@ describe("matching missing content by name on import", () => {
     ).toBe(true);
   });
 });
+
+describe("matching a name saved with the character's class appended", () => {
+  /** A Hunter (counts as Ranger) whose file appended "(Ranger)" to knacks. */
+  const classContent: readonly ContentEntity[] = [
+    entity("L1", "1", "Level"),
+    entity("HUNTER", "Hunter", "Class", [
+      { name: "GRANTS_HUNTER", type: "Grants" },
+    ]),
+    entity("GRANTS_HUNTER", "Hunter", "Grants", [
+      { name: "COUNTS_HUNTER", type: "CountsAsClass" },
+      { name: "COUNTS_RANGER", type: "CountsAsClass" },
+    ]),
+    entity("COUNTS_HUNTER", "Hunter", "CountsAsClass"),
+    entity("COUNTS_RANGER", "Ranger", "CountsAsClass"),
+    entity("COUNTS_WIZARD", "Wizard", "CountsAsClass"),
+    entity("MULTICLASS", "Arcane Initiate", "Feat", [
+      { name: "COUNTS_WIZARD", type: "CountsAsClass" },
+    ]),
+    entity("OUR_GUIDE", "Mountain Guide", "Class Feature"),
+    entity("OUR_REST", "Watchful Rest", "Class Feature"),
+    entity("OUR_REST_RANGER", "Watchful Rest (Ranger)", "Class Feature"),
+    entity("OUR_SPELL", "Spell Knack", "Class Feature"),
+    entity("TWIN_A", "Twin Knack", "Class Feature"),
+    entity("TWIN_B", "Twin Knack", "Class Feature"),
+    entity("OUR_TIER", "Tier Knack", "Class Feature"),
+  ];
+  const classXml = `<?xml version="1.0"?>
+<D20Character game-system="D&amp;D4E">
+  <CharacterSheet/>
+  <Level>
+    <RulesElement name="1" type="Level" internal-id="L1" charelem="l1">
+      <RulesElement name="Hunter" type="Class" internal-id="HUNTER" charelem="class"/>
+      <RulesElement name="Arcane Initiate" type="Feat" internal-id="MULTICLASS" charelem="feat"/>
+      <RulesElement name="Mountain Guide (Ranger)" type="Class Feature" internal-id="THEIR_GUIDE" charelem="guide"/>
+      <RulesElement name="Watchful Rest (Ranger)" type="Class Feature" internal-id="THEIR_REST" charelem="rest"/>
+      <RulesElement name="Spell Knack (Wizard)" type="Class Feature" internal-id="THEIR_SPELL" charelem="spell"/>
+      <RulesElement name="Twin Knack (Ranger)" type="Class Feature" internal-id="THEIR_TWIN" charelem="twin"/>
+      <RulesElement name="Tier Knack (heroic tier)" type="Class Feature" internal-id="THEIR_TIER" charelem="tier"/>
+    </RulesElement>
+  </Level>
+</D20Character>`;
+  const matching = () =>
+    importDnd4e(classXml, { matchMissingDefinitionsIn: classContent }).report
+      .definitionMatching!;
+
+  it("strips a class the character has, through what its class counts as", () => {
+    expect(matching().matched).toContainEqual({
+      savedId: "THEIR_GUIDE",
+      savedName: "Mountain Guide (Ranger)",
+      type: "Class Feature",
+      definitionId: "OUR_GUIDE",
+      definitionName: "Mountain Guide",
+      basis: "class-suffix",
+      className: "Ranger",
+    });
+  });
+
+  it("prefers the record that has the saved name itself", () => {
+    expect(
+      matching().matched.find((match) => match.savedId === "THEIR_REST"),
+    ).toMatchObject({ definitionId: "OUR_REST_RANGER", basis: "name" });
+  });
+
+  it("never strips a class the character lacks or another parenthetical", () => {
+    // Wizard is only a multiclass feat's CountsAsClass, not a class.
+    expect(matching().unmatched.map((record) => record.savedId)).toEqual([
+      "THEIR_SPELL",
+      "THEIR_TIER",
+    ]);
+  });
+
+  it("never guesses between records sharing the stripped name", () => {
+    expect(matching().ambiguous).toEqual([
+      {
+        savedId: "THEIR_TWIN",
+        savedName: "Twin Knack (Ranger)",
+        type: "Class Feature",
+        candidateIds: ["TWIN_A", "TWIN_B"],
+      },
+    ]);
+  });
+});

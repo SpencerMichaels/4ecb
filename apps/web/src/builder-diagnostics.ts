@@ -4,7 +4,11 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { matchableName, nameMatchedIdentities } from "@4ecb/legacy-dnd4e";
+import {
+  matchableName,
+  nameMatchedIdentities,
+  suffixedName,
+} from "@4ecb/legacy-dnd4e";
 import type {
   EngineDiagnostic,
   EvaluatedCharacter,
@@ -279,13 +283,22 @@ export function nameMatchedContentIssues(
     const sameName =
       name === undefined ||
       matchableName(name) === matchableName(match.savedName);
+    const suffixed = suffixedName(match.savedName);
+    const classSuffix =
+      !sameName &&
+      suffixed !== undefined &&
+      matchableName(suffixed.name) === matchableName(name ?? "")
+        ? suffixed.suffix
+        : undefined;
     return {
       key: `import:matched:${match.savedId}`,
       kind: "note",
       title: `${name ?? match.savedName} (${match.type})`,
       detail: sameName
         ? `Your file saved it as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, the one record with the same name and type.`
-        : `Your file saved “${match.savedName}” as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, which the matched record above it grants in its place.`,
+        : classSuffix !== undefined
+          ? `Your file saved “${match.savedName}” as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, the one record of that type named without your class (${classSuffix}).`
+          : `Your file saved “${match.savedName}” as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, which the matched record above it grants in its place.`,
       effect:
         "The character and its exports use the matched record. Check it's the one you meant.",
       ...(match.inventoryEntryId === undefined

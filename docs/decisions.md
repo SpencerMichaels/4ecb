@@ -2634,7 +2634,18 @@ Decision:
   "Ghost of the Past Starting Feature", ours "Level 1 Ghost of the Past
   Starting Feature") takes the one record of its type that the matched
   parent grants at its level (the legacy record's `Level` specific) and the
-  build doesn't already hold. Nothing else is matched structurally.
+  build doesn't already hold. Nothing else is matched structurally. The
+  product owner approved this grant alignment as implemented (2026-10-23);
+  it is not provisional.
+- A saved name ending in "(<Class>)" whose class is one of the character's
+  own — its Class and Hybrid Class records, and every CountsAsClass those
+  records grant (a Hunter, the Essentials Ranger build, counts as Ranger) —
+  takes the one record of its type named without that suffix, when no record
+  has the saved name itself ("Mountain Guide (Ranger)", ours "Mountain
+  Guide"). Exact names always win; a class the character lacks (including
+  one only a multiclass feat counts it as) and any other parenthetical
+  ("(heroic tier)", "(level 8)") is never stripped; several same-named
+  records mean no match. Reported with basis `class-suffix` (2026-10-23).
 - It is the Settings option "Match missing content by name" (Importing
   characters), on by default.
 - Each changed identity keeps its saved name and type and records the saved

@@ -15,11 +15,14 @@ export type MatchableDefinition = Pick<
 
 /**
  * How a saved element whose internal-id the content lacks was matched:
- * `name` — exactly one record has its name and type; `grant` — its parent
- * was matched, and the parent's record grants exactly one record of its type
- * at its level that the build doesn't already hold.
+ * `name` — exactly one record has its name and type; `class-suffix` — no
+ * record has its name, which ends in "(<Class>)" naming one of the
+ * character's classes, and exactly one record has its name without that
+ * suffix and its type; `grant` — its parent was matched, and the parent's
+ * record grants exactly one record of its type at its level that the build
+ * doesn't already hold.
  */
-export type Dnd4eDefinitionMatchBasis = "name" | "grant";
+export type Dnd4eDefinitionMatchBasis = "name" | "class-suffix" | "grant";
 
 export interface Dnd4eDefinitionMatch {
   /** The internal-id the file saved. */
@@ -32,6 +35,8 @@ export interface Dnd4eDefinitionMatch {
   readonly basis: Dnd4eDefinitionMatchBasis;
   /** For `grant` matches: the record that grants it. */
   readonly grantedBy?: string;
+  /** For `class-suffix` matches: the class the saved name's suffix named. */
+  readonly className?: string;
 }
 
 export interface Dnd4eUnmatchedDefinition {
@@ -86,6 +91,22 @@ export function matchableName(value: string): string {
       .replace(/\s+/g, " ")
       .trim(),
   );
+}
+
+/**
+ * A name ending in a parenthesized suffix ("Mountain Guide (Ranger)") split
+ * into the name before it and the suffix, or undefined without one. Whether
+ * the suffix names a class is the caller's to decide.
+ */
+export function suffixedName(
+  value: string,
+): { readonly name: string; readonly suffix: string } | undefined {
+  const match = /^(.*\S)\s*\(([^()]+)\)\s*$/s.exec(value);
+  const name = match?.[1];
+  const suffix = match?.[2];
+  return name === undefined || suffix === undefined
+    ? undefined
+    : { name, suffix: suffix.trim() };
 }
 
 function nameKey(name: string, type: string): string {
@@ -352,9 +373,60 @@ function replacedBuild(
   };
 }
 
+const CLASS_TYPES = new Set(["class", "hybrid class"]);
+/** Record types a class grants on the way to the classes it counts as. */
+const COUNTS_AS_PATH_TYPES = new Set(["grants", "countsasclass"]);
+
+/**
+ * The character's classes, keyed by matchable name: its saved Class and
+ * Hybrid Class records (saved and content names) and every CountsAsClass
+ * their records grant, directly or through Grants records — so a Hunter (an
+ * Essentials Ranger build) is also a Ranger, and so is a Hybrid Ranger.
+ * Multiclass feats' CountsAsClass grants are not the character's classes.
+ */
+function characterClassNames(
+  build: CharacterBuild,
+  byId: ReadonlyMap<string, MatchableDefinition>,
+  replacements: ReadonlyMap<string, Replacement>,
+): Map<string, string> {
+  const result = new Map<string, string>();
+  const add = (name: string) => {
+    if (!result.has(matchableName(name))) result.set(matchableName(name), name);
+  };
+  const seen = new Set<string>();
+  const visit = (entity: MatchableDefinition) => {
+    if (seen.has(key(entity.id))) return;
+    seen.add(key(entity.id));
+    if (key(entity.type) === "countsasclass") add(entity.name);
+    for (const rule of entity.rules) {
+      if (key(rule.name) !== "grant") continue;
+      const grantedId = attributeValue(rule, "name");
+      const granted =
+        grantedId === undefined ? undefined : byId.get(key(grantedId));
+      if (granted !== undefined && COUNTS_AS_PATH_TYPES.has(key(granted.type)))
+        visit(granted);
+    }
+  };
+  for (const identity of savedIdentities(build)) {
+    if (!CLASS_TYPES.has(matchableName(identity.type))) continue;
+    add(identity.name);
+    const id = identity.definitionId;
+    const entity =
+      id === undefined
+        ? undefined
+        : byId.get(key(replacements.get(key(id))?.definitionId ?? id));
+    if (entity === undefined) continue;
+    add(entity.name);
+    visit(entity);
+  }
+  return result;
+}
+
 /**
  * Points saved elements whose internal-id the content lacks at the content
- * record that has the same name and type, when exactly one does. A saved
+ * record that has the same name and type, when exactly one does — or, when
+ * none does and the saved name ends in "(<Class>)" naming one of the
+ * character's classes, at the one record named without that suffix. A saved
  * child of a matched element whose own name differs (a theme's "Starting
  * Feature" saved as "Level 1 … Starting Feature") is then lined up with the
  * one record of its type that the matched parent grants at its level.
@@ -403,6 +475,36 @@ export function matchMissingDefinitions(
       definitionId: only.id,
       definitionName: only.name,
       basis: "name",
+    });
+  }
+
+  // A name the file saved with one of the character's classes appended
+  // ("Mountain Guide (Ranger)", ours "Mountain Guide"). Only when no record
+  // has the saved name itself; other parentheticals ("(heroic tier)") never
+  // name a class, so they are never stripped.
+  const classNames = characterClassNames(build, byId, replacements);
+  const suffixCandidatesFor = new Map<string, readonly MatchableDefinition[]>();
+  for (const [savedKey, saved] of missing) {
+    if ((candidatesFor.get(savedKey)?.length ?? 0) > 0) continue;
+    const split = suffixedName(saved.name);
+    const className =
+      split === undefined
+        ? undefined
+        : classNames.get(matchableName(split.suffix));
+    if (split === undefined || className === undefined) continue;
+    const candidates = byName.get(nameKey(split.name, saved.type)) ?? [];
+    suffixCandidatesFor.set(savedKey, candidates);
+    const only = candidates.length === 1 ? candidates[0] : undefined;
+    if (only === undefined) continue;
+    replacements.set(savedKey, { definitionId: only.id });
+    matched.push({
+      savedId: saved.id,
+      savedName: saved.name,
+      type: saved.type,
+      definitionId: only.id,
+      definitionName: only.name,
+      basis: "class-suffix",
+      className,
     });
   }
 
@@ -485,9 +587,10 @@ export function matchMissingDefinitions(
   const unmatched: Dnd4eUnmatchedDefinition[] = [];
   for (const [savedKey, saved] of missing) {
     if (replacements.has(savedKey)) continue;
-    const candidateIds = (candidatesFor.get(savedKey) ?? []).map(
-      (candidate) => candidate.id,
-    );
+    const exact = candidatesFor.get(savedKey) ?? [];
+    const candidateIds = (
+      exact.length > 0 ? exact : (suffixCandidatesFor.get(savedKey) ?? [])
+    ).map((candidate) => candidate.id);
     (candidateIds.length > 1 ? ambiguous : unmatched).push({
       savedId: saved.id,
       savedName: saved.name,
