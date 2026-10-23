@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import {
+  applyCharacterCommand,
   isCharacterRecord,
   newCharacterRecord,
   newNativeCharacterRecord,
@@ -730,5 +731,54 @@ describe("legacy .dnd4e import", () => {
         content,
       }),
     ).toThrow("invalid XML 1.0 character");
+  });
+});
+
+describe("removed occurrences on export", () => {
+  it("drops an occurrence removed from the build from the exported file", () => {
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><CharacterSheet/><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Skill Rules" type="Rules" internal-id="RULES" charelem="rules"><RulesElement name="Cooking" type="Skill" internal-id="HOMEBREW_SKILL" charelem="hb"/></RulesElement></RulesElement></Level></D20Character>`,
+    );
+    // The homebrew skill is not in the content in use.
+    const content = [
+      entity("L1", "1", "Level"),
+      entity("RULES", "Skill Rules", "Rules"),
+    ];
+    const kept = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build: imported.build,
+      evaluation: evaluateCharacter(
+        projectBuildForEvaluation(imported.build, content),
+        content,
+      ),
+      content,
+    });
+    expect(kept).toContain('internal-id="HOMEBREW_SKILL"');
+    const build = applyCharacterCommand(imported.build, {
+      kind: "remove-occurrence",
+      occurrenceId: "legacy:hb",
+    });
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    expect(
+      evaluation.diagnostics.some(
+        ({ code }) => code === "occurrence.missing-definition",
+      ),
+    ).toBe(false);
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build,
+      evaluation,
+      content,
+    });
+    expect(xml).toContain('internal-id="RULES"');
+    expect(xml).not.toContain("HOMEBREW_SKILL");
+    expect(xml).not.toContain("Cooking");
   });
 });

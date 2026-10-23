@@ -26,6 +26,7 @@ import {
   itemChoiceCandidates,
   LOADOUT_SLOT_COLUMNS,
   loadoutChangeCommand,
+  missingInventoryElements,
   practiceKind,
   resolveLoadoutAssignments,
   recommendedMagicItemVariant,
@@ -1150,5 +1151,28 @@ describe("equipment catalog presentation", () => {
         ),
       );
     }
+  });
+});
+
+describe("missing inventory content", () => {
+  it("finds saved elements whose definitions the content lacks", () => {
+    const byId = entityIndex(entity("ARMOR", "Leather Armor", "Armor"));
+    expect(
+      missingInventoryElements(
+        {
+          elements: [
+            { definitionId: "armor", name: "Leather Armor", type: "Armor" },
+            {
+              definitionId: "HOMEBREW",
+              name: "Armor of Brewing +1",
+              type: "Magic Item",
+            },
+            // A name-only legacy element never had a definition to miss.
+            { name: "Custom trinket", type: "Gear" },
+          ],
+        },
+        byId,
+      ).map(({ name }) => name),
+    ).toEqual(["Armor of Brewing +1"]);
   });
 });

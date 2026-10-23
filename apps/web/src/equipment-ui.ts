@@ -1,5 +1,6 @@
 import {
   formatInventoryItemName,
+  type BuildInventoryElement,
   type BuildInventoryEntry,
   type BuildOccurrence,
   type CharacterCommand,
@@ -814,6 +815,21 @@ export function inventoryDefinitionIds(
 ): readonly string[] {
   return entry.elements.flatMap(({ definitionId }) =>
     definitionId === undefined ? [] : [definitionId.toLocaleLowerCase()],
+  );
+}
+
+/**
+ * The saved base/enchantment elements of `entry` whose definitions the
+ * active content lacks (homebrew or uninstalled sources). Name-only legacy
+ * elements never carried a definition, so they are not "missing".
+ */
+export function missingInventoryElements(
+  entry: Pick<BuildInventoryEntry, "elements">,
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly BuildInventoryElement[] {
+  return entry.elements.filter(
+    ({ definitionId }) =>
+      definitionId !== undefined && !byId.has(definitionId.toLocaleLowerCase()),
   );
 }
 

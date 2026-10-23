@@ -32,6 +32,7 @@ import {
   contentUpdateIssue,
   evaluationFailedIssue,
   deityAlignmentIssue,
+  missingHoldingContentIssues,
   withCharacterIssues,
   type BuilderIssue,
 } from "./builder-diagnostics";
@@ -115,6 +116,7 @@ import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
+import { useArmedAction } from "./useArmedAction";
 import { freebeeGiftCommand } from "./freebee-gifts";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { CandidateDetail } from "./CandidateDetail";
@@ -319,6 +321,9 @@ export function CharacterEditorPage({
   // tab; elsewhere, and after a tab change or Review jump, the default rules.
   const [settingLevel, setSettingLevel] = useState(false);
   const toasts = useToasts();
+  // Removing a missing-content occurrence arms the button (a second click
+  // confirms), like Inventory's Remove; the change is also undoable.
+  const issueRemoval = useArmedAction("issue-remove-trigger");
   // Exports read the stored record: wait for pending saves, and store a new
   // character that was never changed (exporting it is a deliberate ask).
   // A .dnd4e export evaluates the character in a fresh rules worker, which
@@ -1282,6 +1287,7 @@ export function CharacterEditorPage({
       planningHorizon,
       abilityScoresIncomplete,
       abilityScoresHouseRuled,
+      build,
     }),
     [
       // One cause, one issue: missing content outranks "content updated".
@@ -1299,6 +1305,11 @@ export function CharacterEditorPage({
         ? []
         : [evaluationFailedIssue(evaluationFailure)]),
       ...(alignmentIssue === undefined ? [] : [alignmentIssue]),
+      // Without any content every holding would be "missing"; the
+      // not-installed issue already covers that.
+      ...(contentMissing || byId.size === 0
+        ? []
+        : missingHoldingContentIssues(build, byId)),
     ],
   );
   const totalUnresolved = builderIssues.unresolved.length;
@@ -1314,6 +1325,10 @@ export function CharacterEditorPage({
     }
     if (issue.target?.kind === "content-update") {
       setReviewingContentUpdate(true);
+      return;
+    }
+    if (issue.target?.kind === "inventory") {
+      onNavigate(characterId, { workspace: "equipment" });
       return;
     }
     if (issue.target?.kind === "abilities") {
@@ -1778,14 +1793,55 @@ export function CharacterEditorPage({
               <strong>Effect:</strong> {issue.effect}
             </p>
           </div>
-          {issue.target === undefined ? null : (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => navigateToDiagnosticIssue(issue)}
-            >
-              Review
-            </button>
+          {issue.target === undefined && issue.removal === undefined ? null : (
+            <div className="diagnostic-actions">
+              {issue.target === undefined ? null : (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => navigateToDiagnosticIssue(issue)}
+                >
+                  Review
+                </button>
+              )}
+              {issue.removal === undefined
+                ? null
+                : (() => {
+                    const { occurrenceId } = issue.removal;
+                    const armed = issueRemoval.isArmed(issue.key);
+                    return (
+                      <button
+                        className="secondary-button danger-action"
+                        type="button"
+                        data-issue-remove-trigger={issue.key}
+                        data-armed={armed || undefined}
+                        aria-label={
+                          armed
+                            ? `Confirm removing ${issue.title}`
+                            : `Remove ${issue.title}`
+                        }
+                        title={
+                          armed
+                            ? "Click again to remove it from the character"
+                            : "Remove it from the character"
+                        }
+                        onClick={() => {
+                          if (!armed) {
+                            issueRemoval.arm(issue.key);
+                            return;
+                          }
+                          issueRemoval.disarm();
+                          dispatch({
+                            kind: "remove-occurrence",
+                            occurrenceId,
+                          });
+                        }}
+                      >
+                        {armed ? "Click again to remove" : "Remove"}
+                      </button>
+                    );
+                  })()}
+            </div>
           )}
         </li>
       ))}

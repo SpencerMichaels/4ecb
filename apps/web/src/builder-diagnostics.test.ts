@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  applyCharacterCommand,
+  type BuildInventoryEntry,
+  type BuildOccurrence,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
 import type { DeityAlignmentConstraint } from "./builder-ui";
@@ -9,6 +15,8 @@ import {
   contentUpdateIssue,
   deityAlignmentIssue,
   evaluationFailedIssue,
+  missingHoldingContentIssues,
+  savedOccurrenceNames,
   withCharacterIssues,
 } from "./builder-diagnostics";
 
@@ -626,5 +634,210 @@ describe("deity alignment", () => {
       [failed],
     );
     expect(groups.errors).toEqual([failed]);
+  });
+});
+
+describe("missing-content issues", () => {
+  const occurrence = (
+    id: string,
+    definitionId: string,
+    name: string,
+    children: BuildOccurrence[] = [],
+  ): BuildOccurrence => ({
+    id,
+    identity: { definitionId, name, type: "Skill" },
+    acquiredLevel: 1,
+    legality: "rules-legal",
+    children,
+    unresolved: false,
+  });
+  const holding = (
+    id: string,
+    equippedQuantity: number,
+    elements: BuildInventoryEntry["elements"],
+  ): BuildInventoryEntry => ({
+    id,
+    acquiredLevel: 1,
+    quantity: 1,
+    equippedQuantity,
+    elements,
+    overrides: {},
+    legality: "rules-legal",
+  });
+  const build: CharacterBuild = {
+    formatVersion: 2,
+    known: [],
+    effectiveLevel: 1,
+    levels: [
+      {
+        level: 1,
+        root: occurrence("level-1", "ID_LEVEL_1", "1", [
+          occurrence("skill-rules", "ID_SKILL_RULES", "Skill Rules", [
+            occurrence("homebrew-skill", "ID_HOMEBREW_SKILL", "Cooking"),
+          ]),
+          occurrence("deity", "ID_HOMEBREW_DEITY", "Aeros"),
+        ]),
+      },
+    ],
+    grabbag: [],
+    inventory: [
+      holding("shield", 1, [
+        { definitionId: "ID_HOMEBREW_SHIELD", name: "Buckler", type: "Armor" },
+      ]),
+      holding("charm", 0, [
+        {
+          definitionId: "ID_HOMEBREW_CHARM",
+          name: "Lucky Charm",
+          type: "Magic Item",
+        },
+      ]),
+      holding("rope", 0, [
+        { definitionId: "ID_ROPE", name: "Rope", type: "Gear" },
+      ]),
+    ],
+    alternates: [],
+    baseAbilities: {},
+    textStrings: {},
+  };
+  const known: ContentEntity = {
+    id: "ID_ROPE",
+    name: "Rope",
+    type: "Gear",
+    source: "Public test fixture",
+    sources: ["Public test fixture"],
+    attributes: [],
+    categories: [],
+    specifics: [],
+    rules: [],
+    description: "",
+    extensions: [],
+    provenance: { sourceKey: "diagnostics-test", sourceOrdinal: 0 },
+  };
+  const byId = new Map([["id_rope", known]]);
+  const missing = (occurrenceId: string, definitionId: string) => ({
+    severity: "error" as const,
+    code: "occurrence.missing-definition",
+    message: `Missing content definition ${definitionId}`,
+    occurrenceId,
+  });
+  const evaluated = evaluation({
+    occurrences: [
+      {
+        id: "homebrew-skill",
+        definitionId: "ID_HOMEBREW_SKILL",
+        acquiredLevel: 1,
+        parentId: "skill-rules",
+        kind: "grant",
+      },
+      {
+        id: "deity",
+        definitionId: "ID_HOMEBREW_DEITY",
+        acquiredLevel: 1,
+        parentId: "level-1",
+        kind: "choice",
+      },
+      {
+        id: "shield:definition:0",
+        definitionId: "ID_HOMEBREW_SHIELD",
+        acquiredLevel: 1,
+        kind: "inventory",
+      },
+    ],
+    choices: [
+      {
+        id: "deity-choice",
+        level: 1,
+        providerOccurrenceId: "level-1",
+        ruleOrdinal: 0,
+        index: 0,
+        type: "Deity",
+        optional: true,
+        selectedOccurrenceId: "deity",
+        candidates: [],
+      },
+    ],
+    diagnostics: [
+      missing("homebrew-skill", "ID_HOMEBREW_SKILL"),
+      missing("deity", "ID_HOMEBREW_DEITY"),
+      missing("shield:definition:0", "ID_HOMEBREW_SHIELD"),
+    ],
+  });
+
+  it("titles missing definitions by their saved names, not internal IDs", () => {
+    const { errors } = builderIssueGroups({
+      ...common,
+      byId,
+      evaluation: evaluated,
+      build,
+    });
+    expect(errors.map(({ title }) => title)).toEqual([
+      "Cooking",
+      "Aeros — level 1 Deity",
+    ]);
+    expect(errors[0]?.detail).toBe(
+      "Cooking isn't in the game content in use (ID_HOMEBREW_SKILL).",
+    );
+  });
+
+  it("falls back to the internal ID when no name was saved", () => {
+    const { errors } = builderIssueGroups({
+      ...common,
+      evaluation: evaluated,
+    });
+    expect(errors.map(({ title }) => title)).toContain("ID_HOMEBREW_SKILL");
+  });
+
+  it("offers Remove only for saved occurrences no choice owns", () => {
+    const { errors } = builderIssueGroups({
+      ...common,
+      byId,
+      evaluation: evaluated,
+      build,
+    });
+    const skill = errors.find(({ title }) => title === "Cooking");
+    const deity = errors.find(({ title }) => title.startsWith("Aeros"));
+    expect(skill?.removal).toEqual({ occurrenceId: "homebrew-skill" });
+    expect(skill?.target).toBeUndefined();
+    expect(deity?.removal).toBeUndefined();
+    expect(deity?.target).toEqual({ kind: "choice", choiceId: "deity-choice" });
+
+    const removed = applyCharacterCommand(build, {
+      kind: "remove-occurrence",
+      occurrenceId: skill!.removal!.occurrenceId,
+    });
+    expect(savedOccurrenceNames(removed).has("homebrew-skill")).toBe(false);
+    expect(savedOccurrenceNames(removed).get("deity")).toBe("Aeros");
+  });
+
+  it("raises one issue per holding with missing content, equipped or not", () => {
+    const issues = missingHoldingContentIssues(build, byId);
+    expect(issues).toEqual([
+      expect.objectContaining({
+        key: "inventory:missing-content:shield",
+        kind: "error",
+        title: "Buckler",
+        detail: "Buckler isn't in the game content in use.",
+        target: { kind: "inventory", entryId: "shield" },
+      }),
+      expect.objectContaining({
+        key: "inventory:missing-content:charm",
+        kind: "warning",
+        title: "Lucky Charm",
+      }),
+    ]);
+    // The equipped holding's engine diagnostic folds into its holding issue.
+    const groups = withCharacterIssues(
+      builderIssueGroups({
+        ...common,
+        byId,
+        evaluation: evaluated,
+        build,
+      }),
+      issues,
+    );
+    expect(
+      groups.errors.filter(({ title }) => title === "Buckler"),
+    ).toHaveLength(1);
+    expect(groups.warnings.map(({ title }) => title)).toEqual(["Lucky Charm"]);
   });
 });

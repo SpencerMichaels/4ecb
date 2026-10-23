@@ -35,6 +35,7 @@ import {
   inventoryLoadoutToggle,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  missingInventoryElements,
   resolveLoadoutAssignments,
   resolvedItemChoices,
   shopItemLevel,
@@ -1150,6 +1151,12 @@ export function EquipmentWorkspace({
                                                 : undefined;
                                         const removalArmed =
                                           removeAction.isArmed(entry.id);
+                                        // Homebrew or uninstalled content:
+                                        // kept, but its effects are unknown.
+                                        const contentMissing =
+                                          byId.size > 0 &&
+                                          missingInventoryElements(entry, byId)
+                                            .length > 0;
                                         return (
                                           <tr
                                             className="table-clickable-row"
@@ -1187,7 +1194,7 @@ export function EquipmentWorkspace({
                                               <button
                                                 type="button"
                                                 className="table-inspect-button inventory-item-button"
-                                                aria-label={`${displayName}. ${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
+                                                aria-label={`${displayName}. ${contentMissing ? "Content not installed. " : ""}${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
                                                 onClick={(event) => {
                                                   event.stopPropagation();
                                                   inspectInventory(entry);
@@ -1226,6 +1233,15 @@ export function EquipmentWorkspace({
                                                   <span className="inventory-item-name">
                                                     {displayName}
                                                   </span>
+                                                  {contentMissing ? (
+                                                    <span
+                                                      className="inventory-item-missing"
+                                                      title="This item's definition isn't in the game content in use, so its effects can't be calculated."
+                                                    >
+                                                      <Icon name="warning" />{" "}
+                                                      Content not installed
+                                                    </span>
+                                                  ) : null}
                                                   {equippedStatus ===
                                                   undefined ? null : (
                                                     <span className="visually-hidden">

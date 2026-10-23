@@ -946,3 +946,12 @@ button.inventory-icon-action:disabled {
   color: var(--muted);
   font-style: italic;
 }
+
+/* A holding whose definition isn't in the content in use (homebrew). */
+.inventory-item-missing {
+  align-items: center;
+  color: var(--warning);
+  display: inline-flex;
+  font-size: 0.85em;
+  gap: 0.25rem;
+}

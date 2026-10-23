@@ -143,6 +143,22 @@
 .diagnostic-list button {
   flex: 0 0 auto;
 }
+.diagnostic-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.diagnostic-list .danger-action {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+/* Click-to-arm, click-again-to-confirm, like Inventory's Remove. */
+.diagnostic-list .danger-action[data-armed="true"] {
+  background: var(--danger);
+  color: var(--surface);
+}
 .diagnostics-workspace,
 .diagnostic-group {
   display: grid;

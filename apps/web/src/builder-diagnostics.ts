@@ -1,3 +1,8 @@
+import {
+  isKnownRecordHolding,
+  type BuildOccurrence,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type {
   EngineDiagnostic,
@@ -11,6 +16,7 @@ import {
   selectedDefinitionId,
   type DeityAlignmentConstraint,
 } from "./builder-ui";
+import { inventoryDisplayName, missingInventoryElements } from "./equipment-ui";
 
 export type BuilderIssueKind =
   "unresolved" | "warning" | "error" | "house-rule" | "update";
@@ -19,7 +25,8 @@ export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
   | { readonly kind: "content-update" }
   | { readonly kind: "settings" }
-  | { readonly kind: "choice"; readonly choiceId: string };
+  | { readonly kind: "choice"; readonly choiceId: string }
+  | { readonly kind: "inventory"; readonly entryId: string };
 
 export interface BuilderIssue {
   readonly key: string;
@@ -28,6 +35,11 @@ export interface BuilderIssue {
   readonly detail: string;
   readonly effect: string;
   readonly target?: BuilderIssueTarget;
+  /**
+   * A saved occurrence no choice owns (a homebrew skill grant, for example)
+   * that the issue offers to remove from the character.
+   */
+  readonly removal?: { readonly occurrenceId: string };
 }
 
 export interface BuilderIssueGroups {
@@ -48,21 +60,76 @@ function selectedOccurrence(
   );
 }
 
+/** The content name, else the name saved with the occurrence (content the
+ * active profile lacks), else the internal ID. */
 function entityName(
   definitionId: string | undefined,
   byId: ReadonlyMap<string, ContentEntity>,
+  savedName?: string,
 ): string | undefined {
   if (definitionId === undefined) return undefined;
-  return byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId;
+  return (
+    byId.get(definitionId.toLocaleLowerCase())?.name ??
+    (savedName === undefined || savedName === "" ? definitionId : savedName)
+  );
+}
+
+/**
+ * Names saved with each build occurrence, by evaluated occurrence ID.
+ * Inventory elements use the evaluator's `<entry>:definition:<index>` IDs.
+ */
+export function savedOccurrenceNames(
+  build: CharacterBuild | undefined,
+): ReadonlyMap<string, string> {
+  const names = new Map<string, string>();
+  if (build === undefined) return names;
+  const visit = (occurrence: BuildOccurrence): void => {
+    const name = occurrence.identity.name.trim();
+    if (name !== "") names.set(occurrence.id, name);
+    occurrence.children.forEach(visit);
+  };
+  for (const frame of build.levels) {
+    visit(frame.root);
+    if (frame.userEdit !== undefined) visit(frame.userEdit.root);
+  }
+  build.grabbag.forEach(visit);
+  for (const alternate of build.alternates) visit(alternate.choice);
+  for (const entry of build.inventory)
+    entry.elements.forEach((element, index) => {
+      const name = element.name.trim();
+      if (name !== "") names.set(`${entry.id}:definition:${index}`, name);
+      element.children?.forEach(visit);
+    });
+  return names;
+}
+
+/** Whether `id` is a saved non-root level or grab-bag occurrence, which the
+ * `remove-occurrence` command can remove. */
+function isRemovableOccurrence(
+  build: CharacterBuild | undefined,
+  id: string,
+): boolean {
+  if (build === undefined) return false;
+  const visit = (occurrence: BuildOccurrence): boolean =>
+    occurrence.id === id || occurrence.children.some(visit);
+  return (
+    build.levels.some((frame) => frame.root.children.some(visit)) ||
+    build.grabbag.some(visit)
+  );
 }
 
 function choiceLabel(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
+  savedNames: ReadonlyMap<string, string> = new Map(),
 ): string {
   const selected = selectedOccurrence(choice, evaluation);
-  const selectedName = entityName(selected?.definitionId, byId);
+  const selectedName = entityName(
+    selected?.definitionId,
+    byId,
+    selected === undefined ? undefined : savedNames.get(selected.id),
+  );
   return selectedName === undefined
     ? `Level ${choice.level} ${choice.name ?? choice.type}`
     : `${selectedName} — level ${choice.level} ${choice.name ?? choice.type}`;
@@ -157,6 +224,39 @@ export function evaluationFailedIssue(message: string): BuilderIssue {
 }
 
 /**
+ * Holdings whose base or enchantment definition the active content lacks
+ * (homebrew, or a source that isn't installed). Equipped ones leave the
+ * character's numbers incomplete, so they are errors like any equipped
+ * missing definition; carried ones only warn.
+ */
+export function missingHoldingContentIssues(
+  build: CharacterBuild,
+  byId: ReadonlyMap<string, ContentEntity>,
+): BuilderIssue[] {
+  return build.inventory.flatMap((entry): BuilderIssue[] => {
+    if (entry.quantity <= 0 || isKnownRecordHolding(entry)) return [];
+    const missing = missingInventoryElements(entry, byId);
+    if (missing.length === 0) return [];
+    const equipped = entry.equippedQuantity > 0;
+    const names = missing.map(
+      ({ name, definitionId }) => name.trim() || definitionId,
+    );
+    return [
+      {
+        key: `inventory:missing-content:${entry.id}`,
+        kind: equipped ? "error" : "warning",
+        title: inventoryDisplayName(entry, byId),
+        detail: `${names.join(" and ")} ${missing.length === 1 ? "isn't" : "aren't"} in the game content in use.`,
+        effect: equipped
+          ? "The item stays equipped and is preserved on export, but its effects aren't calculated."
+          : "The item stays in the inventory and is preserved on export, but its effects can't be calculated.",
+        target: { kind: "inventory", entryId: entry.id },
+      },
+    ];
+  });
+}
+
+/**
  * Classes bound to their deity's alignment (Paladin, Invoker…) may still pick
  * another one; a mismatch marks the character as house-ruled.
  */
@@ -223,6 +323,7 @@ export function builderIssueGroups({
   planningHorizon,
   abilityScoresIncomplete,
   abilityScoresHouseRuled,
+  build,
 }: {
   readonly evaluation: EvaluatedCharacter | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
@@ -230,6 +331,8 @@ export function builderIssueGroups({
   readonly planningHorizon: number;
   readonly abilityScoresIncomplete: boolean;
   readonly abilityScoresHouseRuled: boolean;
+  /** The saved build: names for missing content and removable occurrences. */
+  readonly build?: CharacterBuild;
 }): BuilderIssueGroups {
   if (evaluation === undefined)
     return {
@@ -239,6 +342,20 @@ export function builderIssueGroups({
       houseRules: [],
       updates: [],
     };
+  const savedNames = savedOccurrenceNames(build);
+  const label = (choice: EvaluatedChoice): string =>
+    choiceLabel(choice, evaluation, byId, savedNames);
+  const occurrenceName = (
+    occurrence:
+      { readonly id: string; readonly definitionId: string } | undefined,
+  ): string | undefined =>
+    occurrence === undefined
+      ? undefined
+      : entityName(
+          occurrence.definitionId,
+          byId,
+          savedNames.get(occurrence.id),
+        );
 
   const unresolved: BuilderIssue[] = evaluation.choices.flatMap((choice) =>
     choice.level <= effectiveLevel &&
@@ -249,7 +366,7 @@ export function builderIssueGroups({
           {
             key: `choice:${choice.id}`,
             kind: "unresolved" as const,
-            title: choiceLabel(choice, evaluation, byId),
+            title: label(choice),
             detail: "This required choice has not been selected.",
             effect:
               "The character is incomplete, and no benefits from this selection apply until it is resolved.",
@@ -286,8 +403,8 @@ export function builderIssueGroups({
           kind: "house-rule" as const,
           title:
             choice === undefined
-              ? (entityName(occurrence.definitionId, byId) ?? "House rule")
-              : choiceLabel(choice, evaluation, byId),
+              ? (occurrenceName(occurrence) ?? "House rule")
+              : label(choice),
           detail: "This selection is explicitly marked as a house rule.",
           effect:
             "It remains active and is preserved on export, but the character is marked as using house rules.",
@@ -329,8 +446,8 @@ export function builderIssueGroups({
       kind: "house-rule",
       title:
         choice === undefined
-          ? (entityName(occurrence?.definitionId, byId) ?? "House rule")
-          : choiceLabel(choice, evaluation, byId),
+          ? (occurrenceName(occurrence) ?? "House rule")
+          : label(choice),
       detail: diagnostic.message,
       effect:
         "It remains active and is preserved on export, but the character is marked as using house rules.",
@@ -388,10 +505,23 @@ export function builderIssueGroups({
     const occurrence = evaluation.occurrences.find(
       (candidate) => candidate.id === diagnostic.occurrenceId,
     );
+    const missingDefinition =
+      diagnostic.code === "occurrence.missing-definition";
+    // A holding's missing definitions are one character issue per holding
+    // (missingHoldingContentIssues), equipped or not.
+    if (
+      missingDefinition &&
+      build !== undefined &&
+      occurrence?.kind === "inventory"
+    )
+      return [];
     const subject =
-      choice === undefined
-        ? entityName(occurrence?.definitionId, byId)
-        : choiceLabel(choice, evaluation, byId);
+      choice === undefined ? occurrenceName(occurrence) : label(choice);
+    const removable =
+      missingDefinition &&
+      choice === undefined &&
+      occurrence !== undefined &&
+      isRemovableOccurrence(build, occurrence.id);
     return [
       {
         key: [
@@ -403,8 +533,14 @@ export function builderIssueGroups({
         ].join(":"),
         kind: diagnostic.severity,
         title: subject ?? diagnostic.code,
-        detail: diagnostic.message,
-        effect: diagnosticEffect(diagnostic),
+        detail:
+          missingDefinition && occurrence !== undefined
+            ? `${occurrenceName(occurrence) ?? occurrence.definitionId} isn't in the game content in use (${occurrence.definitionId}).`
+            : diagnostic.message,
+        effect: removable
+          ? "The saved selection is preserved, but its mechanical benefits cannot be calculated without the missing definition. Remove it to drop it from the character and its exports."
+          : diagnosticEffect(diagnostic),
+        ...(removable ? { removal: { occurrenceId: occurrence.id } } : {}),
         ...(choice === undefined
           ? {}
           : {
@@ -468,7 +604,7 @@ export function builderIssueGroups({
           {
             key: `selected-redundant:${choice.id}:${choice.selectedOccurrenceId}`,
             kind: "house-rule" as const,
-            title: choiceLabel(choice, evaluation, byId),
+            title: label(choice),
             detail:
               "This skill is already a class skill, so this selection has no effect.",
             effect:
@@ -480,7 +616,7 @@ export function builderIssueGroups({
         {
           key: `selected-ineligible:${choice.id}:${choice.selectedOccurrenceId}`,
           kind: unverified ? ("warning" as const) : ("error" as const),
-          title: choiceLabel(choice, evaluation, byId),
+          title: label(choice),
           detail: `This selection is not eligible: ${candidateReason(candidate.reasons)}.`,
           effect: unverified
             ? "The selection remains active, but its rules legality cannot be confirmed automatically."
