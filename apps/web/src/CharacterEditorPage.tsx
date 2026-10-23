@@ -98,6 +98,7 @@ import {
   planningEvaluationHorizon,
   planningHorizonCommand,
   repeatedChoiceGroupTitle,
+  replacementPickSummary,
   selectedDefinitionId,
   selectedChoiceIsHouseRule,
   shouldOmitIndividualChoiceHeading,
@@ -1588,6 +1589,16 @@ export function CharacterEditorPage({
     const unit = accordionUnits.find((candidate) => candidate.includes(choice));
     if (unit === undefined) return element;
     const picks = unit.flatMap((item) => {
+      // A swap folds to what it traded: "Press of Steel → Hurricane Strike".
+      if (item.type === "Replacement") {
+        const summary = replacementPickSummary(
+          item,
+          planningEvaluation,
+          byId,
+          build,
+        );
+        return summary === undefined ? [] : [summary];
+      }
       const definitionId = selectedDefinitionId(item, planningEvaluation);
       return definitionId === undefined
         ? []

@@ -12,6 +12,7 @@ import type {
 import {
   candidateReason,
   isBuildPresetChoice,
+  powerSwapPresentation,
   selectedCandidateDecision,
   selectedDefinitionId,
   type DeityAlignmentConstraint,
@@ -130,9 +131,14 @@ function choiceLabel(
     byId,
     selected === undefined ? undefined : savedNames.get(selected.id),
   );
+  const swap = powerSwapPresentation(choice, evaluation, byId);
+  const kind =
+    swap === undefined
+      ? (choice.name ?? choice.type)
+      : `${swap.kind} power swap`;
   return selectedName === undefined
-    ? `Level ${choice.level} ${choice.name ?? choice.type}`
-    : `${selectedName} — level ${choice.level} ${choice.name ?? choice.type}`;
+    ? `Level ${choice.level} ${kind}`
+    : `${selectedName} — level ${choice.level} ${kind}`;
 }
 
 function choiceForDiagnostic(

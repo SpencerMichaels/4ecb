@@ -1901,15 +1901,149 @@ export function choiceTitle(choice: EvaluatedChoice): string {
   return choicePresentationLabel(choice.name || choice.type);
 }
 
+/** How a level-progression power swap reads in the builder. */
+export interface PowerSwapPresentation {
+  /** "daily attack", "encounter attack", "utility", … */
+  readonly kind: string;
+  /** "Swap a daily attack power" */
+  readonly title: string;
+  /** "At 15th level, replace one of your daily attack powers with a new
+   *  one of level 15 or lower." */
+  readonly explanation: string;
+}
+
+function levelOrdinal(level: number): string {
+  const tens = level % 100;
+  const suffix =
+    tens >= 11 && tens <= 13
+      ? "th"
+      : (["th", "st", "nd", "rd"][level % 10] ?? "th");
+  return `${level}${suffix}`;
+}
+
+const SWAP_ATTACK_USAGES = new Set(["at-will", "encounter", "daily"]);
+
+/**
+ * A power swap's wording from its own rule (`<replace powerswap=
+ * "class,usage,level">`: the level-progression and Essentials swaps that
+ * trade a power of that usage for a new one of the level or lower). Labelled
+ * replaces (e.g. Paragon Multiclassing) keep their label; retraining has no
+ * swap category and gets nothing.
+ */
+export function powerSwapPresentation(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): PowerSwapPresentation | undefined {
+  if (choice.type !== "Replacement" || choice.name !== undefined)
+    return undefined;
+  const provider = evaluation.occurrences.find(
+    ({ id }) => id === choice.providerOccurrenceId,
+  );
+  const entity =
+    provider === undefined
+      ? undefined
+      : byId.get(provider.definitionId.toLocaleLowerCase());
+  if (entity === undefined) return undefined;
+  const rule = parseRules(entity.id, entity.rules).find(
+    (candidate) =>
+      candidate.kind === "replace" &&
+      candidate.source.ordinal === choice.ruleOrdinal,
+  );
+  if (rule?.kind !== "replace" || rule.powerSwap === undefined)
+    return undefined;
+  const [, usage = "", cap = ""] = rule.powerSwap.split(",");
+  const kinds = usage
+    .split("|")
+    .map((part) => part.trim().toLocaleLowerCase())
+    .filter((part) => part !== "")
+    .map((part) => (SWAP_ATTACK_USAGES.has(part) ? `${part} attack` : part));
+  const maxLevel = Number.parseInt(cap, 10);
+  if (kinds.length === 0 || !Number.isFinite(maxLevel)) return undefined;
+  const kind = kinds.join(" or ");
+  const article = /^[aeiou]/.test(kind) ? "an" : "a";
+  return {
+    kind,
+    title: `Swap ${article} ${kind} power`,
+    explanation: `At ${levelOrdinal(choice.level)} level, replace one of your ${kind} powers with a new one of level ${maxLevel} or lower.`,
+  };
+}
+
+/** The definition a filled replacement gave up, if known. */
+export function replacedDefinitionId(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+): string | undefined {
+  const selected = selectedOccurrence(choice, evaluation);
+  if (selected?.replacesId === undefined) return undefined;
+  return (
+    evaluation.occurrences.find(({ id }) => id === selected.replacesId)
+      ?.definitionId ??
+    choice.replacementOptions?.find(
+      (option) => option.replacesOccurrenceId === selected.replacesId,
+    )?.definitionId
+  );
+}
+
+/**
+ * A filled replacement as "Replaced → New" (just the new pick when the
+ * replaced definition is unknown); undefined while unfilled. The evaluation
+ * reports a slot whose pick was swapped again later by its current holder
+ * (Hurricane Strike swapped at 19 and back at 25 reads as level 25's pick at
+ * 15 and 19 too), so the saved build's own pick for this slot wins.
+ */
+export function replacementPickSummary(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+  build?: CharacterBuild,
+): string | undefined {
+  const selected = selectedOccurrence(choice, evaluation);
+  if (selected === undefined) return undefined;
+  const name = (definitionId: string) =>
+    byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId;
+  const provider =
+    build === undefined
+      ? undefined
+      : findOccurrence(build, choice.providerOccurrenceId);
+  const direct =
+    provider === undefined
+      ? undefined
+      : provider.children[
+          findBuildChildIndex(
+            provider,
+            provider.identity.definitionId === undefined
+              ? undefined
+              : byId.get(provider.identity.definitionId.toLocaleLowerCase()),
+            choice.ruleOrdinal,
+            choice.index,
+          )
+        ];
+  const directReplaced =
+    build === undefined || direct?.replacesId === undefined
+      ? undefined
+      : findOccurrence(build, direct.replacesId);
+  if (
+    direct?.identity.definitionId !== undefined &&
+    directReplaced?.identity.definitionId !== undefined
+  )
+    return `${name(directReplaced.identity.definitionId)} → ${name(direct.identity.definitionId)}`;
+  const replacedId = replacedDefinitionId(choice, evaluation);
+  const to = name(selected.definitionId);
+  return replacedId === undefined ? to : `${name(replacedId)} → ${to}`;
+}
+
 export function contextualChoiceTitle(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
 ): string {
   return (
+    powerSwapPresentation(choice, evaluation, byId)?.title ??
     contextualChoiceName(choice, evaluation, (reference) =>
       byId.get(reference.trim().toLocaleLowerCase()),
-    ) ?? choiceTitle(choice)
+    ) ??
+    choiceTitle(choice)
   );
 }
 
@@ -1929,9 +2063,11 @@ export function contextualTimelineChoiceTitle(
   byId: ReadonlyMap<string, ContentEntity>,
 ): string {
   return (
+    powerSwapPresentation(choice, evaluation, byId)?.title ??
     contextualChoiceName(choice, evaluation, (reference) =>
       byId.get(reference.trim().toLocaleLowerCase()),
-    ) ?? timelineChoiceTitle(choice)
+    ) ??
+    timelineChoiceTitle(choice)
   );
 }
 

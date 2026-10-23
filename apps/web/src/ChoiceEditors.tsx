@@ -37,6 +37,7 @@ import {
   isCandidateVisible,
   isUnresolvedChoice,
   pickLegality,
+  powerSwapPresentation,
   repeatedChoiceGroupTitle,
   selectedChoiceIsHouseRule,
   selectedDefinitionId,
@@ -566,13 +567,47 @@ function ReplacementEditor({
     onDispatch(command);
   };
 
+  // A level-progression swap explains itself; both steps are labelled by
+  // what is traded (a power, feat, skill or companion when they agree).
+  const swap = powerSwapPresentation(choice, evaluation, byId);
+  const targetCategories = new Set(
+    options.map(({ definitionId }) =>
+      retrainingCategory(byId.get(definitionId.toLocaleLowerCase())?.type),
+    ),
+  );
+  const noun =
+    targetType ??
+    (targetCategories.size === 1 ? [...targetCategories][0] : undefined);
+  const steps = [
+    noun === undefined
+      ? "What to replace"
+      : `${noun[0]!.toLocaleUpperCase()}${noun.slice(1)} to replace`,
+    noun === undefined ? "Replacement" : `New ${noun}`,
+  ] as const;
+  const stepHeadingId = (index: 0 | 1) =>
+    `${choiceSectionId(choice.id)}-replacement-step-${index + 1}`;
+  const stepHeading = (index: 0 | 1) => (
+    <div className="choice-flow-step-heading">
+      <span aria-hidden="true">{index + 1}</span>
+      <h5 className="selection-subsection-heading" id={stepHeadingId(index)}>
+        {steps[index]}
+      </h5>
+    </div>
+  );
+
   return (
     <div className="choice-selection-layout">
       <div className="choice-editor-fields">
-        <div className="replacement-targets">
+        {swap === undefined ? null : (
+          <p className="field-help">{swap.explanation}</p>
+        )}
+        <section
+          aria-labelledby={stepHeadingId(0)}
+          className="replacement-targets"
+        >
+          {stepHeading(0)}
           <CandidateSelectionTable
             kind={targetKind}
-            nameColumnLabel="Replace"
             expandSections
             candidates={targetCandidates}
             featGroups={targetFeatGroups}
@@ -602,44 +637,52 @@ function ReplacementEditor({
                 chooseTarget(option.replacesOccurrenceId);
             }}
           />
-        </div>
-        {target === undefined ? null : (
-          <CandidateSelectionTable
-            evaluation={evaluation}
-            kind={replacementKind}
-            {...(replacementKind === "option"
-              ? { nameColumnLabel: "Replacement" }
-              : {})}
-            candidates={visible}
-            featGroups={replacementFeatGroups}
-            selectedIds={new Set(selectedValue === "" ? [] : [selectedValue])}
-            expandedGroupKey={expandedReplacementGroupKey}
-            byId={byId}
-            disabled={disabled}
-            showIllegal={showAll}
-            onExpandGroup={setExpandedReplacementGroupKey}
-            onInspect={(candidate) => {
-              setPerusingTarget(false);
-              setPerusedId(candidate.definitionId);
-              inspect(candidate, true);
-            }}
-            onToggle={(definitionId) => {
-              // Picking the selected replacement again clears it.
-              if (
-                definitionId.toLocaleLowerCase() ===
-                selectedValue.toLocaleLowerCase()
-              ) {
-                clearReplacement();
-                return;
-              }
-              const candidate = target.candidates.find(
-                (item) => item.definitionId === definitionId,
-              );
-              if (candidate !== undefined) selectReplacement(target, candidate);
-            }}
-            onToggleShowIllegal={() => setShowAll((current) => !current)}
-          />
-        )}
+        </section>
+        <section aria-labelledby={stepHeadingId(1)} className="replacement-new">
+          {stepHeading(1)}
+          {target === undefined ? (
+            <p className="field-help">
+              Choose the {noun ?? "option"} to replace first.
+            </p>
+          ) : (
+            <CandidateSelectionTable
+              evaluation={evaluation}
+              kind={replacementKind}
+              {...(replacementKind === "option"
+                ? { nameColumnLabel: "Replacement" }
+                : {})}
+              candidates={visible}
+              featGroups={replacementFeatGroups}
+              selectedIds={new Set(selectedValue === "" ? [] : [selectedValue])}
+              expandedGroupKey={expandedReplacementGroupKey}
+              byId={byId}
+              disabled={disabled}
+              showIllegal={showAll}
+              onExpandGroup={setExpandedReplacementGroupKey}
+              onInspect={(candidate) => {
+                setPerusingTarget(false);
+                setPerusedId(candidate.definitionId);
+                inspect(candidate, true);
+              }}
+              onToggle={(definitionId) => {
+                // Picking the selected replacement again clears it.
+                if (
+                  definitionId.toLocaleLowerCase() ===
+                  selectedValue.toLocaleLowerCase()
+                ) {
+                  clearReplacement();
+                  return;
+                }
+                const candidate = target.candidates.find(
+                  (item) => item.definitionId === definitionId,
+                );
+                if (candidate !== undefined)
+                  selectReplacement(target, candidate);
+              }}
+              onToggleShowIllegal={() => setShowAll((current) => !current)}
+            />
+          )}
+        </section>
       </div>
       {inspectCandidate === undefined ? (
         <CandidateDetail

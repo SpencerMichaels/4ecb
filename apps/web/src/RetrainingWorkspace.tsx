@@ -13,6 +13,7 @@ import type { InspectedOption } from "./CandidateSelectionTable";
 import { CandidateInspectionScope } from "./builder-choice-context";
 import {
   isOptionalRetrainingChoice,
+  replacedDefinitionId,
   retrainingCategory,
   selectedOccurrence,
   unresolveEvaluatedChoiceCommand,
@@ -64,12 +65,7 @@ export function levelRetrain(
   for (const choice of choices) {
     const selected = selectedOccurrence(choice, evaluation);
     if (selected === undefined) continue;
-    const replacedId =
-      evaluation.occurrences.find(({ id }) => id === selected.replacesId)
-        ?.definitionId ??
-      choice.replacementOptions?.find(
-        (option) => option.replacesOccurrenceId === selected.replacesId,
-      )?.definitionId;
+    const replacedId = replacedDefinitionId(choice, evaluation);
     return {
       choice,
       category: retrainingCategory(
