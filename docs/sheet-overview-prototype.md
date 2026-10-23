@@ -324,7 +324,10 @@ group as Resistances, Immunities, Vulnerabilities, Saving throws, Defenses,
 Initiative, Speed, Skills & checks, Health, Allies (one source's same bonus to
 several defenses reads as one row, "+1 to all defenses against …",
 `combinedDefenseModifiers`), with continuous striping
-and the same Effect/Source columns; the pane shows when either list has
+and the same Effect/Source columns. Group names are screen-reader only, never
+visible headings: most groups hold one row, so labels would roughly double the
+pane's height, and each row's text already names its stat (owner decision,
+2026-10-23); the pane shows when either list has
 entries and keeps its place above reminders (its height still comes out of
 the reminder space). The Play data card adds Defenses, Initiative, Speed and
 Allies note lines from the same data, and the builder sidebar's stat-tile
