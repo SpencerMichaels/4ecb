@@ -1025,6 +1025,32 @@ describe("builder planning UI", () => {
         (id) => (id === anonymousOption.id ? anonymousOption : undefined),
       ),
     ).toBeUndefined();
+
+    // A trait package choice (a hexblade's pact) takes its feature's name too.
+    const pactChoice = { ...level(0), id: "PACT_CHOICE", name: "Pact Choice" };
+    expect(
+      contextualChoiceName(
+        {
+          ...choice,
+          providerOccurrenceId: "pact-provider",
+          type: "Trait Package",
+        },
+        {
+          occurrences: [
+            {
+              id: "pact-provider",
+              definitionId: pactChoice.id,
+              acquiredLevel: 1,
+              kind: "grant",
+            },
+          ],
+        } as unknown as EvaluatedCharacter,
+        (id) =>
+          id === pactChoice.id
+            ? { ...pactChoice, type: "Class Feature" }
+            : undefined,
+      ),
+    ).toBe("Pact Choice");
   });
 
   it("applies a Build preset only to matching unresolved choices", () => {

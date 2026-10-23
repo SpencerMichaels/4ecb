@@ -710,6 +710,10 @@ export function classTableMetadata(entity: ContentEntity): {
   };
 }
 
+/** Choice types named after the class feature that offers them: a nested
+ *  feature select, or a trait package (a hexblade's Pact Choice). */
+const FEATURE_NAMED_CHOICE_TYPES = new Set(["class feature", "trait package"]);
+
 /**
  * Recovers the authored parent feature behind a generic nested select. The
  * evaluator keeps the provider occurrence, while shared candidate categories
@@ -720,8 +724,9 @@ export function contextualChoiceName(
   evaluation: EvaluatedCharacter,
   resolveEntity: (reference: string) => ContentEntity | undefined,
 ): string | undefined {
-  const type = choice.type.trim().toLocaleLowerCase();
-  if (type !== "class feature") return undefined;
+  if (!FEATURE_NAMED_CHOICE_TYPES.has(choice.type.trim().toLocaleLowerCase()))
+    return undefined;
+  const type = "class feature";
 
   const provider = evaluation.occurrences.find(
     (occurrence) => occurrence.id === choice.providerOccurrenceId,
