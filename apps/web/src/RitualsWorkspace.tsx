@@ -114,15 +114,20 @@ export function ritualAllowanceLabel(
   return `${parts.join(" and ")} left${from}`;
 }
 
-/** Chooses the allowance a free ritual uses when several fit (Learn free). */
+/** Chooses the allowance a free ritual uses when several fit (Learn free).
+ *  Each option names its provider and what it still covers, since one
+ *  provider can have several (a Psion's any 1st-level ritual, and Sending or
+ *  Tenser's Floating Disk). */
 function AllowanceChoiceDialog({
   name,
   allowances,
+  describe,
   onLearn,
   onCancel,
 }: {
   readonly name: string;
   readonly allowances: readonly RitualAllowance[];
+  readonly describe: (allowance: RitualAllowance) => string | undefined;
   readonly onLearn: (allowance: RitualAllowance | undefined) => void;
   readonly onCancel: () => void;
 }) {
@@ -165,6 +170,12 @@ function AllowanceChoiceDialog({
               onChange={() => setChosen(allowance.key)}
             />{" "}
             {allowance.provider}
+            {describe(allowance) === undefined ? null : (
+              <span className="ritual-allowance-option-detail">
+                {" "}
+                · {describe(allowance)}
+              </span>
+            )}
           </label>
         ))}
         <label>
@@ -583,6 +594,16 @@ export function RitualsWorkspace({
           <AllowanceChoiceDialog
             name={pendingFree.entity.name}
             allowances={pendingFree.allowances}
+            describe={(allowance) => {
+              const status = statuses.find(
+                (candidate) =>
+                  candidate.allowance.key.toLocaleLowerCase() ===
+                  allowance.key.toLocaleLowerCase(),
+              );
+              return status === undefined
+                ? undefined
+                : ritualAllowanceLabel(status, nameOf);
+            }}
             onCancel={() => setPendingFree(undefined)}
             onLearn={(allowance) => {
               learn(pendingFree.entity, 0, allowance);

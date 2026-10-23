@@ -924,6 +924,7 @@ button.inventory-icon-action:disabled {
   padding: 0;
 }
 
+.ritual-allowance-option-detail,
 .rituals-allowance-source,
 .rituals-known-source {
   color: var(--muted);
