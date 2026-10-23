@@ -15,6 +15,15 @@ minutes, about 50 s per character.
 Totals on `tmp/content/full-local.4ecp`: stats 1109/1130 → 1125/1146, power
 fields 882/965 → 882/953.
 
+**Provenance (owner, 2026-10-22):** SampleHeroes may be old saves.
+Everything in `sample-chars/`, and the batches the owner supplies, was saved
+by the newest legacy builder. "Content revision" is therefore not an
+acceptable classification for a `sample-chars/` difference on its own. It
+needs evidence that the saver's content differed from ours. Under that rule
+the classifications of Hystan's 2 lb weight difference and Oleander's Feast of
+Souls are open again. Oleander's missing homebrew items are a difference
+between the saver's CBLoader parts and our corpus, not staleness.
+
 | Character       | Stats before → after | Power fields before → after |
 | --------------- | -------------------- | --------------------------- |
 | Aeofel          | 51/53 → 52/54        | 10/10 → 10/10               |
