@@ -86,6 +86,27 @@ have committed.
 Hand the owner the visual checks in `docs/visual-review-checklist.md` (Where /
 Expect / Wrong if format).
 
+## Power-swap chain evaluation task (queued 2026-10-22)
+
+Found while making the power-swap rows self-explanatory (commit `f1c1f0c`).
+Start it when no other agent is editing `packages/rules-engine/src/evaluator.ts`.
+
+When a later swap trades away an earlier swap's pick, the evaluator reports
+that slot's final holder as every earlier swap's pick. On the visual-review
+`executioner-fighter` (Hybrid Executioner/Fighter L27), the saved swaps are
+Bristling Defense → Hurricane Strike (15), Hurricane Strike → Toppling Finish
+(19), Toppling Finish → Hurricane Strike (25), and Bitter Harvest → Coward's
+Reward (27). At levels 15 and 19 the evaluator marks Hurricane Strike (the
+level-25 pick) as the selection, and the level-15 "Power to replace" table
+doesn't list Bristling Defense. The rows' folded summaries read the saved build
+and are correct, so they can disagree with the open tables at 15 and 19. The
+fix belongs in the `replace` case of `evaluator.ts`: resolve each swap's own
+selection through the replacement chain at its level. It is likely an
+`EvaluatedCharacter` semantics change, so bump `RULES_EVALUATION_CACHE_VERSION`.
+Follow AGENTS.md's legacy-parity method (the native `CheckReplaceElem` /
+`VerifyDrop` paths) and remove the known-gap note from the "Essentials power
+swaps" item in `docs/visual-review-checklist.md` once it's fixed.
+
 ## Queue commit policy
 
 Once a task is confirmed complete, commit its work. Keep different tasks in
