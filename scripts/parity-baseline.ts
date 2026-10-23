@@ -1,7 +1,8 @@
 /**
  * Standing legacy-parity check (private corpus). Evaluates every legacy
  * comparison character against one pack, writes per-character match counts
- * and mismatch keys to tmp/parity/latest.json, and diffs them against the
+ * (cached stats, power attack/damage, power usage and action type) and
+ * mismatch keys to tmp/parity/latest.json, and diffs them against the
  * accepted baseline tmp/parity/baseline.json. Both files are ignored by git.
  *
  *   pnpm parity:baseline                 # compare with the baseline
@@ -32,7 +33,14 @@ interface CharacterBaseline {
   readonly warnings: number;
   readonly stats: { matching: number; comparable: number };
   readonly powers: { matching: number; comparable: number };
-  /** `stat <name>: <expected> -> <actual>` and `power <name> [<equipment>] <field>: ...`. */
+  /** Cached Power Usage / Action Type against the sheet card (absent in older baselines). */
+  readonly usage?: { matching: number; comparable: number };
+  readonly action?: { matching: number; comparable: number };
+  /**
+   * `stat <name>: <expected> -> <actual>`,
+   * `power <name> [<equipment>] <field>: ...`, `usage <name>: ...` and
+   * `action <name>: ...`.
+   */
   readonly mismatches: readonly string[];
 }
 
@@ -42,6 +50,8 @@ interface Baseline {
   readonly totals: {
     stats: { matching: number; comparable: number };
     powers: { matching: number; comparable: number };
+    usage?: { matching: number; comparable: number };
+    action?: { matching: number; comparable: number };
   };
   readonly characters: readonly CharacterBaseline[];
 }
@@ -80,6 +90,14 @@ function summarize(
       matching: report.cachedPowerParity.matchingFields,
       comparable: report.cachedPowerParity.comparableFields,
     },
+    usage: {
+      matching: report.cachedPowerTypeParity.usage.matching,
+      comparable: report.cachedPowerTypeParity.usage.comparable,
+    },
+    action: {
+      matching: report.cachedPowerTypeParity.action.matching,
+      comparable: report.cachedPowerTypeParity.action.comparable,
+    },
     mismatches: [
       ...report.cachedNumericParity.mismatches.map(
         (stat) =>
@@ -89,6 +107,13 @@ function summarize(
         (power) =>
           `power ${power.power} [${power.equipment}] ${power.field}: ${show(power.expected)} -> ${show(power.actual)}`,
       ),
+      ...[
+        ...report.cachedPowerTypeParity.usage.mismatches,
+        ...report.cachedPowerTypeParity.action.mismatches,
+      ].map(
+        (power) =>
+          `${power.field} ${power.power}: ${power.expected} -> ${show(power.actual)}`,
+      ),
     ],
   };
 }
@@ -97,9 +122,10 @@ const ratio = (part: { matching: number; comparable: number }) =>
   `${part.matching}/${part.comparable}`;
 
 function delta(
-  now: { matching: number; comparable: number },
+  now: { matching: number; comparable: number } | undefined,
   before: { matching: number; comparable: number } | undefined,
 ) {
+  if (now === undefined) return "n/a";
   if (before === undefined) return ratio(now);
   const change = now.matching - before.matching;
   const comparable =
@@ -140,15 +166,14 @@ async function main(): Promise<void> {
     characters.push(summarize(file, compareCharacterParity(xml, entities)));
   }
   const sum = (
-    pick: (character: CharacterBaseline) => {
-      matching: number;
-      comparable: number;
-    },
+    pick: (
+      character: CharacterBaseline,
+    ) => { matching: number; comparable: number } | undefined,
   ) =>
     characters.reduce(
       (total, character) => ({
-        matching: total.matching + pick(character).matching,
-        comparable: total.comparable + pick(character).comparable,
+        matching: total.matching + (pick(character)?.matching ?? 0),
+        comparable: total.comparable + (pick(character)?.comparable ?? 0),
       }),
       { matching: 0, comparable: 0 },
     );
@@ -161,6 +186,8 @@ async function main(): Promise<void> {
     totals: {
       stats: sum((character) => character.stats),
       powers: sum((character) => character.powers),
+      usage: sum((character) => character.usage),
+      action: sum((character) => character.action),
     },
     characters,
   };
@@ -192,7 +219,7 @@ async function main(): Promise<void> {
     if (previous !== undefined) regressions += added.length;
     const state = character.complete ? "" : " incomplete";
     console.log(
-      `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
+      `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
     );
     if (previous === undefined) {
       if (baseline !== undefined) console.log("  (not in the baseline)");
@@ -210,7 +237,7 @@ async function main(): Promise<void> {
       }
   }
   console.log(
-    `Total: stats ${delta(latest.totals.stats, baseline?.totals.stats)}, powers ${delta(latest.totals.powers, baseline?.totals.powers)}`,
+    `Total: stats ${delta(latest.totals.stats, baseline?.totals.stats)}, powers ${delta(latest.totals.powers, baseline?.totals.powers)}, usage ${delta(latest.totals.usage, baseline?.totals.usage)}, action ${delta(latest.totals.action, baseline?.totals.action)}`,
   );
   console.log(`Wrote ${join(OUTPUT_DIR, "latest.json")}`);
   if (accept) {

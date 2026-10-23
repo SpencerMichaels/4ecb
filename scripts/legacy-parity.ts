@@ -21,7 +21,13 @@ import {
   evaluateCharacter,
   projectBuildForEvaluation,
 } from "@4ecb/rules-engine";
-import { buildEvaluatedSheetModel } from "@4ecb/sheet-model";
+import {
+  buildEvaluatedSheetModel,
+  classifyPower,
+  classifyPowerCard,
+  powerActionLabel,
+  type SheetCard,
+} from "@4ecb/sheet-model";
 
 const decompress = promisify(gunzip);
 
@@ -49,15 +55,16 @@ export function compareCharacterParity(
   // contributions. The evaluated stat holds only the rules; the sheet adds
   // the inventory, so compare what the sheet shows (without coins). Missing
   // item definitions leave it unknown (null).
-  const sheetGearWeight = evaluated.converged
-    ? (buildEvaluatedSheetModel(
+  const sheet = evaluated.converged
+    ? buildEvaluatedSheetModel(
         imported.snapshot,
         imported.build,
         evaluated,
         entities,
         { countCoinWeight: false },
-      ).encumbrance?.carriedWeight ?? null)
-    : null;
+      )
+    : undefined;
+  const sheetGearWeight = sheet?.encumbrance?.carriedWeight ?? null;
   const cachedStats = Object.entries(imported.snapshot.stats).flatMap(
     ([name, value]) => {
       const expected = Number(value);
@@ -160,6 +167,10 @@ export function compareCharacterParity(
       }));
     });
   });
+  const typeComparisons = comparePowerTypes(
+    imported.snapshot.powers,
+    sheet?.powers ?? [],
+  );
   return {
     character: imported.snapshot.details.name,
     input: {
@@ -236,7 +247,99 @@ export function compareCharacterParity(
         ),
       ),
     },
+    cachedPowerTypeParity: {
+      usage: summarizePowerTypes(typeComparisons, "usage"),
+      action: summarizePowerTypes(typeComparisons, "action"),
+    },
     diagnostics: evaluated.diagnostics.slice(0, 100),
+  };
+}
+
+export interface PowerTypeComparison {
+  readonly power: string;
+  readonly definitionId: string | undefined;
+  readonly field: "usage" | "action";
+  readonly expected: string;
+  readonly actual: string | undefined;
+  readonly cardFound: boolean;
+  readonly matches: boolean;
+}
+
+interface CachedPowerType {
+  readonly name: string;
+  readonly id?: string | undefined;
+  readonly usage?: string | undefined;
+  readonly actionType?: string | undefined;
+}
+
+/**
+ * Compares each cached legacy power's Power Usage and Action Type (the
+ * PowerStats `<Power>` specifics) with what the evaluated sheet's power card
+ * shows: the usage category from `classifyPowerCard` ("Feature" for a rules
+ * reference) and the action from `powerActionLabel`. Legacy caches write only
+ * At-Will/Encounter/Daily, so the "(Special)" flag is not compared. A card
+ * is found by definition id, then by name; a cached power without a card
+ * compares against nothing.
+ */
+export function comparePowerTypes(
+  cachedPowers: readonly CachedPowerType[],
+  cards: readonly SheetCard[],
+): PowerTypeComparison[] {
+  const key = (value: string) => value.trim().toLocaleLowerCase();
+  return cachedPowers.flatMap((cachedPower) => {
+    const id = cachedPower.id;
+    const card =
+      (id === undefined
+        ? undefined
+        : cards.find(
+            (candidate) =>
+              candidate.id !== undefined && key(candidate.id) === key(id),
+          )) ??
+      cards.find((candidate) => key(candidate.name) === key(cachedPower.name));
+    const shown = card === undefined ? undefined : classifyPowerCard(card);
+    const cachedUsage = cachedPower.usage?.trim() ?? "";
+    const rows: ["usage" | "action", string | undefined, string | undefined][] =
+      [
+        [
+          "usage",
+          cachedUsage === ""
+            ? undefined
+            : (classifyPower({ usage: cachedUsage }).usageLabel ?? cachedUsage),
+          shown?.feature === true ? "Feature" : shown?.usageLabel,
+        ],
+        [
+          "action",
+          powerActionLabel(cachedPower.actionType),
+          powerActionLabel(card?.actionType),
+        ],
+      ];
+    return rows.flatMap(([field, expected, actual]) =>
+      expected === undefined
+        ? []
+        : [
+            {
+              power: cachedPower.name,
+              definitionId: id,
+              field,
+              expected,
+              actual,
+              cardFound: card !== undefined,
+              matches: expected === actual,
+            },
+          ],
+    );
+  });
+}
+
+function summarizePowerTypes(
+  comparisons: readonly PowerTypeComparison[],
+  field: "usage" | "action",
+) {
+  const rows = comparisons.filter((row) => row.field === field);
+  return {
+    comparable: rows.length,
+    matching: rows.filter((row) => row.matches).length,
+    mismatches: rows.filter((row) => !row.matches),
   };
 }
 
