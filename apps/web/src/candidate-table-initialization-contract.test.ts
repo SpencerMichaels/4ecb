@@ -46,7 +46,15 @@ describe("candidate table initialization integration", () => {
     expect(table).toContain("if (initializedRef.current) return");
     expect(table).toContain("initializedRef.current = true");
     expect(table).toContain("viewport.scrollTop = initialCandidateScrollTop");
-    expect(table).toContain("stickyHeaderHeight:");
+    // The row lands under the header and the sticky section band, at the
+    // topmost pick, once the table has candidates and layout to measure (see
+    // CandidateSelectionTable.prescroll.test.tsx for the measuring path).
+    expect(table).toContain("stickyHeaderHeight: stickyRowsTop(table),");
+    expect(table).toContain("initialCandidateScrollTarget(");
+    expect(table).toContain("if (initialScrollSettledRef.current) return;");
+    expect(table).toContain(
+      "setRequestedPage((current) => current ?? openingPage);",
+    );
     expect(table).not.toContain("scrollIntoView");
     // Only the search field's own "x" clears the filter; nothing resets it
     // automatically to locate a row.

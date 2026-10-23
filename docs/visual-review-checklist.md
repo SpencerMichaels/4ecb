@@ -881,3 +881,34 @@ items check that it looks right.
   - **Wrong if:** any name with a " + " in it ("Fey Pact of the White Well
     Weapon + Sword of the White Well"), or the base repeated after the name
     ("Sword of the White Well Fey Pact of the White Well Weapon").
+
+## Build-tab folding and pre-scroll
+
+- [ ] **Filled choices arrive folded.**
+  - **Where:** `fighter-arena` → `edit?tab=build&level=3&section=powers` (a tab
+    with one choice), then with the level picker level 6's Feats and Powers
+    tabs, level 1's Class tab and level 1's Powers tab.
+  - **Expect:** every table choice on each of these tabs arrives as a closed
+    heading showing its pick and a check: "Steel Serpent Strike" at 3, "Melee
+    Training" and "Bodyguard's Stance" at 6, the class and each class-feature
+    row (the talent and arena-weapon rows) and the four powers at 1. No table
+    is open until you click a heading. Open one, go to another level with the
+    level picker and come back: the tab is folded again. A tab with an empty
+    slot still opens that slot's table on arrival.
+  - **Wrong if:** a tab's only choice arrives open as a bare table, any filled
+    row arrives open, or a heading you opened is still open when you return.
+- [ ] **Opening a filled choice scrolls to its pick.**
+  - **Where:** the same tabs: click the folded heading at level 3 Powers
+    (Steel Serpent Strike), level 6 Feats (Melee Training) and level 1 Powers
+    (Bristling Defense, then Spinning Sweep).
+  - **Expect:** the table opens already scrolled so the highlighted pick is
+    the first row under the sticky column headers and the type band ("Class"
+    for powers): headers, band, pick, then the rows after it. A pick among the
+    last rows sits as high as the list allows, with the last row at the
+    bottom. A pick in the first few rows leaves the table at the top. Close
+    and reopen the same heading: it may stay where you left it or scroll to
+    the pick again; either is fine.
+  - **Wrong if:** the table opens at the top with the pick hanging at its
+    bottom edge, the pick sits behind the band or covers the row after it,
+    the table opens one or two rows off, or on a list long enough to page it
+    opens on a page without the pick.

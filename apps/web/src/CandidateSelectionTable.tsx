@@ -36,6 +36,8 @@ import {
 } from "./builder-ui";
 import {
   firstSelectedCandidateId,
+  initialCandidateScrollStep,
+  initialCandidateScrollTarget,
   initialCandidateScrollTop,
 } from "./candidate-table-initialization";
 import {
@@ -73,6 +75,26 @@ const candidateReferenceIndexes = new WeakMap<
 const PINNED_SELECTION_SHARE = 1 / 3;
 
 /**
+ * Where rows start below everything stuck to the top of the table: the
+ * column header, and the sticky type-section band when the table has
+ * sections. Section rows stick at the CSS header height, which can differ
+ * from the rendered header by a fraction of a pixel, so measure from where
+ * they stick.
+ */
+function stickyRowsTop(table: HTMLTableElement): number {
+  const header = table.tHead?.getBoundingClientRect().height ?? 0;
+  const section = table.querySelector<HTMLElement>(
+    "tbody .table-section-row > th",
+  );
+  if (section === null) return header;
+  const top = parseFloat(getComputedStyle(section).top);
+  return (
+    (Number.isFinite(top) ? top : header) +
+    section.getBoundingClientRect().height
+  );
+}
+
+/**
  * Stacks the selected rows' sticky offsets so several selections pinned at the
  * same edge sit one above another instead of overlapping. Rows stick below the
  * header and the sticky section row, if the table has sections. Only as many
@@ -89,16 +111,7 @@ function pinSelectedRows(
       "tbody tr.selection-row-selected:not(.selection-family-row)",
     ),
   ];
-  // Section rows stick at the CSS header height, which can differ from the
-  // rendered header by a fraction of a pixel, so stack below where they stick.
-  const section = table.querySelector<HTMLElement>(
-    "tbody .table-section-row > th",
-  );
-  const base =
-    section === null
-      ? (table.tHead?.getBoundingClientRect().height ?? 0)
-      : parseFloat(getComputedStyle(section).top) +
-        section.getBoundingClientRect().height;
+  const base = stickyRowsTop(table);
   const budget =
     viewport === null
       ? Infinity
@@ -360,6 +373,8 @@ export function CandidateSelectionTable({
   const initialSelectedIdRef = useRef(firstSelectedCandidateId(selectedIds));
   const initialSelectedRowRef = useRef<HTMLTableRowElement>(null);
   const initializedRef = useRef(false);
+  // Set once the opening pre-scroll has happened (or had nothing to do).
+  const initialScrollSettledRef = useRef(false);
   const favoriteIds = useCandidateFavorites();
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
@@ -471,17 +486,6 @@ export function CandidateSelectionTable({
             favoritable: true,
           },
     );
-
-    const viewport = tableScrollRef.current;
-    const row = initialSelectedRowRef.current;
-    if (viewport === null || row === null) return;
-    const header = tableContentRef.current?.tHead;
-    viewport.scrollTop = initialCandidateScrollTop({
-      currentScrollTop: viewport.scrollTop,
-      viewportTop: viewport.getBoundingClientRect().top,
-      rowTop: row.getBoundingClientRect().top,
-      stickyHeaderHeight: header?.getBoundingClientRect().height ?? 0,
-    });
   }, [byId, candidates, initializeInspection]);
   const sortValue = (
     candidate: CandidateDecision,
@@ -930,6 +934,13 @@ export function CandidateSelectionTable({
     resultRowCount += rows.length;
     return { section, expanded, rows, start };
   });
+  // Until the opening pre-scroll settles, aim it at the topmost selected row
+  // as displayed now (candidates or layout may still be arriving).
+  if (!initialScrollSettledRef.current)
+    initialSelectedIdRef.current = initialCandidateScrollTarget(
+      resultSections.flatMap(({ rows }) => rows.map((row) => row.candidateId)),
+      selectedIds,
+    );
   const initialSelectedId = initialSelectedIdRef.current;
   const pageWindow = candidatePageWindow(
     resultRowCount,
@@ -942,11 +953,53 @@ export function CandidateSelectionTable({
               .findIndex((row) => row.candidateId === initialSelectedId),
       ),
   );
-  // Pin the opening page so later expansion or selection changes that move the
-  // initially selected row do not move the user to another page.
+  // Open on the page holding the selected row, scrolled so that row is the
+  // top one under the sticky header and section band (as high as it goes
+  // near the end), once: the table mounts each time its accordion item is
+  // expanded. Wait while there's nothing to measure (no candidates yet, or a
+  // zero-height viewport inside a hidden container) and retry on resize,
+  // rather than settling on a wrong measurement. Settling pins the opening
+  // page so later expansion or selection changes that move the row do not
+  // move the user to another page.
+  const openingPage = pageWindow.page;
   useLayoutEffect(() => {
-    if (requestedPage === undefined) setRequestedPage(pageWindow.page);
-  }, [requestedPage, pageWindow.page]);
+    if (initialScrollSettledRef.current) return;
+    const viewport = tableScrollRef.current;
+    const table = tableContentRef.current;
+    if (viewport === null || table === null) return;
+    const canWaitForLayout = typeof ResizeObserver !== "undefined";
+    const attempt = (): boolean => {
+      if (initialScrollSettledRef.current) return true;
+      const row = initialSelectedRowRef.current;
+      const step = initialCandidateScrollStep({
+        candidateCount: candidates.length,
+        viewportHeight: viewport.clientHeight,
+        canWaitForLayout,
+        targetId: initialSelectedIdRef.current,
+        targetRowMounted: row !== null && row.isConnected,
+      });
+      if (step === "wait") return false;
+      initialScrollSettledRef.current = true;
+      setRequestedPage((current) => current ?? openingPage);
+      if (step === "scroll" && row !== null)
+        viewport.scrollTop = initialCandidateScrollTop({
+          currentScrollTop: viewport.scrollTop,
+          viewportTop:
+            viewport.getBoundingClientRect().top + viewport.clientTop,
+          rowTop: row.getBoundingClientRect().top,
+          stickyHeaderHeight: stickyRowsTop(table),
+          maxScrollTop: viewport.scrollHeight - viewport.clientHeight,
+        });
+      return true;
+    };
+    if (attempt() || !canWaitForLayout) return;
+    const observer = new ResizeObserver(() => {
+      if (attempt()) observer.disconnect();
+    });
+    observer.observe(viewport);
+    observer.observe(table);
+    return () => observer.disconnect();
+  });
   // Selected rows stay visible by sticking to the table's edges. Those on
   // another page are mounted too, before or after this page's rows, so they
   // float at the top or bottom edge in the same way.
