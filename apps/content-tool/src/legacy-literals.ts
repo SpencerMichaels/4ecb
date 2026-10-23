@@ -665,3 +665,45 @@ export function findSmartAssemblyKey(
   }
   return undefined;
 }
+
+/**
+ * Members whose field reads serialize or display a record rather than
+ * decide engine behavior: writers, readers and loaders, and file-level
+ * tables outside any member.
+ */
+export function isSerializationMember(member: string): boolean {
+  if (/\.cs$/.test(member)) return true;
+  const last = member.slice(member.lastIndexOf(".") + 1);
+  return /^(?:Write|Save|Read|Load|Serialize|Deserialize|ToXML|FromXML)/.test(
+    last,
+  );
+}
+
+/**
+ * A plain accessor (`WeaponItem.Damage` reading "Damage"): its only field
+ * is its own name, so the behavior lives in its callers.
+ */
+export function isFieldAccessor(
+  member: string,
+  fields: readonly string[],
+): boolean {
+  const fold = (text: string) => text.replace(/[\s_]/g, "").toLowerCase();
+  const last = fold(member.slice(member.lastIndexOf(".") + 1));
+  return fields.length > 0 && fields.every((field) => fold(field) === last);
+}
+
+/**
+ * Whether a field-name literal marks engine behavior keyed on a field (a
+ * special case like ShouldExecute's "Item Slot"/"_AlwaysExecute"). In the
+ * engine assemblies every field counts; in the applications only the
+ * underscore-prefixed fields, which are engine hooks rather than display
+ * fields, do.
+ */
+export function isBehaviorField(
+  field: string,
+  options: { readonly engine: boolean },
+): boolean {
+  const trimmed = field.trim();
+  if (!/[a-z]{3}/i.test(trimmed)) return false;
+  return options.engine || trimmed.startsWith("_");
+}

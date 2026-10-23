@@ -3,12 +3,17 @@
  * section 5). Decodes every string literal in the decompiled legacy engine
  * and applications, classifies it against an exact content pack, groups the
  * content-targeting ones by the member that uses them, and checks each group
- * against the modern code and the corrections pack. Writes ignored JSON and
- * Markdown reports; the decompiled code, the pack and the reports stay private.
+ * against the modern code and the corrections pack. Engine members keyed on
+ * field-name literals (ShouldExecute's "Item Slot"/"_AlwaysExecute") are cases
+ * too. A claimed status needs evidence (a public test or a private fixture
+ * character); claims without it are reported as unverified, and the impact
+ * columns count matching pack records and private sample characters. Writes
+ * ignored JSON and Markdown reports; the decompiled code, the pack, the sample
+ * characters and the reports stay private.
  *
  *   pnpm audit:legacy-special-cases [PACK.4ecp] [--out=DIR]
  */
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
@@ -22,7 +27,10 @@ import {
   findNativeLiteralUses,
   findSmartAssemblyDecoder,
   findSmartAssemblyKey,
+  isBehaviorField,
   isContentTargeting,
+  isFieldAccessor,
+  isSerializationMember,
   memberAt,
   parseNativeLiteralDeclarations,
   readSmartAssemblyString,
@@ -31,8 +39,12 @@ import {
   type LiteralClassification,
 } from "../apps/content-tool/src/legacy-literals";
 import {
+  GAP_WORDING,
   LEGACY_SPECIAL_CASES,
+  parseEvidence,
+  verificationOf,
   type LegacySpecialCaseStatus,
+  type LegacySpecialCaseVerification,
 } from "../apps/content-tool/src/legacy-special-cases";
 import { LEGACY_IGNORED_CLAUSES } from "@4ecb/rules-engine";
 
@@ -50,9 +62,25 @@ const ASSEMBLIES = [
   "CharacterSheetViewer",
 ] as const;
 const ENGINE_ASSEMBLIES: ReadonlySet<string> = new Set(["D20RulesEngine"]);
+/** Assemblies where every field-name literal can key behavior. */
+const FIELD_ENGINE_ASSEMBLIES: ReadonlySet<string> = new Set([
+  "D20RulesEngine",
+  "RulesEngineCommon",
+]);
 const MODERN_ROOTS = ["packages", "apps"];
 const CORRECTIONS = "content/corrections";
+/**
+ * Fields filled in more records than this are general vocabulary (Keywords,
+ * Power Usage); the impact columns count only rarer, hook-like fields.
+ */
+const RARE_FIELD_LIMIT = 1500;
+/** Private characters the impact column counts (both ignored by git). */
+const SAMPLE_CHARACTER_DIRS = [
+  "sample-chars",
+  "CharacterBuilder/SampleChars/SampleHeroes",
+];
 
+type Entity = ReturnType<typeof decodeContentPack>["entities"][number];
 interface LiteralUse {
   readonly assembly: string;
   readonly file: string;
@@ -82,10 +110,22 @@ interface SpecialCaseRow {
     readonly matches: Readonly<Record<string, number>>;
   }[];
   readonly vocabulary: readonly string[];
+  /** Field-name literals that key engine behavior (ShouldExecute's "Item Slot"). */
+  readonly fields: readonly string[];
+  /** How the member became a case: content literals, field literals or both. */
+  readonly source: "content" | "field" | "content+field" | "annotation";
   readonly entities: number;
+  /** Private sample characters owning a record the case targets. */
+  readonly characters: readonly string[];
   readonly modern: readonly ModernHit[];
   readonly autoStatus: LegacySpecialCaseStatus;
   readonly status: LegacySpecialCaseStatus;
+  readonly verification: LegacySpecialCaseVerification;
+  readonly evidence: readonly string[];
+  /** Evidence pointers that do not resolve (missing file, test or fixture). */
+  readonly brokenEvidence: readonly string[];
+  /** The note admits a gap that the claimed status does not. */
+  readonly contradiction: boolean;
   readonly description: string | undefined;
   readonly note: string | undefined;
   readonly reviewed: boolean;
@@ -120,7 +160,9 @@ function nested(
 
 async function loadVocabulary(packPath: string): Promise<{
   vocabulary: ContentVocabulary;
-  entities: number;
+  entities: readonly Entity[];
+  /** Lower-cased field name -> entities with a non-empty value. */
+  filledFields: ReadonlyMap<string, number>;
 }> {
   const encoded = await readFile(packPath);
   const bytes =
@@ -134,6 +176,7 @@ async function loadVocabulary(packPath: string): Promise<{
   const fieldNames = new Map<string, number>();
   const fieldValues = new Map<string, Map<string, number>>();
   const statNames = new Map<string, number>();
+  const filledFields = new Map<string, number>();
   const prose = new Map<string, string[]>();
   const addProse = (field: string, value: string | undefined) => {
     if (value === undefined || value.length < 24) return;
@@ -150,6 +193,7 @@ async function loadVocabulary(packPath: string): Promise<{
       const field = specific.name.trim();
       increment(fieldNames, field.toLocaleLowerCase());
       const value = specific.value.trim();
+      if (value.length > 0) increment(filledFields, field.toLocaleLowerCase());
       if (value.length > 0 && value.length <= 80)
         nested(fieldValues, value.toLocaleLowerCase(), field);
       addProse(field, value);
@@ -191,8 +235,96 @@ async function loadVocabulary(packPath: string): Promise<{
       statNames,
       proseMatches,
     },
-    entities: pack.entities.length,
+    entities: pack.entities,
+    filledFields,
   };
+}
+
+interface SampleCharacter {
+  readonly file: string;
+  readonly entities: readonly Entity[];
+}
+
+/** The pack records each private sample character owns (by internal-id). */
+async function loadSampleCharacters(
+  entities: readonly Entity[],
+): Promise<SampleCharacter[]> {
+  const byId = new Map(
+    entities.map((entity) => [entity.id.trim().toLocaleLowerCase(), entity]),
+  );
+  const characters: SampleCharacter[] = [];
+  for (const dir of SAMPLE_CHARACTER_DIRS)
+    for (const file of (await walk(dir, /\.dnd4e$/)).sort()) {
+      const xml = await readFile(file, "utf8");
+      const owned = new Map<string, Entity>();
+      for (const match of xml.matchAll(/internal-id="([^"]+)"/g)) {
+        const id = match[1]!.trim().toLocaleLowerCase();
+        const entity = byId.get(id);
+        if (entity !== undefined) owned.set(id, entity);
+      }
+      characters.push({ file, entities: [...owned.values()] });
+    }
+  return characters;
+}
+
+/** Whether a record is one a case's literal targets. */
+function entityMatches(entity: Entity, text: string, kind: LiteralClass) {
+  const lower = text.trim().toLocaleLowerCase();
+  const fold = (value: string | undefined) =>
+    (value ?? "").trim().toLocaleLowerCase();
+  switch (kind) {
+    case "content-id":
+      return fold(entity.id) === lower;
+    case "content-name":
+      return fold(entity.name) === lower;
+    case "field-value":
+      return entity.specifics.some(
+        (specific) => fold(specific.value) === lower,
+      );
+    case "field-name":
+      return entity.specifics.some(
+        (specific) =>
+          fold(specific.name) === lower && specific.value.trim() !== "",
+      );
+    case "prose-fragment":
+      return (
+        fold(entity.description).includes(lower) ||
+        fold(entity.prerequisites).includes(lower) ||
+        entity.specifics.some((specific) =>
+          fold(specific.value).includes(lower),
+        )
+      );
+    default:
+      return false;
+  }
+}
+
+/** Evidence pointers that do not resolve to a test name or a fixture file. */
+async function brokenEvidence(evidence: readonly string[]): Promise<string[]> {
+  const broken: string[] = [];
+  for (const text of evidence) {
+    const parsed = parseEvidence(text);
+    if (parsed === undefined) {
+      broken.push(text);
+      continue;
+    }
+    if (parsed.kind === "private") {
+      const ok = await access(parsed.fixture).then(
+        () => true,
+        () => false,
+      );
+      if (!ok) broken.push(text);
+      continue;
+    }
+    const source = await readFile(parsed.file, "utf8").catch(() => undefined);
+    if (
+      source === undefined ||
+      !source.includes(parsed.test) ||
+      (parsed.case !== undefined && !source.includes(parsed.case))
+    )
+      broken.push(text);
+  }
+  return broken;
 }
 
 async function collectLiterals(): Promise<Map<string, LiteralUse[]>> {
@@ -406,11 +538,14 @@ async function main(): Promise<void> {
     args.find((arg) => arg.startsWith("--out="))?.slice(6) ??
       "tmp/legacy-special-cases",
   );
-  const [{ vocabulary, entities }, uses, modern] = await Promise.all([
-    loadVocabulary(packPath),
-    collectLiterals(),
-    loadModern(),
-  ]);
+  const [{ vocabulary, entities: packEntities, filledFields }, uses, modern] =
+    await Promise.all([
+      loadVocabulary(packPath),
+      collectLiterals(),
+      loadModern(),
+    ]);
+  const entities = packEntities.length;
+  const characters = await loadSampleCharacters(packEntities);
 
   const literals: LiteralRow[] = [...uses].map(([text, list]) => ({
     text,
@@ -430,6 +565,7 @@ async function main(): Promise<void> {
       assembly: string;
       location: string;
       targets: Map<string, LiteralRow>;
+      fields: Map<string, LiteralRow>;
       vocabulary: Set<string>;
     }
   >();
@@ -441,8 +577,19 @@ async function main(): Promise<void> {
         assembly: use.assembly,
         location: `${use.file}:${use.line}`,
         targets: new Map<string, LiteralRow>(),
+        fields: new Map<string, LiteralRow>(),
         vocabulary: new Set<string>(),
       };
+      // Engine behavior keyed on a field name (ShouldExecute's "Item Slot"
+      // and "_AlwaysExecute"), outside serialization code.
+      if (
+        row.classification.kind === "field-name" &&
+        !isSerializationMember(use.member ?? use.file) &&
+        isBehaviorField(row.text, {
+          engine: FIELD_ENGINE_ASSEMBLIES.has(use.assembly),
+        })
+      )
+        entry.fields.set(row.text, row);
       // Application UI matches headings in authored prose; only the
       // engine's prose matches are parser special cases.
       if (
@@ -466,53 +613,108 @@ async function main(): Promise<void> {
     };
   };
 
-  const specialCases: SpecialCaseRow[] = [...members]
-    // A reviewed member that uses only engine vocabulary (GiveFreebees's
-    // "FREEBEE:" stat) is still a special case.
-    .filter(
-      ([key, entry]) =>
-        entry.targets.size > 0 ||
-        LEGACY_SPECIAL_CASES[key.slice(key.indexOf(":") + 1)] !== undefined,
-    )
-    .map(([key, entry]) => {
-      const member = key.slice(key.indexOf(":") + 1);
-      const annotation = LEGACY_SPECIAL_CASES[member];
-      const targets = [...entry.targets.values()].map((row) => ({
-        text: row.text,
-        kind: row.classification.kind,
-        matches: row.classification.matches,
-      }));
-      const hits = targets.map((target) => modernHits(target.text));
-      const automatic = autoStatus(hits);
-      const entityCount = targets.reduce(
-        (sum, target) =>
-          sum +
-          Object.entries(target.matches)
-            .filter(([match]) => !["type", "field", "stat"].includes(match))
-            .reduce((inner, [, count]) => inner + count, 0),
-        0,
-      );
-      return {
-        member,
-        assembly: entry.assembly,
-        location: entry.location,
-        targets,
-        vocabulary: [...entry.vocabulary].sort(),
-        entities: entityCount,
-        modern: hits.filter((hit) => hit.files.length > 0),
-        autoStatus: automatic,
-        status: annotation?.status ?? automatic,
-        description: annotation?.description,
-        note: annotation?.note,
-        reviewed: annotation !== undefined,
-      };
-    })
-    .sort(
-      (left, right) =>
-        statusRank(left.status) - statusRank(right.status) ||
-        right.entities - left.entities ||
-        left.member.localeCompare(right.member),
-    );
+  const fieldKeyed = (
+    member: string,
+    fields: ReadonlyMap<string, LiteralRow>,
+  ) => fields.size > 0 && !isFieldAccessor(member, [...fields.keys()]);
+  const unsortedCases: SpecialCaseRow[] = await Promise.all(
+    [...members]
+      // A reviewed member that uses only engine vocabulary (GiveFreebees's
+      // "FREEBEE:" stat) is still a special case.
+      .filter(([key, entry]) => {
+        const member = key.slice(key.indexOf(":") + 1);
+        return (
+          entry.targets.size > 0 ||
+          fieldKeyed(member, entry.fields) ||
+          LEGACY_SPECIAL_CASES[member] !== undefined
+        );
+      })
+      .map(async ([key, entry]): Promise<SpecialCaseRow> => {
+        const member = key.slice(key.indexOf(":") + 1);
+        const annotation = LEGACY_SPECIAL_CASES[member];
+        const keyed = fieldKeyed(member, entry.fields);
+        const targets = [
+          ...entry.targets.values(),
+          ...(keyed ? entry.fields.values() : []),
+        ].map((row) => ({
+          text: row.text,
+          kind: row.classification.kind,
+          matches: row.classification.matches,
+        }));
+        const hits = targets.map((target) => modernHits(target.text));
+        const automatic = autoStatus(hits);
+        // Impact counts only fields rare enough to be hooks: a member that
+        // also reads Keywords or Power Usage is not about every power.
+        const impactTargets = targets.filter(
+          (target) =>
+            target.kind !== "field-name" ||
+            (filledFields.get(target.text.trim().toLocaleLowerCase()) ?? 0) <=
+              RARE_FIELD_LIMIT,
+        );
+        const entityCount = impactTargets.reduce(
+          (sum, target) =>
+            sum +
+            (target.kind === "field-name"
+              ? (filledFields.get(target.text.trim().toLocaleLowerCase()) ?? 0)
+              : Object.entries(target.matches)
+                  .filter(
+                    ([match]) => !["type", "field", "stat"].includes(match),
+                  )
+                  .reduce((inner, [, count]) => inner + count, 0)),
+          0,
+        );
+        const owning = characters
+          .filter((character) =>
+            character.entities.some((entity) =>
+              impactTargets.some((target) =>
+                entityMatches(entity, target.text, target.kind),
+              ),
+            ),
+          )
+          .map((character) => character.file);
+        const status = annotation?.status ?? automatic;
+        const evidence = annotation?.evidence ?? [];
+        return {
+          member,
+          assembly: entry.assembly,
+          location: entry.location,
+          targets,
+          vocabulary: [...entry.vocabulary].sort(),
+          fields: [...entry.fields.keys()].sort(),
+          source:
+            entry.targets.size > 0
+              ? keyed
+                ? "content+field"
+                : "content"
+              : keyed
+                ? "field"
+                : "annotation",
+          entities: entityCount,
+          characters: owning,
+          modern: hits.filter((hit) => hit.files.length > 0),
+          autoStatus: automatic,
+          status,
+          verification:
+            annotation === undefined
+              ? "unverified"
+              : verificationOf(annotation),
+          evidence,
+          brokenEvidence: await brokenEvidence(evidence),
+          contradiction:
+            ["code", "declarative", "drift-risk"].includes(status) &&
+            GAP_WORDING.test(annotation?.note ?? ""),
+          description: annotation?.description,
+          note: annotation?.note,
+          reviewed: annotation !== undefined,
+        };
+      }),
+  );
+  const specialCases = unsortedCases.sort(
+    (left, right) =>
+      statusRank(left.status) - statusRank(right.status) ||
+      right.entities - left.entities ||
+      left.member.localeCompare(right.member),
+  );
 
   const unreviewed = Object.keys(LEGACY_SPECIAL_CASES).filter(
     (member) => !specialCases.some((row) => row.member === member),
@@ -538,12 +740,31 @@ async function main(): Promise<void> {
 
   const byStatus = new Map<LegacySpecialCaseStatus, number>();
   for (const row of specialCases) increment(byStatus, row.status);
+  const byVerification = new Map<LegacySpecialCaseVerification, number>();
+  for (const row of specialCases) increment(byVerification, row.verification);
+  const findings = specialCases
+    .filter(
+      (row) =>
+        row.status === "not-handled" ||
+        row.status === "partial" ||
+        row.verification === "unverified" ||
+        row.contradiction ||
+        row.brokenEvidence.length > 0,
+    )
+    .sort(
+      (left, right) =>
+        findingRank(left) - findingRank(right) ||
+        right.characters.length - left.characters.length ||
+        right.entities - left.entities ||
+        left.member.localeCompare(right.member),
+    );
 
   await mkdir(outDir, { recursive: true });
   const report = {
     generatedAt: new Date().toISOString(),
     pack: packPath,
     packEntities: entities,
+    sampleCharacters: characters.map((character) => character.file),
     literals: {
       distinct: literals.length,
       native: nativeLiterals,
@@ -553,10 +774,19 @@ async function main(): Promise<void> {
     specialCases: {
       total: specialCases.length,
       reviewed: specialCases.filter((row) => row.reviewed).length,
+      fieldKeyed: specialCases.filter((row) => row.source !== "content").length,
       byStatus: Object.fromEntries(byStatus),
+      byVerification: Object.fromEntries(byVerification),
+      contradictions: specialCases
+        .filter((row) => row.contradiction)
+        .map((row) => row.member),
+      brokenEvidence: specialCases.flatMap((row) =>
+        row.brokenEvidence.map((text) => `${row.member}: ${text}`),
+      ),
     },
     driftChecks,
     staleAnnotations: unreviewed,
+    findings: findings.map((row) => row.member),
     cases: specialCases,
     inventory: literals
       .filter((row) => row.classification.kind !== "ui-text")
@@ -576,13 +806,14 @@ async function main(): Promise<void> {
   );
   await writeFile(
     join(outDir, "legacy-special-cases.md"),
-    markdown(report, specialCases),
+    markdown(report, specialCases, findings),
   );
   console.log(
     `${literals.length} distinct literals (${nativeLiterals} native); ` +
       `${specialCases.length} special cases: ${[...byStatus]
         .map(([status, count]) => `${count} ${status}`)
-        .join(", ")}; drift checks: ${driftChecks
+        .join(", ")}; ${byVerification.get("unverified") ?? 0} unverified; ` +
+      `drift checks: ${driftChecks
         .map((check) => (check.ok ? "ok" : `DRIFT ${check.check}`))
         .join(", ")}`,
   );
@@ -598,11 +829,25 @@ async function main(): Promise<void> {
     console.log(
       `Unreviewed cases: ${pending.map((row) => row.member).join(", ")}`,
     );
-  if (driftChecks.some((check) => !check.ok)) process.exitCode = 1;
+  if (report.specialCases.contradictions.length > 0)
+    console.log(
+      `Notes contradicting their status: ${report.specialCases.contradictions.join(", ")}`,
+    );
+  if (report.specialCases.brokenEvidence.length > 0)
+    console.log(
+      `Evidence that does not resolve: ${report.specialCases.brokenEvidence.join("; ")}`,
+    );
+  if (
+    driftChecks.some((check) => !check.ok) ||
+    report.specialCases.contradictions.length > 0 ||
+    report.specialCases.brokenEvidence.length > 0
+  )
+    process.exitCode = 1;
 }
 
 const STATUS_ORDER: readonly LegacySpecialCaseStatus[] = [
   "not-handled",
+  "partial",
   "drift-risk",
   "code",
   "declarative",
@@ -612,6 +857,14 @@ const STATUS_ORDER: readonly LegacySpecialCaseStatus[] = [
 
 function statusRank(status: LegacySpecialCaseStatus): number {
   return STATUS_ORDER.indexOf(status);
+}
+
+/** Findings order: gaps first, then partial, then unverified claims. */
+function findingRank(row: SpecialCaseRow): number {
+  if (!row.reviewed) return 0;
+  if (row.status === "not-handled") return 1;
+  if (row.status === "partial") return 2;
+  return 3;
 }
 
 interface DriftCheck {
@@ -657,6 +910,7 @@ function cell(value: string): string {
 function markdown(
   report: {
     pack: string;
+    sampleCharacters: readonly string[];
     literals: {
       distinct: number;
       native: number;
@@ -665,36 +919,68 @@ function markdown(
     specialCases: {
       total: number;
       reviewed: number;
+      fieldKeyed: number;
       byStatus: Record<string, number>;
+      byVerification: Record<string, number>;
+      contradictions: readonly string[];
+      brokenEvidence: readonly string[];
     };
     driftChecks: readonly DriftCheck[];
     staleAnnotations: string[];
   },
   cases: readonly SpecialCaseRow[],
+  findings: readonly SpecialCaseRow[],
 ): string {
   const targetSummary = (row: SpecialCaseRow) =>
     row.targets
       .slice(0, 6)
       .map((target) => {
-        const first = Object.keys(target.matches)[0];
+        const first =
+          target.kind === "field-name"
+            ? "field"
+            : Object.keys(target.matches)[0];
         return `\`${cell(target.text.slice(0, 48))}\`${first === undefined ? "" : ` (${first})`}`;
       })
       .join(", ") +
     (row.targets.length > 6 ? `, +${row.targets.length - 6}` : "");
+  const modernCell = (row: SpecialCaseRow) =>
+    cell(
+      row.note ??
+        [...new Set(row.modern.flatMap((hit) => hit.files))]
+          .slice(0, 3)
+          .join(", "),
+    );
+  const characterName = (file: string) =>
+    file.slice(file.lastIndexOf("/") + 1).replace(/\.dnd4e$/, "");
   const lines = [
     "# Legacy special-case inventory",
     "",
-    `Pack: \`${report.pack}\``,
+    `Pack: \`${report.pack}\`; ${report.sampleCharacters.length} private sample characters.`,
     "",
     `- ${report.literals.distinct} distinct literals (${report.literals.native} native).`,
     `- By class: ${Object.entries(report.literals.byKind)
       .sort((left, right) => right[1] - left[1])
       .map(([kind, count]) => `${kind} ${count}`)
       .join(", ")}.`,
-    `- ${report.specialCases.total} special cases (members using content-targeting literals), ${report.specialCases.reviewed} reviewed.`,
+    `- ${report.specialCases.total} special cases (members using content-targeting literals, or engine members keyed on field names: ${report.specialCases.fieldKeyed}), ${report.specialCases.reviewed} reviewed.`,
     `- By status: ${Object.entries(report.specialCases.byStatus)
       .map(([status, count]) => `${status} ${count}`)
       .join(", ")}.`,
+    `- Evidence: ${Object.entries(report.specialCases.byVerification)
+      .map(([state, count]) => `${state} ${count}`)
+      .join(
+        ", ",
+      )}. A code, declarative, partial or drift-risk status needs a public test or a private fixture character that exercises it.`,
+    ...(report.specialCases.contradictions.length > 0
+      ? [
+          `- **Notes contradicting their status:** ${report.specialCases.contradictions.join(", ")}.`,
+        ]
+      : []),
+    ...(report.specialCases.brokenEvidence.length > 0
+      ? [
+          `- **Evidence that does not resolve:** ${report.specialCases.brokenEvidence.join("; ")}.`,
+        ]
+      : []),
     "",
     "## Drift checks",
     "",
@@ -713,6 +999,25 @@ function markdown(
         ]
       : []),
     "",
+    `## Findings (${findings.length})`,
+    "",
+    "Not handled, partial, or claimed without evidence; ranked by status, then sample characters, then pack records. Characters own a record a target literal (or a rare field) names, so the member runs for them; whether it changes their numbers is in the note.",
+    "",
+    "| Member | Status | Characters touched | Records | What it does | Modern |",
+    "| --- | --- | ---: | ---: | --- | --- |",
+    ...findings.map(
+      (row) =>
+        `| ${cell(row.member)} | ${row.reviewed ? row.status : "unreviewed"}${
+          row.verification === "unverified" && row.reviewed
+            ? ", unverified"
+            : ""
+        } | ${row.characters.length}${
+          row.characters.length > 0
+            ? ` (${row.characters.slice(0, 4).map(characterName).join(", ")}${row.characters.length > 4 ? ", ..." : ""})`
+            : ""
+        } | ${row.entities} | ${cell(row.description ?? "")} | ${modernCell(row)} |`,
+    ),
+    "",
   ];
   for (const status of STATUS_ORDER) {
     const rows = cases.filter((row) => row.status === status);
@@ -720,16 +1025,15 @@ function markdown(
     lines.push(
       `## ${status} (${rows.length})`,
       "",
-      "| Member | Content hits | Targets | What it does | Modern |",
-      "| --- | ---: | --- | --- | --- |",
+      "| Member | Records | Chars | Targets | What it does | Modern | Evidence |",
+      "| --- | ---: | ---: | --- | --- | --- | --- |",
       ...rows.map(
         (row) =>
-          `| ${cell(row.member)}${row.reviewed ? "" : " (unreviewed)"} | ${row.entities} | ${targetSummary(row)} | ${cell(row.description ?? "")} | ${cell(
-            row.note ??
-              [...new Set(row.modern.flatMap((hit) => hit.files))]
-                .slice(0, 3)
-                .join(", "),
-          )} |`,
+          `| ${cell(row.member)}${row.reviewed ? "" : " (unreviewed)"}${row.source === "field" ? " (field)" : ""} | ${row.entities} | ${row.characters.length} | ${targetSummary(row)} | ${cell(row.description ?? "")} | ${modernCell(row)} | ${
+            row.verification === "unverified"
+              ? "**unverified**"
+              : cell(row.evidence.join("; "))
+          } |`,
       ),
       "",
     );

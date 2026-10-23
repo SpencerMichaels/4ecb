@@ -9,7 +9,10 @@ import {
   findNativeLiteralUses,
   findSmartAssemblyDecoder,
   findSmartAssemblyKey,
+  isBehaviorField,
   isContentTargeting,
+  isFieldAccessor,
+  isSerializationMember,
   isUiText,
   memberAt,
   parseNativeLiteralDeclarations,
@@ -207,5 +210,33 @@ describe("literal classification", () => {
     expect(isUiText("portrait.png")).toBe(true);
     expect(isUiText("<Weapon>")).toBe(true);
     expect(isUiText("Glory Boon")).toBe(false);
+  });
+});
+
+describe("field-keyed engine members", () => {
+  it("treats writers, readers and file-level tables as serialization", () => {
+    expect(isSerializationMember("?A0x7f38ca63.WriteElemFields")).toBe(true);
+    expect(isSerializationMember("SaveElement")).toBe(true);
+    expect(isSerializationMember("BeastBlock.ToXML")).toBe(true);
+    expect(isSerializationMember("D20RulesEngine/FamiliarBlock.cs")).toBe(true);
+    expect(isSerializationMember("ShouldExecute")).toBe(false);
+    expect(isSerializationMember("EquipLoot")).toBe(false);
+  });
+
+  it("skips plain accessors named for the one field they read", () => {
+    expect(isFieldAccessor("WeaponItem.Damage", ["Damage"])).toBe(true);
+    expect(isFieldAccessor("D20Currency.Gold", ["Gold"])).toBe(true);
+    expect(isFieldAccessor("ItemSet.Benefits", ["Benefits"])).toBe(true);
+    expect(
+      isFieldAccessor("ShouldExecute", ["Item Slot", "_AlwaysExecute"]),
+    ).toBe(false);
+    expect(isFieldAccessor("BeastHitPoints", ["Hit Points"])).toBe(false);
+  });
+
+  it("keys engine behavior on any field but applications only on hook fields", () => {
+    expect(isBehaviorField("Item Slot", { engine: true })).toBe(true);
+    expect(isBehaviorField("Item Slot", { engine: false })).toBe(false);
+    expect(isBehaviorField("_AlwaysExecute", { engine: false })).toBe(true);
+    expect(isBehaviorField("*", { engine: true })).toBe(false);
   });
 });
