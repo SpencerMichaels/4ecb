@@ -210,7 +210,20 @@ Settings → Builder & Equipment.
   - **Wrong if:** "UNKNOWN" on any of the 37 cards or the pages, "— vs …", or
     +55 (the bonus counted twice).
   - **Decide:** the row is labelled "Unarmed", and your own Back to the Wall
-    lines appear under Additional effects. Fine for a summoned ally?
+    line appears under Additional effects. Fine for a summoned ally? (Legacy
+    CharTracker just prints the native engine's conditions for each power, so
+    the recovered viewer code doesn't settle it.)
+- [ ] **Paired attack and damage effects**
+  - **Where:** `executioner-fighter` → `?preview=1`, the Driving Attack card;
+    `hexblade-white-well` and `sentinel-bear` → `?preview=1`, Melee Basic
+    Attack; the same cards in the Build tab's detail pane.
+  - **Expect:** one line under Additional effects: "Back to the Wall: +1 to
+    attack and damage rolls whenever you are adjacent to a wall." The Bull
+    Rush Attack card (no damage) keeps "+1 to attack rolls …" alone. A source
+    whose two bonuses differ would read "+1 to attack rolls and +2 to damage
+    rolls …" on one line.
+  - **Wrong if:** Back to the Wall appears twice on a card, or a line from
+    another source or with another condition has been folded into it.
 
 ## Printed sheet: cards
 
@@ -312,16 +325,26 @@ Settings → Builder & Equipment.
   - **Where:** `executioner-fighter` → `edit?tab=build&level=15`, the power
     replacement row; then levels 19, 25 and 27. Also `beatrix` →
     `edit?tab=retraining&level=8`.
-  - **Expect:** a first table headed "Replace" lists only the swapped kind. At
-    15: the daily attacks Driving Attack and Press of Steel. At 27: the
-    encounter attacks Assassin's Strike (Hybrid), Steel Serpent Strike and
-    Bitter Harvest. After you pick one, a second table offers the replacements.
-    The current picks are Hurricane Strike (15, 19, 25) and Coward's Reward
-    (27). Beatrix's Retraining tab lists levels 2–8, each with powers to
-    retrain.
-  - **Wrong if:** the Replace table offers feats, skills or utility powers, a
-    pick doesn't stick, a power is listed twice (check Bitter Harvest at 27), or
-    a filled swap still shows as missing in the status badges.
+  - **Expect:** the row is headed "Swap a daily attack power" at 15, 19 and 25
+    and "Swap an encounter attack power" at 27. Folded, it shows the trade:
+    "Bristling Defense → Hurricane Strike" (15), "Hurricane Strike → Toppling
+    Finish" (19), "Toppling Finish → Hurricane Strike" (25), "Bitter Harvest →
+    Coward's Reward" (27). Open, a line reads "At 15th level, replace one of
+    your daily attack powers with a new one of level 15 or lower." (the level
+    and kind change to match), then step "1 Power to replace", a table of only
+    the swapped kind (at 15: Driving Attack and Press of Steel; at 27:
+    Assassin's Strike (Hybrid), Steel Serpent Strike and Bitter Harvest), then
+    step "2 New power": "Choose the power to replace first." until you pick
+    one, then the table of new powers. A status-badge issue for an empty swap
+    reads "Level 15 daily attack power swap". Beatrix's Retraining tab lists
+    levels 2–8; a level's "Retrain a power" item shows the same two steps.
+  - **Wrong if:** the row still reads "Replacement", the help line names the
+    wrong level or kind, the first table offers feats, skills or utility
+    powers, a pick doesn't stick, a power is listed twice (check Bitter Harvest
+    at 27), or a filled swap still shows as missing in the status badges.
+    Known gap (rules engine): at 15 and 19 the open tables mark the slot's
+    later holder (Hurricane Strike, from 25) as picked, so they can disagree
+    with the folded summary.
 - [ ] **Wizard spellbook**
   - **Where:** `wizard-gnome` → `edit?tab=build&level=1&section=spellbook`. Then
     `warlock-fey` → `edit?tab=build&level=1&section=class`, Eldritch Blast's

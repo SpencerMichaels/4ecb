@@ -29,6 +29,7 @@ import {
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
 import { universalPowerDefinitionIds } from "./power-reference";
+import { mergeAdditionalEffects } from "./additional-effects";
 import { withUniversalActionCards } from "./universal-action-cards";
 import {
   isFamiliarEntity,
@@ -974,7 +975,8 @@ function evaluatedPowerCards(
         : { damageType: variant.damageType }),
       ...(variant.critical === undefined ? {} : { critical: variant.critical }),
       ...(variant.brutal === undefined ? {} : { brutal: variant.brutal }),
-      additionalEffects: [
+      // A source's paired attack and damage bonus reads as one line.
+      additionalEffects: mergeAdditionalEffects([
         ...(variant.additionalEffects ?? []).map((effect) => ({
           text: effect.text,
           source: "authoritative-evaluation" as const,
@@ -988,7 +990,7 @@ function evaluatedPowerCards(
           source: "authoritative-evaluation" as const,
           provider: effect.source,
         })),
-      ],
+      ]),
     }));
   const defaultVariant =
     variants.find((variant) => variant.equipped && variant.hand === "main") ??
