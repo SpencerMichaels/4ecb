@@ -115,6 +115,70 @@ describe("character evaluator", () => {
       }),
     );
   });
+  it("limits a `modify select` to what that select chose", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "trait",
+            definitionId: "TRAIT",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "chosen",
+            definitionId: "CHOSEN",
+            acquiredLevel: 1,
+            parentId: "trait",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "other",
+            definitionId: "OTHER",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level"),
+        entity("TRAIT", "Dilettante", "Racial Trait", {
+          rules: [
+            rule(
+              "select",
+              { type: "Power", name: "Dilettante", number: "1" },
+              0,
+            ),
+            rule(
+              "modify",
+              {
+                select: "Dilettante",
+                Field: "Power Usage",
+                value: "Encounter",
+              },
+              1,
+            ),
+          ],
+        }),
+        entity("CHOSEN", "Chosen power", "Power", {
+          specifics: { "Power Usage": "At-Will" },
+        }),
+        entity("OTHER", "Other power", "Power", {
+          specifics: { "Power Usage": "At-Will" },
+        }),
+      ],
+    );
+    expect(
+      evaluated.overlays.find(({ field }) => field === "Power Usage")
+        ?.targetDefinitionIds,
+    ).toEqual(["CHOSEN"]);
+  });
   it("keeps every textstring contribution with its source", () => {
     const occurrence = (id: string): CharacterOccurrence => ({
       id: `own-${id}`,

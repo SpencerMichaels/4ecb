@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v43-2026-10-22-global-attack-damage-stats";
+  "evaluated-character-v44-2026-10-23-key-ability-overrides";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2573,6 +2573,7 @@ function evaluateCharacterInternal(
           textStrings: text,
           textContributions,
           equipment,
+          occurrences,
           entities: evaluationEntities,
           ...(beastCompanion === undefined
             ? {}
@@ -2633,9 +2634,34 @@ function overlay(
   occurrences: readonly CharacterOccurrence[],
   index: RulesIndex,
 ): FieldOverlay {
+  // `modify select="X"` targets only what the select named X chose (the
+  // Dilettante power, Unexpected Flourish's spell), not every occurrence.
+  const occurrencesById =
+    rule.select === undefined
+      ? undefined
+      : new Map(occurrences.map((occurrence) => [occurrence.id, occurrence]));
+  const chosenBySelect = (occurrence: CharacterOccurrence): boolean => {
+    if (rule.select === undefined || occurrencesById === undefined) return true;
+    const parent =
+      occurrence.parentId === undefined
+        ? undefined
+        : occurrencesById.get(occurrence.parentId);
+    const parentEntity =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    return (
+      parentEntity !== undefined &&
+      occurrence.ruleOrdinal !== undefined &&
+      parseRules(parentEntity.id, parentEntity.rules).some(
+        (candidate) =>
+          candidate.kind === "select" &&
+          candidate.source.ordinal === occurrence.ruleOrdinal &&
+          key(candidate.name ?? "") === key(rule.select ?? ""),
+      )
+    );
+  };
   const targetDefinitionIds = occurrences.flatMap((occurrence) => {
     const entity = index.get(occurrence.definitionId);
-    if (entity === undefined) return [];
+    if (entity === undefined || !chosenBySelect(occurrence)) return [];
     return (rule.name === undefined ||
       key(entity.name) === key(rule.name) ||
       key(entity.id) === key(rule.name)) &&

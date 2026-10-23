@@ -156,8 +156,7 @@ const PREREQ_UNVERIFIED =
 const AUTO_BUILD = "the modern builder has no auto-build/suggestion engine";
 const LEGACY_IO =
   "legacy file I/O; the modern .dnd4e import/export lives in legacy-dnd4e";
-const KEY_ABILITY_GAP =
-  "no '<X>:key ability' text strings in modern powers.ts (OverrideStat)";
+const KEY_ABILITY = "packages/rules-engine/src/key-ability-overrides.test.ts";
 
 /** Evidence pointer to a public test (see `LegacySpecialCase.evidence`). */
 const test = (file: string, name: string) => `${file} > ${name}`;
@@ -251,9 +250,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (Display 'attack' at-wills), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
       "character-domain retrainSelection / replaceSelection cover retraining; the multiclass Display 'attack' and hybrid CheckHybridPower limits are not reproduced",
     ),
-    "?A0x7555d940.FromDilettante": notHandled(
+    "?A0x7555d940.FromDilettante": code(
       "Powers chosen through the Dilettante racial trait (ID_FMP_RACIAL_TRAIT_643) are treated as out-of-class/encounter; OverrideStat then reads 'dilettante:key ability' (Adept Dilettante).",
-      "build-projection.ts only adopts the Dilettante choice slot; powers.ts has no Dilettante provenance, so 'dilettante:key ability' is unread (KEY_ABILITY_GAP)",
+      "key-ability-overrides.ts powerOrigins: a power whose occurrence's parent is the Dilettante trait (EXCEPTION_IDS.dilettante) reads 'dilettante:key ability', damage following; the encounter usage is the trait's own modify Power Usage",
+      test(
+        KEY_ABILITY,
+        "applies dilettante and multiclass overrides by where the power came from",
+      ),
     ),
     FindDilettante: notHandled(
       "Prerequisite clauses about the Dilettante power's kind look up the Dilettante racial trait's chosen power by ID.",
@@ -267,9 +270,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Prerequisite 'you must have chosen an implement power for your Dilettante racial trait': the Dilettante power has the Implement keyword.",
       `${PREREQ_UNVERIFIED} (FindDilettante)`,
     ),
-    "?A0x7555d940.FromMulticlassing": notHandled(
+    "?A0x7555d940.FromMulticlassing": partial(
       "Multiclass-sourced powers (Dilettante, Paragon Multiclassing IDs, multiclass feats) get the 'multiclass' (and, from feats, 'multiclass feat') keyword and read 'multiclass:key ability'.",
-      "legacyPowerKeywordTags adds neither keyword, so Compensatory Insight's 'multiclass feat:damage' and Combat Virtuoso's 'multiclass:key ability' never apply",
+      "key-ability-overrides.ts powerOrigins marks Dilettante, Paragon Multiclassing, multiclass power-swap and multiclass-feat powers, so Combat Virtuoso's 'multiclass:key ability' applies; legacyPowerKeywordTags still adds no 'multiclass'/'multiclass feat' keyword, so Compensatory Insight's 'multiclass feat:damage' is not applied",
+      test(
+        KEY_ABILITY,
+        "applies dilettante and multiclass overrides by where the power came from",
+      ),
     ),
     "D20Workspace.ClassName": generic(
       "Displays a hybrid character's class as 'Hybrid A|B'.",
@@ -1273,21 +1280,55 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "preserves direct ranged BA flags and honors an effective cleared flag",
       ),
     ),
-    "?A0x7555d940.OverrideStat": notHandled(
+    "?A0x7555d940.OverrideStat": code(
       "Attack ability overrides, in order: '<martial,melee>', 'melee basic', 'melee basic,melee weapon', 'ranged basic', 'ranged basic,bow group', 'ranged basic,thrown' (proficient), '<power ID>' and '<feat> association' ':key ability' text strings, the _Associated Feats association, the granting element's and the power's 'Key Ability' field, 'dilettante:' and 'multiclass:key ability', the '<power> <ability>' choice element (Damage Stat), and Strength for a Heavy Thrown ranged basic attack; _KeyAbilityAs redirects the lookup to another power.",
-      `${KEY_ABILITY_GAP}, 'Key Ability' fields or _KeyAbilityAs: only the '<power> <ability>' choice element and the Heavy Thrown Strength rule are modeled. Probed on Jim_Darkmagic: Intelligent Blademaster leaves the melee basic attack on Strength (+4, 1d4) where legacy uses Intelligence; Dragon Breath with Powerful Breath Strength attacks with Dexterity (+5, highest of Str/Con/Dex) where legacy forces Strength ('Strength!'). 63 records carry ':key ability' text strings (the six Powerful Breath traits, Intelligent Blademaster, Combat Virtuoso, the Melee Training feats, association feats), 6 'modify Key Ability' rules (Unexpected Flourish, Vecna artifacts, Oghma domain) and 4 _KeyAbilityAs powers`,
+      "key-ability-overrides.ts keyAbilityOverride runs the steps in native order before powers.ts's choice element and heavy-thrown rule, then rangedBasicFallbackOverride; '<power name>:key ability' is also read (official Otherworldly Pulse/Call of Letherna choices key by name; native reads only the id, and their unforced values never beat the line's highest ability). Jim_Darkmagic probes now match legacy: Intelligent Blademaster MBA with Staff of Light Intelligence +9, 1d8+6; Dragon Breath with Powerful Breath Strength attacks and damages with Strength",
+      test(
+        KEY_ABILITY,
+        "reads melee-basic text strings, gated by a melee weapon, and moves damage with the attack",
+      ),
+      test(
+        KEY_ABILITY,
+        "reads the power's and the granting element's Key Ability fields, attack only without DMG:",
+      ),
+      test(
+        KEY_ABILITY,
+        "tries martial melee first, before a power-id override",
+      ),
+      test(KEY_ABILITY, "wins over the `<power> <ability>` choice element"),
     ),
-    "?A0x7555d940.OverrideStatList": notHandled(
+    "?A0x7555d940.OverrideStatList": code(
       "Key-ability override value grammar: 'DMG:' (also the damage ability), 'HALF-DMG:' (half the ability modifier to damage), a trailing '*' (only when proficient with the weapon) and '!' (forced even when lower); otherwise the highest listed ability wins.",
-      "not modeled. Probed on Jim_Darkmagic: Melee Training (Intelligence) attacks with Intelligence through its own 'modify Attack' overlay, but deals 1d4+5 (the full Intelligence modifier, from its modify Hit prose) where legacy HALF-DMG:Intelligence* gives half (+2), and only with a proficient weapon. 16 records use these modifiers",
+      "key-ability-overrides.ts overrideFromList, including native's quirk that DMG:/HALF-DMG: set the damage flags whenever the list is read; statalias names (int, dex) resolve through canonicalAbility. Jim_Darkmagic with Melee Training (Intelligence) now deals 1d8+3 with Staff of Light (half Intelligence, +2)",
+      test(
+        KEY_ABILITY,
+        "needs a proficient weapon for a starred ability and halves HALF-DMG damage",
+      ),
+      test(
+        KEY_ABILITY,
+        "halves the damage of Melee Training's own overlaid attack line",
+      ),
+      test(
+        KEY_ABILITY,
+        "keeps the line's ability when a listed one is not higher",
+      ),
+      test(KEY_ABILITY, "names abilities by full name or statalias"),
     ),
-    "?A0x7555d940.OverrideStatPower": notHandled(
+    "?A0x7555d940.OverrideStatPower": code(
       "_KeyAbilityAs: a power takes its key-ability overrides from the power it names.",
-      "not read (4 powers: Accursed Flames, Alluring Lights, Dragon's Wrath, Clinging Breath)",
+      "powers.ts keyPower (by id, else power name) feeds every keyAbilityOverride step except _Associated Feats, which native reads from the evaluated power",
+      test(
+        KEY_ABILITY,
+        "forces a `!` ability keyed by power id, including through _KeyAbilityAs",
+      ),
     ),
-    "?A0x7555d940.OverrideByAssociation": notHandled(
+    "?A0x7555d940.OverrideByAssociation": code(
       "'<feat> association:key ability' text strings for each feat in the power's _Associated Feats.",
-      `${KEY_ABILITY_GAP} (11 association feats, e.g. Black Hood Slayer, Harrowing Swarm Scout)`,
+      "key-ability-overrides.ts associationOverride: the first listed feat with a value wins; damage follows (11 association feats, e.g. Black Hood Slayer, Harrowing Swarm Scout)",
+      test(
+        KEY_ABILITY,
+        "reads `<feat> association` text strings for the power's _Associated Feats",
+      ),
     ),
     "?A0x7555d940.AttackSpecialCase": notHandled(
       "Attack stat 'Highest Mental Ability'.",
@@ -1307,7 +1348,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcStatVsDefense": partial(
       "Attack stat parsing: beast's attack bonus, power-bonus suffixes, 'your highest ability', 'Primary ability', 'Chosen Ability', the '+1 per enemy adjacent to you' condition, then OverrideStat.",
-      "powers.ts attackLineAbility / highestAbility / powerBonusAtLevel; 'Chosen Ability', the per-adjacent-enemy condition and every OverrideStat source are not modeled",
+      "powers.ts attackLineAbility / highestAbility / powerBonusAtLevel; 'Chosen Ability' and the per-adjacent-enemy condition are not modeled; OverrideStat is key-ability-overrides.ts",
       test(
         POWERS,
         "chooses the best attack ability and retains explicit power bonuses",

@@ -8,6 +8,8 @@ export const EXCEPTION_IDS = {
   seekerClass: "ID_FMP_CLASS_104",
   versatileMasterPrerequisite: "ID_FMP_FEAT_1082",
   paragonMulticlassing: "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING",
+  /** FromDilettante/FromMulticlassing: the half-elf Dilettante trait. */
+  dilettante: "ID_FMP_RACIAL_TRAIT_643",
   cleverShotMastery: "ID_CDJ_CLASS_FEATURE_34501",
   rapidShotMastery: "ID_CDJ_CLASS_FEATURE_34502",
   aimedShotMastery: "ID_CDJ_CLASS_FEATURE_34503",

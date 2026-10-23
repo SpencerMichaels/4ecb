@@ -1,7 +1,11 @@
 import { formatInventoryItemName } from "@4ecb/character-domain";
 import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
-import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
+import type {
+  CharacterInventoryEntry,
+  CharacterOccurrence,
+  FieldOverlay,
+} from "./evaluator";
 import type { EvaluatedStat } from "./stats";
 import {
   companionStatBonus,
@@ -9,6 +13,13 @@ import {
   type BeastCompanionStatistics,
 } from "./derived-values";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
+import {
+  keyAbilityOverride,
+  powerOrigins,
+  rangedBasicFallbackOverride,
+  type KeyAbilityContext,
+  type KeyAbilityOverride,
+} from "./key-ability-overrides";
 import type { EquipmentState } from "./equipment";
 import {
   isLegacyMonkWeapon,
@@ -2022,6 +2033,8 @@ export function evaluatePowers(input: {
   readonly equipment?: EquipmentState;
   readonly entities: readonly ContentEntity[];
   /** The beast companion's statistics, for "beast's attack bonus" and [B]. */
+  /** The character's occurrences, for where each power came from. */
+  readonly occurrences?: readonly CharacterOccurrence[];
   readonly beastCompanion?: BeastCompanionStatistics;
 }): readonly EvaluatedPower[] {
   const beast = input.beastCompanion;
@@ -2073,6 +2086,7 @@ export function evaluatePowers(input: {
       textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded") ??
         0,
     ) !== 0;
+  const origins = powerOrigins(input.occurrences ?? [], byId);
   const requirementContext = legacyRequirementContext({
     equipped,
     activeDefinitionIds: input.activeDefinitionIds,
@@ -2236,6 +2250,52 @@ export function evaluatePowers(input: {
       input.activeDefinitionIds,
       byId,
     );
+    // Native OverrideStatPower: _KeyAbilityAs reads the overrides of the
+    // power it names (Dragon's Wrath as Dragon Breath).
+    const keyAbilityAs = field(power, "_KeyAbilityAs")?.trim();
+    const keyPower =
+      (keyAbilityAs === undefined || keyAbilityAs === ""
+        ? undefined
+        : (byId.get(key(keyAbilityAs)) ??
+          byName
+            .get(key(keyAbilityAs))
+            ?.find((entity) => key(entity.type) === "power"))) ?? power;
+    const keyOrigin = origins.get(key(keyPower.id));
+    const keyGrantor =
+      keyOrigin?.grantorId === undefined
+        ? undefined
+        : byId.get(key(keyOrigin.grantorId));
+    const keyAbilityContext = (equipment: Loadout): KeyAbilityContext => {
+      const weaponBase =
+        !equipment.unarmed && (equipment.weaponDefinition || equipment.staff);
+      // A staff without a weapon part is native WeaponBase's Quarterstaff.
+      const weaponCategory =
+        equipment.weaponCategory ??
+        key(
+          field(equipment.requirementBase ?? emptyEntity, "Weapon Category") ??
+            "",
+        );
+      return {
+        power,
+        keyPower,
+        fieldOf: (entity, name) => effectiveField(entity, name, input.overlays),
+        text: (name) => textValue(input.textStrings ?? {}, name),
+        score: (ability) => numericStat(input.stats, ability),
+        ...(keyOrigin === undefined ? {} : { origin: keyOrigin }),
+        ...(keyGrantor === undefined ? {} : { grantor: keyGrantor }),
+        weapon: {
+          melee: weaponBase && weaponCategory.includes("melee"),
+          bowGroup: weaponBase && equipment.tags.includes("bow group"),
+          thrown:
+            weaponBase &&
+            equipment.properties.some(
+              (property) =>
+                property === "heavy thrown" || property === "light thrown",
+            ),
+          proficient: weaponBase && proficientWithWeapon(equipment),
+        },
+      };
+    };
     const variants = handCandidates.map((equipment): PowerVariant => {
       const weaponSpecific = powerWeaponSpecificBonuses(
         power,
@@ -2266,6 +2326,9 @@ export function evaluatePowers(input: {
           return key(choice?.name ?? "") === key(`${power.name} ${ability}`);
         }),
       );
+      // Each attack's key-ability damage flags (native damage_stat and
+      // half_damage), by attack ordinal.
+      const keyAbilityDamage = new Map<number, KeyAbilityOverride>();
       const calculatedAttacks = (
         attackDefinitions.length === 0
           ? [{ ordinal: 1, line: "" } as AuthoredAttack]
@@ -2348,19 +2411,44 @@ export function evaluatePowers(input: {
             attackComponents,
           };
         }
-        let attackStat = attackLineAbility(
-          authoredLine,
-          input.stats,
-          explicitAbilityChoice,
-          preferredAbilities,
+        // Native OverrideStat compares against the attack line's own
+        // ability; the `<power> <ability>` choice element comes after its
+        // text-string and Key Ability overrides.
+        const keyContext = keyAbilityContext(equipment);
+        const override = keyAbilityOverride(
+          attackLineAbility(
+            authoredLine,
+            input.stats,
+            undefined,
+            preferredAbilities,
+          ),
+          keyContext,
         );
-        if (
-          weaponPower &&
-          /^ranged\b/i.test(phaseAttackType ?? "") &&
-          attackStat === "Dexterity" &&
-          equipment.properties.includes("heavy thrown")
-        )
-          attackStat = "Strength";
+        let attackStat =
+          override.ability ??
+          attackLineAbility(
+            authoredLine,
+            input.stats,
+            explicitAbilityChoice,
+            preferredAbilities,
+          );
+        let damageOverride: KeyAbilityOverride = override;
+        if (override.ability === undefined) {
+          if (
+            weaponPower &&
+            /^ranged\b/i.test(phaseAttackType ?? "") &&
+            attackStat === "Dexterity" &&
+            equipment.properties.includes("heavy thrown")
+          )
+            attackStat = "Strength";
+          const fallback = rangedBasicFallbackOverride(attackStat, keyContext);
+          attackStat = fallback.ability ?? attackStat;
+          damageOverride = {
+            damageStat: override.damageStat || fallback.damageStat,
+            halfDamage: override.halfDamage || fallback.halfDamage,
+          };
+        }
+        keyAbilityDamage.set(definition.ordinal, damageOverride);
         const defense = attack?.[2] ?? "Unknown";
         const attackComponents: PowerComponent[] = [
           {
@@ -2446,6 +2534,7 @@ export function evaluatePowers(input: {
         hitLine: string | undefined,
         attackStat: string,
         attackType: string | undefined,
+        keyAbility: KeyAbilityOverride | undefined,
       ): Pick<
         PowerVariant,
         "damage" | "damageType" | "damageComponents" | "conditionalDamage"
@@ -2540,12 +2629,27 @@ export function evaluatePowers(input: {
                 ? [attackStat]
                 : damageAbilities.slice(0, 1)
               : damageAbilities;
+        // Native ParseAbilityMod: with damage_stat every ability modifier
+        // in the damage is the attack ability's, halved for half_damage.
+        const followsAttack =
+          keyAbility?.damageStat === true &&
+          specialDamage?.ability === undefined &&
+          abilityNames.some((ability) => ability === attackStat);
+        const halved = followsAttack && keyAbility?.halfDamage === true;
         if (dice !== undefined)
           damageComponents.push(
-            ...additiveAbilities.map((ability) => ({
-              label: `${ability} modifier`,
-              value: numericStat(input.stats, `${ability} modifier`),
-            })),
+            ...(followsAttack
+              ? additiveAbilities.map(() => attackStat)
+              : additiveAbilities
+            ).map((ability) => {
+              const modifier = numericStat(input.stats, `${ability} modifier`);
+              return halved
+                ? {
+                    label: `half ${ability} modifier`,
+                    value: Math.trunc(modifier / 2),
+                  }
+                : { label: `${ability} modifier`, value: modifier };
+            }),
           );
         if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
         const offHandImplements = handCandidates.filter(
@@ -2706,7 +2810,12 @@ export function evaluatePowers(input: {
           conditionalDamage,
         };
       };
-      const damage = calculateDamage(hitLine, attackStat, attackType);
+      const damage = calculateDamage(
+        hitLine,
+        attackStat,
+        attackType,
+        keyAbilityDamage.get(primaryAttack?.ordinal ?? 1),
+      );
       const attacks =
         attackDefinitions.length === 0
           ? []
@@ -2724,6 +2833,7 @@ export function evaluatePowers(input: {
                       phaseHit,
                       attack.attackStat,
                       attack.attackType,
+                      keyAbilityDamage.get(attack.ordinal),
                     );
               const roleText = `${definition?.line ?? ""} ${phaseHit ?? ""}`;
               const usesOff = /\boff[- ]hand(?: weapon)?\b/i.test(roleText);
