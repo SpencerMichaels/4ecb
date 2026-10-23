@@ -2581,6 +2581,38 @@ Consequences:
 - The parity check (`pnpm parity:baseline`) lists these cached rows as
   legacy placeholders, not as mismatches.
 
+### D095 — Companions, summons and familiars take only rules-backed bonuses
+
+Status: accepted (2026-10-23). Partly a deliberate divergence from legacy
+under D091.
+
+Native `D20Workspace.PowerStats` runs `CalcKeywords` and `CalcGlobal` on
+every row, so the character's `attack rolls`, `damage` and `damage rolls`
+reach beast-companion power rows after `CalcBAB` returns the beast attack
+bonus early. Legacy's own beast stat block (`BeastBlock.SetAttackBonus`)
+leaves them out, so the power-row behaviour follows from code order, not a
+rule.
+
+Decision:
+
+- **Beast companions** take no character-wide bonuses: beast attack bonus
+  (level + category bonus + `ALLY.`/`COMPANION.`/`BEAST.` stats) plus
+  power-keyed bonuses only. Martial Power pp.39, 43 ("treated as separate
+  creatures"; beast powers "use the beast's attack bonus"); Inherent Bonuses
+  are for PCs (DMG2 p.138).
+- **Summons that attack with the summoner's statistics** (e.g. "Wisdom vs.
+  Reflex") are ordinary character rows with every non-temporary bonus,
+  including implement enhancement and implement feats. Rules Compendium
+  pp.120–121; matches legacy.
+- **Fixed-bonus creatures** ("your level + N": hexblade and binder allies)
+  take only creature and power-keyed bonuses, on attack and damage alike, as
+  their description "specifies otherwise".
+- **Familiars** can't attack (Arcane Power p.138), so nothing applies.
+
+Consequences: a beastmaster with Inherent Bonuses or Epic Combatant shows
+lower beast-power numbers than the legacy sheet. Research notes are in the
+ignored `tmp/summon-research/`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
