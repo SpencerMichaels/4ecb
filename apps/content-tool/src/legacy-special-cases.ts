@@ -291,9 +291,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Maps the 'Core' source to a book title (hybrid records to PHB3, otherwise PHB/Divine Power).",
       "presentation of sources; modern shows the authored source",
     ),
-    "?A0x03aa98b1.HybridArmorProf": notHandled(
+    "?A0x03aa98b1.HybridArmorProf": code(
       "An armor or shield Proficiency granted by a hybrid Grants record is deferred until the other hybrid half grants the same proficiency (a hybrid is proficient only with armor both classes grant).",
-      "evaluator grants each hybrid half's whole list: probing Alysa Redfield without Armored Warlord, modern still owns Armor Proficiency (Scale) from Hybrid Fighter alone (31 hybrid Grants records list armor or shields)",
+      "evaluator hybridGrantDeferred: such a grant (and a saved legacy element under it) is inactive unless another hybrid Grants occurrence's active grant rule names the same record; other sources (Armored Warlord, Battlefront Leader) still grant it",
+      test(
+        EVALUATOR,
+        "grants a hybrid armor or shield proficiency only when both halves grant it",
+      ),
+      fixture(
+        "sample-chars/Alysa Redfield.dnd4e",
+        "Hybrid Fighter|Warlord: Scale comes only from Armored Warlord (without it Reflex drops 2 in Scale Armor); Heavy Shield from Battlefront Leader (Hybrid)",
+      ),
     ),
     "D20Workspace.IsEssentials": code(
       "A character is 'Essentials' when any owned class has a _ParentClass (gates the Essentials magic armor table and auto-build).",

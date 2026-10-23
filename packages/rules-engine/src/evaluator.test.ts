@@ -645,6 +645,89 @@ describe("character evaluator", () => {
     });
   });
 
+  it("grants a hybrid armor or shield proficiency only when both halves grant it", () => {
+    const proficiency = (id: string, name: string) =>
+      entity(id, name, "Proficiency");
+    const grants = (id: string, name: string, targets: string[]) =>
+      entity(id, name, "Grants", {
+        rules: targets.map((target, ordinal) =>
+          rule("grant", { name: target, type: "Proficiency" }, ordinal),
+        ),
+      });
+    const entities = [
+      entity("ROOT", "1", "Level", {
+        rules: [
+          rule("grant", { name: "HYBRID_FIGHTER", type: "Grants" }, 0),
+          rule("grant", { name: "HYBRID_WARLORD", type: "Grants" }, 1),
+        ],
+      }),
+      grants("HYBRID_FIGHTER", "Hybrid Fighter", [
+        "CLOTH",
+        "SCALE",
+        "HEAVY_SHIELD",
+        "MILITARY",
+      ]),
+      grants("HYBRID_WARLORD", "Hybrid Warlord", ["CLOTH", "LIGHT_SHIELD"]),
+      entity("ARMORED", "Armored Warlord", "Feat", {
+        rules: [rule("grant", { name: "SCALE", type: "Proficiency" }, 0)],
+      }),
+      proficiency("CLOTH", "Armor Proficiency (Cloth)"),
+      proficiency("SCALE", "Armor Proficiency (Scale)"),
+      proficiency("HEAVY_SHIELD", "Shield Proficiency (Heavy)"),
+      proficiency("LIGHT_SHIELD", "Shield Proficiency (Light)"),
+      proficiency("MILITARY", "Military Melee"),
+    ];
+    const evaluate = (occurrences: CharacterOccurrence[]) =>
+      evaluateCharacter(
+        { level: 1, baseAbilities: {}, occurrences, inventory: [] },
+        entities,
+      ).activeDefinitionIds;
+
+    const fresh = evaluate([rootOccurrence]);
+    // Both halves grant Cloth; only one grants Scale or a shield. Weapon
+    // proficiencies are not deferred.
+    expect(fresh).toEqual(expect.arrayContaining(["CLOTH", "MILITARY"]));
+    expect(fresh).not.toContain("SCALE");
+    expect(fresh).not.toContain("HEAVY_SHIELD");
+    expect(fresh).not.toContain("LIGHT_SHIELD");
+
+    // Another source still grants it.
+    expect(
+      evaluate([
+        rootOccurrence,
+        {
+          id: "feat",
+          definitionId: "ARMORED",
+          acquiredLevel: 1,
+          kind: "grabbag",
+        },
+      ]),
+    ).toContain("SCALE");
+
+    // A legacy save keeps the deferred element under its Grants record.
+    expect(
+      evaluate([
+        rootOccurrence,
+        {
+          id: "fighter",
+          definitionId: "HYBRID_FIGHTER",
+          acquiredLevel: 1,
+          parentId: "root",
+          ruleOrdinal: 0,
+          kind: "grant",
+        },
+        {
+          id: "saved-scale",
+          definitionId: "SCALE",
+          acquiredLevel: 1,
+          parentId: "fighter",
+          ruleOrdinal: 1,
+          kind: "grant",
+        },
+      ]),
+    ).not.toContain("SCALE");
+  });
+
   it("filters every candidate by its legacy prerequisites", () => {
     const result = evaluateCharacter(
       {

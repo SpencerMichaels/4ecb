@@ -49,7 +49,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v47-2026-10-23-striker-weapons-usage";
+  "evaluated-character-v48-2026-10-23-hybrid-armor-proficiency";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1011,6 +1011,59 @@ function evaluateCharacterInternal(
       ruleRequiresMet(rule.requires, parent, activeOccurrences, context)
     );
   };
+  /**
+   * Native HybridArmorProf: an armor or shield Proficiency granted by a
+   * hybrid Grants record waits until the other half's hybrid Grants record
+   * grants it too, so a hybrid is proficient only with the armor and shields
+   * both classes grant. Another source (Armored Warlord, a hybrid talent
+   * feature) still grants it normally.
+   */
+  const hybridGrantDeferred = (
+    provider: CharacterOccurrence,
+    target: ContentEntity,
+    activeOccurrences: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): boolean => {
+    const isHybridGrants = (entity: ContentEntity | undefined) =>
+      entity !== undefined &&
+      key(entity.type) === "grants" &&
+      /hybrid/iu.test(entity.name);
+    if (
+      key(target.type) !== "proficiency" ||
+      !/armor|shield/iu.test(target.name) ||
+      !isHybridGrants(index.get(provider.definitionId))
+    )
+      return false;
+    return !activeOccurrences.some((other) => {
+      if (other.id === provider.id) return false;
+      const entity = index.get(other.definitionId);
+      if (entity === undefined || !isHybridGrants(entity)) return false;
+      return parseRules(entity.id, entity.rules).some(
+        (rule) =>
+          rule.kind === "grant" &&
+          activeAt(rule, input.level) &&
+          key(index.find(rule.name, rule.type)?.id ?? "") === key(target.id) &&
+          ruleRequiresMet(rule.requires, other, activeOccurrences, context),
+      );
+    });
+  };
+  /** A granted occurrence that HybridArmorProf defers. */
+  const deferredHybridGrant = (
+    occurrence: CharacterOccurrence,
+    activeOccurrences: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): boolean => {
+    if (occurrence.parentId === undefined) return false;
+    const provider = activeOccurrences.find(
+      (candidate) => candidate.id === occurrence.parentId,
+    );
+    const target = index.get(occurrence.definitionId);
+    return (
+      provider !== undefined &&
+      target !== undefined &&
+      hybridGrantDeferred(provider, target, activeOccurrences, context)
+    );
+  };
   const savedById = new Map(
     saved.map((occurrence) => [occurrence.id, occurrence]),
   );
@@ -1054,7 +1107,8 @@ function evaluateCharacterInternal(
       (occurrence) =>
         !displacedIds.has(occurrence.id) &&
         !occurrences.some((candidate) => candidate.id === occurrence.id) &&
-        activeProviderRule(occurrence, occurrences, preliminaryContext),
+        activeProviderRule(occurrence, occurrences, preliminaryContext) &&
+        !deferredHybridGrant(occurrence, occurrences, preliminaryContext),
     );
     if (restored.length > 0) occurrences = [...occurrences, ...restored];
     const context = expressionContextFor(occurrences);
@@ -1069,7 +1123,8 @@ function evaluateCharacterInternal(
     for (const occurrence of occurrences)
       if (
         displacedIds.has(occurrence.id) ||
-        !activeProviderRule(occurrence, occurrences, context)
+        !activeProviderRule(occurrence, occurrences, context) ||
+        deferredHybridGrant(occurrence, occurrences, context)
       )
         dropped.add(occurrence.id);
     for (const occurrence of occurrences) {
@@ -1093,6 +1148,8 @@ function evaluateCharacterInternal(
             });
             continue;
           }
+          if (hybridGrantDeferred(occurrence, target, occurrences, context))
+            continue;
           const id = `${occurrence.id}:grant:${rule.source.ordinal}`;
           if (
             !occurrences.some(
