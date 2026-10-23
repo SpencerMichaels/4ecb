@@ -1,5 +1,118 @@
 # Implementation status
 
+## Legacy parity baseline (2026-10-22)
+
+Every difference between our engine and the legacy builder's cached sheets
+on the 18 comparison characters (9 in the ignored `sample-chars/`, 9
+SampleHeroes) is triaged. `pnpm parity:baseline` (`scripts/parity-baseline.ts`,
+private corpus) now checks them: it evaluates all of them in one process,
+writes per-character counts and mismatch keys to `tmp/parity/latest.json`, and
+diffs them against the accepted `tmp/parity/baseline.json`. A new key exits 1.
+`--accept` records a new baseline. `pnpm evaluate:character` shares its
+comparison code (`scripts/legacy-parity.ts`). A full run takes about 15
+minutes, about 50 s per character.
+
+Totals on `tmp/content/full-local.4ecp`: stats 1109/1130 → 1125/1146, power
+fields 882/965 → 882/953.
+
+| Character       | Stats before → after | Power fields before → after |
+| --------------- | -------------------- | --------------------------- |
+| Aeofel          | 51/53 → 52/54        | 10/10 → 10/10               |
+| Binwin          | 57/57 → 58/58        | 46/47 → 46/46               |
+| Drizzt          | 61/61 → 62/62        | 62/63 → 62/63               |
+| Geran Hulmaster | 55/56 → 56/57        | 46/58 → 46/58               |
+| Japheth         | 56/57 → 57/58        | 32/35 → 32/34               |
+| Jim Darkmagic   | 64/64 → 65/65        | 26/32 → 26/32               |
+| Omin Dran       | 55/55 → 56/56        | 40/43 → 40/40               |
+| Raidon Kane     | 54/55 → 55/56        | 24/39 → 24/38               |
+| Young Raistlin  | 55/55 → 56/56        | 38/44 → 38/44               |
+| Alysa           | 68/68 → 69/69        | 56/57 → 56/56               |
+| chopper         | 68/68 → 69/69        | 90/91 → 90/90               |
+| Hu Sheng-Ming   | 72/72 → 73/73        | 50/52 → 50/50               |
+| Hystan          | 68/68 → 68/69        | 60/60 → 60/60               |
+| idon tkare      | 62/63 → 63/64        | 30/30 → 30/30               |
+| Oleander        | 64/78 → 64/78        | 82/112 → 82/112             |
+| Piri            | 63/63 → 64/64        | 70/71 → 70/70               |
+| Silaqui         | 68/69 → 69/69        | 70/71 → 70/70               |
+| Skye            | 68/68 → 69/69        | 50/50 → 50/50               |
+
+Changes (`54e2248`, `4fcc00b`):
+
+- **Weight is compared as the sheet shows it.** Native `TallyLoot`
+  (`D20Workspace.cs`, around line 378) writes the inventory weight into the
+  `Weight` stat, and rules add to it. Our evaluated stat holds only the
+  rules, and the sheet adds the inventory (`sheet-model` `inventoryWeight`).
+  The old harness compared the rules-only stat, giving 1 vs 58 and 2 vs 113.
+  It now compares the sheet's gear weight on every character, which is why
+  each stats count gained one comparison. This was a harness bug, not a
+  product bug.
+- **Healing placeholder rows** (D094). Native `PowerStats`
+  (`D20Workspace.cs`, around line 3889) writes a row for any power with the
+  `Healing` keyword, even without a Hit line: AttackStat `Unknown`, no damage,
+  half level as the "attack". These rows (Healing Word, Inspiring Word, Cure
+  Light Wounds, Destined for Greatness, Invigorating Stride, Boundless
+  Endurance, Longtooth Shifting, Unstoppable, Word of Comfort, Healer's
+  Mercy) are now listed as legacy placeholders instead of mismatches. The
+  writer already emits them on export.
+- **Native exact increase lines.** `AttackPowerModRepl` (`-Module-.cs`,
+  around line 23530) replaces `+N` with the 11th/21st values of five exact
+  lines. We read only the first step, so Darkfire stayed +6 at 21st (now +8).
+  Cache `v42`.
+
+Remaining differences and their classification:
+
+- **SampleHeroes predate the shipped content and the CBLoader parts.** The
+  stock (`combined.dnd40.original.xml`) or older record gives the cached value
+  every time:
+  - Weapon Expertise is +2 from 15th level in stock and +2 from paragon in
+    the parts. This explains Geran's 12 attack fields (18 vs 19).
+  - Iron Will's cached +2 at level 14 is the pre-errata flat bonus (Raidon
+    Will 29 vs 30).
+  - The parts give Freezing Cloud 2d8 and Curse of the Bloody Fangs 3d10.
+    Stock has 1d8 and 2d10, which match the cache.
+  - The monk powers (Five Storms 1d6 vs 1d8, One Hundred Leaves 1d10 vs
+    3d8, and five more) and Fireball (3d6 vs 4d6) have smaller dice in the
+    cache than the 8/27/2010 stock records, which we match.
+    Centered Flurry of Blows and Mental Equilibrium (`ID_FMP_CLASS_FEATURE_1545/1546`)
+    are in no copy of the content. Without them, Crane's Wings loses its
+    unarmed-strike proficiency (22 vs 19).
+  - Magic Missile's rows (attack vs Reflex, 2d4) are the pre-Essentials
+    record. The current one has no attack.
+  - Dalelands (+1 Initiative, Geran) and Baldur's Gate (+2 Streetwise,
+    Japheth) backgrounds carried rules in the saved revision. Every copy now
+    has only Benefit text.
+  - Eladrin's +2 Arcana/History (Aeofel) is stock. The parts replace it with
+    a trait choice, which also leaves Aeofel and Skye incomplete. The parts
+    also add Binwin's Dwarf trait choice and Armor of Resistance
+    resistance-type choice, so Binwin is incomplete too.
+  - The parts restructure Barbarian Agility's internal stat (idon tkare 1 vs
+    0). AC and Reflex agree.
+  - Darkfire's cached +4 at level 21 contradicts both the text and the
+    recovered native table (+8). It is classified with the 8/27/2010 revision
+    batch above, but this one is not proven.
+- **Player characters with homebrew we lack.**
+  - Oleander references 10 records in no copy of the corpus (DOMT Str/Dex
+    items, three homebrew skills, a deity, two proficiencies, two TIV
+    armors). The DOMT items explain Str/Dex and their cascade (AC, Reflex,
+    Initiative, skills, basic attacks) plus Arcana +5. The missing gear
+    leaves Weight unknown.
+  - Oleander's Feast of Souls uses Charisma in the cache, but every copy
+    says Constitution and no native override (`OverrideStat` text strings,
+    association, Key Ability fields, `<power> <ability>` element) applies.
+    This stays unresolved and visible.
+  - Hystan's Weight 107 vs 109: Camouflaged Clothing is 4 lb in stock and 6
+    lb in `40-gear.part`.
+- **Engine gaps the samples don't exercise:** `OverrideStat` key-ability
+  overrides stay queued (roadmap tier 1, item 3).
+
+Owner question, executioner-fighter level 13/17/23 swaps: the dormancy is
+correct. The level-entity `replace name="Power Encounter 13|17|23"` rules
+require `!No Level N Encounter Power`. Each Assassin's Strike upgrade
+(`ID_CDJ_CLASS_FEATURE_LV13/17/23_ASSASSINS_STRIKE_*`) grants that Internal,
+so legacy offers no swap at those levels. The level-17 Bitter Harvest pick
+is an artifact of the review harness. The engine ignores it. Spinning Sweep
+held into the level-27 "Power to replace" list is correct.
+
 ## Player report: Oleander, and audit re-checks (2026-10-22)
 
 A player imported `oleander_9.dnd4e` (level 9 Pixie Warlock; now in the

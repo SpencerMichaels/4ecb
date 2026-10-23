@@ -2559,6 +2559,28 @@ Consequences:
 - The card still prints the Requirement line, so the player sees the
   condition. The rule lives in `power-requirements.ts` (`isPowerRestricted`).
 
+### D094 — Healing powers without a Hit line get no attack row
+
+Status: accepted (2026-10-22). A deliberate divergence from legacy
+`PowerStats` under D091.
+
+Native `D20Workspace.PowerStats` calculates a row for a power with a Hit
+line, for Storm Pillar by name, and for any power whose Keywords contain
+`Healing`. A Healing power with no attack (Healing Word, Inspiring Word,
+Destined for Greatness, Longtooth Shifting, Boundless Endurance) therefore
+gets an Unarmed row with AttackStat `Unknown`, no defense or damage, and an
+"attack bonus" of half level plus any untyped attack bonuses. It is not an
+attack and nothing can roll it.
+
+Consequences:
+
+- The evaluator gives such a power no weapon rows; its healing comes from
+  `EvaluatedPower.healing`.
+- The `.dnd4e` writer still emits the placeholder row on export, so files
+  read by the old builder and viewer keep the shape they expect.
+- The parity check (`pnpm parity:baseline`) lists these cached rows as
+  legacy placeholders, not as mismatches.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

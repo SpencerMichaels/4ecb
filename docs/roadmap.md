@@ -917,10 +917,11 @@ Ranked from `audit:legacy-special-cases`, `audit:modifiers`,
 character before it is fixed, one slice per item.
 
 - **Tier 1, wrong numbers (proposed, awaiting owner go-ahead):**
-  1. Legacy-backed sample mismatches: Raidon Kane unarmed dice, Magic Missile
-     rows and extra Freezing Cloud/Fireball dice (Jim Darkmagic, Raistlin),
-     Geran Hulmaster's Parrying Longsword +1, Japheth's Curse of the Bloody
-     Fangs dice.
+  1. ~~Legacy-backed sample mismatches~~ (triaged 2026-10-22, implementation
+     status "Legacy parity baseline"): Raidon Kane's dice, Magic Missile,
+     Freezing Cloud/Fireball/Bloody Fangs dice and Geran's +1 are content
+     revisions, not engine gaps. `pnpm parity:baseline` now guards the
+     remaining differences.
   2. Unconditional `attack rolls` / `damage rolls` statadds never applied
      (~100 records: Epic Combatant, cloth-armor non-proficiency, Inherent
      Bonuses damage).

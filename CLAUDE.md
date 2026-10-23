@@ -107,6 +107,7 @@ pnpm audit:rules
 pnpm audit:native-workflow
 pnpm evaluate:character
 pnpm evaluate:matrix
+pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept)
 pnpm regenerate:edited-dnd4e
 ```
 
