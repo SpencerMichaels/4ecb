@@ -57,6 +57,9 @@ metadata; this hierarchy is not yet approved.
 
 ## Build-tab table folding and pre-scroll task (queued 2026-10-22)
 
+Done (commits `49b95e6`, `8554ab4`); owner checks are in the checklist's
+"Build-tab folding and pre-scroll" section.
+
 Feedback from a tester (Chris), relayed by the product owner. He was on an
 older public build; none of the 2026-10-22 changes were public yet. Start this
 only after the agents then editing `CharacterEditorPage.tsx` and `builder-ui.ts`

@@ -42,8 +42,16 @@ From the owner's second pass through the visual review:
   for every item (`bf35993`), and the page's wrong steps are corrected
   (`aba6b10`).
 
-Queued in `docs/task-clarifications.md`: Build-tab folding and pre-scroll (a
-tester's report), and the power-swap chain evaluation fix in `evaluator.ts`.
+- **Build-tab folding and pre-scroll** (a tester's report; `49b95e6`,
+  `8554ab4`). Every filled table choice arrives folded to its pick, even a
+  tab's only one, and leaving a tab by any route forgets the item opened
+  there. Opening a filled choice scrolls its pick to the top row under the
+  column header and sticky type band (it used to land behind the band in
+  power and feat tables), aims at the topmost of several picks, and waits for
+  candidates and layout instead of giving up. Visual check pending.
+
+Queued in `docs/task-clarifications.md`: the power-swap chain evaluation fix
+in `evaluator.ts`.
 Open owner decisions are the **Decide** lines in the checklist (flavor
 divider, summoned allies' Back to the Wall, class names inside feature names).
 
