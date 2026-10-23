@@ -140,6 +140,35 @@ recoverable grabbag evidence rather than being discarded. Custom extensions,
 comments, whitespace, cached sheet
 values, and other unmodeled XML remain in `sourceXml`.
 
+### Missing content matched by name (D096)
+
+When Settings → Importing characters → "Match missing content by name" is on
+(the default), the library passes the active content to `importDnd4e`
+(`matchMissingDefinitionsIn`). Every saved identity is checked: level-tree
+occurrences, `UserEdit` children and rule `name` attributes, grabbag,
+alternate providers and choices, loot base/enchantment/augment elements and
+their saved children, and known records. Text strings keyed by a record ID (a
+given `FREEBEE` marker, `LOOTNOTE_<id>__<id>__<name>`) follow the match.
+
+- **Name:** a missing ID takes the one content record of the same type whose
+  name matches after decoding XML entities, collapsing whitespace and
+  folding case (`matchableName`).
+- **Grant:** a still-missing child of a matched parent takes the one record
+  of its type the parent's record grants at the child's saved `Level` (from
+  `RulesElementTally`) that the build doesn't already hold. Once a child is
+  matched to the ID the parent grants, evaluation adopts the saved child as
+  that grant, so nothing is granted twice.
+- **Never on ambiguity:** two or more same-named records leave the ID
+  missing; the report lists the candidates with a warning.
+
+The import report's `definitionMatching` lists `matched` (saved ID, name,
+type, new ID, basis), `ambiguous` and `unmatched`. Changed identities keep
+their saved name and type plus `importedDefinitionId`; exports write the new
+ID. After import a toast summarizes the matches, and the builder's
+Diagnostics keeps one "Matched by name on import" note per saved ID
+(`nameMatchedContentIssues`), reached from the import badge in the builder
+status bar. Unmatched IDs remain missing-content issues as before.
+
 Native creation starts from the active pack's exact ID/digest and canonical
 `ID_INTERNAL_LEVEL_1` definition. It persists a level-1 root, six base ability
 inputs of 10, empty inventory/history extensions, and a minimal valid 0.07a

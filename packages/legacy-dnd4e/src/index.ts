@@ -20,6 +20,13 @@ import {
 } from "@4ecb/character-domain";
 import { SaxesParser } from "saxes";
 
+import {
+  matchMissingDefinitions,
+  type Dnd4eDefinitionMatching,
+  type MatchableDefinition,
+} from "./definition-matching";
+
+export * from "./definition-matching";
 export * from "./writer";
 
 export interface Dnd4eImportDiagnostic {
@@ -39,6 +46,16 @@ export interface Dnd4eImportReport {
   readonly lootCount: number;
   readonly unknownRootElements: readonly string[];
   readonly usesLegacyCache: true;
+  /** Present when the import matched missing IDs by name (see options). */
+  readonly definitionMatching?: Dnd4eDefinitionMatching;
+}
+
+export interface Dnd4eImportOptions {
+  /**
+   * The active content. When given, a saved internal-id it lacks is pointed
+   * at the one record with the same name and type (`matchMissingDefinitions`).
+   */
+  readonly matchMissingDefinitionsIn?: readonly MatchableDefinition[];
 }
 
 export interface Dnd4eImportResult {
@@ -430,6 +447,19 @@ function buildFrom(
   };
 }
 
+/** The `Level` specific of each tallied record, keyed by folded internal-id. */
+function tallyLevelsFrom(sheet: XmlNode | undefined): Map<string, number> {
+  const tally = first(sheet, "RulesElementTally");
+  const levels = new Map<string, number>();
+  for (const node of tally === undefined ? [] : direct(tally, "RulesElement")) {
+    const id = attribute(node, "internal-id");
+    const level = Number.parseInt(specifics(node)["Level"] ?? "", 10);
+    if (id !== undefined && Number.isSafeInteger(level) && !levels.has(key(id)))
+      levels.set(key(id), level);
+  }
+  return levels;
+}
+
 function selectedRulesFrom(sheet: XmlNode | undefined): LegacyRuleElement[] {
   const tally = first(sheet, "RulesElementTally");
   return tally === undefined
@@ -601,7 +631,10 @@ function textStringsFrom(root: XmlNode): Record<string, string> {
   );
 }
 
-export function importDnd4e(input: string): Dnd4eImportResult {
+export function importDnd4e(
+  input: string,
+  options: Dnd4eImportOptions = {},
+): Dnd4eImportResult {
   const sourceXml = input;
   const root = parseTree(input.startsWith("\uFEFF") ? input.slice(1) : input);
   if (key(root.name) !== "d20character")
@@ -677,6 +710,36 @@ export function importDnd4e(input: string): Dnd4eImportResult {
     message:
       "Displayed calculations come from the legacy CharacterSheet cache and have not yet been recalculated.",
   });
+  const parsedBuild = buildFrom(
+    root,
+    sheet,
+    Object.keys(rootAbilities).length === 0 ? abilities : rootAbilities,
+    textStrings,
+  );
+  const content = options.matchMissingDefinitionsIn;
+  let build = parsedBuild;
+  let definitionMatching: Dnd4eDefinitionMatching | undefined;
+  if (content !== undefined) {
+    const levels = tallyLevelsFrom(sheet);
+    const result = matchMissingDefinitions(parsedBuild, content, {
+      savedLevel: (id) => levels.get(key(id)),
+    });
+    build = result.build;
+    definitionMatching = result.matching;
+    const { matched, ambiguous } = result.matching;
+    if (matched.length > 0)
+      diagnostics.push({
+        severity: "info",
+        code: "definitions.matched-by-name",
+        message: `${matched.length} saved record(s) missing from the active content were matched to records with the same name; exports use the matched IDs.`,
+      });
+    for (const entry of ambiguous)
+      diagnostics.push({
+        severity: "warning",
+        code: "definitions.ambiguous-name",
+        message: `${entry.savedName} (${entry.type}) isn't in the active content, and ${entry.candidateIds.length} records share its name, so it wasn't matched.`,
+      });
+  }
   return {
     envelope: {
       format: "dnd4e",
@@ -697,12 +760,7 @@ export function importDnd4e(input: string): Dnd4eImportResult {
       levelCount,
       source: "legacy-cache",
     },
-    build: buildFrom(
-      root,
-      sheet,
-      Object.keys(rootAbilities).length === 0 ? abilities : rootAbilities,
-      textStrings,
-    ),
+    build,
     report: {
       diagnostics,
       ...(version === undefined ? {} : { rootVersion: version }),
@@ -714,6 +772,7 @@ export function importDnd4e(input: string): Dnd4eImportResult {
       lootCount: loot.length,
       unknownRootElements,
       usesLegacyCache: true,
+      ...(definitionMatching === undefined ? {} : { definitionMatching }),
     },
   };
 }

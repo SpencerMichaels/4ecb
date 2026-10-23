@@ -313,7 +313,8 @@ function elementIdentity(value: unknown): boolean {
     optionalString(identity.definitionId) &&
     typeof identity.name === "string" &&
     typeof identity.type === "string" &&
-    optionalString(identity.url)
+    optionalString(identity.url) &&
+    optionalString(identity.importedDefinitionId)
   );
 }
 

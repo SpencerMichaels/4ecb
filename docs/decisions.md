@@ -2613,6 +2613,37 @@ Consequences: a beastmaster with Inherent Bonuses or Epic Combatant shows
 lower beast-power numbers than the legacy sheet. Research notes are in the
 ignored `tmp/summon-research/`.
 
+### D096 — Import matches missing content by unique name and type
+
+Status: accepted (2026-10-23). Product-owner decision.
+
+Players' `.dnd4e` files built with content sources we don't ship save
+records under IDs our content lacks, though the same records exist under
+other IDs (a Hunter saved with `ID_FMP_CLASS_FEATURE_3327` "Aspects of the
+Wild (Hunter)", ours `ID_DBB_CLASS_FEATURE_100014`). Players often don't know
+which sources they used.
+
+Decision:
+
+- On `.dnd4e` import, a saved internal-id missing from the active content is
+  pointed at the content record with the same name and type when exactly one
+  exists. Names compare with XML entities decoded, whitespace collapsed and
+  case folded. Several same-named records means no match; the import warns
+  and lists the candidates.
+- A saved child of a matched record whose own name differs (a theme's
+  "Ghost of the Past Starting Feature", ours "Level 1 Ghost of the Past
+  Starting Feature") takes the one record of its type that the matched
+  parent grants at its level (the legacy record's `Level` specific) and the
+  build doesn't already hold. Nothing else is matched structurally.
+- It is the Settings option "Match missing content by name" (Importing
+  characters), on by default.
+- Each changed identity keeps its saved name and type and records the saved
+  ID as `importedDefinitionId`; the untouched original stays in
+  `legacyEnvelope.sourceXml`. Exports write the matched ID (D091). The
+  builder lists each match as a note in Diagnostics.
+
+Implemented in `packages/legacy-dnd4e/src/definition-matching.ts`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -9,6 +9,10 @@
  *   pnpm parity:baseline --accept        # ...then make this run the baseline
  *   pnpm parity:baseline --pack P.4ecp   # another pack
  *   pnpm parity:baseline FILE.dnd4e ...  # only these characters (no accept)
+ *   pnpm parity:baseline --no-name-matching  # keep saved IDs the pack lacks
+ *
+ * Characters import as the app imports them by default, matching saved IDs
+ * the pack lacks to same-named records (D096).
  *
  * Exits 1 when a mismatch key appears that the baseline did not have, or a
  * baseline character is missing from a full run.
@@ -138,6 +142,7 @@ function delta(
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const accept = args.includes("--accept");
+  const matchMissingByName = !args.includes("--no-name-matching");
   const packIndex = args.indexOf("--pack");
   const packPath =
     packIndex >= 0
@@ -163,7 +168,12 @@ async function main(): Promise<void> {
   const characters: CharacterBaseline[] = [];
   for (const file of files) {
     const xml = await readFile(resolve(file), "utf8");
-    characters.push(summarize(file, compareCharacterParity(xml, entities)));
+    characters.push(
+      summarize(
+        file,
+        compareCharacterParity(xml, entities, { matchMissingByName }),
+      ),
+    );
   }
   const sum = (
     pick: (

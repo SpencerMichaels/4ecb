@@ -269,10 +269,19 @@ function sortedRecord<T>(record: Readonly<Record<string, T>>): [string, T][] {
   );
 }
 
+/** What a file can carry: the saved ID a name match replaced is not written. */
+function semanticIdentity(
+  identity: BuildElementIdentity,
+): BuildElementIdentity {
+  const { importedDefinitionId, ...written } = identity;
+  void importedDefinitionId;
+  return written;
+}
+
 function semanticBuild(build: CharacterBuild): unknown {
   const paths = occurrencePaths(build);
   const occurrence = (value: BuildOccurrence): unknown => ({
-    identity: value.identity,
+    identity: semanticIdentity(value.identity),
     acquiredLevel: value.acquiredLevel,
     legality: value.legality,
     ...(value.replacesId === undefined
@@ -327,7 +336,7 @@ function semanticBuild(build: CharacterBuild): unknown {
     })),
     alternates: build.alternates.map((alternate) => ({
       selectName: alternate.selectName,
-      provider: alternate.provider,
+      provider: semanticIdentity(alternate.provider),
       choice: occurrence(alternate.choice),
     })),
     baseAbilities: sortedRecord(build.baseAbilities),

@@ -42,11 +42,23 @@ export async function loadPackEntities(
   return decodeContentPack(bytes.toString("utf8")).entities;
 }
 
+export interface CharacterParityOptions {
+  /** Import as the app does by default (Settings: "Match missing content
+   *  by name"); false keeps the file's IDs (`--no-name-matching`). */
+  readonly matchMissingByName?: boolean;
+}
+
 export function compareCharacterParity(
   xml: string,
   entities: readonly ContentEntity[],
+  options: CharacterParityOptions = {},
 ) {
-  const imported = importDnd4e(xml);
+  const imported = importDnd4e(
+    xml,
+    options.matchMissingByName === false
+      ? {}
+      : { matchMissingDefinitionsIn: entities },
+  );
   const input = projectBuildForEvaluation(imported.build, entities);
   const started = performance.now();
   const evaluated = evaluateCharacter(input, entities);
@@ -173,6 +185,15 @@ export function compareCharacterParity(
   );
   return {
     character: imported.snapshot.details.name,
+    nameMatching: {
+      matched: imported.report.definitionMatching?.matched.length ?? 0,
+      ambiguous: imported.report.definitionMatching?.ambiguous ?? [],
+      missingDefinitions: evaluated.diagnostics.flatMap((diagnostic) =>
+        diagnostic.code === "occurrence.missing-definition"
+          ? [diagnostic.message.replace(/^Missing content definition /, "")]
+          : [],
+      ),
+    },
     input: {
       level: input.level,
       savedOccurrences: input.occurrences.length,

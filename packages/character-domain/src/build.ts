@@ -5,6 +5,12 @@ export interface BuildElementIdentity {
   readonly name: string;
   readonly type: string;
   readonly url?: string;
+  /**
+   * The internal-id an imported file saved, kept when import pointed this
+   * element at a different content record of the same name because the
+   * active content lacked the saved ID. Exports write `definitionId`.
+   */
+  readonly importedDefinitionId?: string;
 }
 
 export interface BuildInventoryElement extends BuildElementIdentity {
