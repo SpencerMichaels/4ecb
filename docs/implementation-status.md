@@ -1,5 +1,57 @@
 # Implementation status
 
+## Player report: Oleander, and audit re-checks (2026-10-22)
+
+A player imported `oleander_9.dnd4e` (level 9 Pixie Warlock; now in the
+ignored `sample-chars/`). Fixed:
+
+- **Implement damage** (`2575583`, cache `v37`). Dual Implement Spellcaster
+  pairs hands like native `DetermineOffhand` and needs an arcane implement
+  power; `_ImplementEquiv` items (the Vistani Buzuq instrument) are implements;
+  `implement:damage(<augment>)` matches the augment bound to the row's item.
+  See `docs/rules-engine.md`.
+- **Owned unslotted loot executes** like native `ShouldExecute` (`9b8e67d`,
+  cache `v38`): the unequipped Bag of Holding and the Siberys Shard augment now
+  apply; slotted items stay inert until equipped.
+- **Missing content** (`057b054`). Missing-definition issues use the saved
+  name; holdings whose base or enchantment is missing get a "Content not
+  installed" marker and an issue (error if equipped, warning if carried); a
+  granted occurrence the pack lacks (homebrew skills, a homebrew proficiency)
+  can be removed from Diagnostics, undoably, and leaves the export.
+
+Oleander, legacy-cached parity on the private pack: stats 62/77 → 64/78, power
+fields 64/112 → 82/112. Every implement power matches legacy except Feast of
+Souls, where the save uses Charisma but every copy of the content (original,
+CBLoader-merged, ours) says Constitution and no native override applies: the
+save came from a machine with homebrew parts we lack (11 missing IDs). The
+other remaining mismatches are the homebrew DOMT Str/Dex items, and Weight,
+which the sheet totals from inventory. The other 17 samples are unchanged
+except Silaqui, which gained one Weight comparison of the same kind.
+
+**Why the coverage audit missed these.** Steps 1–4 checked presence, not
+numbers. Step 5 marked Dual Implement Spellcaster handled because code
+existed, marked dragonshard augments handled despite a "no augment slot model"
+note, and never listed `ShouldExecute`, because it was keyed on field names.
+None of the 26 legacy comparison files used these features. Follow-ups, all
+private-corpus tools with reports in ignored `tmp/`:
+
+- `pnpm audit:legacy-special-cases` (`3c29489`): 348 cases (137 new
+  field-keyed ones). A handled claim needs evidence (a public test or a private
+  sample) or is reported unverified; a note admitting a gap fails the audit.
+  43 not handled, 37 partial, 16 unverified.
+- `pnpm audit:modifiers` (`3d447ac`, `6754ad3`): probes every statadd, modify
+  and textstring shape by evaluation. 1,272 shapes: 261 applied, 34 partial,
+  932 ignored (mostly internal counters), 45 not probed.
+- `pnpm audit:parity-coverage`: the 18 comparison files exercise 155 shapes.
+- `pnpm evaluate:matrix` includes `sample-chars/` and defaults its pack
+  (`036d46a`).
+
+The ranked calculation gaps from these reports are queued in
+`docs/roadmap.md` ("Calculation-gap queue").
+
+Requested and deferred to M8: creating a custom item that travels with the
+character (the player's Deck of Many Things bonuses).
+
 ## Owner review round 2 (2026-10-22)
 
 From the owner's second pass through the visual review:

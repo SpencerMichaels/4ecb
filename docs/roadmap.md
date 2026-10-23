@@ -909,6 +909,40 @@ The following are continuous rather than deferred to a cleanup milestone:
 - documentation and architecture-decision updates; and
 - reproducible project-local Nix tooling.
 
+### Calculation-gap queue (2026-10-22)
+
+Ranked from `audit:legacy-special-cases`, `audit:modifiers`,
+`audit:parity-coverage` and `evaluate:matrix` (see implementation status,
+"Player report: Oleander"). Each item is confirmed on a sample or probe
+character before it is fixed, one slice per item.
+
+- **Tier 1, wrong numbers (proposed, awaiting owner go-ahead):**
+  1. Legacy-backed sample mismatches: Raidon Kane unarmed dice, Magic Missile
+     rows and extra Freezing Cloud/Fireball dice (Jim Darkmagic, Raistlin),
+     Geran Hulmaster's Parrying Longsword +1, Japheth's Curse of the Bloody
+     Fangs dice.
+  2. Unconditional `attack rolls` / `damage rolls` statadds never applied
+     (~100 records: Epic Combatant, cloth-armor non-proficiency, Inherent
+     Bonuses damage).
+  3. Attack key-ability overrides (native `OverrideStat`: `:key ability`
+     textstrings, `DMG:`/`HALF-DMG:`/`!`/`*`, `_KeyAbilityAs`, Key Ability
+     fields; ~90 records, e.g. Melee Training, Intelligent Blademaster).
+  4. Weapon `modify` overlays (Properties, Range, damage die) and weapon
+     selectors (multi-group weapons, two-handed, staff as Quarterstaff).
+  5. Power keyword channels (ki focuses, implement groups, instrument,
+     two-blade, two-weapon checks).
+  6. Mundane implement gear rows; Sneak Attack Weapons; hybrid armor
+     proficiency needing both halves.
+  7. Confirm whether target-less `modify` rules over-apply (may be a probe
+     artifact).
+- **Tier 2, missing reminders:** conditional defense, skill and speed
+  statadds (~1,000 records) and conditional damage textstrings.
+- **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
+  `UniversalClassSkill`, gated resistances.
+- **Owner decisions needed:** hybrid power alternation, augment versions
+  inheriting parent overrides, a builder control for binding augments, sheet
+  short descriptions (`_CS_ShortDescription`).
+
 Visual polish and exhaustive interface validation are intentionally not
 continuous speculative workstreams during early implementation. Each milestone
 must preserve sound semantic structure and usable functional controls. Product

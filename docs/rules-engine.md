@@ -327,14 +327,32 @@ explicitly activates them; no implicit campaign flag is synthesized.
 Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native
-`Dual Implement Spellcaster` exception is evaluated by exact feat identity/name:
-an implement attack made through the selected equipped main-hand implement adds
-the distinct equipped off-hand implement's enhancement to damage, with a named
-provenance component. If multiple equipped off-hand implements make that pair
-ambiguous, the engine adds no bonus rather than selecting one by inventory
-order. Public same-profile fixtures swap two unequal implement
-enhancements and require the bonus to follow the hand selection exactly. The
-ignored nine-character historical matrix remains cross-profile diagnostic
+`Dual Implement Spellcaster` exception is evaluated by exact feat identity/name
+and applies only to powers whose Keywords include both "implement" and
+"arcane". A row adds a different equipped implement's enhancement to damage,
+with a named provenance component: the main-hand row pairs with the single
+off-hand implement (no bonus if several make it ambiguous), an off-hand row
+pairs with the main-hand item, and with no hand selection each row uses native
+`DetermineOffhand` (the first other equipped weapon or non-ki-focus implement;
+`legacyOffhand` in `powers.ts`). A non-weapon item with `_ImplementEquiv`
+(e.g. an instrument) is an implement, as in native `LootImplement`. Public
+same-profile fixtures swap two unequal implement enhancements and require the
+bonus to follow the hand selection exactly; the private `oleander_9` sample
+matches legacy on every arcane implement row.
+
+A parenthesized stat limiter (`implement:damage(<name>)`) matches the row's
+base, its enchantment, or the augment bound to the row's item through the
+loot `augment` override (native `CalcKeywords` + `FindLoot`). Binding only
+arrives through import; there is no builder control for it yet.
+
+Owned loot executes like native `EquipLoot`/`ShouldExecute`: a holding runs
+its rules when equipped, or when owned and its base has an empty `Item Slot`
+or a non-empty `_AlwaysExecute`. Its enchantment runs with it unless an
+equipped Arms-slot base already occupies the arms slot and the enchantment is
+also Arms. Each definition runs once across holdings. Executing is not
+equipping: `wearing`/`not-wearing` predicates and weapon/implement rows still
+require an equipped holding (`lootExecutes`/`executedLoot` in `evaluator.ts`).
+The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 
 Power combat-stat selection follows native `CalcKeywords`/`IsKeyword` for
