@@ -10,6 +10,10 @@ import {
   type EvaluatedStat,
 } from "@4ecb/rules-engine";
 import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
+import {
+  conditionalModifiers,
+  type ConditionalModifier,
+} from "./conditional-modifiers";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
@@ -109,6 +113,9 @@ export interface SheetOverview {
   }[];
   readonly saves: string;
   readonly defensiveTraits: readonly DefensiveTrait[];
+  /** Conditional defense, initiative, speed, skill, check, healing-surge and
+   *  ally-facing bonuses, each with its condition and source. */
+  readonly conditionalModifiers: readonly ConditionalModifier[];
   readonly bloodied: string;
   readonly vision: string;
   readonly features: readonly OverviewFeature[];
@@ -601,6 +608,10 @@ export function withSheetOverview(
               other.value === entry.value &&
               other.source === entry.source,
           ) === index,
+      ),
+      conditionalModifiers: conditionalModifiers(
+        input.evaluatedStats ?? {},
+        model.skills.map(({ label }) => label),
       ),
       abilities: model.abilities.map(({ label, value }) => {
         const score = number(value);

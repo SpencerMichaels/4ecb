@@ -125,6 +125,11 @@ export type {
   OverviewFeature,
   OverviewInventory,
 } from "./overview";
+export {
+  conditionalModifiers,
+  type ConditionalModifier,
+  type ConditionalModifierSurface,
+} from "./conditional-modifiers";
 
 /** Content types listed by name in the sheet's features section. */
 export const SHEET_FEATURE_TYPES: readonly string[] = [
