@@ -17,6 +17,7 @@ import {
 import { storeAlreadyValidatedContentPack } from "@4ecb/browser-storage/validated-pack-storage";
 
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
+import { IMPORT_NAME_MATCHING_STORAGE_KEY } from "./import-report";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
@@ -182,6 +183,13 @@ export function App() {
       return false;
     }
   });
+  const [matchContentByName, setMatchContentByName] = useState(() => {
+    try {
+      return localStorage.getItem(IMPORT_NAME_MATCHING_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
   const [mergeFunds, setMergeFunds] = useState(() => {
     try {
       return localStorage.getItem(MERGE_FUNDS_STORAGE_KEY) !== "0";
@@ -316,6 +324,15 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [proficientEquipmentOnly]);
+  useEffect(() => {
+    try {
+      if (matchContentByName)
+        localStorage.removeItem(IMPORT_NAME_MATCHING_STORAGE_KEY);
+      else localStorage.setItem(IMPORT_NAME_MATCHING_STORAGE_KEY, "0");
+    } catch {
+      // The import preference still applies for this session.
+    }
+  }, [matchContentByName]);
   useEffect(() => {
     try {
       if (mergeFunds) localStorage.removeItem(MERGE_FUNDS_STORAGE_KEY);
@@ -583,6 +600,8 @@ export function App() {
                       onShowEntitySourceChange={setShowEntitySource}
                       mergeFunds={mergeFunds}
                       onMergeFundsChange={setMergeFunds}
+                      matchContentByName={matchContentByName}
+                      onMatchContentByNameChange={setMatchContentByName}
                       countCoinWeight={countCoinWeight}
                       onCountCoinWeightChange={setCountCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
@@ -604,6 +623,7 @@ export function App() {
                   ) : route.characterId === undefined ? (
                     <CharacterLibraryPage
                       manifests={manifests}
+                      matchMissingContentByName={matchContentByName}
                       {...(activePackId === undefined ? {} : { activePackId })}
                       {...(activeProfile === undefined
                         ? {}

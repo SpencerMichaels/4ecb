@@ -33,6 +33,7 @@ import {
   evaluationFailedIssue,
   deityAlignmentIssue,
   missingHoldingContentIssues,
+  nameMatchedContentIssues,
   withCharacterIssues,
   type BuilderIssue,
 } from "./builder-diagnostics";
@@ -1322,12 +1323,14 @@ export function CharacterEditorPage({
       ...(contentMissing || byId.size === 0
         ? []
         : missingHoldingContentIssues(build, byId)),
+      ...nameMatchedContentIssues(build, byId),
     ],
   );
   const totalUnresolved = builderIssues.unresolved.length;
   const warningCount = builderIssues.warnings.length;
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
+  const noteCount = builderIssues.notes.length;
   const contentUpdate = builderIssues.updates[0];
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
     setAccordionOverride(undefined);
@@ -1800,6 +1803,12 @@ export function CharacterEditorPage({
         "Rules the evaluator preserved but cannot fully verify or calculate.",
       issues: builderIssues.warnings,
     },
+    {
+      title: "Matched by name on import",
+      description:
+        "Records the imported file saved under IDs the game content doesn't have, matched to content records. Nothing to fix; check they're the ones you meant.",
+      issues: builderIssues.notes,
+    },
   ];
   const renderIssueList = (issues: readonly BuilderIssue[]) => (
     <ul className="diagnostic-list">
@@ -2232,6 +2241,20 @@ export function CharacterEditorPage({
                   >
                     <Icon name="circle-x" />
                     <span aria-hidden="true">{errorCount}</span>
+                  </button>
+                ) : null}
+                {noteCount > 0 ? (
+                  <button
+                    aria-label={`${noteCount} ${noteCount === 1 ? "record" : "records"} matched by name on import, open diagnostics`}
+                    className="builder-health builder-health-note"
+                    title={`${noteCount} ${noteCount === 1 ? "record" : "records"} matched by name on import`}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(characterId, { workspace: "diagnostics" })
+                    }
+                  >
+                    <Icon name="import" />
+                    <span aria-hidden="true">{noteCount}</span>
                   </button>
                 ) : null}
                 {contentUpdate === undefined ? null : (

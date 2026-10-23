@@ -4,6 +4,7 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { matchableName, nameMatchedIdentities } from "@4ecb/legacy-dnd4e";
 import type {
   EngineDiagnostic,
   EvaluatedCharacter,
@@ -20,7 +21,7 @@ import {
 import { inventoryDisplayName, missingInventoryElements } from "./equipment-ui";
 
 export type BuilderIssueKind =
-  "unresolved" | "warning" | "error" | "house-rule" | "update";
+  "unresolved" | "warning" | "error" | "house-rule" | "update" | "note";
 
 export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
@@ -50,6 +51,8 @@ export interface BuilderIssueGroups {
   readonly houseRules: readonly BuilderIssue[];
   /** News, not problems: an available game-content update. */
   readonly updates: readonly BuilderIssue[];
+  /** Not problems: how import read the file (records matched by name). */
+  readonly notes: readonly BuilderIssue[];
 }
 
 function selectedOccurrence(
@@ -263,6 +266,41 @@ export function missingHoldingContentIssues(
 }
 
 /**
+ * Saved records an import pointed at a same-named content record because
+ * the file's ID wasn't in the content (Settings: "Match missing content by
+ * name"). Read from the build, so they stay listed after import.
+ */
+export function nameMatchedContentIssues(
+  build: CharacterBuild,
+  byId: ReadonlyMap<string, ContentEntity>,
+): BuilderIssue[] {
+  return nameMatchedIdentities(build).map((match) => {
+    const name = byId.get(match.definitionId.toLocaleLowerCase())?.name;
+    const sameName =
+      name === undefined ||
+      matchableName(name) === matchableName(match.savedName);
+    return {
+      key: `import:matched:${match.savedId}`,
+      kind: "note",
+      title: `${name ?? match.savedName} (${match.type})`,
+      detail: sameName
+        ? `Your file saved it as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, the one record with the same name and type.`
+        : `Your file saved “${match.savedName}” as ${match.savedId}, which the game content doesn't have, so it uses ${match.definitionId}, which the matched record above it grants in its place.`,
+      effect:
+        "The character and its exports use the matched record. Check it's the one you meant.",
+      ...(match.inventoryEntryId === undefined
+        ? {}
+        : {
+            target: {
+              kind: "inventory" as const,
+              entryId: match.inventoryEntryId,
+            },
+          }),
+    };
+  });
+}
+
+/**
  * Classes bound to their deity's alignment (Paladin, Invoker…) may still pick
  * another one; a mismatch marks the character as house-ruled.
  */
@@ -319,6 +357,10 @@ export function withCharacterIssues(
       ...groups.updates,
       ...issues.filter((issue) => issue.kind === "update"),
     ],
+    notes: [
+      ...groups.notes,
+      ...issues.filter((issue) => issue.kind === "note"),
+    ],
   };
 }
 
@@ -347,6 +389,7 @@ export function builderIssueGroups({
       errors: [],
       houseRules: [],
       updates: [],
+      notes: [],
     };
   const savedNames = savedOccurrenceNames(build);
   const label = (choice: EvaluatedChoice): string =>
@@ -650,5 +693,6 @@ export function builderIssueGroups({
       ),
     ]),
     updates: [],
+    notes: [],
   };
 }

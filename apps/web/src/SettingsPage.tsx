@@ -117,6 +117,8 @@ export interface SettingsPageProps {
   readonly onCountCoinWeightChange: (value: boolean) => void;
   readonly mergeFunds: boolean;
   readonly onMergeFundsChange: (value: boolean) => void;
+  readonly matchContentByName: boolean;
+  readonly onMatchContentByNameChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
   readonly proficientEquipmentOnly: boolean;
@@ -188,6 +190,8 @@ export function SettingsPage({
   onCountCoinWeightChange,
   mergeFunds,
   onMergeFundsChange,
+  matchContentByName,
+  onMatchContentByNameChange,
   resolveAbilityChoices,
   onResolveAbilityChoicesChange,
   proficientEquipmentOnly,
@@ -650,6 +654,24 @@ export function SettingsPage({
                   cards that still overflow.
                 </p>
               </div>
+            </div>
+          </section>
+
+          <section className="panel settings-section">
+            <div>
+              <h3>Importing characters</h3>
+              <p>
+                Options for opening .dnd4e files from the original Character
+                Builder.
+              </p>
+            </div>
+            <div className="settings-options">
+              <CheckboxSetting
+                checked={matchContentByName}
+                onChange={onMatchContentByNameChange}
+                label="Match missing content by name"
+                help="When a file uses a record your content doesn't have, use the one record with the same name and type instead, and list each match after the import. Turn off to keep the file's records as missing content."
+              />
             </div>
           </section>
 

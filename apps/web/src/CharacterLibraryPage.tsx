@@ -12,6 +12,7 @@ import { importDnd4e } from "@4ecb/legacy-dnd4e";
 
 import { activeProfileBinding } from "./content-update";
 import { Icon } from "./Icon";
+import { importReportToast } from "./import-report";
 import { UpdateButton } from "./PwaUpdate";
 import { BuildVersion } from "./BuildVersion";
 import { createNativeCharacter } from "./new-character";
@@ -44,12 +45,15 @@ export interface CharacterLibraryPageProps {
   readonly manifests: readonly ContentPackManifest[];
   readonly activePackId?: string;
   readonly activeProfile?: ContentProfileDefinition;
+  /** Settings: point saved IDs the active content lacks at same-named records. */
+  readonly matchMissingContentByName?: boolean;
 }
 
 export function CharacterLibraryPage({
   manifests,
   activePackId,
   activeProfile,
+  matchMissingContentByName = true,
 }: CharacterLibraryPageProps) {
   const [characters, setCharacters] = useState<
     readonly CharacterLibraryEntry[]
@@ -125,7 +129,15 @@ export function CharacterLibraryPage({
     }
     if (file.size > 10 * 1024 * 1024)
       throw new Error("Character file exceeds the 10 MiB import limit");
-    const imported = importDnd4e(await file.text());
+    const text = await file.text();
+    const content =
+      matchMissingContentByName && activePackId !== undefined
+        ? (await contentRepository.get(activePackId))?.entities
+        : undefined;
+    const imported = importDnd4e(
+      text,
+      content === undefined ? {} : { matchMissingDefinitionsIn: content },
+    );
     const manifest = manifests.find(
       (candidate) => candidate.packId === activePackId,
     );
@@ -143,17 +155,8 @@ export function CharacterLibraryPage({
     );
     await repository.put(character);
     await refresh();
-    const warnings = imported.report.diagnostics.filter(
-      (diagnostic) => diagnostic.severity !== "info",
-    );
-    if (warnings.length > 0)
-      pushToast({
-        tone: warnings.some((warning) => warning.severity === "error")
-          ? "error"
-          : "warning",
-        title: `Imported ${character.title} with warnings`,
-        messages: warnings.map((warning) => warning.message),
-      });
+    const toast = importReportToast(character.title, imported.report);
+    if (toast !== undefined) pushToast(toast);
   }
 
   /** A .4ecb package keeps its own content binding and portrait; it is
