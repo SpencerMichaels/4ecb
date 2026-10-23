@@ -444,12 +444,11 @@ Settings → Builder & Equipment.
     should learn it straight away (one allowance, no dialog).
   - **Expect:** a dialog "Learn Tenser's Floating Disk free" with "Use a free
     ritual from" radio buttons, one per allowance, plus "None (a gift)", and
-    Cancel and Learn free buttons. Cancel learns nothing.
-  - **Wrong if:** the psion learns it without asking, or the wizard gets the
-    dialog.
-  - **Known issue:** a psion has two allowances, any 1st-level ritual and one of
-    Sending or Tenser's Floating Disk. Both name their provider "Psion", so the
-    two radio buttons read the same.
+    Cancel and Learn free buttons. Cancel learns nothing. The psion's two
+    options read "Psion · 1 free 1st-level ritual left" and "Psion · 1 free
+    ritual left: Sending or Tenser's Floating Disk" (the part after "·" in grey).
+  - **Wrong if:** the psion learns it without asking, the wizard gets the
+    dialog, or two options read the same.
 - [ ] **Known-list source line:** "Learned free at level N (Spellbook)".
   - **Where:** `wizard-gnome` → `edit?tab=rituals`.
   - **Expect:** Comprehend Language's grey line reads "Learned free at level 1

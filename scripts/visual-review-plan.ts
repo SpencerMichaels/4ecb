@@ -116,7 +116,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Benefits by level",
-            "The White Well pact's level sections, viewed at levels 1, 9 and 12 (change the Build level); also Alchemist, Feytouched and Archmage.",
+            "The White Well pact's level sections (the pact choice exists only at Build level 1, so only Level 1 starts open; open the later sections by clicking them); also Alchemist, Feytouched and Archmage.",
           ],
           [
             "Class detail card",
@@ -227,7 +227,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Benefits by level",
-            "The White Well pact's level sections with Legendary Hexblade chosen: only its path section (the White Well's own features at levels 11, 12, 16 and 20). Change the Build level to 11 and 25 to see the sections open.",
+            "The White Well pact's level sections with Legendary Hexblade chosen: only its path section (the White Well's own features at levels 11, 12, 16 and 20). The pact choice is only on Build level 1, so only Level 1 starts open; click the others open.",
           ],
         ],
       },
@@ -520,7 +520,7 @@ const reviews: ReviewCharacter[] = [
           ["Gnome characters", "The gnome loads and evaluates."],
           [
             "Other detail stacks",
-            "Race list: select Genasi — Elemental Manifestation with its sub-options (~26 cards).",
+            "Race list: select Genasi. Its race card lists Elemental Manifestation as one paragraph inside the card (expected); the ~26-card stack appears only where the manifestation itself is the option.",
           ],
         ],
       },
@@ -530,7 +530,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Other detail stacks",
-            "Class list: Warlord (Commanding Presence) and Cleric (Channel Divinity lists 12 powers).",
+            "Class list: Warlord and Cleric. Their class cards list Commanding Presence and Channel Divinity as one paragraph each inside the card (expected); the stacks appear only where the feature itself is the option.",
           ],
         ],
       },
@@ -583,7 +583,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             '"Learn X free" dialog',
-            'Learn rituals → Tenser\'s Floating Disk → Learn free: both Spellbook pools fit, so a dialog offers a pool, "None (a gift)" or Cancel.',
+            'Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion: New → Psion class at level 1 → Rituals → Learn rituals → Tenser\'s Floating Disk → Learn free. Each option reads "Psion · …" with what that allowance still covers.',
           ],
         ],
       },
@@ -1261,11 +1261,11 @@ const general: GeneralSection[] = [
   {
     title: "Character library",
     steps:
-      "Open #/characters. Check in light and dark themes and at 140% zoom. The review characters give a populated table; the Update waiting and Missing content copies exercise the header Update button and the role line error.",
+      "Open #/characters. Check in light and dark themes and at 140% zoom. The review characters give a populated table; the Missing content copy exercises the role line error. (The header's Update button is the app's own update and appears only when a new app version is waiting; no review copy makes it show.)",
     items: [
       [
         "Header",
-        "New, Import, Trash + count, divider, Update (the Update waiting copy makes it show), Settings; labels collapse at phone width; New's disabled tooltip (turn content off in Settings to see it).",
+        "New, Import, Trash + count, divider, Update (only when a new app version is waiting), Settings; labels collapse at phone width; New's disabled tooltip (turn content off in Settings to see it).",
       ],
       [
         "Table",
