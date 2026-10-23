@@ -7,16 +7,20 @@ import {
   type EvaluatedContribution,
   type EvaluatedStat,
 } from "@4ecb/rules-engine";
+import {
+  conditionalModifiers,
+  type ConditionalModifier,
+} from "@4ecb/sheet-model";
 
 import { StatGroup, type StatTileValue } from "./StatTiles";
 
 type HeaderEvaluation = Pick<EvaluatedCharacter, "stats">;
 
 const defenses = [
-  ["AC", ["AC", "Armor Class"]],
-  ["Fort", ["Fortitude Defense", "Fortitude"]],
-  ["Ref", ["Reflex Defense", "Reflex"]],
-  ["Will", ["Will Defense", "Will"]],
+  ["AC", ["AC", "Armor Class"], "AC"],
+  ["Fort", ["Fortitude Defense", "Fortitude"], "Fortitude"],
+  ["Ref", ["Reflex Defense", "Reflex"], "Reflex"],
+  ["Will", ["Will Defense", "Will"], "Will"],
 ] as const;
 
 const abilities = [
@@ -171,17 +175,45 @@ function contributionLine(contribution: TooltipContribution): string {
   return `${contribution.label} ${contribution.value}`;
 }
 
+/** The tile's conditional bonuses (sheet-model conditionalModifiers, the
+ *  page-1 pane's source), each with its condition and source. */
+function conditionalLines(
+  conditional: readonly ConditionalModifier[],
+): string[] {
+  return conditional.length === 0
+    ? []
+    : [
+        "Conditional:",
+        ...conditional.map(({ text, source }) => `${text} (${source})`),
+      ];
+}
+
 function statTooltip(
   label: string,
   value: string,
   stat: EvaluatedStat,
+  conditional: readonly ConditionalModifier[] = [],
 ): string {
   return [
     `${label} ${value}`,
     ...collapsePerLevelHitPoints(appliedContributions(stat)).map(
       contributionLine,
     ),
+    ...conditionalLines(conditional),
   ].join("\n");
+}
+
+/** The character's own conditional bonuses by the stat they modify. */
+function conditionalByTarget(
+  evaluation: HeaderEvaluation | undefined,
+): (target: string) => readonly ConditionalModifier[] {
+  const modifiers =
+    evaluation === undefined
+      ? []
+      : conditionalModifiers(evaluation.stats, []).filter(
+          (modifier) => modifier.surface !== "allies",
+        );
+  return (target) => modifiers.filter((modifier) => modifier.target === target);
 }
 
 function statTile(
@@ -191,16 +223,22 @@ function statTile(
   signed = false,
   /** Full name for the tooltip when the tile label is abbreviated. */
   tooltipLabel = label,
+  conditional: readonly ConditionalModifier[] = [],
 ): StatTileValue {
   const stat = evaluatedStat(evaluation, names);
   const value = displayValue(stat, signed);
   return typeof stat?.value === "number"
-    ? { label, value, title: statTooltip(tooltipLabel, value, stat) }
+    ? {
+        label,
+        value,
+        title: statTooltip(tooltipLabel, value, stat, conditional),
+      }
     : { label, value };
 }
 
 function surgeValueTile(
   evaluation: HeaderEvaluation | undefined,
+  conditional: readonly ConditionalModifier[] = [],
 ): StatTileValue {
   const total =
     evaluation === undefined
@@ -219,6 +257,7 @@ function surgeValueTile(
       ...(bonus === undefined
         ? []
         : appliedContributions(bonus).map(contributionLine)),
+      ...conditionalLines(conditional),
     ].join("\n"),
   };
 }
@@ -276,6 +315,7 @@ export function BuilderCharacterStats({
 }: {
   readonly evaluation?: HeaderEvaluation | undefined;
 }) {
+  const conditional = conditionalByTarget(evaluation);
   return (
     <section aria-label="Key statistics" className="builder-character-stats">
       <StatGroup
@@ -290,8 +330,8 @@ export function BuilderCharacterStats({
       <StatGroup
         label="Defenses"
         tone="defenses"
-        values={defenses.map(([label, names]) =>
-          statTile(evaluation, label, names),
+        values={defenses.map(([label, names, target]) =>
+          statTile(evaluation, label, names, false, label, conditional(target)),
         )}
       />
       <StatGroup
@@ -300,20 +340,45 @@ export function BuilderCharacterStats({
         values={[
           statTile(evaluation, "Max HP", "Hit Points"),
           bloodiedTile(evaluation),
-          statTile(evaluation, "Surges", "Healing Surges"),
-          surgeValueTile(evaluation),
+          statTile(
+            evaluation,
+            "Surges",
+            "Healing Surges",
+            false,
+            "Surges",
+            conditional("Healing Surges"),
+          ),
+          surgeValueTile(evaluation, conditional("Healing Surge Value")),
         ]}
       />
       <div className="builder-character-stat-row">
         <StatGroup
           label="Initiative"
           tone="movement"
-          values={[statTile(evaluation, "Init", "Initiative", true)]}
+          values={[
+            statTile(
+              evaluation,
+              "Init",
+              "Initiative",
+              true,
+              "Init",
+              conditional("Initiative"),
+            ),
+          ]}
         />
         <StatGroup
           label="Speed"
           tone="movement"
-          values={[statTile(evaluation, "Speed", "Speed")]}
+          values={[
+            statTile(
+              evaluation,
+              "Speed",
+              "Speed",
+              false,
+              "Speed",
+              conditional("Speed"),
+            ),
+          ]}
         />
         <StatGroup
           label="Passive senses"

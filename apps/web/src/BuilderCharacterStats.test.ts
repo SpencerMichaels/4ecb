@@ -281,3 +281,72 @@ describe("BuilderCharacterStats Play-card arrangement", () => {
     );
   });
 });
+
+describe("BuilderCharacterStats conditional bonuses", () => {
+  it("lists a tile's own conditional bonuses in its tooltip", () => {
+    const conditional = (
+      statName: string,
+      value: string,
+      condition: string,
+      providerName: string,
+    ) =>
+      contribution({
+        id: `${providerName}:0`,
+        stat: statName,
+        value,
+        condition,
+        providerName,
+        applied: false,
+        reason: "conditional",
+        numericValue: Number(value),
+      });
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {
+        evaluation: {
+          stats: {
+            AC: {
+              name: "AC",
+              value: 18,
+              contributions: [
+                contribution({ providerName: "Armor", value: "+8" }),
+                conditional(
+                  "AC",
+                  "+4",
+                  "against opportunity attacks",
+                  "Synthetic style",
+                ),
+              ],
+            },
+            Speed: {
+              name: "Speed",
+              value: 6,
+              contributions: [
+                conditional("Speed", "+2", "when charging", "Synthetic stride"),
+              ],
+            },
+            "ALLY.AC": {
+              name: "ALLY.AC",
+              value: 0,
+              contributions: [
+                conditional(
+                  "ALLY.AC",
+                  "+1",
+                  "while adjacent",
+                  "Synthetic aura",
+                ),
+              ],
+            },
+          },
+        },
+      }),
+    );
+    expect(markup).toContain(
+      'title="AC 18\nArmor +8\nConditional:\n+4 to AC against opportunity attacks (Synthetic style)"',
+    );
+    expect(markup).toContain(
+      'title="Speed 6\nConditional:\n+2 to speed when charging (Synthetic stride)"',
+    );
+    // Ally bonuses are not the character's own.
+    expect(markup).not.toContain("Synthetic aura");
+  });
+});
