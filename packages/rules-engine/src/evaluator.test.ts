@@ -179,6 +179,106 @@ describe("character evaluator", () => {
         ?.targetDefinitionIds,
     ).toEqual(["CHOSEN"]);
   });
+  describe("a `modify` with neither name nor select", () => {
+    const powers = [
+      entity("LIGHT", "Light", "Power", {
+        specifics: { "Power Usage": "Encounter" },
+      }),
+      entity("BOLT", "Bolt", "Power", {
+        specifics: { "Power Usage": "Encounter" },
+      }),
+      entity("OTHER", "Other power", "Power", {
+        specifics: { "Power Usage": "Daily" },
+      }),
+    ];
+    const usageModify = (ordinal: number) =>
+      rule("modify", { Field: "Power Usage", value: "At-Will" }, ordinal);
+    const evaluateWith = (
+      rules: ReturnType<typeof rule>[],
+      extra: CharacterOccurrence[] = [],
+    ) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "item",
+              definitionId: "ITEM",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "other",
+              definitionId: "OTHER",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            ...extra,
+          ],
+          inventory: [],
+        },
+        [
+          entity("ROOT", "1", "Level"),
+          entity("ITEM", "Gauntlets", "Feat", { rules }),
+          ...powers,
+        ],
+      );
+    const usageTargets = (evaluated: ReturnType<typeof evaluateCharacter>) =>
+      evaluated.overlays
+        .filter(({ field }) => field === "Power Usage")
+        .map(({ targetDefinitionIds }) => targetDefinitionIds);
+
+    it("targets only the record the preceding grant made", () => {
+      const evaluated = evaluateWith([
+        rule("grant", { name: "LIGHT", type: "Power" }, 0),
+        usageModify(1),
+      ]);
+      expect(usageTargets(evaluated)).toEqual([["LIGHT"]]);
+    });
+    it("does nothing before the provider has made a child", () => {
+      const evaluated = evaluateWith([
+        usageModify(0),
+        rule("grant", { name: "LIGHT", type: "Power" }, 1),
+      ]);
+      expect(usageTargets(evaluated)).toEqual([[]]);
+    });
+    it("targets the most recent of several children", () => {
+      const evaluated = evaluateWith([
+        rule("grant", { name: "LIGHT", type: "Power" }, 0),
+        rule("statadd", { name: "Speed", value: "1" }, 1),
+        rule("grant", { name: "BOLT", type: "Power" }, 2),
+        usageModify(3),
+      ]);
+      expect(usageTargets(evaluated)).toEqual([["BOLT"]]);
+    });
+    it("targets a preceding select's last chosen slot, or nothing", () => {
+      const select = rule("select", { type: "Power", number: "2" }, 0);
+      const chosen = (choiceIndex: number, definitionId: string) => ({
+        id: `chosen-${choiceIndex}`,
+        definitionId,
+        acquiredLevel: 1,
+        parentId: "item",
+        ruleOrdinal: 0,
+        choiceIndex,
+        kind: "choice" as const,
+      });
+      expect(
+        usageTargets(
+          evaluateWith(
+            [select, usageModify(1)],
+            [chosen(0, "LIGHT"), chosen(1, "BOLT")],
+          ),
+        ),
+      ).toEqual([["BOLT"]]);
+      expect(
+        usageTargets(
+          evaluateWith([select, usageModify(1)], [chosen(0, "LIGHT")]),
+        ),
+      ).toEqual([[]]);
+    });
+  });
   it("keeps every textstring contribution with its source", () => {
     const occurrence = (id: string): CharacterOccurrence => ({
       id: `own-${id}`,

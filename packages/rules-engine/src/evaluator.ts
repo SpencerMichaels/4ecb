@@ -49,7 +49,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v49-2026-10-23-implement-as-class";
+  "evaluated-character-v50-2026-10-23-nameless-modify-child";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1779,7 +1779,8 @@ function evaluateCharacterInternal(
     // Race "Skill Bonuses" and background "Benefit" text is display-only: the
     // native engine never reads either field, and content grants the real
     // bonuses through rules (parsing the text double-counted them).
-    for (const rule of parseRules(entity.id, entity.rules)) {
+    const entityRules = parseRules(entity.id, entity.rules);
+    for (const rule of entityRules) {
       if (
         !activeAt(rule, input.level) ||
         !ruleRequiresMet(
@@ -2150,7 +2151,14 @@ function evaluateCharacterInternal(
             equipmentPredicate(equipment, rule.wearing)
           )
             overlays.push(
-              overlay(rule, occurrence, occurrences, index, baseItemIds),
+              overlay(
+                rule,
+                occurrence,
+                entityRules,
+                occurrences,
+                index,
+                baseItemIds,
+              ),
             );
           break;
         case "suggest": {
@@ -2755,9 +2763,57 @@ export function evaluateCharacter(
   return evaluated;
 }
 
+/**
+ * Native ProcessModify with neither `name` nor `select` walks the
+ * provider's child list up to the rule's cursor and modifies the element of
+ * the last child created so far. ExecuteRules runs the provider's rules in
+ * order, and each grant and replace makes one child (VerifyChild) and each
+ * select `number` children, whatever their level or conditions; drops and
+ * other statements make none. So the target is the preceding grant's record
+ * (FindGrantElement) or what the preceding replace, or the preceding
+ * select's last slot, chose. With no child yet, or an empty slot, nothing is
+ * modified (Gauntlets of Brilliance makes only Light at-will, Student of
+ * Battle only Inspiring Word daily).
+ */
+function precedingChildTarget(
+  rule: ModifyRule,
+  providerRules: readonly ExecutableRule[],
+  provider: CharacterOccurrence,
+  occurrences: readonly CharacterOccurrence[],
+  index: RulesIndex,
+): string | undefined {
+  let child: ExecutableRule | undefined;
+  for (const candidate of providerRules) {
+    if (candidate.source.ordinal >= rule.source.ordinal) break;
+    if (
+      candidate.kind === "grant" ||
+      candidate.kind === "replace" ||
+      (candidate.kind === "select" && candidate.number > 0)
+    )
+      child = candidate;
+  }
+  if (child === undefined) return undefined;
+  const childRule = child;
+  const lastSlot = childRule.kind === "select" ? childRule.number - 1 : 0;
+  const created = occurrences.find(
+    (occurrence) =>
+      occurrence.parentId === provider.id &&
+      occurrence.ruleOrdinal === childRule.source.ordinal &&
+      (childRule.kind !== "select" ||
+        (occurrence.choiceIndex ?? 0) === lastSlot),
+  );
+  if (created !== undefined) return created.definitionId;
+  // A grant whose record another provider already supplies makes no
+  // occurrence of its own; native still targets the granted record.
+  return childRule.kind === "grant"
+    ? index.find(childRule.name, childRule.type)?.id
+    : undefined;
+}
+
 function overlay(
   rule: ModifyRule,
   provider: CharacterOccurrence,
+  providerRules: readonly ExecutableRule[],
   occurrences: readonly CharacterOccurrence[],
   index: RulesIndex,
   baseItemIds: ReadonlyMap<string, string>,
@@ -2773,6 +2829,28 @@ function overlay(
       providerOccurrenceId: provider.id,
       targetDefinitionIds: baseId === undefined ? [] : [baseId],
       targetName: rule.name,
+      field: rule.field,
+      ...(rule.value === undefined ? {} : { value: rule.value }),
+      ...(rule.listAddition === undefined
+        ? {}
+        : { listAddition: rule.listAddition }),
+      ...(rule.dieIncrease === undefined
+        ? {}
+        : { dieIncrease: rule.dieIncrease }),
+    };
+  }
+  if (rule.name === undefined && rule.select === undefined) {
+    const target = precedingChildTarget(
+      rule,
+      providerRules,
+      provider,
+      occurrences,
+      index,
+    );
+    return {
+      providerOccurrenceId: provider.id,
+      targetDefinitionIds: target === undefined ? [] : [target],
+      ...(rule.type === undefined ? {} : { targetType: rule.type }),
       field: rule.field,
       ...(rule.value === undefined ? {} : { value: rule.value }),
       ...(rule.listAddition === undefined

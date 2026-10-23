@@ -1213,8 +1213,8 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "character-domain inventory overrides",
     ),
     "?A0x03aa98b1.ProcessModify": partial(
-      "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes.",
-      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; item-fields.ts overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A 'this' modify with conditions (Unforgettable Cudgel's _PowerstatKeywords, Warsoul Weapon's prereqs) is not applied",
+      "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes; a modify with neither name nor select targets the provider's most recent child.",
+      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; item-fields.ts overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A 'this' modify with conditions (Unforgettable Cudgel's _PowerstatKeywords, Warsoul Weapon's prereqs) is not applied. A modify with neither name nor select (precedingChildTarget) walks the provider's child list (me[13]) up to the rule cursor: one child per grant and replace, number per select, in rule order regardless of level or conditions, so it targets the preceding grant's record or what the preceding replace or select's last slot chose, and nothing before any child or for an empty slot",
       test(
         EVALUATOR,
         "resolves weapon and armor fields through modify overlays, including BaseItem",
@@ -1224,6 +1224,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "targets records by name, ID, type and Large size, never by context name",
       ),
       test(ITEM_FIELDS, "steps dice through the native one-handed table"),
+      test(EVALUATOR, "targets only the record the preceding grant made"),
+      test(EVALUATOR, "does nothing before the provider has made a child"),
+      test(EVALUATOR, "targets the most recent of several children"),
+      test(
+        EVALUATOR,
+        "targets a preceding select's last chosen slot, or nothing",
+      ),
+      fixture(
+        "CharacterBuilder/SampleChars/SampleHeroes/GeranHulmaster.dnd4e",
+        "Gauntlets of Brilliance (heroic tier) grants Light, then a nameless modify Power Usage At-Will: only Light is at-will (usage 21/21)",
+      ),
+      fixture(
+        "CharacterBuilder/SampleChars/SampleHeroes/Omin_Dran.dnd4e",
+        "Student of Battle grants Inspiring Word, then nameless Power Usage Daily and Special modifies: only Inspiring Word changes (usage 13/13)",
+      ),
     ),
 
     // --- D20RulesEngine: power math -------------------------------------
