@@ -19,10 +19,18 @@ fields 882/965 → 882/953.
 Everything in `sample-chars/`, and the batches the owner supplies, was saved
 by the newest legacy builder. "Content revision" is therefore not an
 acceptable classification for a `sample-chars/` difference on its own. It
-needs evidence that the saver's content differed from ours. Under that rule
-the classifications of Hystan's 2 lb weight difference and Oleander's Feast of
-Souls are open again. Oleander's missing homebrew items are a difference
-between the saver's CBLoader parts and our corpus, not staleness.
+needs evidence that the saver's content differed from ours.
+
+- **Oleander** is another player's character. Its save references 10 homebrew
+  records that are in no copy of our corpus, so its saver's CBLoader parts
+  provably differ from ours. Its differences are expected unless we get those
+  parts. That includes Feast of Souls: the published power (also at
+  iws.mx/dnd, power 4098) uses Constitution, so the cache's Charisma most
+  likely comes from the saver's own content.
+- **Hystan** (2 lb weight difference) is open again. If the saver used the
+  owner's CBLoader setup, Camouflaged Clothing should weigh the corrected 6 lb,
+  so check how we compose that part against CBLoader. To be re-examined with
+  the owner's next batch of current-builder saves.
 
 | Character       | Stats before → after | Power fields before → after |
 | --------------- | -------------------- | --------------------------- |
