@@ -1785,6 +1785,7 @@ export function buildEvaluatedSheetModel(
           return {
             name: definition?.name ?? element.name,
             type: definition?.type ?? element.type,
+            magicItemType: field(definition, "Magic Item Type"),
           };
         }) ??
         entry.definitionIds.map((id) => {
@@ -1792,6 +1793,7 @@ export function buildEvaluatedSheetModel(
           return {
             name: definition?.name ?? id,
             type: definition?.type ?? "",
+            magicItemType: field(definition, "Magic Item Type"),
           };
         });
       return [

@@ -868,3 +868,16 @@ items check that it looks right.
   - **Expect:** a thin divider between the italic flavor and the rules, as race,
     class and background cards already had.
   - **Decide:** keep the divider on all choice cards, or drop it everywhere?
+
+## Item names
+
+- [ ] **Pact weapon named by its artifact.**
+  - **Where:** `beatrix` → `edit?tab=equipment` (Inventory and the main-hand
+    loadout slot); then `beatrix` → `?preview=1`, the Melee Basic Attack and
+    other weapon power cards and the item card.
+  - **Expect:** the pact weapon reads "Sword of the White Well" everywhere,
+    as the legacy builder names it. Her rod still reads "Accurate rod of the
+    Feywild +2".
+  - **Wrong if:** any name with a " + " in it ("Fey Pact of the White Well
+    Weapon + Sword of the White Well"), or the base repeated after the name
+    ("Sword of the White Well Fey Pact of the White Well Weapon").

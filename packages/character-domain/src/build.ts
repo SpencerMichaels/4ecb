@@ -97,67 +97,94 @@ export interface BuildInventoryEntry {
   readonly legality: BuildLegality;
 }
 
-/** Formats an exact inventory holding without exposing its base/enchantment split. */
+/** One part of an inventory holding as the name formatter needs it. */
+export interface InventoryNamePart extends Pick<
+  BuildElementIdentity,
+  "name" | "type"
+> {
+  /** The Magic Item's authored "Magic Item Type" (e.g. "Artifact"). */
+  readonly magicItemType?: string | undefined;
+}
+
+const INVENTORY_BASE_TYPES = ["armor", "weapon", "superior implement"];
+/**
+ * Legacy CharLootName's implement words, tried in order on implement bases,
+ * plus the generic "implement" (e.g. "Implement of X +2").
+ */
+const IMPLEMENT_NAME_WORDS = [
+  "implement",
+  "holy symbol",
+  "symbol",
+  "orb",
+  "rod",
+  "staff",
+  "tome",
+  "totem",
+  "wand",
+  "ki focus",
+];
+
+function replaceNameWord(
+  baseName: string,
+  enchantmentName: string,
+  word: string,
+): string | undefined {
+  const match = new RegExp(`\\b${word}\\b`, "iu").exec(enchantmentName);
+  if (match === null) return undefined;
+  return (
+    enchantmentName.slice(0, match.index) +
+    baseName +
+    enchantmentName.slice(match.index + word.length)
+  );
+}
+
+function tidyName(name: string): string {
+  return name.replaceAll(/\s+/gu, " ").trim();
+}
+
+/**
+ * Formats an exact inventory holding without exposing its base/enchantment
+ * split, following the legacy engine's CharLootName
+ * (reverse-engineering/generated/decompiled/D20RulesEngine/-Module-.cs,
+ * `CharLootName(ws, base, ench_elem)`): a custom name wins; a lone base or
+ * enchantment is its own name; an enchantment whose Magic Item Type is
+ * Artifact (pact weapons, named artifacts) names the holding by itself;
+ * otherwise the enchantment's "weapon"/"armor"/implement word is replaced
+ * by the base name, or the base name is inserted before the enchantment's
+ * "+N"/parenthetical. Deliberate improvements over legacy (D091): "Magic
+ * Weapon +N" on a Longsword reads "Longsword +N" (legacy "Magic Longsword
+ * +N"); shield templates merge with the shield base ("Storm Heavy Shield");
+ * the base's own kind of word is replaced first; and an enchantment that
+ * already names its base is not repeated ("Wyrmtooth Dagger +1", "Sword of
+ * Croodle").
+ */
 export function formatInventoryItemName(
-  elements: readonly Pick<BuildElementIdentity, "name" | "type">[],
+  elements: readonly InventoryNamePart[],
   customName?: string,
 ): string {
   const preservedName = customName?.trim();
   if (preservedName) return preservedName;
 
-  const normalized = elements.map(({ name, type }) => ({
-    name,
+  const normalized = elements.map(({ name, type, magicItemType }) => ({
+    name: name.trim(),
     type: type.toLocaleLowerCase(),
+    magicItemType: magicItemType?.trim().toLocaleLowerCase(),
   }));
   const base = normalized.find(({ type }) =>
-    ["armor", "weapon", "superior implement"].includes(type),
+    INVENTORY_BASE_TYPES.includes(type),
   );
   const enchantment = normalized.find(({ type }) => type === "magic item");
-  if (base !== undefined && enchantment !== undefined) {
-    if (
-      base.type === "armor" &&
-      /\bshield\b/iu.test(base.name) &&
-      /shield/iu.test(enchantment.name)
-    ) {
-      const baseName = base.name.replace(/\b[a-z]/gu, (letter) =>
-        letter.toLocaleUpperCase(),
-      );
-      const stem = enchantment.name
-        .trim()
-        .replace(/\s+\((?:heroic|paragon|epic) tier\)$/iu, "");
-      const composed = /\bshield\b/iu.test(stem)
-        ? stem.replace(/\bshield\b/iu, baseName)
-        : `${stem} ${baseName}`;
-      return composed
-        .replaceAll(/\s+/gu, " ")
-        .trim()
-        .replace(/^[a-z]/u, (letter) => letter.toLocaleUpperCase());
-    }
-
-    const enhanced = /^(.*?)\s+\+(\d+)$/u.exec(enchantment.name.trim());
-    if (enhanced !== null) {
-      const stem = enhanced[1]!.trim();
-      const bonus = enhanced[2]!;
-      const generic =
-        base.type === "armor"
-          ? "armor"
-          : base.type === "weapon"
-            ? "weapon"
-            : "implement";
-      let composed: string;
-      if (stem.toLocaleLowerCase() === `magic ${generic}`) {
-        composed = base.name;
-      } else {
-        const replaceable =
-          base.type === "superior implement"
-            ? /\b(?:holy symbol|ki focus|implement|symbol|orb|rod|staff|tome|totem|wand)\b/iu
-            : new RegExp(`\\b${generic}\\b`, "iu");
-        composed = replaceable.test(stem)
-          ? stem.replace(replaceable, base.name)
-          : `${stem} ${base.name}`;
-      }
-      return `${composed.replaceAll(/\s+/gu, " ").trim()} +${bonus}`;
-    }
+  const composed =
+    base === undefined || enchantment === undefined
+      ? undefined
+      : composeInventoryName(base, enchantment);
+  if (composed !== undefined) {
+    const others = normalized.filter(
+      (part) => part !== base && part !== enchantment && part.name !== "",
+    );
+    return others.length === 0
+      ? composed
+      : [composed, ...others.map(({ name }) => name)].join(" + ");
   }
 
   return (
@@ -165,6 +192,90 @@ export function formatInventoryItemName(
       .map(({ name }) => name)
       .filter(Boolean)
       .join(" + ") || "Unnamed item"
+  );
+}
+
+function composeInventoryName(
+  base: { readonly name: string; readonly type: string },
+  enchantment: {
+    readonly name: string;
+    readonly magicItemType?: string | undefined;
+  },
+): string {
+  if (enchantment.magicItemType === "artifact") return enchantment.name;
+
+  if (
+    base.type === "armor" &&
+    /\bshield\b/iu.test(base.name) &&
+    /shield/iu.test(enchantment.name)
+  ) {
+    const baseName = base.name.replace(/\b[a-z]/gu, (letter) =>
+      letter.toLocaleUpperCase(),
+    );
+    const stem = enchantment.name.replace(
+      /\s+\((?:heroic|paragon|epic) tier\)$/iu,
+      "",
+    );
+    const composed = /\bshield\b/iu.test(stem)
+      ? stem.replace(/\bshield\b/iu, baseName)
+      : `${stem} ${baseName}`;
+    return tidyName(composed).replace(/^[a-z]/u, (letter) =>
+      letter.toLocaleUpperCase(),
+    );
+  }
+
+  const generic =
+    base.type === "armor"
+      ? "armor"
+      : base.type === "weapon"
+        ? "weapon"
+        : "implement";
+  const magic = new RegExp(`^magic ${generic}(?=\\s+\\+\\d)`, "iu");
+  if (magic.test(enchantment.name))
+    return tidyName(enchantment.name.replace(magic, base.name));
+
+  // Legacy tries "weapon", then "armor", then implement words; trying the
+  // base's own kind first keeps "Master's Wand of Thundering Armor +1" on an
+  // implement from replacing "Armor".
+  const words =
+    base.type === "superior implement"
+      ? [...IMPLEMENT_NAME_WORDS, "weapon", "armor"]
+      : base.type === "armor"
+        ? ["armor", "weapon"]
+        : ["weapon", "armor"];
+  for (const word of words) {
+    const replaced = replaceNameWord(base.name, enchantment.name, word);
+    if (replaced !== undefined) return tidyName(replaced);
+  }
+  const kiFocused = replaceNameWord(
+    `Ki Focused ${base.name}`,
+    enchantment.name,
+    "ki focus",
+  );
+  if (kiFocused !== undefined) return tidyName(kiFocused);
+
+  const marker = /\s*[+(]/u.exec(enchantment.name);
+  const stem =
+    marker === null
+      ? enchantment.name
+      : enchantment.name.slice(0, marker.index);
+  // An item that already names its base is the holding's name, where legacy
+  // would repeat the base: "Wyrmtooth Dagger +1" on a Dagger (legacy
+  // "Wyrmtooth Dagger Dagger +1"), and, for a named item without "+N",
+  // "Sword of Croodle" on a Longsword or "Axe of Tloques" on a Battleaxe.
+  // A "+N" template with its own noun ("Pact Sword +1") still shows its base.
+  const baseName = base.name.toLocaleLowerCase();
+  const baseNoun = baseName.split(/\s+/u).at(-1) ?? "";
+  const stemWords = stem.toLocaleLowerCase().split(/[^\p{L}]+/u);
+  const namesBase =
+    ` ${stemWords.join(" ")} `.includes(` ${baseName} `) ||
+    (!/\+\d/u.test(enchantment.name) &&
+      stemWords.some((word) => word.length >= 3 && baseNoun.endsWith(word)));
+  if (namesBase) return tidyName(enchantment.name);
+  return tidyName(
+    marker === null
+      ? `${enchantment.name} ${base.name}`
+      : `${stem} ${base.name} ${enchantment.name.slice(marker.index).trim()}`,
   );
 }
 

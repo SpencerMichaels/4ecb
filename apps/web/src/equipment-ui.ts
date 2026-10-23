@@ -871,6 +871,10 @@ export function inventoryDisplayName(
     return {
       name: definition?.name ?? name,
       type: definition?.type ?? type,
+      magicItemType:
+        definition === undefined
+          ? undefined
+          : contentSpecificValue(definition, "Magic Item Type"),
     };
   });
   const base = formatInventoryItemName(elements, entry.name);

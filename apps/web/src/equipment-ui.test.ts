@@ -612,8 +612,21 @@ describe("equipment catalog presentation", () => {
       "Storm Shield (heroic tier)",
       "Magic Item",
     );
+    const pactWeapon = entity(
+      "PACT_WEAPON",
+      "Fey Pact of the White Well Weapon",
+      "Weapon",
+    );
+    const whiteWell = entity(
+      "WHITE_WELL",
+      "Sword of the White Well",
+      "Magic Item",
+      { "Magic Item Type": "Artifact" },
+    );
     const index = new Map(
       [
+        pactWeapon,
+        whiteWell,
         leather,
         gloaming,
         greatbow,
@@ -652,6 +665,9 @@ describe("equipment catalog presentation", () => {
     );
     expect(inventoryDisplayName(holding(heavyShield, stormShield), index)).toBe(
       "Storm Heavy Shield",
+    );
+    expect(inventoryDisplayName(holding(pactWeapon, whiteWell), index)).toBe(
+      "Sword of the White Well",
     );
     expect(
       inventoryDisplayName(

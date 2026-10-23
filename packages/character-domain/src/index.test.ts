@@ -403,6 +403,95 @@ describe("character records", () => {
     ).toBe("Tusk Barbed Shield");
   });
 
+  it("names a base plus enchantment like legacy CharLootName, never joined", () => {
+    const name = (
+      base: [string, string],
+      enchantment: string,
+      magicItemType?: string,
+    ) =>
+      formatInventoryItemName([
+        { name: base[0], type: base[1] },
+        { name: enchantment, type: "Magic Item", magicItemType },
+      ]);
+    // An Artifact enchantment names the holding by itself (Beatrix's pact
+    // weapon; legacy <Weapon name="Sword of the White Well">).
+    expect(
+      name(
+        ["Fey Pact of the White Well Weapon", "Weapon"],
+        "Sword of the White Well",
+        "Artifact",
+      ),
+    ).toBe("Sword of the White Well");
+    expect(
+      name(["Chainmail", "Armor"], "The Invulnerable Coat of Arnd", "Artifact"),
+    ).toBe("The Invulnerable Coat of Arnd");
+    // Generic words are replaced wherever they appear, keeping parentheticals.
+    expect(
+      name(["Blowgun", "Weapon"], "Weapon of Accuracy +1 (Ranged)", "Weapon"),
+    ).toBe("Blowgun of Accuracy +1 (Ranged)");
+    expect(
+      name(["Banded Mail", "Armor"], "Armor of Vulnerability (Cursed)"),
+    ).toBe("Banded Mail of Vulnerability (Cursed)");
+    expect(
+      name(
+        ["Accurate totem", "Superior Implement"],
+        "Totem of the Dancing Leaf (level 15)",
+      ),
+    ).toBe("Accurate totem of the Dancing Leaf (level 15)");
+    expect(
+      name(
+        ["Accurate Ki Focus", "Superior Implement"],
+        "Crimson Wick Ki Focus (Lvl 4)",
+      ),
+    ).toBe("Crimson Wick Accurate Ki Focus (Lvl 4)");
+    // The base's own kind of word wins (legacy replaced "Armor" here).
+    expect(
+      name(
+        ["Accurate wand", "Superior Implement"],
+        "Master's Wand of Thundering Armor +1",
+      ),
+    ).toBe("Master's Accurate wand of Thundering Armor +1");
+    // An enchantment that already names its base is not repeated.
+    expect(name(["Dagger", "Weapon"], "Wyrmtooth Dagger +2")).toBe(
+      "Wyrmtooth Dagger +2",
+    );
+    expect(name(["Longsword", "Weapon"], "Sword of Croodle")).toBe(
+      "Sword of Croodle",
+    );
+    expect(name(["Battleaxe", "Weapon"], "Axe of Tloques")).toBe(
+      "Axe of Tloques",
+    );
+    // A "+N" template with its own noun still shows the base.
+    expect(name(["Longsword", "Weapon"], "Pact Sword +2")).toBe(
+      "Pact Sword Longsword +2",
+    );
+    // Otherwise the base follows the enchantment's name, before "+N"/"(".
+    expect(name(["Longsword", "Weapon"], "Moonbane")).toBe(
+      "Moonbane Longsword",
+    );
+    expect(name(["Longsword", "Weapon"], "Holy Avenger +3")).toBe(
+      "Holy Avenger Longsword +3",
+    );
+    expect(name(["Alhulak", "Weapon"], "Sword of the Fallen (Cursed)")).toBe(
+      "Sword of the Fallen Alhulak (Cursed)",
+    );
+    // Custom names still win; lone parts are their own name.
+    expect(
+      formatInventoryItemName(
+        [
+          { name: "Longsword", type: "Weapon" },
+          { name: "Magic Weapon +1", type: "Magic Item" },
+        ],
+        " Oathkeeper ",
+      ),
+    ).toBe("Oathkeeper");
+    expect(
+      formatInventoryItemName([
+        { name: "Cloak of Translocation +2", type: "Magic Item" },
+      ]),
+    ).toBe("Cloak of Translocation +2");
+  });
+
   it("parses, formats, and calculates all five currency denominations", () => {
     const amount = parseLegacyCurrency("1 ad; 2 pp; 1,003 gp; 4 sp; 5 cp");
     expect(amount).toEqual({ ad: 1, pp: 2, gp: 1003, sp: 4, cp: 5 });

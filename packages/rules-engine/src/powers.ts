@@ -363,7 +363,11 @@ const emptyEntity: ContentEntity = {
  * name it (e.g. "Aversion Quickbeam Staff +2"), never a joined part list. */
 function equipmentName(parts: readonly ContentEntity[]): string {
   return formatInventoryItemName(
-    parts.map(({ name, type }) => ({ name, type })),
+    parts.map((part) => ({
+      name: part.name,
+      type: part.type,
+      magicItemType: field(part, "Magic Item Type"),
+    })),
   );
 }
 
