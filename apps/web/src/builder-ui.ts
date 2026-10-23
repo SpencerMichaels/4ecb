@@ -358,6 +358,45 @@ export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {
   return !choice.optional && choice.selectedOccurrenceId === undefined;
 }
 
+/**
+ * The choice a level tab selects on arrival: its first unresolved one, or
+ * none when every slot is filled, so filled slots start folded to their
+ * picks instead of opening the first one's full table.
+ */
+export function arrivalChoiceId(
+  choices: readonly EvaluatedChoice[],
+): string | undefined {
+  return choices.find(isUnresolvedChoice)?.id;
+}
+
+/**
+ * The accordion unit a level tab opens when the user hasn't picked a
+ * heading: the one holding the tab's selected choice (which selecting a
+ * candidate never moves, so the page doesn't jump), else the first
+ * unresolved one, else none.
+ */
+export function defaultAccordionUnit<Unit extends readonly EvaluatedChoice[]>(
+  units: readonly Unit[],
+  selectedChoiceId: string | undefined,
+  unresolved: (unit: Unit) => boolean,
+): Unit | undefined {
+  return (
+    units.find((unit) => unit.some((item) => item.id === selectedChoiceId)) ??
+    units.find(unresolved)
+  );
+}
+
+/**
+ * The accordion item the user opened, kept only while they stay on its
+ * level tab: on any other tab it is dropped, so returning to the tab (by
+ * whatever route) arrives with its filled slots folded again.
+ */
+export function accordionOverrideForTab<
+  Override extends { readonly tab: string },
+>(override: Override | undefined, tab: string): Override | undefined {
+  return override?.tab === tab ? override : undefined;
+}
+
 export interface LevelChoiceProgress {
   readonly completed: number;
   readonly required: number;

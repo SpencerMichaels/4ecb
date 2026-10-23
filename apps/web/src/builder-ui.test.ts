@@ -16,6 +16,10 @@ import {
   applyBuildPresetCommand,
   buildPresetPlan,
   abilityScoreAdjustment,
+  accordionOverrideForTab,
+  arrivalChoiceId,
+  defaultAccordionUnit,
+  isUnresolvedChoice,
   abilityScoreBonus,
   abilityScoreDisplay,
   abilityScoreWithPendingDelta,
@@ -1718,6 +1722,45 @@ describe("builder planning UI", () => {
     expect(
       levelChoiceProgress([choice("one", true), choice("two", true)]),
     ).toEqual({ completed: 2, required: 2, state: "complete" });
+  });
+
+  it("arrives at a filled tab with every choice folded to its pick", () => {
+    const choice = (id: string, selected = false) =>
+      ({
+        id,
+        optional: false,
+        selectedOccurrenceId: selected ? `${id}-selection` : undefined,
+      }) as EvaluatedCharacter["choices"][number];
+    const power = choice("power", true);
+    const feat = choice("feat");
+    const unresolved = (
+      unit: readonly EvaluatedCharacter["choices"][number][],
+    ) => unit.some(isUnresolvedChoice);
+
+    // Arrival selects the first unfilled slot, or none when all are filled.
+    expect(arrivalChoiceId([power, feat])).toBe("feat");
+    expect(arrivalChoiceId([power, choice("other", true)])).toBeUndefined();
+
+    // A filled slot stays folded unless it holds the selected choice; an
+    // unfilled one opens.
+    expect(defaultAccordionUnit([[power]], undefined, unresolved)).toBe(
+      undefined,
+    );
+    const units = [[power], [feat]];
+    expect(defaultAccordionUnit(units, undefined, unresolved)).toBe(units[1]);
+    // The selected choice's unit stays open once filled (no jump on select),
+    // and a heading the user opened (it selects its choice) wins.
+    expect(defaultAccordionUnit(units, "power", unresolved)).toBe(units[0]);
+  });
+
+  it("forgets an opened accordion item once its tab is left", () => {
+    const opened = { tab: "5:Powers", key: "power" };
+    expect(accordionOverrideForTab(opened, "5:Powers")).toBe(opened);
+    // Any other tab (level picker, current-level change, history) drops it,
+    // so returning to level 5's Powers arrives folded again.
+    expect(accordionOverrideForTab(opened, "7:Powers")).toBeUndefined();
+    expect(accordionOverrideForTab(opened, "5:Feats")).toBeUndefined();
+    expect(accordionOverrideForTab(undefined, "5:Powers")).toBeUndefined();
   });
 
   it("treats levels with no required choices as untouched", () => {

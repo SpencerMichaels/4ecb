@@ -186,9 +186,8 @@ describe("builder header integration", () => {
 
 describe("one table or none at a time", () => {
   it("folds a tab's table choices into an accordion opened only by its headings", () => {
-    expect(source).toContain(
-      "return units.length + (presetsInAccordion ? 1 : 0) >= 2 ? units : [];",
-    );
+    // Even a tab's only table choice folds, so its heading shows the pick.
+    expect(source).toContain("    return units;\n  })();");
     // A heading opens its item; the open heading folds it (none open).
     expect(source).toContain(
       "setAccordionOverride({ tab: accordionTabKey, key: null });",
@@ -206,9 +205,23 @@ describe("one table or none at a time", () => {
     ).toContain("{open ? children : null}");
     // By default the open item follows the tab's selected choice, which a
     // selection never moves: no auto-advance to the next unresolved choice.
+    // Arrival selects the first unresolved choice or none, so a filled tab
+    // arrives folded (see arrivalChoiceId/defaultAccordionUnit).
+    expect(source).toContain("defaultAccordionUnit(");
     expect(source).toContain(
-      "unit.some((item) => item.id === selectedChoiceId)",
+      "setSelectedChoiceId(arrivalChoiceId(activeSectionChoices));",
     );
+    expect(source).toContain(
+      "setSelectedChoiceId(arrivalChoiceId(sectionChoices));",
+    );
+    expect(source).toContain(
+      "setSelectedChoiceId(arrivalChoiceId(destinationChoices));",
+    );
+    // Leaving a tab by any route forgets the item the user opened there.
+    expect(source).toContain(
+      "accordionOverrideForTab(current, arrivedTabKey),",
+    );
+    expect(source).toContain("}, [arrivedTabKey]);");
   });
 
   it("makes starting presets an accordion item that starts closed", () => {
