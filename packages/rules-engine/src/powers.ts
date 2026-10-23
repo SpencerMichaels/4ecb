@@ -1022,14 +1022,43 @@ function combatStatComponents(
     defense?: string;
     byId: ReadonlyMap<string, ContentEntity>;
     basicAttackKind?: "melee" | "ranged" | undefined;
-    /** Built-in typed bonuses that share maxima with matching stats. */
+    /** Native AddLaterKeywords: the attack ability is a keyword too. */
+    attackStat?: string;
+    /**
+     * Built-in typed bonuses the row already holds (native CalcBAB and
+     * CalcDamage register the weapon's enhancement as "Enhancement" before
+     * any keyword stat), sharing maxima with matching stats.
+     */
     typedExtras?: readonly {
       readonly bonusType: string;
       readonly component: PowerComponent;
     }[];
+    /**
+     * Also read the row-wide stats (native CalcGlobal, after CalcKeywords
+     * with the same typed maxima): `attack rolls`, or `damage` and, for a
+     * damage roll, `damage rolls`, each also limited to the weapon base,
+     * enchantment or augment as `attack rolls(<name>)`; with `weaponRolls`
+     * (a weapon power with a wielded weapon) `weapon attack rolls` /
+     * `weapon damage rolls` too.
+     */
+    globalStats?: { readonly weaponRolls: boolean };
   },
 ): PowerComponent[] {
   const suffix = `${kind}:${fieldName}`;
+  const globalNames = new Set(
+    context.globalStats === undefined
+      ? []
+      : fieldName === "attack"
+        ? [
+            "attack rolls",
+            ...(context.globalStats.weaponRolls ? ["weapon attack rolls"] : []),
+          ]
+        : [
+            "damage",
+            "damage rolls",
+            ...(context.globalStats.weaponRolls ? ["weapon damage rolls"] : []),
+          ],
+  );
   const attackTypeTags = (() => {
     const normalized = key(attackType ?? "");
     if (/melee\s+or\s+ranged/.test(normalized)) {
@@ -1053,9 +1082,16 @@ function combatStatComponents(
     ...legacyPowerKeywordTags(power, context.byId),
     ...context.keywords.map(key),
     key(context.defense ?? ""),
+    key(context.attackStat ?? ""),
   ]);
   const relevant = Object.entries(stats).filter(([name]) => {
     const normalized = key(name);
+    const global = normalized.match(/^([^:(]*?)(?:\((.*)\))?$/);
+    if (global !== null && globalNames.has(global[1]!.trim()))
+      return (
+        global[2] === undefined ||
+        limiterNames(equipment, context.byId).has(global[2])
+      );
     // Native CalcKeywords/IsKeyword: comma qualifiers are conjunctive;
     // parenthesized limits identify the selected base/enchantment, not any
     // other implement in the inventory. The evaluated contribution has already
@@ -1120,11 +1156,13 @@ function combatStatComponents(
         ];
       });
     });
-  for (const extra of context.typedExtras ?? [])
-    components.push({
+  // Registered first, so an equal stat bonus of the same type adds nothing.
+  components.unshift(
+    ...(context.typedExtras ?? []).map((extra) => ({
       bonusType: key(extra.bonusType),
       component: extra.component,
-    });
+    })),
+  );
   // Native AttackKeyword/DamageKeyword share typed maxima across matching
   // channels; qualifying the same type more narrowly must not stack it twice.
   const maxima = new Map<string, (typeof components)[number]>();
@@ -2204,6 +2242,24 @@ export function evaluatePowers(input: {
         equipment,
         input.stats,
       );
+      // Native CalcBAB/CalcDamage: the wielded item's enhancement is an
+      // "Enhancement" bonus, so typed Enhancement stats (Inherent Bonuses)
+      // add only what exceeds it.
+      const enhancementExtra =
+        equipment.enhancement === 0
+          ? []
+          : [
+              {
+                bonusType: "Enhancement",
+                component: {
+                  label: "enhancement bonus",
+                  value: equipment.enhancement,
+                },
+              },
+            ];
+      // Native CalcKeywords reads `weapon attack/damage rolls` only for a
+      // weapon power with a wielded (non-unarmed) weapon.
+      const weaponRolls = weaponPower && !equipment.unarmed;
       const explicitAbilityChoice = abilityNames.find((ability) =>
         input.activeDefinitionIds.some((definitionId) => {
           const choice = byId.get(key(definitionId));
@@ -2322,11 +2378,6 @@ export function evaluatePowers(input: {
             label: "proficiency bonus",
             value: equipment.proficiency,
           });
-        if (equipment.enhancement !== 0)
-          attackComponents.push({
-            label: "enhancement bonus",
-            value: equipment.enhancement,
-          });
         attackComponents.push(
           ...combatStatComponents(
             input.stats,
@@ -2335,7 +2386,15 @@ export function evaluatePowers(input: {
             weaponPower ? "weapon" : "implement",
             "attack",
             phaseAttackType,
-            { keywords, defense, byId, basicAttackKind },
+            {
+              keywords,
+              defense,
+              byId,
+              basicAttackKind,
+              attackStat,
+              typedExtras: enhancementExtra,
+              globalStats: { weaponRolls },
+            },
           ),
         );
         if (implementPower && equipment.weaponDefinition)
@@ -2488,11 +2547,6 @@ export function evaluatePowers(input: {
               value: numericStat(input.stats, `${ability} modifier`),
             })),
           );
-        if (dice !== undefined && !abilityOnly && equipment.enhancement !== 0)
-          damageComponents.push({
-            label: "enhancement bonus",
-            value: equipment.enhancement,
-          });
         if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
         const offHandImplements = handCandidates.filter(
           (candidate) =>
@@ -2545,10 +2599,13 @@ export function evaluatePowers(input: {
                 defense,
                 byId,
                 basicAttackKind,
+                attackStat,
+                globalStats: { weaponRolls },
                 typedExtras:
                   offHandEnhancement === 0
-                    ? []
+                    ? enhancementExtra
                     : [
+                        ...enhancementExtra,
                         {
                           bonusType: "off-hand enhancement",
                           component: {

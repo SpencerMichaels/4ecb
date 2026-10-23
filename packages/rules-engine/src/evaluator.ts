@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v42-2026-10-22-native-increase-lines";
+  "evaluated-character-v43-2026-10-22-global-attack-damage-stats";
 
 export interface CharacterOccurrence {
   readonly id: string;

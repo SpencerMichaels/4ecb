@@ -1171,6 +1171,128 @@ describe("power evaluation", () => {
     });
   });
 
+  it("applies row-wide attack and damage stats like native CalcGlobal", () => {
+    const contribution = (
+      name: string,
+      value: number,
+      extra: { bonusType?: string; condition?: string } = {},
+    ) => ({
+      id: `${name}:${value}:${extra.bonusType ?? extra.condition ?? ""}`,
+      stat: name,
+      value: String(value),
+      providerId: "feature",
+      providerName: "Synthetic feature",
+      numericValue: value,
+      ...extra,
+      applied: extra.condition === undefined,
+      ...(extra.condition === undefined
+        ? {}
+        : { reason: "conditional" as const }),
+    });
+    const evaluated = (
+      name: string,
+      ...contributions: ReturnType<typeof contribution>[]
+    ): EvaluatedStat => ({ name, value: 0, contributions });
+    const entities = [
+      entity("STRIKE", "Synthetic Strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("BOLT", "Synthetic Bolt", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Reflex",
+        Hit: "2d6 + Intelligence modifier damage.",
+      }),
+      entity("SWORD", "Synthetic Sword", "Weapon", { Damage: "1d8" }),
+      entity("SWORD_MAGIC", "Synthetic Sword +1", "Magic Item", {
+        "Magic Item Type": "Weapon",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+      entity("WAND", "Synthetic Wand +3", "Magic Item", {
+        "Magic Item Type": "Wand",
+        Enhancement: "+3 attack rolls and damage rolls",
+      }),
+    ];
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE", "BOLT"],
+      inventory: [
+        {
+          id: "sword",
+          definitionIds: ["SWORD", "SWORD_MAGIC"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "wand",
+          definitionIds: ["WAND"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "Intelligence modifier": stat("Intelligence modifier", 5),
+        // Armor non-proficiency penalty, an Inherent Bonuses-style typed
+        // enhancement and a conditional bonus that stays a reminder.
+        "attack rolls": evaluated(
+          "attack rolls",
+          contribution("attack rolls", -2),
+          contribution("attack rolls", 2, { bonusType: "Enhancement" }),
+          contribution("attack rolls", 3, { condition: "while bloodied" }),
+        ),
+        "damage rolls": evaluated(
+          "damage rolls",
+          contribution("damage rolls", 2, { bonusType: "Enhancement" }),
+        ),
+        Damage: evaluated("Damage", contribution("Damage", 1)),
+        // Native AddLaterKeywords makes the attack ability a keyword.
+        "Intelligence:damage": evaluated(
+          "Intelligence:damage",
+          contribution("Intelligence:damage", 1),
+        ),
+        "weapon attack rolls": evaluated(
+          "weapon attack rolls",
+          contribution("weapon attack rolls", 1),
+        ),
+        "attack rolls(Synthetic Sword +1)": evaluated(
+          "attack rolls(Synthetic Sword +1)",
+          contribution("attack rolls(Synthetic Sword +1)", 1),
+        ),
+        "attack rolls(Other Blade +5)": evaluated(
+          "attack rolls(Other Blade +5)",
+          contribution("attack rolls(Other Blade +5)", 5),
+        ),
+      },
+      overlays: [],
+      entities,
+    });
+    const row = (power: string, equipment: string) =>
+      powers
+        .find((candidate) => candidate.name === power)
+        ?.variants.find((variant) => variant.equipmentId === equipment);
+
+    // Str 4, enhancement max(+1 sword, +2 typed) = 2, -2 penalty, +1 weapon
+    // attack rolls, +1 limited to the sword; damage +2 enhancement, +1.
+    expect(row("Synthetic Strike", "sword")).toMatchObject({
+      attackBonus: 6,
+      damage: "1d8+7",
+    });
+    // The wand's +3 enhancement exceeds the typed +2; no weapon-only stats;
+    // an Intelligence attack adds Intelligence:damage.
+    expect(row("Synthetic Bolt", "wand")).toMatchObject({
+      attackBonus: 6,
+      damage: "2d6+10",
+    });
+    // Unarmed holds no enhancement, so the typed +2 applies in full.
+    expect(row("Synthetic Strike", "unarmed")?.attackBonus).toBe(4);
+  });
+
   it("selects the current level line and highest listed ability", () => {
     const entities = [
       entity("POWER", "Theme blast", "Power", {
