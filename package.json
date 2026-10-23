@@ -26,6 +26,8 @@
     "audit:coverage-matrix": "tsx scripts/audit-coverage-matrix.ts",
     "audit:legacy-special-cases": "tsx scripts/audit-legacy-special-cases.ts",
     "audit:requires": "tsx scripts/audit-requires.ts",
+    "audit:modifiers": "tsx scripts/audit-modifiers.ts",
+    "audit:parity-coverage": "tsx scripts/audit-parity-coverage.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "review:build": "tsx scripts/build-visual-review.ts",
     "review:verify": "tsx --tsconfig apps/web/tsconfig.app.json --import ./apps/web/scripts/visual-review-css-stub.mjs apps/web/scripts/verify-visual-review.ts",
