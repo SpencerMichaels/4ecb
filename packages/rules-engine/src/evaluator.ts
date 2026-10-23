@@ -49,7 +49,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v48-2026-10-23-hybrid-armor-proficiency";
+  "evaluated-character-v49-2026-10-23-implement-as-class";
 
 export interface CharacterOccurrence {
   readonly id: string;

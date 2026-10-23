@@ -37,6 +37,7 @@ import {
   legacyListContainsOneOf,
 } from "./weapon-groups";
 import {
+  IMPLEMENT_CLASS_FIELDS,
   increaseDamageDie,
   legacyIsKiFocus,
   legacyIsStaff,
@@ -196,8 +197,8 @@ interface Loadout {
    * (e.g. "holy symbol", "staff") and, for weapons, its name and group. */
   readonly implementKinds: readonly string[];
   /** Authored scopes in which this item works as an implement regardless of
-   * proficiency (_ImplementForClass/_ImplementForPower), e.g. a pact blade
-   * for warlock powers. */
+   * proficiency (_ImplementForClass/_ImplementAsClass/_ImplementForPower),
+   * e.g. a pact blade for warlock powers. */
   readonly implementScopes: readonly string[];
   /** _UniversalImplement: works as any implement. */
   readonly universalImplement: boolean;
@@ -612,7 +613,10 @@ function loadouts(
         .filter((value) => value.trim() !== "")
         .map(implementKind),
       implementScopes: [
-        ...listField(parts, "_ImplementForClass"),
+        // `_ImplementForClass` and its alias `_ImplementAsClass` (a deliberate
+        // D091 difference: legacy reads only the former), from the
+        // overlay-resolved parts, so list-additions arrive comma-joined.
+        ...IMPLEMENT_CLASS_FIELDS.flatMap((name) => listField(parts, name)),
         ...listField(parts, "_ImplementForPower"),
       ],
       universalImplement: parts.some(

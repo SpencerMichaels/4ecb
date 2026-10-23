@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { FieldOverlay } from "./evaluator";
 import {
   increaseDamageDie,
+  legacyLootImplement,
   overlaidEntity,
   overlaidField,
   overlayTargets,
@@ -126,5 +127,53 @@ describe("item field overlays (native C_RulesElementField)", () => {
     expect(weapon?.specifics[0]?.value).toBe("High Crit");
     expect(power).toBe(entities[1]);
     expect(withOverlaidItems(entities, [])).toBe(entities);
+  });
+});
+
+describe("legacyLootImplement special implements", () => {
+  const records = [
+    entity("WARLOCK", "Warlock", "Class"),
+    entity("BARD", "Bard", "Class"),
+  ];
+  const resolve = {
+    weaponEquiv: () => undefined,
+    record: (reference: string) =>
+      records.find(
+        (record) => record.id.toLowerCase() === reference.trim().toLowerCase(),
+      ),
+  };
+  const sword = (specifics: Record<string, string>) =>
+    entity("SWORD", "Longsword", "Weapon", {
+      Group: "Heavy Blade",
+      ...specifics,
+    });
+
+  it("reads _ImplementAsClass as an alias of _ImplementForClass", () => {
+    expect(legacyLootImplement(sword({}), undefined, resolve)).toBeUndefined();
+    // An overlaid list-addition onto an empty field.
+    const overlaid = overlaidEntity(sword({}), [
+      overlay({
+        targetName: "SWORD",
+        targetType: "Weapon",
+        field: "_ImplementAsClass",
+        listAddition: "WARLOCK",
+      }),
+    ]);
+    expect(legacyLootImplement(overlaid, undefined, resolve)).toBe("Implement");
+    expect(
+      legacyLootImplement(
+        sword({ _ImplementAsClass: "BARD" }),
+        undefined,
+        resolve,
+      ),
+    ).toBe("instrument");
+    // `_ImplementForClass` is read first; the alias still counts beside it.
+    expect(
+      legacyLootImplement(
+        sword({ _ImplementForClass: "UNKNOWN", _ImplementAsClass: "BARD" }),
+        undefined,
+        resolve,
+      ),
+    ).toBe("instrument");
   });
 });

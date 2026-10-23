@@ -790,13 +790,22 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsSpecialImplement": code(
       "An item whose (or whose enchantment's) _ImplementForClass names a record is a special implement for that class.",
-      "powers.ts implementScopes; item-fields.ts legacyLootImplement (the base's field only, as the RulesElement overload)",
+      "powers.ts implementScopes; item-fields.ts legacyLootImplement (the base's field only, as the RulesElement overload). Deliberately different (D091): IMPLEMENT_CLASS_FIELDS reads _ImplementAsClass as an alias of _ImplementForClass (both honored). Native code never reads _ImplementAsClass, whose only official writer is ID_INTERNAL_INTERNAL_MELEE_WEAPONS_AS_WARLOCK_IMPLEMENTS (Avernian Knight's Melee Implement, ID_FMP_CLASS_FEATURE_2185: 'You can use any melee weapon as a warlock implement', list-adding ID_FMP_CLASS_7 to 74 melee weapons), so the feature did nothing in legacy",
       test(POWERS, "uses a pact blade only for its class's powers"),
+      test(
+        ITEM_FIELDS,
+        "reads _ImplementAsClass as an alias of _ImplementForClass",
+      ),
     ),
     "?A0x7555d940.ForClass": code(
       "_ImplementForClass on the base or enchantment matches an owned class by name or ID.",
-      "powers.ts implementScopeMatcher",
+      "powers.ts implementScopeMatcher; _ImplementAsClass is read as an alias (D091, see IsSpecialImplement)",
       test(POWERS, "uses a pact blade only for its class's powers"),
+      test(POWERS, "reads _ImplementAsClass as an alias of _ImplementForClass"),
+      test(
+        EVALUATOR,
+        "reads an _ImplementAsClass list-addition as _ImplementForClass (granted: %s)",
+      ),
     ),
     "?A0x7555d940.ForPower": code(
       "_ImplementForPower on the base or enchantment, checked with CheckPower.",

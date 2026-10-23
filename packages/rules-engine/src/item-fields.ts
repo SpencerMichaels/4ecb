@@ -252,11 +252,30 @@ export function legacyImplementType(
 }
 
 /**
+ * The item fields naming the classes an item is an implement for:
+ * `_ImplementForClass` and its alias `_ImplementAsClass`, read identically
+ * (same value grammar, both honored when both are present).
+ *
+ * Deliberate D091 difference from legacy: native LootImplement,
+ * IsSpecialImplement and the implement-proficiency check read only
+ * `_ImplementForClass`. The official content's only `_ImplementAsClass`
+ * writer is the Avernian Knight's Melee Implement ("You can use any melee
+ * weapon as a warlock implement"), whose Internal list-adds the Warlock class
+ * to 74 melee weapons, so in the legacy builder the feature did nothing.
+ * Reading the alias makes it work, and covers homebrew that uses it.
+ */
+export const IMPLEMENT_CLASS_FIELDS = [
+  "_ImplementForClass",
+  "_ImplementAsClass",
+] as const;
+
+/**
  * Native LootImplement for a loot's base and enchantment: what it is an
  * implement as ("Staff", "Ki Focuses", ImplementType, the base's or else the
- * enchantment's `_ImplementEquiv`), or, for an `_ImplementForClass` item,
- * "instrument" (a bard's) or "Implement". Undefined when it is no implement.
- * BuildKeywordSet names its "<value> implement" channels from it.
+ * enchantment's `_ImplementEquiv`), or, for an `_ImplementForClass` (or alias
+ * `_ImplementAsClass`) item, "instrument" (a bard's) or "Implement".
+ * Undefined when it is no implement. BuildKeywordSet names its
+ * "<value> implement" channels from it.
  */
 export function legacyLootImplement(
   base: ContentEntity | undefined,
@@ -277,9 +296,15 @@ export function legacyLootImplement(
       ? ""
       : (rawField(enchant, "_ImplementEquiv")?.trim() ?? ""));
   if (equivalent !== "") return equivalent;
-  // Native IsSpecialImplement: the base's `_ImplementForClass` names a record.
-  const forClass = rawField(base, "_ImplementForClass")?.trim() ?? "";
-  const special = forClass === "" ? undefined : resolve.record(forClass);
+  // Native IsSpecialImplement: the base's `_ImplementForClass` value names a
+  // record (FindRulesElement on the whole value, so a list or qualified
+  // value such as "Druid,Shaman" or "warlock(dwarf)" is not special here;
+  // implement eligibility reads those through powers.ts implementScopes).
+  // The alias is checked the same way, after `_ImplementForClass`.
+  const special = IMPLEMENT_CLASS_FIELDS.map((name) => {
+    const value = rawField(base, name)?.trim() ?? "";
+    return value === "" ? undefined : resolve.record(value);
+  }).find((record) => record !== undefined);
   if (special === undefined) return undefined;
   return key(special.name) === key(EXCEPTION_NAMES.bardClass)
     ? "instrument"

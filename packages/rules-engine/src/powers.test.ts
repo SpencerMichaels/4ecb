@@ -3271,6 +3271,35 @@ describe("item implement metadata", () => {
     );
   });
 
+  it("reads _ImplementAsClass as an alias of _ImplementForClass", () => {
+    // Same grammar: a race qualifier and comma-joined list-additions.
+    const hammer = entity("HAMMER", "Alias Hammer +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementAsClass: "warlock(dwarf)",
+    });
+    expect(variantsFor("CURSE", [hammer])).toEqual(["Unarmed"]);
+    expect(variantsFor("CURSE", [hammer], ["DWARF"])).toContain(
+      "Alias Hammer Dagger +1",
+    );
+    const listed = entity("LISTED", "Alias Blade +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementAsClass: "WIZARD, CLERIC",
+    });
+    expect(variantsFor("PRAYER", [listed])).toContain("Alias Blade Dagger +1");
+    expect(variantsFor("CURSE", [listed])).toEqual(["Unarmed"]);
+    // Both fields present: either scope works.
+    const both = entity("BOTH", "Twofold Blade +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementForClass: "WARLOCK",
+      _ImplementAsClass: "CLERIC",
+    });
+    expect(variantsFor("CURSE", [both])).toContain("Twofold Blade Dagger +1");
+    expect(variantsFor("PRAYER", [both])).toContain("Twofold Blade Dagger +1");
+  });
+
   it("treats an implement-equivalent weapon as that implement", () => {
     const avenger = entity("AVENGER", "Holy Avenger +5", "Magic Item", {
       "Magic Item Type": "Weapon",

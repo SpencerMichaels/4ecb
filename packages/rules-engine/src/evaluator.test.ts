@@ -335,6 +335,97 @@ describe("character evaluator", () => {
       expect(variant?.damage).toBe(trained ? "1d8+6" : "1d8+4");
     },
   );
+  it.each([true, false])(
+    "reads an _ImplementAsClass list-addition as _ImplementForClass (granted: %s)",
+    (granted) => {
+      // Avernian Knight's Melee Implement: an Internal list-adds the Warlock
+      // class to melee weapons' `_ImplementAsClass` (a D091 alias; legacy
+      // ignores the field).
+      const entities = [
+        entity("WARLOCK", "Warlock", "Class"),
+        entity(
+          "MELEE_AS_WARLOCK",
+          "Melee Weapons As Warlock Implements",
+          "Internal",
+          {
+            rules: [
+              rule(
+                "modify",
+                {
+                  name: "LONGSWORD",
+                  type: "Weapon",
+                  Field: "_ImplementAsClass",
+                  "list-addition": "WARLOCK",
+                },
+                0,
+              ),
+            ],
+          },
+        ),
+        entity("LONGSWORD", "Longsword", "Weapon", {
+          specifics: {
+            Damage: "1d8",
+            "Proficiency Bonus": "3",
+            Group: "Heavy Blade",
+            Properties: "Versatile",
+            Range: "",
+          },
+        }),
+        entity("CURSE", "Synthetic Curse", "Power", {
+          specifics: {
+            Keywords: "Arcane, Implement",
+            Class: "WARLOCK",
+            Attack: "Charisma vs. Will",
+            Hit: "1d6 + Charisma modifier damage.",
+          },
+        }),
+      ];
+      const evaluated = evaluateCharacter(
+        {
+          level: 11,
+          baseAbilities: { Charisma: 18 },
+          occurrences: [
+            rootOccurrence,
+            ...[
+              "WARLOCK",
+              "CURSE",
+              ...(granted ? ["MELEE_AS_WARLOCK"] : []),
+            ].map((definitionId) => ({
+              id: definitionId.toLowerCase(),
+              definitionId,
+              acquiredLevel: 1,
+              kind: "grabbag" as const,
+            })),
+          ],
+          inventory: [
+            {
+              id: "sword",
+              definitionIds: ["LONGSWORD"],
+              quantity: 1,
+              equippedQuantity: 1,
+              acquiredLevel: 1,
+            },
+          ],
+          candidateDetailLevels: [],
+        },
+        entities,
+      );
+      const variants =
+        evaluated.powers.find((power) => power.definitionId === "CURSE")
+          ?.variants ?? [];
+      const sword = variants.find((variant) => variant.equipmentId === "sword");
+      if (granted) {
+        expect(sword?.proficient).toBe(true);
+        // No weapon proficiency bonus on an implement attack.
+        expect(sword?.attackBonus).toBe(
+          variants.find((variant) => variant.equipmentName === "Unarmed")
+            ?.attackBonus,
+        );
+      } else {
+        expect(sword?.proficient ?? false).toBe(false);
+      }
+    },
+  );
   it("makes the shared deity choice required for covered classes and hybrids", () => {
     const deityRule = rule("select", { type: "Deity", optional: "true" }, 0);
     const evaluateFor = (selectedClass: ContentEntity) =>
