@@ -66,7 +66,6 @@ import {
 
 import {
   abilityScoreAdjustment,
-  arrivalChoiceId,
   characterHeaderSubtitle,
   MAX_CHARACTER_LEVEL,
   classKeyAbilities,
@@ -76,7 +75,6 @@ import {
   choiceSectionId,
   choicesAtLevel,
   contextualChoiceTitle,
-  defaultAccordionUnit,
   deityAlignmentConstraint,
   evaluationAtHorizon,
   findOccurrence,
@@ -1020,12 +1018,13 @@ export function CharacterEditorPage({
   const classChoicePlacementId = activeChoiceSection?.choices.find((choice) =>
     ["class", "hybrid class"].includes(choice.type.trim().toLocaleLowerCase()),
   )?.id;
-  // Arriving at a tab selects its first unresolved choice, or none when
-  // every choice is filled, so filled slots start folded to their picks.
   useEffect(() => {
     if (activeSectionChoices.some((choice) => choice.id === selectedChoiceId))
       return;
-    setSelectedChoiceId(arrivalChoiceId(activeSectionChoices));
+    setSelectedChoiceId(
+      activeSectionChoices.find(isUnresolvedChoice)?.id ??
+        activeSectionChoices[0]?.id,
+    );
   }, [activeSectionChoices, selectedChoiceId]);
 
   useEffect(() => {
@@ -1369,7 +1368,9 @@ export function CharacterEditorPage({
     const sectionChoices =
       displayedChoiceSections.find((group) => group.section === section)
         ?.choices ?? [];
-    setSelectedChoiceId(arrivalChoiceId(sectionChoices));
+    setSelectedChoiceId(
+      sectionChoices.find(isUnresolvedChoice)?.id ?? sectionChoices[0]?.id,
+    );
     onNavigate(characterId, {
       workspace: "build",
       level: selectedLevel,
@@ -1414,7 +1415,10 @@ export function CharacterEditorPage({
                   : legacyChoiceSection(choice)) === rememberedSection,
             );
       setSelectedLevel(level);
-      setSelectedChoiceId(arrivalChoiceId(destinationChoices));
+      setSelectedChoiceId(
+        destinationChoices.find(isUnresolvedChoice)?.id ??
+          destinationChoices[0]?.id,
+      );
       if (requestedSection !== undefined)
         setSelectedSectionByLevel((current) => ({
           ...current,
@@ -1474,14 +1478,12 @@ export function CharacterEditorPage({
       dependentFlowByChoiceId.get(choice.id) ?? [choice]
     );
   };
-  // A tab shows at most one table at a time: each table unit (even a tab's
-  // only one) folds to an accordion heading (title, picks, status), and the
-  // open heading folds away again. Unless the user picks a heading, the open
-  // one is the tab's selected choice (first unresolved on arrival, never
-  // moved by selecting), so the page doesn't jump on its own; a tab whose
-  // slots are all filled arrives with every item folded to its picks. At
-  // level 1 the Class tab's starting presets are an item too, closed by
-  // default.
+  // A tab with two or more table choices shows at most one table at a time:
+  // each table unit folds to an accordion heading (title, picks, status),
+  // and the open heading folds away again. Unless the user picks a heading,
+  // the open one is the tab's selected choice (first unresolved on arrival,
+  // never moved by selecting), so the page doesn't jump on its own. At level
+  // 1 the Class tab's starting presets are an item too, closed by default.
   const presetsInAccordion =
     activeLevelSection === "Class" &&
     selectedLevel === 1 &&
@@ -1508,18 +1510,18 @@ export function CharacterEditorPage({
       )
         units.push(unit);
     }
-    return units;
+    return units.length + (presetsInAccordion ? 1 : 0) >= 2 ? units : [];
   })();
   const accordionTabKey = `${selectedLevel}:${activeLevelSection ?? ""}`;
   const unitUnresolved = (unit: readonly EvaluatedChoice[]) =>
     unit.some(
       (item) => item.level <= build.effectiveLevel && isUnresolvedChoice(item),
     );
-  const defaultAccordionKey = defaultAccordionUnit(
-    accordionUnits,
-    selectedChoiceId,
-    unitUnresolved,
-  )?.[0]?.id;
+  const defaultAccordionKey = (accordionUnits.find((unit) =>
+    unit.some((item) => item.id === selectedChoiceId),
+  ) ??
+    accordionUnits.find(unitUnresolved) ??
+    accordionUnits[0])?.[0]?.id;
   const openAccordionKey =
     accordionOverride?.tab === accordionTabKey
       ? accordionOverride.key
