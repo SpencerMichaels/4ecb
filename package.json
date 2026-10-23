@@ -32,6 +32,7 @@
     "review:build": "tsx scripts/build-visual-review.ts",
     "review:verify": "tsx --tsconfig apps/web/tsconfig.app.json --import ./apps/web/scripts/visual-review-css-stub.mjs apps/web/scripts/verify-visual-review.ts",
     "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",
+    "parity:baseline": "tsx scripts/parity-baseline.ts",
     "regenerate:edited-dnd4e": "tsx scripts/regenerate-edited-dnd4e.ts",
     "build": "pnpm typecheck && pnpm --filter @4ecb/web build",
     "content-tool": "tsx apps/content-tool/src/main.ts",
