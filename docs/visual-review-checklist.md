@@ -193,10 +193,12 @@ Settings → Builder & Equipment.
     normal-weight "You wield a deadly weapon forged with magic, …". Paladin:
     bold "Divine Defender." then "A holy warrior …". In the traits grid: HP at
     1st, HP per level, Healing surges, Defenses, Key abilities ("Charisma,
-    Dexterity, Constitution, Intelligence"), Armor and so on. Race and
+    Dexterity, Constitution, Intelligence"), Armor and so on. Below the grid,
+    "About Hexblade" comes before the "Class features" list. Race and
     background descriptions are also normal weight.
   - **Wrong if:** the whole paragraph is bold, the heading sits on its own line,
-    or Key abilities is missing, doubled, or not just above Armor.
+    Key abilities is missing, doubled, or not just above Armor, or the Class
+    features list comes before About.
 - [ ] **Summoned allies**
   - **Where:** `hexblade-white-well` → `?preview=1`, the first card page:
     Mourning Handmaiden's Attack (7th card), Spectral Protector's Attack (8th)

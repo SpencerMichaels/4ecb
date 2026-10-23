@@ -13,8 +13,9 @@ import { Prose } from "./Prose";
 /**
  * Race, class and background cards lead with their rules (the published
  * "Racial Traits"/"Class Traits" box: a compact stat grid, then granted traits
- * or features listed inside the card), with the lore after them. Fields this
- * layout doesn't place still show, under "More".
+ * or features listed inside the card), with the lore after them; a class's
+ * long feature list comes after its lore instead. Fields this layout doesn't
+ * place still show, under "More".
  */
 export type StructuredEntityKind = "race" | "class" | "background";
 
@@ -278,10 +279,11 @@ function ClassBody({
           })),
         ]}
       />
-      <TraitList heading="Class features" traits={features} />
+      {/* The lore before the long feature list, so it isn't buried. */}
       <CardSection title={`About ${entity.name}`}>
         <LoreFields entity={entity} names={CLASS_LORE} />
       </CardSection>
+      <TraitList heading="Class features" traits={features} />
       <MoreFields
         entity={entity}
         placed={[
