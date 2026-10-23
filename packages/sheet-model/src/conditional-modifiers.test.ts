@@ -95,6 +95,13 @@ describe("conditional modifier projection", () => {
         condition: "when in range of the standard",
         providerName: "Standard",
       },
+      {
+        id: "surges",
+        stat: "Healing Surges",
+        value: "-2",
+        condition: "when you are bloodied",
+        providerName: "Drawback",
+      },
     ]);
     expect(
       modifiers.map(({ surface, target, text, source }) => [
@@ -157,6 +164,12 @@ describe("conditional modifier projection", () => {
         "Healing Surge Value",
         "+2 to healing surge value when in range of the standard",
         "Standard",
+      ],
+      [
+        "health",
+        "Healing Surges",
+        "-2 to healing surges when you are bloodied",
+        "Drawback",
       ],
     ]);
     expect(modifiers[0]?.provenanceId).toBe("ac");

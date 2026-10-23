@@ -73,6 +73,12 @@ function targetOf(
       target: "Healing Surge Value",
       label: "healing surge value",
     };
+  if (normalized === "healing surges")
+    return {
+      surface: "health",
+      target: "Healing Surges",
+      label: "healing surges",
+    };
   if (normalized === "bull rush")
     return { surface: "checks", target: "Bull rush", label: "bull rush" };
   const check = /^check:(.+)$/.exec(normalized);
