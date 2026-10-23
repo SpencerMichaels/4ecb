@@ -55,6 +55,37 @@ candidate hierarchy is identity/summary, combat essentials, proficiencies and
 skills, features and build choices, descriptive text, then subdued source
 metadata; this hierarchy is not yet approved.
 
+## Build-tab table folding and pre-scroll task (queued 2026-10-22)
+
+Feedback from a tester (Chris), relayed by the product owner. He was on an
+older public build; none of the 2026-10-22 changes were public yet. Start this
+only after the agents then editing `CharacterEditorPage.tsx` and `builder-ui.ts`
+have committed.
+
+1. **Fold filled choices on arrival.** Every table choice on a tab whose pick
+   is already made starts folded when the tab loads, as level 1 does, even
+   when the tab has only one choice (the old build folded only when a tab had
+   more than one). Commit `34a2ef0` ("Fold filled Build-tab choices to their
+   picks on arrival") appears to do this already. Verify it against the
+   request on several levels and tabs (powers, feats, class features, a
+   one-choice tab) and close any gap.
+2. **Pre-scroll to the pick.** After a tab loads, its tables start folded. The
+   first time after loading the tab that a table with a pick is expanded, the
+   table is pre-scrolled so the selected row is the top row under the sticky
+   column headers, or as high as it can go when it's near the bottom of the
+   list. Later expansions in the same tab visit needn't re-scroll. Chris
+   reported the "floating" selected row is not always obvious. The table
+   already pre-scrolls on its first render (`initialCandidateScrollTop` in
+   `candidate-table-initialization.ts`, used by `CandidateSelectionTable.tsx`),
+   so find the cases where that misses. Unverified guesses: the table renders
+   while its accordion is folded, so its height is zero and the measured
+   position is wrong; the pick is inside a collapsed group or on another page
+   (`candidate-table-paging.ts`); or the table is re-shown rather than
+   remounted.
+
+Hand the owner the visual checks in `docs/visual-review-checklist.md` (Where /
+Expect / Wrong if format).
+
 ## Queue commit policy
 
 Once a task is confirmed complete, commit its work. Keep different tasks in
