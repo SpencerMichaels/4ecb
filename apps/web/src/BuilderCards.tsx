@@ -10,6 +10,7 @@ import {
   projectBuildForEvaluation,
   sharedRulesIndex,
   type EvaluatedCharacter,
+  type FieldOverlay,
 } from "@4ecb/rules-engine";
 import {
   authoredSheetPowerCard,
@@ -63,6 +64,9 @@ export interface BuilderCardSettings {
    *  show only its path-dependent benefits (a pact's Legendary Hexblade
    *  features). */
   readonly paragonPathId?: string;
+  /** The character's `modify` overlays, so item cards show its weapons'
+   *  modified fields (a Reaper's Blade scythe's High Crit). */
+  readonly itemOverlays?: readonly FieldOverlay[];
 }
 
 /** The paragon path picked anywhere in the build, unless retrained away. */
@@ -140,6 +144,7 @@ export function evaluatedBuilderCardSettings(
   const paragonPathId = buildParagonPathId(build);
   return {
     ...(paragonPathId === undefined ? {} : { paragonPathId }),
+    itemOverlays: evaluation.overlays,
     powerCardFor: (entity) =>
       cardFor(
         entity,
@@ -275,7 +280,11 @@ export function BuilderItemCard({
   if (entity === undefined) return null;
   // A composed item (e.g. a magic armor on a base armor) cites each source.
   const sources = [...new Set(entities.map(entityCardSource))];
-  const card = sheetItemCard({ name, entities });
+  const card = sheetItemCard({
+    name,
+    entities,
+    overlays: settings.itemOverlays,
+  });
   return (
     <ItemCard
       card={card}

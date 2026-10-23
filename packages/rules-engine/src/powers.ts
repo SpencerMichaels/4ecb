@@ -29,7 +29,12 @@ import {
   weaponRequirementThrowsMelee,
   type PowerRequirementContext,
 } from "./power-requirements";
-import { weaponGroups } from "./weapon-groups";
+import { legacyKeywordList } from "./weapon-groups";
+import {
+  increaseDamageDie,
+  legacyIsStaff,
+  withOverlaidItems,
+} from "./item-fields";
 
 export interface PowerComponent {
   readonly label: string;
@@ -382,23 +387,6 @@ function equipmentName(parts: readonly ContentEntity[]): string {
   );
 }
 
-/** Legacy IsStaff for an item's base record. */
-function legacyIsStaff(entity: ContentEntity): boolean {
-  switch (key(entity.type)) {
-    case "magic item":
-      return key(field(entity, "Magic Item Type") ?? "") === "staff";
-    case "weapon":
-      return key(entity.id) === key(EXCEPTION_IDS.quarterstaff);
-    case "superior implement":
-      return key(field(entity, "Group") ?? "") === "staff";
-    default:
-      return [
-        EXCEPTION_NAMES.staffImplement,
-        EXCEPTION_NAMES.staffImplementAlternate,
-      ].some((name) => key(name) === key(entity.name));
-  }
-}
-
 /** Legacy WeaponEquiv: a "name[:type]" or ID naming the record the item
  * attacks as (a superior implement or shield that is also a weapon). */
 function legacyWeaponEquiv(
@@ -467,7 +455,6 @@ function loadouts(
   byId: ReadonlyMap<string, ContentEntity>,
   byName: ReadonlyMap<string, readonly ContentEntity[]>,
   textStrings: Readonly<Record<string, string>>,
-  overlays: readonly FieldOverlay[],
 ): readonly Loadout[] {
   const result: Loadout[] = [];
   for (const entry of inventory.filter((item) => item.quantity > 0)) {
@@ -504,7 +491,9 @@ function loadouts(
       (entity) => entity !== baseRecord && key(entity.type) === "magic item",
     );
     const staff = baseRecord !== undefined && legacyIsStaff(baseRecord);
-    const groups = weapon === undefined ? [] : weaponGroups(weapon, overlays);
+    // The parts are already overlay-resolved (Arena Training's "Arena").
+    const groups =
+      weapon === undefined ? [] : legacyKeywordList(field(weapon, "Group"));
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
@@ -552,6 +541,10 @@ function loadouts(
               field(weapon, "Item Slot") ?? "",
               field(weapon, "Hands Required") ?? "",
               ...(field(weapon, "Properties") ?? "").split(","),
+              // Native AddWeaponKeywords: any thrown property is "thrown".
+              ...(/thrown/iu.test(field(weapon, "Properties") ?? "")
+                ? ["thrown"]
+                : []),
             ]),
         magicType ?? "",
         ...(implement === undefined || !magicType
@@ -623,7 +616,9 @@ function loadouts(
     id: "unarmed",
     name: "Unarmed",
     definitionIds: [],
-    weaponDamage: "1d4",
+    // Native FigureWeaponDice without a weapon: the "Unarmed Damage Die"
+    // text string (Brutal Brawler's 1d6), else 1d4.
+    weaponDamage: textValue(textStrings, "Unarmed Damage Die")?.trim() || "1d4",
     proficiency: 0,
     proficiencyNames: [],
     enhancement: 0,
@@ -926,17 +921,77 @@ function beastAdditionalEffects(
   });
 }
 
+/**
+ * Native DieIncrease: every `<keywords>:die` stat whose comma-separated
+ * keywords are all in the row's keyword set (IsKeyword) steps the weapon die
+ * up that many times (Deadly Soldier's "Off-hand:die", Throwing Master's
+ * "thrown,ranged:die").
+ */
+function dieIncreaseSteps(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  tags: ReadonlySet<string>,
+): number {
+  let steps = 0;
+  for (const [name, stat] of Object.entries(stats)) {
+    const keywords = /^(.+):die$/iu.exec(name.trim())?.[1];
+    if (keywords === undefined || typeof stat.value !== "number") continue;
+    if (keywords.split(",").every((keyword) => tags.has(key(keyword))))
+      steps += Math.max(0, Math.trunc(stat.value));
+  }
+  return steps;
+}
+
+/**
+ * Native FigureWeaponDice for one [W] term of a row. Arena Training's
+ * improvised weapon (no weapon, a weapon the character is not proficient
+ * with, or an improvised one) is 1d8, 1d10 two-handed. Otherwise a "(off-hand
+ * weapon)" term uses the off-hand item's die (DetermineOffhand; a double
+ * weapon's other end), any other term the row's own, each stepped up by
+ * DieIncrease; with no weapon it is the unarmed die.
+ */
+function figureWeaponDice(input: {
+  readonly equipment: Loadout;
+  readonly offhand: Loadout | undefined;
+  readonly offhandTerm: boolean;
+  readonly arenaImprovised: boolean;
+  readonly steps: number;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+}): string | undefined {
+  const { equipment } = input;
+  if (input.arenaImprovised)
+    return key(
+      field(equipment.requirementBase ?? emptyEntity, "Hands Required") ?? "",
+    ) === "two-handed"
+      ? "1d10"
+      : "1d8";
+  if (equipment.unarmed) return equipment.weaponDamage;
+  let die = equipment.weaponDamage;
+  if (input.offhandTerm && input.offhand !== undefined) {
+    const secondaryEnd =
+      input.offhand === equipment
+        ? field(equipment.requirementBase ?? emptyEntity, "_Secondary End")
+        : undefined;
+    const end =
+      secondaryEnd === undefined || secondaryEnd.trim() === ""
+        ? undefined
+        : input.byId.get(key(secondaryEnd));
+    die =
+      (end === undefined ? undefined : field(end, "Damage")) ??
+      input.offhand.weaponDamage ??
+      die;
+  }
+  return die === undefined ? undefined : increaseDamageDie(die, input.steps);
+}
+
 function criticalExpression(
   equipment: Loadout,
   level: number,
+  weaponDie: string | undefined,
 ): string | undefined {
   const parts = equipment.critical === undefined ? [] : [equipment.critical];
-  if (
-    equipment.weaponDamage !== undefined &&
-    equipment.properties.includes("high crit")
-  ) {
+  if (weaponDie !== undefined && equipment.properties.includes("high crit")) {
     const dice = diceTimes(
-      equipment.weaponDamage,
+      weaponDie,
       1 + Math.floor((Math.max(1, level) - 1) / 10),
     );
     parts.unshift(`+${dice} high crit damage`);
@@ -1021,6 +1076,52 @@ function limiterNames(
   );
 }
 
+/**
+ * A power row's keyword set (native BuildKeywordSet and AddLaterKeywords),
+ * which `<keywords>:attack`, `:damage` and `:die` stats test with
+ * IsKeyword: the item's tags, the power's name, attack type and keywords,
+ * the basic-attack kind, the defense and the attack ability.
+ */
+function rowKeywordTags(
+  equipment: Loadout,
+  power: ContentEntity,
+  attackType: string | undefined,
+  context: {
+    readonly keywords: readonly string[];
+    readonly defense?: string;
+    readonly byId: ReadonlyMap<string, ContentEntity>;
+    readonly basicAttackKind?: "melee" | "ranged" | undefined;
+    readonly attackStat?: string;
+  },
+): { readonly tags: ReadonlySet<string>; readonly powerTags: string[] } {
+  const attackTypeTags = (() => {
+    const normalized = key(attackType ?? "");
+    if (/melee\s+or\s+ranged/.test(normalized)) {
+      if (equipment.weaponCategory?.includes("ranged")) return ["ranged"];
+      if (equipment.weaponCategory?.includes("melee")) return ["melee"];
+    }
+    return ["melee", "ranged", "area", "close"].filter((candidate) =>
+      new RegExp(`\\b${candidate}\\b`).test(normalized),
+    );
+  })();
+  const powerTags = [
+    key(power.name),
+    key(power.name).replace(/\s+attack$/, ""),
+    ...attackTypeTags,
+    ...(context.basicAttackKind ? [`${context.basicAttackKind} basic`] : []),
+  ].filter(Boolean);
+  const tags = new Set([
+    ...equipment.tags.filter((tag) => tag !== "weapon" && tag !== "implement"),
+    ...equipment.definitionIds.map(key),
+    ...powerTags,
+    ...legacyPowerKeywordTags(power, context.byId),
+    ...context.keywords.map(key),
+    key(context.defense ?? ""),
+    key(context.attackStat ?? ""),
+  ]);
+  return { tags, powerTags };
+}
+
 function combatStatComponents(
   stats: Readonly<Record<string, EvaluatedStat>>,
   equipment: Loadout,
@@ -1070,31 +1171,12 @@ function combatStatComponents(
             ...(context.globalStats.weaponRolls ? ["weapon damage rolls"] : []),
           ],
   );
-  const attackTypeTags = (() => {
-    const normalized = key(attackType ?? "");
-    if (/melee\s+or\s+ranged/.test(normalized)) {
-      if (equipment.weaponCategory?.includes("ranged")) return ["ranged"];
-      if (equipment.weaponCategory?.includes("melee")) return ["melee"];
-    }
-    return ["melee", "ranged", "area", "close"].filter((candidate) =>
-      new RegExp(`\\b${candidate}\\b`).test(normalized),
-    );
-  })();
-  const powerTags = [
-    key(power.name),
-    key(power.name).replace(/\s+attack$/, ""),
-    ...attackTypeTags,
-    ...(context.basicAttackKind ? [`${context.basicAttackKind} basic`] : []),
-  ].filter(Boolean);
-  const tags = new Set([
-    ...equipment.tags.filter((tag) => tag !== "weapon" && tag !== "implement"),
-    ...equipment.definitionIds.map(key),
-    ...powerTags,
-    ...legacyPowerKeywordTags(power, context.byId),
-    ...context.keywords.map(key),
-    key(context.defense ?? ""),
-    key(context.attackStat ?? ""),
-  ]);
+  const { tags, powerTags } = rowKeywordTags(
+    equipment,
+    power,
+    attackType,
+    context,
+  );
   const relevant = Object.entries(stats).filter(([name]) => {
     const normalized = key(name);
     const global = normalized.match(/^([^:(]*?)(?:\((.*)\))?$/);
@@ -2038,11 +2120,13 @@ export function evaluatePowers(input: {
   readonly beastCompanion?: BeastCompanionStatistics;
 }): readonly EvaluatedPower[] {
   const beast = input.beastCompanion;
-  const byId = new Map(
-    input.entities.map((entity) => [key(entity.id), entity]),
-  );
+  // Loot records as native C_RulesElementField reads them: with the
+  // character's `modify` overlays (Reaper's Blade's High Crit scythe, a
+  // Heartwood Spear's heavy thrown base spear).
+  const entities = withOverlaidItems(input.entities, input.overlays);
+  const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
   const byName = new Map<string, ContentEntity[]>();
-  for (const entity of input.entities) {
+  for (const entity of entities) {
     const named = byName.get(key(entity.name));
     if (named === undefined) byName.set(key(entity.name), [entity]);
     else named.push(entity);
@@ -2052,7 +2136,6 @@ export function evaluatePowers(input: {
     byId,
     byName,
     input.textStrings ?? {},
-    input.overlays,
   );
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
@@ -2070,6 +2153,22 @@ export function evaluatePowers(input: {
     weaponProficiencies.size === 0 ||
     item.proficiencyNames.length === 0 ||
     item.proficiencyNames.some((name) => weaponProficiencies.has(key(name)));
+  // Native ArenaTrainingImprovisedWeapon: with Arena Training, no weapon, a
+  // weapon the character is not proficient with, or an improvised weapon
+  // deals 1d8 (1d10 two-handed) with a +2 proficiency bonus.
+  const hasArenaTraining = input.activeDefinitionIds.some(
+    (id) => key(id) === key(EXCEPTION_IDS.arenaTraining),
+  );
+  const arenaImprovised = (item: Loadout) =>
+    hasArenaTraining &&
+    (item.unarmed ||
+      ((item.weaponDefinition || item.staff) &&
+        (!proficientWithWeapon(item) ||
+          /improvised/iu.test(
+            field(item.requirementBase ?? emptyEntity, "Weapon Category") ??
+              item.weaponCategory ??
+              "",
+          ))));
   // Deliberate departure from legacy PowerStats, which offered every
   // equipped item to implement powers (D081).
   const characterImplementProficiencies = implementProficiencies(
@@ -2457,7 +2556,13 @@ export function evaluatePowers(input: {
           },
           { label: "half your level", value: halfLevel(input.level) },
         ];
-        if (
+        if (weaponPower && arenaImprovised(equipment))
+          attackComponents.push({
+            label: "proficiency bonus",
+            value: 2,
+            source: "Arena Training",
+          });
+        else if (
           weaponPower &&
           equipment.proficiency !== 0 &&
           proficientWithWeapon(equipment)
@@ -2529,6 +2634,30 @@ export function evaluatePowers(input: {
       const attackStat = primaryAttack?.attackStat ?? "Unknown";
       const defense = primaryAttack?.defense ?? "Unknown";
       const attackComponents = primaryAttack?.attackComponents ?? [];
+      const offhandItem = legacyOffhand(equipment, equipped);
+      const weaponDie = (
+        rowAttackType: string | undefined,
+        rowAttackStat: string,
+        offhandTerm: boolean,
+      ) =>
+        figureWeaponDice({
+          equipment,
+          offhand: offhandItem,
+          offhandTerm,
+          arenaImprovised: arenaImprovised(equipment),
+          steps: dieIncreaseSteps(
+            input.stats,
+            rowKeywordTags(equipment, power, rowAttackType, {
+              keywords,
+              defense,
+              byId,
+              basicAttackKind,
+              attackStat: rowAttackStat,
+            }).tags,
+          ),
+          byId,
+        });
+      const mainWeaponDie = weaponDie(attackType, attackStat, false);
 
       const calculateDamage = (
         hitLine: string | undefined,
@@ -2563,7 +2692,21 @@ export function evaluatePowers(input: {
           };
         const damageComponents: PowerComponent[] = [];
         const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
-        const weaponMatch = selectedHitClause?.match(/(\d+)\[W\]/i);
+        // Native ParseWeaponDmg: every N[W] term of the damage expression
+        // (the text before "damage"; level lines and riders are not part of
+        // it), each "(off-hand weapon)" one with the off-hand die.
+        const weaponTermPattern = /(\d*)\[W\]( \(off-hand weapon\))?/giu;
+        const expressionTerms = [
+          ...(
+            (selectedHitClause ?? "").split(/\bdamage\b/iu)[0] ?? ""
+          ).matchAll(weaponTermPattern),
+        ];
+        const firstTerm = [
+          ...(selectedHitClause ?? "").matchAll(weaponTermPattern),
+        ].slice(0, 1);
+        const weaponTerms =
+          expressionTerms.length > 0 ? expressionTerms : firstTerm;
+        const weaponMatch = weaponTerms[0];
         // Legacy: an implement with no weapon die (a rod) on a [W] power
         // deals only the ability modifier.
         const dieless =
@@ -2580,10 +2723,18 @@ export function evaluatePowers(input: {
             ? [
                 dieless
                   ? undefined
-                  : diceTimes(
-                      equipment.weaponDamage ?? "1d4",
-                      Number(weaponMatch[1]),
-                    ),
+                  : weaponTerms
+                      .map((term) =>
+                        diceTimes(
+                          weaponDie(
+                            attackType,
+                            attackStat,
+                            term[2] !== undefined,
+                          ) ?? "1d4",
+                          Number(term[1] || 1),
+                        ),
+                      )
+                      .join("+"),
                 key(power.name) === "howling strike"
                   ? fixedMatch?.[1]
                   : undefined,
@@ -2870,7 +3021,11 @@ export function evaluatePowers(input: {
                 ...(eligible ? {} : { eligible: false }),
               };
             });
-      const critical = criticalExpression(equipment, input.level);
+      const critical = criticalExpression(
+        equipment,
+        input.level,
+        mainWeaponDie,
+      );
       const brutal = equipment.properties
         .map((property) => /^brutal\s+(\d+)$/i.exec(property)?.[1])
         .find((value) => value !== undefined);
@@ -2894,9 +3049,9 @@ export function evaluatePowers(input: {
               : {}),
         definitionIds: equipment.definitionIds,
         equipped: equipment.equipped,
-        ...(equipment.weaponDamage === undefined
+        ...(equipment.weaponDamage === undefined || mainWeaponDie === undefined
           ? {}
-          : { weaponDamage: equipment.weaponDamage }),
+          : { weaponDamage: mainWeaponDie }),
         ...(equipment.hand === undefined ? {} : { hand: equipment.hand }),
         ...(equipment.pairedEquipmentName === undefined
           ? {}

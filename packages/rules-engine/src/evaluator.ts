@@ -44,10 +44,12 @@ import {
   type EvaluatedBeastCompanion,
 } from "./beast-companion";
 import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
+import { legacyIsStaff, overlaidEntity, overlaidFields } from "./item-fields";
+import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v44-2026-10-23-key-ability-overrides";
+  "evaluated-character-v45-2026-10-23-weapon-fields-dice-selectors";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -468,17 +470,43 @@ function dynamicCategories(
   };
 }
 
+/**
+ * The equipped records the wearing/not-wearing selectors read. Fields
+ * resolve through the character's `modify` overlays (native
+ * C_RulesElementField), which the rule pass is still collecting, so the
+ * items are rebuilt whenever an overlay has been added since the last read.
+ */
 function equippedState(
   input: EvaluationInput,
   index: RulesIndex,
+  overlays: readonly FieldOverlay[],
 ): EquipmentState {
+  let builtFor = -1;
+  let items: readonly EquippedItem[] = [];
+  return {
+    get items() {
+      if (builtFor !== overlays.length) {
+        items = equippedItems(input, index, overlays);
+        builtFor = overlays.length;
+      }
+      return items;
+    },
+  };
+}
+
+function equippedItems(
+  input: EvaluationInput,
+  index: RulesIndex,
+  overlays: readonly FieldOverlay[],
+): EquippedItem[] {
   const items: EquippedItem[] = [];
   for (const entry of input.inventory.filter(
     (item) => item.acquiredLevel <= input.level && item.equippedQuantity > 0,
   )) {
-    for (const definitionId of entry.definitionIds) {
-      const entity = index.get(definitionId);
-      if (entity === undefined) continue;
+    entry.definitionIds.forEach((definitionId, definitionIndex) => {
+      const record = index.get(definitionId);
+      if (record === undefined) return;
+      const entity = overlaidEntity(record, overlays);
       const properties = (
         field(entity, "Properties") ??
         field(entity, "Weapon Property") ??
@@ -487,13 +515,33 @@ function equippedState(
         .split(",")
         .map((value) => value.trim())
         .filter(Boolean);
+      const handsText = field(entity, "Hands Required") ?? "";
+      // Native CategoryMatch reads the record's categories, which name
+      // Two-Handed, each weapon group and so on by ID; LootCheck also takes
+      // the record's name (or its name without "Large "), and the weapon a
+      // superior implement's WeaponEquiv names.
+      const equivalentId = field(entity, "WeaponEquiv")?.trim();
+      const equivalent =
+        equivalentId === undefined || equivalentId === ""
+          ? undefined
+          : (index.get(equivalentId) ??
+            index.find(equivalentId.replace(/:weapon$/iu, ""), "Weapon"));
       const categories = [
-        ...entity.categories,
+        ...index.categoryValues(record),
+        entity.name.replace(/^large\s+/iu, ""),
+        ...(equivalent === undefined
+          ? []
+          : [
+              ...index.categoryValues(equivalent),
+              ...legacyKeywordList(field(equivalent, "Group")),
+              field(equivalent, "Hands Required") ?? "",
+            ]),
         field(entity, "Armor Type") ?? "",
         field(entity, "Armor Category") ?? "",
         field(entity, "Weapon Category") ?? "",
-        field(entity, "Weapon Group") ?? "",
-        field(entity, "Group") ?? "",
+        ...legacyKeywordList(field(entity, "Weapon Group")),
+        ...legacyKeywordList(field(entity, "Group")),
+        handsText,
         field(entity, "Implement Type") ?? "",
         field(entity, "Magic Item Type") ?? "",
       ].filter(Boolean);
@@ -510,7 +558,6 @@ function equippedState(
           /ki focus/i.test(entity.name) ? "Ki Focus" : "",
         );
       const slot = field(entity, "Item Slot");
-      const handsText = field(entity, "Hands Required") ?? "";
       items.push({
         id: entry.id,
         name: entity.name,
@@ -522,10 +569,15 @@ function equippedState(
           ? {}
           : { hands: /two/i.test(handsText) ? 2 : 1 }),
         quantity: entry.equippedQuantity,
+        base: definitionIndex === 0,
+        ...(equivalent === undefined ? {} : { weaponEquivalent: true }),
+        ...(definitionIndex === 0 && legacyIsStaff(entity)
+          ? { staff: true }
+          : {}),
       });
-    }
+    });
   }
-  return { items };
+  return items;
 }
 
 function activeAt(rule: ExecutableRule, level: number): boolean {
@@ -737,20 +789,36 @@ function evaluateCharacterInternal(
   const savedDefinitionIds = new Set(
     input.occurrences.map(({ definitionId }) => key(definitionId)),
   );
-  const inventoryOccurrences: CharacterOccurrence[] = executedLoot(
+  const lootDefinitions = executedLoot(
     inventory.filter((entry) => entry.acquiredLevel <= input.level),
     index,
-  ).flatMap(({ entry, definitionIndex, definitionId }) =>
-    savedDefinitionIds.has(key(definitionId))
-      ? []
-      : [
-          {
-            id: `${entry.id}:definition:${definitionIndex}`,
-            definitionId,
-            acquiredLevel: entry.acquiredLevel,
-            kind: "inventory" as const,
-          },
-        ],
+  );
+  // Each executed enchantment's holding base, for `modify name="BaseItem"`,
+  // by occurrence ID and (when the enchantment is also a saved occurrence)
+  // by definition.
+  const baseItemIds = new Map(
+    lootDefinitions.flatMap(({ entry, definitionIndex, definitionId }) => {
+      const baseId = entry.definitionIds[0];
+      return definitionIndex === 0 || baseId === undefined
+        ? []
+        : [
+            [`${entry.id}:definition:${definitionIndex}`, baseId] as const,
+            [key(definitionId), baseId] as const,
+          ];
+    }),
+  );
+  const inventoryOccurrences: CharacterOccurrence[] = lootDefinitions.flatMap(
+    ({ entry, definitionIndex, definitionId }) =>
+      savedDefinitionIds.has(key(definitionId))
+        ? []
+        : [
+            {
+              id: `${entry.id}:definition:${definitionIndex}`,
+              definitionId,
+              acquiredLevel: entry.acquiredLevel,
+              kind: "inventory" as const,
+            },
+          ],
   );
   const executed: CharacterOccurrence[] = [
     ...input.occurrences.filter(
@@ -1304,7 +1372,8 @@ function evaluateCharacterInternal(
       : [selectedTheme.id, selectedTheme.name, ...selectedTheme.categories].map(
           key,
         );
-  const equipment = equippedState(currentInput, index);
+  const overlays: FieldOverlay[] = [];
+  const equipment = equippedState(currentInput, index, overlays);
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
     stats.add({
@@ -1335,7 +1404,6 @@ function evaluateCharacterInternal(
     });
   }
   let choices: EvaluatedChoice[] = [];
-  const overlays: FieldOverlay[] = [];
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];
   const text = { ...(input.textStrings ?? {}) };
   const textContributions: EvaluatedTextContribution[] = [];
@@ -2024,7 +2092,9 @@ function evaluateCharacterInternal(
             rule.wearing === undefined ||
             equipmentPredicate(equipment, rule.wearing)
           )
-            overlays.push(overlay(rule, occurrence, occurrences, index));
+            overlays.push(
+              overlay(rule, occurrence, occurrences, index, baseItemIds),
+            );
           break;
         case "suggest": {
           const target = index.find(rule.name, rule.type);
@@ -2633,7 +2703,29 @@ function overlay(
   provider: CharacterOccurrence,
   occurrences: readonly CharacterOccurrence[],
   index: RulesIndex,
+  baseItemIds: ReadonlyMap<string, string>,
 ): FieldOverlay {
+  // Native ProcessModify: `BaseItem` is the holding's base record while
+  // EquipLoot executes its enchantment (Heartwood Spear's spear), and
+  // nothing otherwise.
+  if (rule.name !== undefined && key(rule.name) === "baseitem") {
+    const baseId =
+      baseItemIds.get(provider.id) ??
+      baseItemIds.get(key(provider.definitionId));
+    return {
+      providerOccurrenceId: provider.id,
+      targetDefinitionIds: baseId === undefined ? [] : [baseId],
+      targetName: rule.name,
+      field: rule.field,
+      ...(rule.value === undefined ? {} : { value: rule.value }),
+      ...(rule.listAddition === undefined
+        ? {}
+        : { listAddition: rule.listAddition }),
+      ...(rule.dieIncrease === undefined
+        ? {}
+        : { dieIncrease: rule.dieIncrease }),
+    };
+  }
   // `modify select="X"` targets only what the select named X chose (the
   // Dilettante power, Unexpected Flourish's spell), not every occurrence.
   const occurrencesById =
@@ -2685,38 +2777,14 @@ function overlay(
   };
 }
 
+/**
+ * A record's fields as native C_RulesElementField reads them: every `modify`
+ * overlay that targets it (see item-fields.ts `overlayTargets`) applied in
+ * order over its own specifics.
+ */
 export function applyFieldOverlays(
   entity: ContentEntity,
   overlays: readonly FieldOverlay[],
 ): Readonly<Record<string, string>> {
-  const fields: Record<string, string> = Object.fromEntries(
-    entity.specifics.map((specific) => [specific.name, specific.value]),
-  );
-  for (const overlay of overlays.filter((candidate) =>
-    candidate.targetDefinitionIds.some((id) => key(id) === key(entity.id)),
-  )) {
-    const existingName =
-      Object.keys(fields).find((name) => key(name) === key(overlay.field)) ??
-      overlay.field;
-    if (overlay.value !== undefined) fields[existingName] = overlay.value;
-    if (overlay.listAddition !== undefined)
-      fields[existingName] = [fields[existingName], overlay.listAddition]
-        .filter(Boolean)
-        .join(", ");
-    if (overlay.dieIncrease !== undefined)
-      fields[existingName] = increaseDie(
-        fields[existingName] ?? "",
-        Number(overlay.dieIncrease) || 1,
-      );
-  }
-  return fields;
-}
-
-function increaseDie(value: string, steps: number): string {
-  const dice = [4, 6, 8, 10, 12];
-  return value.replace(
-    /d(4|6|8|10|12)\b/i,
-    (_, size: string) =>
-      `d${dice[Math.min(dice.length - 1, dice.indexOf(Number(size)) + steps)]}`,
-  );
+  return overlaidFields(entity, overlays);
 }

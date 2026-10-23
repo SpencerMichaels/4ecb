@@ -1,3 +1,9 @@
+/**
+ * One equipped record as the wearing/not-wearing selectors see it (native
+ * HasLoot/LootCheck). `categories` holds the record's categories by ID and
+ * name (Two-Handed, Heavy Blade, Polearm), its name, and its overlay-resolved
+ * category fields (one entry per Group); `properties` its Properties list.
+ */
 export interface EquippedItem {
   readonly id: string;
   readonly name: string;
@@ -7,6 +13,15 @@ export interface EquippedItem {
   readonly slot?: string;
   readonly hands?: number;
   readonly quantity: number;
+  /** The holding's base record (CharLoot base), not its enchantment. */
+  readonly base?: boolean;
+  /** Native IsStaff: a Quarterstaff, staff implement or magic staff. */
+  readonly staff?: boolean;
+  /**
+   * Native WeaponEquiv: a superior implement that is also a weapon (an
+   * Accurate dagger is a Dagger); its categories include that weapon's.
+   */
+  readonly weaponEquivalent?: boolean;
 }
 
 export interface EquipmentState {
@@ -50,6 +65,14 @@ export function matchesEquipmentSelector(
   const colon = value.indexOf(":");
   const prefix = colon < 0 ? "" : value.slice(0, colon);
   const operand = colon < 0 ? value : value.slice(colon + 1);
+  // Native LootCheck: a "staff" category is met by any IsStaff record (a
+  // Quarterstaff for implement:staff) before the record type is checked.
+  if (
+    operand.trim() === "staff" &&
+    item.staff === true &&
+    (prefix === "weapon" || prefix === "implement" || prefix === "only-weapon")
+  )
+    return true;
   switch (prefix) {
     case "armor":
       return (
@@ -60,7 +83,8 @@ export function matchesEquipmentSelector(
       );
     case "weapon":
       return (
-        item.type.toLocaleLowerCase() === "weapon" &&
+        (item.type.toLocaleLowerCase() === "weapon" ||
+          item.weaponEquivalent === true) &&
         (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "implement":
@@ -74,7 +98,8 @@ export function matchesEquipmentSelector(
         : item.slot?.toLocaleLowerCase() === operand;
     case "only-weapon":
       return (
-        item.type.toLocaleLowerCase() === "weapon" &&
+        (item.type.toLocaleLowerCase() === "weapon" ||
+          item.weaponEquivalent === true) &&
         (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "versatile":
@@ -94,20 +119,42 @@ export function matchesEquipmentSelector(
   }
 }
 
+const HAND_SLOTS = new Set(["two-hands", "one-hand", "off-hand"]);
+
+/**
+ * Native CheckOnlyWeapon: at most one equipped holding whose base fills a
+ * hand slot (Two-hands, One-hand, Off-hand); a second weapon, or an off-hand
+ * implement, means the weapon is not the only one (two of the same holding
+ * are still one). A record without an Item Slot counts when it is a weapon.
+ */
+function onlyOneHandItem(state: EquipmentState): boolean {
+  const held = new Set(
+    state.items
+      .filter(
+        (item) =>
+          item.quantity > 0 &&
+          item.base !== false &&
+          (item.slot === undefined
+            ? item.type.toLocaleLowerCase() === "weapon"
+            : HAND_SLOTS.has(item.slot.trim().toLocaleLowerCase())),
+      )
+      .map((item) => item.id),
+  );
+  return held.size <= 1;
+}
+
 export function equipmentPredicate(
   state: EquipmentState,
   selector: string,
 ): boolean {
   const value = selector.trim().toLocaleLowerCase();
-  if (value.startsWith("only-weapon:")) {
-    const weapons = state.items.filter(
-      (item) => item.quantity > 0 && item.type.toLocaleLowerCase() === "weapon",
-    );
+  if (value.startsWith("only-weapon:"))
     return (
-      weapons.reduce((sum, item) => sum + item.quantity, 0) === 1 &&
-      weapons.some((item) => matchesEquipmentSelector(item, value))
+      onlyOneHandItem(state) &&
+      state.items.some(
+        (item) => item.quantity > 0 && matchesEquipmentSelector(item, value),
+      )
     );
-  }
   if (value.startsWith("dual-wielding:")) {
     const operand = value.slice("dual-wielding:".length);
     const weapons = state.items

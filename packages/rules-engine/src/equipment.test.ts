@@ -80,4 +80,58 @@ describe("equipment predicates", () => {
       ),
     ).toBe(true);
   });
+  it("treats any staff as a staff and counts hand slots for only-weapon", () => {
+    const quarterstaff = {
+      id: "staff",
+      name: "Quarterstaff",
+      type: "Weapon",
+      categories: ["Staff", "Two-Handed"],
+      properties: [],
+      slot: "Two-Hands",
+      quantity: 1,
+      base: true,
+      staff: true,
+    };
+    const shield = {
+      id: "shield",
+      name: "Light Shield",
+      type: "Armor",
+      categories: ["Shield"],
+      properties: [],
+      slot: "Off-hand",
+      quantity: 1,
+      base: true,
+    };
+    const enchantment = {
+      id: "staff",
+      name: "Defensive Weapon +1",
+      type: "Magic Item",
+      categories: [],
+      properties: [],
+      slot: "Off-hand",
+      quantity: 1,
+      base: false,
+    };
+    expect(
+      equipmentPredicate({ items: [quarterstaff] }, "implement:staff"),
+    ).toBe(true);
+    expect(
+      equipmentPredicate(
+        { items: [quarterstaff, enchantment] },
+        "only-weapon:staff",
+      ),
+    ).toBe(true);
+    expect(
+      equipmentPredicate(
+        { items: [quarterstaff, shield] },
+        "only-weapon:staff",
+      ),
+    ).toBe(false);
+    expect(
+      equipmentPredicate(
+        { items: [{ ...quarterstaff, quantity: 2 }] },
+        "only-weapon:staff",
+      ),
+    ).toBe(true);
+  });
 });

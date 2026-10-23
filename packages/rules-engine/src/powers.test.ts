@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { evaluatePowers, powerAttackProfile } from "./powers";
+import { EXCEPTION_IDS } from "./exceptions";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
 
 function entity(
@@ -3332,5 +3333,198 @@ describe("extra damage dice", () => {
       entities: [entity("POWER", "Synthetic strike", "Power", {})],
     });
     expect(power?.extraDamage).toBeUndefined();
+  });
+});
+
+describe("weapon fields and dice (native C_RulesElementField, FigureWeaponDice)", () => {
+  const held = (id: string, definitionIds: string[], equippedQuantity = 1) => ({
+    id,
+    definitionIds,
+    quantity: 1,
+    equippedQuantity,
+    acquiredLevel: 1,
+  });
+  const strike = (id: string, hit: string, attackType = "Melee weapon") =>
+    entity(id, id, "Power", {
+      Keywords: "Weapon",
+      "Attack Type": attackType,
+      Attack: "Strength vs. AC",
+      Hit: hit,
+    });
+  const weapon = (
+    id: string,
+    name: string,
+    specifics: Record<string, string> = {},
+  ) =>
+    entity(id, name, "Weapon", {
+      Damage: "1d8",
+      "Proficiency Bonus": "2",
+      "Weapon Category": "Military Melee",
+      Group: "Heavy Blade",
+      Properties: "",
+      Range: "",
+      ...specifics,
+    });
+  const overlay = (
+    targetName: string,
+    field: string,
+    change: { value?: string; listAddition?: string; dieIncrease?: string },
+  ) => ({
+    providerOccurrenceId: "feat",
+    targetDefinitionIds: [],
+    targetName,
+    targetType: "Weapon",
+    field,
+    ...change,
+  });
+  const variant = (
+    power: ReturnType<typeof evaluatePowers>[number] | undefined,
+    equipmentId: string,
+  ) =>
+    power?.variants.find((candidate) => candidate.equipmentId === equipmentId);
+
+  it("reads modified weapon properties, proficiency, damage and range", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE"],
+      entities: [
+        strike("STRIKE", "1[W] damage."),
+        weapon("SCYTHE", "Scythe", { Damage: "2d4" }),
+        weapon("SHURIKEN", "Large Shuriken", { Damage: "1d4" }),
+        weapon("SPEAR", "Spear"),
+      ],
+      inventory: [
+        held("scythe", ["SCYTHE"]),
+        held("shuriken", ["SHURIKEN"]),
+        held("spear", ["SPEAR"]),
+      ],
+      stats: {},
+      overlays: [
+        overlay("Scythe", "Properties", { listAddition: "High Crit" }),
+        overlay("Scythe", "Proficiency Bonus", { value: "3" }),
+        // A weapon modify also changes its "Large <name>" record.
+        overlay("Shuriken", "Damage", { dieIncrease: "1" }),
+        {
+          providerOccurrenceId: "spear-enchantment",
+          targetDefinitionIds: ["SPEAR"],
+          targetName: "BaseItem",
+          field: "Properties",
+          listAddition: "Heavy Thrown",
+        },
+        {
+          providerOccurrenceId: "spear-enchantment",
+          targetDefinitionIds: ["SPEAR"],
+          targetName: "BaseItem",
+          field: "Range",
+          value: "10/20",
+        },
+      ],
+    });
+    expect(variant(power, "scythe")).toMatchObject({
+      attackBonus: 3,
+      critical: "+2d4 high crit damage",
+    });
+    expect(variant(power, "shuriken")).toMatchObject({
+      weaponDamage: "1d6",
+      damage: "1d6",
+    });
+    expect(variant(power, "spear")?.basicAttackTypes).toEqual([
+      "melee",
+      "ranged",
+    ]);
+  });
+
+  it("steps weapon dice up by matching ':die' stats (DieIncrease)", () => {
+    const stats = {
+      "Off-hand:die": stat("Off-hand:die", 1),
+      "thrown,ranged:die": stat("thrown,ranged:die", 1),
+    };
+    const entities = [
+      strike("MELEE", "1[W] damage."),
+      strike("THROW", "1[W] damage.", "Ranged weapon"),
+      weapon("SHORT", "Short sword", {
+        Damage: "1d6",
+        Properties: "Off-Hand",
+        Group: "Light Blade",
+      }),
+      weapon("AXE", "Throwing axe", {
+        Damage: "1d6",
+        Properties: "Light Thrown",
+        Range: "5/10",
+        Group: "Axe",
+      }),
+    ];
+    const [melee, thrown] = evaluatePowers({
+      level: 11,
+      activeDefinitionIds: ["MELEE", "THROW"],
+      entities,
+      inventory: [held("short", ["SHORT"], 0), held("axe", ["AXE"], 0)],
+      stats,
+      overlays: [],
+    });
+    expect(variant(melee, "short")?.damage).toBe("1d8");
+    expect(variant(melee, "axe")?.damage).toBe("1d6");
+    expect(variant(thrown, "axe")?.damage).toBe("1d8");
+  });
+
+  it("uses the Unarmed Damage Die text string and the off-hand weapon's die", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["FRENZY"],
+      entities: [
+        strike("FRENZY", "1[W] + 1[W] (off-hand weapon) damage."),
+        weapon("LONG", "Longsword"),
+        weapon("SHORT", "Short sword", { Damage: "1d6" }),
+      ],
+      inventory: [held("long", ["LONG"]), held("short", ["SHORT"])],
+      stats: {},
+      textStrings: { "Unarmed Damage Die": "1d6" },
+      overlays: [],
+    });
+    expect(variant(power, "long")?.damage).toBe("1d8+1d6");
+    expect(variant(power, "short")?.damage).toBe("1d6+1d8");
+    expect(variant(power, "unarmed")?.damage).toBe("1d6+1d6");
+  });
+
+  it("gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE", EXCEPTION_IDS.arenaTraining, "LONG_PROF"],
+      entities: [
+        strike("STRIKE", "1[W] damage."),
+        entity(
+          EXCEPTION_IDS.arenaTraining,
+          "Arena Training",
+          "Class Feature",
+          {},
+        ),
+        entity(
+          "LONG_PROF",
+          "Weapon Proficiency (Longsword)",
+          "Proficiency",
+          {},
+        ),
+        weapon("LONG", "Longsword", { "Proficiency Bonus": "3" }),
+        weapon("MAUL", "Maul", {
+          Damage: "2d6",
+          "Hands Required": "Two-Handed",
+        }),
+      ],
+      inventory: [held("long", ["LONG"]), held("maul", ["MAUL"])],
+      stats: {},
+      overlays: [],
+    });
+    expect(variant(power, "long")).toMatchObject({
+      attackBonus: 3,
+      damage: "1d8",
+    });
+    expect(variant(power, "maul")).toMatchObject({
+      attackBonus: 2,
+      damage: "1d10",
+    });
+    expect(variant(power, "unarmed")).toMatchObject({
+      attackBonus: 2,
+      damage: "1d8",
+    });
   });
 });

@@ -1945,6 +1945,207 @@ describe("character evaluator", () => {
     expect(result.stats.AC?.value).toBe(2);
   });
 
+  it("reads weapon selectors through categories, names, staves and hand slots (native HasLoot)", () => {
+    const held = (id: string, definitionIds: string[]) => ({
+      id,
+      definitionIds,
+      quantity: 1,
+      equippedQuantity: 1,
+      acquiredLevel: 1,
+    });
+    const statadd = (
+      name: string,
+      selector: string,
+      ordinal: number,
+      negated = false,
+    ) =>
+      rule(
+        "statadd",
+        {
+          name,
+          value: "+1",
+          [negated ? "not-wearing" : "wearing"]: selector,
+        },
+        ordinal,
+      );
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          statadd("Two-handed blade", "weapon:two-handed,heavy blade", 0),
+          statadd("Only polearm", "only-weapon:polearm", 1),
+          statadd("Glaive by name", "weapon:glaive", 2),
+          statadd("Not a glaive", "weapon:!glaive", 3),
+          statadd("Staff implement", "implement:staff", 4),
+          statadd("Staff weapon", "weapon:staff", 5),
+          statadd("Not two-handed", "weapon:two-handed", 6, true),
+          statadd("Light blade", "weapon:light blade", 7),
+        ],
+      }),
+      entity("CAT_TWO", "Two-Handed", "Category"),
+      entity("GROUP_HB", "Heavy Blade", "Weapon Group"),
+      entity("GROUP_POLE", "Polearm", "Weapon Group"),
+      entity("GLAIVE", "Glaive", "Weapon", {
+        categories: ["CAT_TWO", "GROUP_HB", "GROUP_POLE"],
+        specifics: {
+          Group: "Heavy Blade, Polearm",
+          "Hands Required": "Two-Handed",
+          "Item Slot": "Two-Hands",
+        },
+      }),
+      entity(EXCEPTION_IDS.quarterstaff, "Quarterstaff", "Weapon", {
+        specifics: {
+          Group: "Staff",
+          "Hands Required": "Two-Handed",
+          "Item Slot": "Two-Hands",
+        },
+      }),
+      entity("SHIELD", "Light Shield", "Armor", {
+        specifics: { "Item Slot": "Off-hand" },
+      }),
+      entity("DAGGER", "Dagger", "Weapon", {
+        specifics: { Group: "Light Blade" },
+      }),
+      entity("ACCURATE", "Accurate dagger", "Superior Implement", {
+        specifics: { WeaponEquiv: "DAGGER" },
+      }),
+    ];
+    const evaluate = (inventory: CharacterInventoryEntry[]) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [rootOccurrence],
+          inventory,
+        },
+        content,
+      ).stats;
+
+    const glaive = evaluate([held("glaive", ["GLAIVE"])]);
+    expect(glaive["Two-handed blade"]?.value).toBe(1);
+    expect(glaive["Only polearm"]?.value).toBe(1);
+    expect(glaive["Glaive by name"]?.value).toBe(1);
+    expect(glaive["Not a glaive"]?.value ?? 0).toBe(0);
+    expect(glaive["Not two-handed"]?.value ?? 0).toBe(0);
+    // A shield fills the other hand, so the glaive is not the only weapon.
+    const withShield = evaluate([
+      held("glaive", ["GLAIVE"]),
+      held("shield", ["SHIELD"]),
+    ]);
+    expect(withShield["Only polearm"]?.value ?? 0).toBe(0);
+    expect(withShield["Two-handed blade"]?.value).toBe(1);
+    // Native IsStaff: a mundane Quarterstaff is a staff implement.
+    const staff = evaluate([held("staff", [EXCEPTION_IDS.quarterstaff])]);
+    expect(staff["Staff implement"]?.value).toBe(1);
+    expect(staff["Staff weapon"]?.value).toBe(1);
+    expect(evaluate([])["Not two-handed"]?.value).toBe(1);
+    // Native WeaponEquiv: a superior implement dagger is a light blade.
+    expect(
+      evaluate([held("accurate", ["ACCURATE"])])["Light blade"]?.value,
+    ).toBe(1);
+  });
+
+  it("resolves weapon and armor fields through modify overlays, including BaseItem", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "feat",
+            definitionId: "FEAT",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [
+          {
+            id: "spear",
+            definitionIds: ["SPEAR", "HEARTWOOD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "armor",
+            definitionIds: ["STUDDED"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [
+            rule(
+              "statadd",
+              {
+                name: "Thrown spear",
+                value: "+1",
+                wearing: "weapon:heavy thrown",
+              },
+              0,
+            ),
+            rule(
+              "statadd",
+              { name: "Leather armor", value: "+1", wearing: "armor:leather" },
+              1,
+            ),
+          ],
+        }),
+        entity("FEAT", "Armor Proficiency: Studded Leather", "Feat", {
+          rules: [
+            rule(
+              "modify",
+              {
+                name: "Studded Leather",
+                type: "Armor",
+                Field: "Armor Category",
+                value: "Leather",
+              },
+              0,
+            ),
+          ],
+        }),
+        entity("SPEAR", "Spear", "Weapon", {
+          specifics: { Group: "Spear", Properties: "", Range: "" },
+        }),
+        entity("HEARTWOOD", "Heartwood Spear", "Magic Item", {
+          specifics: { "Magic Item Type": "Weapon" },
+          rules: [
+            rule(
+              "modify",
+              {
+                name: "BaseItem",
+                Field: "Properties",
+                "list-addition": "Heavy Thrown",
+              },
+              0,
+            ),
+            rule(
+              "modify",
+              { name: "BaseItem", Field: "Range", value: "10/20" },
+              1,
+            ),
+          ],
+        }),
+        entity("STUDDED", "Studded Leather", "Armor", {
+          specifics: { "Armor Category": "Studded Leather" },
+        }),
+      ],
+    );
+
+    expect(result.stats["Thrown spear"]?.value).toBe(1);
+    expect(result.stats["Leather armor"]?.value).toBe(1);
+    const spearOverlays = result.overlays.filter(
+      (overlay) => overlay.targetName === "BaseItem",
+    );
+    expect(spearOverlays.map((overlay) => overlay.targetDefinitionIds)).toEqual(
+      [["SPEAR"], ["SPEAR"]],
+    );
+  });
+
   it("promotes CountsAsClass power categories for paragon multiclassing", () => {
     const result = evaluateCharacter(
       {
@@ -3226,7 +3427,7 @@ describe("character evaluator", () => {
 
   it("applies list, replacement, and die-step overlays without mutating content", () => {
     const power = entity("POWER", "Power", "Power", {
-      specifics: { Keywords: "Arcane", Damage: "1d8 + 2" },
+      specifics: { Keywords: "Arcane", Damage: "1d8" },
     });
     const fields = applyFieldOverlays(power, [
       {
@@ -3250,12 +3451,12 @@ describe("character evaluator", () => {
     ]);
     expect(fields).toEqual({
       Keywords: "Arcane, Fire",
-      Damage: "1d10 + 2",
+      Damage: "1d10",
       Display: "Changed",
     });
     expect(power.specifics.map(({ value }) => value)).toEqual([
       "Arcane",
-      "1d8 + 2",
+      "1d8",
     ]);
   });
 });

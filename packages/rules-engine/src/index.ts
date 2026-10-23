@@ -7,6 +7,7 @@ export * from "./exceptions";
 export * from "./expressions";
 export * from "./freebees";
 export * from "./ir";
+export * from "./item-fields";
 export * from "./item-sets";
 export * from "./known-records";
 export * from "./prerequisites";

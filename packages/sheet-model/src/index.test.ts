@@ -13,9 +13,62 @@ import {
   buildEvaluatedSheetModel,
   buildSheetModel,
   createSheetPowerCardFinder,
+  sheetItemCard,
 } from ".";
 
 describe("sheet model", () => {
+  it("shows an item card with the character's modified weapon fields", () => {
+    const spear: ContentEntity = {
+      id: "SPEAR",
+      name: "Spear",
+      type: "Weapon",
+      source: "test",
+      sources: ["test"],
+      attributes: [],
+      categories: [],
+      specifics: [
+        { name: "Range", value: "", extraAttributes: [], ordinal: 0 },
+        { name: "Properties", value: "", extraAttributes: [], ordinal: 1 },
+      ],
+      rules: [],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "test", sourceOrdinal: 0 },
+    };
+    const card = sheetItemCard({
+      name: "Spear",
+      entities: [spear],
+      overlays: [
+        {
+          providerOccurrenceId: "enchantment",
+          targetDefinitionIds: ["SPEAR"],
+          targetName: "BaseItem",
+          field: "Range",
+          value: "10/20",
+        },
+        {
+          providerOccurrenceId: "feat",
+          targetDefinitionIds: [],
+          targetName: "Spear",
+          targetType: "Weapon",
+          field: "Properties",
+          listAddition: "Heavy Thrown",
+        },
+      ],
+    });
+    expect(card.fields).toEqual(
+      expect.arrayContaining([
+        { label: "Range", value: "10/20" },
+        expect.objectContaining({ label: "Properties" }),
+      ]),
+    );
+    expect(
+      card.fields.find((entry) => entry.label === "Properties")?.value,
+    ).toMatch(/Heavy Thrown/u);
+    expect(sheetItemCard({ name: "Spear", entities: [spear] }).fields).toEqual(
+      [],
+    );
+  });
   it("applies the coin-weight option to cached sheets without modifying the cache", () => {
     const snapshot: LegacyCharacterSnapshot = {
       details: { CarriedMoney: "500 gp" },

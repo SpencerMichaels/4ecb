@@ -20,8 +20,10 @@ import {
   applyFieldOverlays,
   halfLevel,
   knownRecords,
+  overlaidEntity,
   type EvaluatedCharacter,
   type EvaluatedPower,
+  type FieldOverlay,
 } from "@4ecb/rules-engine";
 
 import {
@@ -1159,7 +1161,9 @@ export function createSheetPowerCardFinder(
 /**
  * The printed card for an item composed of its content entities (a base item
  * and its enchantment, the last one naming it). Shared by the sheet and the
- * builder's equipment and shop details.
+ * builder's equipment and shop details. With the evaluation's `overlays`,
+ * each record's fields are the character's (a Reaper's Blade scythe is High
+ * Crit, a Heartwood Spear's spear is heavy thrown with a range).
  */
 export function sheetItemCard(input: {
   readonly name: string;
@@ -1168,14 +1172,19 @@ export function sheetItemCard(input: {
   readonly baseItemType?: string | undefined;
   readonly quantity?: number | undefined;
   readonly equippedQuantity?: number | undefined;
+  readonly overlays?: readonly FieldOverlay[] | undefined;
 }): SheetCard {
-  const entity = input.entities.at(-1);
+  const overlays = input.overlays ?? [];
+  const entities = input.entities.map((candidate) =>
+    overlaidEntity(candidate, overlays),
+  );
+  const entity = entities.at(-1);
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
     kind: "item",
     name: input.name,
     itemType: input.itemType ?? entity?.type ?? "Item",
-    baseItemType: input.baseItemType ?? input.entities[0]?.type ?? "Item",
+    baseItemType: input.baseItemType ?? entities[0]?.type ?? "Item",
     fields: [
       ...(input.quantity === undefined
         ? []
@@ -1183,7 +1192,7 @@ export function sheetItemCard(input: {
       ...(input.equippedQuantity === undefined || input.equippedQuantity === 0
         ? []
         : [{ label: "Equipped", value: String(input.equippedQuantity) }]),
-      ...input.entities.flatMap((candidate) => entityFields(candidate)),
+      ...entities.flatMap((candidate) => entityFields(candidate)),
     ],
     ...entityPresentation(entity),
   };
@@ -1845,6 +1854,7 @@ export function buildEvaluatedSheetModel(
           baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
           quantity: entry.quantity,
           equippedQuantity: entry.equippedQuantity,
+          overlays: evaluation.overlays,
         }),
       ];
     },

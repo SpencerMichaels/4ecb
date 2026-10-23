@@ -174,6 +174,8 @@ const BEAST = "packages/rules-engine/src/beast-companion.test.ts";
 const FREEBEES = "packages/rules-engine/src/freebees.test.ts";
 const ITEM_SETS = "packages/rules-engine/src/item-sets.test.ts";
 const WEAPON_GROUPS = "packages/rules-engine/src/weapon-groups.test.ts";
+const ITEM_FIELDS = "packages/rules-engine/src/item-fields.test.ts";
+const SHEET = "packages/sheet-model/src/index.test.ts";
 const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
 const ENCUMBRANCE = "packages/sheet-model/src/encumbrance.test.ts";
@@ -337,8 +339,20 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.C_RulesElementField": partial(
       "Field lookup: name/Element Type/Flavor/Description/ID pseudo-fields, then 'modify' overlays, then the _AugmentParent power's overlays for an augment version, then the record's own field.",
-      "evaluator field overlays apply to the targeted definition only; an augment version (689 records with _AugmentParent) does not inherit overlays aimed at its parent power",
+      "item-fields.ts overlaidField/overlaidEntity resolve overlays by target ID, or by name/ID and type for any record (owned or not); loot records are read overlaid by power rows (withOverlaidItems), the wearing selectors and the item cards. An augment version (689 records with _AugmentParent) does not inherit overlays aimed at its parent power",
       test(POWERS, "materializes and deduplicates psionic augment versions"),
+      test(
+        ITEM_FIELDS,
+        "applies value, list-addition and die-increase in order without mutating content",
+      ),
+      test(
+        POWERS,
+        "reads modified weapon properties, proficiency, damage and range",
+      ),
+      test(
+        SHEET,
+        "shows an item card with the character's modified weapon fields",
+      ),
     ),
     "D20Workspace.IsAugmentablePower": code(
       "A power with _AugmentVersions is augmentable.",
@@ -705,7 +719,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsStaff": code(
       "Staff detection: staff implement gear names, Staff magic items, Quarterstaff (ID_FMP_WEAPON_10), staff group.",
-      "powers.ts legacyIsStaff",
+      "item-fields.ts legacyIsStaff, read by power rows and the 'staff' wearing selectors",
+      test(
+        EVALUATOR,
+        "reads weapon selectors through categories, names, staves and hand slots (native HasLoot)",
+      ),
       test(
         POWERS,
         "treats magic staves as both implements and quarterstaff weapons",
@@ -859,9 +877,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "With Arena Training, every 'Arena Weapon' property weapon's keywords join the power's keyword set.",
       "no modern Arena Training channel",
     ),
-    "?A0x7555d940.ArenaTrainingImprovisedWeapon": notHandled(
+    "?A0x7555d940.ArenaTrainingImprovisedWeapon": code(
       "Arena Training (ID_FMP_CLASS_FEATURE_2893) lets non-proficient and improvised weapons use the improvised-weapon rules.",
-      "not modeled",
+      "powers.ts arenaImprovised: Unarmed, a weapon (or staff) the character is not proficient with, or an Improvised one deals 1d8 (1d10 two-handed) with a +2 proficiency bonus",
+      test(
+        POWERS,
+        "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
+      ),
     ),
     "?A0x0bed2cbe.WieldingDefensive": partial(
       "'defensive' selector: dual-wielding with a proficient defensive weapon (staff as Quarterstaff).",
@@ -886,7 +908,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     HasLoot: code(
       "wearing/not-wearing selector dispatch (defensive, versatile, dual-wielding, dual-shield, slot, staff implement, only-weapon, _EquipmentEquiv).",
-      "equipment.ts matchesEquipmentSelector / equipmentPredicate",
+      "equipment.ts matchesEquipmentSelector / equipmentPredicate over evaluator.ts equippedItems: overlay-resolved fields, categories by ID and name (Two-Handed, each weapon group), the record name, IsStaff and WeaponEquiv. _EquipmentEquiv has no record in the current pack",
+      test(
+        EVALUATOR,
+        "reads weapon selectors through categories, names, staves and hand slots (native HasLoot)",
+      ),
+      test(
+        EVALUATOR,
+        "resolves weapon and armor fields through modify overlays, including BaseItem",
+      ),
       test(
         EQUIPMENT,
         "matches armor, weapon, slot, property, and versatile selectors",
@@ -897,13 +927,25 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "exposes weapon groups and magic implement types to equipment rules",
       ),
     ),
-    "?A0x0bed2cbe.CheckOnlyWeapon": partial(
+    "?A0x0bed2cbe.CheckOnlyWeapon": code(
       "'only-weapon' selectors and dual wielding with a double weapon: at most one equipped hand item.",
-      "equipment.ts 'only-weapon:' needs exactly one equipped weapon; legacy counts every equipped Two-hands/One-hand/Off-hand item (a shield or off-hand implement also breaks 'only weapon'), and the double-weapon dual-wielding branch is not modeled",
+      "equipment.ts onlyOneHandItem: at most one equipped holding whose base fills Two-hands/One-hand/Off-hand (a shield or off-hand implement breaks 'only weapon'); its double-weapon use is listed under IsDualWielding",
+      test(
+        EQUIPMENT,
+        "treats any staff as a staff and counts hand slots for only-weapon",
+      ),
+      test(
+        EVALUATOR,
+        "reads weapon selectors through categories, names, staves and hand slots (native HasLoot)",
+      ),
     ),
     "?A0x0bed2cbe.LootCheck": code(
       "Selector matching by category or weapon name, including 'Large <weapon>' variants.",
-      "equipment.ts",
+      "equipment.ts matchTerms over the record's categories by ID and name, its name (without 'Large '), split Group list and Hands Required; 'staff' matches any IsStaff record",
+      test(
+        EVALUATOR,
+        "reads weapon selectors through categories, names, staves and hand slots (native HasLoot)",
+      ),
       test(
         EQUIPMENT,
         "matches armor, weapon, slot, property, and versatile selectors",
@@ -1105,7 +1147,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.GetProficiencyBonus": code(
       "Proficiency Bonus when proficient (Arena Training improvised +2 aside).",
-      "powers.ts proficientWithWeapon",
+      "powers.ts proficientWithWeapon, reading the overlay-resolved Proficiency Bonus (Deadeye Slinger's sling); Arena Training improvised weapons +2",
+      test(
+        POWERS,
+        "reads modified weapon properties, proficiency, damage and range",
+      ),
       test(
         POWERS,
         "adds a weapon's proficiency bonus only with its weapon proficiency",
@@ -1125,9 +1171,18 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Stores a loot damage override.",
       "character-domain inventory overrides",
     ),
-    "?A0x03aa98b1.ProcessModify": generic(
+    "?A0x03aa98b1.ProcessModify": partial(
       "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes.",
-      "evaluator field overlays",
+      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; item-fields.ts overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A 'this' modify with conditions (Unforgettable Cudgel's _PowerstatKeywords, Warsoul Weapon's prereqs) is not applied",
+      test(
+        EVALUATOR,
+        "resolves weapon and armor fields through modify overlays, including BaseItem",
+      ),
+      test(
+        ITEM_FIELDS,
+        "targets records by name, ID, type and Large size, never by context name",
+      ),
+      test(ITEM_FIELDS, "steps dice through the native one-handed table"),
     ),
 
     // --- D20RulesEngine: power math -------------------------------------
@@ -1418,15 +1473,31 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "recognizes ongoing damage expressed through an ability modifier",
       ),
     ),
-    "?A0x7555d940.FindWeaponDamage": partial(
+    "?A0x7555d940.FindWeaponDamage": code(
       "[W]/[B] dice and the '[W] (off-hand weapon)' term.",
-      "powers.ts reads [W]/[B]; '[W] (off-hand weapon)' (6 powers: Eruption of Steel, Whirling Frenzy, Twinclaw Rend, ...) uses the row's own weapon die rather than the off-hand weapon's",
+      "powers.ts calculateDamage reads every N[W] term; a '(off-hand weapon)' one (6 powers: Eruption of Steel, Whirling Frenzy, Twinclaw Rend, ...) takes the off-hand die",
       test(POWERS, "produces explainable weapon and unarmed variants with %s"),
+      test(
+        POWERS,
+        "uses the Unarmed Damage Die text string and the off-hand weapon's die",
+      ),
     ),
-    "?A0x7555d940.FigureWeaponDice": partial(
+    "?A0x7555d940.FigureWeaponDice": code(
       "Weapon dice: the loot's damage override, the off-hand weapon for off-hand dice, DieIncrease ('<keyword>:die' stats), Arena Training improvised 1d8/1d10, unarmed 'Unarmed Damage Die' text string or 1d4.",
-      "powers.ts weaponDamage; not modeled: '<keyword>:die' increases (Deadly Soldier, Throwing Master), the 'Unarmed Damage Die' text string (Brutal Brawler, Bladed Fists), Arena Training improvised dice, off-hand dice",
+      "powers.ts figureWeaponDice / dieIncreaseSteps over the row's keyword set (rowKeywordTags); the off-hand item is legacyOffhand (a double weapon's _Secondary End)",
       test(POWERS, "produces explainable weapon and unarmed variants with %s"),
+      test(
+        POWERS,
+        "steps weapon dice up by matching ':die' stats (DieIncrease)",
+      ),
+      test(
+        POWERS,
+        "uses the Unarmed Damage Die text string and the off-hand weapon's die",
+      ),
+      test(
+        POWERS,
+        "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
+      ),
     ),
     "?A0x7555d940.DiceAdjustment": notHandled(
       "Striker dice adjustments: '<feature> Dice' stats limited to the weapon name or '<group> group'.",
