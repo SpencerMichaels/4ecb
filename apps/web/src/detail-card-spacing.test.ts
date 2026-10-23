@@ -412,10 +412,12 @@ describe("detail card spacing audit", () => {
     { width: 1440, height: 900 },
     { width: 390, height: 844 },
   ])
+    // The cascade runs over every app rule per element: a few seconds alone,
+    // longer when the whole workspace suite runs in parallel.
     it(`finds no spacing problems at ${String(viewport.width)}px`, () => {
       const findings = auditFixtures(viewport);
       expect(formatFindings(findings)).toBe("");
-    });
+    }, 60_000);
 });
 
 describe("the card style audit", () => {
