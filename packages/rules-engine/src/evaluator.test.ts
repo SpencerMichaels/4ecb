@@ -5,6 +5,7 @@ import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 import {
   applyFieldOverlays,
   evaluateCharacter,
+  type CharacterInventoryEntry,
   type CharacterOccurrence,
 } from "./evaluator";
 import { EXCEPTION_IDS } from "./exceptions";
@@ -3124,5 +3125,150 @@ describe("legacy item requirements", () => {
     expect(unmet(evaluate(true, 1))).toEqual([]);
     expect(evaluate(true, 1).legal).toBe(true);
     expect(unmet(evaluate(false, 0))).toEqual([]);
+  });
+});
+
+describe("legacy loot execution (EquipLoot/ShouldExecute)", () => {
+  const content = [
+    entity("ROOT", "1", "Level"),
+    entity("BAG", "Synthetic Bag", "Magic Item", {
+      specifics: { "Magic Item Type": "Wondrous Item", "Item Slot": "" },
+      rules: [rule("statadd", { name: "Weight Discount", value: "200" }, 0)],
+    }),
+    entity("CHARM", "Synthetic Charm", "Magic Item", {
+      specifics: { "Item Slot": "Neck" },
+      rules: [rule("statadd", { name: "Fortitude", value: "+1" }, 0)],
+    }),
+    entity("TOME", "Synthetic Tome", "Magic Item", {
+      specifics: { "Item Slot": "Off-hand", _AlwaysExecute: "true" },
+      rules: [rule("statadd", { name: "Will", value: "+1" }, 0)],
+    }),
+    entity("DAGGER", "Dagger", "Weapon", {
+      specifics: { "Item Slot": "One-hand" },
+    }),
+    entity("RUNE", "Synthetic Rune Weapon", "Magic Item", {
+      specifics: { "Item Slot": "" },
+      rules: [rule("statadd", { name: "Initiative", value: "+1" }, 0)],
+    }),
+    entity("BRACERS", "Synthetic Bracers", "Magic Item", {
+      specifics: { "Item Slot": "Arms" },
+    }),
+    entity("SHIELD", "Light Shield", "Armor", {
+      specifics: { "Item Slot": "Off-hand" },
+    }),
+    entity("SHIELD_ENCHANT", "Synthetic Defender Shield", "Magic Item", {
+      specifics: { "Item Slot": "Arms" },
+      rules: [rule("statadd", { name: "Reflex", value: "+1" }, 0)],
+    }),
+  ];
+  const holding = (
+    id: string,
+    definitionIds: string[],
+    equippedQuantity: number,
+    quantity = 1,
+  ): CharacterInventoryEntry => ({
+    id,
+    definitionIds,
+    quantity,
+    equippedQuantity,
+    acquiredLevel: 1,
+  });
+  const evaluate = (inventory: CharacterInventoryEntry[]) =>
+    evaluateCharacter(
+      { level: 1, baseAbilities: {}, occurrences: [rootOccurrence], inventory },
+      content,
+    );
+
+  it("runs an owned, unequipped item whose base has no Item Slot", () => {
+    const evaluated = evaluate([holding("bag", ["BAG"], 0)]);
+    expect(evaluated.stats["Weight Discount"]?.value).toBe(200);
+  });
+
+  it("keeps an owned, unequipped slotted item inert", () => {
+    expect(
+      evaluate([holding("charm", ["CHARM"], 0)]).stats.Fortitude?.value ?? 0,
+    ).toBe(0);
+    expect(
+      evaluate([holding("charm", ["CHARM"], 1)]).stats.Fortitude?.value,
+    ).toBe(1);
+  });
+
+  it("runs an unequipped slotted item that sets _AlwaysExecute", () => {
+    expect(evaluate([holding("tome", ["TOME"], 0)]).stats.Will?.value).toBe(1);
+  });
+
+  it("ignores holdings with no owned count", () => {
+    expect(
+      evaluate([holding("bag", ["BAG"], 0, 0)]).stats["Weight Discount"]
+        ?.value ?? 0,
+    ).toBe(0);
+  });
+
+  it("decides by the base element, not an unslotted enchantment", () => {
+    expect(
+      evaluate([holding("knife", ["DAGGER", "RUNE"], 0)]).stats.Initiative
+        ?.value ?? 0,
+    ).toBe(0);
+    expect(
+      evaluate([holding("knife", ["DAGGER", "RUNE"], 1)]).stats.Initiative
+        ?.value,
+    ).toBe(1);
+  });
+
+  it("runs one definition once across holdings (AlreadyExecuted)", () => {
+    const evaluated = evaluate([
+      holding("bag-a", ["BAG"], 0),
+      { ...holding("bag-b", ["BAG"], 0), name: "Second bag" },
+    ]);
+    expect(evaluated.stats["Weight Discount"]?.value).toBe(200);
+  });
+
+  it("skips an Arms enchantment while an equipped base fills the Arms slot", () => {
+    const shield = holding("shield", ["SHIELD", "SHIELD_ENCHANT"], 1);
+    expect(evaluate([shield]).stats.Reflex?.value).toBe(1);
+    expect(
+      evaluate([shield, holding("bracers", ["BRACERS"], 0)]).stats.Reflex
+        ?.value,
+    ).toBe(1);
+    expect(
+      evaluate([shield, holding("bracers", ["BRACERS"], 1)]).stats.Reflex
+        ?.value ?? 0,
+    ).toBe(0);
+  });
+
+  it("does not treat an executed, unequipped item as worn", () => {
+    const worn = [
+      ...content,
+      entity("WATCH", "Watch", "Feature", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Speed", value: "+1", wearing: "Synthetic Bag" },
+            0,
+          ),
+        ],
+      }),
+    ];
+    const withBag = (equippedQuantity: number) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "watch",
+              definitionId: "WATCH",
+              acquiredLevel: 1,
+              kind: "grant",
+            },
+          ],
+          inventory: [holding("bag", ["BAG"], equippedQuantity)],
+        },
+        worn,
+      );
+    expect(withBag(0).stats["Weight Discount"]?.value).toBe(200);
+    expect(withBag(0).stats.Speed?.value ?? 0).toBe(0);
+    expect(withBag(1).stats.Speed?.value).toBe(1);
   });
 });

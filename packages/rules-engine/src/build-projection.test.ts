@@ -1127,6 +1127,13 @@ describe("build projection", () => {
   });
 
   it("projects modern loadout assignments into equipment-backed defenses", () => {
+    // Slotted items: unequipped, they do not execute (legacy ShouldExecute).
+    const slotted = (item: ContentEntity, slot: string): ContentEntity => ({
+      ...item,
+      specifics: [
+        { name: "Item Slot", value: slot, extraAttributes: [], ordinal: 0 },
+      ],
+    });
     const content = [
       entity("ROOT", "Root", "Test", [
         statement("statadd", { name: "AC", value: "10" }, 0),
@@ -1134,14 +1141,20 @@ describe("build projection", () => {
         statement("statadd", { name: "Reflex Defense", value: "10" }, 2),
         statement("statadd", { name: "Will Defense", value: "10" }, 3),
       ]),
-      entity("ARMOR", "Synthetic Flowform Cloth Armor", "Armor", [
-        statement("statadd", { name: "AC", value: "+1" }, 0),
-      ]),
-      entity("CAPE", "Synthetic Cape", "Magic Item", [
-        statement("statadd", { name: "Fortitude Defense", value: "+1" }, 0),
-        statement("statadd", { name: "Reflex Defense", value: "+1" }, 1),
-        statement("statadd", { name: "Will Defense", value: "+1" }, 2),
-      ]),
+      slotted(
+        entity("ARMOR", "Synthetic Flowform Cloth Armor", "Armor", [
+          statement("statadd", { name: "AC", value: "+1" }, 0),
+        ]),
+        "Body",
+      ),
+      slotted(
+        entity("CAPE", "Synthetic Cape", "Magic Item", [
+          statement("statadd", { name: "Fortitude Defense", value: "+1" }, 0),
+          statement("statadd", { name: "Reflex Defense", value: "+1" }, 1),
+          statement("statadd", { name: "Will Defense", value: "+1" }, 2),
+        ]),
+        "Neck",
+      ),
     ];
     const inventoryEntry = (
       id: string,

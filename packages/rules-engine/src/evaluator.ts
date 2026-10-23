@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v37-2026-10-22-dual-implement-augments";
+  "evaluated-character-v38-2026-10-22-owned-loot-executes";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -548,6 +548,82 @@ export function aggregateInventory(
   );
 }
 
+function itemSlot(entity: ContentEntity | undefined): string {
+  return entity === undefined ? "" : (field(entity, "Item Slot") ?? "");
+}
+
+/**
+ * Legacy ShouldExecute: a holding's rules run while any of it is equipped,
+ * or while it is owned (count > 0) and its base element either has no Item
+ * Slot (wondrous items, augments, rituals, most gear) or sets
+ * `_AlwaysExecute`. Only the base element (the holding's first definition)
+ * decides; an owned, unequipped slotted item stays inert.
+ */
+function lootExecutes(
+  entry: CharacterInventoryEntry,
+  index: RulesIndex,
+): boolean {
+  if (entry.equippedQuantity > 0) return true;
+  if (entry.quantity <= 0) return false;
+  const baseId = entry.definitionIds[0];
+  const base = baseId === undefined ? undefined : index.get(baseId);
+  if (base === undefined) return false;
+  return (
+    itemSlot(base).length === 0 ||
+    (field(base, "_AlwaysExecute") ?? "").length > 0
+  );
+}
+
+/**
+ * The inventory definitions whose rules execute, in inventory order, as
+ * legacy EquipLoot does: each executing holding runs its base element and,
+ * per ShouldExecuteEnchant, its enchantment unless an equipped holding's base
+ * occupies the Arms slot and the enchantment is itself an Arms item (a shield
+ * enchantment yields to worn bracers). AlreadyExecuted skips a definition an
+ * earlier executing holding already ran (as its base or executed
+ * enchantment). Executing is not equipping: wearing predicates, loadout and
+ * weapon/implement rows still read only equipped holdings (SlotEquipped).
+ */
+function executedLoot(
+  inventory: readonly CharacterInventoryEntry[],
+  index: RulesIndex,
+): readonly {
+  readonly entry: CharacterInventoryEntry;
+  readonly definitionIndex: number;
+  readonly definitionId: string;
+}[] {
+  const armsSlotUsed = inventory.some((entry) => {
+    const baseId = entry.definitionIds[0];
+    return (
+      entry.equippedQuantity > 0 &&
+      baseId !== undefined &&
+      key(itemSlot(index.get(baseId))) === "arms"
+    );
+  });
+  const ran = new Set<string>();
+  const result: {
+    entry: CharacterInventoryEntry;
+    definitionIndex: number;
+    definitionId: string;
+  }[] = [];
+  for (const entry of inventory) {
+    if (!lootExecutes(entry, index)) continue;
+    entry.definitionIds.forEach((definitionId, definitionIndex) => {
+      if (
+        definitionIndex > 0 &&
+        armsSlotUsed &&
+        key(itemSlot(index.get(definitionId))) === "arms"
+      )
+        return;
+      const definitionKey = key(definitionId);
+      if (ran.has(definitionKey)) return;
+      ran.add(definitionKey);
+      result.push({ entry, definitionIndex, definitionId });
+    });
+  }
+  return result;
+}
+
 const magicArmorAdjustment = {
   light: [0, 0, 0, 0, 1, 1, 2],
   heavy: [0, 0, 1, 2, 3, 4, 6],
@@ -563,9 +639,8 @@ function essentialsMagicArmorBonuses(
   index: RulesIndex,
 ): ReadonlyMap<string, number> {
   const bonuses = new Map<string, number>();
-  for (const entry of inventory.filter(
-    ({ equippedQuantity }) => equippedQuantity > 0,
-  )) {
+  // Native EssentialsMagicArmor runs for each executing holding.
+  for (const entry of inventory.filter((item) => lootExecutes(item, index))) {
     const definitions = entry.definitionIds.flatMap((definitionId) => {
       const definition = index.get(definitionId);
       return definition === undefined ? [] : [definition];
@@ -651,22 +726,20 @@ function evaluateCharacterInternal(
   const savedDefinitionIds = new Set(
     input.occurrences.map(({ definitionId }) => key(definitionId)),
   );
-  const inventoryOccurrences: CharacterOccurrence[] = inventory.flatMap(
-    (entry) =>
-      entry.acquiredLevel > input.level || entry.equippedQuantity <= 0
-        ? []
-        : entry.definitionIds.flatMap((definitionId, definitionIndex) =>
-            savedDefinitionIds.has(key(definitionId))
-              ? []
-              : [
-                  {
-                    id: `${entry.id}:definition:${definitionIndex}`,
-                    definitionId,
-                    acquiredLevel: entry.acquiredLevel,
-                    kind: "inventory" as const,
-                  },
-                ],
-          ),
+  const inventoryOccurrences: CharacterOccurrence[] = executedLoot(
+    inventory.filter((entry) => entry.acquiredLevel <= input.level),
+    index,
+  ).flatMap(({ entry, definitionIndex, definitionId }) =>
+    savedDefinitionIds.has(key(definitionId))
+      ? []
+      : [
+          {
+            id: `${entry.id}:definition:${definitionIndex}`,
+            definitionId,
+            acquiredLevel: entry.acquiredLevel,
+            kind: "inventory" as const,
+          },
+        ],
   );
   const executed: CharacterOccurrence[] = [
     ...input.occurrences.filter(

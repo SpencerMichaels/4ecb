@@ -98,9 +98,10 @@ describe("content profile migration preview", () => {
     expect(preview.referencedDefinitionCount).toBe(3);
     expect(preview.missingDefinitionIds).toEqual(["MISSING"]);
     expect(preview.changedDefinitionIds).toEqual(["SELECTED"]);
+    // The owned, unslotted gear executes in the source profile (ShouldExecute).
     expect(preview.statChanges).toContainEqual({
       name: "Migration score",
-      before: 2,
+      before: 3,
       after: 5,
     });
     expect(preview.source).toBeDefined();

@@ -54,7 +54,14 @@ function entity(
   };
 }
 
-const piece = (id: string, name: string, set: string, counter = "Set Count") =>
+// Slotted pieces: an unequipped slotted holding does not execute (ShouldExecute).
+const piece = (
+  id: string,
+  name: string,
+  set: string,
+  slot: string,
+  counter = "Set Count",
+) =>
   entity(id, name, "Magic Item", {
     rules: [
       rule(
@@ -63,7 +70,7 @@ const piece = (id: string, name: string, set: string, counter = "Set Count") =>
         0,
       ),
     ],
-    specifics: { _Item_Set_ID: set },
+    specifics: { _Item_Set_ID: set, "Item Slot": slot },
   });
 
 const content = [
@@ -79,8 +86,8 @@ const content = [
     specifics: { _Item_Set_ID: "SET", "Piece Count": "3" },
     rules: [rule("statadd", { name: "Speed", value: "+1" }, 0)],
   }),
-  piece("CROWN", "Synthetic Crown", "SET"),
-  piece("CLOAK", "Synthetic Cloak", "SET"),
+  piece("CROWN", "Synthetic Crown", "SET", "Head"),
+  piece("CLOAK", "Synthetic Cloak", "SET", "Neck"),
   entity("GROUP", "Synthetic Company Arms", "Item Set", {
     specifics: { Tier: "Group", Benefits: "GROUP_2" },
   }),
@@ -88,7 +95,13 @@ const content = [
     specifics: { _Item_Set_ID: "GROUP", "Piece Count": "2" },
     rules: [rule("statadd", { name: "Insight", value: "+2" }, 0)],
   }),
-  piece("BLADE", "Synthetic Company Blade", "GROUP", "Equipped Count"),
+  piece(
+    "BLADE",
+    "Synthetic Company Blade",
+    "GROUP",
+    "One-hand",
+    "Equipped Count",
+  ),
 ];
 
 const holding = (
