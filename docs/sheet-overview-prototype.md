@@ -315,6 +315,31 @@ Summary continuation (2026-10-15): The defensive-traits pane is named
 **Resistances & Weaknesses**, reserving Defenses for AC/Fortitude/Reflex/Will.
 Its table has muted `Effect` and `Source` column headings, styled like the
 Basic Attacks headings (2026-10-16).
+
+Conditional modifiers (owner decision, 2026-10-23): the pane is renamed
+**Conditional modifiers** (resistances are conditional in play too) and also
+lists sheet-model `overview.conditionalModifiers`, the legacy CharTracker
+"CONDITIONAL BONUSES"/"CONDITIONAL MODIFIERS"/"SPECIAL MOVEMENT" blocks. Rows
+group as Resistances, Immunities, Vulnerabilities, Saving throws, Defenses,
+Initiative, Speed, Skills & checks, Health, Allies (one source's same bonus to
+several defenses reads as one row, "+1 to all defenses against …",
+`combinedDefenseModifiers`), with continuous striping
+and the same Effect/Source columns; the pane shows when either list has
+entries and keeps its place above reminders (its height still comes out of
+the reminder space). The Play data card adds Defenses, Initiative, Speed and
+Allies note lines from the same data, and the builder sidebar's stat-tile
+tooltips end with a "Conditional:" list of that stat's own entries.
+No duplicates: Remember in play drops a reminder when everything it says is
+shown in a more specific place (this pane, power-card reminder lines, the
+companion card). Sources match by provenance (the contribution's provider
+resolves to the granting definition or inventory holding; names only when no
+provenance exists), and `reminderCovered` (`reminder-coverage.ts`) requires
+every amount in the reminder to appear in those entries (as often) and every
+game term it names (action types, movement, conditions, stats, feat or power
+grants) to appear in at least one of them, ignoring level-scaling notes. A
+reminder that says more, such as Hunter Fighting Style's bonus feat and
+free-action sheathe, stays. A reminder identical to a power card's line is
+always a duplicate. Ally bonuses on the companion card leave the pane.
 The measured page-1 reminder selection now sends omitted reminders directly to
 an optional summary continuation starting on physical page 2, suitable as the
 summary's reverse side. No continuation page is emitted when all reminders fit.
@@ -388,10 +413,10 @@ backgrounds without inter-cell borders. All summary tables start with a shaded
 first data row, with defensive categories maintaining continuous striping.
 Below the numeric band, equal-width
 columns prefer Senses, Skills, Abilities/Languages and Basic Attacks on
-the left, with Resistances & Weaknesses above reminders on the right. Defensive traits consume
+the left, with Conditional modifiers above reminders on the right. Defensive traits consume
 right-column reminder space, never left-column skill/ability space. Whole panes fill the left in
 that order; the first that cannot fit and all following panes move to the right,
-below Resistances & Weaknesses and above reminders. Abilities/Languages remain one fitting unit.
+below Conditional modifiers and above reminders. Abilities/Languages remain one fitting unit.
 Measurements use equal-width hidden pane probes, account for inter-pane gaps and
 the footer, and rerun for content, font and page-size changes. The layout can move
 panes back when space increases. Reminder fitting uses only the right-column

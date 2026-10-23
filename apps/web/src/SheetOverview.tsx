@@ -12,6 +12,7 @@ import {
 } from "react";
 import type { CharacterPortrait } from "@4ecb/character-domain";
 import {
+  combinedDefenseModifiers,
   featureChoiceText,
   withoutDanglingChoiceLeadIn,
   type CharacterSheetModel,
@@ -25,7 +26,11 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { StatGroup } from "./StatTiles";
-import { defensiveBonusText } from "./defensive-text";
+import {
+  CONDITIONAL_MODIFIER_GROUPS,
+  conditionalModifierText,
+  defensiveBonusText,
+} from "./defensive-text";
 import {
   scratchpadConsumables,
   type ScratchpadConsumable,
@@ -460,11 +465,14 @@ function ReminderPanels({
     </div>
   );
 }
-function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
-  const groups = new Map<
-    string,
-    NonNullable<CharacterSheetModel["overview"]>["defensiveTraits"][number][]
-  >();
+/** Page 1's Conditional modifiers pane (owner decision, 2026-10-23):
+ *  resistances, immunities, vulnerabilities and save bonuses, then the
+ *  conditional defense, initiative, speed, skill/check, health and ally
+ *  bonuses, each with its source. */
+function ConditionalModifiers({ model }: { model: CharacterSheetModel }) {
+  const groups = new Map<string, { text: string; source: string }[]>();
+  const add = (group: string, text: string, source: string) =>
+    groups.set(group, [...(groups.get(group) ?? []), { text, source }]);
   const names: Record<string, string> = {
     resistance: "Resistances",
     resistances: "Resistances",
@@ -480,11 +488,33 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
       names[(trait.group ?? trait.label).toLowerCase()] ??
       trait.group ??
       trait.label;
-    groups.set(group, [...(groups.get(group) ?? []), trait]);
+    add(group, defensiveBonusText(trait), trait.source ?? "Source unavailable");
   }
+  for (const modifier of combinedDefenseModifiers(
+    model.overview?.conditionalModifiers ?? [],
+  ))
+    add(
+      CONDITIONAL_MODIFIER_GROUPS[modifier.surface],
+      conditionalModifierText(modifier),
+      modifier.source,
+    );
+  const order = [
+    "Resistances",
+    "Immunities",
+    "Vulnerabilities",
+    "Saving throws",
+    "Defenses",
+    "Initiative",
+    "Speed",
+    "Skills & checks",
+    "Health",
+    "Allies",
+  ];
+  const rank = (value: string) =>
+    order.includes(value) ? order.indexOf(value) : order.length;
   let rowNumber = 0;
   return (
-    <table className="ov-defensive-table" aria-label="Resistances & Weaknesses">
+    <table className="ov-defensive-table" aria-label="Conditional modifiers">
       <colgroup>
         <col />
         <col />
@@ -496,20 +526,10 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
         </tr>
       </thead>
       {[...groups]
-        .sort(([a], [b]) => {
-          const order = [
-            "Resistances",
-            "Immunities",
-            "Vulnerabilities",
-            "Saving throws",
-          ];
-          const rank = (value: string) =>
-            order.includes(value) ? order.indexOf(value) : order.length;
-          return rank(a) - rank(b);
-        })
-        .map(([group, traits]) => (
+        .sort(([a], [b]) => rank(a) - rank(b))
+        .map(([group, rows]) => (
           <tbody key={group} aria-label={group}>
-            {traits.map((trait, index) => (
+            {rows.map((row, index) => (
               <tr
                 key={index}
                 className={
@@ -517,9 +537,9 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
                 }
               >
                 <td>
-                  <Prose value={defensiveBonusText(trait)} />
+                  <Prose value={row.text} />
                 </td>
-                <td>{trait.source ?? "Source unavailable"}</td>
+                <td>{row.source}</td>
               </tr>
             ))}
           </tbody>
@@ -794,7 +814,7 @@ function SummaryColumns({
       </BasicAttackLimit.Provider>
       <section
         className="sp-column ov-reminders-column"
-        aria-label="Resistances, weaknesses and reminders"
+        aria-label="Conditional modifiers and reminders"
       >
         {slots.get("defenses")}
         {panes.slice(leftCount).map(renderPane)}
@@ -1002,13 +1022,14 @@ function Summary({
       </section>
       <SummaryColumns model={model} onVisibleReminders={onVisibleReminders}>
         <SummaryPane id="defenses">
-          {overview.defensiveTraits?.length ? (
+          {overview.defensiveTraits?.length ||
+          overview.conditionalModifiers?.length ? (
             <Panel
-              title="Resistances & Weaknesses"
+              title="Conditional modifiers"
               icon="shield"
               className="ov-defensive-traits"
             >
-              <DefensiveTraits model={model} />
+              <ConditionalModifiers model={model} />
             </Panel>
           ) : null}
         </SummaryPane>

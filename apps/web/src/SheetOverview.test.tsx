@@ -1,6 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { buildSheetModel, type SheetCard } from "@4ecb/sheet-model";
+import {
+  buildSheetModel,
+  type CharacterSheetModel,
+  type SheetCard,
+} from "@4ecb/sheet-model";
 import {
   SheetOverview,
   fittingReminderIndices,
@@ -1622,9 +1626,9 @@ describe("real-data sheet overview", () => {
       expect(left!.indexOf(`>${headings[i]}</h3>`)).toBeGreaterThan(
         left!.indexOf(`>${headings[i - 1]}</h3>`),
       );
-    expect(left).not.toContain(">Resistances &amp; Weaknesses</h3>");
-    expect(right).toContain(">Resistances &amp; Weaknesses</h3>");
-    expect(right!.indexOf(">Resistances &amp; Weaknesses</h3>")).toBeLessThan(
+    expect(left).not.toContain(">Conditional modifiers</h3>");
+    expect(right).toContain(">Conditional modifiers</h3>");
+    expect(right!.indexOf(">Conditional modifiers</h3>")).toBeLessThan(
       right!.indexOf('class="ov-reminder-region"'),
     );
     expect(summary).toContain("Low-light vision; Tremorsense 4");
@@ -2124,7 +2128,7 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
-    expect(summary).toContain(">Resistances &amp; Weaknesses</h3>");
+    expect(summary).toContain(">Conditional modifiers</h3>");
     expect(summary).toContain("Resist 5 fire");
     expect(summary).toContain("Vulnerable 5 cold");
     expect(summary).toContain("Immune to acid");
@@ -2144,7 +2148,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("<td>Synthetic cloak</td>");
     expect(summary).toContain("<td>Synthetic feat</td>");
     expect(summary).toContain('aria-label="Resistances"');
-    expect(summary.indexOf(">Resistances &amp; Weaknesses</h3>")).toBeLessThan(
+    expect(summary.indexOf(">Conditional modifiers</h3>")).toBeLessThan(
       summary.indexOf('class="ov-reminder-region"'),
     );
     expect(
@@ -2158,7 +2162,92 @@ describe("real-data sheet overview", () => {
         paper="letter"
       />,
     );
-    expect(empty).not.toContain(">Resistances &amp; Weaknesses</h3>");
+    expect(empty).not.toContain(">Conditional modifiers</h3>");
+  });
+  it("lists conditional modifiers in groups after the resistance and save rows", () => {
+    const modifier = (
+      surface: string,
+      target: string,
+      text: string,
+      source: string,
+    ) =>
+      ({
+        surface,
+        target,
+        text,
+        source,
+        provenanceId: `${source}:0`,
+      }) as NonNullable<
+        CharacterSheetModel["overview"]
+      >["conditionalModifiers"][number];
+    const summaryOf = (
+      overview: Partial<NonNullable<CharacterSheetModel["overview"]>>,
+    ) =>
+      renderToStaticMarkup(
+        <SheetOverview
+          model={{ ...model, overview: { ...model.overview!, ...overview } }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+        />,
+      )
+        .split('aria-label="Character summary"')[1]!
+        .split("</article>")[0]!;
+    const summary = summaryOf({
+      defensiveTraits: [
+        {
+          label: "Saving throws",
+          value: "+2 to saves against poison",
+          source: "Synthetic feat",
+        },
+        { label: "Resistance", value: "Fire 5", source: "Synthetic cloak" },
+      ],
+      conditionalModifiers: [
+        modifier("allies", "AC", "Allies gain +1 to AC near you", "Guard"),
+        modifier("speed", "Speed", "+2 to speed when charging", "Swift"),
+        modifier("checks", "Bull rush", "+2 to bull rush", "Charger"),
+        modifier("skills", "Athletics", "+2 to Athletics checks", "Climber"),
+        modifier("health", "Healing Surges", "-2 to it", "Drawback"),
+        modifier("initiative", "Initiative", "+2 to initiative", "Alert"),
+        modifier("defenses", "AC", "+4 to AC against OAs", "Style"),
+      ],
+    });
+    const table = summary
+      .split(
+        '<table class="ov-defensive-table" aria-label="Conditional modifiers"',
+      )[1]!
+      .split("</table>")[0]!;
+    const groups = [...table.matchAll(/<tbody aria-label="([^"]+)"/g)].map(
+      (match) => match[1],
+    );
+    expect(groups).toEqual([
+      "Resistances",
+      "Saving throws",
+      "Defenses",
+      "Initiative",
+      "Speed",
+      "Skills &amp; checks",
+      "Health",
+      "Allies",
+    ]);
+    expect(table).toContain(
+      '<p class="prose-paragraph">+4 to AC against OAs</p></div></td><td>Style</td>',
+    );
+    // Skills and checks share a group, in model order.
+    expect(table.indexOf("+2 to bull rush")).toBeLessThan(
+      table.indexOf("+2 to Athletics checks"),
+    );
+    // Striping continues across groups: 9 rows, 5 striped.
+    expect(table.match(/class="ov-defensive-striped"/g)).toHaveLength(5);
+    // The pane shows for conditional modifiers alone.
+    expect(
+      summaryOf({
+        defensiveTraits: [],
+        conditionalModifiers: [
+          modifier("speed", "Speed", "+2 to speed when charging", "Swift"),
+        ],
+      }),
+    ).toContain(">Conditional modifiers</h3>");
   });
   it.each([
     ["0", "+0"],

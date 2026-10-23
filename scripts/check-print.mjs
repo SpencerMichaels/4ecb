@@ -1941,7 +1941,7 @@ async function inspectPdf(
     "Character reference",
     "Synthetic resilience",
     "Synthetic focus",
-    "Resistances & Weaknesses",
+    "Conditional modifiers",
     "Resist 5 fire",
     "Vulnerable 3 cold",
     ...(onlyOverview

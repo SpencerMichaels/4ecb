@@ -68,6 +68,55 @@ describe("Play data stat body", () => {
     ]);
   });
 
+  it("adds conditional defense, initiative, speed and ally lines beside the saves", () => {
+    const modifier = (
+      surface: string,
+      target: string,
+      text: string,
+      source: string,
+    ) => ({ surface, target, text, source, provenanceId: `${source}:0` });
+    const data = playData({
+      ...model,
+      overview: {
+        ...model.overview!,
+        saves: "+1",
+        conditionalModifiers: [
+          modifier("speed", "Speed", "+2 to speed when charging", "Swift"),
+          modifier(
+            "defenses",
+            "AC",
+            "+4 to AC against opportunity attacks",
+            "Style",
+          ),
+          modifier("defenses", "Will", "+2 to Will against fear", "Resolve"),
+          modifier("initiative", "Initiative", "+2 to initiative", "Alert"),
+          modifier(
+            "allies",
+            "AC",
+            "Allies gain +1 to AC while adjacent to you",
+            "Guard",
+          ),
+          // Skills, checks and health stay on page 1.
+          modifier("skills", "Athletics", "+2 to Athletics checks", "Climb"),
+          modifier("health", "Healing Surge Value", "+2 to it", "Standard"),
+        ],
+      },
+    } as CharacterSheetModel);
+    expect(data.notes).toEqual([
+      { label: "Senses", text: "Low-light vision" },
+      {
+        label: "Defenses",
+        text: "+4 to AC against opportunity attacks; +2 to Will against fear",
+      },
+      { label: "Saves", text: "+1" },
+      { label: "Resistances", text: "5 fire" },
+      { label: "Immunities", text: "Disease" },
+      { label: "Initiative", text: "+2 to initiative" },
+      { label: "Speed", text: "+2 to speed when charging" },
+      { label: "Allies", text: "Allies gain +1 to AC while adjacent to you" },
+    ]);
+  });
+
   it("is the print Play data card's body", () => {
     const stats = renderToStaticMarkup(
       <PlayDataStats data={playData(model)} />,

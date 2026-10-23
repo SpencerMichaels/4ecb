@@ -945,3 +945,41 @@ items check that it looks right.
     toast).
   - **Wrong if:** the toast overflows the screen at 140% zoom, the badge is
     colored like a warning or error, or the group crowds the real problems.
+
+## Conditional modifiers (2026-10-23)
+
+These use imported sample characters (`sample-chars/*.dnd4e`). Texts, group
+order and which reminders were dropped are verified by tests and a
+sample-character diff; check only layout and fit.
+
+- [ ] **Page 1 Conditional modifiers pane.**
+  - **Where:** Natan 12 → `?preview=1` (resistances plus three combined
+    defense rows), Idon tkare at 6th (Speed and Skills & checks rows),
+    Trey Spectre 12 (five rows), Skye (saves only); at 100% and 140% zoom.
+  - **Expect:** the right column's first pane is titled "Conditional
+    modifiers" with the same Effect/Source table as before: Resistances,
+    Immunities, Vulnerabilities, Saving throws rows first, then Defenses,
+    Initiative, Speed, Skills & checks, Health, Allies. Striping alternates
+    continuously across groups. Long effects ("+1 to all defenses against
+    attacks made by bloodied creatures") wrap inside the Effect column; the
+    Source column stays readable. Reminders below still fill the remaining
+    space and overflow to page 2 with the "N more reminders" caption.
+  - **Wrong if:** the pane pushes reminders off the page without a caption,
+    rows overlap the footer, the Source column is crushed, or striping breaks
+    between groups.
+  - **Decide:** whether the groups need visible group labels (they are only
+    screen-reader labels now; each row's text names its stat).
+- [ ] **Play data card lines.**
+  - **Where:** the same characters' Play data card (print preview, cards
+    pages): Natan 12, Idon, Piri, Hystan.
+  - **Expect:** note lines Defenses, Saves, Resistances…, Other, Initiative,
+    Speed, Allies, each only when it has text, at the card's 7pt note size,
+    all inside the card.
+  - **Wrong if:** the notes overflow the card's bottom edge or clip.
+- [ ] **Builder stat-tile tooltips.**
+  - **Where:** Hystan → builder, hover the sidebar AC tile; Idon and Piri →
+    hover Speed; Natan 12 → hover AC/Fort/Ref/Will. Light and dark mode.
+  - **Expect:** the tooltip ends with "Conditional:" and one line per entry,
+    "+4 to AC against opportunity attacks you provoke by making a ranged
+    attack (Hunter Fighting Style)".
+  - **Wrong if:** a tile without conditional entries shows "Conditional:".
