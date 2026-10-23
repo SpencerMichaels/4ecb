@@ -31,7 +31,7 @@
  *
  *   pnpm audit:modifiers [PACK.4ecp] [--examples N] [--base FILE.dnd4e]...
  *                        [--shapes N] [--kind statadd|modify|textstring]
- *                        [--match REGEX] [--jobs N]
+ *                        [--match REGEX [--merge]] [--jobs N]
  */
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -86,6 +86,7 @@ interface Options {
   readonly shapeLimit: number | undefined;
   readonly kinds: ReadonlySet<string> | undefined;
   readonly match: RegExp | undefined;
+  readonly merge: boolean;
   readonly jobs: number;
   readonly shard:
     { readonly index: number; readonly count: number } | undefined;
@@ -102,6 +103,7 @@ function parseOptions(argv: readonly string[]): Options {
   let shard: Options["shard"];
   let out: string | undefined;
   let match: RegExp | undefined;
+  let merge = false;
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index] ?? "";
     const next = () => {
@@ -114,6 +116,7 @@ function parseOptions(argv: readonly string[]): Options {
     else if (argument === "--shapes") shapeLimit = Number(next());
     else if (argument === "--kind") kinds.add(key(next()));
     else if (argument === "--match") match = new RegExp(next(), "iu");
+    else if (argument === "--merge") merge = true;
     else if (argument === "--jobs") jobs = Number(next());
     else if (argument === "--out") out = next();
     else if (argument === "--shard") {
@@ -128,6 +131,7 @@ function parseOptions(argv: readonly string[]): Options {
     shapeLimit,
     kinds: kinds.size === 0 ? undefined : kinds,
     match,
+    merge,
     jobs,
     shard,
     out,
@@ -458,6 +462,25 @@ function providerClone(
   };
 }
 
+/**
+ * Whether a `this` modify is already in the provider record: content
+ * compilation folds self-modifies into fields, so the runtime overlay has
+ * nothing left to do.
+ */
+function compiledIntoProvider(use: ModifierUse, provider: ContentEntity) {
+  if (key(use.attributes.name ?? "") !== "this") return false;
+  const current = key(field(provider, use.attributes.field ?? "") ?? "");
+  const value = use.attributes.value ?? use.attributes["list-addition"];
+  if (value === undefined) return false;
+  return (
+    current === key(value) ||
+    current
+      .split(",")
+      .map((entry) => entry.trim())
+      .includes(key(value))
+  );
+}
+
 /** Whether an occurrence, contribution or overlay id belongs to the probe. */
 function isProbeProvider(id: string): boolean {
   return id.startsWith(PROBE_OCCURRENCE) || id.startsWith(CLONE_ITEM);
@@ -505,6 +528,10 @@ type Outcome =
   | "sheet"
   | "stat-only"
   | "editor"
+  /** A `this` modify the pack already folded into the provider field. */
+  | "compiled"
+  /** A target-less modify the engine applied to every owned record. */
+  | "overbroad"
   | "text-only"
   | "overlay-only"
   | "overlay-unmatched"
@@ -513,7 +540,12 @@ type Outcome =
   | `not-probed:${string}`;
 
 /** Visible somewhere: a power line, the sheet, or an editor consumer. */
-const SURFACED: ReadonlySet<Outcome> = new Set(["power", "sheet", "editor"]);
+const SURFACED: ReadonlySet<Outcome> = new Set([
+  "power",
+  "sheet",
+  "editor",
+  "compiled",
+]);
 
 interface ProbeResult {
   readonly entityId: string;
@@ -535,7 +567,8 @@ function ruleText(rule: RuleStatement): string {
 
 function flatten(value: unknown, path: string, out: Map<string, string>): void {
   if (value === null || typeof value !== "object") {
-    out.set(path, String(value));
+    // Carrier and clone IDs differ between baseline and probe by design.
+    out.set(path, String(value).replace(/AUDIT_[A-Z_]+_\d+/gu, "AUDIT"));
     return;
   }
   if (Array.isArray(value)) {
@@ -718,6 +751,22 @@ class Prober {
     const probed = this.#evaluate(base, spec, true);
     if (!probed.evaluation.converged)
       return { outcome: "not-probed:nonconvergent", evidence: [] };
+    if (
+      spec.use.kind === "modify" &&
+      spec.use.attributes.name === undefined &&
+      spec.use.attributes.select === undefined
+    ) {
+      const targets = probed.evaluation.overlays
+        .filter((overlay) => isProbeProvider(overlay.providerOccurrenceId))
+        .flatMap((overlay) => overlay.targetDefinitionIds);
+      if (targets.length > 1)
+        return {
+          outcome: "overbroad",
+          evidence: [
+            `${targets.length} targets: ${targets.slice(0, 4).join(", ")}`,
+          ],
+        };
+    }
     const powerDiff = differences(baseline.powers, probed.powers);
     if (powerDiff.length > 0)
       return { outcome: "power", evidence: powerDiff.slice(0, 3) };
@@ -965,9 +1014,11 @@ async function probeShard(
       const cloned = providerClone(use, lookup);
       const clone = cloned?.as === "item" ? cloned.entity : undefined;
       const context =
-        use.kind === "modify"
-          ? modifyContext(use, lookup)
-          : statContext(use.attributes.name ?? "", vocabulary, lookup);
+        cloned !== undefined && compiledIntoProvider(use, cloned.entity)
+          ? "compiled"
+          : use.kind === "modify"
+            ? modifyContext(use, lookup)
+            : statContext(use.attributes.name ?? "", vocabulary, lookup);
       if (typeof context === "string") {
         list.push({
           index,
@@ -1094,7 +1145,10 @@ async function probeShard(
       if (spec.skipped !== undefined) {
         probes.push({
           ...common,
-          outcome: `not-probed:${spec.skipped}`,
+          outcome:
+            spec.skipped === "compiled"
+              ? "compiled"
+              : `not-probed:${spec.skipped}`,
           perBase: {},
           evidence: [],
         });
@@ -1320,13 +1374,22 @@ async function main(): Promise<void> {
     options.jobs <= 1
       ? [await probeShard(options, { index: 0, count: 1 })]
       : await runShards(options);
-  const reports = results
-    .flatMap((result) => result.reports)
-    .toSorted(
-      (left, right) =>
-        right.entityCount - left.entityCount ||
-        left.shape.localeCompare(right.shape),
-    );
+  const fresh = results.flatMap((result) => result.reports);
+  // --merge re-probes a subset (--match) into an existing report.
+  const kept = options.merge
+    ? await readFile(`${OUTPUT_DIRECTORY}/modifiers.json`, "utf8")
+        .then((text) => (JSON.parse(text) as { shapes: ShapeReport[] }).shapes)
+        .catch(() => [] as ShapeReport[])
+    : [];
+  const freshShapes = new Set(fresh.map((report) => report.shape));
+  const reports = [
+    ...kept.filter((report) => !freshShapes.has(report.shape)),
+    ...fresh,
+  ].toSorted(
+    (left, right) =>
+      right.entityCount - left.entityCount ||
+      left.shape.localeCompare(right.shape),
+  );
   const selectorReports = results.flatMap((result) => result.selectors);
   const bases = results[0]?.bases ?? [];
   const pack = await loadPack(options.packPath);
