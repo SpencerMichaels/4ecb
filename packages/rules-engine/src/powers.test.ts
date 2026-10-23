@@ -2472,6 +2472,13 @@ describe("power evaluation", () => {
         }),
       ]),
     );
+    // The off-hand row pairs with the main-hand implement, as native
+    // DetermineOffhand does for every equipped row.
+    expect(
+      powers("Accurate Orb +3")?.variants.find(
+        (variant) => variant.equipmentName === "Defensive Wand +2",
+      ),
+    ).toMatchObject({ hand: "off", damage: "1d8+10" });
     expect(powers("Defensive Wand +2")?.variants).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -2496,6 +2503,148 @@ describe("power evaluation", () => {
         }),
       ]),
     });
+  });
+
+  it("pairs dual implements by legacy DetermineOffhand without a hand selection", () => {
+    const entities = [
+      entity("POWER", "Arcane Bolt", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Charisma vs. Reflex",
+        Hit: "1d8 + Charisma modifier force damage.",
+      }),
+      entity("DIVINE", "Holy Bolt", "Power", {
+        Keywords: "Divine, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Charisma vs. Reflex",
+        Hit: "1d8 + Charisma modifier radiant damage.",
+      }),
+      entity("FEAT", "Dual Implement Spellcaster", "Feat", {}),
+      entity("WAND", "Synthetic Wand +2", "Magic Item", {
+        "Magic Item Type": "Wand",
+        Enhancement: "+2 attack rolls and damage rolls",
+      }),
+      // A wondrous item that is an implement only through _ImplementEquiv.
+      entity("LUTE", "Synthetic Lute +3", "Magic Item", {
+        "Magic Item Type": "Wondrous Item",
+        "Item Slot": "Off-hand",
+        _ImplementEquiv: "Instrument",
+        Enhancement: "+3 attack rolls and damage rolls",
+      }),
+      entity("ROD", "Spare Rod +1", "Magic Item", {
+        "Magic Item Type": "Rod",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    ];
+    const [arcane, divine] = evaluatePowers({
+      level: 10,
+      activeDefinitionIds: ["POWER", "DIVINE", "FEAT"],
+      inventory: [
+        {
+          id: "wand",
+          name: "Synthetic Wand +2",
+          definitionIds: ["WAND"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "rod",
+          name: "Spare Rod +1",
+          definitionIds: ["ROD"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+        {
+          id: "lute",
+          name: "Synthetic Lute +3",
+          definitionIds: ["LUTE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Charisma modifier": stat("Charisma modifier", 5) },
+      overlays: [],
+      entities,
+    });
+    const damage = (power: typeof arcane, name: string) =>
+      power?.variants.find((variant) => variant.equipmentName === name)?.damage;
+    // Each equipped implement's row adds the other's enhancement.
+    expect(damage(arcane, "Synthetic Wand +2")).toBe("1d8+10");
+    expect(damage(arcane, "Synthetic Lute +3")).toBe("1d8+10");
+    // An unequipped implement has no off hand; a non-arcane power gets none.
+    expect(damage(arcane, "Spare Rod +1")).toBe("1d8+6");
+    expect(damage(divine, "Synthetic Wand +2")).toBe("1d8+7");
+  });
+
+  it("matches an augment limiter on the item the augment is bound to", () => {
+    const shardBonus: EvaluatedStat = combatStat(
+      "implement:damage(Synthetic Shard)",
+      1,
+    );
+    const augment =
+      '<?xml version="1.0" encoding="utf-16"?><CharLootID><baseID>SHARD</baseID></CharLootID>';
+    const evaluate = (shardOwned: boolean) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "dagger",
+            name: "Shard Dagger",
+            definitionIds: ["DAGGER"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+            overrides: { augment },
+          },
+          {
+            id: "other",
+            name: "Plain Dagger",
+            definitionIds: ["DAGGER"],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+          },
+          ...(shardOwned
+            ? [
+                {
+                  id: "shard",
+                  definitionIds: ["SHARD"],
+                  quantity: 1,
+                  equippedQuantity: 0,
+                  acquiredLevel: 1,
+                },
+              ]
+            : []),
+        ],
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 3),
+          "implement:damage(Synthetic Shard)": shardBonus,
+        },
+        overlays: [],
+        entities: [
+          entity("POWER", "Arcane Bolt", "Power", {
+            Keywords: "Arcane, Implement",
+            "Attack Type": "Ranged 10",
+            Attack: "Charisma vs. Reflex",
+            Hit: "1d6 + Charisma modifier damage.",
+          }),
+          entity("DAGGER", "Dagger", "Weapon", { Damage: "1d4" }),
+          entity("SHARD", "Synthetic Shard", "Magic Item", {
+            "Magic Item Type": "Dragonshard Augment",
+          }),
+        ],
+      })[0];
+    const damage = (power: ReturnType<typeof evaluate>, name: string) =>
+      power?.variants.find((variant) => variant.equipmentName === name)?.damage;
+    const owned = evaluate(true);
+    expect(damage(owned, "Shard Dagger")).toBe("1d6+4");
+    expect(damage(owned, "Plain Dagger")).toBe("1d6+3");
+    // CharLootAugment resolves only an augment the character owns.
+    expect(damage(evaluate(false), "Shard Dagger")).toBe("1d6+3");
   });
 
   it("limits hybrid striker damage to its class powers", () => {

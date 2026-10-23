@@ -188,6 +188,9 @@ interface Loadout {
   readonly equippedQuantity: number;
   readonly offhandCandidate: boolean;
   readonly staff: boolean;
+  /** Legacy CharLootAugment: the name of the owned augment (a dragonshard)
+   * bound to this item, which a `…(<augment name>)` limiter also matches. */
+  readonly augmentName?: string;
 }
 
 function key(value: string): string {
@@ -403,6 +406,47 @@ function legacyWeaponEquiv(
   );
 }
 
+function decodeXmlText(value: string): string {
+  return value
+    .replace(/&lt;/gu, "<")
+    .replace(/&gt;/gu, ">")
+    .replace(/&quot;/gu, '"')
+    .replace(/&apos;/gu, "'")
+    .replace(/&amp;/gu, "&");
+}
+
+/**
+ * Legacy CharLootAugment: a loot entry's `augment` attribute is a serialized
+ * CharLootID (`baseID`, optional `enchantID`), and FindLoot resolves it to
+ * another owned loot entry, e.g. a dragonshard bound to a weapon. Returns that
+ * augment's base record, or undefined when nothing owned matches.
+ */
+function boundAugment(
+  entry: CharacterInventoryEntry,
+  inventory: readonly CharacterInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ContentEntity | undefined {
+  const serialized = Object.entries(entry.overrides ?? {}).find(
+    ([name]) => key(name) === "augment",
+  )?.[1];
+  if (serialized === undefined) return undefined;
+  const xml = decodeXmlText(serialized);
+  const element = (name: string) =>
+    new RegExp(`<${name}>([^<]*)</${name}>`, "u").exec(xml)?.[1]?.trim();
+  const baseId = element("baseID");
+  if (baseId === undefined || baseId === "") return undefined;
+  const enchantId = element("enchantID");
+  const owned = inventory.some(
+    (candidate) =>
+      candidate !== entry &&
+      candidate.quantity > 0 &&
+      key(candidate.definitionIds[0] ?? "") === key(baseId) &&
+      (enchantId === undefined ||
+        key(candidate.definitionIds[1] ?? "") === key(enchantId)),
+  );
+  return owned ? byId.get(key(baseId)) : undefined;
+}
+
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
@@ -430,10 +474,15 @@ function loadouts(
           itemType,
         ) ||
         /^(holy symbol|ki focus)$/i.test(entity.name) ||
-        key(entity.type) === "superior implement"
+        key(entity.type) === "superior implement" ||
+        // Legacy LootImplement: a non-weapon item whose `_ImplementEquiv`
+        // names an implement kind is one (an instrument, say).
+        (weapon === undefined &&
+          (field(entity, "_ImplementEquiv")?.trim() ?? "") !== "")
       );
     });
     if (weapon === undefined && implement === undefined) continue;
+    const augment = boundAugment(entry, inventory, byId);
     const critical = field(magic ?? emptyEntity, "Critical");
     const baseRecord = weapon ?? parts[0];
     const enchantRecord = parts.find(
@@ -545,6 +594,7 @@ function loadouts(
                 : baseRecord),
           }),
       equippedQuantity: entry.equippedQuantity,
+      ...(augment === undefined ? {} : { augmentName: augment.name }),
       offhandCandidate:
         key(baseRecord?.type ?? "") === "weapon" ||
         (implement !== undefined &&
@@ -937,6 +987,25 @@ function legacyPowerKeywordTags(
     .filter(Boolean);
 }
 
+/**
+ * Names a parenthesized `keyword:stat(<name>)` limiter may give for this
+ * equipment (normalized): native IsLimiterName's base and enchantment, and
+ * the augment bound to it (CharLootAugment, as in CalcKeywords).
+ */
+function limiterNames(
+  equipment: Loadout,
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlySet<string> {
+  return new Set(
+    [
+      ...equipment.definitionIds.map((id) => byId.get(key(id))?.name ?? ""),
+      equipment.augmentName ?? "",
+    ]
+      .map(key)
+      .filter(Boolean),
+  );
+}
+
 function combatStatComponents(
   stats: Readonly<Record<string, EvaluatedStat>>,
   equipment: Loadout,
@@ -993,9 +1062,7 @@ function combatStatComponents(
       qualified[2] === fieldName &&
       qualified[1]!.split(",").every((tag) => tags.has(key(tag))) &&
       (qualified[3] === undefined ||
-        equipment.definitionIds.some(
-          (id) => key(context.byId.get(key(id))?.name ?? "") === qualified[3],
-        ))
+        limiterNames(equipment, context.byId).has(qualified[3]))
     )
       return true;
     if (qualified?.[3] !== undefined) return false;
@@ -1539,9 +1606,7 @@ function powerAdditionalEffects(input: {
       const limiter = qualified[3];
       if (
         limiter !== undefined &&
-        !input.equipment.definitionIds.some(
-          (id) => key(input.byId.get(key(id))?.name ?? "") === limiter,
-        )
+        !limiterNames(input.equipment, input.byId).has(limiter)
       )
         return [];
     }
@@ -1753,6 +1818,31 @@ function legacyIsDoubleWeapon(weapon: ContentEntity | undefined): boolean {
 }
 
 /**
+ * Legacy DetermineOffhand, for a row that attacks with `item`: the same item
+ * when two are equipped, else the first other equipped weapon or non-ki-focus
+ * implement in inventory order, else a double weapon's other end. An
+ * unequipped item has no off hand.
+ */
+function legacyOffhand(
+  item: Loadout,
+  equipped: readonly Loadout[],
+): Loadout | undefined {
+  if (item.unarmed) return undefined;
+  if (item.equippedQuantity > 1) return item;
+  if (item.equippedQuantity === 1) {
+    const other = equipped.find(
+      (candidate) =>
+        candidate !== item &&
+        !candidate.unarmed &&
+        candidate.equippedQuantity >= 1 &&
+        candidate.offhandCandidate,
+    );
+    if (other !== undefined) return other;
+  }
+  return legacyIsDoubleWeapon(item.requirementBase) ? item : undefined;
+}
+
+/**
  * The character-level inputs of legacy IsRestricted, bound per item:
  * WeaponBase, DetermineOffhand/OffhandWeaponBase, IsMonkWeapon, the shield
  * checks, VersatileUsedInTwoHands and GetStatText.
@@ -1819,23 +1909,7 @@ function legacyRequirementContext(input: {
     statText,
     resolveWeapon,
   };
-  // Legacy DetermineOffhand: the same item when two are equipped, else the
-  // first other equipped weapon or non-ki-focus implement, else a double
-  // weapon's other end.
-  const offhandFor = (item: Loadout): Loadout | undefined => {
-    if (item.equippedQuantity > 1) return item;
-    if (item.equippedQuantity === 1) {
-      const other = input.equipped.find(
-        (candidate) =>
-          candidate !== item &&
-          !candidate.unarmed &&
-          candidate.equippedQuantity >= 1 &&
-          candidate.offhandCandidate,
-      );
-      if (other !== undefined) return other;
-    }
-    return legacyIsDoubleWeapon(item.requirementBase) ? item : undefined;
-  };
+  const offhandFor = (item: Loadout) => legacyOffhand(item, input.equipped);
   // Legacy OffhandWeaponBase: a double weapon's `_Secondary End`.
   const offhandBase = (item: Loadout): ContentEntity | undefined => {
     const secondary = field(
@@ -1996,6 +2070,7 @@ export function evaluatePowers(input: {
     const recoveries = recoveryExpressions(hitLine, effectLine);
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
+    const arcanePower = keywords.some((value) => key(value) === "arcane");
     const powerImplementScope = implementScopeMatcher(
       power,
       keywords,
@@ -2400,12 +2475,32 @@ export function evaluatePowers(input: {
             candidate.equipped &&
             candidate.implementDefinition,
         );
+        // Native DualImplementSpellcaster: an arcane implement power's damage
+        // roll made with an equipped item adds the enhancement of the item
+        // in the other hand, which must be a different item (TwoDifferent
+        // Weapons). With a saved main-hand selection, the main-hand row pairs
+        // with the one equipped off-hand implement (none when ambiguous) and
+        // an off-hand row with the main-hand item; without one, the other
+        // hand is native DetermineOffhand's.
+        const mainHandItem = handCandidates.find(
+          (candidate) => candidate.hand === "main",
+        );
+        const otherHand =
+          equipment.hand === "main"
+            ? offHandImplements.length === 1
+              ? offHandImplements[0]
+              : undefined
+            : equipment.hand === "off"
+              ? mainHandItem
+              : legacyOffhand(equipment, equipped);
         const pairedImplement =
           implementPower &&
+          arcanePower &&
           hasDualImplementSpellcaster &&
-          equipment.hand === "main" &&
-          offHandImplements.length === 1
-            ? offHandImplements[0]
+          otherHand !== undefined &&
+          otherHand.definitionIds.join("\0") !==
+            equipment.definitionIds.join("\0")
+            ? otherHand
             : undefined;
         // Legacy types Dual Implement Spellcaster's bonus as an off-hand
         // enhancement, sharing one maximum with pact-blade transfers of the
