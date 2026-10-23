@@ -9,7 +9,7 @@ import {
   type BeastCompanionStatistics,
 } from "./derived-values";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
-import { equipmentPredicate, type EquipmentState } from "./equipment";
+import type { EquipmentState } from "./equipment";
 import {
   isLegacyMonkWeapon,
   isPowerRestricted,
@@ -1898,48 +1898,24 @@ function legacyRequirementContext(input: {
       ? undefined
       : resolveWeapon(unarmedText)) ??
     resolveWeapon(EXCEPTION_NAMES.unarmedAttack);
-  const shield =
-    input.equipment !== undefined &&
-    equipmentPredicate(input.equipment, "armor:shield");
-  const dualShields =
-    input.equipment !== undefined &&
-    equipmentPredicate(input.equipment, "dual-shield:");
   const shared = {
-    dualShields,
-    shield,
     versatileUsedTwoHanded: (weapon: ContentEntity) =>
       (small && !/small/iu.test(field(weapon, "Properties") ?? "")) ||
       input.versatileUsedTwoHanded,
     statText,
     resolveWeapon,
   };
-  const offhandFor = (item: Loadout) => legacyOffhand(item, input.equipped);
-  // Legacy OffhandWeaponBase: a double weapon's `_Secondary End`.
-  const offhandBase = (item: Loadout): ContentEntity | undefined => {
-    const secondary = field(
-      item.baseRecord ?? emptyEntity,
-      "_Secondary End",
-    )?.trim();
-    return (
-      (secondary === undefined || secondary === ""
-        ? undefined
-        : resolve(secondary)) ?? item.requirementBase
-    );
-  };
   return (item, meleePower) => {
     if (item.unarmed)
       return {
         ...shared,
         mainBase: meleePower ? unarmedBase : undefined,
-        offhandBase: undefined,
         monkWeapon: true,
         unarmed: true,
       };
-    const offhand = offhandFor(item);
     return {
       ...shared,
       mainBase: item.requirementBase,
-      offhandBase: offhand === undefined ? undefined : offhandBase(offhand),
       monkWeapon: isLegacyMonkWeapon(
         item.requirementBase,
         item.staff,
@@ -2103,10 +2079,12 @@ export function evaluatePowers(input: {
     });
     // Legacy IsValidPowerCombo tests the Implement keyword first, so a power
     // that is both (Hexblade, Swordmage) takes the implement path.
-    // Legacy IsRestricted: the power's Requirement may reject a pairing. It
-    // checks every weapon-power item and, through AllowUnarmed, Unarmed for
-    // any power; an implement power's own items are not checked. A
-    // `_WeaponRequirement` also reads the extended weapon selectors.
+    // Legacy IsRestricted: the power's Requirement may reject a row's
+    // weapon. It checks every weapon-power item and, through AllowUnarmed,
+    // Unarmed for any power; an implement power's own items are not checked.
+    // A `_WeaponRequirement` also reads the extended weapon selectors. Only
+    // clauses naming the attacking weapon filter rows: a shield, second
+    // weapon or free hand limits when the power is used (D093).
     const requirement = machineReadRequirement(
       effectiveField(power, "Requirement", input.overlays),
       weaponRequirement,

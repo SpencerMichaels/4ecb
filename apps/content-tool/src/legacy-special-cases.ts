@@ -816,13 +816,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "rejects Unarmed for a requirement its record cannot meet",
       ),
     ),
-    "?A0x7555d940.OffhandWeaponBase": code(
+    "?A0x7555d940.OffhandWeaponBase": outOfScope(
       "Off-hand base: a double weapon's _Secondary End, else WeaponBase.",
-      "powers.ts legacyRequirementContext offhandBase",
-      test(
-        REQUIREMENTS,
-        "needs a melee off hand for two melee weapons, or a ranged weapon",
-      ),
+      "Deliberately different (D093): IsRestricted read it only for off-hand clauses, which no longer filter power rows (a second weapon is loadout state)",
     ),
     NormalizedName: code(
       "Weapon name for matching: a secondary end's _Primary End weapon, without a ' (large)' suffix.",
@@ -1162,7 +1158,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     IsRestricted: code(
       "Power Requirement 'You must be wielding ...' grammar (bow or crossbow, two shields, thrown and melee, reach, blowgun, dagger, spiked chain, ...) limits weapon variants; other clauses match a weapon Group or thrown property, or a WeaponSwap text.",
-      "rules-engine power-requirements.ts isPowerRestricted; one-off wordings restated as `_WeaponRequirement` in content/corrections/94-power-requirements.part, whose extended selectors (named weapons, pairs, free hand) also cover the wordings legacy rejects (08-hard-coded-exceptions.md)",
+      "rules-engine power-requirements.ts isPowerRestricted; one-off wordings restated as `_WeaponRequirement` in content/corrections/94-power-requirements.part, whose extended selectors (named weapons, pairs, free hand) also cover the wordings legacy rejects (08-hard-coded-exceptions.md). Deliberately different (D093): clauses about the loadout (two melee weapons, two shields, a thrown and a melee weapon, a pair's other hand, a free hand) never remove a row",
       test(REQUIREMENTS, "cuts clauses as the native loop does"),
       test(
         REQUIREMENTS,
@@ -1170,7 +1166,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
       test(
         REQUIREMENTS,
-        "needs a melee off hand for two melee weapons, or a ranged weapon",
+        "never rejects a row for a second weapon or shield (D093)",
       ),
     ),
     "?A0x7555d940.WeaponSwap": code(
@@ -1199,10 +1195,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.OtherRestrictions": code(
       "Requirement 'You must be using a shield.' needs a shield.",
-      "power-requirements.ts isPowerRestricted (equipment armor:shield)",
+      "Deliberately different (D093): power-requirements.ts isPowerRestricted never rejects a row for it; the card still prints the Requirement",
       test(
         REQUIREMENTS,
-        "checks the shield requirement and leaves other wording alone",
+        "never rejects a row for the shield requirement or other wording",
       ),
     ),
     "?A0x7555d940.IsMeleePower": code(
@@ -1255,14 +1251,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.DetermineOffhand": code(
       "Off-hand pairing: the same item when two are equipped, else the first other equipped weapon or non-ki-focus implement, else a double weapon's other end.",
-      "powers.ts legacyOffhand (2575583); legacyRequirementContext for requirements",
+      "powers.ts legacyOffhand (2575583); requirements no longer read the off hand (D093)",
       test(
         POWERS,
         "pairs dual implements by legacy DetermineOffhand without a hand selection",
-      ),
-      test(
-        REQUIREMENTS,
-        "stops at a missing off hand for the thrown-and-melee pair",
       ),
     ),
     "?A0x7555d940.DeterminePower": code(

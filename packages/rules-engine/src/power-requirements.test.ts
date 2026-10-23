@@ -77,10 +77,7 @@ function context(
 ): PowerRequirementContext {
   return {
     mainBase: undefined,
-    offhandBase: undefined,
     monkWeapon: false,
-    dualShields: false,
-    shield: false,
     versatileUsedTwoHanded: () => false,
     statText: () => undefined,
     resolveWeapon: () => undefined,
@@ -146,25 +143,19 @@ describe("legacy power requirement grammar (IsRestricted)", () => {
     ).toBe(true);
   });
 
-  it("needs a melee off hand for two melee weapons, or a ranged weapon", () => {
-    const requirement =
-      "You must be wielding two melee weapons or a ranged weapon.";
-    expect(
-      restricted(requirement, { mainBase: longsword, offhandBase: longsword }),
-    ).toBe(false);
-    expect(restricted(requirement, { mainBase: longsword })).toBe(true);
-    expect(restricted(requirement, { mainBase: longbow })).toBe(false);
-    // A melee weapon with a range (thrown) is also ranged.
-    expect(restricted(requirement, { mainBase: dagger })).toBe(false);
-  });
-
-  it("stops at a missing off hand for the thrown-and-melee pair", () => {
-    const requirement =
-      "You must be wielding both a thrown weapon and a melee weapon.";
-    expect(restricted(requirement, { mainBase: longsword })).toBe(true);
-    expect(
-      restricted(requirement, { mainBase: longsword, offhandBase: dagger }),
-    ).toBe(false);
+  it("never rejects a row for a second weapon or shield (D093)", () => {
+    // Legacy needed the off hand to match; holding it is loadout state.
+    for (const requirement of [
+      "You must be wielding two melee weapons.",
+      "You must be wielding two melee weapons or a ranged weapon.",
+      "You must be wielding both a thrown weapon and a melee weapon.",
+      "You must be wielding two shields.",
+      "You must be wielding two melee weapons, one of which is a light blade that has the off-hand property.",
+    ]) {
+      expect(restricted(requirement, { mainBase: longsword })).toBe(false);
+      expect(restricted(requirement, { mainBase: longbow })).toBe(false);
+      expect(restricted(requirement)).toBe(false);
+    }
   });
 
   it("accepts a weapon swap text naming the weapon or its group", () => {
@@ -191,11 +182,9 @@ describe("legacy power requirement grammar (IsRestricted)", () => {
     ).toBe(true);
   });
 
-  it("checks the shield requirement and leaves other wording alone", () => {
-    expect(restricted("You must be using a shield.")).toBe(true);
-    expect(restricted("You must be using a shield.", { shield: true })).toBe(
-      false,
-    );
+  it("never rejects a row for the shield requirement or other wording", () => {
+    // Legacy OtherRestrictions needed a shield; D093 drops that.
+    expect(restricted("You must be using a shield.")).toBe(false);
     expect(restricted("You must be bloodied.")).toBe(false);
   });
 
@@ -298,30 +287,13 @@ describe("extended `_WeaponRequirement` selectors", () => {
     );
   });
 
-  it("pairs one hand with each selector, in either order", () => {
-    const pair = "You must be wielding a weapon:Longsword & melee.";
-    expect(extended(pair, { mainBase: longsword, offhandBase: dagger })).toBe(
-      false,
-    );
-    expect(extended(pair, { mainBase: dagger, offhandBase: longsword })).toBe(
-      false,
-    );
+  it("reads a pair or free hand by the row's own weapon (D093)", () => {
+    // Either pair member makes the attack; the other hand is loadout state.
+    const pair = "You must be wielding a group:crossbow & group:light blade.";
+    expect(extended(pair, { mainBase: dagger })).toBe(false);
     expect(extended(pair, { mainBase: longsword })).toBe(true);
-    expect(extended(pair, { mainBase: dagger, offhandBase: dagger })).toBe(
-      true,
-    );
-    expect(extended(pair, { mainBase: longsword, offhandBase: longbow })).toBe(
-      true,
-    );
-  });
-
-  it("needs the other hand empty for a free hand", () => {
     const free = "You must be wielding a property:off-hand & free hand.";
     expect(extended(free, { mainBase: dagger })).toBe(false);
-    expect(extended(free, { mainBase: dagger, offhandBase: longsword })).toBe(
-      true,
-    );
-    expect(extended(free, { mainBase: dagger, shield: true })).toBe(true);
     expect(extended(free, { mainBase: longsword })).toBe(true);
   });
 
@@ -398,26 +370,25 @@ describe("power variants under a Requirement", () => {
     { id: "Bow", weapon: longbow, equipped: 0 },
   ];
 
-  it("keeps only the pairings legacy PowerStats lists", () => {
-    // An equipped longsword's off hand is the other equipped one; an
-    // unequipped dagger has none, but it is thrown and so ranged.
+  it("keeps every row under a situational requirement (D093)", () => {
+    // Requirement != Prerequisite: a shield or second weapon limits when
+    // the power is used, not its card rows (legacy dropped the unequipped
+    // dagger and the bow, or every row without a shield).
+    const everyRow = variantNames({}, inventory);
+    expect(everyRow).toContain("Unarmed");
+    for (const Requirement of [
+      "You must be using a shield.",
+      "You must be wielding two melee weapons.",
+      "You must be wielding two melee weapons or a ranged weapon.",
+    ])
+      expect(variantNames({ Requirement }, inventory)).toEqual(everyRow);
+    // A clause naming the attacking weapon still selects the rows.
     expect(
       variantNames(
-        {
-          Requirement:
-            "You must be wielding two melee weapons or a ranged weapon.",
-        },
+        { Requirement: "You must be wielding a light blade." },
         inventory,
       ),
-    ).toEqual(["Sword A", "Sword B", "Spare dagger", "Bow"]);
-    expect(
-      variantNames(
-        { Requirement: "You must be wielding two melee weapons." },
-        inventory,
-      ),
-    ).toEqual(["Sword A", "Sword B"]);
-    // Without a requirement every fitting weapon and Unarmed is offered.
-    expect(variantNames({}, inventory)).toContain("Unarmed");
+    ).toEqual(["Spare dagger"]);
   });
 
   it("reads `_WeaponRequirement` in place of the published Requirement", () => {

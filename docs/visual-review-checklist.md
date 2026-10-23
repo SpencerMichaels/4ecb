@@ -252,6 +252,19 @@ Settings → Builder & Equipment.
   - **Wrong if:** a row for every carried weapon, the bola under Coward's
     Reward, or an empty table. Zadatl Grab, Crescendo Sword and the cleric
     "simple weapon" powers are known open gaps (implementation-status).
+- [ ] **Situational requirements keep weapon rows (D093)**
+  - **Where:** `executioner-fighter` → `?preview=1`, the Press of Steel card
+    (the character has no shield). Also its card in the Build tab's level-9
+    detail pane.
+  - **Expect:** the card still prints "Requirement: You must be using a
+    shield.", and its weapon table has a Rapier row (+19, 2d8+3) and an
+    Unarmed row (+16, 2d4+3), with the attack line and under Additional
+    effects "Back to the Wall: +1 to attack and damage rolls whenever you are
+    adjacent to a wall." Powers that name the attacking weapon still filter:
+    Bola Takedown keeps its single Bola row.
+  - **Wrong if:** Press of Steel has an empty weapon table or no Additional
+    effects, the Requirement line is gone, or a weapon-naming power (Bola
+    Takedown, Coward's Reward) gains rows for other weapons.
 - [ ] **Assassin's Strike (Hybrid)**
   - **Where:** `executioner-fighter` → `?preview=1`, Assassin's Strike (Hybrid)
     card. `edit?tab=build&level=1&section=powers` → Assassin's Strike (Hybrid).

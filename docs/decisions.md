@@ -2534,6 +2534,31 @@ Consequences:
 - New library metadata fields bump `CHARACTER_METADATA_VERSION`, so
   existing rows backfill on read.
 
+### D093 — Requirement != Prerequisite: situational requirements keep card rows
+
+Status: accepted (2026-10-22, product owner). A deliberate divergence from
+legacy `IsRestricted` under D091.
+
+A power's Requirement limits when the power can be used, not whether it can
+be chosen or what its card shows. Legacy `IsRestricted`/`OtherRestrictions`
+dropped every weapon row that the current loadout couldn't use, so Press of
+Steel ("You must be using a shield.") had no attack, damage or Additional
+effects on a character without a shield.
+
+Consequences:
+
+- Clauses that identify the weapon making the attack (a light or heavy
+  blade, a dagger, a reach, two-handed or thrown weapon, a bow or crossbow, a
+  spiked chain, a monk weapon, a named weapon or group) still select which
+  weapon rows a card shows.
+- Clauses about the rest of the loadout never remove a row: "You must be
+  using a shield.", "two melee weapons", "two melee weapons or a ranged
+  weapon", "two shields", "both a thrown weapon and a melee weapon", and in
+  a `_WeaponRequirement` a pair's other hand (`a & b` is met by either) or a
+  `free hand`.
+- The card still prints the Requirement line, so the player sees the
+  condition. The rule lives in `power-requirements.ts` (`isPowerRestricted`).
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

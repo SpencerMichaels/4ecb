@@ -11,6 +11,15 @@ import { EXCEPTION_NAMES } from "./exceptions";
  * restrictions"). It is engine semantics, so it lives in code; a power whose
  * wording the grammar cannot read gets a machine-read `_WeaponRequirement`
  * from content corrections instead (D089).
+ *
+ * Requirement != Prerequisite (D093, a deliberate divergence from legacy
+ * IsRestricted under D091): a requirement limits when a power can be used,
+ * not whether it can be chosen or what its card shows. So a clause naming
+ * the weapon that makes the attack (a light blade, a dagger, a reach or
+ * two-handed weapon, a bow or crossbow, a thrown or monk weapon, a named
+ * weapon) still selects the weapon rows, but a clause about the rest of the
+ * loadout (using a shield, a second weapon or shield, a free other hand)
+ * never removes one; the card still prints the Requirement line.
  */
 
 /** Machine-read replacement for `Requirement`, from content corrections.
@@ -19,7 +28,20 @@ import { EXCEPTION_NAMES } from "./exceptions";
 export const WEAPON_REQUIREMENT_FIELD = "_WeaponRequirement";
 
 const WIELDING_PREFIX = "you must be wielding ";
-const SHIELD_REQUIREMENT = "you must be using a shield.";
+
+/**
+ * Wielding clauses about the loadout, not the attacking weapon: always met
+ * (D093). Legacy required the off hand (DetermineOffhand) to match, or two
+ * shields equipped; "two melee weapons or a ranged weapon" is met by its
+ * two-weapon half. "You must be using a shield." isn't a wielding
+ * requirement, so it never restricts either.
+ */
+const SITUATIONAL_CLAUSES = new Set([
+  "two melee weapons",
+  "two melee weapons or a ranged weapon",
+  "two shields",
+  "both a thrown weapon and a melee weapon",
+]);
 
 /** Legacy IsMonkWeapon: weapons a monk's "monk weapon" requirement accepts. */
 const MONK_WEAPON_NAMES = new Set(
@@ -35,14 +57,8 @@ export interface PowerRequirementContext {
   /** WeaponBase(main hand, power): the weapon record the power uses, or
    * undefined (an unarmed ranged power). */
   readonly mainBase: ContentEntity | undefined;
-  /** OffhandWeaponBase(DetermineOffhand(main hand)), or undefined. */
-  readonly offhandBase: ContentEntity | undefined;
   /** Legacy IsMonkWeapon of the main-hand item (true when unarmed). */
   readonly monkWeapon: boolean;
-  /** Legacy DualShieldConditional: two or more shields equipped. */
-  readonly dualShields: boolean;
-  /** Legacy HasLoot("armor:shield"). */
-  readonly shield: boolean;
   /** Legacy VersatileUsedInTwoHands for a versatile weapon: a Small
    * character with a non-small weapon, or _INTERNAL_VersatileUsedTwoHanded. */
   readonly versatileUsedTwoHanded: (weapon: ContentEntity) => boolean;
@@ -269,10 +285,10 @@ function extendedSelector(text: string): WeaponSelector | undefined {
  *   group or property (by substring, as legacy), or is melee or ranged.
  *   `thrown melee` is `melee` for a power thrown as a melee attack (see
  *   `weaponRequirementThrowsMelee`).
- * - `<selector> & <selector>`: one hand matches each, in either order (the
- *   main hand and DetermineOffhand's off hand, as legacy's pair branches).
- * - `<selector> & free hand`: the other hand holds no weapon, implement or
- *   shield.
+ * - `<selector> & <selector>`: the row's weapon matches either selector;
+ *   holding the other one is loadout state (D093).
+ * - `<selector> & free hand`: the row's weapon matches the selector; the
+ *   free other hand is loadout state (D093).
  * - `any`: a condition the sheet cannot check (gear it cannot equip); every
  *   row, Unarmed included, meets it.
  *
@@ -288,20 +304,11 @@ function extendedClause(
   if (first === undefined || rest.length > 0) return undefined;
   const main = extendedSelector(first);
   if (main === undefined) return undefined;
-  if (second === undefined) return main(context.mainBase, context);
-  if (equal(second.trim(), "free hand"))
-    return (
-      main(context.mainBase, context) &&
-      context.offhandBase === undefined &&
-      !context.shield
-    );
+  if (second === undefined || equal(second.trim(), "free hand"))
+    return main(context.mainBase, context);
   const other = extendedSelector(second);
   if (other === undefined) return undefined;
-  const offhand = context.offhandBase;
-  return (
-    (main(context.mainBase, context) && other(offhand, context)) ||
-    (other(context.mainBase, context) && main(offhand, context))
-  );
+  return main(context.mainBase, context) || other(context.mainBase, context);
 }
 
 /** Whether a `_WeaponRequirement` names a thrown melee weapon: the power
@@ -318,12 +325,13 @@ export function weaponRequirementThrowsMelee(
 }
 
 /**
- * Legacy IsRestricted (with OtherRestrictions): whether the power's
- * Requirement rejects this main-hand/off-hand pairing. A wielding
- * requirement is met when any clause is; an unrecognized clause is met only
- * when a weapon's Group contains it (or a weapon swap allows it). With
- * `extended` (the requirement is a `_WeaponRequirement`), a clause in an
- * `extendedClause` form is read that way instead.
+ * Legacy IsRestricted: whether the power's Requirement rejects this row's
+ * weapon. A wielding requirement is met when any clause is; an unrecognized
+ * clause is met only when the weapon's Group contains it (or a weapon swap
+ * allows it). With `extended` (the requirement is a `_WeaponRequirement`),
+ * a clause in an `extendedClause` form is read that way instead.
+ * Situational clauses, and legacy OtherRestrictions' shield requirement,
+ * never reject a row (D093).
  */
 export function isPowerRestricted(
   power: ContentEntity,
@@ -332,43 +340,27 @@ export function isPowerRestricted(
   options: { readonly extended?: boolean } = {},
 ): boolean {
   const clauses = wieldingClauses(requirement);
-  if (clauses === undefined)
-    return equal(requirement, SHIELD_REQUIREMENT) && !context.shield;
+  if (clauses === undefined) return false;
   const main = context.mainBase;
-  const offhand = context.offhandBase;
   for (const raw of clauses) {
     const clause = raw.toLocaleLowerCase();
     const met =
       options.extended === true ? extendedClause(raw, context) : undefined;
     if (met !== undefined) {
       if (met) return false;
+    } else if (SITUATIONAL_CLAUSES.has(clause)) {
+      return false;
     } else if (main !== undefined && clause === "bow or a crossbow") {
       if (contains(field(main, "Group"), "bow")) return false;
     } else if (clause === "monk weapon") {
       if (context.monkWeapon) return false;
-    } else if (clause === "two shields") {
-      if (context.dualShields) return false;
-    } else if (clause === "both a thrown weapon and a melee weapon") {
-      if (offhand === undefined) return true;
-      const mainThrown = contains(field(main, "Properties"), "thrown");
-      const offhandThrown = contains(field(offhand, "Properties"), "thrown");
-      if (
-        (isMeleeWeapon(main) && offhandThrown) ||
-        (isMeleeWeapon(offhand) && mainThrown)
-      )
-        return false;
     } else if (
       clause ===
       "light thrown or a heavy thrown weapon to make a melee attack with this power"
     ) {
       if (isRangedWeapon(main)) return false;
-    } else if (clause === "two melee weapons") {
-      if (isMeleeWeapon(main) && isMeleeWeapon(offhand)) return false;
     } else if (main === undefined) {
       // Every remaining branch needs a weapon record.
-    } else if (clause === "two melee weapons or a ranged weapon") {
-      if (isMeleeWeapon(main) && isMeleeWeapon(offhand)) return false;
-      if (legacyWeaponType(main).ranged) return false;
     } else if (clause === "ranged weapon") {
       if (legacyWeaponType(main).ranged) return false;
     } else if (
