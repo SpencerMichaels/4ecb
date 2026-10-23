@@ -1523,9 +1523,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
       ),
     ),
-    "?A0x7555d940.DiceAdjustment": notHandled(
+    "?A0x7555d940.DiceAdjustment": code(
       "Striker dice adjustments: '<feature> Dice' stats limited to the weapon name or '<group> group'.",
-      "powers.ts conditionalStrikerDamage reads '<feature> Dice' only",
+      "powers.ts strikerDiceAdjustment adds '<feature> Dice(<WeaponBase name>)' and '<feature> Dice(<group> group)' for each trimmed Group entry (native keeps the space after a comma, so its later groups never match; Longsword Finesse, Street Thug, Tunnel Stalker)",
+      test(
+        POWERS,
+        "projects sneak attack only for recovered eligible weapon families",
+      ),
     ),
     "?A0x7555d940.DualImplementSpellcaster": code(
       "Dual Implement Spellcaster (feat by name) adds the other hand's implement enhancement to an arcane implement power's damage roll made with a different item.",
@@ -1543,9 +1547,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "Eyebite and the other arcane implement powers list the Vistani Buzuq +2 off-hand implement enhancement",
       ),
     ),
-    "?A0x7555d940.CalcStrikers": partial(
+    "?A0x7555d940.CalcStrikers": code(
       "Hunter's Quarry, Warlock's Curse, Sneak Attack by feature ID; Sneak Attack needs a weapon power with a light blade or sling group, a hand crossbow or shortbow by name, or a weapon or '<group> group' in the 'Sneak Attack Weapons' text string.",
-      "powers.ts conditionalStrikerDamage / sneakAttackWeapon: the 'Sneak Attack Weapons' text string (13 feats, e.g. Longsword Finesse, Street Thug, Blowgun Training) is not read, and the fixed list accepts every crossbow-group weapon where legacy names only the hand crossbow",
+      "powers.ts conditionalStrikerDamage / sneakAttackWeapon: WeaponBase (Unarmed weapon for a melee power), ListContains on the Group field and record name, then the '+'-joined 'Sneak Attack Weapons' text against NormalizedName and '<group> group' (Longsword Finesse, Blowgun Training, Piercing Palm, …)",
+      test(POWERS, "names a striker's usage from its feature's Usage field"),
       test(
         POWERS,
         "projects sneak attack only for recovered eligible weapon families",
@@ -1555,12 +1560,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "projects conditional striker damage without adding it to every hit",
       ),
     ),
-    "?A0x7555d940.CalcStriker": partial(
+    "?A0x7555d940.CalcStriker": code(
       "Striker reminder: '<feature> Dice'd6 (+ DiceAdjustment), '+<feature>' flat, the '<feature> Die' text string, once per the feature's Usage field (default round).",
-      "powers.ts conditionalStrikerDamage reads Dice, flat and Die; DiceAdjustment and the Usage field are not read (fixed condition text)",
+      "powers.ts conditionalStrikerDamage: the standard feature's Name and overlay-resolved Usage ('once per turn' for Sneak Attack, 'once per round' otherwise), matching every cached striker line on the samples; it omits a zero-dice, zero-flat line native would print as '+0d6'",
       test(
         POWERS,
         "projects sneak attack only for recovered eligible weapon families",
+      ),
+      test(POWERS, "names a striker's usage from its feature's Usage field"),
+      fixture(
+        "CharacterBuilder/SampleChars/SampleHeroes/Drizzt.dnd4e",
+        "every cached '+3d8 to damage once per round (Hunter's Quarry)' line, and Japheth's Warlock's Curse lines",
       ),
     ),
     "?A0x7555d940.HasStrikerFeature": code(

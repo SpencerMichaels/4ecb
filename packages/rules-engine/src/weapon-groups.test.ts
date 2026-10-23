@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import { evaluateCharacter, type FieldOverlay } from "./evaluator";
-import { legacyKeywordList, weaponGroups } from "./weapon-groups";
+import {
+  legacyKeywordList,
+  legacyListContains,
+  legacyListContainsOneOf,
+  weaponGroups,
+} from "./weapon-groups";
 
 function rule(
   name: string,
@@ -200,5 +205,28 @@ describe("weapon groups", () => {
 
     expect(evaluate(false)?.damage).toBe("2d4+1");
     expect(evaluate(true)?.damage).toBe("2d4+4");
+  });
+});
+
+describe("legacy list matching", () => {
+  it("matches whole comma entries like native ListContains", () => {
+    expect(legacyListContains("hand crossbow,shortbow", "Shortbow")).toBe(true);
+    expect(legacyListContains("hand crossbow,shortbow", "Hand Crossbow")).toBe(
+      true,
+    );
+    // "crossbow" first occurs inside "hand crossbow", so it is not an entry.
+    expect(legacyListContains("hand crossbow,shortbow", "Crossbow")).toBe(
+      false,
+    );
+    expect(legacyListContains("Longsword, Mace group", "mace group")).toBe(
+      true,
+    );
+    expect(legacyListContains("any", "Greatsword")).toBe(true);
+    expect(legacyListContainsOneOf("light blade,sling", "Axe, Sling")).toBe(
+      true,
+    );
+    expect(legacyListContainsOneOf("light blade,sling", "Heavy Blade")).toBe(
+      false,
+    );
   });
 });

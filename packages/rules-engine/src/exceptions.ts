@@ -99,6 +99,11 @@ export const EXCEPTION_NAMES = {
    * weapon, else this one. */
   unarmedWeaponText: "Unarmed Weapon",
   unarmedAttack: "Unarmed Attack",
+  /** CalcStrikers: Sneak Attack's weapon groups, weapon names (compared
+   * with the record's own name) and the text string that adds more. */
+  sneakAttackGroups: "light blade,sling",
+  sneakAttackWeapons: "hand crossbow,shortbow",
+  sneakAttackWeaponsText: "Sneak Attack Weapons",
   /** IsMonkWeapon: weapons a "monk weapon" requirement accepts (or a
    * staff); IsDagger also compares the name. */
   club: "Club",

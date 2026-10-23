@@ -462,7 +462,7 @@ describe("legacy .dnd4e import", () => {
                   {
                     source: "Hunter's Quarry",
                     expression: "3d8",
-                    condition: "once per round against your quarry",
+                    condition: "once per round",
                   },
                 ],
               },
@@ -504,7 +504,7 @@ describe("legacy .dnd4e import", () => {
       ],
     });
     expect(conditionalXml).toContain(
-      "<Conditions>+3d8 to damage once per round against your quarry (Hunter's Quarry)</Conditions>",
+      "<Conditions>+3d8 to damage once per round (Hunter's Quarry)</Conditions>",
     );
     // iPlay4e rejects weapons missing any legacy field, unpadded values, or
     // component text in another layout, and shows no power cards without the

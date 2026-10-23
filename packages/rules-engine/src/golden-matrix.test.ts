@@ -277,7 +277,7 @@ describe("representative public character goldens", () => {
         {
           source: "Hunter's Quarry",
           expression: "3d8+2",
-          condition: "once per round against your quarry",
+          condition: "once per round",
         },
       ],
     });

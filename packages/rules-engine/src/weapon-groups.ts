@@ -26,3 +26,28 @@ export function weaponGroups(
 ): string[] {
   return legacyKeywordList(overlaidField(weapon, "Group", overlays));
 }
+
+/**
+ * Native ListContains: the list is "any", or the item's first
+ * case-insensitive occurrence in the list is a whole comma entry (only
+ * spaces between it and the neighbouring commas). Like native, only that
+ * first occurrence is tested.
+ */
+export function legacyListContains(list: string, item: string): boolean {
+  if (list.toLocaleLowerCase() === "any") return true;
+  const start = list.toLocaleLowerCase().indexOf(item.toLocaleLowerCase());
+  if (start < 0) return false;
+  const after = list.slice(start + item.length).trimStart();
+  if (after !== "" && !after.startsWith(",")) return false;
+  const before = list.slice(0, start).trimEnd();
+  return before === "" || before.endsWith(",");
+}
+
+/** Native ListContainsOneOf: the list contains any entry of `items`. */
+export function legacyListContainsOneOf(list: string, items: string): boolean {
+  return items
+    .split(",")
+    .map((item) => item.trimStart())
+    .filter(Boolean)
+    .some((item) => legacyListContains(list, item));
+}

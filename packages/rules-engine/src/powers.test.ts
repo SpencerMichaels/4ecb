@@ -2874,7 +2874,7 @@ describe("power evaluation", () => {
       {
         source: "Hunter's Quarry",
         expression: "2d6",
-        condition: "once per round against your quarry",
+        condition: "once per round",
       },
     ]);
     expect(
@@ -2884,6 +2884,13 @@ describe("power evaluation", () => {
   });
 
   it("projects sneak attack only for recovered eligible weapon families", () => {
+    const weapon = (id: string, name: string, group: string) =>
+      entity(id, name, "Weapon", {
+        Damage: "1d6",
+        "Proficiency Bonus": "2",
+        Group: group,
+        "Weapon Category": "Simple Melee",
+      });
     const entities = [
       entity("POWER", "Rogue Strike", "Power", {
         Keywords: "Martial, Weapon",
@@ -2891,58 +2898,124 @@ describe("power evaluation", () => {
         Attack: "Dexterity vs. AC",
         Hit: "1[W] + Dexterity modifier damage.",
       }),
-      entity("DAGGER", "Dagger", "Weapon", {
-        Damage: "1d4",
-        "Proficiency Bonus": "3",
-        Group: "Light Blade",
+      entity("SPELL", "Rogue Spell", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Dexterity vs. Reflex",
+        Hit: "1d6 + Dexterity modifier damage.",
       }),
-      entity("AXE", "Battleaxe", "Weapon", {
-        Damage: "1d10",
-        "Proficiency Bonus": "2",
-        Group: "Axe",
+      entity("ID_FMP_CLASS_FEATURE_322", "Sneak Attack", "Class Feature", {
+        Usage: "turn",
       }),
+      weapon("DAGGER", "Dagger", "Light Blade"),
+      weapon("HAND", "Hand Crossbow", "Crossbow"),
+      weapon("XBOW", "Crossbow", "Crossbow"),
+      weapon("SWORD", "Longsword", "Heavy Blade"),
+      weapon("MACE", "Mace", "Mace"),
+      weapon("AXE", "Battleaxe", "Axe"),
     ];
+    const evaluate = (
+      textContributions: { name: string; value: string }[],
+      extraStats: Record<string, number> = {},
+    ) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER", "SPELL", "ID_FMP_CLASS_FEATURE_322"],
+        inventory: ["DAGGER", "HAND", "XBOW", "SWORD", "MACE", "AXE"].map(
+          (id) => ({
+            id,
+            definitionIds: [id],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          }),
+        ),
+        stats: {
+          "Dexterity modifier": stat("Dexterity modifier", 4),
+          "Sneak Attack Dice": stat("Sneak Attack Dice", 2),
+          ...Object.fromEntries(
+            Object.entries(extraStats).map(([name, value]) => [
+              name,
+              stat(name, value),
+            ]),
+          ),
+        },
+        textContributions,
+        overlays: [],
+        entities,
+      });
+    const sneak = (
+      powers: ReturnType<typeof evaluate>,
+      powerId: string,
+      equipmentName: string,
+    ) =>
+      powers
+        .find(({ definitionId }) => definitionId === powerId)
+        ?.variants.find((variant) => variant.equipmentName === equipmentName)
+        ?.conditionalDamage.map(
+          ({ expression, condition }) => `${expression} ${condition}`,
+        );
+
+    const plain = evaluate([]);
+    expect(sneak(plain, "POWER", "Dagger")).toEqual(["2d6 once per turn"]);
+    // Native names only the hand crossbow, not the whole crossbow group.
+    expect(sneak(plain, "POWER", "Hand Crossbow")).toEqual([
+      "2d6 once per turn",
+    ]);
+    expect(sneak(plain, "POWER", "Crossbow")).toEqual([]);
+    expect(sneak(plain, "POWER", "Longsword")).toEqual([]);
+    expect(sneak(plain, "POWER", "Battleaxe")).toEqual([]);
+    // Only a weapon power deals Sneak Attack damage.
+    expect(sneak(plain, "SPELL", "Dagger")).toEqual([]);
+
+    // "Sneak Attack Weapons" (Longsword Finesse, Street Thug) adds weapons
+    // by name or "<group> group"; DiceAdjustment reads the limited dice.
+    const feats = evaluate(
+      [
+        { name: "Sneak Attack Weapons", value: "Longsword" },
+        { name: "Sneak Attack Weapons", value: "Mace group" },
+      ],
+      {
+        "Sneak Attack Dice(longsword)": -1,
+        "Sneak Attack Dice(mace group)": -1,
+      },
+    );
+    expect(sneak(feats, "POWER", "Longsword")).toEqual(["1d6 once per turn"]);
+    expect(sneak(feats, "POWER", "Mace")).toEqual(["1d6 once per turn"]);
+    expect(sneak(feats, "POWER", "Dagger")).toEqual(["2d6 once per turn"]);
+    expect(sneak(feats, "POWER", "Battleaxe")).toEqual([]);
+  });
+
+  it("names a striker's usage from its feature's Usage field", () => {
     const [power] = evaluatePowers({
       level: 1,
-      activeDefinitionIds: ["POWER", "ID_FMP_CLASS_FEATURE_322"],
-      inventory: [
-        {
-          id: "dagger",
-          definitionIds: ["DAGGER"],
-          quantity: 1,
-          equippedQuantity: 1,
-          acquiredLevel: 1,
-        },
-        {
-          id: "axe",
-          definitionIds: ["AXE"],
-          quantity: 1,
-          equippedQuantity: 1,
-          acquiredLevel: 1,
-        },
-      ],
-      stats: {
-        "Dexterity modifier": stat("Dexterity modifier", 4),
-        "Sneak Attack Dice": stat("Sneak Attack Dice", 2),
-      },
+      activeDefinitionIds: ["POWER", "ID_FMP_CLASS_FEATURE_605"],
+      inventory: [],
+      stats: { "Warlock's Curse Dice": stat("Warlock's Curse Dice", 1) },
       overlays: [],
-      entities,
+      entities: [
+        entity("POWER", "Eldritch Bolt", "Power", {
+          Keywords: "Arcane, Implement",
+          "Attack Type": "Ranged 10",
+          Attack: "Charisma vs. Reflex",
+          Hit: "1d10 damage.",
+        }),
+        entity(
+          "ID_FMP_CLASS_FEATURE_605",
+          "Warlock's Curse",
+          "Class Feature",
+          {},
+        ),
+      ],
     });
-
-    expect(
-      power?.variants.find(({ equipmentName }) => equipmentName === "Dagger")
-        ?.conditionalDamage,
-    ).toEqual([
+    // No Usage field: native "round".
+    expect(power?.variants[0]?.conditionalDamage).toEqual([
       {
-        source: "Sneak Attack",
-        expression: "2d6",
-        condition: "once per turn with combat advantage and an eligible weapon",
+        source: "Warlock's Curse",
+        expression: "1d6",
+        condition: "once per round",
       },
     ]);
-    expect(
-      power?.variants.find(({ equipmentName }) => equipmentName === "Battleaxe")
-        ?.conditionalDamage,
-    ).toEqual([]);
   });
 
   it("retains unsupported diagnostics for unknown striker feature variants", () => {

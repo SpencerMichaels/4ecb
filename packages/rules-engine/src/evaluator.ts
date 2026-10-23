@@ -49,7 +49,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v46-2026-10-23-keyword-channels-mundane-implements";
+  "evaluated-character-v47-2026-10-23-striker-weapons-usage";
 
 export interface CharacterOccurrence {
   readonly id: string;

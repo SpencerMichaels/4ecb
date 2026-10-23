@@ -25,12 +25,17 @@ import type { EquipmentState } from "./equipment";
 import {
   isLegacyMonkWeapon,
   isPowerRestricted,
+  legacyNormalizedWeaponName,
   machineReadRequirement,
   WEAPON_REQUIREMENT_FIELD,
   weaponRequirementThrowsMelee,
   type PowerRequirementContext,
 } from "./power-requirements";
-import { legacyKeywordList } from "./weapon-groups";
+import {
+  legacyKeywordList,
+  legacyListContains,
+  legacyListContainsOneOf,
+} from "./weapon-groups";
 import {
   increaseDamageDie,
   legacyIsKiFocus,
@@ -1816,27 +1821,29 @@ function lineAtLevel(
   return selected;
 }
 
+/**
+ * Native CalcStrikers: Hunter's Quarry, Warlock's Curse and Sneak Attack, by
+ * their standard feature (whose Name and Usage the reminder reads), or the
+ * hybrid feature for that class's powers (HasStrikerFeature).
+ */
 const strikerFeatures = [
   {
-    name: "Hunter's Quarry",
     standardId: key(EXCEPTION_IDS.huntersQuarry),
     hybridId: key(EXCEPTION_IDS.hybridHuntersQuarry),
     hybridClassId: key(EXCEPTION_IDS.rangerClass),
-    condition: "once per round against your quarry",
+    fallbackName: "Hunter's Quarry",
   },
   {
-    name: "Warlock's Curse",
     standardId: key(EXCEPTION_IDS.warlocksCurse),
     hybridId: key(EXCEPTION_IDS.hybridWarlocksCurse),
     hybridClassId: key(EXCEPTION_IDS.warlockClass),
-    condition: "once per turn against a cursed target",
+    fallbackName: "Warlock's Curse",
   },
   {
-    name: "Sneak Attack",
     standardId: key(EXCEPTION_IDS.sneakAttack),
     hybridId: key(EXCEPTION_IDS.hybridSneakAttack),
     hybridClassId: key(EXCEPTION_IDS.rogueClass),
-    condition: "once per turn with combat advantage and an eligible weapon",
+    fallbackName: "Sneak Attack",
     weaponRestricted: true,
   },
 ] as const;
@@ -1850,9 +1857,64 @@ function textValue(
   )?.[1];
 }
 
-function sneakAttackWeapon(equipment: Loadout): boolean {
-  return equipment.tags.some((tag) =>
-    /^(?:crossbow|light blade|shortbow|sling)(?: group)?$/i.test(tag),
+/** The row's weapon as native CalcStrikers sees it. */
+interface StrikerWeapon {
+  readonly weaponPower: boolean;
+  /** Native WeaponBase(main hand, power): the row's weapon record (the
+   * Unarmed weapon for a melee power without one), undefined for none. */
+  readonly base: ContentEntity | undefined;
+  /** The base's overlay-resolved Group entries. */
+  readonly groups: readonly string[];
+  /** Native NormalizedName of the base. */
+  readonly normalizedName: string | undefined;
+  /** Native GetStatText(name, '+'). */
+  readonly statText: (name: string) => string | undefined;
+}
+
+/**
+ * Native DiceAdjustment: "<feature> Dice(<weapon name>)" and
+ * "<feature> Dice(<group> group)" stats (Longsword Finesse's -1 die).
+ */
+function strikerDiceAdjustment(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  diceName: string,
+  weapon: StrikerWeapon,
+): number {
+  if (weapon.base === undefined) return 0;
+  return [
+    weapon.base.name,
+    ...weapon.groups.map((group) => `${group} group`),
+  ].reduce(
+    (sum, limit) => sum + numericStat(stats, `${diceName}(${limit})`),
+    0,
+  );
+}
+
+/**
+ * Native CalcStrikers' Sneak Attack weapons: a weapon power whose weapon is
+ * in the light blade or sling group or is a hand crossbow or shortbow by
+ * name, or whose normalized name or "<group> group" is in the '+'-joined
+ * "Sneak Attack Weapons" text (Longsword Finesse, Street Thug, …).
+ */
+function sneakAttackWeapon(weapon: StrikerWeapon): boolean {
+  if (!weapon.weaponPower || weapon.base === undefined) return false;
+  const groups = weapon.groups.join(",");
+  if (
+    legacyListContainsOneOf(EXCEPTION_NAMES.sneakAttackGroups, groups) ||
+    legacyListContains(EXCEPTION_NAMES.sneakAttackWeapons, weapon.base.name)
+  )
+    return true;
+  const text = (weapon.statText(EXCEPTION_NAMES.sneakAttackWeaponsText) ?? "")
+    .replaceAll("+", ",")
+    .replace(/^,/u, "");
+  if (text === "") return false;
+  return (
+    (weapon.normalizedName !== undefined &&
+      legacyListContains(text, weapon.normalizedName)) ||
+    legacyListContainsOneOf(
+      text,
+      weapon.groups.map((group) => `${group} group`).join(","),
+    )
   );
 }
 
@@ -1861,7 +1923,9 @@ function conditionalStrikerDamage(input: {
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly textStrings: Readonly<Record<string, string>>;
   readonly power: ContentEntity;
-  readonly equipment: Loadout;
+  readonly weapon: StrikerWeapon;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly overlays: readonly FieldOverlay[];
 }): readonly PowerConditionalDamage[] {
   const activeIds = new Set(input.activeDefinitionIds.map(key));
   return strikerFeatures.flatMap((feature) => {
@@ -1879,19 +1943,36 @@ function conditionalStrikerDamage(input: {
     if (
       "weaponRestricted" in feature &&
       feature.weaponRestricted &&
-      !sneakAttackWeapon(input.equipment)
+      !sneakAttackWeapon(input.weapon)
     )
       return [];
-    const dice = numericStat(input.stats, `${feature.name} Dice`);
-    const flat = numericStat(input.stats, feature.name);
+    const record = input.byId.get(feature.standardId);
+    const name = record?.name ?? feature.fallbackName;
+    const diceName = `${name} Dice`;
+    const dice =
+      numericStat(input.stats, diceName) +
+      strikerDiceAdjustment(input.stats, diceName, input.weapon);
+    const flat = numericStat(input.stats, name);
     if (dice <= 0 && flat === 0) return [];
-    const die = textValue(input.textStrings, `${feature.name} Die`) ?? "d6";
+    const die = textValue(input.textStrings, `${name} Die`) ?? "d6";
     const diceExpression = dice > 0 ? `${dice}${die}` : "";
     const expression = [
       diceExpression,
       flat === 0 ? "" : `${flat > 0 && diceExpression ? "+" : ""}${flat}`,
     ].join("");
-    return [{ source: feature.name, expression, condition: feature.condition }];
+    // Native: "once per <Usage>", the feature's Usage field or "round".
+    const usage =
+      (record === undefined
+        ? undefined
+        : effectiveField(record, "Usage", input.overlays)
+      )?.trim() || "round";
+    return [
+      {
+        source: name,
+        expression,
+        condition: `once per ${usage.toLocaleLowerCase()}`,
+      },
+    ];
   });
 }
 
@@ -2593,6 +2674,26 @@ export function evaluatePowers(input: {
           )?.id ?? power.id,
         ),
       ) ?? origins.get(key(power.id));
+    // Native CalcStrikers' WeaponBase: the Unarmed weapon for a melee power
+    // without one; for a non-weapon power, the item itself.
+    const strikerWeapon = (equipment: Loadout): StrikerWeapon => {
+      const context = requirementContext(equipment, powerRange.melee);
+      const base = equipment.unarmed
+        ? context.mainBase
+        : weaponPower
+          ? equipment.requirementBase
+          : equipment.lootBase;
+      return {
+        weaponPower,
+        base,
+        groups: legacyKeywordList(field(base ?? emptyEntity, "Group")),
+        normalizedName:
+          base === undefined
+            ? undefined
+            : legacyNormalizedWeaponName(base, context.resolveWeapon),
+        statText: context.statText,
+      };
+    };
     const variants = handCandidates.map((equipment): PowerVariant => {
       const nativeKeywords = nativeRowKeywords(equipment, {
         weaponPower,
@@ -3145,7 +3246,9 @@ export function evaluatePowers(input: {
                 stats: input.stats,
                 textStrings: input.textStrings ?? {},
                 power,
-                equipment,
+                weapon: strikerWeapon(equipment),
+                byId,
+                overlays: input.overlays,
               })),
         ];
         const primaryDamageText =
