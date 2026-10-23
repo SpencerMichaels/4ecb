@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v38-2026-10-22-owned-loot-executes";
+  "evaluated-character-v39-2026-10-22-legacy-loot-names";
 
 export interface CharacterOccurrence {
   readonly id: string;
