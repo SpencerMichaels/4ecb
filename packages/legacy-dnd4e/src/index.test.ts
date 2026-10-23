@@ -520,6 +520,62 @@ describe("legacy .dnd4e import", () => {
     expect(xml).toContain(
       '<Stat value="18"><alias name="Strength"/><statadd value="18"/></Stat>',
     );
+    // Conditional statadds and textstrings in the native StatBlock shape:
+    // `conditional=`, and a textstring's text in `String=`, not a statlink.
+    const conditionalStatXml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build,
+      evaluation: {
+        ...evaluation,
+        stats: {
+          ...evaluation.stats,
+          "melee basic:damage": {
+            name: "melee basic:damage",
+            value: 0,
+            contributions: [
+              {
+                id: "helm",
+                stat: "melee basic:damage",
+                value: "+1d6",
+                providerId: "helm",
+                providerName: "Horned Helm",
+                condition: "when charging",
+                text: true,
+                applied: false,
+                reason: "conditional",
+              },
+            ],
+          },
+          Speed: {
+            name: "Speed",
+            value: 0,
+            contributions: [
+              {
+                id: "swift",
+                stat: "Speed",
+                value: "+2",
+                numericValue: 2,
+                providerId: "swift",
+                providerName: "Swift Charge",
+                condition: "when charging",
+                applied: false,
+                reason: "conditional",
+              },
+            ],
+          },
+        },
+      },
+      content,
+    });
+    expect(conditionalStatXml).toContain(
+      '<Stat value="0"><alias name="melee basic:damage"/><statadd String="+1d6" value="0" conditional="when charging"/></Stat>',
+    );
+    expect(conditionalStatXml).toContain(
+      '<Stat value="0"><alias name="Speed"/><statadd value="2" conditional="when charging"/></Stat>',
+    );
+    expect(conditionalStatXml).not.toContain('<alias name="1d6"/>');
     expect(xml).toContain('charelem="4ecb-1"');
     expect(xml).toMatch(/charelem="4ecb-3" replaces="4ecb-2"/);
     expect(xml).not.toContain('charelem="root"');

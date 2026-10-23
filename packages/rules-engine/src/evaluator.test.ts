@@ -330,6 +330,99 @@ describe("character evaluator", () => {
       }),
     ]);
   });
+  it("records a conditional textstring as a string statadd and reminds of it on power cards", () => {
+    // Native StatBlock: `<statadd String="+1d6" conditional="when charging"
+    // value="0"/>` under the stat; CalcConditionals reads it back.
+    const entities = [
+      entity("ROOT", "1", "Level"),
+      entity("HELM", "Synthetic Helm", "Feat", {
+        rules: [
+          rule(
+            "textstring",
+            {
+              name: "melee basic:damage",
+              value: "+1d6",
+              condition: "when charging",
+            },
+            0,
+          ),
+          rule(
+            "textstring",
+            {
+              name: "Damage",
+              value: "+2d6",
+              condition: "while wielding a shield",
+              wearing: "armor:shield",
+            },
+            1,
+          ),
+        ],
+      }),
+      entity("MBA", "Melee Basic Attack", "Power", {
+        specifics: {
+          "Attack Type": "Melee weapon",
+          Keywords: "Weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        },
+      }),
+      entity("SWORD", "Synthetic Sword", "Weapon", {
+        specifics: { Damage: "1d8", Group: "Heavy Blade" },
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: { Strength: 16 },
+        occurrences: [
+          rootOccurrence,
+          ...["HELM", "MBA"].map((definitionId) => ({
+            id: definitionId.toLowerCase(),
+            definitionId,
+            acquiredLevel: 1,
+            kind: "grabbag" as const,
+          })),
+        ],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        candidateDetailLevels: [],
+      },
+      entities,
+    );
+    const stat = evaluated.stats["melee basic:damage"];
+    expect(stat?.value).toBe(0);
+    expect(stat?.contributions).toEqual([
+      expect.objectContaining({
+        value: "+1d6",
+        condition: "when charging",
+        text: true,
+        applied: false,
+        reason: "conditional",
+        providerName: "Synthetic Helm",
+      }),
+    ]);
+    expect(stat?.contributions[0]).not.toHaveProperty("numericValue");
+    // A conditional textstring never becomes an applied text value.
+    expect(evaluated.textStrings["melee basic:damage"]).toBeUndefined();
+    expect(evaluated.stats["Damage"]?.contributions[0]?.reason).toBe(
+      "equipment",
+    );
+    const sword = evaluated.powers
+      .find((power) => power.definitionId === "MBA")
+      ?.variants.find((variant) => variant.equipmentId === "sword");
+    // A reminder only: the damage expression keeps its own dice.
+    expect(sword?.damage).not.toMatch(/d6/);
+    expect(sword?.additionalEffects?.map((effect) => effect.text)).toEqual([
+      "+1d6 to damage rolls when charging - Synthetic Helm.",
+    ]);
+  });
   it.each([
     [false, false],
     [true, false],

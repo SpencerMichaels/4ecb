@@ -15,6 +15,9 @@ export interface StatContribution {
   readonly zeroOnly?: boolean;
   readonly nonZeroOnly?: boolean;
   readonly halfPoint?: boolean;
+  /** A conditional `textstring` (legacy StatBlock `statadd String=`): its
+   *  value is literal text such as "+1d6", never a stat link. */
+  readonly text?: boolean;
 }
 
 export interface EvaluatedContribution extends StatContribution {
@@ -93,6 +96,15 @@ export class StatAccumulator {
     return trimmed;
   }
 
+  #raw(
+    contribution: StatContribution,
+    visiting: Set<string>,
+  ): number | string | undefined {
+    return contribution.text === true
+      ? contribution.value
+      : this.#value(contribution.value, visiting);
+  }
+
   #evaluate(name: string, visiting: Set<string>): EvaluatedStat {
     const canonical = this.#canonical(name);
     if (visiting.has(canonical)) return { name, value: 0, contributions: [] };
@@ -114,7 +126,7 @@ export class StatAccumulator {
           equipmentPredicate(this.#equipment, contribution.wearing)) &&
         (contribution.notWearing === undefined ||
           !equipmentPredicate(this.#equipment, contribution.notWearing));
-      const raw = this.#value(contribution.value, next);
+      const raw = this.#raw(contribution, next);
       if (!equipmentMatches) {
         evaluated.push({
           ...contribution,
@@ -197,7 +209,7 @@ export class StatAccumulator {
       value:
         strings.length > 0 &&
         candidates.every(
-          (candidate) => typeof this.#value(candidate.value, next) === "string",
+          (candidate) => typeof this.#raw(candidate, next) === "string",
         )
           ? (strings.at(-1) ?? "")
           : Math.trunc(untyped),

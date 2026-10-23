@@ -674,6 +674,7 @@ function statBlockXml(
   // it ("Acrobatics Trained" for an untrained skill).
   for (const stat of Object.values(evaluation.stats))
     for (const contribution of stat.contributions) {
+      if (contribution.text === true) continue;
       const value = statAddValue(contribution.value);
       if (!("statlink" in value) || value.statlink === undefined) continue;
       const linked = canonical(value.statlink);
@@ -704,7 +705,10 @@ function statBlockXml(
           `${aliases.map((alias) => element("alias", { name: alias })).join("")}${stat.contributions
             .map((contribution) => {
               const occurrence = occurrences.get(contribution.providerId);
-              const value = statAddValue(contribution.value);
+              const value =
+                contribution.text === true
+                  ? { String: contribution.value.trim(), value: "0" }
+                  : statAddValue(contribution.value);
               return element("statadd", {
                 type: contribution.bonusType,
                 Level: occurrence?.acquiredLevel,
@@ -712,7 +716,8 @@ function statBlockXml(
                 ...("statlink" in value && value.statlink !== undefined
                   ? { statlink: canonical(value.statlink) }
                   : {}),
-                condition: contribution.condition,
+                // Native StatBlock spells it "conditional" (RULE.CONDITIONAL).
+                conditional: contribution.condition,
                 wearing: contribution.wearing,
                 "not-wearing": contribution.notWearing,
                 charelem: tokens.get(contribution.providerId),

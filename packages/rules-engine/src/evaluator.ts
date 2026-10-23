@@ -49,7 +49,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v50-2026-10-23-nameless-modify-child";
+  "evaluated-character-v51-2026-10-23-conditional-textstrings";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1827,10 +1827,25 @@ function evaluateCharacterInternal(
           stats.alias(rule.name, rule.alias);
           break;
         case "textstring":
+          // Native records a conditional textstring as a string statadd on
+          // its stat (StatBlock `statadd String="+1d6" conditional=...`),
+          // which CalcConditionals reads back as a power-card reminder.
+          if (rule.condition !== undefined) {
+            stats.add({
+              id: `${occurrence.id}:${rule.source.ordinal}`,
+              stat: rule.name,
+              value: rule.value,
+              providerId: occurrence.id,
+              providerName: entity.name,
+              condition: rule.condition,
+              ...(rule.wearing === undefined ? {} : { wearing: rule.wearing }),
+              text: true,
+            });
+            break;
+          }
           if (
-            rule.condition === undefined &&
-            (rule.wearing === undefined ||
-              equipmentPredicate(equipment, rule.wearing))
+            rule.wearing === undefined ||
+            equipmentPredicate(equipment, rule.wearing)
           ) {
             text[rule.name] = rule.value;
             textContributions.push({
