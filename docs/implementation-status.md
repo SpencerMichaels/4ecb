@@ -401,8 +401,12 @@ Commit `3e61a5e`.
   `feature-choices.ts`). It works from the occurrence tree only, and shows
   in reference card headings, page-1 reminder labels and the screen features
   list. Beatrix: "Pact Choice: Fey Pact of the White Well", "Past life:
-  Eladrin", "Luskan: Luskan Benefit", "Level 1 Hexblade Daily Power: Crown of
-  Stars".
+  Eladrin", "Luskan: Luskan Benefit", "Daily Power: Crown of Stars". On
+  reference rows (`feature-titles.ts`) a leading "Level N" that repeats the
+  level tag is dropped, and with it a single-class character's class name
+  ("Level 1 Hexblade Daily Power" reads "Daily Power"; hybrids and
+  multiclass characters keep it). A closing "You gain one of the following
+  … of your choice." whose list is not printed is dropped too.
 - **Registry.** New `choices` and `proficiencies` surfaces. Trait Package,
   CountsAsRace (when chosen), Background Choice and Proficiency are now
   presented, which the coverage matrix confirms on targeted lines.

@@ -282,13 +282,23 @@ Settings → Builder & Equipment.
   - **Where:** `beatrix` → `?preview=1`, Character Reference pages (Class
     features, Racial traits). `fighter-arena` → `?preview=1`, page 1 reminders.
     The imported Chopper Farlund sample (Two-handed Weapon Talent) works too.
-  - **Expect:** "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin"
-    and "Level 1 Hexblade Daily Power: Crown of Stars", each with its "Level N"
-    tag at the right. A long one wraps onto a second line, clear of the tag.
-    Page 1 of the arena fighter has "Arena Training: Arena Weapon (Glaive),
-    Arena Weapon (Spear)".
+  - **Expect:** "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin",
+    "Daily Power: Crown of Stars" (Level 1), "Utility Power: Ethereal Stride"
+    (Level 2), "Daily Power: Crown of Madness" (Level 5), "Utility Power:
+    Shadowslip" (Level 6) and "Guardian Feature" (Levels 1 and 5), each with
+    its "Level N" tag at the right. The four power rows have no text under the
+    heading. A long one wraps onto a second line, clear of the tag. Page 1 of
+    the arena fighter has "Arena Training: Arena Weapon (Glaive), Arena Weapon
+    (Spear)"; its reference row is "Fighter Talents: Arena Training" with no
+    text. `hexblade-white-well` reads the same way ("Utility Power: Charm of
+    Hearts").
   - **Wrong if:** the tag overlaps or pushes the text, a heading is cut off with
-    "…", or the choice after the colon is missing.
+    "…", or the choice after the colon is missing. A heading repeats its tag
+    ("Level 2 …") or Beatrix's class ("Hexblade Utility Power"), or a row
+    shows only "You gain one of the following … of your choice." or "Choose
+    one of the following fighter talents."
+  - **Decide:** "Barbarian Agility" and "Fighter Talents" keep the class name
+    because it starts the feature's own name, not a "Level N" slot name. OK?
 - [ ] **Background benefit card**
   - **Where:** `hu` → `?preview=1`, Character Reference pages, Background group.
     Then `hystan` and `beatrix`.

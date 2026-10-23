@@ -15,12 +15,16 @@ import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
 import { featureReferenceMetadata } from "./feature-reference";
 import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
+import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
 
 export interface OverviewFeature {
   readonly id: string;
   readonly name: string;
+  /** The reference row's heading where it differs from the name: no
+   *  "Level N" repeating its level tag, no sole class's name. */
+  readonly title?: string;
   readonly group: string;
   readonly summary: string;
   readonly description: string;
@@ -570,6 +574,7 @@ export function withSheetOverview(
       Number(/\ball(?:y|ies)\b/i.test(b.value)) -
       Number(/\ball(?:y|ies)\b/i.test(a.value)),
   );
+  const soleClass = soleClassName(input.selections);
   const hp = number(stat("Hit Points"));
   const saves = stat("Saving Throws", "Saving Throw Bonus", "Saving Throw");
   const savesNumber = saves === undefined ? 0 : number(saves);
@@ -632,7 +637,17 @@ export function withSheetOverview(
         bloodiedValue(hp) ?? stat("Bloodied Value", "Bloodied") ?? "—",
       ),
       vision: overviewSenses(input.selections, input.content, input.stats),
-      features: [...features, ...rulesReferences],
+      features: [...features, ...rulesReferences].map((feature) => {
+        const title = featureRowTitle(feature.name, {
+          level: feature.level,
+          classFeature:
+            (feature.referenceGroup ?? feature.group) === "Class Feature",
+          soleClass,
+        });
+        return feature.level === undefined || title === feature.name
+          ? feature
+          : { ...feature, title };
+      }),
       inventory: input.inventory.filter((item) => item.quantity > 0),
       reminders,
       ...(corePowers.length ? { summaryReminders } : {}),

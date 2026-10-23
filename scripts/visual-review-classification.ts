@@ -52,7 +52,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The pact weapon gift is in the inventory and has a sheet item card.",
   ),
   "beatrix|4|sub-choices on feature rows": mixed(
-    'Reference headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Level 1 Hexblade Daily Power: Crown of Stars".',
+    'Reference headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Daily Power: Crown of Stars" with no dangling "You gain one of the following …" text.',
     'Wrapping of those headings next to the "Level N" tag.',
   ),
   "beatrix|4|background benefit card": auto(

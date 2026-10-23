@@ -13,6 +13,7 @@ import {
 import type { CharacterPortrait } from "@4ecb/character-domain";
 import {
   featureChoiceText,
+  withoutDanglingChoiceLeadIn,
   type CharacterSheetModel,
   type SheetCard,
   type SheetPowerVariant,
@@ -1936,7 +1937,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     .flatMap((feature) => {
       const background = feature.group.trim().toLowerCase() === "background";
       const structuredBackground = background && feature.fullTextAvailable;
-      const description = structuredBackground ? "" : feature.description;
       const fields = structuredBackground
         ? feature.fields.filter((field) =>
             /^(?:benefits?|associated skills|associated languages|prerequisites?)$/i.test(
@@ -1956,10 +1956,20 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           (field) =>
             !(
               /^(?:benefit|flavor(?: text)?|description)$/i.test(field.label) &&
-              description.includes(field.value)
+              !structuredBackground &&
+              feature.description.includes(field.value)
             ),
         )
         .flatMap((field) => referenceParts(field.value, field.label));
+      // A closing "You gain one of the following … of your choice." whose
+      // list is not printed (the pick is in the heading) is dropped, unless
+      // fields follow that could be that list. The row may be left with just
+      // its heading and level tag.
+      const description = structuredBackground
+        ? ""
+        : feature.fieldsFirst || !fieldParts.length
+          ? withoutDanglingChoiceLeadIn(feature.description)
+          : feature.description;
       const parts = [
         ...(feature.fieldsFirst ? fieldParts : []),
         ...referenceParts(description),
@@ -1976,7 +1986,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       return [
         {
           id: feature.id,
-          name: feature.name,
+          name: feature.title ?? feature.name,
           ...(choice === undefined ? {} : { choice }),
           group: groupName(
             feature.referenceGroup ??

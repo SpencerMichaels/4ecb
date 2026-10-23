@@ -164,7 +164,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Sub-choices on feature rows",
-            'Card headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Level 1 Hexblade Daily Power: Crown of Stars"; check wrapping next to "Level N".',
+            'Card headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Daily Power: Crown of Stars" (no text under it); check wrapping next to "Level N".',
           ],
           [
             "Background benefit card",

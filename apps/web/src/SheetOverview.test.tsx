@@ -182,6 +182,62 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain("Former life: Other Ancestry</strong>");
   });
+  it("heads a feature row with its title and drops a dangling choice lead-in", () => {
+    const feature = {
+      group: "Class Feature",
+      summary: "Choose one utility power",
+      fields: [],
+      source: "Synthetic",
+      fullTextAvailable: true,
+      level: 2,
+    };
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            ...feature,
+            id: "utility",
+            name: "Level 2 Synthblade Utility Power",
+            title: "Utility Power",
+            description:
+              "You gain one of the following utility powers of your choice.",
+            choices: [{ id: "POWER", name: "Ethereal Stride", type: "Power" }],
+          },
+          {
+            ...feature,
+            id: "talent",
+            name: "Synthblade Talent",
+            description:
+              "Your training shows. Choose one of the following options.",
+          },
+          {
+            ...feature,
+            id: "listed",
+            name: "Listed Talent",
+            description: "Choose one of the following options.",
+            fields: [{ label: "Option A", value: "You gain a bonus." }],
+          },
+        ],
+      },
+    };
+    const entries = references(fixture);
+    const row = (id: string) => entries.find((entry) => entry.id === id)!;
+    expect([row("utility").name, row("utility").choice]).toEqual([
+      "Utility Power",
+      "Ethereal Stride",
+    ]);
+    expect(row("utility").parts).toEqual([]);
+    expect(row("talent").parts.map((part) => part.block)).toEqual([
+      { kind: "paragraph", text: "Your training shows." },
+    ]);
+    // A lead-in whose list follows as fields stays.
+    expect(row("listed").parts[0]?.block).toEqual({
+      kind: "paragraph",
+      text: "Choose one of the following options.",
+    });
+  });
   it("cards the background benefit after the backgrounds", () => {
     const background = {
       group: "Background",

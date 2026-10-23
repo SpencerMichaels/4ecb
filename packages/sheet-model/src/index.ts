@@ -84,6 +84,11 @@ export {
   SHEET_ALIAS_TYPES,
   type SheetFeatureChoice,
 } from "./feature-choices";
+export {
+  featureRowTitle,
+  soleClassName,
+  withoutDanglingChoiceLeadIn,
+} from "./feature-titles";
 export type {
   SheetProficiencyGroup,
   SheetProficiencyKind,
