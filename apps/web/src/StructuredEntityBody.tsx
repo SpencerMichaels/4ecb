@@ -8,6 +8,7 @@ import {
   contentSpecificValue,
 } from "./builder-ui";
 import { namedClassFeatures } from "./detail-stack";
+import { EntityPrerequisites } from "./EntityCard";
 import { Prose } from "./Prose";
 
 /**
@@ -398,12 +399,7 @@ export function StructuredEntityBody({
           {description === "" ? null : ` ${description}`}
         </p>
       )}
-      {entity.printPrerequisites === undefined ? null : (
-        <section>
-          <h5>Prerequisites</h5>
-          <Prose value={entity.printPrerequisites} />
-        </section>
-      )}
+      <EntityPrerequisites entity={entity} />
       {kind === "race" ? (
         <RaceBody entity={entity} references={references} />
       ) : kind === "class" ? (

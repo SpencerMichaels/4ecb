@@ -380,10 +380,6 @@
   text-transform: uppercase;
 }
 
-.theme-candidate-description p {
-  margin-bottom: 0.65rem;
-}
-
 .theme-description-toggle {
   background: transparent;
   border: 0;
@@ -391,7 +387,10 @@
   font: inherit;
   font-size: 0.85rem;
   font-weight: 700;
-  padding: 0.15rem 0;
+  /* A link-like control at the start of its line, spaced by the card's
+     block gap. */
+  justify-self: start;
+  padding: 0;
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
@@ -585,29 +584,73 @@
   padding-top: 0.85rem;
 }
 
+/* Detail card bodies (the gaps are set on .reference-card-body): margins
+   from the browser or the rules above don't apply inside, every container
+   spaces its blocks by the block gap, and a heading sits the closer heading
+   gap above what it heads. detail-card-spacing.test checks it. */
+.reference-card-body :is(p, dl, dd, ul, ol, h5, h6, section) {
+  margin-block: 0;
+}
+
+.reference-card-body
+  :is(
+    section,
+    .prose-blocks,
+    .entity-lore-field,
+    .theme-candidate-description,
+    .theme-candidate-description > div
+  ) {
+  align-content: start;
+  display: grid;
+  gap: var(--card-block-gap);
+}
+
+.reference-card-body .prose-blocks > .prose-table {
+  margin-block: 0;
+}
+
+/* Book style: only a paragraph that continues another is indented; the
+   first one, and one after a heading or list, starts flush. */
+.reference-card-body .prose-blocks > .prose-paragraph {
+  text-indent: 0;
+}
+
+.reference-card-body .prose-blocks > .prose-paragraph + .prose-paragraph {
+  text-indent: 1.5em;
+}
+
+.reference-card-body :is(h5, h6):not(:last-child) {
+  margin-bottom: calc(var(--card-heading-gap) - var(--card-block-gap));
+}
+
+/* A divider sits midway: the block gap above and below it. */
+.reference-card-body section + section {
+  padding-top: var(--card-block-gap);
+}
+
+/* Flavor is set off from the rules by a divider, as on race, class and
+   background cards (below). */
+.reference-card-body > .candidate-flavor + * {
+  border-top: 1px solid var(--border);
+  padding-top: var(--card-block-gap);
+}
+
 /* Race, class and background cards (StructuredEntityBody): rules first — a
    lede, a compact stat grid, traits or features listed in the card — then
    the lore, all on one scroll. */
 .structured-entity-body {
   align-content: start;
   display: grid;
-  gap: 0.6rem;
+  gap: var(--card-block-gap, 0.6rem);
 }
 
 .structured-entity-body > p {
   margin: 0;
 }
 
-/* After the flavor band, the same divider as between card sections (e.g.
-   above "About …") instead of the band's own bottom margin and padding. */
-.reference-card-body .structured-entity-body > .candidate-flavor {
-  margin-bottom: 0 !important;
-  padding-bottom: 0;
-}
-
 .structured-entity-body > .candidate-flavor + * {
   border-top: 1px solid var(--border);
-  padding-top: 0.85rem;
+  padding-top: var(--card-block-gap, 0.6rem);
 }
 
 .entity-card-context {
@@ -649,14 +692,16 @@
 
 .entity-trait-list {
   display: grid;
-  gap: 0.55rem;
+  gap: var(--card-block-gap, 0.55rem);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.entity-trait-list strong {
-  display: block;
+/* A trait's name heads its text. */
+.entity-trait-list > li {
+  display: grid;
+  gap: var(--card-heading-gap, 0.25rem);
 }
 
 .entity-trait-list p {
@@ -666,7 +711,7 @@
 .entity-lore-field h6 {
   color: var(--muted);
   font-size: 0.78rem;
-  margin: 0.6rem 0 0.15rem;
+  margin: 0;
 }
 
 .entity-benefit {
@@ -695,11 +740,38 @@
   padding: 0.55rem 0.7rem;
 }
 
-.candidate-facts,
-.candidate-fields {
+.candidate-facts {
   display: grid;
   gap: 0.55rem 0.8rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* A card's other fields, one labelled line each ("Level: 1"), like the
+   "Prerequisite:" line and a power card's rule lines; a prose field's text
+   starts below its label. */
+.candidate-fields {
+  display: grid;
+  gap: var(--card-block-gap, 0.55rem);
+}
+
+.candidate-fields dt {
+  display: inline;
+  font-weight: 700;
+}
+
+.candidate-fields dt::after {
+  content: ": ";
+}
+
+.candidate-fields dd {
+  display: inline;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.candidate-fields dd:has(> .prose-blocks) {
+  display: block;
+  margin-top: var(--card-heading-gap, 0.25rem);
 }
 
 .power-value-abbreviation {
@@ -714,8 +786,7 @@
   min-width: 0;
 }
 
-.candidate-facts dt,
-.candidate-fields dt {
+.candidate-facts dt {
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 800;
@@ -723,8 +794,7 @@
   text-transform: uppercase;
 }
 
-.candidate-facts dd,
-.candidate-fields dd {
+.candidate-facts dd {
   margin: 0.15rem 0 0;
   overflow-wrap: anywhere;
 }

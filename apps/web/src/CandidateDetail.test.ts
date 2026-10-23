@@ -529,10 +529,16 @@ describe("option detail benefits by level", () => {
     expect(other).not.toContain("Dark Curse");
   });
 
-  it("puts an option's prerequisites before its text", () => {
-    const prerequisite = { ...pact, printPrerequisites: "Hexblade" };
+  it("puts an option's prerequisites on one line before its text", () => {
+    const prerequisite = {
+      ...pact,
+      printPrerequisites: "Hexblade\n  Dex 13;\nTrained in Arcana",
+    };
     const markup = render(prerequisite, 1);
-    expect(markup.indexOf("<h5>Prerequisites</h5>")).toBeLessThan(
+    const line =
+      '<p class="entity-card-prerequisites"><strong>Prerequisite:</strong> Hexblade; Dex 13; Trained in Arcana</p>';
+    expect(markup).toContain(line);
+    expect(markup.indexOf(line)).toBeLessThan(
       markup.indexOf("You gain the following benefits:"),
     );
   });

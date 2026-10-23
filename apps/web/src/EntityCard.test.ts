@@ -101,15 +101,17 @@ describe("shared entity-card class details", () => {
     expect(isClassEntity(entity("Hybrid Class", []))).toBe(true);
   });
 
-  it("leaves non-class specifics in the standard shared details section", () => {
+  it("lists non-class specifics as labelled field lines", () => {
     const markup = renderToStaticMarkup(
       createElement(EntityCardBody, {
         entity: entity("Feat", [field("Benefit", "Gain a bonus.", 0)]),
         hideFlavortext: false,
       }),
     );
-    expect(markup).toContain("<h5>Details</h5>");
-    expect(markup).toContain("<dt>Benefit</dt>");
+    expect(markup).not.toContain("<h5>Details</h5>");
+    expect(markup).toContain(
+      '<dl class="candidate-fields"><div><dt>Benefit</dt>',
+    );
     expect(markup).not.toContain("Role &amp; Power Source");
   });
 

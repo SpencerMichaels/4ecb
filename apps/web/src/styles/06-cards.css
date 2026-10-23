@@ -638,15 +638,23 @@
 .reference-card-subheading p {
   margin: 0;
 }
+/* Blocks in a card body (flavor, prerequisite line, paragraphs, fields,
+   sections) are spaced by one gap; the body's own rules are in
+   12-choice-details.css. */
 .reference-card-body {
-  --entity-card-flavor-padding: 0.6rem 0.75rem;
+  --card-block-gap: 0.6rem;
+  --card-heading-gap: 0.25rem;
+  align-content: start;
+  display: grid;
   flex: 1;
   font-size: var(--panel-card-body-size);
+  gap: var(--card-block-gap);
   padding: 0.75rem;
 }
 .reference-card-body .candidate-flavor {
   font-size: var(--panel-card-body-size);
-  margin: -0.75rem -0.75rem 0.5rem !important;
+  margin: 0 !important;
+  padding: 0;
 }
 /* The same source line on other choice cards, styled like a card footer. */
 .reference-card-source {

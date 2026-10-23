@@ -396,22 +396,43 @@ function DefaultSpecifics({
   if (fields.length === 0) return null;
   if (isClassEntity(entity))
     return <ClassSpecifics entity={entity} fields={fields} />;
+  // One labelled line per field ("Level: 1"), like a power card's rule
+  // lines; a prose field's text starts on the line below its label.
   return (
-    <section>
-      <h5>Details</h5>
-      <dl className="candidate-fields">
-        {fields.map((field) => (
-          <div key={`${field.ordinal}-${field.name}`}>
-            <dt>{field.name || "Detail"}</dt>
-            <dd
-              className={isProseSpecific(field) ? undefined : "preserve-lines"}
-            >
-              <SpecificValue field={field} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <dl className="candidate-fields">
+      {fields.map((field) => (
+        <div key={`${field.ordinal}-${field.name}`}>
+          <dt>{field.name || "Detail"}</dt>
+          <dd className={isProseSpecific(field) ? undefined : "preserve-lines"}>
+            <SpecificValue field={field} />
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A card's prerequisites as one line: authored lines (or `<br>`s) joined
+ * by "; ", the way the books separate them ("21st level; fey origin"). */
+export function prerequisiteLine(value: string): string {
+  return value
+    .split(/\r\n?|\n|<br\s*\/?>/iu)
+    .map((part) => part.trim().replace(/;$/u, "").trim())
+    .filter(Boolean)
+    .join("; ");
+}
+
+/** "Prerequisite: Hexblade", labelled like a power card's rule lines. */
+export function EntityPrerequisites({
+  entity,
+}: {
+  readonly entity: ContentEntity;
+}) {
+  const line = prerequisiteLine(entity.printPrerequisites ?? "");
+  return line === "" ? null : (
+    <p className="entity-card-prerequisites">
+      <strong>Prerequisite:</strong> {line}
+    </p>
   );
 }
 
@@ -444,12 +465,7 @@ export function EntityCardBody({
       {/* The book order: flavor, prerequisites, then the text, so a lead-in
           ("You gain the following benefits:") ends right above the
           benefits it introduces. */}
-      {entity.printPrerequisites === undefined ? null : (
-        <section>
-          <h5>Prerequisites</h5>
-          <Prose value={entity.printPrerequisites} />
-        </section>
-      )}
+      <EntityPrerequisites entity={entity} />
       {entity.description.length === 0
         ? null
         : (renderDescription?.(entity.description) ?? (

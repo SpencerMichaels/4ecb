@@ -773,3 +773,65 @@ the review characters restored, unless an item says otherwise.
     2d8+2 for the beast.
   - **Wrong if:** a weapon table on a beast-only power, or Distracting Team
     without its beast cells.
+
+## Detail card spacing
+
+Choice cards in the builder's detail pane (everything but power, item,
+familiar and companion cards) now share one vertical rhythm: about 0.6rem
+between blocks, 0.25rem under a heading, and no browser-default margins.
+`apps/web/src/detail-card-spacing.test.ts` checks this from the CSS; these
+items check that it looks right.
+
+- [ ] **Prerequisite line.**
+  - **Where:** `beatrix` → `edit?tab=build&level=1&section=class`. Open the Pact
+    Choice row and click Fey Pact of the White Well.
+  - **Expect:** under the italic flavor text, a thin divider, then one line
+    "**Prerequisite:** Hexblade" (bold label, flush left). A gap the same size
+    as the one above it, then "You gain the following benefits:" as its own
+    paragraph, also flush left. A choice with several prerequisites shows them
+    on one line separated by "; " (e.g. an epic destiny's "21st level; fey
+    origin").
+  - **Wrong if:** a "PREREQUISITES" heading with the value on the line below,
+    "You gain the following benefits:" sitting right under "Hexblade" as if it
+    were a second prerequisite, or either line indented.
+- [ ] **Class feature card fields.**
+  - **Where:** as above, the Fey Pact of the White Well Boon card in the open
+    Level 1 section (also Reward and Weapon).
+  - **Expect:** flavor, divider, "You gain the soul step power." flush left,
+    then after a normal gap one line "**Level:** 1". No "DETAILS" heading.
+    Other short fields read the same way (a deity's "**Alignment:** Good", a
+    feat's "**Tier:** Heroic"); a long prose field puts its label on one line
+    and its text just below.
+  - **Wrong if:** no space between the description and the fields, "Level" and
+    "1" on separate lines, a first line indented, or a big empty gap at the
+    bottom of the card.
+- [ ] **Paragraph indents.**
+  - **Where:** a card with several paragraphs: Fey Pact of the White Well
+    Reward, or `wizard-gnome` → `edit?tab=build&level=1&section=theme`, click
+    Order Adept, then "More…".
+  - **Expect:** the first paragraph, and any paragraph after a heading or list,
+    starts flush left; only a paragraph that follows another paragraph has a
+    small first-line indent. The theme's "More…"/"Less…" link sits at the left
+    under the text, a normal gap below it.
+  - **Wrong if:** every paragraph indented, or the More… link stretched across
+    the card with its label centred.
+  - **Decide:** with a gap between paragraphs, is the continuation indent still
+    wanted, or should card paragraphs never indent?
+- [ ] **Race, class and background cards.**
+  - **Where:** `beatrix` → `edit?tab=build&level=1&section=race`, click
+    Revenant; then the class section, click Hexblade, then Cleric (its About
+    section has a table); `hu` → `edit?tab=build&level=1&section=background`,
+    any background.
+  - **Expect:** the same gaps as on the pact card. The divider under the flavor
+    text has equal space above and below. Each racial trait or class feature
+    name sits just above its text (closer than the gap between traits), as do
+    the small lore headings (Playing, Male names…). A table in the text has a
+    normal gap above and below.
+  - **Wrong if:** a trait name touching its text with no space, a lore heading
+    with a large gap above it, or uneven gaps around a divider or table.
+- [ ] **Flavor divider on every choice card.**
+  - **Where:** any feat, paragon path, theme or class feature card with flavor
+    text, e.g. the pact card above.
+  - **Expect:** a thin divider between the italic flavor and the rules, as race,
+    class and background cards already had.
+  - **Decide:** keep the divider on all choice cards, or drop it everywhere?
