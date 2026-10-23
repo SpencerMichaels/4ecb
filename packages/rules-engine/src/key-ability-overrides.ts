@@ -45,6 +45,9 @@ export interface PowerOrigin {
   readonly dilettante: boolean;
   /** Native FromMulticlassing (featOnly false). */
   readonly multiclass: boolean;
+  /** Native FromMulticlassing with featOnly: a multiclass power swap or a
+   * multiclass feat, not Dilettante or Paragon Multiclassing. */
+  readonly multiclassFeat: boolean;
 }
 
 /** Native FromDilettante/FromMulticlassing and the granting element, keyed
@@ -107,6 +110,7 @@ export function powerOrigins(
       parentId === key(EXCEPTION_IDS.paragonMulticlassing) ||
       multiclassSwap ||
       multiclassFeat;
+    const fromMulticlassFeat = multiclassSwap || multiclassFeat;
     const previous = origins.get(powerKey);
     origins.set(powerKey, {
       ...(previous?.grantorId !== undefined
@@ -116,6 +120,7 @@ export function powerOrigins(
           : { grantorId: found.parent.definitionId }),
       dilettante: (previous?.dilettante ?? false) || dilettante,
       multiclass: (previous?.multiclass ?? false) || multiclass,
+      multiclassFeat: (previous?.multiclassFeat ?? false) || fromMulticlassFeat,
     });
   }
   return origins;

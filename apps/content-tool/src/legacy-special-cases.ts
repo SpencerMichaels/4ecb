@@ -272,12 +272,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Prerequisite 'you must have chosen an implement power for your Dilettante racial trait': the Dilettante power has the Implement keyword.",
       `${PREREQ_UNVERIFIED} (FindDilettante)`,
     ),
-    "?A0x7555d940.FromMulticlassing": partial(
+    "?A0x7555d940.FromMulticlassing": code(
       "Multiclass-sourced powers (Dilettante, Paragon Multiclassing IDs, multiclass feats) get the 'multiclass' (and, from feats, 'multiclass feat') keyword and read 'multiclass:key ability'.",
-      "key-ability-overrides.ts powerOrigins marks Dilettante, Paragon Multiclassing, multiclass power-swap and multiclass-feat powers, so Combat Virtuoso's 'multiclass:key ability' applies; legacyPowerKeywordTags still adds no 'multiclass'/'multiclass feat' keyword, so Compensatory Insight's 'multiclass feat:damage' is not applied",
+      "key-ability-overrides.ts powerOrigins (multiclass / multiclassFeat, through _AugmentParent), read by Combat Virtuoso's 'multiclass:key ability' and powers.ts nativeRowKeywords (Compensatory Insight's 'multiclass feat:damage')",
       test(
         KEY_ABILITY,
         "applies dilettante and multiclass overrides by where the power came from",
+      ),
+      test(
+        POWERS,
+        "adds 'multiclass' and 'multiclass feat' by the power's origin (FromMulticlassing)",
       ),
     ),
     "D20Workspace.ClassName": generic(
@@ -691,10 +695,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "equipment-ui.ts entityCurrencyCopper; the 'Ritual Cost Modifier' stat (Secret Formularies) does not discount ritual prices",
       test(EQUIPMENT_UI, "reads authored prices and ritual subtypes"),
     ),
-    ImplementType: partial(
-      "Implement kind from Magic Item Type (Rod, Staff, Wand, Orb, Totem, Tome, Holy Symbol, Ki Focus), '<X> Implement'/'Implement, <X>' gear names, Holy Symbol/Totem/Ki Focus gear, and a weapon's WeaponEquiv name or Group.",
-      "powers.ts loadouts recognize magic implements, superior implements, _ImplementEquiv and the Holy Symbol/Ki Focus gear names only: mundane Orb/Rod/Staff/Wand/Tome Implement and Totem gear (ID_FMP_GEAR_3/12/13/14/87/101) give no implement variant (Japheth owns the Rod Implement)",
+    ImplementType: code(
+      "Implement kind from Magic Item Type (Rod, Staff, Wand, Orb, Totem, Tome, Holy Symbol, Ki Focus), '<X> Implement'/'Implement, <X>' gear names, Holy Symbol/Totem/Ki Focus gear, and a superior implement's WeaponEquiv name or Group.",
+      "item-fields.ts legacyImplementType (through legacyLootImplement): powers.ts loadouts make mundane Orb/Rod/Staff/Wand/Tome Implement and Totem gear (ID_FMP_GEAR_3/12/13/14/87/101) implement rows (Japheth sold his Rod Implement at level 15, so no row there)",
       test(POWERS, "treats mundane holy symbols as implement choices"),
+      test(
+        POWERS,
+        "makes mundane implement gear implement rows, and a staff a Quarterstaff",
+      ),
     ),
     "?A0xe93d131c.IsImplementName": outOfScope(
       "Same implement-name rule for the auto-build combo tables.",
@@ -715,7 +723,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.IsKiFocus": code(
       "Ki focus detection, including the mundane Ki Focus gear (ID_FMP_GEAR_115).",
-      "powers.ts loadouts read the 'Ki Focus' name; equipment-ui.ts MUNDANE_IMPLEMENT_IDS for the shop",
+      "item-fields.ts legacyIsKiFocus (LootImplement's 'Ki Focuses', the 'Ki Focuses Implement' channel); equipment-ui.ts MUNDANE_IMPLEMENT_IDS for the shop",
+      test(
+        POWERS,
+        "names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type",
+      ),
     ),
     "D20Workspace.IsStaff": code(
       "Staff detection: staff implement gear names, Staff magic items, Quarterstaff (ID_FMP_WEAPON_10), staff group.",
@@ -740,16 +752,24 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.LootImplement": code(
       "Implement name for proficiency: staff, ki focus, ImplementType, _ImplementEquiv (base or enchantment), else 'instrument' for a bard _ImplementForClass item.",
-      "powers.ts implementKinds / implementScopes (2575583 reads _ImplementEquiv on non-weapons); the bard instrument case is the _ImplementForClass scope",
+      "item-fields.ts legacyLootImplement: powers.ts implement detection for non-weapon loot (BuildWeaponsList), implementKinds, the DetermineOffhand candidates and the row's implement channels; implementScopes for _ImplementForClass proficiency",
       test(POWERS, "treats an implement-equivalent weapon as that implement"),
       test(POWERS, "uses a pact blade only for its class's powers"),
+      test(
+        POWERS,
+        "makes mundane implement gear implement rows, and a staff a Quarterstaff",
+      ),
     ),
-    "?A0x7555d940.ImplementName": partial(
-      "Implement name for keyword channels ('<name> implement'): Staff, 'Ki Focuses', ImplementType, _ImplementEquiv, bard 'instrument'.",
-      "powers.ts tags '<Magic Item Type> implement', so 'ki focus implement' never matches the content's 'ki focuses implement' channel and no 'instrument implement' tag exists (see BuildKeywordSet)",
+    "?A0x7555d940.ImplementName": code(
+      "Implement name: Staff, 'Ki Focuses', ImplementType, _ImplementEquiv, bard 'instrument', else empty (LootImplement says 'Implement' for other _ImplementForClass items).",
+      "item-fields.ts legacyLootImplement: BuildKeywordSet names its '<name> implement' channels from LootImplement, so 'ki focuses implement' and 'instrument implement' match",
       test(
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
+      ),
+      test(
+        POWERS,
+        "adds '<group> implement group' and 'instrument implement' channels",
       ),
     ),
     "?A0x7555d940.ImplementProficiency": code(
@@ -762,7 +782,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsSpecialImplement": code(
       "An item whose (or whose enchantment's) _ImplementForClass names a record is a special implement for that class.",
-      "powers.ts implementScopes",
+      "powers.ts implementScopes; item-fields.ts legacyLootImplement (the base's field only, as the RulesElement overload)",
       test(POWERS, "uses a pact blade only for its class's powers"),
     ),
     "?A0x7555d940.ForClass": code(
@@ -841,9 +861,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "rejects Unarmed for a requirement its record cannot meet",
       ),
     ),
-    "?A0x7555d940.OffhandWeaponBase": outOfScope(
+    "?A0x7555d940.OffhandWeaponBase": code(
       "Off-hand base: a double weapon's _Secondary End, else WeaponBase.",
-      "Deliberately different (D093): IsRestricted read it only for off-hand clauses, which no longer filter power rows (a second weapon is loadout state)",
+      "powers.ts nativeRowKeywords (the two-melee-weapon, two-blade channels). Requirements deliberately ignore it (D093): IsRestricted read it only for off-hand clauses, which no longer filter power rows",
+      test(
+        POWERS,
+        "applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)",
+      ),
     ),
     NormalizedName: code(
       "Weapon name for matching: a secondary end's _Primary End weapon, without a ' (large)' suffix.",
@@ -863,7 +887,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AddWeaponKeywords": code(
       "Weapon keyword channels (military, Melee/Ranged Weapon, '<group> group', '<group> group(weapon)', name, ID, properties, thrown, Item Slot, off-hand -> one-hand); staff as Quarterstaff.",
-      "powers.ts loadout tags; the 'Melee Weapon'/'Ranged Weapon', 'group(weapon)' and off-hand 'one-hand' channels are listed under BuildKeywordSet",
+      "powers.ts loadout tags; nativeRowKeywords adds 'Melee Weapon'/'Ranged Weapon', '<group> group(weapon)' and the off-hand slot's 'one-hand'",
       test(
         POWERS,
         "tags a military weapon for military-qualified channels (AddWeaponKeywords)",
@@ -1275,7 +1299,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     FigureWeaponType: code(
       "A weapon is melee or ranged by Weapon Category; a melee weapon with a Range is also ranged.",
-      "powers.ts weaponFitsPowerRange",
+      "powers.ts weaponFitsPowerRange; legacyWeaponType for the Melee/Ranged Weapon and two-melee-weapon channels",
       test(
         POWERS,
         "uses Strength for ranged attacks with Heavy Thrown weapons",
@@ -1595,7 +1619,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.BuildKeywordSet": partial(
       "Keyword set for channel matching: weapon keywords, Arena weapons, implement names ('<name> implement', 'Ki Focuses Implement', '<group> implement group'), 'two-weapon', 'two-melee-weapon(-close)', 'two-blade', 'two-melee-offhand(-close)', attack types, Keywords, _ExtraKeywords, '<feat> association', name, ID, _AugmentParent, Class and paragon path, Power Usage, 'multiclass'/'multiclass feat', 'melee basic'/'ranged basic'.",
-      "powers.ts loadout tags + legacyPowerKeywordTags. Missing channels: 'ki focuses implement' (modern tags 'ki focus implement'; probed on RaidonKane, Implement Expertise (Ki Focuses) adds nothing with a Magic Ki Focus), 'instrument implement' (3 records), '<group> implement group' (14 Implement Expertise records), 'two-melee-offhand(-close)' (Tempest Technique), 'two-blade' (Fey Blades), 'multiclass feat' (Compensatory Insight), 'melee weapon'/'ranged weapon' (Dirty Fighting, Internalize the Basic Kata), 'group(weapon)', the off-hand slot's 'one-hand', _AugmentParent and the paragon path. 'two-weapon,weapon:' (Two-Weapon Fighting) and 'two-melee-weapon:' (Cutting Steps) apply whenever the row's item is equipped, without legacy's second-weapon check",
+      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass). Still missing: the paragon path ID (InsertParagonPath) and Arena weapons (AddArenaWeapons)",
       test(
         POWERS,
         "matches bonuses keyed by the power's class ID and the weapon's ID",
@@ -1604,14 +1628,39 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
       ),
+      test(
+        POWERS,
+        "names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type",
+      ),
+      test(
+        POWERS,
+        "adds '<group> implement group' and 'instrument implement' channels",
+      ),
+      test(
+        POWERS,
+        "applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)",
+      ),
+      test(
+        POWERS,
+        "adds 'melee weapon' or 'ranged weapon' to weapon power rows",
+      ),
+      test(POWERS, "adds an augment version's _AugmentParent as a keyword"),
     ),
-    "?A0x7555d940.IsBlade": notHandled(
+    "?A0x7555d940.IsBlade": code(
       "Light or heavy blade group, for the 'two-blade' channel.",
-      "see BuildKeywordSet ('two-blade')",
+      "powers.ts nativeRowKeywords",
+      test(
+        POWERS,
+        "applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)",
+      ),
     ),
-    "?A0x7555d940.IsOffhand": notHandled(
+    "?A0x7555d940.IsOffhand": code(
       "Off-hand property, for the 'two-melee-offhand' channels.",
-      "see BuildKeywordSet ('two-melee-offhand')",
+      "powers.ts nativeRowKeywords",
+      test(
+        POWERS,
+        "applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)",
+      ),
     ),
     "?A0x7555d940.AttackTypeKeywords": code(
       "Melee/Ranged/Area/Close channels from Attack Type ('melee or ranged weapon' by the weapon).",

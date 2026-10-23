@@ -712,49 +712,75 @@ describe("power evaluation", () => {
     expect(evaluate("SHIELD", "1")?.damage).toBe("1d8+5");
   });
 
-  it("limits equipped-loadout combat predicates to equipped power variants", () => {
-    const [power] = evaluatePowers({
-      level: 1,
-      activeDefinitionIds: ["POWER"],
-      inventory: [
-        {
-          id: "main",
-          definitionIds: ["SWORD"],
-          quantity: 1,
-          equippedQuantity: 1,
-          acquiredLevel: 1,
+  it("applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)", () => {
+    const evaluate = (daggerEquipped: number) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "main",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "alternate",
+            definitionIds: ["DAGGER"],
+            quantity: 1,
+            equippedQuantity: daggerEquipped,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: {
+          "Strength modifier": stat("Strength modifier", 4),
+          "two-melee-weapon:damage": stat("two-melee-weapon:damage", 1),
+          "two-weapon,weapon:damage": stat("two-weapon,weapon:damage", 1),
+          "two-blade:damage": stat("two-blade:damage", 1),
+          "two-melee-offhand,weapon:attack": stat(
+            "two-melee-offhand,weapon:attack",
+            1,
+          ),
         },
-        {
-          id: "alternate",
-          definitionIds: ["DAGGER"],
-          quantity: 1,
-          equippedQuantity: 0,
-          acquiredLevel: 1,
-        },
-      ],
-      stats: {
-        "Strength modifier": stat("Strength modifier", 4),
-        "two-melee-weapon:damage": stat("two-melee-weapon:damage", 1),
-        "two-weapon,weapon:damage": stat("two-weapon,weapon:damage", 1),
-      },
-      overlays: [],
-      entities: [
-        entity("POWER", "Synthetic Strike", "Power", {
-          Keywords: "Weapon",
-          "Attack Type": "Melee weapon",
-          Attack: "Strength vs. AC",
-          Hit: "1[W] + Strength modifier damage.",
-        }),
-        entity("SWORD", "Equipped Sword", "Weapon", { Damage: "1d8" }),
-        entity("DAGGER", "Carried Dagger", "Weapon", { Damage: "1d4" }),
-      ],
-    });
-    const damage = (equipmentName: string) =>
-      power?.variants.find((variant) => variant.equipmentName === equipmentName)
-        ?.damage;
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Strike", "Power", {
+            Keywords: "Weapon",
+            "Attack Type": "Melee weapon",
+            Attack: "Strength vs. AC",
+            Hit: "1[W] + Strength modifier damage.",
+          }),
+          entity("SWORD", "Equipped Sword", "Weapon", {
+            Damage: "1d8",
+            Group: "Heavy Blade",
+            "Weapon Category": "Military Melee",
+          }),
+          entity("DAGGER", "Carried Dagger", "Weapon", {
+            Damage: "1d4",
+            Group: "Light Blade",
+            Properties: "Off-hand, Light Thrown",
+            "Weapon Category": "Simple Melee",
+            Range: "5/10",
+          }),
+        ],
+      })[0];
+    const variant = (
+      power: ReturnType<typeof evaluate>,
+      equipmentName: string,
+    ) => power?.variants.find((entry) => entry.equipmentName === equipmentName);
 
-    expect(damage("Equipped Sword")).toBe("1d8+6");
-    expect(damage("Carried Dagger")).toBe("1d4+4");
+    // One weapon in hand: no off hand, so none of the two-weapon channels.
+    const single = evaluate(0);
+    expect(variant(single, "Equipped Sword")?.damage).toBe("1d8+4");
+    expect(variant(single, "Carried Dagger")?.damage).toBe("1d4+4");
+    // Two melee blades: two-weapon, two-melee-weapon and two-blade, and the
+    // off-hand dagger's own row also gets two-melee-offhand.
+    const dual = evaluate(1);
+    expect(variant(dual, "Equipped Sword")?.damage).toBe("1d8+7");
+    expect(variant(dual, "Equipped Sword")?.attackBonus).toBe(4);
+    expect(variant(dual, "Carried Dagger")?.damage).toBe("1d4+7");
+    expect(variant(dual, "Carried Dagger")?.attackBonus).toBe(5);
   });
 
   it("applies recovered weapon-field ability bonuses only to eligible families", () => {
@@ -3526,5 +3552,270 @@ describe("weapon fields and dice (native C_RulesElementField, FigureWeaponDice)"
       attackBonus: 2,
       damage: "1d8",
     });
+  });
+});
+
+describe("native BuildKeywordSet channels", () => {
+  const owned = (id: string, definitionIds: string[], equipped = 1) => ({
+    id,
+    definitionIds,
+    quantity: 1,
+    equippedQuantity: equipped,
+    acquiredLevel: 1,
+  });
+  const implementPower = entity("BOLT", "Synthetic Bolt", "Power", {
+    Keywords: "Arcane, Implement",
+    "Attack Type": "Ranged 10",
+    Attack: "Intelligence vs. Reflex",
+    Hit: "1d6 + Intelligence modifier damage.",
+  });
+  const rows = (
+    entities: ContentEntity[],
+    inventory: ReturnType<typeof owned>[],
+    bonuses: string[],
+    extra: Partial<Parameters<typeof evaluatePowers>[0]> = {},
+  ) =>
+    evaluatePowers({
+      level: 1,
+      activeDefinitionIds: entities
+        .filter((candidate) => candidate.type === "Power")
+        .map(({ id }) => id),
+      inventory,
+      stats: {
+        "Intelligence modifier": stat("Intelligence modifier", 4),
+        "Strength modifier": stat("Strength modifier", 3),
+        ...Object.fromEntries(
+          bonuses.map((name) => [name, combatStat(name, 1)]),
+        ),
+      },
+      overlays: [],
+      entities,
+      ...extra,
+    });
+  const sources = (
+    power: ReturnType<typeof rows>[number] | undefined,
+    equipmentName: string,
+  ) => {
+    const variant = power?.variants.find(
+      (candidate) => candidate.equipmentName === equipmentName,
+    );
+    return [
+      ...(variant?.attackComponents ?? []),
+      ...(variant?.damageComponents ?? []),
+    ]
+      .filter(({ source }) => source !== undefined)
+      .map(({ label }) => label);
+  };
+
+  it("names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type", () => {
+    const [power] = rows(
+      [
+        implementPower,
+        entity("FOCUS", "Synthetic Ki Focus +1", "Magic Item", {
+          "Magic Item Type": "Ki Focus",
+          Enhancement: "+1 attack rolls and damage rolls",
+        }),
+      ],
+      [owned("focus", ["FOCUS"])],
+      [
+        "ki focuses implement,implement:attack",
+        "ki focuses,implement:damage",
+        "ki focus implement,implement:attack",
+        "implement,ki focus:attack",
+      ],
+    );
+
+    expect(sources(power, "Synthetic Ki Focus +1")).toEqual([
+      "ki focuses implement,implement:attack",
+      "ki focuses,implement:damage",
+    ]);
+  });
+
+  it("makes mundane implement gear implement rows, and a staff a Quarterstaff", () => {
+    const strike = entity("STRIKE", "Synthetic Strike", "Power", {
+      Keywords: "Weapon",
+      "Attack Type": "Melee weapon",
+      Attack: "Strength vs. AC",
+      Hit: "1[W] + Strength modifier damage.",
+    });
+    const powers = rows(
+      [
+        implementPower,
+        strike,
+        entity("ID_FMP_WEAPON_10", "Quarterstaff", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "2",
+          "Weapon Category": "Simple Melee",
+          Group: "Staff",
+        }),
+        entity("ROD", "Rod Implement", "Gear", { "Item Slot": "Off-hand" }),
+        entity("OLD", "Implement, Totem", "Gear", { "Item Slot": "Off-hand" }),
+        entity("STAFF", "Staff Implement", "Gear", { "Item Slot": "Off-hand" }),
+        entity("PROF", "Implement Proficiency (Rod)", "Class Feature", {}),
+      ],
+      [owned("rod", ["ROD"]), owned("totem", ["OLD"], 0)],
+      ["rod implement,implement:attack", "rod,implement:damage"],
+      { activeDefinitionIds: ["BOLT", "STRIKE", "PROF"] },
+    );
+    const bolt = powers.find(({ definitionId }) => definitionId === "BOLT");
+    const rod = bolt?.variants.find(
+      ({ equipmentName }) => equipmentName === "Rod Implement",
+    );
+
+    expect(rod).toMatchObject({
+      proficient: true,
+      attackBonus: 5,
+      damage: "1d6+5",
+    });
+    expect(
+      bolt?.variants.find(
+        ({ equipmentName }) => equipmentName === "Implement, Totem",
+      )?.proficient,
+    ).toBe(false);
+
+    const staff = rows(
+      [
+        strike,
+        entity("ID_FMP_WEAPON_10", "Quarterstaff", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "2",
+          "Weapon Category": "Simple Melee",
+          Group: "Staff",
+        }),
+        entity("STAFF", "Staff Implement", "Gear", { "Item Slot": "Off-hand" }),
+      ],
+      [owned("staff", ["STAFF"])],
+      ["staff group,weapon:damage"],
+    )[0]?.variants.find(
+      ({ equipmentName }) => equipmentName === "Staff Implement",
+    );
+    expect(staff).toMatchObject({ weaponDamage: "1d8", damage: "1d8+3" });
+  });
+
+  it("adds '<group> implement group' and 'instrument implement' channels", () => {
+    const [power] = rows(
+      [
+        implementPower,
+        entity("ID_FMP_WEAPON_3", "Dagger", "Weapon", {
+          Damage: "1d4",
+          Group: "Light Blade",
+          "Weapon Category": "Simple Melee",
+        }),
+        entity("SONG", "Synthetic Songblade +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Enhancement: "+1 attack rolls and damage rolls",
+          _ImplementEquiv: "Instrument",
+        }),
+        entity("ACCURATE", "Accurate dagger", "Superior Implement", {
+          WeaponEquiv: "ID_FMP_WEAPON_3",
+        }),
+      ],
+      [
+        owned("dagger", ["ID_FMP_WEAPON_3"]),
+        owned("song", ["ID_FMP_WEAPON_3", "SONG"]),
+        owned("accurate", ["ACCURATE"]),
+      ],
+      [
+        "light blade implement group:attack",
+        "instrument implement:attack",
+        "dagger implement,implement:damage",
+      ],
+    );
+
+    expect(sources(power, "Dagger")).toEqual([
+      "light blade implement group:attack",
+      "dagger implement,implement:damage",
+    ]);
+    expect(sources(power, "Synthetic Songblade Dagger +1")).toEqual([
+      "light blade implement group:attack",
+      "instrument implement:attack",
+    ]);
+    // A superior implement's ImplementType is its WeaponEquiv record.
+    expect(sources(power, "Accurate dagger")).toEqual([
+      "light blade implement group:attack",
+      "dagger implement,implement:damage",
+    ]);
+  });
+
+  it("adds 'melee weapon' or 'ranged weapon' to weapon power rows", () => {
+    const [power] = rows(
+      [
+        entity("STRIKE", "Synthetic Shot", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee or Ranged weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("SWORD", "Sword", "Weapon", {
+          Damage: "1d8",
+          "Weapon Category": "Military Melee",
+        }),
+        entity("BOW", "Bow", "Weapon", {
+          Damage: "1d10",
+          "Weapon Category": "Military Ranged",
+          Range: "20/40",
+        }),
+      ],
+      [owned("sword", ["SWORD"]), owned("bow", ["BOW"])],
+      ["melee weapon:damage", "ranged weapon:damage"],
+    );
+
+    expect(sources(power, "Sword")).toEqual(["melee weapon:damage"]);
+    expect(sources(power, "Bow")).toEqual(["ranged weapon:damage"]);
+  });
+
+  it("adds an augment version's _AugmentParent as a keyword", () => {
+    const [power] = rows(
+      [
+        entity("AUGMENTED", "Synthetic Bolt (Augment 1)", "Power", {
+          Keywords: "Psionic, Implement",
+          "Attack Type": "Ranged 10",
+          Attack: "Intelligence vs. Reflex",
+          Hit: "1d6 + Intelligence modifier damage.",
+          _AugmentParent: "PARENT",
+        }),
+      ],
+      [],
+      ["parent:damage"],
+    );
+
+    expect(sources(power, "Unarmed")).toEqual(["parent:damage"]);
+  });
+
+  it("adds 'multiclass' and 'multiclass feat' by the power's origin (FromMulticlassing)", () => {
+    const entities = [
+      implementPower,
+      entity("MC", "Synthetic Initiate", "Feat", { type: "Multiclass" }),
+      entity("ID_FMP_RACIAL_TRAIT_643", "Dilettante", "Racial Trait", {}),
+    ];
+    const evaluateFrom = (parent: string) =>
+      sources(
+        rows(entities, [], ["multiclass:damage", "multiclass feat:attack"], {
+          occurrences: [
+            {
+              id: "parent",
+              definitionId: parent,
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "power",
+              definitionId: "BOLT",
+              acquiredLevel: 1,
+              parentId: "parent",
+              kind: "choice",
+            },
+          ],
+        })[0],
+        "Unarmed",
+      );
+
+    expect(evaluateFrom("MC")).toEqual([
+      "multiclass feat:attack",
+      "multiclass:damage",
+    ]);
+    expect(evaluateFrom("ID_FMP_RACIAL_TRAIT_643")).toEqual([
+      "multiclass:damage",
+    ]);
   });
 });

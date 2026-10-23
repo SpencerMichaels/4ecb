@@ -197,6 +197,95 @@ export function legacyIsStaff(entity: ContentEntity): boolean {
   }
 }
 
+/** Native IsKiFocus (D20RulesEngine): the Ki Focus gear, or a magic item
+ * whose Magic Item Type is Ki Focus. */
+export function legacyIsKiFocus(entity: ContentEntity | undefined): boolean {
+  if (entity === undefined) return false;
+  if (key(entity.id) === key(EXCEPTION_IDS.kiFocusGear)) return true;
+  return (
+    key(entity.type) === "magic item" &&
+    key(rawField(entity, "Magic Item Type") ?? "") === "ki focus"
+  );
+}
+
+const IMPLEMENT_MAGIC_ITEM_TYPES = new Set([
+  "rod",
+  "staff",
+  "wand",
+  "orb",
+  "totem",
+  "tome",
+  "holy symbol",
+  "ki focus",
+]);
+
+const IMPLEMENT_GEAR_NAMES = new Set(["holy symbol", "totem", "ki focus"]);
+
+/**
+ * Native ImplementType: a magic item's implement Magic Item Type, a gear
+ * record named "Implement, <kind>", "<kind> Implement", Holy Symbol, Totem
+ * or Ki Focus, or a superior implement's WeaponEquiv record name, else its
+ * Group (possibly empty, which still makes it an implement).
+ */
+export function legacyImplementType(
+  entity: ContentEntity,
+  weaponEquiv: (entity: ContentEntity) => ContentEntity | undefined,
+): string | undefined {
+  switch (key(entity.type)) {
+    case "magic item": {
+      const type = rawField(entity, "Magic Item Type")?.trim() ?? "";
+      return IMPLEMENT_MAGIC_ITEM_TYPES.has(key(type)) ? type : undefined;
+    }
+    case "gear": {
+      const name = entity.name.trim();
+      const prefixed = /^implement, (.*)$/iu.exec(name)?.[1];
+      if (prefixed !== undefined) return prefixed;
+      const suffixed = /^(.+) implement$/iu.exec(name)?.[1];
+      if (suffixed !== undefined) return suffixed;
+      return IMPLEMENT_GEAR_NAMES.has(key(name)) ? name : undefined;
+    }
+    case "superior implement":
+      return weaponEquiv(entity)?.name ?? rawField(entity, "Group") ?? "";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Native LootImplement for a loot's base and enchantment: what it is an
+ * implement as ("Staff", "Ki Focuses", ImplementType, the base's or else the
+ * enchantment's `_ImplementEquiv`), or, for an `_ImplementForClass` item,
+ * "instrument" (a bard's) or "Implement". Undefined when it is no implement.
+ * BuildKeywordSet names its "<value> implement" channels from it.
+ */
+export function legacyLootImplement(
+  base: ContentEntity | undefined,
+  enchant: ContentEntity | undefined,
+  resolve: {
+    readonly weaponEquiv: (entity: ContentEntity) => ContentEntity | undefined;
+    readonly record: (reference: string) => ContentEntity | undefined;
+  },
+): string | undefined {
+  if (base === undefined) return undefined;
+  if (legacyIsStaff(base)) return "Staff";
+  if (legacyIsKiFocus(base)) return "Ki Focuses";
+  const type = legacyImplementType(base, resolve.weaponEquiv);
+  if (type !== undefined) return type;
+  const equivalent =
+    rawField(base, "_ImplementEquiv")?.trim() ||
+    (enchant === undefined
+      ? ""
+      : (rawField(enchant, "_ImplementEquiv")?.trim() ?? ""));
+  if (equivalent !== "") return equivalent;
+  // Native IsSpecialImplement: the base's `_ImplementForClass` names a record.
+  const forClass = rawField(base, "_ImplementForClass")?.trim() ?? "";
+  const special = forClass === "" ? undefined : resolve.record(forClass);
+  if (special === undefined) return undefined;
+  return key(special.name) === key(EXCEPTION_NAMES.bardClass)
+    ? "instrument"
+    : "Implement";
+}
+
 /** Record types that are loot (inventory) records. */
 const ITEM_TYPES = new Set([
   "weapon",

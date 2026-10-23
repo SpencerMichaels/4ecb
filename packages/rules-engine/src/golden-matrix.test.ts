@@ -129,6 +129,7 @@ describe("representative public character goldens", () => {
           Damage: "1d8",
           "Proficiency Bonus": "3",
           Group: "Heavy Blade",
+          "Weapon Category": "Military Melee",
         },
       }),
       entity("DAGGER", "Dagger", "Weapon", {
@@ -137,6 +138,7 @@ describe("representative public character goldens", () => {
           "Proficiency Bonus": "3",
           Group: "Light Blade",
           Properties: "Off-hand",
+          "Weapon Category": "Simple Melee",
         },
       }),
     ];

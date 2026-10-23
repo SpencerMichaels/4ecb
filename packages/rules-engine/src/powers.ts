@@ -19,6 +19,7 @@ import {
   rangedBasicFallbackOverride,
   type KeyAbilityContext,
   type KeyAbilityOverride,
+  type PowerOrigin,
 } from "./key-ability-overrides";
 import type { EquipmentState } from "./equipment";
 import {
@@ -32,7 +33,9 @@ import {
 import { legacyKeywordList } from "./weapon-groups";
 import {
   increaseDamageDie,
+  legacyIsKiFocus,
   legacyIsStaff,
+  legacyLootImplement,
   withOverlaidItems,
 } from "./item-fields";
 
@@ -207,6 +210,11 @@ interface Loadout {
   /** Legacy CharLootAugment: the name of the owned augment (a dragonshard)
    * bound to this item, which a `…(<augment name>)` limiter also matches. */
   readonly augmentName?: string;
+  /** Native CharLoot BaseElem/EnchantElem: the base record (the weapon part
+   * when there is one) and its magic enchantment, which BuildKeywordSet
+   * reads for an implement power's row. */
+  readonly lootBase?: ContentEntity;
+  readonly lootEnchant?: ContentEntity;
 }
 
 function key(value: string): string {
@@ -387,6 +395,19 @@ function equipmentName(parts: readonly ContentEntity[]): string {
   );
 }
 
+/** Record lookups native LootImplement needs: WeaponEquiv and
+ * FindRulesElement for an `_ImplementForClass` value. */
+function legacyImplementResolver(
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
+): Parameters<typeof legacyLootImplement>[2] {
+  return {
+    weaponEquiv: (entity) => legacyWeaponEquiv(entity, byId, byName),
+    record: (reference) =>
+      byId.get(key(reference)) ?? byName.get(key(reference))?.[0],
+  };
+}
+
 /** Legacy WeaponEquiv: a "name[:type]" or ID naming the record the item
  * attacks as (a superior implement or shield that is also a weapon). */
 function legacyWeaponEquiv(
@@ -456,6 +477,7 @@ function loadouts(
   byName: ReadonlyMap<string, readonly ContentEntity[]>,
   textStrings: Readonly<Record<string, string>>,
 ): readonly Loadout[] {
+  const implementResolver = legacyImplementResolver(byId, byName);
   const result: Loadout[] = [];
   for (const entry of inventory.filter((item) => item.quantity > 0)) {
     const parts = entry.definitionIds.flatMap((id) => {
@@ -469,28 +491,45 @@ function loadouts(
     );
     const magicType =
       magic === undefined ? "" : field(magic, "Magic Item Type");
-    const implement = parts.find((entity) => {
-      const itemType = field(entity, "Magic Item Type") ?? "";
-      return (
-        /(implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)/i.test(
-          itemType,
-        ) ||
-        /^(holy symbol|ki focus)$/i.test(entity.name) ||
-        key(entity.type) === "superior implement" ||
-        // Legacy LootImplement: a non-weapon item whose `_ImplementEquiv`
-        // names an implement kind is one (an instrument, say).
-        (weapon === undefined &&
-          (field(entity, "_ImplementEquiv")?.trim() ?? "") !== "")
-      );
-    });
-    if (weapon === undefined && implement === undefined) continue;
-    const augment = boundAugment(entry, inventory, byId);
-    const critical = field(magic ?? emptyEntity, "Critical");
     const baseRecord = weapon ?? parts[0];
     const enchantRecord = parts.find(
       (entity) => entity !== baseRecord && key(entity.type) === "magic item",
     );
+    // Native LootImplement(CharLoot): the base with its enchantment.
+    const lootImplement = legacyLootImplement(
+      baseRecord,
+      enchantRecord,
+      implementResolver,
+    );
+    const implement =
+      parts.find((entity) => {
+        const itemType = field(entity, "Magic Item Type") ?? "";
+        return (
+          /(implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)/i.test(
+            itemType,
+          ) ||
+          /^(holy symbol|ki focus)$/i.test(entity.name) ||
+          key(entity.type) === "superior implement" ||
+          // Legacy LootImplement: a non-weapon item whose `_ImplementEquiv`
+          // names an implement kind is one (an instrument, say).
+          (weapon === undefined &&
+            (field(entity, "_ImplementEquiv")?.trim() ?? "") !== "")
+        );
+      }) ??
+      // Native BuildWeaponsList: any other non-weapon loot LootImplement
+      // names, e.g. the mundane Rod Implement or Totem gear.
+      (weapon === undefined && lootImplement !== undefined
+        ? baseRecord
+        : undefined);
+    if (weapon === undefined && implement === undefined) continue;
+    const augment = boundAugment(entry, inventory, byId);
+    const critical = field(magic ?? emptyEntity, "Critical");
     const staff = baseRecord !== undefined && legacyIsStaff(baseRecord);
+    // Native WeaponBase/IsStaffAsWeapon: a staff without a weapon part (a
+    // magic or superior staff, the Staff Implement gear) attacks as the
+    // Quarterstaff.
+    const staffWeapon =
+      weapon === undefined && (staff || /staff/i.test(magicType ?? ""));
     // The parts are already overlay-resolved (Arena Training's "Arena").
     const groups =
       weapon === undefined ? [] : legacyKeywordList(field(weapon, "Group"));
@@ -498,7 +537,7 @@ function loadouts(
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
       definitionIds: entry.definitionIds,
-      ...(weapon === undefined && !/staff/i.test(magicType ?? "")
+      ...(weapon === undefined && !staffWeapon
         ? {}
         : {
             weaponDamage:
@@ -508,11 +547,11 @@ function loadouts(
           }),
       proficiency:
         Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) ||
-        (/staff/i.test(magicType ?? "") ? 2 : 0),
+        (staffWeapon ? 2 : 0),
       proficiencyNames: [
         ...(weapon !== undefined
           ? [weapon.name]
-          : /staff/i.test(magicType ?? "")
+          : staffWeapon
             ? ["Quarterstaff"]
             : []),
         ...parts.flatMap((entity) => {
@@ -546,10 +585,6 @@ function loadouts(
                 ? ["thrown"]
                 : []),
             ]),
-        magicType ?? "",
-        ...(implement === undefined || !magicType
-          ? []
-          : [`${magicType} implement`]),
       ]
         .map(key)
         .filter(Boolean),
@@ -563,6 +598,7 @@ function loadouts(
               implement.name,
             ]),
         ...(weapon === undefined ? [] : [weapon.name, ...groups]),
+        ...legacyKeywordList(lootImplement),
         // A weapon that counts as an implement kind, e.g. a holy symbol.
         ...listField(parts, "_ImplementEquiv").map((kind) =>
           kind.replace(/\s*\([^)]*\)\s*$/u, ""),
@@ -603,13 +639,14 @@ function loadouts(
           }),
       equippedQuantity: entry.equippedQuantity,
       ...(augment === undefined ? {} : { augmentName: augment.name }),
+      // Native DetermineOffhand: a weapon, or loot LootImplement names
+      // other than a ki focus.
       offhandCandidate:
         key(baseRecord?.type ?? "") === "weapon" ||
-        (implement !== undefined &&
-          !/ki focus/iu.test(
-            `${magicType ?? ""} ${field(implement, "Magic Item Type") ?? ""} ${implement.name}`,
-          )),
+        (lootImplement !== undefined && !/ki focus/iu.test(lootImplement)),
       staff,
+      ...(baseRecord === undefined ? {} : { lootBase: baseRecord }),
+      ...(enchantRecord === undefined ? {} : { lootEnchant: enchantRecord }),
     });
   }
   result.push({
@@ -1051,6 +1088,7 @@ function legacyPowerKeywordTags(
     ]),
     ...list("_ExtraKeywords"),
     ...list("_Associated Feats").map((feat) => `${feat} association`),
+    ...list("_AugmentParent"),
     field(power, "Power Usage") ?? "",
   ]
     .map(key)
@@ -1076,6 +1114,157 @@ function limiterNames(
   );
 }
 
+/** Native FigureWeaponType: melee and ranged from Weapon Category; a melee
+ * weapon with a Range is ranged too. */
+function legacyWeaponType(entity: ContentEntity | undefined): {
+  readonly melee: boolean;
+  readonly ranged: boolean;
+} {
+  const category = field(entity ?? emptyEntity, "Weapon Category") ?? "";
+  const melee = /melee/iu.test(category);
+  return {
+    melee,
+    ranged:
+      /ranged/iu.test(category) ||
+      (melee && (field(entity ?? emptyEntity, "Range")?.trim() ?? "") !== ""),
+  };
+}
+
+/**
+ * The equipment- and origin-dependent channels of native BuildKeywordSet
+ * for one row: `ptr4` is WeaponBase (the WeaponEquiv or Quarterstaff a
+ * weapon power attacks as, the loot's own base for any other power) and the
+ * off hand is DetermineOffhand's.
+ *
+ * - Weapon powers: "Melee Weapon" (else "Ranged Weapon"), "<group>
+ *   group(weapon)", and the off-hand slot's "one-hand".
+ * - Non-weapon powers: the LootImplement name itself ("Staff", "Tome").
+ * - Any power: "Ki Focuses Implement" when the base or enchantment is a ki
+ *   focus; the base's WeaponEquiv record's group, name, properties and slot
+ *   when it is not `ptr4`.
+ * - Implement powers: "<LootImplement or base name> implement" and "<group>
+ *   implement group" (the base's groups, or its WeaponEquiv record's).
+ * - A second weapon or implement in the off hand: "two-weapon"; with two
+ *   melee weapons, "two-melee-weapon(-close)", "two-blade" for two blades,
+ *   and "two-melee-offhand(-close)" when the main weapon is an off-hand one.
+ * - FromMulticlassing: "multiclass" and "multiclass feat".
+ */
+function nativeRowKeywords(
+  equipment: Loadout,
+  input: {
+    readonly weaponPower: boolean;
+    readonly implementPower: boolean;
+    readonly offhand: Loadout | undefined;
+    /** The power's own Attack Type field. */
+    readonly attackType: string | undefined;
+    readonly origin: PowerOrigin | undefined;
+    readonly resolve: Parameters<typeof legacyLootImplement>[2];
+  },
+): readonly string[] {
+  const tags: string[] = [
+    ...(input.origin?.multiclass === true ? ["multiclass"] : []),
+    ...(input.origin?.multiclassFeat === true ? ["multiclass feat"] : []),
+  ];
+  // Without a weapon, a melee power's WeaponBase is the Unarmed weapon.
+  if (equipment.unarmed) {
+    if (input.weaponPower && /melee/iu.test(input.attackType ?? ""))
+      tags.push("melee weapon");
+    return tags;
+  }
+  const base = input.weaponPower
+    ? equipment.requirementBase
+    : equipment.lootBase;
+  if (base === undefined) return tags;
+  // Native WeaponEnchant: the enchantment, else a magic item base itself.
+  const enchant =
+    equipment.lootEnchant ??
+    (key(equipment.lootBase?.type ?? "") === "magic item"
+      ? equipment.lootBase
+      : undefined);
+  const isWeapon = (entity: ContentEntity | undefined) =>
+    key(entity?.type ?? "") === "weapon";
+  if (input.weaponPower) {
+    const type = legacyWeaponType(base);
+    if (type.melee) tags.push("melee weapon");
+    else if (type.ranged) tags.push("ranged weapon");
+    tags.push(
+      ...legacyKeywordList(field(base, "Group")).map(
+        (group) => `${group} group(weapon)`,
+      ),
+    );
+  }
+  if (isWeapon(base) && key(field(base, "Item Slot") ?? "") === "off-hand")
+    tags.push("one-hand");
+  const lootImplement = legacyLootImplement(base, enchant, input.resolve);
+  if (!input.weaponPower) tags.push(...legacyKeywordList(lootImplement));
+  if (legacyIsKiFocus(base) || legacyIsKiFocus(enchant))
+    tags.push("ki focuses implement");
+  const equivalent =
+    equipment.lootBase === undefined
+      ? undefined
+      : input.resolve.weaponEquiv(equipment.lootBase);
+  const mainEquivalent = equivalent === base ? undefined : equivalent;
+  if (input.implementPower) {
+    tags.push(
+      ...legacyKeywordList(lootImplement || base.name).map(
+        (name) => `${name} implement`,
+      ),
+    );
+    const groupSource = isWeapon(base) ? base : mainEquivalent;
+    tags.push(
+      ...legacyKeywordList(field(groupSource ?? emptyEntity, "Group")).map(
+        (group) => `${group} implement group`,
+      ),
+    );
+  }
+  if (mainEquivalent !== undefined) {
+    tags.push(
+      ...legacyKeywordList(field(mainEquivalent, "Group")).map(
+        (group) => `${group} group`,
+      ),
+      mainEquivalent.name,
+      ...legacyKeywordList(field(mainEquivalent, "Properties")),
+    );
+    if (isWeapon(mainEquivalent)) {
+      const slot = field(mainEquivalent, "Item Slot") ?? "";
+      tags.push(...legacyKeywordList(slot));
+      if (key(slot) === "off-hand") tags.push("one-hand");
+    }
+  }
+  const offhand = input.offhand;
+  if (offhand !== undefined) {
+    tags.push("two-weapon");
+    // Native OffhandWeaponBase: the off-hand loot's `_Secondary End`, else
+    // its WeaponBase for this power.
+    const secondaryEnd = field(
+      offhand.lootBase ?? emptyEntity,
+      "_Secondary End",
+    )?.trim();
+    const offhandBase =
+      (secondaryEnd === undefined || secondaryEnd === ""
+        ? undefined
+        : input.resolve.record(secondaryEnd)) ??
+      (input.weaponPower ? offhand.requirementBase : offhand.lootBase);
+    if (legacyWeaponType(base).melee && legacyWeaponType(offhandBase).melee) {
+      const attackType = input.attackType ?? "";
+      const melee = /melee/iu.test(attackType);
+      const close = !melee && /close/iu.test(attackType);
+      if (melee) tags.push("two-melee-weapon");
+      else if (close) tags.push("two-melee-weapon-close");
+      const blade = (entity: ContentEntity | undefined) =>
+        /light blade|heavy blade/iu.test(
+          field(entity ?? emptyEntity, "Group") ?? "",
+        );
+      if (blade(base) && blade(offhandBase)) tags.push("two-blade");
+      if (/off-hand/iu.test(field(base, "Properties") ?? "")) {
+        if (melee) tags.push("two-melee-offhand");
+        else if (close) tags.push("two-melee-offhand-close");
+      }
+    }
+  }
+  return tags.map(key).filter(Boolean);
+}
+
 /**
  * A power row's keyword set (native BuildKeywordSet and AddLaterKeywords),
  * which `<keywords>:attack`, `:damage` and `:die` stats test with
@@ -1092,6 +1281,9 @@ function rowKeywordTags(
     readonly byId: ReadonlyMap<string, ContentEntity>;
     readonly basicAttackKind?: "melee" | "ranged" | undefined;
     readonly attackStat?: string;
+    /** The row's equipment- and origin-dependent channels
+     * (nativeRowKeywords). */
+    readonly nativeKeywords?: readonly string[];
   },
 ): { readonly tags: ReadonlySet<string>; readonly powerTags: string[] } {
   const attackTypeTags = (() => {
@@ -1118,6 +1310,7 @@ function rowKeywordTags(
     ...context.keywords.map(key),
     key(context.defense ?? ""),
     key(context.attackStat ?? ""),
+    ...(context.nativeKeywords ?? []),
   ]);
   return { tags, powerTags };
 }
@@ -1136,6 +1329,7 @@ function combatStatComponents(
     basicAttackKind?: "melee" | "ranged" | undefined;
     /** Native AddLaterKeywords: the attack ability is a keyword too. */
     attackStat?: string;
+    nativeKeywords?: readonly string[];
     /**
      * Built-in typed bonuses the row already holds (native CalcBAB and
      * CalcDamage register the weapon's enhancement as "Enhancement" before
@@ -1202,22 +1396,11 @@ function combatStatComponents(
     if (normalized === suffix) return true;
     if (normalized.endsWith(`,${suffix}`)) {
       const qualifier = normalized.slice(0, -suffix.length - 1);
-      return (
-        equipment.tags.includes(qualifier) ||
-        (equipment.equipped &&
-          (qualifier === "two-weapon" || qualifier === "two-melee-weapon"))
-      );
+      return equipment.tags.includes(qualifier);
     }
-    if (
-      [...equipment.tags, ...powerTags].some(
-        (tag) => normalized === `${tag}:${fieldName}`,
-      )
-    )
-      return true;
-    // Conditional equipment predicates are encoded before the terminal stat
-    // name (for example, two-melee-weapon:damage). By this stage the stat
-    // accumulator has already decided whether the contribution applies.
-    return equipment.equipped && normalized.endsWith(`-${suffix}`);
+    return [...equipment.tags, ...powerTags].some(
+      (tag) => normalized === `${tag}:${fieldName}`,
+    );
   });
   const seen = new Set<string>();
   const components: { component: PowerComponent; bonusType?: string }[] =
@@ -1725,8 +1908,10 @@ function powerAdditionalEffects(input: {
   readonly damage?: string;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly basicAttackKind?: "melee" | "ranged" | undefined;
+  readonly nativeKeywords?: readonly string[];
 }): readonly PowerAdditionalEffect[] {
   const tags = new Set([
+    ...(input.nativeKeywords ?? []),
     ...input.keywords.map(key),
     ...input.equipment.tags,
     ...input.equipment.properties,
@@ -2137,6 +2322,7 @@ export function evaluatePowers(input: {
     byName,
     input.textStrings ?? {},
   );
+  const implementResolver = legacyImplementResolver(byId, byName);
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
   const weaponProficiencies = new Set(
@@ -2395,7 +2581,27 @@ export function evaluatePowers(input: {
         },
       };
     };
+    // Native FromMulticlassing reads an augment version's _AugmentParent.
+    const augmentParent = field(power, "_AugmentParent")?.trim() ?? "";
+    const channelOrigin =
+      origins.get(
+        key(
+          (augmentParent === ""
+            ? undefined
+            : (byId.get(key(augmentParent)) ??
+              byName.get(key(augmentParent))?.[0])
+          )?.id ?? power.id,
+        ),
+      ) ?? origins.get(key(power.id));
     const variants = handCandidates.map((equipment): PowerVariant => {
+      const nativeKeywords = nativeRowKeywords(equipment, {
+        weaponPower,
+        implementPower,
+        offhand: legacyOffhand(equipment, equipped),
+        attackType,
+        origin: channelOrigin,
+        resolve: implementResolver,
+      });
       const weaponSpecific = powerWeaponSpecificBonuses(
         power,
         equipment,
@@ -2587,6 +2793,7 @@ export function evaluatePowers(input: {
               attackStat,
               typedExtras: enhancementExtra,
               globalStats: { weaponRolls },
+              nativeKeywords,
             },
           ),
         );
@@ -2599,7 +2806,7 @@ export function evaluatePowers(input: {
               "weapon",
               "attack",
               phaseAttackType,
-              { keywords, defense, byId, basicAttackKind },
+              { keywords, defense, byId, basicAttackKind, nativeKeywords },
             ).filter(({ provenanceId }) =>
               provenanceId?.endsWith(":legacy-focused-expertise"),
             ),
@@ -2653,6 +2860,7 @@ export function evaluatePowers(input: {
               byId,
               basicAttackKind,
               attackStat: rowAttackStat,
+              nativeKeywords,
             }).tags,
           ),
           byId,
@@ -2856,6 +3064,7 @@ export function evaluatePowers(input: {
                 basicAttackKind,
                 attackStat,
                 globalStats: { weaponRolls },
+                nativeKeywords,
                 typedExtras:
                   offHandEnhancement === 0
                     ? enhancementExtra
@@ -2897,7 +3106,7 @@ export function evaluatePowers(input: {
               "weapon",
               "damage",
               attackType,
-              { keywords, defense, byId, basicAttackKind },
+              { keywords, defense, byId, basicAttackKind, nativeKeywords },
             ),
           );
         const powerDamageBonus = Number(
@@ -3079,6 +3288,7 @@ export function evaluatePowers(input: {
                   : { damage: damage.damage }),
                 byId,
                 basicAttackKind,
+                nativeKeywords,
               }),
         ...(critical === undefined || beastOnly ? {} : { critical }),
         ...(brutal === undefined || beastOnly

@@ -34,6 +34,8 @@ export const EXCEPTION_IDS = {
   /** MeetsItemRequirement: the Internal records two item Requirements need. */
   canUseComponents: "ID_INTERNAL_INTERNAL_CAN_USE_COMPONENTS",
   kiFocusUser: "ID_INTERNAL_INTERNAL_KI_FOCUS_USER",
+  /** IsKiFocus: the mundane Ki Focus gear. */
+  kiFocusGear: "ID_FMP_GEAR_115",
 } as const;
 
 /**
@@ -108,6 +110,9 @@ export const EXCEPTION_NAMES = {
   /** IsStaff: implement records named as staffs. */
   staffImplement: "Implement, Staff",
   staffImplementAlternate: "Staff Implement",
+  /** LootImplement: an `_ImplementForClass` item of this class is an
+   * "instrument". */
+  bardClass: "Bard",
   /** SmallWithNonSmallWeapon: a Small size without One Size Larger uses a
    * non-small versatile weapon two-handed. */
   smallSize: "Small",
