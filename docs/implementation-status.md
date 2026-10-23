@@ -1,5 +1,56 @@
 # Implementation status
 
+## Owner review round 2 (2026-10-22)
+
+From the owner's second pass through the visual review:
+
+- **Library.** The detail pane is header-only, and there's no filter box and
+  no content-update indicator (`0858ff1`). The identity line reads "Race
+  Class N" (`0592d9e`). The labelled Settings action has no underline
+  (`aa7e8a9`). The role line keeps multi-word sources and roles (`5134cee`).
+- **Rituals.** Each "Learn X free" option says what its allowance covers, so a
+  psion's two no longer both read "Psion" (`b2e2ef3`).
+- **Builder.**
+  - A trait package choice takes its feature's name, "Pact Choice"
+    (`f7bea15`).
+  - Class cards show About before Class features (`0a01180`).
+  - Level-progression power swaps say what they are: "Swap a daily attack
+    power", a one-line rule, numbered steps, and a "lost → gained" summary
+    (`f1c1f0c`).
+- **Detail cards** (`ed80ca9`, `732108d`):
+  - One spacing rhythm: a block gap, a heading gap, and no element margins
+    inside card bodies.
+  - One-line prerequisites and inline short fields ("Level: 1").
+  - The rhythm is enforced by `detail-card-spacing.test.ts`, a cascade audit
+    over `appStyles`, with jsdom as a dev dependency.
+- **Power cards.** A source's matching attack and damage bonuses are one line
+  ("+1 to attack and damage rolls …") on print, panel and reminders
+  (`9faffaf`).
+- **Reference pages.** Feature rows drop a "Level N" their tag repeats and a
+  sole class's name, and omit a dangling "one of the following … of your
+  choice" lead-in (`3793ec3`).
+- **Item names** (`e7ba7f6`, `0c8d551`, cache `v39`):
+  - Holdings follow legacy `CharLootName` (`D20RulesEngine/-Module-.cs`
+    ~20619–20740): an Artifact enchantment is named alone, otherwise the
+    base replaces the first weapon, armor or implement word.
+  - No holding is named "A + B" any more (3,049 such pairings before across
+    the private pack, 0 after).
+  - Deliberate D091 differences from legacy: "Magic Weapon +N" stays
+    "Greatbow +N", not "Magic Greatbow +N", and a base the enchantment
+    already names isn't repeated.
+- **Visual review.** The checklist now gives Where / Expect / Wrong if steps
+  for every item (`bf35993`), and the page's wrong steps are corrected
+  (`aba6b10`).
+
+Queued in `docs/task-clarifications.md`: Build-tab folding and pre-scroll (a
+tester's report), and the power-swap chain evaluation fix in `evaluator.ts`.
+Open owner decisions are the **Decide** lines in the checklist (flavor
+divider, summoned allies' Back to the Wall, class names inside feature names).
+
+Verification: 1230 tests pass across character-domain, rules-engine,
+sheet-model, legacy-dnd4e and apps/web, plus the web, sheet-model and
+character-domain typechecks. Print checks were not run.
+
 ## Owner review round 1 (2026-10-22)
 
 From the owner's first pass through the visual review and the new auto checks
