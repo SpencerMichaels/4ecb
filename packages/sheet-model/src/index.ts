@@ -126,6 +126,7 @@ export type {
   OverviewInventory,
 } from "./overview";
 export {
+  combinedDefenseModifiers,
   conditionalModifiers,
   type ConditionalModifier,
   type ConditionalModifierSurface,
@@ -2083,6 +2084,7 @@ export function buildEvaluatedSheetModel(
     inventory: inventoryPresentations
       .filter(({ referenceKind }) => referenceKind === undefined)
       .map(({ entry, original, name, entity, itemEntities }) => ({
+        id: entry.id,
         name,
         itemType: entity?.type ?? original?.elements.at(-1)?.type,
         baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,

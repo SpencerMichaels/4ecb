@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { StatAccumulator, type StatContribution } from "@4ecb/rules-engine";
-import { conditionalModifiers } from "./conditional-modifiers";
+import {
+  combinedDefenseModifiers,
+  conditionalModifiers,
+} from "./conditional-modifiers";
 
 const SKILLS = ["Athletics", "Perception", "Stealth"];
 
@@ -330,6 +333,68 @@ describe("conditional modifier projection", () => {
     ).toEqual([
       "+4 to AC against opportunity attacks",
       "+3 item bonus to Knowledge checks related to demons",
+    ]);
+  });
+});
+
+describe("combined defense modifiers", () => {
+  it("joins a source's same bonus to several defenses", () => {
+    const defenses = ["AC", "Fortitude", "Reflex", "Will"];
+    const modifiers = project([
+      ...defenses.map((stat, index) => ({
+        id: `majesty:${index}`,
+        stat,
+        value: "+1",
+        condition: "against attacks made by bloodied creatures",
+        providerName: "Majesty",
+      })),
+      ...["AC", "Will"].map((stat, index) => ({
+        id: `cloak:${index}`,
+        stat,
+        value: "+2",
+        bonusType: "Item",
+        condition: "against ranged attacks",
+        providerName: "Cloak",
+      })),
+      {
+        id: "stride",
+        stat: "Speed",
+        value: "+2",
+        condition: "when charging",
+        providerName: "Stride",
+      },
+      {
+        id: "other",
+        stat: "Reflex",
+        value: "+1",
+        condition: "against attacks made by bloodied creatures",
+        providerName: "Other source",
+      },
+    ]);
+    expect(modifiers).toHaveLength(8);
+    expect(
+      combinedDefenseModifiers(modifiers).map(({ target, text, source }) => [
+        target,
+        text,
+        source,
+      ]),
+    ).toEqual([
+      [
+        "AC, Fortitude, Reflex, Will",
+        "+1 to all defenses against attacks made by bloodied creatures",
+        "Majesty",
+      ],
+      [
+        "AC, Will",
+        "+2 item bonus to AC and Will against ranged attacks",
+        "Cloak",
+      ],
+      [
+        "Reflex",
+        "+1 to Reflex against attacks made by bloodied creatures",
+        "Other source",
+      ],
+      ["Speed", "+2 to speed when charging", "Stride"],
     ]);
   });
 });

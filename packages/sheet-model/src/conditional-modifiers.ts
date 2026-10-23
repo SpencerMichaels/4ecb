@@ -192,3 +192,54 @@ export function conditionalModifiers(
   }
   return result;
 }
+
+const DEFENSE_ORDER = ["AC", "Fortitude", "Reflex", "Will"];
+
+/**
+ * For display: one entry per bonus that several defenses share, as a
+ * source's "+1 to AC, Fortitude, Reflex and Will against ..." usually is.
+ * The same amount, condition and source to all four defenses reads "+1 to
+ * all defenses against ...". Other entries pass through unchanged; per-stat
+ * consumers (the builder's stat tooltips) keep the separate entries.
+ */
+export function combinedDefenseModifiers(
+  modifiers: readonly ConditionalModifier[],
+): ConditionalModifier[] {
+  const groups = new Map<
+    string,
+    { template: string; entries: ConditionalModifier[] }
+  >();
+  const result: (ConditionalModifier | string)[] = [];
+  for (const modifier of modifiers) {
+    const marker = ` to ${modifier.target} `;
+    const at = modifier.text.indexOf(marker);
+    if (!DEFENSE_ORDER.includes(modifier.target) || at < 0) {
+      result.push(modifier);
+      continue;
+    }
+    const template = `${modifier.text.slice(0, at)} to \u0000 ${modifier.text.slice(at + marker.length)}`;
+    const identity = `${modifier.surface}\u0001${modifier.source}\u0001${template}`;
+    const group = groups.get(identity);
+    if (group === undefined) {
+      groups.set(identity, { template, entries: [modifier] });
+      result.push(identity);
+    } else group.entries.push(modifier);
+  }
+  return result.map((entry) => {
+    if (typeof entry !== "string") return entry;
+    const { template, entries } = groups.get(entry)!;
+    if (entries.length === 1) return entries[0]!;
+    const targets = DEFENSE_ORDER.filter((name) =>
+      entries.some((modifier) => modifier.target === name),
+    );
+    const label =
+      targets.length === DEFENSE_ORDER.length
+        ? "all defenses"
+        : `${targets.slice(0, -1).join(", ")} and ${targets.at(-1)}`;
+    return {
+      ...entries[0]!,
+      target: targets.join(", "),
+      text: template.replace("\u0000", label),
+    };
+  });
+}

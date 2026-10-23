@@ -4,6 +4,8 @@ import type { OverviewInventory } from "./overview";
 
 export interface ItemPropertyReminder extends SheetValue {
   readonly elements?: readonly string[];
+  /** The holding's id, when known, for provenance matching. */
+  readonly sourceId?: string;
 }
 
 function propertyNames(value: string): string[] {
@@ -108,11 +110,14 @@ export function equippedItemPropertyReminders(
       .map((entity) => [entity.name.trim().toLowerCase(), entity]),
   );
   const grouped = new Map<string, string[]>();
+  const sourceIds = new Map<string, string>();
   const seen = new Set<string>();
   const add = (item: OverviewInventory, value: string) => {
     const key = `${item.name}:${value}`;
     if (!seen.has(key))
       grouped.set(item.name, [...(grouped.get(item.name) ?? []), value]);
+    if (item.id !== undefined && !sourceIds.has(item.name))
+      sourceIds.set(item.name, item.id);
     seen.add(key);
   };
   for (const item of inventory.filter(
@@ -154,5 +159,6 @@ export function equippedItemPropertyReminders(
     label,
     value: values.join("\n\n"),
     ...(values.length > 1 ? { elements: values } : {}),
+    ...(sourceIds.has(label) ? { sourceId: sourceIds.get(label)! } : {}),
   }));
 }

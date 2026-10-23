@@ -87,27 +87,41 @@ describe("defensive stat projection", () => {
       ]),
     );
     expect(defensiveStatTraits(values, evaluated)).toEqual([
-      { label: "Resistance", value: "Fire 5", source: "Synthetic trait" },
+      {
+        label: "Resistance",
+        value: "Fire 5",
+        source: "Synthetic trait",
+        provenanceIds: ["0"],
+      },
       {
         label: "Resistance",
         value: "Fire 10 while bloodied",
         source: "Synthetic trait",
+        provenanceIds: ["7"],
       },
-      { label: "Vulnerability", value: "Cold 3", source: "Synthetic trait" },
+      {
+        label: "Vulnerability",
+        value: "Cold 3",
+        source: "Synthetic trait",
+        provenanceIds: ["1"],
+      },
       {
         label: "Saving throws",
         value: "+2 feat bonus to saves against poison",
         source: "Synthetic trait",
+        provenanceIds: ["3"],
       },
       {
         label: "Saving throws",
         value: "+3 to saves while bloodied",
         source: "Synthetic trait",
+        provenanceIds: ["4"],
       },
       {
         label: "Death saves",
         value: "+2 to death saves",
         source: "Synthetic trait",
+        provenanceIds: ["6"],
       },
     ]);
   });
@@ -148,6 +162,7 @@ describe("defensive stat projection", () => {
         label: "Saving throws",
         value: "Custom modifier to saves against fear (unresolved)",
         source: "Custom trait",
+        provenanceIds: ["custom"],
       },
     ]);
   });

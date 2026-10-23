@@ -294,9 +294,9 @@ describe("printed overview data", () => {
         category: "Class features",
       },
     ]);
-    expect(model.overview?.summaryReminders).toEqual([
-      { label: feature.name, value: extra, category: "Class features" },
-    ]);
+    // The extra damage line is on the Chosen Foe card, so page 1 does not
+    // repeat it.
+    expect(model.overview?.summaryReminders).toEqual([]);
     expect(
       model.overview?.features.find((f) => f.id === feature.id)?.description,
     ).toBe(feature.description);
@@ -704,7 +704,7 @@ describe("printed overview data", () => {
       expect(model.powers).toEqual(powers);
     },
   );
-  it("deduplicates unattributed identical effects without merging distinct effects", () => {
+  it("drops unattributed effects their power cards already show", () => {
     const base = buildSheetModel(snapshot, []);
     const powers = ["First", "Second"].map((name) => ({
       kind: "power" as const,
@@ -725,9 +725,9 @@ describe("printed overview data", () => {
       m.overview?.reminders.filter(
         (r) => r.value === "Conditional bonus without a known provider.",
       ),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
   });
-  it("keeps the source category of conditional effects from power-granting features", () => {
+  it("drops conditional effects of power-granting features that their power cards show", () => {
     const feature = {
       ...feat,
       id: "feature:mark",
@@ -770,9 +770,8 @@ describe("printed overview data", () => {
       },
       { level: 8, stats: {}, selections, content: [feature], inventory: [] },
     );
-    expect(model.overview?.reminders).toEqual([
-      { label: feature.name, value: text, category: "Class features" },
-    ]);
+    // Remember in play never repeats a power card's reminder line.
+    expect(model.overview?.reminders).toEqual([]);
   });
   it("omits passive grants and loadout bonuses from reminders, retaining actionable benefits", () => {
     const examples = [

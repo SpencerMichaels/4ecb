@@ -15,6 +15,13 @@ import {
   type ConditionalModifier,
 } from "./conditional-modifiers";
 import { equippedItemPropertyReminders } from "./item-reminders";
+import {
+  definitionSourceKey,
+  inventorySourceKey,
+  nameSourceKey,
+  provenanceSourceResolver,
+  reminderCovered,
+} from "./reminder-coverage";
 import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
 import { featureReferenceMetadata } from "./feature-reference";
@@ -64,6 +71,8 @@ function deityFeature(deity: SheetDeityReference): OverviewFeature {
   };
 }
 export interface OverviewInventory {
+  /** The holding's id (evaluated inventory), for provenance matching. */
+  readonly id?: string;
   readonly itemType?: string | undefined;
   readonly baseItemType?: string | undefined;
   /** Total weight of the listed quantity, not a per-copy weight. */
@@ -389,31 +398,59 @@ export function withSheetOverview(
     input.stats,
     input.evaluatedStats,
   );
+  // Which source each specific-surface entry and reminder belongs to, for
+  // dropping reminders those entries already show (reminder-coverage.ts).
+  const sourceOf = provenanceSourceResolver(
+    input.evaluatedStats ?? {},
+    input.occurrences ?? [],
+  );
+  const sourceKeys = (
+    provenanceId: string | undefined,
+    name: string | undefined,
+  ) => {
+    const resolved = sourceOf(provenanceId);
+    return resolved.length
+      ? resolved
+      : name?.trim()
+        ? [nameSourceKey(name)]
+        : [];
+  };
+  const textTraitSources = new Map<DefensiveTrait, readonly string[]>();
+  const featureSources = (feature: OverviewFeature) => [
+    definitionSourceKey(feature.id),
+    nameSourceKey(feature.name),
+  ];
   // Preserve whole authored clauses rather than reducing prose immunities to an
   // invented numeric stat or dropping conditions from the preceding sentence.
   const selfDefense =
     /\byou (?:are|become) immune\b|\byou (?:have|gain) (?:immunity|vulnerability)\b/i;
+  const pushTextTrait = (trait: DefensiveTrait, sources: readonly string[]) => {
+    defensiveTraits.push(trait);
+    textTraitSources.set(trait, sources);
+  };
   for (const feature of features) {
     if (selfDefense.test(feature.description))
-      defensiveTraits.push({
-        label: feature.name,
-        value: feature.description,
-        source: feature.name,
-        group: /immune|immunity/i.test(feature.description)
-          ? "Immunities"
-          : "Vulnerabilities",
-      });
+      pushTextTrait(
+        {
+          label: feature.name,
+          value: feature.description,
+          source: feature.name,
+          group: /immune|immunity/i.test(feature.description)
+            ? "Immunities"
+            : "Vulnerabilities",
+        },
+        featureSources(feature),
+      );
     for (const field of feature.fields)
       if (
         /^(?:immunities|immunity|resistances|vulnerabilities)$/i.test(
           field.label,
         )
       )
-        defensiveTraits.push({
-          ...field,
-          source: feature.name,
-          group: field.label,
-        });
+        pushTextTrait(
+          { ...field, source: feature.name, group: field.label },
+          featureSources(feature),
+        );
   }
   for (const item of input.inventory.filter((item) => item.equipped > 0))
     for (const field of item.fields)
@@ -423,36 +460,53 @@ export function withSheetOverview(
         ) ||
         (/^property$/i.test(field.label) && selfDefense.test(field.value))
       )
-        defensiveTraits.push({
-          label: `${item.name} · ${field.label}`,
-          value: field.value,
-          source: item.name,
-          group: /^property$/i.test(field.label)
-            ? /immune|immunity/i.test(field.value)
-              ? "Immunities"
-              : "Vulnerabilities"
-            : field.label,
-        });
+        pushTextTrait(
+          {
+            label: `${item.name} · ${field.label}`,
+            value: field.value,
+            source: item.name,
+            group: /^property$/i.test(field.label)
+              ? /immune|immunity/i.test(field.value)
+                ? "Immunities"
+                : "Vulnerabilities"
+              : field.label,
+          },
+          [
+            ...(item.id === undefined ? [] : [inventorySourceKey(item.id)]),
+            nameSourceKey(item.name),
+          ],
+        );
   const reminders: OverviewReminder[] = [];
+  const reminderSources = new Map<OverviewReminder, readonly string[]>();
   const reminderByFeature = new Map<string, number>();
-  const reminderKeys = new Set<string>();
+  const reminderKeys = new Map<string, OverviewReminder>();
   const addReminder = (
     label: string,
     value: string,
     category: OverviewReminder["category"] = "Other reminders",
     elements?: readonly string[],
     choice?: string,
+    sources: readonly string[] = [],
   ) => {
     const identity = `${label}:${value}`;
-    if (!value.trim() || reminderKeys.has(identity)) return;
-    reminderKeys.add(identity);
-    reminders.push({
+    if (!value.trim()) return;
+    const existing = reminderKeys.get(identity);
+    if (existing !== undefined) {
+      reminderSources.set(existing, [
+        ...new Set([...(reminderSources.get(existing) ?? []), ...sources]),
+      ]);
+      return;
+    }
+    const reminder: OverviewReminder = {
       label,
       value,
       category,
       ...(elements && elements.length > 1 ? { elements } : {}),
       ...(choice === undefined ? {} : { choice }),
-    });
+    };
+    reminderKeys.set(identity, reminder);
+    reminderSources.set(reminder, sources);
+    reminders.push(reminder);
   };
   for (const feature of features)
     if (
@@ -465,6 +519,7 @@ export function withSheetOverview(
         reminderCategory(feature.group),
         undefined,
         featureChoiceText(feature.choices),
+        featureSources(feature),
       );
       const index = reminders.findIndex(
         (reminder) =>
@@ -482,6 +537,13 @@ export function withSheetOverview(
       reminder.value,
       "Item properties",
       reminder.elements,
+      undefined,
+      [
+        ...(reminder.sourceId === undefined
+          ? []
+          : [inventorySourceKey(reminder.sourceId)]),
+        nameSourceKey(reminder.label),
+      ],
     );
   const seenEffects = new Set<string>();
   for (const power of model.powers)
@@ -508,14 +570,17 @@ export function withSheetOverview(
           category: reminderCategory(feature.group),
           ...(choice === undefined ? {} : { choice }),
         };
-        if (existing !== undefined) reminders[existing] = canonical;
-        else {
+        if (existing !== undefined) {
+          reminderSources.set(canonical, featureSources(feature));
+          reminders[existing] = canonical;
+        } else {
           addReminder(
             canonical.label,
             canonical.value,
             canonical.category,
             undefined,
             choice,
+            featureSources(feature),
           );
           const index = reminders.findIndex(
             (reminder) =>
@@ -536,8 +601,80 @@ export function withSheetOverview(
         effect.provider ?? feature?.name ?? power.name,
         effect.text,
         feature ? reminderCategory(feature.group) : "Other reminders",
+        undefined,
+        undefined,
+        [
+          ...sourceKeys(effect.provenanceId, effect.provider ?? feature?.name),
+          ...(feature ? featureSources(feature) : []),
+        ],
       );
     }
+  // Companion-card notes are the more specific home of the ally bonuses
+  // that name the companion.
+  const companionNoteIds = new Set(
+    model.companions.flatMap((card) =>
+      "notes" in card ? card.notes.map((note) => note.provenanceId) : [],
+    ),
+  );
+  const conditional = conditionalModifiers(
+    input.evaluatedStats ?? {},
+    model.skills.map(({ label }) => label),
+  ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId));
+  const represented: { sources: readonly string[]; text: string }[] = [
+    ...conditional.map((modifier) => ({
+      sources: sourceKeys(modifier.provenanceId, modifier.source),
+      text: modifier.text,
+    })),
+    ...defensiveTraits.map((trait) => ({
+      sources: textTraitSources.get(trait) ?? [
+        ...new Set(
+          (trait.provenanceIds?.length
+            ? trait.provenanceIds
+            : [undefined]
+          ).flatMap((id) =>
+            sourceKeys(
+              id,
+              trait.provenanceIds?.length ? undefined : trait.source,
+            ),
+          ),
+        ),
+      ],
+      text: `${trait.label}: ${trait.value}`,
+    })),
+    ...model.powers.flatMap((power) =>
+      (power.additionalEffects ?? []).map((effect) => ({
+        sources: sourceKeys(effect.provenanceId, effect.provider),
+        text: effect.text,
+      })),
+    ),
+    ...model.companions.flatMap((card) =>
+      "notes" in card
+        ? card.notes.map((note) => ({
+            sources: sourceKeys(note.provenanceId, note.source),
+            text: note.text,
+          }))
+        : [],
+    ),
+  ];
+  // A power card's own reminder line, whatever its provenance.
+  const cardLines = new Set(
+    model.powers.flatMap((power) =>
+      (power.additionalEffects ?? []).map((effect) => key(effect.text)),
+    ),
+  );
+  const redundant = (reminder: OverviewReminder) => {
+    if (cardLines.has(key(reminder.value))) return true;
+    const sources = new Set(reminderSources.get(reminder) ?? []);
+    if (sources.size === 0) return false;
+    return reminderCovered(
+      reminder.value,
+      represented
+        .filter((entry) => entry.sources.some((source) => sources.has(source)))
+        .map((entry) => entry.text),
+    );
+  };
+  for (let index = reminders.length - 1; index >= 0; index--)
+    if (redundant(reminders[index]!)) reminders.splice(index, 1);
   const summaryReminders = [...reminders];
   const corePowers = corePowerReminders({
     ...input,
@@ -609,10 +746,7 @@ export function withSheetOverview(
               other.source === entry.source,
           ) === index,
       ),
-      conditionalModifiers: conditionalModifiers(
-        input.evaluatedStats ?? {},
-        model.skills.map(({ label }) => label),
-      ),
+      conditionalModifiers: conditional,
       abilities: model.abilities.map(({ label, value }) => {
         const score = number(value);
         const mod =
