@@ -1274,6 +1274,29 @@ describe("power evaluation", () => {
     });
   });
 
+  it("reads both steps of a native exact increase line (AttackPowerModRepl)", () => {
+    const bonusAt = (level: number) =>
+      evaluatePowers({
+        level,
+        activeDefinitionIds: ["POWER"],
+        inventory: [],
+        stats: {},
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Flame", "Power", {
+            "Attack Type": "Ranged 10",
+            Attack:
+              "Wisdom +4 vs. Reflex\nIncrease to +6 bonus at 11th level and +8 bonus at 21st level.",
+            Hit: "The target grants combat advantage.",
+          }),
+        ],
+      })[0]?.variants[0]?.attackComponents.find(
+        ({ label }) => label === "power attack bonus",
+      )?.value;
+
+    expect([bonusAt(10), bonusAt(11), bonusAt(21)]).toEqual([4, 6, 8]);
+  });
+
   it("does not bridge unrelated weapon expertise onto implement attacks", () => {
     const [power] = evaluatePowers({
       level: 15,

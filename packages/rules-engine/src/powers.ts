@@ -1408,13 +1408,56 @@ function classKeyAbilities(
   });
 }
 
+/**
+ * Native AttackPowerModRepl (D20RulesEngine `-Module-.cs`, around 23530):
+ * exact increase lines whose 11th- and 21st-level bonuses the generic parse
+ * below would only half read. The value replaces the line's `+N`.
+ */
+const NATIVE_INCREASE_LINES: readonly {
+  readonly text: string;
+  readonly paragon: number;
+  readonly epic: number;
+}[] = [
+  {
+    text: "Increase to +6 at 11th level, +8 at 21st level.",
+    paragon: 6,
+    epic: 8,
+  },
+  {
+    text: "Increase to +6 bonus at 11th level and +8 bonus at 21st level.",
+    paragon: 6,
+    epic: 8,
+  },
+  {
+    text: "Increase the bonus to attack rolls to +4 at 11th level and +6 at 21st level",
+    paragon: 4,
+    epic: 6,
+  },
+  {
+    text: "Increase to +4 bonus at 11th level, and to +6 at 21st level",
+    paragon: 4,
+    epic: 6,
+  },
+  {
+    text: "Increase to +4 bonus at 11th level, and to +6 bonus at 21st level",
+    paragon: 4,
+    epic: 6,
+  },
+];
+
 function powerBonusAtLevel(line: string, level: number): number {
+  const normalized = key(line.replace(/\s+/g, " "));
+  const native = NATIVE_INCREASE_LINES.find(({ text }) =>
+    normalized.includes(key(text)),
+  );
   const firstLine = line.split("\n")[0] ?? line;
   let bonus = Number(
     firstLine.match(
       /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)\s*\+\s*(\d+)/i,
     )?.[1] ?? 0,
   );
+  if (native !== undefined && bonus !== 0)
+    return level >= 21 ? native.epic : level >= 11 ? native.paragon : bonus;
   for (const match of line.matchAll(
     /(?:Level\s+)?(\d+)(?:st|nd|rd|th)?(?:\s+level)?\s*:\s*[^\n]*?\+\s*(\d+)|Increase\s+to\s+\+(\d+)\s+bonus\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi,
   )) {
