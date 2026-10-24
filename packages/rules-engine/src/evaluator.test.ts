@@ -4030,3 +4030,79 @@ describe("legacy loot execution (EquipLoot/ShouldExecute)", () => {
     expect(withBag(1).stats.Speed?.value).toBe(1);
   });
 });
+
+describe("dormant saved selections (D043)", () => {
+  const content = [
+    entity("ROOT", "3", "Level", {
+      rules: [
+        rule(
+          "select",
+          {
+            type: "Power",
+            name: "Power Encounter 3",
+            requires: "!No Level 3 Encounter Power",
+          },
+          0,
+        ),
+      ],
+    }),
+    entity("CLASS", "Hunter", "Class", {
+      rules: [rule("grant", { name: "NOLV3", type: "Internal" }, 0)],
+    }),
+    entity("NOLV3", "No Level 3 Encounter Power", "Internal"),
+    entity("PICK", "Lightning's Revelation", "Power"),
+  ];
+  const pick: CharacterOccurrence = {
+    id: "pick",
+    definitionId: "PICK",
+    acquiredLevel: 3,
+    parentId: "root",
+    ruleOrdinal: 0,
+    choiceIndex: 0,
+    kind: "choice",
+  };
+  const classOccurrence: CharacterOccurrence = {
+    id: "class",
+    definitionId: "CLASS",
+    acquiredLevel: 1,
+    kind: "root",
+  };
+
+  it("lists a saved pick whose slot an owned record switches off", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [rootOccurrence, classOccurrence, pick],
+        inventory: [],
+      },
+      content,
+    );
+    expect(evaluated.activeDefinitionIds).not.toContain("PICK");
+    expect(evaluated.dormantSelections).toEqual([
+      {
+        occurrence: pick,
+        providerOccurrenceId: "root",
+        ruleOrdinal: 0,
+        slotName: "Power Encounter 3",
+        slotType: "Power",
+        requires: "!No Level 3 Encounter Power",
+        blockedBy: [expect.objectContaining({ definitionId: "NOLV3" })],
+      },
+    ]);
+  });
+
+  it("lists nothing while the slot is active", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [rootOccurrence, pick],
+        inventory: [],
+      },
+      content,
+    );
+    expect(evaluated.activeDefinitionIds).toContain("PICK");
+    expect(evaluated.dormantSelections).toBeUndefined();
+  });
+});

@@ -23,6 +23,7 @@ import {
   parseCategoryExpression,
   parseRequires,
   type ExpressionContext,
+  type RequiresExpression,
 } from "./expressions";
 import {
   parseRules,
@@ -49,7 +50,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v52-2026-10-23-staff-weapon-keywords";
+  "evaluated-character-v53-2026-10-23-dormant-selections";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -153,6 +154,26 @@ export interface EvaluatedChoice {
   }[];
 }
 
+/**
+ * A saved pick whose provider's select rule is inactive because its
+ * `requires` isn't met (D043). Level-gated (future) slots, replacement swaps
+ * and drop rules are not dormancy.
+ */
+export interface DormantSelection {
+  readonly occurrence: CharacterOccurrence;
+  readonly providerOccurrenceId: string;
+  readonly ruleOrdinal: number;
+  /** The select rule's name ("Power Encounter 3") and type ("Power"). */
+  readonly slotName?: string;
+  readonly slotType: string;
+  readonly requires: string;
+  /**
+   * Active occurrences whose presence switches the slot off: they match a
+   * negated name in `requires` ("!No Level 3 Encounter Power").
+   */
+  readonly blockedBy: readonly CharacterOccurrence[];
+}
+
 export interface FieldOverlay {
   readonly providerOccurrenceId: string;
   readonly targetDefinitionIds: readonly string[];
@@ -195,6 +216,11 @@ export interface EvaluatedCharacter {
    * its own slot's `selectedOccurrenceId`, so that level shows its pick.
    */
   readonly replacedSelections?: readonly CharacterOccurrence[];
+  /**
+   * Saved picks whose slot a statement-level `requires` currently switches
+   * off (D043): kept in the build, but contributing nothing.
+   */
+  readonly dormantSelections?: readonly DormantSelection[];
   readonly activeDefinitionIds: readonly string[];
   readonly activeDefinitions: readonly ActiveDefinitionMembership[];
   readonly choices: readonly EvaluatedChoice[];
@@ -2739,6 +2765,79 @@ function evaluateCharacterInternal(
         : savedById.get(choice.selectedOccurrenceId);
     return selected === undefined ? [] : [selected];
   });
+  const replacedSelectionIds = new Set(replacedSelections.map(({ id }) => id));
+  /** Names a requires expression needs absent ("!X"), under any nesting. */
+  const negatedNames = (
+    expression: RequiresExpression,
+    negated = false,
+  ): string[] => {
+    switch (expression.kind) {
+      case "owned":
+        return negated ? [expression.token] : [];
+      case "category":
+        return [];
+      case "not":
+        return negatedNames(expression.operand, !negated);
+      case "and":
+      case "or":
+        return expression.operands.flatMap((operand) =>
+          negatedNames(operand, negated),
+        );
+    }
+  };
+  const dormantSelections = saved.flatMap((occurrence): DormantSelection[] => {
+    if (
+      occurrence.kind !== "choice" ||
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal === undefined ||
+      activeOccurrenceIds.has(occurrence.id) ||
+      displacedIds.has(occurrence.id) ||
+      replacedSelectionIds.has(occurrence.id) ||
+      droppedSelectSlots.has(
+        `${occurrence.parentId}:${occurrence.ruleOrdinal}:${occurrence.choiceIndex ?? 0}`,
+      )
+    )
+      return [];
+    const provider = occurrences.find(({ id }) => id === occurrence.parentId);
+    const providerDefinition =
+      provider === undefined ? undefined : index.get(provider.definitionId);
+    if (provider === undefined || providerDefinition === undefined) return [];
+    const rule = parseRules(
+      providerDefinition.id,
+      providerDefinition.rules,
+    ).find((candidate) => candidate.source.ordinal === occurrence.ruleOrdinal);
+    if (
+      rule?.kind !== "select" ||
+      rule.requires === undefined ||
+      !activeAt(rule, input.level) ||
+      ruleRequiresMet(rule.requires, provider, occurrences, expressionContext)
+    )
+      return [];
+    const names = negatedNames(parseRequires(rule.requires));
+    const blockedBy = occurrences.filter((candidate) => {
+      const entity = index.get(candidate.definitionId);
+      return (
+        entity !== undefined &&
+        names.some((token) =>
+          evaluateRequires(
+            { kind: "owned", token },
+            { ...expressionContext, owned: [entity], namedOwned: [entity] },
+          ),
+        )
+      );
+    });
+    return [
+      {
+        occurrence,
+        providerOccurrenceId: provider.id,
+        ruleOrdinal: occurrence.ruleOrdinal,
+        ...(rule.name === undefined ? {} : { slotName: rule.name }),
+        slotType: rule.type,
+        requires: rule.requires,
+        blockedBy,
+      },
+    ];
+  });
   return {
     level: input.level,
     converged,
@@ -2747,6 +2846,7 @@ function evaluateCharacterInternal(
     legal,
     occurrences,
     ...(replacedSelections.length === 0 ? {} : { replacedSelections }),
+    ...(dormantSelections.length === 0 ? {} : { dormantSelections }),
     activeDefinitionIds,
     activeDefinitions,
     choices,
