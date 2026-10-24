@@ -15,6 +15,7 @@ import {
   contentNotInstalledIssue,
   contentUpdateIssue,
   deityAlignmentIssue,
+  dormantSelectionIssues,
   evaluationFailedIssue,
   missingHoldingContentIssues,
   nameMatchedContentIssues,
@@ -562,6 +563,7 @@ describe("character issues outside rules evaluation", () => {
         houseRules: [],
         updates: [],
         notes: [],
+        inactive: [],
       },
       [issue],
     );
@@ -634,6 +636,7 @@ describe("deity alignment", () => {
         houseRules: [],
         updates: [],
         notes: [],
+        inactive: [],
       },
       [failed],
     );
@@ -888,6 +891,7 @@ describe("records matched by name on import", () => {
         houseRules: [],
         updates: [],
         notes: [],
+        inactive: [],
       },
       issues,
     );
@@ -928,5 +932,134 @@ describe("records matched by name on import", () => {
     ).toEqual([
       "Your file saved “Mountain Guide (Ranger)” as THEIRS_GUIDE, which the game content doesn't have, so it uses OURS_GUIDE, the one record of that type named without your class (Ranger).",
     ]);
+  });
+});
+
+describe("dormant saved selections", () => {
+  const byId = new Map(
+    [
+      { id: "L3", name: "3", type: "Level" },
+      { id: "HUNTER", name: "Hunter", type: "Class" },
+      { id: "ID_FMP_CLASS_2", name: "Cleric", type: "Class" },
+      { id: "HUNTER_GRANTS", name: "Hunter", type: "Grants" },
+      { id: "NO_LV3", name: "No Level 3 Encounter Power", type: "Internal" },
+      { id: "PICK", name: "Lightning's Revelation", type: "Power" },
+    ].map((entity) => [
+      entity.id.toLocaleLowerCase(),
+      { rules: [], ...entity } as unknown as ContentEntity,
+    ]),
+  );
+  const pick = {
+    id: "pick",
+    definitionId: "PICK",
+    acquiredLevel: 3,
+    parentId: "level-3",
+    ruleOrdinal: 2,
+    choiceIndex: 0,
+    kind: "choice" as const,
+  };
+  const blocker = {
+    id: "no-lv3",
+    definitionId: "NO_LV3",
+    acquiredLevel: 1,
+    parentId: "hunter-grants",
+    ruleOrdinal: 0,
+    kind: "grant" as const,
+  };
+  const dormantEvaluation = evaluation({
+    occurrences: [
+      { id: "level-3", definitionId: "L3", acquiredLevel: 3, kind: "root" },
+      {
+        id: "hunter",
+        definitionId: "HUNTER",
+        acquiredLevel: 1,
+        kind: "choice",
+      },
+      {
+        id: "hunter-grants",
+        definitionId: "HUNTER_GRANTS",
+        acquiredLevel: 1,
+        parentId: "hunter",
+        ruleOrdinal: 0,
+        kind: "grant",
+      },
+      blocker,
+    ],
+    dormantSelections: [
+      {
+        occurrence: pick,
+        providerOccurrenceId: "level-3",
+        ruleOrdinal: 2,
+        slotName: "Power Encounter 3",
+        slotType: "Power",
+        requires: "!No Level 3 Encounter Power",
+        blockedBy: [blocker],
+      },
+    ],
+  });
+
+  it("say what was saved, where, and which rule switches its slot off", () => {
+    expect(dormantSelectionIssues(dormantEvaluation, byId)).toEqual([
+      {
+        key: "inactive:pick",
+        kind: "inactive",
+        title: "Lightning's Revelation (Power)",
+        detail:
+          "Saved at level 3 in the level-3 encounter power slot. This character doesn't have that slot: Hunter's “No Level 3 Encounter Power” switches it off.",
+        effect:
+          "It stays saved and is kept on export, but adds nothing to the character. It comes back if the slot turns back on.",
+        target: { kind: "level-section", level: 3, section: "Powers" },
+      },
+    ]);
+  });
+
+  it("fall back to the requirement when no owned record blocks the slot", () => {
+    const [issue] = dormantSelectionIssues(
+      evaluation({
+        dormantSelections: [
+          {
+            occurrence: pick,
+            providerOccurrenceId: "level-3",
+            ruleOrdinal: 2,
+            slotName: "Pact Boon",
+            slotType: "Class Feature",
+            requires: "ID_FMP_CLASS_2",
+            blockedBy: [],
+          },
+        ],
+      }),
+      byId,
+    );
+    expect(issue?.detail).toBe(
+      "Saved at level 3 in the “Pact Boon” slot. This character doesn't have that slot: it needs “Cleric”, which isn't met.",
+    );
+    expect(issue?.target).toEqual({
+      kind: "level-section",
+      level: 3,
+      section: "Class",
+    });
+  });
+
+  it("are notes of their own, never errors or warnings", () => {
+    const groups = withCharacterIssues(
+      builderIssueGroups({
+        evaluation: dormantEvaluation,
+        byId,
+        effectiveLevel: 3,
+        planningHorizon: 3,
+        abilityScoresIncomplete: false,
+        abilityScoresHouseRuled: false,
+      }),
+      dormantSelectionIssues(dormantEvaluation, byId),
+    );
+    expect(groups.inactive).toHaveLength(1);
+    expect(groups.errors).toEqual([]);
+    expect(groups.warnings).toEqual([]);
+    expect(groups.notes).toEqual([]);
+  });
+
+  it("are absent when no saved pick is dormant", () => {
+    expect(dormantSelectionIssues(evaluation(), byId)).toEqual([]);
+    expect(dormantSelectionIssues(undefined, byId)).toEqual([]);
   });
 });

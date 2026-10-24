@@ -17,21 +17,35 @@ import type {
 import {
   candidateReason,
   isBuildPresetChoice,
+  legacyChoiceSection,
   powerSwapPresentation,
   selectedCandidateDecision,
   selectedDefinitionId,
   type DeityAlignmentConstraint,
+  type LegacyChoiceSection,
 } from "./builder-ui";
 import { inventoryDisplayName, missingInventoryElements } from "./equipment-ui";
 
 export type BuilderIssueKind =
-  "unresolved" | "warning" | "error" | "house-rule" | "update" | "note";
+  | "unresolved"
+  | "warning"
+  | "error"
+  | "house-rule"
+  | "update"
+  | "note"
+  | "inactive";
 
 export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
   | { readonly kind: "content-update" }
   | { readonly kind: "settings" }
   | { readonly kind: "choice"; readonly choiceId: string }
+  /** A level's Build section, for a slot that has no live choice. */
+  | {
+      readonly kind: "level-section";
+      readonly level: number;
+      readonly section: LegacyChoiceSection;
+    }
   | { readonly kind: "inventory"; readonly entryId: string };
 
 export interface BuilderIssue {
@@ -57,6 +71,8 @@ export interface BuilderIssueGroups {
   readonly updates: readonly BuilderIssue[];
   /** Not problems: how import read the file (records matched by name). */
   readonly notes: readonly BuilderIssue[];
+  /** Not problems: saved picks whose slot a rule currently switches off. */
+  readonly inactive: readonly BuilderIssue[];
 }
 
 function selectedOccurrence(
@@ -313,6 +329,114 @@ export function nameMatchedContentIssues(
   });
 }
 
+/** "Power Encounter 3" reads as "level-3 encounter power slot". */
+function slotPhrase(slotName: string | undefined, slotType: string): string {
+  const power = /^power\s+(at-will|encounter|daily|utility)\s+(\d+)$/iu.exec(
+    slotName?.trim() ?? "",
+  );
+  if (power !== null)
+    return `level-${power[2]} ${power[1]?.toLocaleLowerCase()} power slot`;
+  return slotName === undefined || slotName.trim() === ""
+    ? `${slotType.trim().toLocaleLowerCase()} slot`
+    : `“${slotName.trim()}” slot`;
+}
+
+/** A requires expression with each content ID shown as its record's name
+ * ("ID_FMP_CLASS_2" reads "Cleric"). */
+function readableRequires(
+  requires: string,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  return requires
+    .replace(
+      /[A-Za-z][\w-]*_[\w-]+/gu,
+      (token) => byId.get(token.toLocaleLowerCase())?.name ?? token,
+    )
+    .trim();
+}
+
+const PLUMBING_TYPES = new Set(["internal", "grants"]);
+
+/**
+ * Saved picks the evaluation holds dormant (D043): their slot's rule is
+ * switched off for this character, by import or since (a content update,
+ * a changed class). Each names the pick, its level and slot, and the record
+ * that switches the slot off, with where that record comes from.
+ */
+export function dormantSelectionIssues(
+  evaluation: EvaluatedCharacter | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+  build?: CharacterBuild,
+): BuilderIssue[] {
+  if (evaluation?.dormantSelections === undefined) return [];
+  const savedNames = savedOccurrenceNames(build);
+  const occurrencesById = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  const entityOf = (definitionId: string) =>
+    byId.get(definitionId.toLocaleLowerCase());
+  /** The nearest owner a player would recognise (Hunter, not its Grants). */
+  const sourceName = (occurrenceId: string | undefined): string | undefined => {
+    let current =
+      occurrenceId === undefined
+        ? undefined
+        : occurrencesById.get(occurrenceId);
+    while (current !== undefined) {
+      const entity = entityOf(current.definitionId);
+      if (
+        entity !== undefined &&
+        !PLUMBING_TYPES.has(entity.type.trim().toLocaleLowerCase()) &&
+        entity.type.trim().toLocaleLowerCase() !== "level"
+      )
+        return entity.name;
+      current =
+        current.parentId === undefined
+          ? undefined
+          : occurrencesById.get(current.parentId);
+    }
+    return undefined;
+  };
+  return evaluation.dormantSelections.map((dormant) => {
+    const { occurrence } = dormant;
+    const entity = entityOf(occurrence.definitionId);
+    const name =
+      entityName(
+        occurrence.definitionId,
+        byId,
+        savedNames.get(occurrence.id),
+      ) ?? occurrence.definitionId;
+    const blockers = [
+      ...new Set(
+        dormant.blockedBy.map((blocker) => {
+          const blockerName =
+            entityOf(blocker.definitionId)?.name ?? blocker.definitionId;
+          const source = sourceName(blocker.parentId);
+          return source === undefined
+            ? blockerName
+            : `${source}'s “${blockerName}”`;
+        }),
+      ),
+    ];
+    const reason =
+      blockers.length === 0
+        ? `it needs “${readableRequires(dormant.requires, byId)}”, which isn't met`
+        : `${blockers.join(" and ")} ${blockers.length === 1 ? "switches" : "switch"} it off`;
+    return {
+      key: `inactive:${occurrence.id}`,
+      kind: "inactive",
+      title: entity === undefined ? name : `${name} (${entity.type})`,
+      detail: `Saved at level ${occurrence.acquiredLevel} in the ${slotPhrase(dormant.slotName, dormant.slotType)}. This character doesn't have that slot: ${reason}.`,
+      effect:
+        "It stays saved and is kept on export, but adds nothing to the character. It comes back if the slot turns back on.",
+      target: {
+        kind: "level-section",
+        level: occurrence.acquiredLevel,
+        section: legacyChoiceSection({ type: dormant.slotType }),
+      },
+    };
+  });
+}
+
 /**
  * Classes bound to their deity's alignment (Paladin, Invoker…) may still pick
  * another one; a mismatch marks the character as house-ruled.
@@ -374,6 +498,10 @@ export function withCharacterIssues(
       ...groups.notes,
       ...issues.filter((issue) => issue.kind === "note"),
     ],
+    inactive: [
+      ...groups.inactive,
+      ...issues.filter((issue) => issue.kind === "inactive"),
+    ],
   };
 }
 
@@ -403,6 +531,7 @@ export function builderIssueGroups({
       houseRules: [],
       updates: [],
       notes: [],
+      inactive: [],
     };
   const savedNames = savedOccurrenceNames(build);
   const label = (choice: EvaluatedChoice): string =>
@@ -707,5 +836,6 @@ export function builderIssueGroups({
     ]),
     updates: [],
     notes: [],
+    inactive: [],
   };
 }

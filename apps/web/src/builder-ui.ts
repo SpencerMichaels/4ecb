@@ -1590,7 +1590,7 @@ const legacySectionOrder: readonly LegacyChoiceSection[] = [
  * classification: no choice is merged or re-parented.
  */
 export function legacyChoiceSection(
-  choice: EvaluatedChoice,
+  choice: Pick<EvaluatedChoice, "type" | "spellbook">,
 ): LegacyChoiceSection {
   const type = choice.type.trim().toLocaleLowerCase();
   if (choice.spellbook !== undefined) return "Spellbook";
