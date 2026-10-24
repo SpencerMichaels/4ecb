@@ -539,6 +539,16 @@ function loadouts(
     // The parts are already overlay-resolved (Arena Training's "Arena").
     const groups =
       weapon === undefined ? [] : legacyKeywordList(field(weapon, "Group"));
+    // Native AddWeaponKeywords reads a staff main hand's keywords (group,
+    // name, ID, properties, slot) from the Quarterstaff for every power, so
+    // a staff without a weapon part answers to "staff group" (Staff
+    // Expertise's `weapon,staff group:attack`).
+    const keywordWeapon =
+      weapon ?? (staff ? byId.get(key(EXCEPTION_IDS.quarterstaff)) : undefined);
+    const keywordGroups =
+      keywordWeapon === weapon
+        ? groups
+        : legacyKeywordList(field(keywordWeapon ?? emptyEntity, "Group"));
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
@@ -573,21 +583,26 @@ function loadouts(
       equipped: entry.equippedQuantity > 0,
       tags: [
         ...parts.map((entity) => entity.name),
-        ...(weapon === undefined
+        ...(keywordWeapon === undefined
           ? []
           : [
+              ...(keywordWeapon === weapon
+                ? []
+                : [keywordWeapon.name, keywordWeapon.id]),
               // Native AddWeaponKeywords: "military" when the weapon's
               // Weapon Category contains it ("military,heavy blade group").
-              ...(/military/iu.test(field(weapon, "Weapon Category") ?? "")
+              ...(/military/iu.test(
+                field(keywordWeapon, "Weapon Category") ?? "",
+              )
                 ? ["military"]
                 : []),
-              ...groups,
-              ...groups.map((group) => `${group} group`),
-              field(weapon, "Item Slot") ?? "",
-              field(weapon, "Hands Required") ?? "",
-              ...(field(weapon, "Properties") ?? "").split(","),
+              ...keywordGroups,
+              ...keywordGroups.map((group) => `${group} group`),
+              field(keywordWeapon, "Item Slot") ?? "",
+              field(keywordWeapon, "Hands Required") ?? "",
+              ...(field(keywordWeapon, "Properties") ?? "").split(","),
               // Native AddWeaponKeywords: any thrown property is "thrown".
-              ...(/thrown/iu.test(field(weapon, "Properties") ?? "")
+              ...(/thrown/iu.test(field(keywordWeapon, "Properties") ?? "")
                 ? ["thrown"]
                 : []),
             ]),

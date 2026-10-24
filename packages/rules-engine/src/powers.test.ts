@@ -2304,6 +2304,64 @@ describe("power evaluation", () => {
     });
   });
 
+  it("gives a staff without a weapon part the Quarterstaff's weapon keywords (AddWeaponKeywords)", () => {
+    const entities = [
+      entity("BASIC", "Melee Basic Attack", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("BOLT", "Synthetic bolt", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Reflex",
+        Hit: "1d6 + Intelligence modifier damage.",
+      }),
+      entity(EXCEPTION_IDS.quarterstaff, "Quarterstaff", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "2",
+        "Weapon Category": "Simple Melee",
+        Group: "Staff",
+        "Item Slot": "Two-Hand",
+      }),
+      entity("STAFF", "Staff of Light +1", "Magic Item", {
+        "Magic Item Type": "Staff",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    ];
+    const powers = evaluatePowers({
+      level: 3,
+      activeDefinitionIds: ["BASIC", "BOLT"],
+      inventory: [
+        {
+          id: "staff",
+          definitionIds: ["STAFF"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 0),
+        "Intelligence modifier": stat("Intelligence modifier", 0),
+        "weapon,staff group:attack": combatStat("weapon,staff group:attack", 1),
+      },
+      overlays: [],
+      entities,
+    });
+    const attack = (name: string) =>
+      powers
+        .find((power) => power.name === name)
+        ?.variants.find(
+          (variant) => variant.equipmentName === "Staff of Light +1",
+        )?.attackBonus;
+    // 1 half level + 2 proficiency + 1 enhancement + 1 staff group feat.
+    expect(attack("Melee Basic Attack")).toBe(5);
+    // An implement power is not a weapon power: no `weapon,` channel.
+    expect(attack("Synthetic bolt")).toBe(2);
+  });
+
   it("treats mundane holy symbols as implement choices", () => {
     const entities = [
       entity("POWER", "Sacred Flame", "Power", {
@@ -3791,7 +3849,9 @@ describe("native BuildKeywordSet channels", () => {
     )[0]?.variants.find(
       ({ equipmentName }) => equipmentName === "Staff Implement",
     );
-    expect(staff).toMatchObject({ weaponDamage: "1d8", damage: "1d8+3" });
+    // Native AddWeaponKeywords reads a staff main hand's group from the
+    // Quarterstaff, so "staff group,weapon" applies (+1).
+    expect(staff).toMatchObject({ weaponDamage: "1d8", damage: "1d8+4" });
   });
 
   it("adds '<group> implement group' and 'instrument implement' channels", () => {

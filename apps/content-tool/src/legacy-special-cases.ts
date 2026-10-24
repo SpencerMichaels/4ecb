@@ -904,10 +904,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AddWeaponKeywords": code(
       "Weapon keyword channels (military, Melee/Ranged Weapon, '<group> group', '<group> group(weapon)', name, ID, properties, thrown, Item Slot, off-hand -> one-hand); staff as Quarterstaff.",
-      "powers.ts loadout tags; nativeRowKeywords adds 'Melee Weapon'/'Ranged Weapon', '<group> group(weapon)' and the off-hand slot's 'one-hand'",
+      "powers.ts loadout tags (a staff without a weapon part takes the Quarterstaff's); nativeRowKeywords adds 'Melee Weapon'/'Ranged Weapon', '<group> group(weapon)' and the off-hand slot's 'one-hand'",
       test(
         POWERS,
         "tags a military weapon for military-qualified channels (AddWeaponKeywords)",
+      ),
+      test(
+        POWERS,
+        "gives a staff without a weapon part the Quarterstaff's weapon keywords (AddWeaponKeywords)",
       ),
       test(
         WEAPON_GROUPS,
