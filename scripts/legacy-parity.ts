@@ -105,17 +105,27 @@ export function compareCharacterParity(
   const evaluatedPowers = new Map(
     evaluated.powers.map((power) => [power.definitionId, power]),
   );
+  const augmentBaseVersion = augmentBaseVersions(entities);
+  const evaluatedPowerId = (cachedPower: { id?: string; name: string }) =>
+    augmentBaseVersion.get(key(cachedPower.id ?? "")) ??
+    augmentBaseVersion.get(key(cachedPower.name)) ??
+    cachedPower.id;
   // Legacy PowerStats also writes a row for a Healing-keyword power without
-  // a Hit line (D20Workspace.PowerStats): AttackStat Unknown, no damage, an
-  // attack of half level plus untyped attack bonuses. It is a placeholder,
-  // not an attack; the modern engine has no attack row for such a power and
-  // the .dnd4e writer regenerates the placeholder on export (D094).
+  // a Hit line (D20Workspace.PowerStats): no damage, an attack of half level
+  // plus untyped attack bonuses. It is a placeholder, not an attack; the
+  // modern engine has no attack row for such a power and the .dnd4e writer
+  // regenerates the placeholder on export (D094). Its attack line has no
+  // " vs ", so CalcStatVsDefense (-Module-.cs ~23767) takes both the stat and
+  // the defense from a string-table token: older builders write AttackStat
+  // and Defense "Unknown", newer ones an empty AttackStat and Defense
+  // "unknown". A real attack row always has a " vs " defense and a stat.
   const legacyPlaceholderRows: { power: string; equipment: string }[] = [];
   const powerComparisons = imported.snapshot.powers.flatMap((cachedPower) => {
+    const definitionId = evaluatedPowerId(cachedPower);
     const power =
-      (cachedPower.id === undefined
+      (definitionId === undefined
         ? undefined
-        : evaluatedPowers.get(cachedPower.id)) ??
+        : evaluatedPowers.get(definitionId)) ??
       evaluated.powers.find((candidate) => candidate.name === cachedPower.name);
     return cachedPower.weapons.flatMap((cachedWeapon) => {
       const variant = power?.variants.find((candidate) =>
@@ -125,8 +135,7 @@ export function compareCharacterParity(
         }),
       );
       if (
-        cachedWeapon.attackStat === "Unknown" &&
-        cachedWeapon.damage === undefined &&
+        isLegacyPlaceholderRow(cachedWeapon) &&
         (variant === undefined || variant.attackBonus === undefined)
       ) {
         legacyPlaceholderRows.push({
@@ -182,6 +191,7 @@ export function compareCharacterParity(
   const typeComparisons = comparePowerTypes(
     imported.snapshot.powers,
     sheet?.powers ?? [],
+    evaluatedPowerId,
   );
   return {
     character: imported.snapshot.details.name,
@@ -276,6 +286,43 @@ export function compareCharacterParity(
   };
 }
 
+const key = (value: string) => value.trim().toLocaleLowerCase();
+
+/** The D094 healing placeholder row, in either form PowerStats writes. */
+function isLegacyPlaceholderRow(weapon: {
+  readonly attackStat?: string | undefined;
+  readonly defense?: string | undefined;
+  readonly damage?: string | undefined;
+}): boolean {
+  return (
+    weapon.damage === undefined &&
+    (weapon.attackStat === "Unknown" ||
+      (weapon.attackStat === undefined && weapon.defense === "unknown"))
+  );
+}
+
+/**
+ * Legacy caches a psionic augmentable power under its base power (id and
+ * name) with the unaugmented stats; the modern engine evaluates each
+ * `_AugmentVersions` entry separately. Maps the base power's id and name to
+ * its first version, Augment 0 (the content lists versions in order).
+ */
+function augmentBaseVersions(
+  entities: readonly ContentEntity[],
+): Map<string, string> {
+  const versions = new Map<string, string>();
+  for (const entity of entities) {
+    const first = entity.specifics
+      .find((specific) => specific.name === "_AugmentVersions")
+      ?.value.split(",")[0]
+      ?.trim();
+    if (first === undefined || first === "") continue;
+    versions.set(key(entity.id), first);
+    if (!versions.has(key(entity.name))) versions.set(key(entity.name), first);
+  }
+  return versions;
+}
+
 export interface PowerTypeComparison {
   readonly power: string;
   readonly definitionId: string | undefined;
@@ -305,16 +352,19 @@ interface CachedPowerType {
 export function comparePowerTypes(
   cachedPowers: readonly CachedPowerType[],
   cards: readonly SheetCard[],
+  cardId: (cachedPower: CachedPowerType) => string | undefined = (
+    cachedPower,
+  ) => cachedPower.id,
 ): PowerTypeComparison[] {
-  const key = (value: string) => value.trim().toLocaleLowerCase();
   return cachedPowers.flatMap((cachedPower) => {
     const id = cachedPower.id;
+    const lookupId = cardId(cachedPower);
     const card =
-      (id === undefined
+      (lookupId === undefined
         ? undefined
         : cards.find(
             (candidate) =>
-              candidate.id !== undefined && key(candidate.id) === key(id),
+              candidate.id !== undefined && key(candidate.id) === key(lookupId),
           )) ??
       cards.find((candidate) => key(candidate.name) === key(cachedPower.name));
     const shown = card === undefined ? undefined : classifyPowerCard(card);
