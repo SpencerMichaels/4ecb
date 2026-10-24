@@ -3229,10 +3229,13 @@ export function evaluatePowers(input: {
               { keywords, defense, byId, basicAttackKind, nativeKeywords },
             ),
           );
+        // Native CalcDamage parses only the damage expression: the hit line
+        // up to its first "damage". A "+N bonus to damage rolls" rider after
+        // it (Villain's Menace, Warlord's Strike) is a follow-up effect.
+        const damageExpression = `${(selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? ""} damage`;
         const powerDamageBonus = Number(
-          selectedHitClause?.match(
-            /\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i,
-          )?.[1] ?? 0,
+          damageExpression.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ??
+            0,
         );
         if (dice !== undefined && !abilityOnly && powerDamageBonus !== 0)
           damageComponents.push({

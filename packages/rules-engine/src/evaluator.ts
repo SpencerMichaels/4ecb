@@ -50,7 +50,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v54-2026-10-23-unslotted-children";
+  "evaluated-character-v55-2026-10-23-hit-rider-damage";
 
 export interface CharacterOccurrence {
   readonly id: string;

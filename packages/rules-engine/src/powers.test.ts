@@ -656,6 +656,43 @@ describe("power evaluation", () => {
       "+3 to damage rolls while flanking - Synthetic feature.",
     ]);
   });
+  it("adds a flat hit bonus only from the damage expression (native CalcDamage)", () => {
+    const damageFor = (hit: string) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Strike", "Power", {
+            Keywords: "Weapon",
+            "Attack Type": "Melee weapon",
+            Attack: "Strength vs. AC",
+            Hit: hit,
+          }),
+          entity("SWORD", "Synthetic Sword", "Weapon", { Damage: "1d8" }),
+        ],
+      })[0]?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Sword",
+      )?.damage;
+
+    expect(damageFor("1[W] + Strength modifier + 2 damage.")).toBe("1d8+6");
+    expect(
+      damageFor(
+        "1[W] + Strength modifier damage, and you gain a +4 power bonus to damage rolls against the target until the end of the encounter.",
+      ),
+    ).toBe("1d8+4");
+  });
+
   it("adds versatile damage only when the legacy two-handed choice is set", () => {
     const entities = [
       entity("POWER", "Synthetic Strike", "Power", {
