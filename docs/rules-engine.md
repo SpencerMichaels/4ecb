@@ -232,7 +232,11 @@ Saved grant children now first claim the grant whose target they are
 (`assignChildSlots`); a child whose categories name an unclaimed container
 grant becomes that container's selection (Bonus At-Will Power under Human
 Power Selection, Dilettante under Half-Elf Power Selection); others keep their
-own position if free. Aeofel's
+own position if free and of the select's exact type, else take the first free
+select of their type (2026-10-23: an older Deva save's Elven no longer fills
+the newer Race Ability Bonus select; native `CopyLoadedChoice` would drop it).
+A saved child no slot can take stays owned, fills no choice and raises the
+`occurrence.unslotted` warning. Aeofel's
 Arcana/History remain short because current content moved them behind the
 Eladrin Subrace choice his record never made. Defense-keyed damage stats (`will:damage`, e.g. Resplendent
 Gloves) apply to powers that target that defense, as legacy Hold Foe shows.

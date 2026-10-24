@@ -50,7 +50,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v53-2026-10-23-dormant-selections";
+  "evaluated-character-v54-2026-10-23-unslotted-children";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1356,6 +1356,28 @@ function evaluateCharacterInternal(
       code: "engine.non-convergent",
       message: "Rule topology did not converge within 30 iterations.",
     });
+  // A saved child with a provider but no rule position is one the projection
+  // found no current slot for (content changed since it was saved). It stays
+  // owned and preserved; say so rather than let it pass unnoticed.
+  for (const occurrence of input.occurrences) {
+    if (
+      occurrence.kind !== "choice" ||
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal !== undefined
+    )
+      continue;
+    const definition = index.get(occurrence.definitionId);
+    const parent = saved.find(({ id }) => id === occurrence.parentId);
+    const provider =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    if (definition === undefined || provider === undefined) continue;
+    diagnostics.push({
+      severity: "warning",
+      code: "occurrence.unslotted",
+      message: `${definition.name} is saved under ${provider.name}, which no longer grants it and has no free ${definition.type} choice to hold it.`,
+      occurrenceId: occurrence.id,
+    });
+  }
   const ownedDefinitions = occurrences.flatMap((occurrence) => {
     const definition = index.get(occurrence.definitionId);
     if (definition !== undefined) return [definition];

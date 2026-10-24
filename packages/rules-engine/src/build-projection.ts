@@ -27,6 +27,8 @@ interface ChildSlot {
   readonly minimumLevel: number;
   /** A grant's target name or internal ID, as authored. */
   readonly grantTarget?: string;
+  /** A select slot's element type: only a record of this type can fill it. */
+  readonly type?: string;
 }
 
 function childSlots(
@@ -57,6 +59,7 @@ function childSlots(
         choiceIndex: index,
         kind: "choice" as const,
         minimumLevel: rule.source.level.minimum,
+        type: rule.type,
       }));
     if (rule.kind === "replace")
       return [
@@ -124,9 +127,17 @@ interface ChildAssignment {
  *    its categories name the container (current content wraps formerly direct
  *    traits in selections: Bonus At-Will Power under Human Power Selection,
  *    Dilettante under Half-Elf Power Selection);
- * 3. any other child keeps the slot at its own position if still free;
- * 4. the rest fill free choice slots in order, never another grant's slot,
- *    and any left over stay unslotted.
+ * 3. any other child keeps the slot at its own position if still free and
+ *    still eligible: a select slot takes only a record of its own type;
+ * 4. the rest fill the first free eligible choice slot in order, never
+ *    another grant's slot, and any left over stay unslotted.
+ *
+ * Native load (VerifySelect, then `D20Choice::CopyLoadedChoice`/`Sync` in
+ * `-Module-.cs` ~17121/6956) is purely positional and silently drops a child
+ * whose type differs from its slot's. A save made against older content (a
+ * Deva saved before its Race Ability Bonus select existed) would then lose a
+ * language and leave its real language slot open; step 4 instead re-seats
+ * the child in a matching slot (D091: recover rather than copy the loss).
  * Adoption needs content lookups, so callers without them skip step 2.
  */
 function assignChildSlots(
@@ -180,9 +191,20 @@ function assignChildSlots(
       adopted.set(index, { grant, select });
       claimed.add(grant);
     }
-  occurrence.children.forEach((_, index) => {
+  // Native `D20Choice::CopyLoadedChoice` installs a loaded child in its
+  // positional select only when the record's type is the select's type.
+  const eligible = (child: BuildOccurrence, slot: ChildSlot) =>
+    slot.type === undefined ||
+    child.identity.type.trim() === "" ||
+    lower(child.identity.type) === lower(slot.type);
+  occurrence.children.forEach((child, index) => {
     const positional = slots[index];
-    if (!free(index) || positional === undefined || claimed.has(positional))
+    if (
+      !free(index) ||
+      positional === undefined ||
+      claimed.has(positional) ||
+      !eligible(child, positional)
+    )
       return;
     assigned[index] = positional;
     claimed.add(positional);
@@ -190,13 +212,16 @@ function assignChildSlots(
   const remaining = slots.filter(
     (slot) => !claimed.has(slot) && slot.grantTarget === undefined,
   );
-  let next = 0;
-  return {
-    slots: assigned.map((slot, index) =>
-      slot !== undefined || adopted.has(index) ? slot : remaining[next++],
-    ),
-    adopted,
-  };
+  occurrence.children.forEach((child, index) => {
+    if (!free(index)) return;
+    const slot = remaining.find(
+      (candidate) => !claimed.has(candidate) && eligible(child, candidate),
+    );
+    if (slot === undefined) return;
+    assigned[index] = slot;
+    claimed.add(slot);
+  });
+  return { slots: assigned, adopted };
 }
 
 export function findBuildChildIndex(
@@ -214,7 +239,11 @@ export function findBuildChildIndex(
   );
   if (existing >= 0) return existing;
   const index = childSlots(occurrence, entity).findIndex(matching);
-  return index < 0 ? occurrence.children.length : index;
+  // The positional child, if any, belongs to another slot (or no slot, when
+  // it is a saved child no slot can take): append rather than overwrite it.
+  return index < 0 || index < occurrence.children.length
+    ? occurrence.children.length
+    : index;
 }
 
 function findBuildOccurrence(
@@ -775,15 +804,12 @@ export function projectBuildForEvaluation(
         );
         return;
       }
-      const childSlot = slots[index] ?? {
-        ruleOrdinal: index,
-        choiceIndex: 0,
-        kind: "choice" as const,
-        minimumLevel: child.acquiredLevel,
-      };
+      // A saved child no current slot can take stays owned and preserved,
+      // but fills no choice: it has no rule position.
+      const childSlot = slots[index];
       visit(
         child,
-        childSlot.kind,
+        childSlot?.kind ?? "choice",
         occurrence.id,
         childSlot,
         effectiveAcquiredLevel,
@@ -887,13 +913,14 @@ export function projectBuildForEvaluation(
           : entityById(element.definitionId);
       const { slots } = assignChildSlots(provider, entity);
       children.forEach((child, index) => {
-        const slot = slots[index] ?? {
-          ruleOrdinal: index,
-          choiceIndex: 0,
-          kind: "choice" as const,
-          minimumLevel: child.acquiredLevel,
-        };
-        visit(child, slot.kind, providerId, slot, entry.acquiredLevel);
+        const slot = slots[index];
+        visit(
+          child,
+          slot?.kind ?? "choice",
+          providerId,
+          slot,
+          entry.acquiredLevel,
+        );
       });
     });
   }

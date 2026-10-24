@@ -204,6 +204,138 @@ describe("build projection", () => {
     );
   });
 
+  describe("saved children whose positional slot has another type", () => {
+    // Saved against older content: the race had no ability select, so its
+    // two languages sit where current content now asks for an ability bonus.
+    const content = [
+      entity("RACE", "Synthetic ancestry", "Race", [
+        statement("grant", { name: "RACE_GRANTS", type: "Grants" }, 0),
+        statement("select", { type: "Race Ability Bonus", number: "1" }, 1),
+        statement("select", { type: "Language", number: "2" }, 2),
+      ]),
+      entity("RACE_GRANTS", "Synthetic ancestry", "Grants"),
+      entity("INT", "Intelligence", "Race Ability Bonus", [
+        statement("statadd", { name: "Intelligence", value: "+2" }, 0),
+      ]),
+      entity("ELVEN", "Elven", "Language"),
+      entity("DRACONIC", "Draconic", "Language"),
+      entity("FEAT", "Old Feat", "Feat"),
+    ];
+    const child = (
+      id: string,
+      definitionId: string,
+      type: string,
+      children: CharacterBuild["levels"][number]["root"]["children"] = [],
+    ) => ({
+      id,
+      identity: { definitionId, name: id, type },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children,
+    });
+    const buildWith = (
+      children: CharacterBuild["levels"][number]["root"]["children"],
+    ): CharacterBuild => ({
+      formatVersion: 2,
+      known: [],
+      effectiveLevel: 1,
+      levels: [{ level: 1, root: child("race", "RACE", "Race", children) }],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: { Intelligence: 10 },
+      textStrings: {},
+    });
+    const saved = [
+      child("grants", "RACE_GRANTS", "Grants"),
+      child("elven", "ELVEN", "Language"),
+      child("draconic", "DRACONIC", "Language"),
+    ];
+
+    it("seats each in a slot of its own type and leaves the other open", () => {
+      const projected = projectBuildForEvaluation(buildWith(saved), content);
+      expect(projected.occurrences).toContainEqual(
+        expect.objectContaining({
+          id: "elven",
+          ruleOrdinal: 2,
+          choiceIndex: 1,
+        }),
+      );
+      expect(projected.occurrences).toContainEqual(
+        expect.objectContaining({
+          id: "draconic",
+          ruleOrdinal: 2,
+          choiceIndex: 0,
+        }),
+      );
+      const evaluated = evaluateCharacter(projected, content);
+      const required = evaluated.diagnostics.filter(
+        ({ code }) => code === "choice.required",
+      );
+      expect(required).toEqual([
+        expect.objectContaining({ occurrenceId: "race", ruleOrdinal: 1 }),
+      ]);
+    });
+
+    it("adds a later pick for the open slot without displacing a saved child", () => {
+      const build = buildWith(saved);
+      const projected = projectBuildForEvaluation(build, content);
+      const evaluated = evaluateCharacter(projected, content);
+      const abilityChoice = evaluated.choices.find(
+        (choice) =>
+          choice.providerOccurrenceId === "race" && choice.ruleOrdinal === 1,
+      );
+      expect(abilityChoice).toBeDefined();
+      const command = commandForEvaluatedChoice(
+        build,
+        abilityChoice!,
+        evaluated.occurrences,
+        content,
+        child("int", "INT", "Race Ability Bonus"),
+        (index) => `placeholder-${index}`,
+      );
+      expect(command).toBeDefined();
+      const next = applyCharacterCommand(build, command!);
+      expect(next.levels[0]!.root.children.map(({ id }) => id)).toEqual([
+        "grants",
+        "elven",
+        "draconic",
+        "int",
+      ]);
+      const reevaluated = evaluateCharacter(
+        projectBuildForEvaluation(next, content),
+        content,
+      );
+      expect(reevaluated.stats.Intelligence?.value).toBe(12);
+      expect(reevaluated.complete).toBe(true);
+    });
+
+    it("keeps a saved child no slot can take owned but out of every choice", () => {
+      const projected = projectBuildForEvaluation(
+        buildWith([...saved, child("feat", "FEAT", "Feat")]),
+        content,
+      );
+      const feat = projected.occurrences.find(({ id }) => id === "feat");
+      expect(feat).toMatchObject({ parentId: "race", kind: "choice" });
+      expect(feat?.ruleOrdinal).toBeUndefined();
+      const evaluated = evaluateCharacter(projected, content);
+      expect(evaluated.occurrences.map(({ id }) => id)).toContain("feat");
+      expect(evaluated.diagnostics).toContainEqual({
+        severity: "warning",
+        code: "occurrence.unslotted",
+        message:
+          "Old Feat is saved under Synthetic ancestry, which no longer grants it and has no free Feat choice to hold it.",
+        occurrenceId: "feat",
+      });
+      expect(
+        evaluated.choices.some(
+          (choice) => choice.selectedOccurrenceId === "feat",
+        ),
+      ).toBe(false);
+    });
+  });
+
   it("maps serialized child slots to rule ordinals and avoids duplicate grants", () => {
     const content = [
       entity("LEVEL", "1", "Level", [
