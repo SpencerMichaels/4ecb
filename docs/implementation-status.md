@@ -1,5 +1,93 @@
 # Implementation status
 
+## Calculation-gap queue, conditional modifiers, new player saves (2026-10-23)
+
+Continues "Player report: Oleander" below. Verification: `pnpm vitest run
+packages apps` 148 files / 1417 tests, typecheck, lint and format clean at
+`0c204fe`; public `scripts/check.sh` (print skipped) passed at `7a3cf95`.
+`pnpm check:print` cannot run locally (Chromium in the Nix shell fails:
+`libasound` needs GLIBC_2.43); CI's print job covers it.
+
+**Tier 1, wrong numbers** (roadmap "Calculation-gap queue"; each finding
+confirmed on a sample or probe character first):
+
+- Row-wide `attack rolls`, `damage`, `damage rolls`, `<ability>:damage`
+  (native `CalcGlobal`; typed Enhancement only above the item's own),
+  `0d11b30`.
+- Attack key-ability overrides (native `OverrideStat`, 11-step precedence,
+  `DMG:`/`HALF-DMG:`/`!`/`*`, `_KeyAbilityAs`, dilettante/multiclass origin;
+  `key-ability-overrides.ts`), `89590ba`. Also `modify select=` targets only
+  that select's pick (Hystan's powers had all shown Encounter).
+- Weapon `modify` overlays, native die steps, `[W] (off-hand weapon)`, Arena
+  Training, equipment selectors (one resolver, `item-fields.ts`), `871b0d9`.
+- Native power keyword channels and mundane implement rows, `c8669e2`;
+  Sneak Attack Weapons, striker dice and Usage, `e2544c7`; hybrid armor
+  proficiency only when both halves grant it, `7a3cf95`.
+- A nameless `modify` targets the provider's most recent child (native
+  `ProcessModify`), `f2bb532`. Gauntlets of Brilliance had made all of Geran's
+  powers At-Will, Student of Battle all of Omin's Daily.
+- `_ImplementAsClass` read as an alias of `_ImplementForClass` (Avernian
+  Knight's Melee Implement; D091), `cf75a8f`.
+- Staff Expertise on staff weapon attacks (a staff without a weapon part takes
+  the Quarterstaff's `AddWeaponKeywords`), `fbe0821`.
+- Decisions: D095 (companions take no character-wide bonuses; summons that use
+  your statistics take all non-temporary ones; fixed-bonus allies only their
+  own; familiars can't attack).
+
+**Tier 2, conditional modifiers.** Conditional statadds and textstrings are
+kept as recorded-but-unapplied contributions; conditional damage textstrings
+show as power-card reminders; the `.dnd4e` writer uses legacy `conditional=` /
+`String=` (`cd5f262`, `23b725d`, `375cddf`). Page 1's "Resistances &
+Weaknesses" pane is now **Conditional modifiers** (screen-reader-only group
+names), the Play data card gains Defenses/Initiative/Speed/Allies lines, and
+builder stat-tile tooltips list each stat's entries (`fdaef9f`, `c8239e5`).
+"Remember in play" drops a reminder that a more specific place already says in
+full, including the Action Point and Second Wind cards (`5ff422d`).
+
+**Parity check.** `parity:baseline` compares power usage and action type
+(`5738b65`) and recognises newer healing-placeholder rows and psionic augment
+base powers (`17c2af9`). Drizzt's Cutting Steps on close attacks is accepted
+as an older-builder cache. All SampleHeroes were saved by an older builder;
+`sample-chars/` are current-builder saves.
+
+**New player saves.** 18 more files in the ignored `sample-chars/` (27
+total). Import now:
+
+- matches a saved ID the content lacks to the one same-named, same-type
+  record, a renamed child through its matched parent's grants, and a trailing
+  "(Class)" for one of the character's classes (D096; Settings → Importing
+  characters, default on; matches listed in Diagnostics) — `93c7051`,
+  `19cad84`, `8f450cb`. Erdan 11: 33 → 6 missing records, Max Unger 12: 32 → 5,
+  Hunzu 10's items resolve (AC 31 → 34, as cached);
+- seats a saved child only in a select of its own type, and warns about one no
+  slot holds (`0635243`, `0c204fe`; KrizDevvon's Elven no longer fills the Deva
+  ability-bonus choice);
+- notes saved picks whose slot a `requires` switches off, any time, in
+  Diagnostics "Inactive saved choices" (`ace6cb5`, `e8b6ffd`; Erdan 9, Beldin
+  3, and a stale Divine Fortune on Hu Sheng-Ming and the KrizDevvon saves).
+
+Remaining differences on the new files are classified (triage notes in ignored
+`tmp/triage18/`): one player's homebrew (TIV skills, DOMT items, Lunge, many
+proficiencies; also Charisma for Constitution powers on that machine:
+oleander's Feast of Souls, test_test's Diabolic Grasp), artifact-blade
+proficiencies saved as weapons (Beldin, Erdan, Max, Trey), a different base
+part set (house-ruled extra encounter powers, now noted as inactive),
+KrizDevvon level 14's feats saved as illegal stubs, and Hystan_Original_7 saved
+without the gear part. Ghost of the Past keeps its Language choice (the
+records the players used omit it; both texts grant a language).
+
+**Open:**
+
+- Hunzu 10's Divine Bolts (legacy omits Eagle Eye Goggles' `ranged basic`
+  bonus; the native trace says it should apply). Needs a same-profile legacy
+  save to settle.
+- Tier 1 item 8 (fixed-bonus ally damage, D095) and Tier 3; owner decisions
+  listed in the roadmap queue.
+- Content-update publish: `content/corrections/` changed since the last
+  release, so `scripts/publish-content.sh` must follow the next deploy.
+- Visual checks for today's UI are in `docs/visual-review-checklist.md`.
+- Custom items are deferred to M8.
+
 ## Legacy parity baseline (2026-10-22)
 
 Every difference between our engine and the legacy builder's cached sheets

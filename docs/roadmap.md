@@ -916,8 +916,8 @@ Ranked from `audit:legacy-special-cases`, `audit:modifiers`,
 "Player report: Oleander"). Each item is confirmed on a sample or probe
 character before it is fixed, one slice per item.
 
-- **Tier 1, wrong numbers (items 2–7 done 2026-10-23; see implementation
-  status):**
+- **Tier 1, wrong numbers (items 2–7 done 2026-10-23, plus Staff Expertise
+  on staff weapon attacks; see implementation status):**
   1. ~~Legacy-backed sample mismatches~~ (triaged 2026-10-22, implementation
      status "Legacy parity baseline"): Raidon Kane's dice, Magic Missile,
      Freezing Cloud/Fireball/Bloody Fangs dice and Geran's +1 are content
@@ -935,15 +935,15 @@ character before it is fixed, one slice per item.
      two-blade, two-weapon checks).
   6. Mundane implement gear rows; Sneak Attack Weapons; hybrid armor
      proficiency needing both halves.
-  7. Confirm whether target-less `modify` rules over-apply (may be a probe
-     artifact). `modify select=` was real and is fixed (`89590ba`); other
-     target-less forms are unchecked.
+  7. ~~Target-less `modify` rules over-apply~~: real; `select=` fixed in
+     `89590ba`, nameless in `f2bb532` (latent: nameless `drop`, nameless
+     `UniversalClassSkill`; no content uses them).
   8. Fixed-bonus ally damage (D095): hexblade/binder ally damage still picks
      up character-wide damage stats its attack leaves out. After Tier 2.
-- **Tier 2, missing reminders (owner approved 2026-10-23):** conditional
-  defense, skill and speed statadds (~1,000 records) and conditional damage
-  textstrings. Current-builder saves exercise them (Hystan, Silaqui, Piri,
-  Idon), not only the older SampleHeroes. First trace how legacy showed them.
+- **Tier 2, missing reminders:** done 2026-10-23 (Conditional modifiers pane,
+  Play data card lines, stat-tile tooltips, power-card reminders). Left:
+  `damage(<item>)` textstrings (Challenge-Seeking), `ally.melee:damage`
+  (Infernal Pincer), one `check:<other>` example.
 - **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
   `UniversalClassSkill`, gated resistances, summoning powers whose creature
   attacks sit in " Standard action"/" Minor Action" fields (86+ powers; no
