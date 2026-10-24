@@ -692,7 +692,12 @@ export function builderIssueGroups({
       diagnostic.severity === "info"
     )
       return [];
-    const choice = choiceForDiagnostic(diagnostic, evaluation);
+    // A saved child no slot holds is not any choice's selection; a choice it
+    // provides itself is not what the warning is about.
+    const unslotted = diagnostic.code === "occurrence.unslotted";
+    const choice = unslotted
+      ? undefined
+      : choiceForDiagnostic(diagnostic, evaluation);
     const occurrence = evaluation.occurrences.find(
       (candidate) => candidate.id === diagnostic.occurrenceId,
     );
@@ -709,7 +714,7 @@ export function builderIssueGroups({
     const subject =
       choice === undefined ? occurrenceName(occurrence) : label(choice);
     const removable =
-      missingDefinition &&
+      (missingDefinition || unslotted) &&
       choice === undefined &&
       occurrence !== undefined &&
       isRemovableOccurrence(build, occurrence.id);
@@ -728,18 +733,32 @@ export function builderIssueGroups({
           missingDefinition && occurrence !== undefined
             ? `${occurrenceName(occurrence) ?? occurrence.definitionId} isn't in the game content in use (${occurrence.definitionId}).`
             : diagnostic.message,
-        effect: removable
-          ? "The saved selection is preserved, but its mechanical benefits cannot be calculated without the missing definition. Remove it to drop it from the character and its exports."
-          : diagnosticEffect(diagnostic),
+        effect: unslotted
+          ? `It still applies and is kept on export.${removable ? " Remove it if it no longer belongs on the character." : ""}`
+          : removable
+            ? "The saved selection is preserved, but its mechanical benefits cannot be calculated without the missing definition. Remove it to drop it from the character and its exports."
+            : diagnosticEffect(diagnostic),
         ...(removable ? { removal: { occurrenceId: occurrence.id } } : {}),
-        ...(choice === undefined
-          ? {}
-          : {
+        ...(choice !== undefined
+          ? {
               target: {
                 kind: "choice" as const,
                 choiceId: choice.id,
               },
-            }),
+            }
+          : unslotted && occurrence !== undefined
+            ? {
+                target: {
+                  kind: "level-section" as const,
+                  level: occurrence.acquiredLevel,
+                  section: legacyChoiceSection({
+                    type:
+                      byId.get(occurrence.definitionId.toLocaleLowerCase())
+                        ?.type ?? "",
+                  }),
+                },
+              }
+            : {}),
       },
     ];
   });

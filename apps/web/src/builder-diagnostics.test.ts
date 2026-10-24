@@ -816,6 +816,53 @@ describe("missing-content issues", () => {
     expect(savedOccurrenceNames(removed).get("deity")).toBe("Aeros");
   });
 
+  it("names a saved child no slot holds and offers Review and Remove", () => {
+    const language: ContentEntity = {
+      ...known,
+      id: "ID_ELVEN",
+      name: "Elven",
+      type: "Language",
+    };
+    const message =
+      "Elven is saved under Deva, which no longer grants it and has no free Language choice to hold it.";
+    const { warnings } = builderIssueGroups({
+      ...common,
+      byId: new Map([["id_elven", language]]),
+      evaluation: evaluation({
+        occurrences: [
+          {
+            id: "deity",
+            definitionId: "ID_ELVEN",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            kind: "choice",
+          },
+        ],
+        choices: [],
+        diagnostics: [
+          {
+            severity: "warning",
+            code: "occurrence.unslotted",
+            message,
+            occurrenceId: "deity",
+          },
+        ],
+      }),
+      build,
+    });
+    expect(warnings).toEqual([
+      expect.objectContaining({
+        kind: "warning",
+        title: "Elven",
+        detail: message,
+        effect:
+          "It still applies and is kept on export. Remove it if it no longer belongs on the character.",
+        removal: { occurrenceId: "deity" },
+        target: { kind: "level-section", level: 1, section: "Race" },
+      }),
+    ]);
+  });
+
   it("raises one issue per holding with missing content, equipped or not", () => {
     const issues = missingHoldingContentIssues(build, byId);
     expect(issues).toEqual([
