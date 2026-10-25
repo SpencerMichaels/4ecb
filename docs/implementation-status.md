@@ -15,6 +15,11 @@ Feat reminder and reference titles use the plain feat name; selection and
 class-alias metadata remains in the reference body. Verification evidence and
 the remaining equipment/content work are recorded with the triage.
 
+Battle Awareness and Arcane Prodigy now grant their existing encounter powers
+(`content/corrections/9C-feat-powers.part`). The legacy builder never granted
+them, so saved legacy power lists lack them; parity baseline unchanged. The
+other encounter-use feats remain the open audit in the triage.
+
 Loadout slots are single-sourced: the builder's resolver moved to
 `sheet-model/src/loadout-slots.ts`, the sheet model projects its slots, and the
 printed loadout no longer infers slots from authored Item Slot text (an

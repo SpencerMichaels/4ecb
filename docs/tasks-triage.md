@@ -8,7 +8,7 @@
 | 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                                 |
 | 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                                     |
 | 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                                    |
-| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Existing power definitions can be granted; separate checkpoint.                                        |
+| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                            |
 | 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                                    |
 | 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Confirmed raw transactions exposed as current holdings; repair projection and edit semantics together. |
 | 8     | Remaining encounter-use feat powers                | Large audit/content work | Classify transitive grants, missing powers and passive modifiers before adding corrections.            |
@@ -88,8 +88,17 @@ replace existing powers or modify passive/recovery behavior.
 
 Battle Awareness (`ID_FMP_FEAT_911`) has a complete existing encounter power
 (`ID_FMP_POWER_6592`, distinct from the same-named fighter utility); Arcane
-Prodigy (`ID_FMP_FEAT_669`) likewise has `ID_FMP_POWER_9782`. Grant those existing
-definitions through corrections before expanding scope.
+Prodigy (`ID_FMP_FEAT_669`) likewise has `ID_FMP_POWER_9782`.
+
+**Done.** `content/corrections/9C-feat-powers.part` appends one Power grant to
+each feat (no copied prose). The rebuilt pack's CBLoader parity check is clean
+(38339 records, none missing/extra/changed). Hu, Beldin and Trey (all with
+Battle Awareness) each gain exactly one "Battle Awareness Feat" power and card,
+Encounter, Immediate Interrupt; none of their legacy saves lists it and none
+has the same-named fighter utility, so nothing is doubled. A private probe
+(Trey with Arcane Prodigy instead) gains one Encounter Free Action power, and
+the feat's tier stat is 1 at level 12. `pnpm parity:baseline` is unchanged
+(it compares only powers the legacy save cached).
 
 Active-use candidates without same-named powers include Student of the Sword,
 Defender of the Wild, Sly Dodge, Infernal Captain's Pact, Bravo, Warden's

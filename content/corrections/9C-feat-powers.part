@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<D20Rules game-system="D&amp;D4E">
+  <!-- These feats describe encounter abilities whose complete power records
+       already exist in the private corpus, but omit the corresponding grants.
+       Reuse those records rather than duplicating their published text. -->
+  <!-- Battle Awareness: the feat power is distinct from the same-named
+       fighter utility power (ID_FMP_POWER_1440). -->
+  <AppendNodes internal-id="ID_FMP_FEAT_911">
+    <rules>
+      <grant name="ID_FMP_POWER_6592" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Arcane Prodigy retains its existing tier scaling and class metadata. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_669">
+    <rules>
+      <grant name="ID_FMP_POWER_9782" type="Power" />
+    </rules>
+  </AppendNodes>
+</D20Rules>
