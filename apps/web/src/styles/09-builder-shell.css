@@ -513,14 +513,14 @@
   color: var(--danger);
 }
 
-/* The "update available" icon, accent-colored as on the library page; here,
-   after the muted toolbar buttons, so it isn't muted with them. */
-.builder-status > .update-ready {
-  color: var(--accent);
+/* The "update available" icons (app update, game content update) use the
+   orange notify color, as on the library page; here, after the muted toolbar
+   buttons, so they aren't muted with them. */
+.builder-status > :is(.update-ready, .builder-health-update) {
+  color: var(--notify);
 }
 
-.builder-status > .builder-health-house-rule,
-.builder-status > .builder-health-update {
+.builder-status > .builder-health-house-rule {
   color: var(--accent);
 }
 

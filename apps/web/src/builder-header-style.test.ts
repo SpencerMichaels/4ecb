@@ -218,3 +218,18 @@ describe("pinned equipment tab", () => {
     );
   });
 });
+
+describe("update notification color", () => {
+  it("colors the app and content update icons with the shared notify token", () => {
+    expect(
+      declarationsFor(
+        ".builder-status > :is(.update-ready, .builder-health-update)",
+      ),
+    ).toContain("color: var(--notify)");
+    expect(declarationsFor(".page-actions > .update-ready")).toContain(
+      "color: var(--notify)",
+    );
+    // Defined for light, explicit dark and system dark themes.
+    expect(styles.match(/--notify:\s*#[0-9a-f]{6};/g)).toHaveLength(3);
+  });
+});

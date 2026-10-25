@@ -25,6 +25,9 @@
   --danger-soft: #f1dede;
   --warning: #8b4c00;
   --warning-soft: #f8e8cc;
+  /* Actionable notifications (a waiting app update or game content update):
+     orange, brighter than the brown warning and clearly not the error red. */
+  --notify: #c2410c;
   --success: #006400;
   --success-soft: #deedde;
   --power-at-will: #006400;
@@ -87,6 +90,7 @@
   --danger-soft: #482525;
   --warning: #ffc36b;
   --warning-soft: #46351f;
+  --notify: #ff9248;
   --success: #83d18b;
   --success-soft: #203c2a;
   --power-at-will-soft: #183923;
@@ -117,6 +121,7 @@
     --danger-soft: #482525;
     --warning: #ffc36b;
     --warning-soft: #46351f;
+    --notify: #ff9248;
     --success: #83d18b;
     --success-soft: #203c2a;
     --power-at-will-soft: #183923;

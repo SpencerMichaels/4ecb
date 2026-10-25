@@ -15,10 +15,11 @@
   padding: 0.75rem;
 }
 
-/* Top-bar "update available" icon (PwaUpdate.tsx), colored like the builder's
-   status icons so it reads as something waiting for the user. */
+/* Top-bar "update available" icon (PwaUpdate.tsx), in the orange notify
+   color shared with the builder's update badges, so it reads as something
+   waiting for the user. */
 .page-actions > .update-ready {
-  color: var(--accent);
+  color: var(--notify);
 }
 
 .empty-state {
