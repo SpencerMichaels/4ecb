@@ -168,7 +168,9 @@ export function onScreenFeatureLabels(
   return model.features.flatMap((group) =>
     group.entries.map((entry) => {
       const choice = featureChoiceText(entry.choices);
-      return choice === undefined ? entry.label : `${entry.label}: ${choice}`;
+      return choice === undefined || group.group === "Feat"
+        ? entry.label
+        : `${entry.label}: ${choice}`;
     }),
   );
 }

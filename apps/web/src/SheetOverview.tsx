@@ -2004,11 +2004,13 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       ];
       if (structuredBackground && !parts.length) return [];
       const choice = featureChoiceText(feature.choices);
+      const featChoice = feature.group === "Feat" && choice !== undefined;
+      if (featChoice) parts.push(...referenceParts(choice, "Choices"));
       return [
         {
           id: feature.id,
           name: feature.title ?? feature.name,
-          ...(choice === undefined ? {} : { choice }),
+          ...(choice === undefined || featChoice ? {} : { choice }),
           group: groupName(
             feature.referenceGroup ??
               (order.includes(feature.group)

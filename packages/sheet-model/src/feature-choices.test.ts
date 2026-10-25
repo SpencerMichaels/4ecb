@@ -225,7 +225,10 @@ describe("feature sub-choices", () => {
         entity("ELF", "Elf", "CountsAsRace"),
         entity("HUMAN", "Human", "CountsAsRace"),
         entity("POWER", "Synthetic Power", "Power"),
-        entity("MULTICLASS", "Initiate", "Feat"),
+        {
+          ...entity("MULTICLASS", "Initiate", "Feat"),
+          description: "Once per encounter, you can make an extra attack.",
+        },
         entity("FIGHTER", "Fighter", "CountsAsClass"),
         entity("CLASS_ALIAS", "Synthetic Class", "CountsAsClass"),
       ],
@@ -258,6 +261,19 @@ describe("feature sub-choices", () => {
     expect(featureChoiceText(row(aliases, "Initiate")?.choices)).toBe(
       "Athletics; counts as Fighter",
     );
+    expect(
+      aliases.overview?.reminders.find(({ label }) => label === "Initiate"),
+    ).toEqual({
+      label: "Initiate",
+      value: "Once per encounter, you can make an extra attack.",
+      category: "Feats",
+    });
+    expect(
+      featureChoiceText(
+        aliases.overview?.features.find(({ name }) => name === "Initiate")
+          ?.choices,
+      ),
+    ).toBe("Athletics; counts as Fighter");
     expect(
       aliases.features
         .flatMap(({ entries }) =>

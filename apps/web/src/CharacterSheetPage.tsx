@@ -661,6 +661,13 @@ export function CharacterSheetPage({
                 <ValueList
                   values={group.entries.map((entry) => {
                     const choice = featureChoiceText(entry.choices);
+                    if (group.group === "Feat" && choice !== undefined)
+                      return {
+                        ...entry,
+                        value: [entry.value, `Choices: ${choice}`]
+                          .filter(Boolean)
+                          .join("\n\n"),
+                      };
                     return choice === undefined
                       ? entry
                       : { ...entry, label: `${entry.label}: ${choice}` };

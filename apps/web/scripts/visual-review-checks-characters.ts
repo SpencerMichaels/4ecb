@@ -927,11 +927,22 @@ rule("hu", "Print preview", "Background benefit card", (c) => {
     ),
   ];
 });
-rule("hu", "Print preview", "Granted aliases on feature rows", (c) =>
-  printedHeading(c, "Battle Awareness: Athletics; counts as Fighter"),
-);
+rule("hu", "Print preview", "Granted aliases on feature rows", (c) => [
+  ...printedHeading(c, "Battle Awareness"),
+  truthy(
+    "Battle Awareness choices remain in its reference body",
+    printedPagesFor(c)
+      .references.find(({ name }) => name === "Battle Awareness")
+      ?.parts.some(
+        ({ label, block }) =>
+          label === "Choices" &&
+          block.kind === "paragraph" &&
+          block.text === "Athletics; counts as Fighter",
+      ) === true,
+  ),
+]);
 rule("hu", "Sheet (on screen)", "Granted aliases on feature rows", (c) => [
-  onScreenFeature(c, "Battle Awareness: Athletics; counts as Fighter"),
+  onScreenFeature(c, "Battle Awareness"),
 ]);
 
 /* ------------------------------------------------------------------ */

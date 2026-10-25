@@ -29,6 +29,7 @@ import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
+import { ACTION_POINT_ID } from "./universal-action-cards";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -518,7 +519,9 @@ export function withSheetOverview(
         feature.summary || feature.description,
         reminderCategory(feature.group),
         undefined,
-        featureChoiceText(feature.choices),
+        feature.group === "Feat"
+          ? undefined
+          : featureChoiceText(feature.choices),
         featureSources(feature),
       );
       const index = reminders.findIndex(
@@ -563,7 +566,10 @@ export function withSheetOverview(
         (namedFeatures.length === 1 ? namedFeatures[0] : undefined);
       if (feature && !feature.accessOnly) {
         const existing = reminderByFeature.get(feature.id);
-        const choice = featureChoiceText(feature.choices);
+        const choice =
+          feature.group === "Feat"
+            ? undefined
+            : featureChoiceText(feature.choices);
         const canonical = {
           label: feature.name,
           value: feature.summary || feature.description,
@@ -662,9 +668,27 @@ export function withSheetOverview(
       (power.additionalEffects ?? []).map((effect) => key(effect.text)),
     ),
   );
+  // These benefits can influence when to spend a point, so keep them visible
+  // before the player consults the Action Point card (owner policy, 2026-10-24).
+  const actionPointEffects = model.powers
+    .filter((power) => power.id === ACTION_POINT_ID)
+    .flatMap((power) => power.additionalEffects ?? []);
+  const actionPointSources = new Set(
+    actionPointEffects.flatMap((effect) =>
+      sourceKeys(effect.provenanceId, effect.provider),
+    ),
+  );
+  const actionPointTexts = new Set(
+    actionPointEffects.map((effect) => key(effect.text)),
+  );
   const redundant = (reminder: OverviewReminder) => {
-    if (cardLines.has(key(reminder.value))) return true;
     const sources = new Set(reminderSources.get(reminder) ?? []);
+    if (
+      actionPointTexts.has(key(reminder.value)) ||
+      [...sources].some((source) => actionPointSources.has(source))
+    )
+      return false;
+    if (cardLines.has(key(reminder.value))) return true;
     if (sources.size === 0) return false;
     return reminderCovered(
       reminder.value,

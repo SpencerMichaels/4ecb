@@ -1,5 +1,20 @@
 # Implementation status
 
+## Task-list triage and quick wins (2026-10-24)
+
+Investigation and complexity ordering are recorded in
+[`tasks-triage.md`](tasks-triage.md). The original `tasks.txt` remains the
+owner's report; its Divine Fortune item was corrected to **inactive saved
+choice**, not missing choice.
+
+Action Point benefits now remain in "Remember in play" as well as on their
+card. This owner-approved exception applies to self, ally and beast-companion
+Action Point notes, including effects otherwise represented by conditional
+modifiers. Ordinary power-card and conditional-modifier deduplication remains.
+Feat reminder and reference titles use the plain feat name; selection and
+class-alias metadata remains in the reference body. Verification evidence and
+the remaining equipment/content work are recorded with the triage.
+
 ## Calculation-gap queue, conditional modifiers, new player saves (2026-10-23)
 
 Continues "Player report: Oleander" below. Verification: `pnpm vitest run

@@ -4,10 +4,12 @@ import type {
   CharacterOccurrence,
   EvaluatedContribution,
   EvaluatedStat,
+  EvaluatedCharacter,
 } from "@4ecb/rules-engine";
 
-import { buildSheetModel } from "./index";
+import { buildSheetModel, type SheetCard } from "./index";
 import { withSheetOverview } from "./overview";
+import { withUniversalActionCards } from "./universal-action-cards";
 
 function entity(
   id: string,
@@ -160,7 +162,7 @@ const occurrences: CharacterOccurrence[] = [swift, style, aim, guard].map(
   }),
 );
 
-function overview() {
+function overview(extraPowers: readonly SheetCard[] = []) {
   const selectedRules = entities.map(({ id, name, type }) => ({
     id,
     name,
@@ -184,6 +186,7 @@ function overview() {
     {
       ...base,
       powers: [
+        ...extraPowers,
         {
           kind: "power",
           name: "Ranged basic attack",
@@ -229,6 +232,50 @@ function overview() {
 }
 
 describe("Remember in play deduplication", () => {
+  it("keeps self, ally and companion Action Point benefits beside their card", () => {
+    const cards = withUniversalActionCards([], {
+      textContributions: [
+        {
+          name: "Action Point",
+          value:
+            "Ward Tattoo:When you spend an action point, gain resist 5 fire",
+          providerId: "loot:tattoo:definition:0",
+          providerName: "Ward Tattoo",
+          definitionId: "tattoo",
+        },
+        {
+          name: "ALLY.Action Point",
+          value:
+            "Helpful Leader:When an ally spends an action point, that ally gains +2 to attack",
+          providerId: "leader",
+          providerName: "Helpful Leader",
+          definitionId: "leader",
+        },
+        {
+          name: "BEAST.Action Point",
+          value:
+            "Beast Bond:When your companion spends an action point, it gains +2 to damage",
+          providerId: "bond",
+          providerName: "Beast Bond",
+          definitionId: "bond",
+        },
+      ],
+    } as unknown as EvaluatedCharacter);
+    const result = overview(cards);
+    for (const effect of cards.find((card) => card.name === "Action Point")!
+      .additionalEffects!) {
+      expect(result.reminders).toContainEqual(
+        expect.objectContaining({ value: effect.text }),
+      );
+    }
+    // Ordinary card and conditional-stat duplication is still suppressed.
+    expect(result.reminders.map(({ label }) => label)).not.toContain(
+      "Sure Aim",
+    );
+    expect(result.reminders.map(({ label }) => label)).not.toContain(
+      "Steady Guard",
+    );
+  });
   it("drops reminders a more specific place shows in full, by provenance", () => {
     const labels = overview().reminders.map(({ label }) => label);
     // Conditional modifiers pane (speed), power card (attack), saves rows

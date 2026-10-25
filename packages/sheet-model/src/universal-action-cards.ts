@@ -47,14 +47,13 @@ function actionPointEffects(
         text,
         source: "authoritative-evaluation" as const,
         ...(provider ? { provider } : {}),
-        cardOnly: true,
         provenanceId: providerId,
       };
     }),
   );
 }
 
-const ACTION_POINT_ID = "4ecb:universal:action-point";
+export const ACTION_POINT_ID = "4ecb:universal:action-point";
 
 /** Encounter powers whose own effect spends your second wind (e.g. Dwarven
  *  Resilience) share its single use; allies' second winds do not count. */

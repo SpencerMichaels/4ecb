@@ -911,6 +911,10 @@ The following are continuous rather than deferred to a cleanup milestone:
 
 ### Calculation-gap queue (2026-10-22)
 
+The 2026-10-24 owner task list is separately ordered by implementation
+complexity in [`tasks-triage.md`](tasks-triage.md), with quick-win checkpoints
+before equipment-history repairs and the broader feat-power audit.
+
 Ranked from `audit:legacy-special-cases`, `audit:modifiers`,
 `audit:parity-coverage` and `evaluate:matrix` (see implementation status,
 "Player report: Oleander"). Each item is confirmed on a sample or probe

@@ -97,12 +97,11 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "hu|0|background benefit card": auto(
     'Six background cards, then "Background benefit: …" with its Benefit text.',
   ),
-  "hu|0|granted aliases on feature rows": mixed(
-    '"Battle Awareness: Athletics; counts as Fighter" on the printed feature rows.',
-    'Does "; counts as" read well after a choice?',
+  "hu|0|granted aliases on feature rows": auto(
+    'The printed feat heading is "Battle Awareness"; its reference body retains "Choices: Athletics; counts as Fighter".',
   ),
   "hu|1|granted aliases on feature rows": auto(
-    "The Battle Awareness alias in the on-screen feature list.",
+    'The on-screen feature label is "Battle Awareness"; choices belong in its body.',
   ),
   // Piri
   "piri|0|rows": auto(

@@ -1,5 +1,13 @@
 # Architecture decision log
 
+### Action Point reminder policy (2026-10-24)
+
+Owner decision: retain all Action Point benefit reminders in "Remember in
+play", even when the Action Point card or another specific surface repeats
+them. These benefits can influence the decision to spend a point. This applies
+to self, ally and companion benefits, not just Demonskin Tattoo; other reminder
+deduplication remains unchanged.
+
 This file records product-level decisions. Implementation-level decisions should
 be added as short ADRs when they affect multiple packages, stored formats,
 compatibility, deployment, security, or long-term maintenance.

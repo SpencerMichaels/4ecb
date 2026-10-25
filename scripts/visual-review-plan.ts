@@ -311,7 +311,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Granted aliases on feature rows",
-            '"Battle Awareness: Athletics; counts as Fighter" — does "; counts as" read well after a choice?',
+            'The heading is "Battle Awareness"; the reference body retains "Choices: Athletics; counts as Fighter".',
           ],
         ],
       },
@@ -321,7 +321,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Granted aliases on feature rows",
-            "Battle Awareness alias in the on-screen feature list.",
+            'The feature label is "Battle Awareness"; its body retains "Choices: Athletics; counts as Fighter".',
           ],
         ],
       },

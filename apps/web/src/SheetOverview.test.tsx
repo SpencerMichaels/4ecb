@@ -114,6 +114,43 @@ describe("real-data sheet overview", () => {
       false,
     );
   });
+  it("keeps feat choices in reference text instead of the heading", () => {
+    const entry = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            id: "initiate",
+            name: "Initiate",
+            group: "Feat",
+            summary: "Once per encounter, make an extra attack.",
+            description: "Once per encounter, make an extra attack.",
+            fields: [],
+            source: "Synthetic",
+            fullTextAvailable: true,
+            choices: [
+              { id: "SKILL", name: "Athletics", type: "Skill Training" },
+              {
+                id: "CLASS",
+                name: "Fighter",
+                type: "CountsAsClass",
+                granted: true,
+              },
+            ],
+          },
+        ],
+      },
+    }).find(({ id }) => id === "initiate");
+    expect(entry?.name).toBe("Initiate");
+    expect(entry?.choice).toBeUndefined();
+    expect(entry?.parts).toContainEqual(
+      expect.objectContaining({
+        label: "Choices",
+        block: { kind: "paragraph", text: "Athletics; counts as Fighter" },
+      }),
+    );
+  });
   it("lists proficiencies by kind after the inventory and names sub-choices", () => {
     const fixture = {
       ...model,
