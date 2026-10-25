@@ -128,6 +128,19 @@ expression, as native `CalcDamage` reads the hit line up to its first
 1418 tests pass. Valria's ki-focus wrist razors and Sylestine's three gaps are
 queued in the roadmap.
 
+**2026-10-24/25:** native `BuildKiList` ki-focused weapon rows (`2f9566d`;
+Valria 42/42); dice-less damage expressions ("Charisma modifier … damage",
+"5 + Charisma modifier …") per native `CalcDamage`/`IsDamageRoll`, with
+`:nonroll-damage` now read (`095daae`, `fbcaef2`; ~95 powers; Sylestine all
+fields match); the parity check lists retired community power cards instead of
+comparing them (`1b92954`); fixed-bonus summoned creatures take only creature
+and power-keyed damage bonuses, plus `SUMMON.` stats (`ac996dc`, D095);
+special-case evidence (`ea4db0c`). Cache v59. 1441 tests pass; the accepted
+parity baseline covers 40 characters. Remaining open items are in the roadmap
+queue: Tier 3, owner decisions, Hunzu's Divine Bolts (needs a legacy save),
+the visual checks in `docs/visual-review-checklist.md`, and
+`scripts/publish-content.sh` after the next deploy.
+
 **Open:**
 
 - Hunzu 10's Divine Bolts (legacy omits Eagle Eye Goggles' `ranged basic`

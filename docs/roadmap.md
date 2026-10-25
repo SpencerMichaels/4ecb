@@ -942,17 +942,18 @@ character before it is fixed, one slice per item.
   7. ~~Target-less `modify` rules over-apply~~: real; `select=` fixed in
      `89590ba`, nameless in `f2bb532` (latent: nameless `drop`, nameless
      `UniversalClassSkill`; no content uses them).
-  8. Fixed-bonus ally damage (D095): hexblade/binder ally damage still picks
-     up character-wide damage stats its attack leaves out. After Tier 2.
+  8. ~~Fixed-bonus ally damage (D095)~~: fixed `ac996dc`. Open: Wyrm Form /
+     Dragon Bite / Breath Weapon / Chasme Gore attack rows use the fixed-line
+     path without character-wide attack bonuses (D095 doesn't clearly cover
+     them).
 - **Tier 2, missing reminders:** done 2026-10-23 (Conditional modifiers pane,
   Play data card lines, stat-tile tooltips, power-card reminders). Left:
   `damage(<item>)` textstrings (Challenge-Seeking), `ally.melee:damage`
   (Infernal Pincer), one `check:<other>` example.
-- **From four more player saves (2026-10-23, baselined):** ~~Villain's Menace
-  damage +4~~ (fixed `da275bc`, 29 powers); a ki-focus
-  weapon (Shadow Master Ki Focused Wrist Razors) gets no rows (`Valria`);
-  Staggering Note's flat damage missing, Well of Shadows secondary damage
-  parsed as "Ongoing", no Arcane Wisp familiar card (`Sylestine`).
+- ~~**From four more player saves (2026-10-23)**~~: all fixed — Villain's
+  Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
+  (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
+  (`1b92954`).
 - **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
   `UniversalClassSkill`, gated resistances, summoning powers whose creature
   attacks sit in " Standard action"/" Minor Action" fields (86+ powers; no
