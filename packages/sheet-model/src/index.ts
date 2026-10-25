@@ -9,6 +9,7 @@ import {
   type LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
 import {
+  displayPrerequisites,
   isUserFacingSpecific,
   weaponPropertyText,
   type ContentEntity,
@@ -567,19 +568,7 @@ function entityPresentation(
   entity: ContentEntity | undefined,
 ): Pick<SheetCard, "flavor" | "prerequisites" | "description" | "source"> {
   if (entity === undefined) return {};
-  const candidatePrerequisites =
-    entity.printPrerequisites?.trim() || entity.prerequisites?.trim();
-  const prerequisites =
-    candidatePrerequisites !== undefined &&
-    candidatePrerequisites.toLocaleLowerCase() !== "unselectable" &&
-    isUserFacingSpecific({
-      name: "Prerequisite",
-      value: candidatePrerequisites,
-      extraAttributes: [],
-      ordinal: 0,
-    })
-      ? candidatePrerequisites
-      : undefined;
+  const prerequisites = displayPrerequisites(entity);
   return {
     ...(entity.flavor === undefined || entity.flavor.trim().length === 0
       ? {}

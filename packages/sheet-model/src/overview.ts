@@ -1,4 +1,8 @@
-import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import {
+  displayPrerequisites,
+  isUserFacingSpecific,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
 import {
@@ -293,11 +297,13 @@ export function withSheetOverview(
           )
           .map((field) => ({ label: field.name.trim(), value: field.value })) ??
         [];
+      const prerequisites =
+        entity === undefined ? undefined : displayPrerequisites(entity);
       if (
-        entity?.prerequisites?.trim() &&
+        prerequisites !== undefined &&
         !fields.some((field) => /^prerequisites?$/i.test(field.label))
       )
-        fields.unshift({ label: "Prerequisite", value: entity.prerequisites });
+        fields.unshift({ label: "Prerequisite", value: prerequisites });
       // A group's own choice row (Background benefit) has no entity; the
       // chosen benefit's text is its benefit.
       if (entity === undefined && entry.choices?.length && entry.value.trim())

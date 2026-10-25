@@ -182,6 +182,34 @@ describe("printed overview data", () => {
       value: benefit,
     });
   });
+  it("prints a feature's readable prerequisite, never its rule grammar", () => {
+    const multiclass = {
+      ...feat,
+      id: "feat:synthetic-multiclass",
+      name: "Synthetic multiclass",
+      prerequisites:
+        "Str 13; ~MULTICLASS or Fighter CountsAsClass; !ID_SYNTHETIC_CLASS_1",
+    };
+    const reference = (entity: typeof multiclass) =>
+      buildSheetModel(
+        {
+          ...snapshot,
+          selectedRules: [
+            { id: entity.id, name: entity.name, type: entity.type },
+          ],
+        },
+        [entity],
+      ).overview?.features[0]?.fields.find(
+        (field) => field.label === "Prerequisite",
+      )?.value;
+    expect(reference({ ...multiclass, printPrerequisites: "Str 13" })).toBe(
+      "Str 13",
+    );
+    expect(reference(multiclass)).toBeUndefined();
+    expect(
+      reference({ ...multiclass, prerequisites: "Trained in Athletics" }),
+    ).toBe("Trained in Athletics");
+  });
   it("retains injected inventory categories without coupling the model to UI taxonomy", () => {
     const elements = [
       { id: "weapon:test", name: "Synthetic sword", type: "Weapon" },

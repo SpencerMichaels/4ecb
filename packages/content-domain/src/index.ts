@@ -171,6 +171,30 @@ const internalSpecificNames = new Set([
   "weaponequiv",
 ]);
 
+/** The prerequisite line to show a reader: the printed line when authored,
+ *  else the rule's own Prereqs only when it is plain prose rather than rule
+ *  grammar (`~MULTICLASS`, `!ID_…`, `CountsAsClass`). */
+export function displayPrerequisites(
+  entity: Pick<ContentEntity, "prerequisites" | "printPrerequisites">,
+): string | undefined {
+  const printed = entity.printPrerequisites?.trim();
+  if (printed) return printed;
+  const rule = entity.prerequisites?.trim();
+  if (
+    !rule ||
+    rule.toLocaleLowerCase() === "unselectable" ||
+    /(?:^|[;,\s])[~!]|\bID_[A-Z0-9_]|\bCountsAs/.test(rule) ||
+    !isUserFacingSpecific({
+      name: "Prerequisite",
+      value: rule,
+      extraAttributes: [],
+      ordinal: 0,
+    })
+  )
+    return undefined;
+  return rule;
+}
+
 export function isUserFacingSpecific(field: SpecificField): boolean {
   const name = field.name.trim();
   const value = field.value.trim();
