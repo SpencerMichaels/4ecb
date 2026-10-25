@@ -667,7 +667,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.IsShield": code(
       "Shield detection by Armor Type or _IsEnchant.",
-      "equipment-ui.ts isAuthoredShield",
+      "sheet-model loadout-slots.ts isAuthoredShield",
       test(
         EQUIPMENT_UI,
         "pairs armor and weapon enchantments only with compatible bases",

@@ -2053,13 +2053,10 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
               (slot) =>
                 slotPresentation(slot)?.label ?? slot.replaceAll("-", " "),
             )
-            .join(" / ") ||
-          (find(item.fields, "Item Slot") === "—"
-            ? "Held / unspecified"
-            : find(item.fields, "Item Slot")),
-        slotRank: slotRank(
-          item.slots.length ? item.slots : [find(item.fields, "Item Slot")],
-        ),
+            .join(" / ") || "Held / unspecified",
+        // Slots come resolved from sheet-model (the builder's loadout resolver);
+        // never re-infer them from the authored Item Slot here.
+        slotRank: slotRank(item.slots),
         inventoryCategory:
           INVENTORY_CATEGORIES.find(
             (category) => category.id === item.category,

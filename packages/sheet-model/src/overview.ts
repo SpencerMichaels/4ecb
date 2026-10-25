@@ -81,6 +81,10 @@ export interface OverviewInventory {
   readonly name: string;
   readonly quantity: number;
   readonly equipped: number;
+  /**
+   * Occupied loadout slot IDs, resolved by `resolveLoadoutAssignments` (the
+   * builder Loadout's resolver); empty when an equipped holding has no slot.
+   */
   readonly slots: readonly string[];
   readonly fields: readonly SheetValue[];
   /** Optional UI-provided classification, shared with the builder inventory. */

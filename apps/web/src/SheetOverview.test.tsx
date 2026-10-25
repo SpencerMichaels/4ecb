@@ -2585,10 +2585,13 @@ describe("real-data sheet overview", () => {
         inventory: [
           item("A sword", ["main-hand"], [], "weapons"),
           item("Z helmet", ["head"], [], "worn-items"),
+          item("Boots", ["feet"], [], "worn-items"),
+          // Slots arrive resolved from sheet-model; the renderer never
+          // re-infers one from the authored Item Slot.
           item(
-            "Boots",
+            "Unslotted symbol",
             [],
-            [{ label: "Item Slot", value: "Feet" }],
+            [{ label: "Item Slot", value: "Off-hand" }],
             "worn-items",
           ),
         ],
@@ -2618,6 +2621,7 @@ describe("real-data sheet overview", () => {
       ["Head", "Z helmet"],
       ["Feet", "Boots"],
       ["Main hand", "A sword"],
+      ["Held / unspecified", "Unslotted symbol"],
     ]);
     expect(equippedRows).toContainEqual(["Neck", "—"]);
     expect(equippedRows).toContainEqual(["Off hand", "—"]);
@@ -2632,13 +2636,14 @@ describe("real-data sheet overview", () => {
     expect(carried.flatMap((table) => table.rows)).toEqual([
       ["A sword", "2"],
       ["Boots", "2"],
+      ["Unslotted symbol", "2"],
       ["Z helmet", "2"],
     ]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:false")
         ?.parts.map((part) => part.tableCategory),
-    ).toEqual(["Weapons", "Worn items", "Worn items"]);
+    ).toEqual(["Weapons", "Worn items", "Worn items", "Worn items"]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:true")
@@ -2654,7 +2659,7 @@ describe("real-data sheet overview", () => {
                   : []),
               ],
         ),
-    ).toEqual(["hard-hat", "sword", "footprints"]);
+    ).toEqual(["hard-hat", "sword", "item", "footprints"]);
   });
   it("includes equipped-only holdings and total stack quantities with equipped superscripts", () => {
     const fixture = {

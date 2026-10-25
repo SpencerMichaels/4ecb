@@ -58,7 +58,17 @@ import {
 import { godFragmentPowerCards } from "./god-fragment-card";
 import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
 import { characterClassName } from "./class-identity";
+import { resolveLoadoutAssignments } from "./loadout-slots";
 export { characterClassName, hybridClassName } from "./class-identity";
+export {
+  inventoryDefinitionIds,
+  inventoryRequiresBothHands,
+  inventorySlotCandidates,
+  isAuthoredShield,
+  resolveLoadoutAssignments,
+  type LoadoutHolding,
+  type ResolvedLoadoutAssignments,
+} from "./loadout-slots";
 export {
   deityDomains,
   deityDomainsText,
@@ -1581,14 +1591,30 @@ export function buildSheetModel(
       ...extendedLegacyNotes(snapshot.textStrings),
     ],
   };
+  // Legacy loot records equipped counts only; place them with the same
+  // resolver the builder's Loadout uses.
+  const lootLoadout = resolveLoadoutAssignments(
+    lootPresentations.map(({ loot }, index) => ({
+      id: String(index),
+      quantity: loot.count,
+      equippedQuantity: loot.equippedCount,
+      elements: loot.elements.map(({ id, name, type }) => ({
+        ...(id === undefined ? {} : { definitionId: id }),
+        name,
+        type,
+      })),
+    })),
+    entities,
+  );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: Number(detail.Level) || snapshot.levelCount || 1,
     stats: snapshot.stats,
     selections: snapshot.selectedRules,
     content,
     inventory: lootPresentations
+      .map((presentation, index) => ({ ...presentation, index }))
       .filter(({ referenceKind }) => referenceKind === undefined)
-      .map(({ loot, element, entity, itemEntities }) => ({
+      .map(({ loot, element, entity, itemEntities, index }) => ({
         name: loot.name,
         itemType: entity?.type ?? element?.type,
         baseItemType: itemEntities[0]?.type ?? loot.elements[0]?.type,
@@ -1599,7 +1625,10 @@ export function buildSheetModel(
         }),
         quantity: loot.count,
         equipped: loot.equippedCount,
-        slots: [],
+        slots:
+          lootLoadout.assignmentsByEntry
+            .get(String(index))
+            ?.map((assignment) => assignment.slot) ?? [],
         ...inventoryCategoryFields(
           loot.elements.map((element) => ({
             name: element.name,
@@ -2065,6 +2094,26 @@ export function buildEvaluatedSheetModel(
       ...extendedLegacyNotes(build.textStrings),
     ],
   };
+  // Explicit modern slots win; imported equip-count holdings are placed by
+  // the same resolver as the builder's Loadout, so both surfaces agree.
+  const loadout = resolveLoadoutAssignments(
+    inventoryPresentations.map(({ entry, original }) => ({
+      id: entry.id,
+      quantity: entry.quantity,
+      equippedQuantity: entry.equippedQuantity,
+      ...(original?.equippedSlots === undefined
+        ? {}
+        : { equippedSlots: original.equippedSlots }),
+      elements:
+        original?.elements ??
+        entry.definitionIds.map((definitionId) => ({
+          definitionId,
+          name: "",
+          type: "",
+        })),
+    })),
+    entities,
+  );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: evaluation.level,
     evaluatedStats: evaluation.stats,
@@ -2111,7 +2160,9 @@ export function buildEvaluatedSheetModel(
           )?.[1],
         }),
         slots:
-          original?.equippedSlots?.map((assignment) => assignment.slot) ?? [],
+          loadout.assignmentsByEntry
+            .get(entry.id)
+            ?.map((assignment) => assignment.slot) ?? [],
         fields: itemEntities.flatMap(entityFields),
       })),
   });

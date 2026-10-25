@@ -14,10 +14,27 @@ import {
   RulesIndex,
   type ItemChoiceSlot,
 } from "@4ecb/rules-engine";
+import {
+  inventoryDefinitionIds,
+  inventoryRequiresBothHands,
+  inventorySlotCandidates,
+  isAuthoredShield,
+  resolveLoadoutAssignments,
+} from "@4ecb/sheet-model";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import type { IconName } from "./Icon";
-import { isAuthoredShield, LOADOUT_SLOT_ICONS } from "./item-icons";
+import { LOADOUT_SLOT_ICONS } from "./item-icons";
+
+// The loadout-slot resolver lives in sheet-model so the builder and the sheet
+// share it; re-exported for builder callers.
+export {
+  inventoryDefinitionIds,
+  inventoryRequiresBothHands,
+  inventorySlotCandidates,
+  resolveLoadoutAssignments,
+};
+export type { ResolvedLoadoutAssignments } from "@4ecb/sheet-model";
 
 export const SHOP_ITEM_TYPES = [
   "Armor",
@@ -810,14 +827,6 @@ export function groupMagicItemFamilies(
   });
 }
 
-export function inventoryDefinitionIds(
-  entry: Pick<BuildInventoryEntry, "elements">,
-): readonly string[] {
-  return entry.elements.flatMap(({ definitionId }) =>
-    definitionId === undefined ? [] : [definitionId.toLocaleLowerCase()],
-  );
-}
-
 /**
  * The saved base/enchantment elements of `entry` whose definitions the
  * active content lacks (homebrew or uninstalled sources). Name-only legacy
@@ -887,206 +896,6 @@ export function inventoryDisplayName(
   return resolvedChoices.length === 0
     ? base
     : `${base} (${resolvedChoices.join(", ")})`;
-}
-
-export function inventorySlotCandidates(
-  entry: BuildInventoryEntry,
-  byId: ReadonlyMap<string, ContentEntity>,
-): readonly string[] {
-  const definitions = inventoryDefinitionIds(entry).flatMap((id) => {
-    const entity = byId.get(id);
-    return entity === undefined ? [] : [entity];
-  });
-  const item = definitions[0];
-  const armor = definitions.find(
-    (definition) => definition.type.toLocaleLowerCase() === "armor",
-  );
-  const slots = definitions
-    .flatMap((definition) => [
-      contentSpecificValue(definition, "Item Slot") ?? "",
-      contentSpecificValue(definition, "Magic Item Type") ?? "",
-    ])
-    .join("\n")
-    .toLocaleLowerCase();
-  const candidates: EquipmentSlotId[] = [];
-  if (armor !== undefined && isAuthoredShield(armor)) {
-    return ["off-hand"];
-  }
-  if (
-    slots.includes("two-hand") ||
-    slots.includes("off-hand") ||
-    slots.includes("one-hand")
-  ) {
-    candidates.push("main-hand", "off-hand");
-  }
-  if (slots.includes("head and neck")) candidates.push("head", "neck");
-  if (item?.type.toLocaleLowerCase() === "weapon") {
-    const hands =
-      contentSpecificValue(item, "Hands Required")?.toLocaleLowerCase() ?? "";
-    if (hands.includes("two-handed")) return ["main-hand", "off-hand"];
-    if (
-      (contentSpecificValue(item, "Properties") ?? "")
-        .toLocaleLowerCase()
-        .includes("off-hand")
-    )
-      return ["main-hand", "off-hand"];
-    return ["main-hand", "off-hand"];
-  }
-  if (armor !== undefined) return ["body"];
-  const mappings = [
-    ["body", "body"],
-    ["head", "head"],
-    ["neck", "neck"],
-    ["arms", "arms"],
-    ["hands", "hands"],
-    ["ring", "ring-1"],
-    ["ring", "ring-2"],
-    ["waist", "waist"],
-    ["feet", "feet"],
-    ["holy symbol", "symbol"],
-    ["symbol", "symbol"],
-    ["ki focus", "ki-focus"],
-    ["tattoo", "tattoo"],
-    ["companion", "companion"],
-    ["familiar", "familiar"],
-    ["mount", "mount"],
-  ] as const;
-  return [
-    ...new Set(
-      candidates.concat(
-        mappings
-          .filter(([needle]) => slots.includes(needle))
-          .map(([, slot]) => slot),
-      ),
-    ),
-  ];
-}
-
-export function inventoryRequiresBothHands(
-  entry: BuildInventoryEntry,
-  byId: ReadonlyMap<string, ContentEntity>,
-): boolean {
-  const item = inventoryDefinitionIds(entry)
-    .map((id) => byId.get(id))
-    .find((entity) => entity?.type.toLocaleLowerCase() === "weapon");
-  if (item === undefined) return false;
-  return (
-    (contentSpecificValue(item, "Item Slot") ?? "")
-      .toLocaleLowerCase()
-      .includes("two-hand") ||
-    (contentSpecificValue(item, "Hands Required") ?? "")
-      .toLocaleLowerCase()
-      .includes("two-handed")
-  );
-}
-
-export interface ResolvedLoadoutAssignments {
-  readonly assignmentsByEntry: ReadonlyMap<
-    string,
-    readonly EquipmentSlotAssignment[]
-  >;
-}
-
-const inferredSlotPriority: readonly EquipmentSlotId[] = [
-  "body",
-  "head",
-  "neck",
-  "arms",
-  "hands",
-  "waist",
-  "feet",
-  "symbol",
-  "ki-focus",
-  "tattoo",
-  "companion",
-  "familiar",
-  "mount",
-  "ring-1",
-  "ring-2",
-  "main-hand",
-  "off-hand",
-];
-
-/**
- * Projects legacy `equip-count` holdings into the modern slot model for
- * presentation and the next loadout edit. The legacy format records how many
- * copies are equipped but not which hand/ring slot they occupy. Explicit
- * modern assignments always win; unambiguous remaining positions are filled
- * deterministically without changing the durable build until the user edits
- * the loadout.
- */
-export function resolveLoadoutAssignments(
-  inventory: readonly BuildInventoryEntry[],
-  byId: ReadonlyMap<string, ContentEntity>,
-): ResolvedLoadoutAssignments {
-  const assignmentsByEntry = new Map<
-    string,
-    readonly EquipmentSlotAssignment[]
-  >();
-  const occupied = new Set<EquipmentSlotId>();
-
-  for (const entry of inventory) {
-    if (entry.equippedSlots === undefined) continue;
-    const assignments = [...entry.equippedSlots];
-    assignmentsByEntry.set(entry.id, assignments);
-    assignments.forEach(({ slot }) => occupied.add(slot));
-  }
-
-  for (const entry of inventory) {
-    if (
-      entry.equippedSlots !== undefined ||
-      entry.equippedQuantity <= 0 ||
-      entry.quantity <= 0
-    )
-      continue;
-    const candidates = new Set(
-      inventorySlotCandidates(entry, byId) as readonly EquipmentSlotId[],
-    );
-    const tentative: EquipmentSlotAssignment[] = [];
-    const tentativelyOccupied = new Set(occupied);
-    let complete = true;
-
-    for (
-      let quantityIndex = 0;
-      quantityIndex < entry.equippedQuantity;
-      quantityIndex += 1
-    ) {
-      if (inventoryRequiresBothHands(entry, byId)) {
-        if (
-          !candidates.has("main-hand") ||
-          !candidates.has("off-hand") ||
-          tentativelyOccupied.has("main-hand") ||
-          tentativelyOccupied.has("off-hand")
-        ) {
-          complete = false;
-          break;
-        }
-        tentative.push(
-          { slot: "main-hand", quantityIndex },
-          { slot: "off-hand", quantityIndex },
-        );
-        tentativelyOccupied.add("main-hand");
-        tentativelyOccupied.add("off-hand");
-        continue;
-      }
-      const slot = inferredSlotPriority.find(
-        (candidate) =>
-          candidates.has(candidate) && !tentativelyOccupied.has(candidate),
-      );
-      if (slot === undefined) {
-        complete = false;
-        break;
-      }
-      tentative.push({ slot, quantityIndex });
-      tentativelyOccupied.add(slot);
-    }
-
-    if (!complete) continue;
-    assignmentsByEntry.set(entry.id, tentative);
-    tentative.forEach(({ slot }) => occupied.add(slot));
-  }
-
-  return { assignmentsByEntry };
 }
 
 export function loadoutChangeCommand(

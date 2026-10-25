@@ -15,6 +15,12 @@ Feat reminder and reference titles use the plain feat name; selection and
 class-alias metadata remains in the reference body. Verification evidence and
 the remaining equipment/content work are recorded with the triage.
 
+Loadout slots are single-sourced: the builder's resolver moved to
+`sheet-model/src/loadout-slots.ts`, the sheet model projects its slots, and the
+printed loadout no longer infers slots from authored Item Slot text (an
+imported holy symbol now sits in the Holy symbol slot, not Off hand). Hu's
+remaining builder/sheet gap is the inventory-history projection (item 7).
+
 ## Calculation-gap queue, conditional modifiers, new player saves (2026-10-23)
 
 Continues "Player report: Oleander" below. Verification: `pnpm vitest run

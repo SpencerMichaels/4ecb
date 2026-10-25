@@ -9,7 +9,7 @@
 | 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                                     |
 | 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                                    |
 | 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Existing power definitions can be granted; separate checkpoint.                                        |
-| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Confirmed duplicate slot inference; share the slot resolver.                                           |
+| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                                    |
 | 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Confirmed raw transactions exposed as current holdings; repair projection and edit semantics together. |
 | 8     | Remaining encounter-use feat powers                | Large audit/content work | Classify transitive grants, missing powers and passive modifiers before adding corrections.            |
 
@@ -48,6 +48,22 @@ explicit modern slots; the sheet forwards those empty slots, then
 Extract/reuse a shared resolver and project resolved slots into the sheet;
 remove independent renderer inference. Validate imported two-handed weapon +
 holy symbol, explicit modern assignments, edits and reloads.
+
+Done: the resolver (`inventorySlotCandidates`, `inventoryRequiresBothHands`,
+`resolveLoadoutAssignments`, `isAuthoredShield`) now lives in
+`packages/sheet-model/src/loadout-slots.ts`; the builder re-exports it and
+`buildEvaluatedSheetModel`/`buildSheetModel` project its slots into
+`overview.inventory[].slots`. `SheetOverview.tsx` no longer reads the authored
+Item Slot; an equipped holding the resolver cannot place reads "Held /
+unspecified". Synthetic coverage: `loadout-slots.test.ts`.
+
+Hu re-check: at level 8 his file's final LootTally and the modern
+current-level aggregate both have Symbol of Hope equipped and Way-Leader Gouge
+owned but **unequipped** (level-6 rows: Gouge 0/−1, Symbol 0/+1). The sheet
+now shows Symbol of Hope in the Holy symbol slot and no weapon, matching
+legacy. The builder Loadout still resolves over raw positive rows (the level-5
+purchase: Gouge equipped, symbol not), so it disagrees until item 7 feeds it
+current-level aggregated holdings.
 
 **Inventory history.** Hu acquires Belt of Vigor at level 5 (+1 quantity,
 +1 equipped) and removes it at level 6 (-1/-1). His final LootTally correctly

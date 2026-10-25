@@ -28,13 +28,6 @@ function normalized(value: string | undefined): string {
   return value?.trim().toLocaleLowerCase() ?? "";
 }
 
-export function isAuthoredShield(entity: ContentEntity): boolean {
-  return (
-    normalized(entity.type) === "armor" &&
-    normalized(contentSpecificValue(entity, "Armor Type")).includes("shield")
-  );
-}
-
 /**
  * Resolves the canonical item icon used by loadout slots, detail cards, and
  * selection chips. For composed magic items, the physical base identity wins
