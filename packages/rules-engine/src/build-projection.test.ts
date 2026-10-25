@@ -1429,8 +1429,8 @@ describe("build projection", () => {
         ),
       );
       expect(
-        (after!.stats["Fortitude Defense"]?.value ?? 0) -
-          (before!.stats["Fortitude Defense"]?.value ?? 0),
+        Number(after!.stats["Fortitude Defense"]?.value ?? 0) -
+          Number(before!.stats["Fortitude Defense"]?.value ?? 0),
       ).toBe(1);
       expect(
         after!.choices.find(
