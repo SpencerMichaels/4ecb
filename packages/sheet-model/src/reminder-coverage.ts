@@ -186,6 +186,16 @@ const CLAUSE_COVERAGE = 0.6;
  * are ignored.
  * With no representing entries, nothing is covered.
  */
+/** Whether every amount in `text` (+2, 1d6, resist 5) appears in one of
+ *  `represented`; text with no amounts is trivially shown. */
+export function amountsShown(
+  text: string,
+  represented: readonly string[],
+): boolean {
+  const available = new Set(represented.flatMap(amounts));
+  return amounts(text).every((amount) => available.has(amount));
+}
+
 export function reminderCovered(
   reminder: string,
   represented: readonly string[],

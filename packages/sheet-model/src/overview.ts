@@ -21,6 +21,7 @@ import {
 } from "./conditional-modifiers";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import {
+  amountsShown,
   definitionSourceKey,
   inventorySourceKey,
   nameSourceKey,
@@ -159,30 +160,89 @@ function hasPlayReminder(summary: string, description: string): boolean {
     withoutLoadoutConditions,
   );
 }
+/** The carded powers a feature grants. `representing` holds the texts of
+ *  cards that are the feature itself: a feat's power, or one named for the
+ *  feature (Flamespeed); a choice naming its feat in `_SupportsID` (Student
+ *  of One-Handed Weapons) takes its feat's. `other` is set when the feature
+ *  grants a differently named carded power, as class features often do
+ *  beside benefits of their own (a covenant's manifestation). */
+interface GrantedCards {
+  readonly representing: readonly string[];
+  readonly other: boolean;
+}
+function grantedCards(
+  entity: ContentEntity | undefined,
+  cards: ReadonlyMap<string, { readonly name: string; readonly text: string }>,
+  definitions: ReadonlyMap<string, ContentEntity>,
+): GrantedCards {
+  const none = { representing: [], other: false };
+  if (entity === undefined) return none;
+  const direct = (owner: ContentEntity): GrantedCards => {
+    const granted = owner.rules.flatMap((rule) => {
+      if (
+        !/^grant$/i.test(rule.name) ||
+        key(getAttribute(rule.attributes, "type") ?? "") !== "power"
+      )
+        return [];
+      const card = cards.get(key(getAttribute(rule.attributes, "name") ?? ""));
+      return card === undefined ? [] : [card];
+    });
+    const represents = (card: { readonly name: string }) =>
+      key(owner.type) === "feat" || key(card.name) === key(owner.name);
+    return {
+      representing: granted.filter(represents).map((card) => card.text),
+      other: granted.some((card) => !represents(card)),
+    };
+  };
+  const own = direct(entity);
+  if (own.representing.length || own.other || entity.rules.length) return own;
+  const owners = entity.specifics
+    .filter((field) => key(field.name) === "_supportsid")
+    .flatMap((field) => field.value.split(/\s*,\s*/))
+    .flatMap((id) => {
+      const owner = definitions.get(key(id));
+      return owner !== undefined && key(owner.type) === "feat"
+        ? [direct(owner)]
+        : [];
+    });
+  return {
+    representing: owners.flatMap((owner) => owner.representing),
+    other: false,
+  };
+}
 function accessOnly(
   entity: ContentEntity | undefined,
   benefit: string,
-  carded: ReadonlySet<string> = new Set(),
+  cards: GrantedCards = { representing: [], other: false },
+  reminder = benefit,
 ): boolean {
+  // Grants, selections and stats named for the feature itself, which only
+  // scale its own power by tier (Cyclone Warrior), add no separate benefit.
   const selectorOnly = Boolean(
     entity?.rules.length &&
-    entity.rules.every((rule) => /^(?:grant|select)$/i.test(rule.name)),
-  );
-  // A grant/select-only feature whose granted power has its own card: prose
-  // describing that power (shifts, attacks, damage) is on the card. Only a
-  // number, bonus, penalty or an effect added to a use marks a benefit of the
-  // feature itself.
-  const grantsCardedPower = Boolean(
-    entity?.rules.some(
+    entity.rules.every(
       (rule) =>
-        /^grant$/i.test(rule.name) &&
-        key(getAttribute(rule.attributes, "type") ?? "") === "power" &&
-        carded.has(key(getAttribute(rule.attributes, "name") ?? "")),
+        /^(?:grant|select)$/i.test(rule.name) ||
+        (/^statadd$/i.test(rule.name) &&
+          key(getAttribute(rule.attributes, "name") ?? "") ===
+            key(entity.name)),
     ),
   );
+  const describesCards = selectorOnly || entity?.rules.length === 0;
+  // A feature whose own power has a card: its prose describes that card,
+  // beside build-time access (skill training, class aliases, implements).
+  // Only an amount the card does not show is a benefit of the feature itself.
   if (
-    selectorOnly &&
-    grantsCardedPower &&
+    describesCards &&
+    cards.representing.length &&
+    amountsShown(`${benefit}\n${reminder}`, cards.representing)
+  )
+    return true;
+  // A feature granting other carded powers (a pact's spell and boon) is a
+  // wrapper unless its prose adds an amount or an effect to a use.
+  if (
+    describesCards &&
+    cards.other &&
     !/[+-]\s*\d|\b(?:bonus(?!\s+(?:feat|power)\b)|penalty|in addition)\b|\bwhen(?:ever)? you (?:use|spend|hit)\b/i.test(
       benefit,
     )
@@ -267,8 +327,24 @@ export function withSheetOverview(
     input.content.map((entity) => [key(entity.id), entity]),
   );
   const features: OverviewFeature[] = [];
-  const cardedPowers = new Set(
-    model.powers.flatMap((power) => (power.id ? [key(power.id)] : [])),
+  const cardedPowers = new Map(
+    model.powers.flatMap((power) =>
+      power.id
+        ? [
+            [
+              key(power.id),
+              {
+                name: power.name,
+                text: [
+                  power.name,
+                  ...power.fields.map((field) => field.value),
+                  power.description ?? "",
+                ].join("\n"),
+              },
+            ] as const,
+          ]
+        : [],
+    ),
   );
   const referenceMetadata = featureReferenceMetadata(input);
   const seen = new Set<string>();
@@ -307,6 +383,7 @@ export function withSheetOverview(
           ?.value.trim() ||
         description.split(/\bBenefit:\s*/i).at(-1) ||
         description;
+      const cards = grantedCards(entity, cardedPowers, definitions);
       const fields =
         entity?.specifics
           .filter(
@@ -355,9 +432,9 @@ export function withSheetOverview(
         fullTextAvailable: Boolean(description || fields.length),
         ...(entity ? referenceMetadata.get(key(entity.id)) : undefined),
         playReminder:
-          !accessOnly(entity, benefit || summary, cardedPowers) &&
+          !accessOnly(entity, benefit || summary, cards, summary) &&
           hasPlayReminder(summary, benefit),
-        accessOnly: accessOnly(entity, benefit || summary, cardedPowers),
+        accessOnly: accessOnly(entity, benefit || summary, cards, summary),
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
     }

@@ -232,7 +232,14 @@ dispositions are recorded by the coordinating change.
   only by ID. No private sample has the feat.
 - References print `displayPrerequisites` (print-prereqs, else plain-prose
   Prereqs), never rule grammar such as `~MULTICLASS` or `!ID_…`.
-- A grant/select-only feature whose granted power has its own card is
-  access-only: its prose describes the card. A number, bonus, penalty or added
-  per-use effect still keeps the reminder. Across the 31 private samples this
-  newly drops only Battle Awareness.
+- Reminder vs. card (refined after item 8): a grant/select-only feature
+  (stats named for itself allowed, e.g. tier scaling) whose own power has a
+  card — a feat's power, a power named for the feature, or, for a choice
+  naming its feat in `_SupportsID`, its feat's — is access-only unless its
+  text has an amount the card does not show. A feature granting other carded
+  powers (a pact's spell and boon) is access-only unless its text adds an
+  amount, bonus, penalty, "in addition" or a "when you use/spend/hit" effect
+  (Covenant of Malediction keeps its manifestation). Across the 31 private
+  samples this drops Battle Awareness and Mage's Spellbook (its card has the
+  same preparation text and table); all 19 item-8 feats and Path of
+  Destruction show one card and no reminder.

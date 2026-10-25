@@ -591,62 +591,117 @@ describe("printed overview data", () => {
       specifics: [],
       rules: [],
     };
-    const grantFeat = (id: string, description: string) => ({
+    const rule = (name: string, attributes: Record<string, string>) => ({
+      name,
+      attributes: Object.entries(attributes).map(([n, value]) => ({
+        name: n,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal: 0,
+    });
+    const grantFeat = (id: string, description: string, extra = []) => ({
       ...feat,
       id,
       name: id,
       description,
       specifics: [],
       rules: [
-        {
-          name: "select",
-          attributes: [{ name: "type", value: "Skill Training" }],
-          text: "",
-          children: [],
-          ordinal: 0,
-        },
-        {
-          name: "grant",
-          attributes: [
-            { name: "name", value: power.id },
-            { name: "type", value: "Power" },
-          ],
-          text: "",
-          children: [],
-          ordinal: 1,
-        },
+        rule("select", { type: "Skill Training" }),
+        rule("grant", { name: power.id, type: "Power" }),
+        ...extra,
       ],
     });
     const only = grantFeat(
       "Synthetic awareness feat",
-      "You gain training in one skill. Once per encounter, when an adjacent enemy shifts, you can make a melee basic attack against it.",
+      "You gain training in one skill. In addition, you can use swordmage implements. Once per encounter, when an adjacent enemy shifts, you can make a melee basic attack against it with a +2 bonus.",
     );
+    // A stat named for the feat only scales its own power by tier.
+    const scaled = {
+      ...grantFeat(
+        "Synthetic scaled feat",
+        "Once per encounter, gain a +2 bonus to damage rolls.",
+      ),
+    };
+    const scaledFeat = {
+      ...scaled,
+      rules: [
+        ...scaled.rules,
+        rule("statadd", { name: scaled.name, value: "+1" }),
+      ],
+    };
+    // A choice naming the feat in _SupportsID is described by the same card.
+    const choice = {
+      ...feat,
+      id: "feature:synthetic-choice",
+      type: "Class Feature",
+      name: "Synthetic choice",
+      description: "Once per encounter, add a +2 bonus to an attack roll.",
+      specifics: [
+        {
+          name: "_SupportsID",
+          value: only.id,
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+      rules: [],
+    };
     const extra = grantFeat(
       "Synthetic awareness plus",
-      "Once per encounter, when an adjacent enemy shifts, you can attack it. When you use this power, you can shift 1 square.",
+      "Once per encounter, attack an adjacent enemy that shifts. You also gain a +4 bonus to AC against it.",
     );
-    const reminders = (powers: readonly { id: string; name: string }[]) =>
+    // A class feature bundling a differently named power with its own
+    // benefit (a covenant's manifestation) keeps its reminder.
+    const covenant = {
+      ...grantFeat(
+        "Synthetic covenant",
+        "You gain the Synthetic Awareness power. When you use a divine power, you can push one target 1 square.",
+      ),
+      type: "Class Feature",
+    };
+    // A class feature whose prose only describes its other carded power (a
+    // pact's boon) is a wrapper.
+    const pact = {
+      ...grantFeat(
+        "Synthetic pact",
+        "Boon: when a cursed enemy drops, you can teleport 3 squares.",
+      ),
+      type: "Class Feature",
+    };
+    const definitions = [only, scaledFeat, choice, extra, covenant, pact];
+    const reminders = (cards: boolean) =>
       buildSheetModel(
         {
           ...snapshot,
-          selectedRules: [only, extra].map((e) => ({
+          selectedRules: definitions.map((e) => ({
             id: e.id,
             name: e.name,
             type: e.type,
           })),
-          powers: powers.map((p) => ({
-            ...p,
-            usage: "Encounter",
-            weapons: [],
-          })),
+          powers: cards
+            ? [
+                {
+                  id: power.id,
+                  name: power.name,
+                  usage: "Encounter",
+                  weapons: [],
+                  description:
+                    "Melee basic attack with a +2 bonus; +2 damage while bloodied.",
+                },
+              ]
+            : [],
         },
-        [only, extra, power],
+        [...definitions, power],
       ).overview?.reminders.map((r) => r.label);
-    expect(reminders([{ id: power.id, name: power.name }])).toEqual([
-      extra.name,
-    ]);
+    // Only an amount the card does not show (+4) keeps a feat's reminder.
+    expect(reminders(true)).toEqual(
+      expect.arrayContaining([extra.name, covenant.name]),
+    );
+    expect(reminders(true)).toHaveLength(2);
     // Without the power's card, the feat's prose is the only place it appears.
-    expect(reminders([])).toEqual(
+    expect(reminders(false)).toEqual(
       expect.arrayContaining([only.name, extra.name]),
     );
   });
