@@ -733,12 +733,14 @@ reminder control and card ordering (plan and owner decisions:
 0. **Done (2026-10-25).** Stable card keys from provenance and the card
    deck in sheet-model (`sheetCardDeck`); no visible change.
 1. **Done (2026-10-25).** `SheetLayout` persistence, `?preview=1&edit=1`
-   and the toolbar View | Edit control, the "Sheet contents" panel with
-   page/section toggles, card hide/show (item cards via `showPowerCard`)
-   and global reset.
+   and the toolbar View | Edit control; on-paper card and section menus
+   (corner button, right-click, keyboard, long press) to hide/show cards
+   (item cards via `showPowerCard`) and sections, a "Show hidden" toggle
+   that reveals hidden things dimmed for per-item restore, and global
+   reset in the toolbar.
 2. Reminders: show/hide, custom reminders, provenance hints, and removal of
    the Action Point reminder special case.
-3. Card ordering and on-paper controls.
+3. Card ordering (on-paper controls landed with phase 1).
 4. Optional: reminder ordering, one-off print scope.
 
 ### Exit criteria
