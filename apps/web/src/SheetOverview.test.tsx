@@ -528,7 +528,6 @@ describe("real-data sheet overview", () => {
         ...model,
         identity: [...model.identity, { label: "Experience", value }],
         notes: [],
-        inactive: [],
       };
       expect(
         references(fixture).some(

@@ -5,7 +5,7 @@
 | Order | Task slice                                         | Complexity               | Disposition                                                                                   |
 | ----- | -------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------- |
 | 1     | Action Point action label                          | Trivial verification     | Already correct: Free Action; retain.                                                         |
-| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                        |
+| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Preserved silently, no UI (owner 2026-10-25); no missing choice or calculation defect.        |
 | 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                            |
 | 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                           |
 | 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                   |
@@ -33,9 +33,11 @@ contains multiple classes' branches. The Divine Fortune selector requires
 Cleric (`ID_FMP_CLASS_2`); Hu is an Avenger. His level-6 Versatile Channeler
 selects Healer's Mercy separately and does not grant Cleric identity. The
 original file's final RulesElementTally excludes Divine Fortune. D043 therefore
-correctly preserves the saved pick, suppresses its contribution and explains
-it in Diagnostics. No deletion, formula change or diagnostic suppression is
-warranted. This conclusion uses saved topology, content requirements and the
+correctly preserves the saved pick and suppresses its contribution. No deletion,
+formula change or evaluator change is warranted. Owner decision (2026-10-25):
+dormant picks are silent in the UI — no Diagnostics note or badge — and kept for
+export, since a `.dnd4e` storage artifact reads as a bug to a player. This
+conclusion uses saved topology, content requirements and the
 original active tally, not a presumption that calculated caches are stale.
 
 ## Equipment follow-up boundaries

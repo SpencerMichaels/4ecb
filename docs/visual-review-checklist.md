@@ -983,20 +983,3 @@ sample-character diff; check only layout and fit.
     "+4 to AC against opportunity attacks you provoke by making a ranged
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
-
-## Inactive saved choices
-
-- [ ] **Dormant-pick notes.**
-  - **Where:** import `sample-chars/Erdan 11.dnd4e` (and
-    `Beldin Hammertongue 11.dnd4e`) and open it in the builder.
-  - **Expect:** a lock icon with a count (9 for Erdan, 3 for Beldin) sits
-    after the name-match badge in the same muted note color and opens
-    Diagnostics. The "Inactive saved choices" group comes after "Matched by
-    name on import" and lists each pick, for example "Lightning's Revelation
-    (Power): Saved at level 3 in the level-3 encounter power slot. This
-    character doesn't have that slot: Hunter's “No Level 3 Encounter Power”
-    switches it off." Review opens the Build tab at that level on Powers.
-    The warning and error counts don't change.
-  - **Wrong if:** the badge is colored like a warning or error, the lock
-    reads as "locked character", the badge row wraps badly at 140% zoom, or
-    Review lands on a different level.

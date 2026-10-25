@@ -34,7 +34,6 @@ import {
   deityAlignmentIssue,
   missingHoldingContentIssues,
   nameMatchedContentIssues,
-  dormantSelectionIssues,
   withCharacterIssues,
   type BuilderIssue,
 } from "./builder-diagnostics";
@@ -1325,7 +1324,6 @@ export function CharacterEditorPage({
         ? []
         : missingHoldingContentIssues(build, byId)),
       ...nameMatchedContentIssues(build, byId),
-      ...dormantSelectionIssues(planningEvaluation, byId, build),
     ],
   );
   const totalUnresolved = builderIssues.unresolved.length;
@@ -1333,7 +1331,6 @@ export function CharacterEditorPage({
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
   const noteCount = builderIssues.notes.length;
-  const inactiveCount = builderIssues.inactive.length;
   const contentUpdate = builderIssues.updates[0];
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
     setAccordionOverride(undefined);
@@ -1826,12 +1823,6 @@ export function CharacterEditorPage({
         "Records the imported file saved under IDs the game content doesn't have, matched to content records. Nothing to fix; check they're the ones you meant.",
       issues: builderIssues.notes,
     },
-    {
-      title: "Inactive saved choices",
-      description:
-        "Picks the character saved in slots a rule switches off for it, so they add nothing. Nothing to fix; they're kept, and come back if the slot does.",
-      issues: builderIssues.inactive,
-    },
   ];
   const renderIssueList = (issues: readonly BuilderIssue[]) => (
     <ul className="diagnostic-list">
@@ -2278,20 +2269,6 @@ export function CharacterEditorPage({
                   >
                     <Icon name="import" />
                     <span aria-hidden="true">{noteCount}</span>
-                  </button>
-                ) : null}
-                {inactiveCount > 0 ? (
-                  <button
-                    aria-label={`${inactiveCount} inactive saved ${inactiveCount === 1 ? "choice" : "choices"}, open diagnostics`}
-                    className="builder-health builder-health-note"
-                    title={`${inactiveCount} inactive saved ${inactiveCount === 1 ? "choice" : "choices"}`}
-                    type="button"
-                    onClick={() =>
-                      onNavigate(characterId, { workspace: "diagnostics" })
-                    }
-                  >
-                    <Icon name="lock" />
-                    <span aria-hidden="true">{inactiveCount}</span>
                   </button>
                 ) : null}
                 {contentUpdate === undefined ? null : (

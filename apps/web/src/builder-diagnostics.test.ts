@@ -15,7 +15,6 @@ import {
   contentNotInstalledIssue,
   contentUpdateIssue,
   deityAlignmentIssue,
-  dormantSelectionIssues,
   evaluationFailedIssue,
   missingHoldingContentIssues,
   nameMatchedContentIssues,
@@ -563,7 +562,6 @@ describe("character issues outside rules evaluation", () => {
         houseRules: [],
         updates: [],
         notes: [],
-        inactive: [],
       },
       [issue],
     );
@@ -636,7 +634,6 @@ describe("deity alignment", () => {
         houseRules: [],
         updates: [],
         notes: [],
-        inactive: [],
       },
       [failed],
     );
@@ -938,7 +935,6 @@ describe("records matched by name on import", () => {
         houseRules: [],
         updates: [],
         notes: [],
-        inactive: [],
       },
       issues,
     );
@@ -1045,68 +1041,15 @@ describe("dormant saved selections", () => {
     ],
   });
 
-  it("say what was saved, where, and which rule switches its slot off", () => {
-    expect(dormantSelectionIssues(dormantEvaluation, byId)).toEqual([
-      {
-        key: "inactive:pick",
-        kind: "inactive",
-        title: "Lightning's Revelation (Power)",
-        detail:
-          "Saved at level 3 in the level-3 encounter power slot. This character doesn't have that slot: Hunter's “No Level 3 Encounter Power” switches it off.",
-        effect:
-          "It stays saved and is kept on export, but adds nothing to the character. It comes back if the slot turns back on.",
-        target: { kind: "level-section", level: 3, section: "Powers" },
-      },
-    ]);
-  });
-
-  it("fall back to the requirement when no owned record blocks the slot", () => {
-    const [issue] = dormantSelectionIssues(
-      evaluation({
-        dormantSelections: [
-          {
-            occurrence: pick,
-            providerOccurrenceId: "level-3",
-            ruleOrdinal: 2,
-            slotName: "Pact Boon",
-            slotType: "Class Feature",
-            requires: "ID_FMP_CLASS_2",
-            blockedBy: [],
-          },
-        ],
-      }),
+  it("raise no builder issue in any group (saved silently, D043)", () => {
+    const groups = builderIssueGroups({
+      evaluation: dormantEvaluation,
       byId,
-    );
-    expect(issue?.detail).toBe(
-      "Saved at level 3 in the “Pact Boon” slot. This character doesn't have that slot: it needs “Cleric”, which isn't met.",
-    );
-    expect(issue?.target).toEqual({
-      kind: "level-section",
-      level: 3,
-      section: "Class",
+      effectiveLevel: 3,
+      planningHorizon: 3,
+      abilityScoresIncomplete: false,
+      abilityScoresHouseRuled: false,
     });
-  });
-
-  it("are notes of their own, never errors or warnings", () => {
-    const groups = withCharacterIssues(
-      builderIssueGroups({
-        evaluation: dormantEvaluation,
-        byId,
-        effectiveLevel: 3,
-        planningHorizon: 3,
-        abilityScoresIncomplete: false,
-        abilityScoresHouseRuled: false,
-      }),
-      dormantSelectionIssues(dormantEvaluation, byId),
-    );
-    expect(groups.inactive).toHaveLength(1);
-    expect(groups.errors).toEqual([]);
-    expect(groups.warnings).toEqual([]);
-    expect(groups.notes).toEqual([]);
-  });
-
-  it("are absent when no saved pick is dormant", () => {
-    expect(dormantSelectionIssues(evaluation(), byId)).toEqual([]);
-    expect(dormantSelectionIssues(undefined, byId)).toEqual([]);
+    for (const issues of Object.values(groups)) expect(issues).toEqual([]);
   });
 });

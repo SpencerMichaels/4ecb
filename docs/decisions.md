@@ -802,11 +802,12 @@ is active. The evaluator therefore distinguishes durable saved topology from
 the active occurrence projection: when a provider rule becomes inactive, its
 saved child and descendants stop contributing definitions, rules, stats, and
 choices without being deleted. If the provider reactivates, its preserved child
-can return. The player is told: the evaluation lists each saved pick whose
-select rule's `requires` switches it off (`dormantSelections`, with the
-blocking records), and the builder shows each as an "Inactive saved choices"
-note in Diagnostics, never a warning. This applies whenever a pick is dormant,
-on import or later (2026-10-23).
+can return. The evaluation lists each saved pick whose select rule's
+`requires` switches it off (`dormantSelections`, with the blocking records) as
+evaluation data for diagnostics and development. Dormant picks are silent in
+the UI (owner decision 2026-10-25): no Diagnostics group, badge, warning or
+note, because a pick only a `.dnd4e` save holds means nothing to a player and
+reads as a bug. They are preserved silently and kept on export.
 
 This is recovered generic behavior, not a Ranger exception. In the original
 content, `ID_INTERNAL_GRANTS_RANGER` places

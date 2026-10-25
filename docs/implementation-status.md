@@ -5,7 +5,8 @@
 Investigation and complexity ordering are recorded in
 [`tasks-triage.md`](tasks-triage.md). The original `tasks.txt` remains the
 owner's report; its Divine Fortune item was corrected to **inactive saved
-choice**, not missing choice.
+choice**, not missing choice; dormant picks are now silent in the UI and kept
+for export (owner decision 2026-10-25, D043).
 
 Action Point benefits now remain in "Remember in play" as well as on their
 card. This owner-approved exception applies to self, ally and beast-companion
@@ -105,16 +106,16 @@ total). Import now:
 - seats a saved child only in a select of its own type, and warns about one no
   slot holds (`0635243`, `0c204fe`; KrizDevvon's Elven no longer fills the Deva
   ability-bonus choice);
-- notes saved picks whose slot a `requires` switches off, any time, in
-  Diagnostics "Inactive saved choices" (`ace6cb5`, `e8b6ffd`; Erdan 9, Beldin
-  3, and a stale Divine Fortune on Hu Sheng-Ming and the KrizDevvon saves).
+- preserves saved picks whose slot a `requires` switches off, silently (D043;
+  the "Inactive saved choices" notes of `ace6cb5`, `e8b6ffd` were removed on
+  2026-10-25: Erdan 9, Beldin 3, Hu Sheng-Ming's Divine Fortune, KrizDevvon).
 
 Remaining differences on the new files are classified (triage notes in ignored
 `tmp/triage18/`): one player's homebrew (TIV skills, DOMT items, Lunge, many
 proficiencies; also Charisma for Constitution powers on that machine:
 oleander's Feast of Souls, test_test's Diabolic Grasp), artifact-blade
 proficiencies saved as weapons (Beldin, Erdan, Max, Trey), a different base
-part set (house-ruled extra encounter powers, now noted as inactive),
+part set (house-ruled extra encounter powers, preserved as inactive),
 KrizDevvon level 14's feats saved as illegal stubs, and Hystan_Original_7 saved
 without the gear part. Ghost of the Past keeps its Language choice (the
 records the players used omit it; both texts grant a language).
