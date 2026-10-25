@@ -55,8 +55,12 @@ grant: Blade Initiate now grants its existing Swordmage Warding feat power,
 and 17 feats (two through Student of the Plague traits) gain structural
 `ID_4ECB_POWER_*` records with original summaries (D089), each one card with
 the right usage and action. The other 78 are riders, recovery, ritual, Action
-Point or transitive grants; Far Thought, Coincidental Success and Secret of
-Reawakening await the owner. Path of Destruction's feat power now carries the
+Point or transitive grants. By owner decision Far Thought trades its permanent
+telepathy for a Daily power card, and Coincidental Success and Secret of
+Reawakening stay reminders. Native `power-replace` swaps (named gain, LOSE
+category) now work; Blowgun Expert and Gythka Novice name their real powers,
+Disrupting Shot gains its swap rule, and Power Strike is choosable with
+Powerful Strike (its Category level is read when it has no Level field). Path of Destruction's feat power now carries the
 feat's name. CBLoader parity clean; parity baseline unchanged. Some feats
 still show both card and reminder (listed in the triage) pending a refinement
 of the access-only reminder rule.

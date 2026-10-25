@@ -175,6 +175,57 @@ Novice's `"Gythka Claw Scoop:…"` name no power (the records are "Uncanny Aim
 add uses of an existing power (Epic Recovery, Discipline Adept, Reaping
 Renewal, …) are (b) modifiers.
 
+**Item 8 follow-up (owner decisions, 2026-10-25).**
+
+- **Far Thought.** The feat's only rule, the permanent `Telepathy` vision
+  grant, is removed (`RemoveNodes <rules />`). The feat now grants the
+  structural daily power `ID_4ECB_POWER_FAR_THOUGHT`: Daily, Free Action, with
+  a short original effect summary. The feat text names no action and nothing
+  triggers it, so Free Action is used; the legacy builder showed no power.
+  Senses no longer lists the feat's telepathy sentence, while another source
+  (Elan Heritage, "telepathy 5") still shows. The feat is access-only, so it
+  has no reminder.
+- **Coincidental Success, Secret of Reawakening and Psionic Vampire** stay
+  reminders, with no change.
+- **Power swaps.** The evaluator had treated `power-replace` as ordinary
+  power retraining and ignored its target. It now follows the native
+  `GAIN:LOSE` semantics described in `docs/rules-engine.md`: GAIN is the one
+  power gained, by name or ID, and LOSE is the category an owned power must
+  match. A bare level `N` means that level or lower, and `N+` means N or
+  higher. The corpus has 112 such rules; no private sample owns one.
+  - **Blowgun Expert.** It now references `ID_FMP_POWER_7356`, "Uncanny Aim
+    (Blowgun)".
+  - **Gythka Novice.** It now references `ID_FMP_POWER_12925`, Gythka Claw
+    Swoop. LOSE is narrowed from `attack,3+` to `encounter,attack,3+`, matching
+    the feat's text (D091).
+  - **Disrupting Shot.** It gains
+    `power-replace="ID_FMP_POWER_13588_DISRUPTING_SHOT:ID_FMP_CLASS_5,encounter,attack,1+"`.
+    That record is CBLoader's ranger copy of the power, whose prerequisite is
+    this feat. The hunter record `ID_FMP_POWER_13588` requires the Hunter
+    class.
+  - **Powerful Strike.** Legacy needs no rule here. Power Strike's own
+    prerequisites ("… or Powerful Strike …") admit it to the fighter's
+    encounter slots. It failed only because its level is the bare `1` in its
+    Category and it has no Level field. A power with no Level field now reads
+    that number, as native does. Only Power Strike and Backstab are affected.
+  - **Verification on private probes.** The probes were chopper farlund
+    (fighter, level 8) and Hystan_8 (ranger) with each feat added. Each swap is
+    offered with the right lost powers: Blowgun Expert offers the level 6+
+    utility Mighty Sprint; Gythka Novice offers the level 3+ encounter attacks
+    Sweeping Blow and Bloody the Field; Disrupting Shot offers ranger encounter
+    attacks. Applying each swap removes the lost power. The gained power then
+    has exactly one power and one card with no new errors:
+    - Uncanny Aim (Blowgun): Encounter, Minor Action
+    - Gythka Claw Swoop: Encounter, Standard
+    - Disruptive Shot: Encounter, Standard
+    - Power Strike: Encounter, No Action, taken in the level-3 encounter slot
+      Without the feat, Power Strike stays ineligible on its prerequisite.
+- **Regression checks.** An old-vs-new engine comparison over all 40 samples
+  showed no change to powers, diagnostics or eligible candidates. That
+  includes Silaqui, who has the unrelated Disruptive Strike. The
+  CBLoader parity check is clean (38339), and the pack has 38374 records
+  (+1). `pnpm parity:baseline` has no added or fixed keys.
+
 Verification: `scripts/build-private-content.sh` CBLoader parity check
 clean (38339 records, none missing/extra/changed); the pack has 38373
 records (+18) and an unchanged 41 import warnings. A private synthetic probe
