@@ -909,6 +909,40 @@ const LEVEL_ATTACK_LINE =
 /** The attack stat of a "your level + N" attack. */
 export const LEVEL_ATTACK_STAT = "Level";
 
+/**
+ * A power a summoned creature uses: the Summoning keyword, or a stat block
+ * naming the creature a "Summoned Creature" (Servant of the Staff). With a
+ * "your level + N" attack it is a fixed-bonus creature (D095): its attack
+ * and damage take only creature (`ALLY.`/`COMPANION.`/`SUMMON.`) and
+ * power-keyed bonuses, never the summoner's character-wide or keyword ones.
+ * Native PowerStats runs CalcKeywords and CalcGlobal on every row, so legacy
+ * adds them; their description "specifies otherwise" (D091).
+ */
+function summonedCreaturePower(
+  power: ContentEntity,
+  keywords: readonly string[],
+): boolean {
+  return (
+    keywords.some((keyword) => key(keyword) === "summoning") ||
+    power.specifics.some((specific) =>
+      /\bsummoned creature\b/i.test(specific.value),
+    )
+  );
+}
+
+/** A fixed-bonus creature's own bonus to one statistic, as a component. */
+function creatureStatComponents(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  statNames: readonly string[],
+  label: string,
+): PowerComponent[] {
+  const value = statNames.reduce(
+    (sum, stat) => sum + companionStatBonus(stats, "SUMMON", stat),
+    0,
+  );
+  return value === 0 ? [] : [{ label, value }];
+}
+
 function isBeastAttackLine(line: string | undefined): boolean {
   return BEAST_ATTACK_LINE.test(line ?? "");
 }
@@ -2617,6 +2651,7 @@ export function evaluatePowers(input: {
       .split(",")
       .map((value) => value.trim())
       .filter(Boolean);
+    const summonedCreature = summonedCreaturePower(power, keywords);
     const attackType = effectiveField(power, "Attack Type", input.overlays);
     const rawBasic = effectiveField(power, "_BasicAttack", input.overlays)
       ?.trim()
@@ -2921,14 +2956,21 @@ export function evaluatePowers(input: {
           };
         }
         // A summoned creature attacks with your level plus a fixed bonus;
-        // no ability, weapon or implement applies, only bonuses keyed to
-        // this power.
+        // no ability, weapon or implement applies, only the creature's own
+        // bonuses and bonuses keyed to this power.
         const levelAttack = LEVEL_ATTACK_LINE.exec(authoredLine);
         if (levelAttack !== null) {
           const powerBonus = Number(levelAttack[1]);
           const attackComponents: PowerComponent[] = [
             { label: "your level", value: input.level },
             { label: "power attack bonus", value: powerBonus },
+            ...(summonedCreature
+              ? creatureStatComponents(
+                  input.stats,
+                  ["attack rolls"],
+                  "creature attack bonus",
+                )
+              : []),
             ...powerSpecificComponents(input.stats, power, "attack"),
           ];
           return {
@@ -3132,6 +3174,12 @@ export function evaluatePowers(input: {
             }),
             conditionalDamage: [],
           };
+        // D095: a fixed-bonus creature's damage is its dice, the named
+        // ability modifiers and flat terms, its own damage bonuses and those
+        // keyed to this power; nothing of the summoner's weapon, implement,
+        // keywords or character-wide damage.
+        const fixedCreature =
+          summonedCreature && attackStat === LEVEL_ATTACK_STAT;
         const damageComponents: PowerComponent[] = [];
         const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
         // Native ParseWeaponDmg: every N[W] term of the damage expression
@@ -3252,7 +3300,8 @@ export function evaluatePowers(input: {
                 : { label: `${ability} modifier`, value: modifier };
             }),
           );
-        if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
+        if (dice !== undefined && !fixedCreature)
+          damageComponents.push(...weaponSpecific.damage);
         const offHandImplements = handCandidates.filter(
           (candidate) =>
             candidate.hand === "off" &&
@@ -3290,7 +3339,17 @@ export function evaluatePowers(input: {
         // enhancement, sharing one maximum with pact-blade transfers of the
         // same bonus ("[Doesn't Stack]").
         const offHandEnhancement = pairedImplement?.enhancement ?? 0;
-        if (hasDamage && !abilityOnly)
+        if (hasDamage && fixedCreature)
+          damageComponents.push(
+            // Native IsDamageRoll: flat damage is not a damage roll.
+            ...creatureStatComponents(
+              input.stats,
+              flat ? ["damage"] : ["damage", "damage rolls"],
+              "creature damage bonus",
+            ),
+            ...powerSpecificComponents(input.stats, power, "damage"),
+          );
+        if (hasDamage && !abilityOnly && !fixedCreature)
           damageComponents.push(
             ...combatStatComponents(
               input.stats,
@@ -3328,6 +3387,7 @@ export function evaluatePowers(input: {
           );
         if (
           dice !== undefined &&
+          !fixedCreature &&
           weaponPower &&
           equipment.properties.includes("versatile") &&
           versatileUsedTwoHanded
@@ -3339,6 +3399,7 @@ export function evaluatePowers(input: {
         if (
           hasDamage &&
           !abilityOnly &&
+          !fixedCreature &&
           implementPower &&
           equipment.weaponDefinition
         )
@@ -3394,7 +3455,7 @@ export function evaluatePowers(input: {
                 },
               ]
             : []),
-          ...(!hasDamage
+          ...(!hasDamage || fixedCreature
             ? []
             : conditionalStrikerDamage({
                 activeDefinitionIds: input.activeDefinitionIds,

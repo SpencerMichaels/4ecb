@@ -2405,6 +2405,69 @@ describe("power evaluation", () => {
     expect(corrected?.unsupported).toEqual([]);
   });
 
+  it("gives a fixed-bonus summoned creature only creature and power-keyed bonuses (D095)", () => {
+    const evaluate = (fields: Record<string, string>) =>
+      evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["SUMMONED"],
+        inventory: [],
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 4),
+          "attack rolls": combatStat("attack rolls", 2),
+          damage: combatStat("damage", 1),
+          "damage rolls": combatStat("damage rolls", 2),
+          "arcane:damage": combatStat("arcane:damage", 7),
+          "ALLY.attack rolls": stat("ALLY.attack rolls", 1),
+          "SUMMON.damage": stat("SUMMON.damage", 5),
+          "COMPANION.damage rolls": stat("COMPANION.damage rolls", 1),
+          "SUMMONED:damage": combatStat("SUMMONED:damage", 2),
+        },
+        overlays: [],
+        entities: [
+          entity("SUMMONED", "Synthetic Ally Attack", "Power", {
+            "Attack Type": "Melee 1",
+            Attack: "your level + 5 vs. AC",
+            ...fields,
+          }),
+        ],
+      })[0]?.variants[0]?.attacks?.[0];
+
+    // Dice + Charisma + SUMMON.damage + COMPANION.damage rolls + the
+    // power's own bonus; no damage, damage rolls or arcane:damage.
+    const creature = evaluate({
+      Keywords: "Arcane, Summoning",
+      Hit: "1d8 + your Charisma modifier damage.",
+    });
+    expect(creature).toMatchObject({ attackBonus: 16, damage: "1d8+12" });
+    expect(creature?.damageComponents?.map(({ label }) => label)).toEqual([
+      "Charisma modifier",
+      "creature damage bonus",
+      "SUMMONED:damage",
+    ]);
+
+    // Flat damage is not a damage roll: no COMPANION.damage rolls.
+    expect(
+      evaluate({ Keywords: "Arcane, Summoning", Hit: "5 damage." }),
+    ).toMatchObject({ damage: "12" });
+
+    // A stat block naming a Summoned Creature, without the keyword.
+    expect(
+      evaluate({
+        "Synthetic Servant Stats": "Medium humanoid; Summoned Creature",
+        Hit: "1d8 + your Charisma modifier damage.",
+      }),
+    ).toMatchObject({ damage: "1d8+12" });
+
+    // A "your level + N" attack you make yourself (a transformed form)
+    // keeps your damage bonuses; its attack stays the fixed line.
+    expect(
+      evaluate({
+        Keywords: "Arcane",
+        Hit: "1d8 + your Charisma modifier damage.",
+      }),
+    ).toMatchObject({ attackBonus: 15, damage: "1d8+16" });
+  });
+
   it("classifies healing surges and temporary hit point effects", () => {
     const [power] = evaluatePowers({
       level: 6,

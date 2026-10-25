@@ -52,15 +52,18 @@ export function evaluatedHealingSurgeValue(
   );
 }
 
-/** The stat prefix of a companion kind (legacy `FamiliarBlock`, `BeastBlock`). */
-export type CompanionKind = "FAMILIAR" | "BEAST";
+/**
+ * The stat prefix of a companion kind (legacy `FamiliarBlock`, `BeastBlock`;
+ * `SUMMON.` for a summoned creature, as Alien Summoning's statadds name it).
+ */
+export type CompanionKind = "FAMILIAR" | "BEAST" | "SUMMON";
 
 const COMPANION_PREFIXES = (kind: CompanionKind) =>
   ["ALLY", "COMPANION", kind] as const;
 
 /**
  * A companion's bonus to one of its statistics: the character's `ALLY.`,
- * `COMPANION.` and kind-specific (`FAMILIAR.`, `BEAST.`) stats, summed as
+ * `COMPANION.` and kind-specific (`FAMILIAR.`, `BEAST.`, `SUMMON.`) stats, summed as
  * legacy `CompanionStatBlock.GetCompanionStat` does.
  */
 export function companionStatBonus(

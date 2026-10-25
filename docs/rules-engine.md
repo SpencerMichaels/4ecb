@@ -331,6 +331,17 @@ the weapon's enhancement, `damage rolls`, `:damage` keyword stats and
 versatile do not apply; `damage` and `:nonroll-damage` do (the latter also for
 damage rolls), and striker reminders still attach.
 
+A "your level + N vs. X" attack line is the attack bonus alone (plus bonuses
+keyed to the power). When the power is a summoned creature's (the Summoning
+keyword, or a stat block naming a "Summoned Creature") it is a fixed-bonus
+creature under D095: attack and damage add the creature's `ALLY.`,
+`COMPANION.` and `SUMMON.` stats (`attack rolls`; `damage`, and `damage rolls`
+for a damage roll) and power-keyed stats, but none of the summoner's weapon,
+implement, keyword or character-wide bonuses. Its damage keeps the dice, the
+named ability modifiers and flat terms. Other "your level + N" powers made by
+the character (Wyrm Form Basic Bite, Breath Weapon, boons) keep ordinary
+damage.
+
 Power prose naming a `beast's <ability> modifier` is not a character-ability
 reference. Such a clause is excluded from ordinary ability math and emits
 `companion-ability:<power-id>` until the selected companion occurrence and its
