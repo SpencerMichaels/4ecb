@@ -112,6 +112,10 @@ only, with no rule behind it.
       elements by ID, so the ID must keep resolving.
     - `CBLoader/Custom` stays unmodified, and the build checks it against
       CBLoader's own merged cache before corrections apply.
+  - **Parity:** a legacy save caches the card as a power (Sylestine's
+    "Familiar: Arcane Wisp", At-Will, Minor). `scripts/legacy-parity.ts` lists
+    a cached power whose ID now resolves to a non-power record under
+    `cachedPowerTypeParity.retiredPowers` instead of comparing it.
   - **The Widow of Arach-Tinilith theme** (_Dragon_ 413) was never in the
     official data; the community coded the whole theme. Its spiderling familiar
     existed only as one of these cards. The correction turns that card into a

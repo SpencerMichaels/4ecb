@@ -188,8 +188,27 @@ export function compareCharacterParity(
       }));
     });
   });
+  // A cached power whose ID the content now resolves to a non-power record
+  // was retired on purpose, e.g. the community "Familiar: X" cards that
+  // content/corrections/91-familiar-cards.part turns into inert Internal
+  // records because the sheet prints a familiar card instead. It is listed,
+  // not compared.
+  const typeById = new Map(
+    entities.map((entity) => [key(entity.id), key(entity.type)]),
+  );
+  const retired = (cachedPower: { readonly id?: string | undefined }) => {
+    const type = typeById.get(key(cachedPower.id ?? ""));
+    return type !== undefined && type !== "power";
+  };
+  const retiredPowers = imported.snapshot.powers
+    .filter(retired)
+    .map((cachedPower) => ({
+      power: cachedPower.name,
+      definitionId: cachedPower.id,
+      type: typeById.get(key(cachedPower.id ?? "")),
+    }));
   const typeComparisons = comparePowerTypes(
-    imported.snapshot.powers,
+    imported.snapshot.powers.filter((cachedPower) => !retired(cachedPower)),
     sheet?.powers ?? [],
     evaluatedPowerId,
   );
@@ -281,6 +300,7 @@ export function compareCharacterParity(
     cachedPowerTypeParity: {
       usage: summarizePowerTypes(typeComparisons, "usage"),
       action: summarizePowerTypes(typeComparisons, "action"),
+      retiredPowers,
     },
     diagnostics: evaluated.diagnostics.slice(0, 100),
   };
