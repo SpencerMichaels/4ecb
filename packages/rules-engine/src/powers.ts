@@ -1643,10 +1643,12 @@ const abilityNames = [
 /**
  * Native CalcDamage for a damage expression without dice: the hit text up to
  * its first " damage" (none when a sentence ends before it) whose first word
- * is an ability followed by " modifier" (ParseAbilityMod on "+0") deals flat
- * damage, e.g. Staggering Note's "Charisma modifier thunder damage" is 6.
- * Returns the expression's own constant (0), or undefined when the
- * expression is not flat damage.
+ * is an ability followed by " modifier" (ParseAbilityMod on "+0") or a number
+ * (ParseDamage, then AddToDamage sums the "+ <ability> modifier" terms) deals
+ * flat damage: Staggering Note's "Charisma modifier thunder damage" is 6, Well
+ * of Shadows' secondary "5 + Charisma modifier necrotic damage" 11, even
+ * though an "ongoing 10" rider follows. Returns the expression's own constant,
+ * or undefined when the expression is not flat damage.
  */
 function nativeFlatDamageBase(hitClause: string): number | undefined {
   const end = hitClause.toLocaleLowerCase().indexOf(" damage");
@@ -1655,6 +1657,8 @@ function nativeFlatDamageBase(hitClause: string): number | undefined {
   if (sentence >= 0 && sentence < end) return undefined;
   const expression = hitClause.slice(0, end).trim();
   if (/\d+d\d+|\[[WB]\]/iu.test(expression)) return undefined;
+  const leading = /^(\d+)(?:\s|$)/u.exec(expression)?.[1];
+  if (leading !== undefined) return Number(leading);
   if (
     new RegExp(`^(?:${abilityNames.join("|")}) modifier\\b`, "iu").test(
       expression,

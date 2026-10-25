@@ -742,6 +742,14 @@ describe("power evaluation", () => {
     expect(
       damageFor("Charisma modifier. The target takes damage."),
     ).toBeUndefined();
+    // A leading number is the expression's constant (ParseDamage), and an
+    // "ongoing" rider after the damage does not replace it.
+    expect(
+      damageFor(
+        "5 + Charisma modifier necrotic damage, and the target takes ongoing 10 necrotic damage (save ends).",
+      ),
+    ).toBe("20");
+    expect(damageFor("3 damage.")).toBe("12");
   });
 
   it("adds versatile damage only when the legacy two-handed choice is set", () => {
