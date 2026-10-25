@@ -348,7 +348,7 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.paper-a4 \.print-reference-card\s*\{[\s\S]*?height:\s*86\.8mm;[\s\S]*?width:\s*63mm;/,
     );
-    expect(sheetSource).toContain("chunks(printableCards, 9)");
+    expect(sheetSource).toContain("chunks(resolvedLayout.deck, 9)");
     expect(sheetSource).toContain("powerActionLabel(card.actionType)");
     expect(sheetSource).toContain("powerTextAtLevel(value, characterLevel)");
     expect(sheetSource).toContain('.replace(/\\bFortitude\\b/gi, "Fort")');

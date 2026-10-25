@@ -20,7 +20,20 @@ function isEquipmentEditorRoute(
   );
 }
 
+function isSheetPreviewRoute(
+  route: AppRoute,
+): route is Extract<AppRoute, { readonly page: "characters" }> {
+  return (
+    route.page === "characters" &&
+    route.characterId !== undefined &&
+    route.mode === undefined &&
+    route.preview === true
+  );
+}
+
 /**
+ * The sheet's View and Edit modes are one print preview, too.
+ *
  * Inventory and Loadout are two route-backed views of the same Equipment
  * workspace. Moving focus to the main landmark for that local view change
  * would also scroll the page to the top, unlike a true navigation.
@@ -30,9 +43,12 @@ export function shouldFocusMainContentAfterRouteChange(
   next: AppRoute,
 ): boolean {
   return !(
-    isEquipmentEditorRoute(previous) &&
-    isEquipmentEditorRoute(next) &&
-    previous.characterId === next.characterId
+    (isEquipmentEditorRoute(previous) &&
+      isEquipmentEditorRoute(next) &&
+      previous.characterId === next.characterId) ||
+    (isSheetPreviewRoute(previous) &&
+      isSheetPreviewRoute(next) &&
+      previous.characterId === next.characterId)
   );
 }
 

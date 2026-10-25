@@ -1,6 +1,6 @@
 # Editable character sheet — plan (owner-reviewed 2026-10-25)
 
-Status: **approved; phases 0–1 next.** Owner task (tasks.txt): allow editing the
+Status: **approved; phases 0–1 done (2026-10-25, D099); phase 2 next.** Owner task (tasks.txt): allow editing the
 character sheet with view and edit modes — moving/hiding cards, choosing
 reference sections, pinning or removing reminders — and, if manual reminders
 land, drop the "all Action Point riders are reminders" special case.
@@ -10,8 +10,9 @@ land, drop the "all Action Point riders are reminders" special case.
 - The "character sheet" users see is the print preview
   (`#/characters/<id>?preview=1`); the interactive View sheet is deferred to M6.
 - Pipeline: `buildEvaluatedSheetModel` → `withSheetOverview`
-  (`packages/sheet-model/src/overview.ts`: features, reminders) → web card deck
-  (`print-card-sequence.ts`, `power-card-order.ts`, 9 per page) →
+  (`packages/sheet-model/src/overview.ts`: features, reminders) → card deck
+  (`sheetCardDeck` in sheet-model since phase 0, then `applySheetLayout`; 9
+  per page) →
   `SheetOverview.tsx` probe-fits page 1, continuations, scratchpad, reference
   pages; page numbers chain via `onPageCount`.
 - `CharacterRecord` already carries non-build metadata (`sheetSettings`,
@@ -115,9 +116,9 @@ sheet-model with keys.
 
 ## 5. Phases
 
-0. Stable identity (item card IDs, reminder candidate IDs/`coveredBy`, deck
-   into sheet-model); no visible change.
-1. **Smallest slice:** `SheetLayout` + persistence, route/toggle, panel with
+0. **Done.** Stable identity (item card IDs, deck into sheet-model); no
+   visible change. Reminder candidate IDs/`coveredBy` move to phase 2.
+1. **Done.** `SheetLayout` + persistence, route/toggle, panel with
    section toggles, card hide/show, global reset.
 2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
    removal.

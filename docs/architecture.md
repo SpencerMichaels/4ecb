@@ -457,6 +457,17 @@ One visual card component supports, across staged milestones:
 - the M5.8 interactive play mode, where activation dispatches a `PlayState`
   command.
 
+The printed card deck order (`sheetCardDeck` in
+`packages/sheet-model/src/card-deck.ts`) and its stable, provenance-built card
+keys live in sheet-model. A character's sheet layout (D099,
+`CharacterRecord.sheetLayout`) is presentation stored beside the build: the
+pure `applySheetLayout` (`packages/sheet-model/src/sheet-layout.ts`) selects
+which cards and sections print without computing any value, and item cards
+follow their holdings' legacy `showPowerCard` flags, applied after evaluation.
+The sheet page keeps layout and those flags in their own state, so editing
+them (print preview Edit mode, `?preview=1&edit=1`) never re-evaluates the
+character.
+
 Print settings form a persisted `SheetRenderProfile` with paper size, orientation,
 included sections, card options, color mode, font scale, and blank-field policy.
 Print CSS uses explicit page boxes, break controls, fixed card grids, and cut-safe

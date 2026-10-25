@@ -44,6 +44,23 @@ describe("route focus policy", () => {
     );
   });
 
+  it("keeps focus when the sheet switches between View and Edit", () => {
+    const view = {
+      page: "characters" as const,
+      characterId: "one",
+      preview: true,
+    };
+    const edit = { ...view, sheetEdit: true };
+    expect(shouldFocusMainContentAfterRouteChange(view, edit)).toBe(false);
+    expect(shouldFocusMainContentAfterRouteChange(edit, view)).toBe(false);
+    expect(
+      shouldFocusMainContentAfterRouteChange(view, {
+        ...edit,
+        characterId: "two",
+      }),
+    ).toBe(true);
+  });
+
   it("retains main-landmark focus for major navigation", () => {
     const equipment = {
       page: "characters" as const,

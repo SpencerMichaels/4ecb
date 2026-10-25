@@ -447,6 +447,75 @@ describe("CharacterRepository", () => {
     upgraded.close();
   });
 
+  it("saves the sheet layout and item card flags without touching last modified", async () => {
+    const storage = repository();
+    const holding = {
+      id: "holding-1",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [{ name: "Synthetic Cloak", type: "Magic Item" }],
+      overrides: {},
+      legality: "rules-legal" as const,
+    };
+    const base = character();
+    await storage.put({
+      ...base,
+      build: { ...base.build, inventory: [holding] },
+    });
+    const layout = {
+      version: 1 as const,
+      hiddenSections: ["scratchpad" as const],
+      hiddenCards: ["power:id_fmp_power_1"],
+    };
+    const saved = await storage.updateMetadata("character-one", {
+      sheetLayout: layout,
+      itemCardsShown: { "holding-1": false },
+    });
+    expect(saved.sheetLayout).toEqual(layout);
+    expect(saved.build.inventory[0]?.showPowerCard).toBe(false);
+    expect(saved.updatedAt).toBe(base.updatedAt);
+    expect((await storage.listMetadataPartitioned()).active[0]?.updatedAt).toBe(
+      base.updatedAt,
+    );
+    expect(await storage.get("character-one")).toEqual(saved);
+
+    // Backups and duplicates carry it like any other record data.
+    const backup = await storage.exportBackup();
+    const destination = repository();
+    expect(await destination.restoreBackup(backup)).toBe(1);
+    expect((await destination.get("character-one"))?.sheetLayout).toEqual(
+      layout,
+    );
+    const copy = await storage.duplicate("character-one");
+    expect(copy.sheetLayout).toEqual(layout);
+    expect(copy.build.inventory[0]?.showPowerCard).toBe(false);
+
+    // Malformed entries are dropped; `null` resets to the defaults.
+    const lenient = await storage.updateMetadata("character-one", {
+      sheetLayout: {
+        version: 1,
+        hiddenSections: ["not-a-section", "session-notes"],
+        hiddenCards: [7, "power:x"],
+      } as never,
+    });
+    expect(lenient.sheetLayout).toEqual({
+      version: 1,
+      hiddenSections: ["session-notes"],
+      hiddenCards: ["power:x"],
+    });
+    const reset = await storage.updateMetadata("character-one", {
+      sheetLayout: null,
+    });
+    expect(reset).not.toHaveProperty("sheetLayout");
+    expect(reset.updatedAt).toBe(base.updatedAt);
+    // A real metadata edit still moves it.
+    const renamed = await storage.updateMetadata("character-one", {
+      notes: "Edited",
+    });
+    expect(renamed.updatedAt).not.toBe(base.updatedAt);
+  });
+
   it("updates, duplicates, trashes, and restores characters", async () => {
     const storage = repository();
     await storage.put(character());

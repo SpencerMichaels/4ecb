@@ -250,6 +250,21 @@ On **View sheet**, select Letter or A4, optional blank hit points, power/item
 cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
+The print preview's toolbar switches **Sheet: View | Edit**. **Edit** keeps
+the paper preview and opens **Sheet contents** beside it (on a narrow window,
+open it from the toolbar's **Sheet contents** button). There you choose which
+pages print — the play scratchpad, each full-reference group (features, item
+reference, power index, rituals & practices, character profile) and session
+notes; page 1 always prints — and which cards print, by group with **Show
+all**/**Hide all**. Hiding a power's card keeps it on the scratchpad and in the
+power index, and page numbers close up around hidden pages. An item's card
+choice is saved on the item itself, so it carries over when the character is
+exported to the original Character Builder. **Reset sheet to defaults** (click
+again to confirm) prints everything again. Changes save automatically, are
+kept per character in backups and copies, and don't change the character's
+"last modified" time; printing (**Print or save PDF**, or **PDF** from the
+library) always uses the saved choices.
+
 The sheet's **Worn/Held Items** pane lists equipped gear by loadout slot, and
 **Carried Items** lists only the copies that are not equipped (three daggers
 with one equipped shows two). The encumbrance total still counts everything.

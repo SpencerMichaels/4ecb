@@ -10,8 +10,13 @@ import {
 import { CharacterRepository } from "@4ecb/browser-storage";
 import {
   characterDisplayName,
+  normalizeSheetLayout,
+  withSheetCardsShown,
+  withSheetSectionShown,
   type CharacterPortrait,
   type CharacterRecord,
+  type SheetLayout,
+  type SheetSectionId,
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
@@ -20,19 +25,20 @@ import {
   type EvaluatedCharacter,
 } from "@4ecb/rules-engine";
 import {
+  applySheetLayout,
   buildEvaluatedSheetModel,
   buildSheetModel,
   featureChoiceText,
   isSheetPlayCard,
-  sheetCardDeck,
   sortedPowerCards,
   type CharacterSheetModel,
   type SheetDeckCard,
+  type SheetLayoutCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
-import { loadCharacter } from "./character-drafts";
+import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { Icon } from "./Icon";
 import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
@@ -48,9 +54,23 @@ import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
-import { SheetOverview } from "./SheetOverview";
+import { referenceSections, SheetOverview } from "./SheetOverview";
+import { SegmentedControl } from "./SegmentedControl";
+import {
+  SheetContentsPanel,
+  sheetContentsSections,
+} from "./SheetContentsPanel";
 
 const characters = new CharacterRepository();
+
+/** Each holding's `showPowerCard` flag: whether it prints an item card. */
+const holdingCardFlags = (record: CharacterRecord | undefined) =>
+  new Map(
+    (record?.build.inventory ?? []).map((entry) => [
+      entry.id,
+      entry.showPowerCard !== false,
+    ]),
+  );
 
 function ValueList({
   values,
@@ -118,6 +138,8 @@ export function CharacterSheetPage({
   printCardTextSize = 8,
   countCoinWeight = true,
   paper = "letter",
+  sheetEditing = false,
+  onSheetModeChange,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -130,6 +152,9 @@ export function CharacterSheetPage({
   readonly countCoinWeight?: boolean;
   /** The app-wide paper size (a preference, not per-character data). */
   readonly paper?: PaperSize;
+  /** The print preview's Edit mode (`?preview=1&edit=1`, D099). */
+  readonly sheetEditing?: boolean;
+  readonly onSheetModeChange?: (editing: boolean) => void;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(openPrintPreview);
   useEffect(() => {
@@ -148,8 +173,22 @@ export function CharacterSheetPage({
   const [initialLoadSettled, setInitialLoadSettled] = useState(false);
   const [rulesClient, setRulesClient] = useState<RulesRuntimeClient>();
   const printRequested = useRef(false);
+  // Sheet presentation lives apart from `character`, so changing it never
+  // re-evaluates the character or rebuilds the sheet model (D099).
+  const [sheetLayout, setSheetLayout] = useState<SheetLayout>();
+  const [itemCardsShown, setItemCardsShown] = useState<
+    ReadonlyMap<string, boolean>
+  >(() => new Map());
+  const [contentsOpen, setContentsOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string>();
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const latestPresentation = useRef({ sheetLayout, itemCardsShown });
+  latestPresentation.current = { sheetLayout, itemCardsShown };
   useEffect(() => {
     setError(undefined);
+    setSheetLayout(undefined);
+    setItemCardsShown(new Map());
+    setSaveError(undefined);
     setInitialLoadSettled(false);
     setCharacter(undefined);
     setContent(undefined);
@@ -160,6 +199,8 @@ export function CharacterSheetPage({
       try {
         const loaded = await loadCharacter(characters, characterId);
         setCharacter(loaded);
+        setSheetLayout(normalizeSheetLayout(loaded?.sheetLayout));
+        setItemCardsShown(holdingCardFlags(loaded));
         if (loaded?.profileBinding !== undefined)
           setContent(
             await appContentRuntime.getPack(loaded.profileBinding.packId),
@@ -272,6 +313,111 @@ export function CharacterSheetPage({
     rulesClient,
     !initialLoadReady,
   );
+  // Saves are silent and serialized (D098): only a failure shows, with a
+  // retry that saves the whole current presentation.
+  const savePresentation = useCallback(
+    (changes: Parameters<CharacterRepository["updateMetadata"]>[1]) => {
+      saveQueue.current = saveQueue.current
+        .then(async () => {
+          await persistCharacterDraft(characters, characterId);
+          await characters.updateMetadata(characterId, changes);
+          setSaveError(undefined);
+        })
+        .catch((reason: unknown) => {
+          setSaveError(
+            reason instanceof Error ? reason.message : String(reason),
+          );
+        });
+    },
+    [characterId],
+  );
+  const retrySave = useCallback(() => {
+    const current = latestPresentation.current;
+    savePresentation({
+      sheetLayout: current.sheetLayout ?? null,
+      itemCardsShown: Object.fromEntries(current.itemCardsShown),
+    });
+  }, [savePresentation]);
+  const updateLayout = useCallback(
+    (next: SheetLayout | undefined) => {
+      setSheetLayout(next);
+      savePresentation({ sheetLayout: next ?? null });
+    },
+    [savePresentation],
+  );
+  const showSection = useCallback(
+    (section: SheetSectionId, shown: boolean) =>
+      updateLayout(
+        withSheetSectionShown(
+          latestPresentation.current.sheetLayout,
+          section,
+          shown,
+        ),
+      ),
+    [updateLayout],
+  );
+  const showCards = useCallback(
+    (cards: readonly SheetLayoutCard[], shown: boolean) => {
+      const holdingIds = cards.flatMap(({ holdingId }) =>
+        holdingId === undefined ? [] : [holdingId],
+      );
+      const layoutCards = cards.filter(
+        ({ holdingId }) => holdingId === undefined,
+      );
+      const current = latestPresentation.current;
+      const nextLayout =
+        layoutCards.length === 0
+          ? current.sheetLayout
+          : withSheetCardsShown(current.sheetLayout, layoutCards, shown);
+      if (holdingIds.length > 0) {
+        const nextFlags = new Map(current.itemCardsShown);
+        for (const id of holdingIds) nextFlags.set(id, shown);
+        setItemCardsShown(nextFlags);
+      }
+      if (layoutCards.length > 0) setSheetLayout(nextLayout);
+      savePresentation({
+        ...(layoutCards.length === 0
+          ? {}
+          : { sheetLayout: nextLayout ?? null }),
+        ...(holdingIds.length === 0
+          ? {}
+          : {
+              itemCardsShown: Object.fromEntries(
+                holdingIds.map((id) => [id, shown]),
+              ),
+            }),
+      });
+    },
+    [savePresentation],
+  );
+  // Defaults: no layout deltas, and every holding prints its card.
+  const resetPresentation = useCallback(() => {
+    const flags = latestPresentation.current.itemCardsShown;
+    setSheetLayout(undefined);
+    setItemCardsShown(new Map([...flags.keys()].map((id) => [id, true])));
+    savePresentation({
+      sheetLayout: null,
+      itemCardsShown: Object.fromEntries(
+        [...flags.keys()].map((id) => [id, true]),
+      ),
+    });
+  }, [savePresentation]);
+  const resolvedLayout = useMemo(
+    () =>
+      model === undefined
+        ? undefined
+        : applySheetLayout(model, sheetLayout, { itemCardsShown }),
+    [model, sheetLayout, itemCardsShown],
+  );
+  const contentsSections = useMemo(
+    () =>
+      model === undefined || !sheetEditing
+        ? []
+        : sheetContentsSections(
+            referenceSections(model).map((entries) => entries.length),
+          ),
+    [model, sheetEditing],
+  );
   // A saved PDF is named "Ingi - Level 8.pdf", from the title and print path.
   const pdfTitle =
     character === undefined
@@ -331,7 +477,12 @@ export function CharacterSheetPage({
         <div className="error">{error}</div>
       </main>
     );
-  if (character === undefined || model === undefined || !initialLoadReady)
+  if (
+    character === undefined ||
+    model === undefined ||
+    resolvedLayout === undefined ||
+    !initialLoadReady
+  )
     return (
       <LoadingScreen
         className="sheet-page"
@@ -403,11 +554,15 @@ export function CharacterSheetPage({
       </>
     );
   const powerCards = sortedPowerCards(model.powers);
-  const screenItems = model.items.filter((card) => !card.hiddenByDefault);
-  const printableCards = sheetCardDeck(model).filter(
-    ({ defaultShown }) => defaultShown,
+  const screenItems = resolvedLayout.deck.flatMap(({ card, group }) =>
+    group === "items" && card.kind === "item" ? [card] : [],
   );
-  const printCardPages = chunks(printableCards, 9);
+  // Hidden cards leave the deck before it is cut into 9-card pages.
+  const printCardPages = chunks(resolvedLayout.deck, 9);
+  const editing = showPrintPreview && sheetEditing;
+  const resettable =
+    sheetLayout !== undefined ||
+    [...itemCardsShown.values()].some((shown) => !shown);
   const characterLevel =
     Number(
       model.identity.find((entry) => entry.label === "Level")?.value ??
@@ -415,7 +570,7 @@ export function CharacterSheetPage({
     ) || 1;
   return (
     <main
-      className={`sheet-page paper-${paper}${showPrintPreview ? " is-print-preview" : ""}`}
+      className={`sheet-page paper-${paper}${showPrintPreview ? " is-print-preview" : ""}${editing ? " is-sheet-editing" : ""}`}
       id="main-content"
       style={
         {
@@ -452,16 +607,62 @@ export function CharacterSheetPage({
               <Icon name="back" />
             </button>
           )}
-          <button
-            aria-label="Print or save as PDF"
-            className="icon-only-button button-icon"
-            title="Print or save as PDF"
-            type="button"
-            onClick={print}
-          >
-            <Icon name="print" />
-          </button>
+          <SegmentedControl
+            label="Sheet"
+            options={[
+              ["view", "View"],
+              ["edit", "Edit"],
+            ]}
+            value={editing ? "edit" : "view"}
+            onChange={(mode) => {
+              setContentsOpen(false);
+              onSheetModeChange?.(mode === "edit");
+            }}
+          />
+          <span className="print-preview-toolbar-end">
+            {editing ? (
+              <button
+                aria-controls="sheet-contents-panel"
+                aria-expanded={contentsOpen}
+                className="sheet-contents-toggle"
+                type="button"
+                onClick={() => setContentsOpen((open) => !open)}
+              >
+                <Icon name="layers" />
+                Sheet contents
+              </button>
+            ) : null}
+            <button
+              aria-label="Print or save as PDF"
+              className="icon-only-button button-icon"
+              title="Print or save as PDF"
+              type="button"
+              onClick={print}
+            >
+              <Icon name="print" />
+            </button>
+          </span>
+          {saveError === undefined ? null : (
+            <div className="error sheet-layout-save-error" role="alert">
+              <span>Couldn't save the sheet layout: {saveError}</span>
+              <button type="button" onClick={retrySave}>
+                Try again
+              </button>
+            </div>
+          )}
         </div>
+      ) : null}
+      {editing ? (
+        <SheetContentsPanel
+          layout={resolvedLayout}
+          sections={contentsSections}
+          open={contentsOpen}
+          resettable={resettable}
+          onClose={() => setContentsOpen(false)}
+          onSectionShown={showSection}
+          onCardsShown={showCards}
+          onReset={resetPresentation}
+        />
       ) : null}
       <div className="screen-sheet-view">
         <header className="view-sheet-header">
@@ -688,63 +889,67 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      <SheetOverview
-        model={model}
-        name={characterName}
-        portrait={character.portrait}
-        paper={paper}
-      >
-        {(firstCardPage) =>
-          printCardPages.map((page, pageIndex) => (
-            <section
-              className="print-card-page print-page print-only"
-              key={`print-card-page-${pageIndex}`}
-            >
-              <div className="print-card-grid">
-                {page.map(({ card, key }) => (
-                  <PrintCard
-                    card={card}
-                    model={model}
-                    name={characterName}
-                    portrait={character.portrait}
-                    characterLevel={characterLevel}
-                    key={key}
-                  />
-                ))}
-              </div>
-              <footer className="print-card-page-footer">
-                <span>Power &amp; Item Cards</span>
-                <span
-                  className="print-card-footer-identity"
-                  title={[
-                    characterName,
-                    ...["Race", "Class", "Level"].map(
-                      (label) =>
-                        model.identity.find((value) => value.label === label)
-                          ?.value,
-                    ),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                >
-                  {characterName} ·{" "}
-                  {["Race", "Class", "Level"]
-                    .map(
-                      (label) =>
-                        model.identity.find((value) => value.label === label)
-                          ?.value,
-                    )
-                    .filter(Boolean)
-                    .join(" ")}
-                </span>
-                <span className="ov-page-number">
-                  {firstCardPage + pageIndex}
-                </span>
-              </footer>
-            </section>
-          ))
-        }
-      </SheetOverview>
+      {/* The printed pages, beside Edit mode's contents panel. */}
+      <div className="sheet-preview-pages">
+        <SheetOverview
+          model={model}
+          name={characterName}
+          portrait={character.portrait}
+          paper={paper}
+          hiddenSections={resolvedLayout.hiddenSections}
+        >
+          {(firstCardPage) =>
+            printCardPages.map((page, pageIndex) => (
+              <section
+                className="print-card-page print-page print-only"
+                key={`print-card-page-${pageIndex}`}
+              >
+                <div className="print-card-grid">
+                  {page.map(({ card, key }) => (
+                    <PrintCard
+                      card={card}
+                      model={model}
+                      name={characterName}
+                      portrait={character.portrait}
+                      characterLevel={characterLevel}
+                      key={key}
+                    />
+                  ))}
+                </div>
+                <footer className="print-card-page-footer">
+                  <span>Power &amp; Item Cards</span>
+                  <span
+                    className="print-card-footer-identity"
+                    title={[
+                      characterName,
+                      ...["Race", "Class", "Level"].map(
+                        (label) =>
+                          model.identity.find((value) => value.label === label)
+                            ?.value,
+                      ),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  >
+                    {characterName} ·{" "}
+                    {["Race", "Class", "Level"]
+                      .map(
+                        (label) =>
+                          model.identity.find((value) => value.label === label)
+                            ?.value,
+                      )
+                      .filter(Boolean)
+                      .join(" ")}
+                  </span>
+                  <span className="ov-page-number">
+                    {firstCardPage + pageIndex}
+                  </span>
+                </footer>
+              </section>
+            ))
+          }
+        </SheetOverview>
+      </div>
     </main>
   );
 }

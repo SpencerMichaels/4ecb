@@ -967,3 +967,42 @@ sample-character diff; check only layout and fit.
     "+4 to AC against opportunity attacks you provoke by making a ranged
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
+
+## Sheet Edit mode (2026-10-25, D099 phases 0–1)
+
+Labels, saving, page numbering and "no re-evaluation" are verified by tests;
+check only layout and feel. Any character works; Hu (`hu`) has item cards
+and several reference groups.
+
+- [ ] **View | Edit toggle and the Sheet contents panel.**
+  - **Where:** `hu` → `?preview=1`, click **Edit** in the toolbar's "Sheet"
+    control; at 100% and at 140% browser zoom on the 1920px display, light
+    and dark mode.
+  - **Expect:** the URL becomes `?preview=1&edit=1`; the paper pages stay
+    centred in the left column and a "Sheet contents" panel sits on the
+    right, sticky under the toolbar and scrolling on its own: Pages (Page 1
+    summary checked and greyed, then Play scratchpad, Feature reference, Item
+    reference, Power index, Rituals & practices, Character profile, Session
+    notes; empty groups say "Nothing to print"), then Play cards, Companions
+    ("No companion cards." when none), Powers and Items, each with Show
+    all/Hide all, then "Reset sheet to defaults". Back still returns to the
+    builder in one step.
+  - **Wrong if:** the panel overlaps a page or the toolbar's Print button,
+    the page is pushed under the panel, a horizontal scrollbar appears at
+    140%, or the panel's text is unreadable in dark mode.
+- [ ] **Narrow window drawer.**
+  - **Where:** the same page with the window under ~1280 CSS px (or 200%
+    zoom).
+  - **Expect:** no side panel; a "Sheet contents" button in the toolbar
+    opens the panel as a drawer from the right with a close (×) button.
+  - **Wrong if:** the drawer can't be closed, covers the toolbar without a
+    shadow edge, or the button shows at wide widths.
+- [ ] **Hiding things on paper.**
+  - **Where:** in Edit, untick a power, an item and Play scratchpad.
+  - **Expect:** the cards disappear and later cards close up 9 per page; the
+    scratchpad page goes and every later page number drops by one; the
+    hidden power still has its scratchpad row once the scratchpad is back.
+    Reload: the choices persist; the library's "last modified" order doesn't
+    change. Reset (click twice) restores everything.
+  - **Wrong if:** a gap is left where a card was, page numbers skip, or
+    probe/measurement artefacts show on screen.

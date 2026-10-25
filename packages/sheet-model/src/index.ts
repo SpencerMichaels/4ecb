@@ -96,6 +96,11 @@ export {
   type SheetPlayCard,
 } from "./card-deck";
 export {
+  applySheetLayout,
+  type ResolvedSheetLayout,
+  type SheetLayoutCard,
+} from "./sheet-layout";
+export {
   itemSetOf,
   sheetItemSetCard,
   sheetItemSetCards,

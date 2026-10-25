@@ -29,6 +29,7 @@ import {
 import {
   canonicalHashRedirect,
   characterEditorHash,
+  characterSheetHash,
   commitHashNavigation,
   parseHashRoute,
   type BuilderNavigation,
@@ -279,6 +280,15 @@ export function App() {
     },
     [],
   );
+  // View and Edit are one print preview: switching replaces the entry, so
+  // Back still leaves the sheet.
+  const navigateSheet = useCallback((characterId: string, editing: boolean) => {
+    const next = characterSheetHash(characterId, {
+      preview: true,
+      edit: editing,
+    });
+    if (commitHashNavigation(window, next, true)) setHash(next);
+  }, []);
   useEffect(() => {
     applyThemePreference(document.documentElement, theme);
     try {
@@ -651,6 +661,10 @@ export function App() {
                       manifests={manifests}
                       printOnReady={route.print === true}
                       openPrintPreview={route.preview === true}
+                      sheetEditing={route.sheetEdit === true}
+                      onSheetModeChange={(editing) =>
+                        navigateSheet(route.characterId!, editing)
+                      }
                       countCoinWeight={countCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}

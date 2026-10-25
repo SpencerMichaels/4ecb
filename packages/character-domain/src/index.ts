@@ -1,10 +1,12 @@
 export * from "./build";
+export * from "./sheet-layout";
 
 import {
   CHARACTER_BUILD_FORMAT_VERSION,
   EQUIPMENT_SLOT_IDS,
   equippedQuantityFromSlots,
 } from "./build";
+import type { SheetLayout } from "./sheet-layout";
 import type {
   BuildElementIdentity,
   CharacterBuild,
@@ -138,6 +140,11 @@ export interface CharacterRecord {
   readonly build: CharacterBuild;
   readonly sheetSettings: SheetSettings;
   readonly portrait?: CharacterPortrait;
+  /**
+   * Printed-sheet presentation (D099), never build input. Read it through
+   * `normalizeSheetLayout`: stored values are accepted leniently.
+   */
+  readonly sheetLayout?: SheetLayout;
 }
 
 export interface LegacyCharacterRecordV1 extends Omit<

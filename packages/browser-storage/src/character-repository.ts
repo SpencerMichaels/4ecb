@@ -7,7 +7,9 @@ import {
   isCharacterRecordWithBuildV2,
   isCurrentStoredRecord,
   isLegacyCharacterRecordV1,
+  normalizeSheetLayout,
   upgradeCharacterBuild,
+  withHoldingCardsShown,
   type CharacterBuild,
   type CharacterBackup,
   type CharacterProfileBinding,
@@ -16,6 +18,7 @@ import {
   type LegacyCharacterRecordV1,
   type StoredCharacterRecord,
   type SupportedCharacterBackup,
+  type SheetLayout,
   type SheetSettings,
 } from "@4ecb/character-domain";
 import type { ContentPack } from "@4ecb/content-pack";
@@ -520,9 +523,18 @@ export class CharacterRepository {
       readonly profileBinding?: CharacterProfileBinding | null;
       readonly sheetSettings?: Partial<SheetSettings>;
       readonly portrait?: CharacterPortrait | null;
+      /** The printed-sheet layout (D099); `null` resets it to defaults. */
+      readonly sheetLayout?: SheetLayout | null;
+      /** Holding id -> whether it prints an item card (`showPowerCard`). */
+      readonly itemCardsShown?: Readonly<Record<string, boolean>>;
     },
   ): Promise<CharacterRecord> {
     const current = await this.required(id);
+    // Sheet presentation is not an edit to the character: it never moves
+    // the library's "last modified" order (owner decision, D099).
+    const presentationOnly = Object.keys(changes).every(
+      (key) => key === "sheetLayout" || key === "itemCardsShown",
+    );
     const profileBinding =
       changes.profileBinding === null
         ? undefined
@@ -538,15 +550,40 @@ export class CharacterRepository {
     const { portrait: _currentPortrait, ...withoutPortrait } =
       withoutProfileBinding;
     void _currentPortrait;
+    const { sheetLayout: _currentSheetLayout, ...withoutSheetLayout } =
+      withoutPortrait;
+    void _currentSheetLayout;
+    const sheetLayout =
+      changes.sheetLayout === null
+        ? undefined
+        : normalizeSheetLayout(changes.sheetLayout ?? current.sheetLayout);
+    const shownHoldings = Object.entries(changes.itemCardsShown ?? {});
+    const build =
+      shownHoldings.length === 0
+        ? current.build
+        : {
+            ...current.build,
+            inventory: withHoldingCardsShown(
+              withHoldingCardsShown(
+                current.build.inventory,
+                shownHoldings.filter(([, shown]) => shown).map(([id]) => id),
+                true,
+              ),
+              shownHoldings.filter(([, shown]) => !shown).map(([id]) => id),
+              false,
+            ),
+          };
     const updated: CharacterRecord = {
-      ...withoutPortrait,
+      ...withoutSheetLayout,
+      build,
+      ...(sheetLayout === undefined ? {} : { sheetLayout }),
       ...(requestedTitle === undefined || requestedTitle.length === 0
         ? {}
         : {
             build: {
-              ...current.build,
+              ...build,
               textStrings: {
-                ...current.build.textStrings,
+                ...build.textStrings,
                 Name: requestedTitle,
               },
             },
@@ -565,7 +602,9 @@ export class CharacterRepository {
               ...changes.sheetSettings,
             },
           }),
-      updatedAt: new Date().toISOString(),
+      updatedAt: presentationOnly
+        ? current.updatedAt
+        : new Date().toISOString(),
     };
     await this.put(updated);
     return updated;

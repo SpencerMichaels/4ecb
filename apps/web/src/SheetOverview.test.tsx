@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
+import type { SheetSectionId } from "@4ecb/character-domain";
 import { describe, expect, it } from "vitest";
 import {
   buildSheetModel,
@@ -1224,6 +1225,25 @@ describe("real-data sheet overview", () => {
     expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
       html.indexOf('data-card-start="3"'),
     );
+  });
+  it("leaves hidden sections out and numbers later pages without them", () => {
+    const render = (hidden: readonly SheetSectionId[]) =>
+      renderToStaticMarkup(
+        <SheetOverview
+          model={model}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          hiddenSections={new Set(hidden)}
+        >
+          {(firstPage) => <span data-card-start={firstPage} />}
+        </SheetOverview>,
+      );
+    const hidden = render(["scratchpad", "session-notes"]);
+    expect(hidden).toContain('data-card-start="2"');
+    expect(hidden).not.toContain('aria-label="Play scratchpad"');
+    expect(hidden).not.toContain('aria-label="Session notes"');
+    expect(render([])).toContain('aria-label="Play scratchpad"');
   });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(

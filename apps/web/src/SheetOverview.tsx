@@ -10,7 +10,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { CharacterPortrait } from "@4ecb/character-domain";
+import {
+  SHEET_REFERENCE_GROUP_IDS,
+  type CharacterPortrait,
+  type SheetSectionId,
+} from "@4ecb/character-domain";
 import {
   combinedDefenseModifiers,
   featureChoiceText,
@@ -2983,59 +2987,75 @@ export function paginateReferenceGroups(
   }
   return pages;
 }
+/**
+ * The full-reference entries in their five page groups, in print order
+ * (`SHEET_REFERENCE_GROUP_IDS`: features, items, power index, rituals &
+ * practices, character profile).
+ */
+export function referenceSections(
+  model: CharacterSheetModel,
+): ReferenceEntry[][] {
+  const entries = references(model);
+  const bucket = (entry: ReferenceEntry) =>
+    entry.group === "Items"
+      ? 1
+      : /^(?:Power index|Item power index)$/.test(entry.group)
+        ? 2
+        : entry.group === "Rituals & practices"
+          ? 3
+          : entry.group === "Character Profile"
+            ? 4
+            : 0;
+  const groups = [
+    "Class features",
+    "Racial traits",
+    "Racial features",
+    "Theme",
+    "Background",
+    "Deity",
+    "Paragon paths",
+    "Epic destinies",
+    "Feats",
+    "Other features",
+  ];
+  return SHEET_REFERENCE_GROUP_IDS.map((_, index) =>
+    entries
+      .filter((entry) => bucket(entry) === index)
+      .sort((a, b) =>
+        index
+          ? 0
+          : (groups.includes(a.group)
+              ? groups.indexOf(a.group)
+              : groups.length) -
+              (groups.includes(b.group)
+                ? groups.indexOf(b.group)
+                : groups.length) ||
+            (a.level ?? Infinity) - (b.level ?? Infinity) ||
+            a.name.localeCompare(b.name),
+      ),
+  );
+}
 function Details({
   model,
   name,
   startPage,
+  hiddenSections,
   onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
   startPage: number;
+  hiddenSections: ReadonlySet<SheetSectionId>;
   onPageCount: (count: number) => void;
 }) {
-  const sections = useMemo(() => {
-    const entries = references(model);
-    const bucket = (entry: ReferenceEntry) =>
-      entry.group === "Items"
-        ? 1
-        : /^(?:Power index|Item power index)$/.test(entry.group)
-          ? 2
-          : entry.group === "Rituals & practices"
-            ? 3
-            : entry.group === "Character Profile"
-              ? 4
-              : 0;
-    const groups = [
-      "Class features",
-      "Racial traits",
-      "Racial features",
-      "Theme",
-      "Background",
-      "Deity",
-      "Paragon paths",
-      "Epic destinies",
-      "Feats",
-      "Other features",
-    ];
-    return Array.from({ length: 5 }, (_, index) =>
-      entries
-        .filter((entry) => bucket(entry) === index)
-        .sort((a, b) =>
-          index
-            ? 0
-            : (groups.includes(a.group)
-                ? groups.indexOf(a.group)
-                : groups.length) -
-                (groups.includes(b.group)
-                  ? groups.indexOf(b.group)
-                  : groups.length) ||
-              (a.level ?? Infinity) - (b.level ?? Infinity) ||
-              a.name.localeCompare(b.name),
-        ),
-    );
-  }, [model]);
-  const [counts, setCounts] = useState<readonly number[]>([0, 0, 0, 0, 0]);
+  const sections = useMemo(() => referenceSections(model), [model]);
+  const [measured, setCounts] = useState<readonly number[]>([0, 0, 0, 0, 0]);
+  // A hidden group prints nothing, so later page numbers move up.
+  const counts = measured.map((count, index) =>
+    hiddenSections.has(`reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`)
+      ? 0
+      : count,
+  );
   const totalPages = counts.reduce((sum, count) => sum + count, 0);
   useLayoutEffect(() => onPageCount(totalPages), [onPageCount, totalPages]);
   const callbacks = useMemo(
@@ -3053,19 +3073,23 @@ function Details({
   );
   return (
     <>
-      {sections.map((entries, index) => (
-        <ReferencePages
-          key={index}
-          model={model}
-          name={name}
-          entries={entries}
-          wide={index === 1 || index === 2}
-          startPage={
-            startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
-          }
-          onPageCount={callbacks[index]!}
-        />
-      ))}
+      {sections.map((entries, index) =>
+        hiddenSections.has(
+          `reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`,
+        ) ? null : (
+          <ReferencePages
+            key={index}
+            model={model}
+            name={name}
+            entries={entries}
+            wide={index === 1 || index === 2}
+            startPage={
+              startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
+            }
+            onPageCount={callbacks[index]!}
+          />
+        ),
+      )}
     </>
   );
 }
@@ -3508,17 +3532,21 @@ function ReferencePages({
     </>
   );
 }
+const NO_HIDDEN_SECTIONS: ReadonlySet<SheetSectionId> = new Set();
 export function SheetOverview({
   model,
   name,
   portrait,
   paper,
+  hiddenSections = NO_HIDDEN_SECTIONS,
   children,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   paper: "letter" | "a4";
+  /** Sections the sheet layout leaves out (D099); they count no pages. */
+  hiddenSections?: ReadonlySet<SheetSectionId>;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
@@ -3526,7 +3554,9 @@ export function SheetOverview({
     indices: readonly number[];
   }>();
   const [continuationPages, setContinuationPages] = useState(0);
-  const [scratchpadPages, setScratchpadPages] = useState(1);
+  const [measuredScratchpadPages, setScratchpadPages] = useState(1);
+  const scratchpadShown = !hiddenSections.has("scratchpad");
+  const scratchpadPages = scratchpadShown ? measuredScratchpadPages : 0;
   const [detailsPages, setDetailsPages] = useState(0);
   const onVisibleReminders = useCallback(
     (indices: readonly number[]) => {
@@ -3562,27 +3592,32 @@ export function SheetOverview({
           entries={continuationEntries}
           onPageCount={setContinuationPages}
         />
-        <Scratchpad
-          model={model}
-          name={name}
-          startPage={2 + continuationPages}
-          onPageCount={setScratchpadPages}
-        />
+        {scratchpadShown ? (
+          <Scratchpad
+            model={model}
+            name={name}
+            startPage={2 + continuationPages}
+            onPageCount={setScratchpadPages}
+          />
+        ) : null}
       </div>
       <div className={overviewClass}>
         <Details
           model={model}
           name={name}
           startPage={2 + continuationPages + scratchpadPages}
+          hiddenSections={hiddenSections}
           onPageCount={setDetailsPages}
         />
       </div>
       {typeof children === "function"
         ? children(2 + continuationPages + scratchpadPages + detailsPages)
         : children}
-      <div className={overviewClass}>
-        <SessionNotes model={model} name={name} />
-      </div>
+      {hiddenSections.has("session-notes") ? null : (
+        <div className={overviewClass}>
+          <SessionNotes model={model} name={name} />
+        </div>
+      )}
     </>
   );
 }

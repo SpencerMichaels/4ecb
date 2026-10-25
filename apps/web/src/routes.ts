@@ -64,6 +64,8 @@ export type AppRoute =
       readonly mode?: "sheet" | "edit";
       readonly print?: boolean;
       readonly preview?: boolean;
+      /** The print preview's Edit mode (D099); only with `preview`. */
+      readonly sheetEdit?: boolean;
       readonly builder?: BuilderNavigation;
     };
 
@@ -195,6 +197,7 @@ export function parseHashRoute(hash: string): AppRoute {
     if (characterId === undefined || characterId.length === 0)
       return { page: "characters" };
     const editing = match[2] !== undefined;
+    const parameters = new URLSearchParams(query);
     return {
       page: "characters",
       characterId,
@@ -203,10 +206,14 @@ export function parseHashRoute(hash: string): AppRoute {
             mode: "edit" as const,
             builder: parseBuilderNavigation(query),
           }
-        : new URLSearchParams(query).get("print") === "1"
-          ? { print: true }
-          : new URLSearchParams(query).get("preview") === "1"
-            ? { preview: true }
+        : parameters.get("print") === "1"
+          ? // Printing is always the View sheet.
+            { print: true }
+          : parameters.get("preview") === "1"
+            ? {
+                preview: true,
+                ...(parameters.get("edit") === "1" ? { sheetEdit: true } : {}),
+              }
             : {}),
     };
   }
@@ -265,7 +272,31 @@ function hashForRoute(route: AppRoute): string {
       route.characterId,
       route.builder ?? { workspace: "build" },
     );
-  return `#/characters/${encodeURIComponent(route.characterId)}${route.print === true ? "?print=1" : route.preview === true ? "?preview=1" : ""}`;
+  return characterSheetHash(route.characterId, {
+    ...(route.print === true ? { print: true } : {}),
+    ...(route.preview === true ? { preview: true } : {}),
+    ...(route.sheetEdit === true ? { edit: true } : {}),
+  });
+}
+
+/** The character sheet: print preview (View or Edit mode) or auto-print. */
+export function characterSheetHash(
+  characterId: string,
+  options: {
+    readonly preview?: boolean;
+    readonly edit?: boolean;
+    readonly print?: boolean;
+  } = {},
+): string {
+  const query =
+    options.print === true
+      ? "?print=1"
+      : options.preview === true
+        ? options.edit === true
+          ? "?preview=1&edit=1"
+          : "?preview=1"
+        : "";
+  return `#/characters/${encodeURIComponent(characterId)}${query}`;
 }
 
 export function canonicalHashRedirect(hash: string): string | undefined {

@@ -719,6 +719,35 @@ new server-owned data architecture and not the later M9 release-hardening pass.
 builder; the container foundation predates this milestone and broader 1.0
 hardening remains in M9.
 
+## M5.75 — Editable printed sheet
+
+### Goal
+
+Let players choose what their printed sheet contains without touching the
+build: View and Edit modes on the print preview, hiding cards and pages,
+reminder control and card ordering (plan and owner decisions:
+[`sheet-editing-plan.md`](sheet-editing-plan.md), D099).
+
+### Phases
+
+0. **Done (2026-10-25).** Stable card keys from provenance and the card
+   deck in sheet-model (`sheetCardDeck`); no visible change.
+1. **Done (2026-10-25).** `SheetLayout` persistence, `?preview=1&edit=1`
+   and the toolbar View | Edit control, the "Sheet contents" panel with
+   page/section toggles, card hide/show (item cards via `showPowerCard`)
+   and global reset.
+2. Reminders: show/hide, custom reminders, provenance hints, and removal of
+   the Action Point reminder special case.
+3. Card ordering and on-paper controls.
+4. Optional: reminder ordering, one-off print scope.
+
+### Exit criteria
+
+- Layout edits never re-evaluate the character or move "last modified".
+- Each phase's synthetic tests (key stability, round trips, routes, page
+  renumbering) pass, and the owner approves the panel visually, including at
+  140% zoom.
+
 ## M5.8 — Desktop/tablet local-play foundation
 
 ### Goal

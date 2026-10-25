@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalHashRedirect,
   characterEditorHash,
+  characterSheetHash,
   commitHashNavigation,
   parseHashRoute,
 } from "./routes";
@@ -39,6 +40,34 @@ describe("hash routes", () => {
     expect(canonicalHashRedirect("#/characters/one?preview=1")).toBeUndefined();
     expect(canonicalHashRedirect("#/characters/one?print=0")).toBe(
       "#/characters/one",
+    );
+  });
+
+  it("parses the sheet's Edit mode only inside the print preview", () => {
+    expect(parseHashRoute("#/characters/one?preview=1&edit=1")).toEqual({
+      page: "characters",
+      characterId: "one",
+      preview: true,
+      sheetEdit: true,
+    });
+    expect(
+      canonicalHashRedirect("#/characters/one?preview=1&edit=1"),
+    ).toBeUndefined();
+    expect(canonicalHashRedirect("#/characters/one?edit=1&preview=1")).toBe(
+      "#/characters/one?preview=1&edit=1",
+    );
+    // Printing is view-only, and edit alone is no preview.
+    expect(canonicalHashRedirect("#/characters/one?print=1&edit=1")).toBe(
+      "#/characters/one?print=1",
+    );
+    expect(canonicalHashRedirect("#/characters/one?edit=1")).toBe(
+      "#/characters/one",
+    );
+    expect(characterSheetHash("a b", { preview: true, edit: true })).toBe(
+      "#/characters/a%20b?preview=1&edit=1",
+    );
+    expect(characterSheetHash("one", { preview: true })).toBe(
+      "#/characters/one?preview=1",
     );
   });
 

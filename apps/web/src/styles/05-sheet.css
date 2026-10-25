@@ -540,3 +540,158 @@
 .print-power-card.has-keywords.no-action-band {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
+
+/* Print preview Edit mode (D099): the paper preview with the "Sheet
+   contents" panel beside it on wide screens (an 8.5in page fits beside it
+   at 140% zoom on a 1920px display), else a drawer from the toolbar. */
+.sheet-page.is-print-preview .print-preview-toolbar {
+  flex-wrap: wrap;
+}
+
+.print-preview-toolbar-end {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.sheet-layout-save-error {
+  align-items: center;
+  display: flex;
+  flex-basis: 100%;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.sheet-contents-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  display: none;
+  overflow-y: auto;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.sheet-contents-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sheet-contents-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.sheet-contents-group {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0 0;
+}
+
+.sheet-contents-group > legend {
+  font-weight: 700;
+  padding: 0 0.4rem 0 0;
+}
+
+.sheet-contents-bulk {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.sheet-contents-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sheet-contents-list > li {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  justify-content: space-between;
+  padding: 0.15rem 0;
+}
+
+.sheet-contents-list label {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.sheet-contents-hint,
+.sheet-contents-empty {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.sheet-contents-empty {
+  margin: 0.2rem 0;
+}
+
+.sheet-contents-reset {
+  border-top: 1px solid var(--border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.sheet-contents-toggle {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+/* Narrow: a drawer over the preview, opened from the toolbar. */
+.sheet-page.is-sheet-editing .sheet-contents-panel[data-open] {
+  bottom: 0;
+  box-shadow: -0.25rem 0 1rem rgb(0 0 0 / 25%);
+  display: block;
+  max-width: calc(100vw - 2rem);
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 24rem;
+  z-index: 30;
+}
+
+@media screen and (min-width: 80rem) {
+  .sheet-page.is-sheet-editing {
+    align-items: start;
+    column-gap: 1.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+
+  .sheet-page.is-sheet-editing > .print-preview-toolbar {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .sheet-page.is-sheet-editing > .sheet-preview-pages {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .sheet-page.is-sheet-editing > .sheet-contents-panel,
+  .sheet-page.is-sheet-editing > .sheet-contents-panel[data-open] {
+    box-shadow: none;
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+    max-height: calc(100vh - 5rem);
+    max-width: none;
+    position: sticky;
+    top: 4rem;
+    width: auto;
+    z-index: auto;
+  }
+
+  .sheet-page.is-sheet-editing .sheet-contents-toggle,
+  .sheet-page.is-sheet-editing .sheet-contents-close {
+    display: none;
+  }
+}

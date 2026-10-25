@@ -2741,6 +2741,60 @@ Implemented in `apps/web/src/builder-diagnostics.ts`,
 `apps/web/src/CharacterEditorPage.tsx`, `apps/web/src/import-report.ts`,
 `apps/web/src/ChoiceEditors.tsx` and `apps/web/src/CharacterSheetPage.tsx`.
 
+### D099 — The printed sheet has an editable, per-character layout
+
+Status: accepted (2026-10-25), phases 0–1 implemented. Product-owner plan
+and decisions in `docs/sheet-editing-plan.md` §7.
+
+Decision:
+
+- A character's sheet layout is presentation, never build input: an
+  optional `CharacterRecord.sheetLayout` (`SheetLayout`,
+  `packages/character-domain/src/sheet-layout.ts`) beside `sheetSettings`
+  and `portrait`. No schema bump; backups, export, duplicate and trash carry
+  it unchanged; the rules engine and `.dnd4e` import/export never see it.
+  It stores only deltas from the default sheet (`hiddenSections`,
+  `hiddenCards`, `shownCards`), so new cards get default behavior; vanished
+  keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
+  leniently (malformed entries are dropped; an empty layout is the default).
+- Item cards are the exception (owner decision 1): whether a holding prints
+  its card is the holding's legacy `showPowerCard` flag, so it round-trips
+  to the old builder. It is presentation, not a build edit: evaluation input
+  (`evaluationInventory`) never carries it, and the sheet applies it after
+  evaluation, so toggling it never re-evaluates. Legacy-cache sheets, whose
+  item cards have no holding, use the layout's lists instead.
+- Layout edits do not touch the library's "last modified" order (owner
+  decision 5): `CharacterRepository.updateMetadata` keeps `updatedAt` when
+  it only changes `sheetLayout` (`null` resets it) or `itemCardsShown`.
+- Cards and sections have stable keys built in sheet-model from
+  provenance, never text: `power:<definitionId>` (legacy name fallback +
+  `#n`), `item:<holdingId>`, `item-set:<id>`, `companion:<id>`,
+  `play:character`/`play:skills`; sections `scratchpad`, `session-notes`
+  and `reference:<features|items|power-index|rituals|profile>`. A retrained
+  power is a new card and starts from defaults.
+- The card deck order (`sheetCardDeck`) lives in sheet-model, and the pure
+  `applySheetLayout` selects what prints: hidden cards leave the deck before
+  it is cut into 9-card pages; hiding a card never removes its power from
+  the scratchpad usage boxes or power index; hidden sections count no pages,
+  so page numbers chain without them. Layout never computes a value.
+- The print preview has View and Edit modes
+  (`#/characters/<id>?preview=1&edit=1`; `?print=1` is always View; the
+  builder and library link to View). Edit keeps the paper preview with a
+  "Sheet contents" panel (beside the pages from 80rem, a drawer below):
+  page/section toggles (page 1 shown disabled-checked), card hide/show in
+  deck order with group bulk toggles, and an arm-then-confirm "Reset sheet
+  to defaults" (layout cleared, every holding prints its card). Saves are
+  silent and serialized (D098); only a failure shows, with a retry.
+- Later phases (reminder show/hide and custom reminders, which supersede
+  the "Action Point reminder policy (2026-10-24)"; card ordering) extend the
+  same type.
+
+Implemented in `packages/character-domain/src/sheet-layout.ts`,
+`packages/browser-storage/src/character-repository.ts`,
+`packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
+`apps/web/src/{CharacterSheetPage,SheetContentsPanel,SheetOverview}.tsx`
+and `apps/web/src/routes.ts`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

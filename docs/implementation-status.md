@@ -1,5 +1,29 @@
 # Implementation status
 
+## Editable printed sheet, phases 0–1 (2026-10-25)
+
+Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).
+Phase 0: the card deck order moved from the web app into sheet-model
+(`sheetCardDeck`, `sortedPowerCards`) with stable provenance keys
+(`power:<definitionId>`, `item:<holdingId>`, `item-set:`, `companion:`,
+`play:`); evaluated item cards carry their holding id, and items whose
+holding has `showPowerCard=false` stay in the model as `hiddenByDefault`
+(the default deck still omits them). Phase 1: optional
+`CharacterRecord.sheetLayout` with a lenient normalizer, saved by
+`updateMetadata` without moving `updatedAt`; `applySheetLayout` in
+sheet-model; the print preview's "Sheet: View | Edit" control and
+`#/characters/<id>?preview=1&edit=1`; Edit mode's "Sheet contents" panel
+(page/section toggles, card hide/show by group, arm-then-confirm reset);
+silent serialized saves with a retry alert on failure. Item cards toggle
+the holding's `showPowerCard` flag, which never reaches evaluation input,
+and the sheet page keeps layout and flags out of the evaluated character's
+state (a jsdom test asserts one evaluation across toggles). Hidden sections
+count no pages. Phases 2–4 (reminders, ordering) remain.
+
+Verification: `pnpm vitest run packages apps`, typecheck, lint and
+format clean. `pnpm check:print` not run (headless Chromium cannot start
+in the Nix shell); the owner's visual check covers the panel.
+
 ## Task-list triage and quick wins (2026-10-24)
 
 Investigation and complexity ordering are recorded in
