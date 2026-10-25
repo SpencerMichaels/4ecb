@@ -346,14 +346,26 @@ export function isFreebeeGiven(
   );
 }
 
-export const CHARACTER_BUILD_FORMAT_VERSION = 2 as const;
+export const CHARACTER_BUILD_FORMAT_VERSION = 3 as const;
 
 export interface CharacterBuild {
   readonly formatVersion: typeof CHARACTER_BUILD_FORMAT_VERSION;
   readonly effectiveLevel: number;
   readonly levels: readonly BuildLevelFrame[];
   readonly grabbag: readonly BuildOccurrence[];
+  /**
+   * What the character owns now: one concrete holding per item (same name
+   * and elements), with non-negative counts. It is the same at every viewed
+   * level and is the only inventory any surface or evaluation reads (D097).
+   */
   readonly inventory: readonly BuildInventoryEntry[];
+  /**
+   * An imported file's original per-level `loot` transactions (legacy
+   * LootTally deltas, possibly negative), kept verbatim so export can write
+   * them back. Never read for current state; absent when nothing was
+   * imported as history.
+   */
+  readonly inventoryHistory?: readonly BuildInventoryEntry[];
   /** Learned rituals, alchemical formulas and martial practices. */
   readonly known: readonly BuildKnownEntry[];
   readonly alternates: readonly BuildAlternate[];
@@ -364,9 +376,20 @@ export interface CharacterBuild {
 /** A saved build from before known records left the inventory. */
 export interface CharacterBuildV1 extends Omit<
   CharacterBuild,
-  "formatVersion" | "known"
+  "formatVersion" | "known" | "inventoryHistory"
 > {
   readonly formatVersion: 1;
+}
+
+/**
+ * A saved build whose inventory was still the imported per-level loot
+ * transactions rather than current holdings.
+ */
+export interface CharacterBuildV2 extends Omit<
+  CharacterBuild,
+  "formatVersion" | "inventoryHistory"
+> {
+  readonly formatVersion: 2;
 }
 
 /**
@@ -408,8 +431,8 @@ export function knownEntryFromHolding(
 
 /**
  * Splits ritual holdings out of an inventory. A holding with no remaining
- * count (`count="0"`) is not known; it stays in the inventory so its record
- * is still exported.
+ * count (`count="0"`), or one a later level's loot removes again, is not
+ * known; it stays in the inventory rows so its record is still exported.
  */
 export function separateKnownHoldings(
   inventory: readonly BuildInventoryEntry[],
@@ -419,8 +442,17 @@ export function separateKnownHoldings(
 } {
   const known: BuildKnownEntry[] = [];
   const remaining: BuildInventoryEntry[] = [];
+  const counts = new Map<string, number>();
   for (const entry of inventory) {
-    if (isKnownRecordHolding(entry) && entry.quantity > 0)
+    const key = inventoryHoldingKey(entry);
+    counts.set(key, (counts.get(key) ?? 0) + entry.quantity);
+  }
+  for (const entry of inventory) {
+    if (
+      isKnownRecordHolding(entry) &&
+      entry.quantity > 0 &&
+      (counts.get(inventoryHoldingKey(entry)) ?? 0) > 0
+    )
       known.push(knownEntryFromHolding(entry));
     else remaining.push(entry);
   }
@@ -432,15 +464,21 @@ export function separateKnownHoldings(
  * a current build is returned unchanged, and no entry is ever dropped.
  */
 export function upgradeCharacterBuild(
-  build: CharacterBuild | CharacterBuildV1,
+  build: CharacterBuild | CharacterBuildV2 | CharacterBuildV1,
 ): CharacterBuild {
   if (build.formatVersion === CHARACTER_BUILD_FORMAT_VERSION) return build;
-  const { inventory, known } = separateKnownHoldings(build.inventory);
+  const v2: CharacterBuildV2 =
+    build.formatVersion === 2
+      ? build
+      : {
+          ...build,
+          formatVersion: 2,
+          ...separateKnownHoldings(build.inventory),
+        };
   return {
-    ...build,
+    ...v2,
     formatVersion: CHARACTER_BUILD_FORMAT_VERSION,
-    inventory,
-    known,
+    ...settleInventory(v2.inventory),
   };
 }
 
@@ -832,24 +870,41 @@ export function isRulesInertTextKey(key: string): boolean {
   return isWalletTextKey(key) || isFreeformCharacterDetailTextKey(key);
 }
 
-/** Resolves the latest defined per-level value at or before the requested level. */
+/**
+ * Resolves the latest defined per-level value at or before `level`. Without
+ * a level it is the character's current wallet: the latest value at any
+ * level, so a value left above a lowered level is never shadowed (D097).
+ */
 export function resolveCharacterWallet(
-  build: CharacterBuild,
+  build: Pick<CharacterBuild, "textStrings">,
   wallet: CharacterWalletKind,
-  level = build.effectiveLevel,
+  level = 30,
 ): ResolvedCharacterWallet {
+  const sourceLevel = walletTextLevel(build.textStrings, wallet, level);
+  if (sourceLevel === undefined) return { amount: ZERO_CURRENCY };
+  return {
+    amount: parseLegacyCurrency(
+      build.textStrings[characterWalletTextKey(sourceLevel, wallet)] ?? "",
+    ),
+    sourceLevel,
+  };
+}
+
+/**
+ * The level of the latest stored wallet text at or before `level` (any
+ * level by default), without parsing it; undefined when none is stored.
+ */
+export function walletTextLevel(
+  textStrings: Readonly<Record<string, string>>,
+  wallet: CharacterWalletKind,
+  level = 30,
+): number | undefined {
   if (!Number.isInteger(level) || level < 1 || level > 30)
     throw new Error("Wallet level must be an integer from 1 through 30");
-  for (let candidate = level; candidate >= 1; candidate -= 1) {
-    const key = characterWalletTextKey(candidate, wallet);
-    if (Object.hasOwn(build.textStrings, key)) {
-      return {
-        amount: parseLegacyCurrency(build.textStrings[key] ?? ""),
-        sourceLevel: candidate,
-      };
-    }
-  }
-  return { amount: ZERO_CURRENCY };
+  for (let candidate = level; candidate >= 1; candidate -= 1)
+    if (Object.hasOwn(textStrings, characterWalletTextKey(candidate, wallet)))
+      return candidate;
+  return undefined;
 }
 
 export function equippedQuantityFromSlots(
@@ -916,6 +971,141 @@ export function inventoryEntryWithQuantity(
     equippedQuantity: equippedQuantityFromSlots(equippedSlots),
     equippedSlots,
   };
+}
+
+/**
+ * The item a holding is: its name and exact elements. Rows with one key are
+ * one item, as legacy TallyLoot and the evaluator's aggregation treat them.
+ */
+export function inventoryHoldingKey(
+  entry: Pick<BuildInventoryEntry, "name" | "elements">,
+): string {
+  return [
+    entry.name ?? "",
+    ...entry.elements.map(
+      (element) =>
+        element.definitionId ?? `?${element.type}\u0001${element.name}`,
+    ),
+  ]
+    .join("\0")
+    .toLocaleLowerCase();
+}
+
+/** A row that is already a concrete holding: owned, with valid counts. */
+function concreteHolding(entry: BuildInventoryEntry): boolean {
+  return (
+    entry.quantity > 0 &&
+    entry.equippedQuantity >= 0 &&
+    entry.equippedQuantity <= entry.quantity
+  );
+}
+
+/** A row's slot assignments; an unequipped row without any has none. */
+function rowSlots(
+  entry: BuildInventoryEntry,
+): readonly EquipmentSlotAssignment[] | undefined {
+  return entry.equippedSlots ?? (entry.equippedQuantity === 0 ? [] : undefined);
+}
+
+/**
+ * Folds inventory rows into current holdings, one per item: counts are
+ * summed (legacy per-level loot records removals and unequips as negative
+ * deltas), overrides merge in row order, and the latest owned row (one with
+ * saved element choices first) supplies the elements, name, legality and
+ * power-card preference. The first row's ID and level identify the holding. A sum that
+ * equips more copies than it owns keeps every equipped copy owned, so it
+ * still executes and fills its slot exactly as the evaluator summed it; an
+ * item summing to nothing is gone. Exact slot assignments survive only when
+ * every row is concrete and carries them, re-indexed across the rows;
+ * otherwise the shared loadout resolver places the equipped copies.
+ * Already-current holdings are returned unchanged.
+ */
+export function currentInventoryHoldings(
+  rows: readonly BuildInventoryEntry[],
+): readonly BuildInventoryEntry[] {
+  const groups = new Map<string, BuildInventoryEntry[]>();
+  for (const row of rows) {
+    const key = inventoryHoldingKey(row);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [row]);
+    else group.push(row);
+  }
+  let changed = false;
+  const holdings = [...groups.values()].flatMap(
+    (group): BuildInventoryEntry[] => {
+      const first = group[0]!;
+      if (group.length === 1 && concreteHolding(first)) return [first];
+      changed = true;
+      let quantity = 0;
+      let equippedQuantity = 0;
+      let overrides: Record<string, string> = {};
+      for (const row of group) {
+        quantity += row.quantity;
+        equippedQuantity += row.equippedQuantity;
+        overrides = { ...overrides, ...row.overrides };
+      }
+      equippedQuantity = Math.max(0, equippedQuantity);
+      quantity = Math.max(quantity, equippedQuantity);
+      if (quantity <= 0) return [];
+      const owned = group.filter((row) => row.quantity > 0);
+      const representative =
+        owned.findLast((row) =>
+          row.elements.some(({ children }) => (children?.length ?? 0) > 0),
+        ) ??
+        owned.at(-1) ??
+        group.at(-1)!;
+      let equippedSlots: EquipmentSlotAssignment[] | undefined = [];
+      let offset = 0;
+      for (const row of group) {
+        const slots = rowSlots(row);
+        if (slots === undefined || !concreteHolding(row)) {
+          equippedSlots = undefined;
+          break;
+        }
+        equippedSlots.push(
+          ...slots.map((assignment) => ({
+            ...assignment,
+            quantityIndex: assignment.quantityIndex + offset,
+          })),
+        );
+        offset += row.quantity;
+      }
+      const { equippedSlots: _slots, ...base } = representative;
+      void _slots;
+      return [
+        {
+          ...base,
+          id: first.id,
+          acquiredLevel: first.acquiredLevel,
+          quantity,
+          equippedQuantity:
+            equippedSlots === undefined
+              ? equippedQuantity
+              : equippedQuantityFromSlots(equippedSlots),
+          ...(equippedSlots === undefined || equippedSlots.length === 0
+            ? {}
+            : { equippedSlots }),
+          overrides,
+        },
+      ];
+    },
+  );
+  return changed ? holdings : rows;
+}
+
+/**
+ * Turns stored inventory rows into current holdings. Rows that are not
+ * already one concrete holding per item (an imported file's per-level loot
+ * transactions) are kept verbatim as the build's inventory history.
+ */
+export function settleInventory(rows: readonly BuildInventoryEntry[]): {
+  readonly inventory: readonly BuildInventoryEntry[];
+  readonly inventoryHistory?: readonly BuildInventoryEntry[];
+} {
+  const inventory = currentInventoryHoldings(rows);
+  return inventory === rows
+    ? { inventory }
+    : { inventory, inventoryHistory: rows };
 }
 
 /** Legacy text fields that are also projected into CharacterSheet/Details. */
@@ -1117,12 +1307,25 @@ function multipliedCopper(...factors: readonly number[]): number {
   return result;
 }
 
+/**
+ * The text key a wallet edit writes: the current level's, or the latest
+ * stored one above it, so the edit is what {@link resolveCharacterWallet}
+ * reads back. Legacy stores money per level; players see one wallet.
+ */
+export function currentWalletTextKey(
+  build: Pick<CharacterBuild, "effectiveLevel" | "textStrings">,
+  wallet: CharacterWalletKind,
+): string {
+  const source = walletTextLevel(build.textStrings, wallet) ?? 0;
+  return characterWalletTextKey(Math.max(build.effectiveLevel, source), wallet);
+}
+
 function withCurrentWallet(
   build: CharacterBuild,
   wallet: CharacterWalletKind,
   amount: CurrencyAmount,
 ): CharacterBuild {
-  const key = characterWalletTextKey(build.effectiveLevel, wallet);
+  const key = currentWalletTextKey(build, wallet);
   return {
     ...build,
     textStrings: {
@@ -1271,16 +1474,13 @@ export function applyCharacterCommand(
       const index = build.inventory.findIndex(
         (entry) => entry.id === command.entry.id,
       );
-      if (index < 0)
-        return {
-          ...build,
-          inventory: [...build.inventory, command.entry],
-        };
       const inventory = [...build.inventory];
-      inventory[index] = command.entry;
+      if (index < 0) inventory.push(command.entry);
+      else inventory[index] = command.entry;
+      // A holding that becomes (or duplicates) another owned item joins it.
       return {
         ...build,
-        inventory,
+        inventory: currentInventoryHoldings(inventory),
       };
     }
     case "remove-inventory":
@@ -1340,10 +1540,22 @@ export function applyCharacterCommand(
       const carried = resolveCharacterWallet(build, "carried").amount;
       const stored = resolveCharacterWallet(build, "stored").amount;
       const paid = payWalletCopper(carried, stored, cost);
-      let updated: CharacterBuild = {
-        ...build,
-        inventory: [...build.inventory, command.entry],
-      };
+      // Buying an item the character owns adds copies to that holding, which
+      // keeps its equipped slots, saved choices and preferences.
+      const key = inventoryHoldingKey(command.entry);
+      const ownedIndex = build.inventory.findIndex(
+        (entry) => inventoryHoldingKey(entry) === key,
+      );
+      const inventory = [...build.inventory];
+      if (ownedIndex < 0) inventory.push(command.entry);
+      else {
+        const owned = inventory[ownedIndex]!;
+        inventory[ownedIndex] = {
+          ...owned,
+          quantity: owned.quantity + command.entry.quantity,
+        };
+      }
+      let updated: CharacterBuild = { ...build, inventory };
       if (cost > 0) {
         updated = withCurrentWallet(updated, "carried", paid.carried);
         if (cost > currencyToCopper(carried))
@@ -1461,7 +1673,11 @@ export function applyCharacterCommand(
         }
         textStrings[gift.marker] = FREEBEE_GIVEN;
       }
-      return { ...build, inventory, textStrings };
+      return {
+        ...build,
+        inventory: currentInventoryHoldings(inventory),
+        textStrings,
+      };
     }
     case "set-text": {
       const textStrings = { ...build.textStrings };

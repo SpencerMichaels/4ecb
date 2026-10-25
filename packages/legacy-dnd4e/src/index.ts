@@ -17,6 +17,7 @@ import type {
 import {
   CHARACTER_BUILD_FORMAT_VERSION,
   separateKnownHoldings,
+  settleInventory,
 } from "@4ecb/character-domain";
 import { SaxesParser } from "saxes";
 
@@ -439,7 +440,8 @@ function buildFrom(
       };
     }),
     grabbag,
-    inventory,
+    // Per-level loot becomes current holdings; the rows stay as history.
+    ...settleInventory(inventory),
     known,
     alternates,
     baseAbilities: snapshotAbilities,

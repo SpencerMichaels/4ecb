@@ -36,7 +36,7 @@ function entity(id: string, value: string): ContentEntity {
 }
 
 const build: CharacterBuild = {
-  formatVersion: 2,
+  formatVersion: 3,
   known: [],
   effectiveLevel: 1,
   levels: [

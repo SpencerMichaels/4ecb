@@ -672,7 +672,7 @@ describe("missing-content issues", () => {
     legality: "rules-legal",
   });
   const build: CharacterBuild = {
-    formatVersion: 2,
+    formatVersion: 3,
     known: [],
     effectiveLevel: 1,
     levels: [

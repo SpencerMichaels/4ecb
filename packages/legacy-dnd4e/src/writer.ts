@@ -1,6 +1,10 @@
 import {
+  characterWalletTextKey,
+  currentInventoryHoldings,
   detailsWithLegacyTextStrings,
+  inventoryHoldingKey,
   isKnownElementStored,
+  walletTextLevel,
   type BuildElementIdentity,
   type BuildInventoryEntry,
   type BuildKnownEntry,
@@ -314,26 +318,31 @@ function semanticBuild(build: CharacterBuild): unknown {
       name: entry.element.name,
       type: entry.element.type,
     })),
-    inventory: build.inventory.map((entry) => ({
-      acquiredLevel: entry.acquiredLevel,
-      quantity: entry.quantity,
-      equippedQuantity: entry.equippedQuantity,
-      elements: entry.elements.map((identity) => ({
-        definitionId: identity.definitionId,
-        name: identity.name,
-        type: identity.type,
-        url: identity.url,
-        ...(identity.children === undefined
+    // Holdings are one current set at every level (D097): neither their order
+    // nor the level of their first loot row is part of their meaning.
+    inventory: [...build.inventory]
+      .sort((left, right) =>
+        inventoryHoldingKey(left).localeCompare(inventoryHoldingKey(right)),
+      )
+      .map((entry) => ({
+        quantity: entry.quantity,
+        equippedQuantity: entry.equippedQuantity,
+        elements: entry.elements.map((identity) => ({
+          definitionId: identity.definitionId,
+          name: identity.name,
+          type: identity.type,
+          url: identity.url,
+          ...(identity.children === undefined
+            ? {}
+            : { children: identity.children.map(occurrence) }),
+        })),
+        ...(entry.name === undefined ? {} : { name: entry.name }),
+        ...(entry.showPowerCard === undefined
           ? {}
-          : { children: identity.children.map(occurrence) }),
+          : { showPowerCard: entry.showPowerCard }),
+        overrides: sortedRecord(entry.overrides),
+        legality: entry.legality,
       })),
-      ...(entry.name === undefined ? {} : { name: entry.name }),
-      ...(entry.showPowerCard === undefined
-        ? {}
-        : { showPowerCard: entry.showPowerCard }),
-      overrides: sortedRecord(entry.overrides),
-      legality: entry.legality,
-    })),
     alternates: build.alternates.map((alternate) => ({
       selectName: alternate.selectName,
       provider: semanticIdentity(alternate.provider),
@@ -841,9 +850,20 @@ export function projectBuildForLegacyExport(
     ...build,
     levels,
     grabbag,
-    inventory: build.inventory.filter(
-      (entry) => entry.acquiredLevel <= activeLevel,
+    // Holdings are current at every level (D097): one lowered below an
+    // item's purchase still owns it, as the level it is exported at.
+    inventory: build.inventory.map((entry) =>
+      entry.acquiredLevel <= activeLevel
+        ? entry
+        : { ...entry, acquiredLevel: activeLevel },
     ),
+    ...(build.inventoryHistory === undefined
+      ? {}
+      : {
+          inventoryHistory: build.inventoryHistory.filter(
+            (entry) => entry.acquiredLevel <= activeLevel,
+          ),
+        }),
     known: build.known.filter((entry) => entry.acquiredLevel <= activeLevel),
     alternates: build.alternates.flatMap((alternate) =>
       alternate.choice.acquiredLevel <= activeLevel &&
@@ -852,7 +872,84 @@ export function projectBuildForLegacyExport(
         ? [{ ...alternate, choice: activeOccurrence(alternate.choice) }]
         : [],
     ),
+    textStrings: withCurrentWalletAtLevel(build.textStrings, activeLevel),
   };
+}
+
+/**
+ * Legacy reads money at its own level. The current wallet can sit at a
+ * higher level's key after the level was lowered; copy it down so the old
+ * builder sees the same coins.
+ */
+function withCurrentWalletAtLevel(
+  textStrings: Readonly<Record<string, string>>,
+  level: number,
+): Readonly<Record<string, string>> {
+  let result = textStrings;
+  for (const wallet of ["carried", "stored"] as const) {
+    const source = walletTextLevel(textStrings, wallet);
+    if (source === undefined || source <= level) continue;
+    result = {
+      ...result,
+      [characterWalletTextKey(level, wallet)]:
+        textStrings[characterWalletTextKey(source, wallet)] ?? "",
+    };
+  }
+  return result;
+}
+
+/**
+ * The per-level `loot` rows to write. A build without imported history
+ * writes its holdings. Otherwise the original transactions are written back
+ * verbatim, then one row at the current level per item whose current
+ * holding differs from what those transactions sum to, so legacy TallyLoot
+ * arrives at exactly the current holdings (D097). A delta for an item the
+ * history already holds carries no saved choices: they are in its history.
+ */
+export function legacyLootRows(
+  build: CharacterBuild,
+): readonly BuildInventoryEntry[] {
+  const history = build.inventoryHistory;
+  if (history === undefined) return build.inventory;
+  const before = new Map(
+    currentInventoryHoldings(history).map((entry) => [
+      inventoryHoldingKey(entry),
+      entry,
+    ]),
+  );
+  const now = new Map(
+    build.inventory.map((entry) => [inventoryHoldingKey(entry), entry]),
+  );
+  const deltas: BuildInventoryEntry[] = [];
+  for (const key of new Set([...now.keys(), ...before.keys()])) {
+    const current = now.get(key);
+    const previous = before.get(key);
+    const quantity = (current?.quantity ?? 0) - (previous?.quantity ?? 0);
+    const equippedQuantity =
+      (current?.equippedQuantity ?? 0) - (previous?.equippedQuantity ?? 0);
+    const overridesChanged =
+      current !== undefined &&
+      JSON.stringify(sortedRecord(current.overrides)) !==
+        JSON.stringify(sortedRecord(previous?.overrides ?? {}));
+    if (quantity === 0 && equippedQuantity === 0 && !overridesChanged) continue;
+    const { equippedSlots: _slots, ...item } = (current ?? previous)!;
+    void _slots;
+    deltas.push({
+      ...item,
+      id: `${item.id}:export-delta`,
+      acquiredLevel: build.effectiveLevel,
+      quantity,
+      equippedQuantity,
+      elements:
+        previous === undefined
+          ? item.elements
+          : item.elements.map(({ children: _children, ...element }) => {
+              void _children;
+              return element;
+            }),
+    });
+  }
+  return [...history, ...deltas];
 }
 
 /**
@@ -1161,11 +1258,13 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     throw new Error("Edited export requires a converged rules evaluation");
   if (input.evaluation.level !== input.build.effectiveLevel)
     throw new Error("Edited export evaluation does not match the build level");
-  const build = withKnownAsLoot(
-    projectBuildForLegacyExport(
-      withLegacyFreebeeRituals(input.build, input.evaluation, input.content),
-    ),
+  const projected = projectBuildForLegacyExport(
+    withLegacyFreebeeRituals(input.build, input.evaluation, input.content),
   );
+  const build = withKnownAsLoot({
+    ...projected,
+    inventory: legacyLootRows(projected),
+  });
 
   const sourceXml = input.envelope.sourceXml.startsWith("\uFEFF")
     ? input.envelope.sourceXml.slice(1)

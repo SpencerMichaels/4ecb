@@ -45,7 +45,7 @@ import {
   type CoinAdjustment,
   ZERO_CURRENCY,
   characterDisplayName,
-  characterWalletTextKey,
+  currentWalletTextKey,
   currencyToCopper,
   formatLegacyCurrency,
   resolveCharacterWallet,
@@ -1970,7 +1970,7 @@ export function CharacterEditorPage({
       kind: "batch",
       commands: (["carried", "stored"] as const).map((location) => ({
         kind: "set-text" as const,
-        name: characterWalletTextKey(build.effectiveLevel, location),
+        name: currentWalletTextKey(build, location),
         value: formatLegacyCurrency(amount(location)),
       })),
     });
@@ -2011,12 +2011,12 @@ export function CharacterEditorPage({
       commands: [
         {
           kind: "set-text",
-          name: characterWalletTextKey(activeBuild.effectiveLevel, "carried"),
+          name: currentWalletTextKey(activeBuild, "carried"),
           value: formatLegacyCurrency(adjusted.carried),
         },
         {
           kind: "set-text",
-          name: characterWalletTextKey(activeBuild.effectiveLevel, "stored"),
+          name: currentWalletTextKey(activeBuild, "stored"),
           value: formatLegacyCurrency(adjusted.stored),
         },
       ],

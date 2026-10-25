@@ -55,7 +55,7 @@ const content = [
 const byId = new Map(content.map((value) => [value.id.toLowerCase(), value]));
 
 const build: CharacterBuild = {
-  formatVersion: 2,
+  formatVersion: 3,
   effectiveLevel: 3,
   levels: [],
   grabbag: [],

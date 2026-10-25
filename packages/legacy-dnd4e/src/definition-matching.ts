@@ -350,6 +350,17 @@ function replacedBuild(
         replacedElement(element, replacements),
       ),
     })),
+    // The preserved loot transactions name the same items as the holdings.
+    ...(build.inventoryHistory === undefined
+      ? {}
+      : {
+          inventoryHistory: build.inventoryHistory.map((entry) => ({
+            ...entry,
+            elements: entry.elements.map((element) =>
+              replacedElement(element, replacements),
+            ),
+          })),
+        }),
     known: build.known.map((entry) => ({
       ...entry,
       element: replacedIdentity(entry.element, replacements),

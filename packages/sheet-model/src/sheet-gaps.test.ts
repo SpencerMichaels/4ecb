@@ -136,7 +136,7 @@ const holding = (id: string, definitionId: string, equipped: number) => ({
   legality: "rules-legal" as const,
 });
 const build: CharacterBuild = {
-  formatVersion: 2,
+  formatVersion: 3,
   known: [],
   effectiveLevel: 1,
   levels: [],

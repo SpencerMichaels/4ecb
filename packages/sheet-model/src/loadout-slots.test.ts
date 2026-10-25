@@ -89,7 +89,7 @@ const snapshot: LegacyCharacterSnapshot = {
 
 function build(inventory: readonly BuildInventoryEntry[]): CharacterBuild {
   return {
-    formatVersion: 2,
+    formatVersion: 3,
     known: [],
     effectiveLevel: 1,
     levels: [],

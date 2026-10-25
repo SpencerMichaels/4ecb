@@ -28,6 +28,7 @@ import {
   parseCoinAdjustment,
   payWalletCopper,
   resolveCharacterWallet,
+  currentWalletTextKey,
   subtractCurrency,
   type CharacterBuild,
   type CharacterBuildV1,
@@ -51,7 +52,7 @@ const snapshot = {
 };
 
 const build: CharacterBuild = {
-  formatVersion: 2,
+  formatVersion: 3,
   known: [],
   effectiveLevel: 1,
   levels: [
@@ -521,7 +522,7 @@ describe("character records", () => {
     expect(consolidateCurrency(ZERO_CURRENCY)).toEqual(ZERO_CURRENCY);
   });
 
-  it("inherits the latest legacy wallet text at or below the requested level", () => {
+  it("reads one current wallet: the latest legacy wallet text at any level", () => {
     const leveled: CharacterBuild = {
       ...build,
       effectiveLevel: 4,
@@ -532,15 +533,41 @@ describe("character records", () => {
         "_PER_LEVEL_5_Carried Money": "99 gp",
       },
     };
+    // A value left above a lowered level is still the current wallet.
     expect(resolveCharacterWallet(leveled, "carried")).toEqual({
-      amount: { ad: 0, pp: 0, gp: 2, sp: 5, cp: 0 },
-      sourceLevel: 3,
+      amount: { ad: 0, pp: 0, gp: 99, sp: 0, cp: 0 },
+      sourceLevel: 5,
     });
     expect(resolveCharacterWallet(leveled, "stored")).toEqual({
       amount: { ad: 0, pp: 0, gp: 20, sp: 0, cp: 0 },
       sourceLevel: 1,
     });
+    // Export still asks for a legacy level's value explicitly.
+    expect(resolveCharacterWallet(leveled, "carried", 4).sourceLevel).toBe(3);
     expect(resolveCharacterWallet(leveled, "carried", 2).sourceLevel).toBe(1);
+    // Edits write the key that is read back, never one a later key shadows.
+    expect(currentWalletTextKey(leveled, "carried")).toBe(
+      "_PER_LEVEL_5_Carried Money",
+    );
+    expect(currentWalletTextKey(leveled, "stored")).toBe(
+      "_PER_LEVEL_4_Stored Money",
+    );
+    const spent = applyCharacterCommand(leveled, {
+      kind: "purchase-inventory",
+      entry: {
+        id: "rope",
+        acquiredLevel: 4,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [{ name: "Rope", type: "Gear" }],
+        overrides: {},
+        legality: "rules-legal",
+      },
+      priceCopper: 100,
+    });
+    expect(resolveCharacterWallet(spent, "carried").amount.gp).toBe(98);
+    expect(spent.textStrings["_PER_LEVEL_5_Carried Money"]).toBe("98 gp");
+    expect(spent.textStrings["_PER_LEVEL_3_Carried Money"]).toBe("2 gp; 5 sp");
   });
 
   it("recognizes wallet text keys and nothing else", () => {
@@ -1042,8 +1069,10 @@ describe("known rituals, formulas and practices", () => {
       ],
     };
     const upgraded = upgradeCharacterBuild(v1);
-    expect(upgraded.formatVersion).toBe(2);
-    expect(upgraded.inventory.map(({ id }) => id)).toEqual([
+    expect(upgraded.formatVersion).toBe(3);
+    // The sold ritual is no longer owned; its row stays as history.
+    expect(upgraded.inventory.map(({ id }) => id)).toEqual(["book", "scroll"]);
+    expect(upgraded.inventoryHistory?.map(({ id }) => id)).toEqual([
       "book",
       "scroll",
       "sold",

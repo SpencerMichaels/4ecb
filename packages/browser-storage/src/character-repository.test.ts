@@ -39,7 +39,7 @@ function character(id = "character-one") {
       source: "legacy-cache",
     },
     {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -195,7 +195,7 @@ describe("CharacterRepository", () => {
     expect(upgradedCharacter).toMatchObject({
       id: legacy.id,
       schemaVersion: 2,
-      build: { formatVersion: 2 },
+      build: { formatVersion: 3 },
     });
     const upgradedContent = new ContentPackRepository(name);
     await expect(upgradedContent.activePackId()).resolves.toBe("v2-profile");
@@ -247,7 +247,7 @@ describe("CharacterRepository", () => {
 
     const recovered = await new CharacterRepository(name).get(legacy.id);
     expect(recovered).toMatchObject({ id: legacy.id, schemaVersion: 2 });
-    expect(recovered?.build.formatVersion).toBe(2);
+    expect(recovered?.build.formatVersion).toBe(3);
     await expect(
       new CharacterRepository(name).listMetadataPartitioned(),
     ).resolves.toMatchObject({
@@ -296,7 +296,7 @@ describe("CharacterRepository", () => {
     db.close();
 
     const migrated = await storage.get("format-1");
-    expect(migrated?.build.formatVersion).toBe(2);
+    expect(migrated?.build.formatVersion).toBe(3);
     expect(migrated?.build.inventory.map(({ id }) => id)).toEqual([
       "legacy:loot:1:1",
     ]);
@@ -313,10 +313,78 @@ describe("CharacterRepository", () => {
     const reopened = await openDB(name);
     expect(
       (await reopened.get("characters", "format-1")).build.formatVersion,
-    ).toBe(2);
+    ).toBe(3);
     expect(await reopened.getAll("characterMigrations")).toHaveLength(0);
     reopened.close();
     await expect(storage.get("format-1")).resolves.toEqual(migrated);
+  });
+
+  it("settles a format-2 build's per-level loot into current holdings on load", async () => {
+    const name = `4ecb-holdings-migration-${crypto.randomUUID()}`;
+    databases.push(name);
+    const current = character("format-2");
+    const { inventoryHistory: _history, ...build } = current.build;
+    void _history;
+    const belt = {
+      id: "legacy:loot:5:0",
+      acquiredLevel: 5,
+      quantity: 1,
+      equippedQuantity: 1,
+      elements: [
+        { definitionId: "ID_BELT", name: "Belt of Vigor", type: "Magic Item" },
+      ],
+      overrides: {},
+      legality: "rules-legal" as const,
+    };
+    const blade = {
+      ...belt,
+      id: "legacy:loot:5:1",
+      elements: [{ definitionId: "ID_BLADE", name: "Gouge", type: "Weapon" }],
+    };
+    const rows = [
+      belt,
+      blade,
+      {
+        ...belt,
+        id: "legacy:loot:6:0",
+        acquiredLevel: 6,
+        quantity: -1,
+        equippedQuantity: -1,
+      },
+      {
+        ...blade,
+        id: "legacy:loot:6:1",
+        acquiredLevel: 6,
+        quantity: 0,
+        equippedQuantity: -1,
+      },
+    ];
+    const storage = new CharacterRepository(name);
+    await storage.put(current);
+    const db = await openDB(name);
+    await db.put("characters", {
+      ...current,
+      build: { ...build, formatVersion: 2, inventory: rows },
+    });
+    db.close();
+
+    const migrated = await storage.get("format-2");
+    expect(migrated?.build.formatVersion).toBe(3);
+    expect(
+      migrated?.build.inventory.map(({ id, quantity, equippedQuantity }) => [
+        id,
+        quantity,
+        equippedQuantity,
+      ]),
+    ).toEqual([["legacy:loot:5:1", 1, 0]]);
+    expect(migrated?.build.inventoryHistory).toEqual(rows);
+    // Written back once; reloading returns the same current holdings.
+    const reopened = await openDB(name);
+    expect(
+      (await reopened.get("characters", "format-2")).build.formatVersion,
+    ).toBe(3);
+    reopened.close();
+    await expect(storage.get("format-2")).resolves.toEqual(migrated);
   });
 
   it("moves schema-4 rendered portraits out of metadata during upgrade", async () => {

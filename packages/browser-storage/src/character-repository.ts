@@ -4,6 +4,7 @@ import {
   duplicateCharacterRecord,
   isCharacterRecord,
   isCharacterRecordWithBuildV1,
+  isCharacterRecordWithBuildV2,
   isCurrentStoredRecord,
   isLegacyCharacterRecordV1,
   upgradeCharacterBuild,
@@ -802,6 +803,7 @@ async function validateBackup(
 function isStoredCharacter(value: unknown): value is StoredCharacterRecord {
   return (
     isCharacterRecord(value) ||
+    isCharacterRecordWithBuildV2(value) ||
     isCharacterRecordWithBuildV1(value) ||
     isLegacyCharacterRecordV1(value)
   );
@@ -810,8 +812,9 @@ function isStoredCharacter(value: unknown): value is StoredCharacterRecord {
 /**
  * Upgrades a stored record to the current schema and build format. Schema-1
  * records are re-imported from their source; a format-1 build moves its
- * ritual holdings into the known list. Both are idempotent and keep every
- * entry.
+ * ritual holdings into the known list, and a format-2 build settles its
+ * per-level loot into current holdings, keeping the original rows as
+ * inventory history. All are idempotent and keep every entry.
  */
 function upgradeRecord(value: StoredCharacterRecord): CharacterRecord {
   if (isCurrentStoredRecord(value)) return value;

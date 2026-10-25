@@ -90,7 +90,7 @@ describe("build projection", () => {
       children,
     });
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -173,7 +173,7 @@ describe("build projection", () => {
       children,
     });
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -237,7 +237,7 @@ describe("build projection", () => {
     const buildWith = (
       children: CharacterBuild["levels"][number]["root"]["children"],
     ): CharacterBuild => ({
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [{ level: 1, root: child("race", "RACE", "Race", children) }],
@@ -347,7 +347,7 @@ describe("build projection", () => {
       entity("FEAT", "Feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -415,7 +415,7 @@ describe("build projection", () => {
       entity("SPELL", "Prepared spell", "Power"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -479,7 +479,7 @@ describe("build projection", () => {
       entity("FEAT", "Chosen feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -601,7 +601,7 @@ describe("build projection", () => {
       children: [],
     });
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 3,
       levels: [
@@ -694,7 +694,7 @@ describe("build projection", () => {
       entity("FEAT", "Chosen feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -784,7 +784,7 @@ describe("build projection", () => {
       entity("POWER", "Level 2 power", "Power"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 2,
       levels: [
@@ -868,7 +868,7 @@ describe("build projection", () => {
       entity("FEAT", "Feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -940,7 +940,7 @@ describe("build projection", () => {
       entity("POISON", "Poison", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -1001,7 +1001,7 @@ describe("build projection", () => {
       entity("POISON", "Poison", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -1097,7 +1097,7 @@ describe("build projection", () => {
       entity("CHARISMA", "Charisma blast", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -1191,7 +1191,7 @@ describe("build projection", () => {
       entity("SHIELD", "Shield", "Power"),
     ];
     let build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -1304,7 +1304,7 @@ describe("build projection", () => {
       legality: "rules-legal" as const,
     });
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -1357,9 +1357,93 @@ describe("build projection", () => {
     expect(equippedEvaluation.stats["Will Defense"]?.value).toBe(11);
   });
 
+  it("evaluates current holdings and their choices at an earlier viewed level (D097)", () => {
+    const content = [
+      {
+        // A slotted item only applies while equipped.
+        ...entity("CAPE", "Cape of Resistance", "Magic Item", [
+          statement("statadd", { name: "Fortitude Defense", value: "+1" }, 0),
+          statement("select", { type: "Class Feature", number: "1" }, 1),
+        ]),
+        specifics: [
+          { name: "Item Slot", value: "Neck", extraAttributes: [], ordinal: 0 },
+        ],
+      },
+      entity("POISON", "Poison", "Class Feature"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 3,
+      known: [],
+      effectiveLevel: 8,
+      levels: [],
+      grabbag: [],
+      inventory: [
+        {
+          id: "cape",
+          acquiredLevel: 6,
+          quantity: 1,
+          equippedQuantity: 0,
+          elements: [
+            {
+              definitionId: "CAPE",
+              name: "Cape of Resistance",
+              type: "Magic Item",
+              children: [
+                {
+                  id: "poison",
+                  identity: {
+                    definitionId: "POISON",
+                    name: "Poison",
+                    type: "Class Feature",
+                  },
+                  acquiredLevel: 6,
+                  legality: "rules-legal",
+                  children: [],
+                  unresolved: false,
+                },
+              ],
+            },
+          ],
+          overrides: {},
+          legality: "rules-legal",
+        },
+      ],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    // Equipped while the Build tab views level 2, below the purchase.
+    const equipped = applyCharacterCommand(build, {
+      kind: "equip-inventory",
+      entryId: "cape",
+      assignments: [{ slot: "neck", quantityIndex: 0 }],
+    });
+    for (const level of [2, 8]) {
+      const [before, after] = [build, equipped].map((value) =>
+        evaluateCharacter(
+          projectBuildForEvaluation(
+            { ...value, effectiveLevel: level },
+            content,
+          ),
+          content,
+        ),
+      );
+      expect(
+        (after!.stats["Fortitude Defense"]?.value ?? 0) -
+          (before!.stats["Fortitude Defense"]?.value ?? 0),
+      ).toBe(1);
+      expect(
+        after!.choices.find(
+          ({ providerOccurrenceId }) =>
+            providerOccurrenceId === "cape:definition:0",
+        ),
+      ).toMatchObject({ selectedOccurrenceId: "poison" });
+    }
+  });
+
   it("excludes wallet and freeform detail text keys from evaluation input so those edits reuse cached results", () => {
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -1394,7 +1478,7 @@ describe("build projection", () => {
 
   it("feeds known rituals to evaluation as owned, unequipped elements", () => {
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [
         {
           id: "known-1",

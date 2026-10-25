@@ -164,7 +164,7 @@ describe("sheet model", () => {
       source: "legacy-cache",
     };
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],
@@ -574,7 +574,7 @@ describe("sheet model", () => {
       unresolved: false,
     };
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 3,
       levels: [{ level: 1, root: occurrence }],
@@ -1557,7 +1557,7 @@ describe("sheet model", () => {
       },
     ];
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
@@ -1678,7 +1678,7 @@ describe("sheet model", () => {
       source: "legacy-cache",
     };
     const build: CharacterBuild = {
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [],

@@ -6,7 +6,7 @@ import { OptimisticBuildSaveQueue } from "./optimistic-save";
 
 function build(level: number): CharacterBuild {
   return {
-    formatVersion: 2,
+    formatVersion: 3,
     known: [],
     effectiveLevel: level,
     levels: [],

@@ -284,6 +284,42 @@ function isGeneratedOccurrence(
  * synthetic `<entry>:definition:<index>` provider) or an occurrence stored
  * beneath one, with a way to rebuild the entry around new children.
  */
+/**
+ * The evaluated level of everything the character owns. Inventory is one
+ * current state (D097): an evaluation at an earlier viewed level still
+ * carries, wears and wields today's holdings, so they enter from level 1.
+ */
+const HOLDING_LEVEL = 1;
+
+function atHoldingLevel(occurrence: BuildOccurrence): BuildOccurrence {
+  return {
+    ...occurrence,
+    acquiredLevel: HOLDING_LEVEL,
+    children: occurrence.children.map(atHoldingLevel),
+  };
+}
+
+/**
+ * Current holdings as evaluator inventory entries, present at every
+ * evaluated level (D097). The sheet reads the same entries so its holding
+ * IDs and counts match the evaluation's.
+ */
+export function evaluationInventory(
+  inventory: CharacterBuild["inventory"],
+): CharacterInventoryEntry[] {
+  return inventory.map((entry) => ({
+    id: entry.id,
+    ...(entry.name === undefined ? {} : { name: entry.name }),
+    definitionIds: entry.elements.flatMap((element) =>
+      element.definitionId === undefined ? [] : [element.definitionId],
+    ),
+    quantity: entry.quantity,
+    equippedQuantity: entry.equippedQuantity,
+    acquiredLevel: HOLDING_LEVEL,
+    overrides: entry.overrides,
+  }));
+}
+
 function findInventoryProvider(
   build: CharacterBuild,
   id: string,
@@ -893,16 +929,17 @@ export function projectBuildForEvaluation(
   // Item-specific selections (for example an Armor of Resistance damage type)
   // are serialized beneath the relevant loot definition, not in the level
   // tree. Project them beneath the evaluator's synthetic inventory provider so
-  // an already-completed item choice is not presented as unresolved.
+  // an already-completed item choice is not presented as unresolved. Like the
+  // holding itself, its choices apply at every evaluated level.
   for (const entry of build.inventory) {
     entry.elements.forEach((element, definitionIndex) => {
-      const children = element.children ?? [];
+      const children = (element.children ?? []).map(atHoldingLevel);
       if (children.length === 0) return;
       const providerId = `${entry.id}:definition:${definitionIndex}`;
       const provider: BuildOccurrence = {
         id: providerId,
         identity: element,
-        acquiredLevel: entry.acquiredLevel,
+        acquiredLevel: HOLDING_LEVEL,
         legality: entry.legality,
         children,
         unresolved: element.definitionId === undefined,
@@ -914,13 +951,7 @@ export function projectBuildForEvaluation(
       const { slots } = assignChildSlots(provider, entity);
       children.forEach((child, index) => {
         const slot = slots[index];
-        visit(
-          child,
-          slot?.kind ?? "choice",
-          providerId,
-          slot,
-          entry.acquiredLevel,
-        );
+        visit(child, slot?.kind ?? "choice", providerId, slot, HOLDING_LEVEL);
       });
     });
   }
@@ -990,17 +1021,7 @@ export function projectBuildForEvaluation(
   }
 
   const inventory: CharacterInventoryEntry[] = [
-    ...build.inventory.map((entry) => ({
-      id: entry.id,
-      ...(entry.name === undefined ? {} : { name: entry.name }),
-      definitionIds: entry.elements.flatMap((element) =>
-        element.definitionId === undefined ? [] : [element.definitionId],
-      ),
-      quantity: entry.quantity,
-      equippedQuantity: entry.equippedQuantity,
-      acquiredLevel: entry.acquiredLevel,
-      overrides: entry.overrides,
-    })),
+    ...evaluationInventory(build.inventory),
     // Known rituals are owned elements whose own rules (a community ritual's
     // granted power) still apply. They enter evaluation exactly as an
     // unequipped ritual holding did before they left the inventory.

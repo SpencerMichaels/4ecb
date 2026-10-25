@@ -238,7 +238,7 @@ describe("feature-gated power clauses", () => {
         source: "legacy-cache",
       },
       {
-        formatVersion: 2,
+        formatVersion: 3,
         known: [],
         effectiveLevel: 1,
         levels: [],

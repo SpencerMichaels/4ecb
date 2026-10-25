@@ -9,6 +9,7 @@ import type {
   BuildElementIdentity,
   CharacterBuild,
   CharacterBuildV1,
+  CharacterBuildV2,
 } from "./build";
 
 export const CHARACTER_SCHEMA_VERSION = 2 as const;
@@ -154,8 +155,19 @@ export interface CharacterRecordWithBuildV1 extends Omit<
   readonly build: CharacterBuildV1;
 }
 
+/** A schema-2 record whose inventory was still per-level loot transactions. */
+export interface CharacterRecordWithBuildV2 extends Omit<
+  CharacterRecord,
+  "build"
+> {
+  readonly build: CharacterBuildV2;
+}
+
 export type StoredCharacterRecord =
-  CharacterRecord | CharacterRecordWithBuildV1 | LegacyCharacterRecordV1;
+  | CharacterRecord
+  | CharacterRecordWithBuildV2
+  | CharacterRecordWithBuildV1
+  | LegacyCharacterRecordV1;
 
 /** Whether a stored record already has the current schema and build format. */
 export function isCurrentStoredRecord(
@@ -379,7 +391,7 @@ function buildUserRule(value: unknown, depth: number): boolean {
   );
 }
 
-function characterBuild(value: unknown, formatVersion: 1 | 2): boolean {
+function characterBuild(value: unknown, formatVersion: 1 | 2 | 3): boolean {
   const build = object(value);
   if (build === undefined || build.formatVersion !== formatVersion)
     return false;
@@ -510,6 +522,16 @@ function characterBuild(value: unknown, formatVersion: 1 | 2): boolean {
         levelledEntry(entry) && inventoryHolding(entry, occupiedEquipmentSlots)
       );
     }) &&
+    // Preserved per-level loot transactions: each row is validated alone.
+    (build.inventoryHistory === undefined ||
+      (formatVersion === 3 &&
+        Array.isArray(build.inventoryHistory) &&
+        build.inventoryHistory.every((value) => {
+          const entry = object(value);
+          return (
+            levelledEntry(entry) && inventoryHolding(entry, new Set<string>())
+          );
+        }))) &&
     Array.isArray(build.alternates) &&
     build.alternates.every((value) => {
       const alternate = object(value);
@@ -655,6 +677,16 @@ function portraitCropFitsSource(
 }
 
 export function isCharacterRecord(value: unknown): value is CharacterRecord {
+  const record = characterRecordBase(value);
+  return (
+    record?.schemaVersion === 2 &&
+    characterBuild(record.build, CHARACTER_BUILD_FORMAT_VERSION)
+  );
+}
+
+export function isCharacterRecordWithBuildV2(
+  value: unknown,
+): value is CharacterRecordWithBuildV2 {
   const record = characterRecordBase(value);
   return record?.schemaVersion === 2 && characterBuild(record.build, 2);
 }

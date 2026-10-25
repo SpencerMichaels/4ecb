@@ -89,7 +89,7 @@ const occurrence = (
 });
 
 const build: CharacterBuild = {
-  formatVersion: 2,
+  formatVersion: 3,
   effectiveLevel: 1,
   levels: [
     {

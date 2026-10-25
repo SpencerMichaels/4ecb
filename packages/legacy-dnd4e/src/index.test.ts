@@ -90,7 +90,7 @@ describe("legacy .dnd4e import", () => {
       "Preserve & escape user text.",
     );
     expect(imported.build).toMatchObject({
-      formatVersion: 2,
+      formatVersion: 3,
       known: [],
       effectiveLevel: 1,
       levels: [
@@ -236,9 +236,14 @@ describe("legacy .dnd4e import", () => {
       },
     ]);
     // A scroll never makes its ritual known; a count-0 record is not known
-    // but its loot is kept for export.
+    // or owned, but its loot is kept as history for export.
     expect(
       imported.build.inventory.map(({ elements }) => elements[0]?.definitionId),
+    ).toEqual(["SCROLL"]);
+    expect(
+      imported.build.inventoryHistory?.map(
+        ({ elements }) => elements[0]?.definitionId,
+      ),
     ).toEqual(["SCROLL", "RITUAL_GONE"]);
 
     const build = {
@@ -283,7 +288,8 @@ describe("legacy .dnd4e import", () => {
       reimported.build.inventory.map(
         ({ elements }) => elements[0]?.definitionId,
       ),
-    ).toEqual(["SCROLL", "RITUAL_GONE"]);
+    ).toEqual(["SCROLL"]);
+    expect(xml).toContain('internal-id="RITUAL_GONE"');
     expect(
       compareEditedDnd4eRoundTrip(
         projectBuildForLegacyExport(
@@ -309,20 +315,155 @@ describe("legacy .dnd4e import", () => {
     ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
   });
 
+  it("exports edits to current holdings as deltas after the original loot (D097)", () => {
+    const loot = (
+      count: number,
+      equipped: number,
+      id: string,
+      name: string,
+      type = "Magic Item",
+    ) =>
+      `<loot count="${count}" equip-count="${equipped}" ShowPowerCard="1"><RulesElement name="${name}" type="${type}" internal-id="${id}"/></loot>`;
+    const level = (n: number, rows = "") =>
+      `<Level><RulesElement name="${n}" type="Level" internal-id="L${n}"/>${rows}</Level>`;
+    const source = `<D20Character game-system="D&amp;D4E">${level(1)}${level(
+      2,
+      `${loot(1, 1, "BLADE", "Gouge", "Weapon")}${loot(1, 1, "BELT", "Belt of Vigor")}${loot(1, 0, "SYMBOL", "Symbol of Hope")}`,
+    )}${level(
+      3,
+      `${loot(0, -1, "BLADE", "Gouge", "Weapon")}${loot(0, 1, "SYMBOL", "Symbol of Hope")}${loot(-1, -1, "BELT", "Belt of Vigor")}`,
+    )}</D20Character>`;
+    const content = [
+      entity("L1", "1", "Level"),
+      entity("L2", "2", "Level"),
+      entity("L3", "3", "Level"),
+      entity("BLADE", "Gouge", "Weapon"),
+      entity("BELT", "Belt of Vigor", "Magic Item"),
+      entity("SYMBOL", "Symbol of Hope", "Magic Item"),
+    ];
+    const imported = importDnd4e(source);
+    const owned = (build: typeof imported.build) =>
+      build.inventory.map(({ elements, quantity, equippedQuantity }) => [
+        elements[0]?.definitionId,
+        quantity,
+        equippedQuantity,
+      ]);
+    expect(owned(imported.build)).toEqual([
+      ["BLADE", 1, 0],
+      ["SYMBOL", 1, 1],
+    ]);
+    const exportBuild = (build: typeof imported.build) =>
+      exportEditedDnd4e({
+        target: "legacy-builder-0.07a",
+        envelope: imported.envelope,
+        snapshot: imported.snapshot,
+        build,
+        evaluation: evaluateCharacter(
+          projectBuildForEvaluation(build, content),
+          content,
+        ),
+        content,
+      });
+    const levelLoot = (xml: string) =>
+      [...xml.matchAll(/<Level><RulesElement(.*?)<\/Level>/gsu)].map((match) =>
+        [
+          ...(match[1] ?? "").matchAll(
+            /<loot count="(-?\d+)" equip-count="(-?\d+)"/gu,
+          ),
+        ]
+          .map((row) => `${row[1]}/${row[2]}`)
+          .join(" "),
+      );
+    // Unedited, the original transactions are written back unchanged.
+    expect(levelLoot(exportBuild(imported.build))).toEqual([
+      "",
+      "1/1 1/1 1/0",
+      "0/-1 0/1 -1/-1",
+    ]);
+
+    // Equip the blade in both hands, buy the belt again and wear it.
+    const bladeId = imported.build.inventory[0]!.id;
+    let edited = applyCharacterCommand(imported.build, {
+      kind: "equip-inventory",
+      entryId: bladeId,
+      assignments: [
+        { slot: "main-hand", quantityIndex: 0 },
+        { slot: "off-hand", quantityIndex: 0 },
+      ],
+    });
+    edited = applyCharacterCommand(edited, {
+      kind: "purchase-inventory",
+      entry: {
+        id: "web:belt",
+        acquiredLevel: 3,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [
+          { definitionId: "BELT", name: "Belt of Vigor", type: "Magic Item" },
+        ],
+        showPowerCard: true,
+        overrides: {},
+        legality: "rules-legal",
+      },
+      priceCopper: 0,
+    });
+    edited = applyCharacterCommand(edited, {
+      kind: "equip-inventory",
+      entryId: "web:belt",
+      assignments: [{ slot: "waist", quantityIndex: 0 }],
+    });
+    const xml = exportBuild(edited);
+    // History first, then one delta per changed item at the current level.
+    expect(levelLoot(xml)).toEqual([
+      "",
+      "1/1 1/1 1/0",
+      "0/-1 0/1 -1/-1 0/1 1/1",
+    ]);
+    const tally = /<LootTally>(.*?)<\/LootTally>/su.exec(xml)?.[1] ?? "";
+    expect(
+      [...tally.matchAll(/<loot count="(-?\d+)" equip-count="(-?\d+)"/gu)].map(
+        (row) => `${row[1]}/${row[2]}`,
+      ),
+    ).toEqual(["1/1", "1/1", "1/1"]);
+    const reimported = importDnd4e(xml);
+    expect(owned(reimported.build)).toEqual([
+      ["BLADE", 1, 1],
+      ["BELT", 1, 1],
+      ["SYMBOL", 1, 1],
+    ]);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(edited),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+  });
+
   it("imports per-level loot removals as records the domain decoder accepts", () => {
     const imported = importDnd4e(
       `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/><loot count="1" equip-count="1"><RulesElement name="Old blade" type="Weapon" internal-id="BLADE"/></loot><loot count="1" equip-count="0"><RulesElement name="Spare cloak" type="Magic Item" internal-id="CLOAK"/></loot><loot count="1" equip-count="0"><RulesElement name="Lost Rite" type="Ritual" internal-id="RITE"/></loot></Level><Level><RulesElement name="2" type="Level" internal-id="L2"/><loot count="-1" equip-count="-1"><RulesElement name="Old blade" type="Weapon" internal-id="BLADE"/></loot><loot count="0" equip-count="1"><RulesElement name="Spare cloak" type="Magic Item" internal-id="CLOAK"/></loot><loot count="-1" equip-count="0"><RulesElement name="Lost Rite" type="Ritual" internal-id="RITE"/></loot></Level></D20Character>`,
     );
     expect(
-      imported.build.inventory
+      (imported.build.inventoryHistory ?? [])
         .filter(({ acquiredLevel }) => acquiredLevel === 2)
         .map(({ quantity, equippedQuantity }) => [quantity, equippedQuantity]),
-    ).toEqual(
-      expect.arrayContaining([
-        [-1, -1],
-        [0, 1],
-      ]),
-    );
+    ).toEqual([
+      [-1, -1],
+      [0, 1],
+      [-1, 0],
+    ]);
+    // What the character owns now: the blade and the rite are gone, the
+    // cloak bought at level 1 is worn from level 2 (D097).
+    expect(
+      imported.build.inventory.map(
+        ({ elements, quantity, equippedQuantity }) => [
+          elements[0]?.definitionId,
+          quantity,
+          equippedQuantity,
+        ],
+      ),
+    ).toEqual([["CLOAK", 1, 1]]);
+    expect(imported.build.known).toEqual([]);
     const record = JSON.parse(
       JSON.stringify(
         newCharacterRecord(
@@ -629,7 +770,13 @@ describe("legacy .dnd4e import", () => {
     const reimported = importDnd4e(xml);
     expect(reimported.build.levels).toHaveLength(1);
     expect(xml).not.toContain("Future feat");
-    expect(xml).not.toContain("Future item");
+    // Gear is current at every level (D097): lowering the level keeps it.
+    expect(
+      reimported.build.inventory.map(({ name, elements, acquiredLevel }) => [
+        name ?? elements[0]?.name,
+        acquiredLevel,
+      ]),
+    ).toEqual([["Future item", 1]]);
     expect(build.levels).toHaveLength(2);
     const projectedAlternate = projectBuildForLegacyExport({
       ...build,

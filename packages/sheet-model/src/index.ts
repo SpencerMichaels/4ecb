@@ -2,6 +2,7 @@ import {
   characterWalletTextKey,
   detailsWithLegacyTextStrings,
   formatInventoryItemName,
+  walletTextLevel,
   type CharacterBuild,
   type BuildInventoryElement,
   type LegacyCharacterSnapshot,
@@ -18,6 +19,7 @@ import {
 import {
   abilityModifier,
   aggregateInventory,
+  evaluationInventory,
   applyFieldOverlays,
   halfLevel,
   knownRecords,
@@ -317,19 +319,31 @@ export interface CharacterSheetModel {
   readonly notes: readonly SheetValue[];
 }
 
-/** Preserve wallet text verbatim, with the builder's latest-at-or-below-level lookup. */
+/**
+ * The wallet text, verbatim: the character's one current wallet (D097), or a
+ * legacy cache sheet's wallet at its saved level.
+ */
 function sheetCurrency(
   details: Readonly<Record<string, string>>,
   textStrings: Readonly<Record<string, string>>,
-  level: number,
+  legacyLevel?: number,
 ): SheetValue[] {
   return (["carried", "stored"] as const).map((location) => {
     const label = location === "carried" ? "Carried" : "Stored";
-    for (let at = Math.min(30, Math.max(1, Math.floor(level))); at >= 1; at--) {
-      const key = characterWalletTextKey(at, location);
-      if (Object.hasOwn(textStrings, key))
-        return { label, value: textStrings[key]?.trim() || "0 gp" };
-    }
+    const level = walletTextLevel(
+      textStrings,
+      location,
+      legacyLevel === undefined
+        ? undefined
+        : Math.min(30, Math.max(1, Math.floor(legacyLevel))),
+    );
+    if (level !== undefined)
+      return {
+        label,
+        value:
+          textStrings[characterWalletTextKey(level, location)]?.trim() ||
+          "0 gp",
+      };
     return { label, value: details[`${label}Money`]?.trim() || "—" };
   });
 }
@@ -1791,17 +1805,7 @@ export function buildEvaluatedSheetModel(
     ]);
 
   const inventory = aggregateInventory(
-    build.inventory.map((entry) => ({
-      id: entry.id,
-      ...(entry.name === undefined ? {} : { name: entry.name }),
-      definitionIds: entry.elements.flatMap((element) =>
-        element.definitionId === undefined ? [] : [element.definitionId],
-      ),
-      quantity: entry.quantity,
-      equippedQuantity: entry.equippedQuantity,
-      acquiredLevel: entry.acquiredLevel,
-      overrides: entry.overrides,
-    })),
+    evaluationInventory(build.inventory),
     evaluation.level,
   );
   const inventoryNames = new Map(
@@ -1980,17 +1984,9 @@ export function buildEvaluatedSheetModel(
       ),
       loadAdjustment: Number(evaluatedStat(evaluation, "StrLoadAdjust") ?? 0),
       weightDiscount: Number(evaluatedStat(evaluation, "Weight Discount") ?? 0),
-      currency: sheetCurrency(
-        identityDetails,
-        build.textStrings,
-        evaluation.level,
-      ),
+      currency: sheetCurrency(identityDetails, build.textStrings),
     }),
-    currency: sheetCurrency(
-      identityDetails,
-      build.textStrings,
-      evaluation.level,
-    ),
+    currency: sheetCurrency(identityDetails, build.textStrings),
     identity: [
       "name",
       "Level",
