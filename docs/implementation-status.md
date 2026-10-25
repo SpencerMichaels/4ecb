@@ -23,8 +23,16 @@ other encounter-use feats remain the open audit in the triage.
 Loadout slots are single-sourced: the builder's resolver moved to
 `sheet-model/src/loadout-slots.ts`, the sheet model projects its slots, and the
 printed loadout no longer infers slots from authored Item Slot text (an
-imported holy symbol now sits in the Holy symbol slot, not Off hand). Hu's
-remaining builder/sheet gap is the inventory-history projection (item 7).
+imported holy symbol now sits in the Holy symbol slot, not Off hand).
+
+Inventory, loadout and wealth are one current state (D097, item 7): the
+build's inventory is current holdings only, imported per-level loot is kept
+verbatim as `inventoryHistory` for export, and stored characters migrate via
+a format-3 build upgrade. Every surface and evaluation (any viewed level)
+reads the holdings; legacy export writes history plus per-item deltas. Hu's
+builder and sheet now agree with his LootTally (Symbol equipped, Gouge
+carried, no Belt of Vigor); equipping the Gouge or buying and wearing Belt
+of Vigor takes effect (surge value 17 → 18).
 
 ## Calculation-gap queue, conditional modifiers, new player saves (2026-10-23)
 

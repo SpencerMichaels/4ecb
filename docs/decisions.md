@@ -2667,6 +2667,54 @@ Decision:
 
 Implemented in `packages/legacy-dnd4e/src/definition-matching.ts`.
 
+### D097 — Inventory, loadout and wealth are one current state
+
+Status: accepted (2026-10-24). Product-owner decision.
+
+Legacy `.dnd4e` files store gear as per-level `loot` transactions that
+`D20Workspace.TallyLoot` sums (a later level records a sale or unequip as a
+negative count), and money as per-level `_PER_LEVEL_<n>_Carried/Stored
+Money` text. The builder exposed the raw rows as holdings: Hu Sheng-Ming's
+level-5 Gouge and Belt of Vigor purchases showed as owned and equipped,
+and equipping them edited the level-5 row that his level-6 row still
+cancelled, so nothing changed.
+
+Decision:
+
+- Inventory, loadout and wealth (every denomination) are **one current
+  state** on every surface. Players never see or reason about them per
+  level, and no UI views them "at an earlier level". Every edit —
+  equip/unequip, add/remove, buy/sell, quantity, coins — changes the current
+  state, from any tab and at any viewed level.
+- `CharacterBuild.inventory` holds only current, concrete holdings: one per
+  item (same name and elements), non-negative counts, valid slots. Rules
+  evaluation, the sheet, Equipment, Shop and Loadout all read it, and an
+  evaluation at an earlier viewed level still carries today's holdings and
+  their saved item choices (`evaluationInventory`, `build-projection.ts`).
+- Imported per-level rows are kept verbatim as
+  `CharacterBuild.inventoryHistory` (never read for current state). Import
+  and the format-3 upgrade of stored characters
+  (`CHARACTER_BUILD_FORMAT_VERSION` 2 → 3, journalled like the format-1
+  upgrade) fold them with `currentInventoryHoldings`: counts sum, an
+  over-equipped sum stays owned so it executes as before, items summing to
+  nothing are gone, the first row's ID identifies the holding.
+- Buying an owned item adds copies to that holding; an edit that makes a
+  holding another item's twin joins it.
+- Export to the legacy builder (best-effort, D091) writes the preserved
+  history, then one delta row per changed item at the current level, so
+  legacy TallyLoot sums to the current holdings; an unedited import writes
+  its rows back unchanged. Holdings bought above a lowered level are
+  exported at the current level.
+- The current wallet is the latest stored wallet text at any level; edits
+  write that key (`currentWalletTextKey`), so a later level's value never
+  shadows them. Export copies it to the current level's key when it sits
+  higher.
+
+Implemented in `packages/character-domain/src/build.ts`,
+`packages/legacy-dnd4e/src/{index,writer}.ts`,
+`packages/rules-engine/src/build-projection.ts` and
+`packages/sheet-model/src/index.ts`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

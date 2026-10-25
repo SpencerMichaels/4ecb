@@ -2,16 +2,16 @@
 
 ## Complexity order and disposition
 
-| Order | Task slice                                         | Complexity               | Disposition                                                                                            |
-| ----- | -------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
-| 1     | Action Point action label                          | Trivial verification     | Already correct: Free Action; retain.                                                                  |
-| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                                 |
-| 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                                     |
-| 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                                    |
-| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                            |
-| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                                    |
-| 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Confirmed raw transactions exposed as current holdings; repair projection and edit semantics together. |
-| 8     | Remaining encounter-use feat powers                | Large audit/content work | Classify transitive grants, missing powers and passive modifiers before adding corrections.            |
+| Order | Task slice                                         | Complexity               | Disposition                                                                                 |
+| ----- | -------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
+| 1     | Action Point action label                          | Trivial verification     | Already correct: Free Action; retain.                                                       |
+| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                      |
+| 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                          |
+| 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                         |
+| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                 |
+| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                         |
+| 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Done (D097): inventory, loadout and wealth are one current state; history kept for export.  |
+| 8     | Remaining encounter-use feat powers                | Large audit/content work | Classify transitive grants, missing powers and passive modifiers before adding corrections. |
 
 This is an investigation and quick-win checkpoint, not closure of the equipment
 or full feat-power work. Keep those items open in this order within M5.7.
@@ -78,6 +78,30 @@ Use current-level aggregated holdings in Equipment and map commands back to
 history safely. Preserve original transactions. Validate removed items,
 repeated purchases, negative equipment deltas, equip/unequip, quantity changes,
 sales and viewing earlier levels. Merely hiding negative rows is not a fix.
+
+**Done (D097, `d14c19c`).** Owner decision: inventory, loadout and every
+currency denomination are one current state on every surface; no per-level
+view. `CharacterBuild.inventory` now holds only current concrete holdings
+(one per item), the imported loot rows are kept verbatim as
+`inventoryHistory`, and stored characters migrate through a journalled
+format-3 build upgrade. Equipment, Shop, Loadout, the sheet and every
+evaluation (including an earlier level viewed in the Build tab) read the
+holdings, so all equip/buy/sell/quantity edits change the current state.
+Buying an owned item adds to its holding. Legacy export writes the history
+then one delta row per changed item at the current level (an unedited import
+writes its rows back unchanged). The wallet is the latest stored value at
+any level; edits write that key. Synthetic coverage:
+`character-domain/src/inventory-holdings.test.ts`, the legacy round trip in
+`legacy-dnd4e/src/index.test.ts`, the earlier-level evaluation in
+`build-projection.test.ts` and the format-2 reload in
+`character-repository.test.ts`.
+
+Hu acceptance (private, `tmp/inventory-history/hu.ts`): imported holdings
+are Symbol of Hope equipped (Holy symbol slot), Way-Leader Gouge carried and
+no Belt of Vigor (he wears Belt of Vim), matching his LootTally on builder
+and sheet. Equipping the Gouge puts it in both hands on both; buying Belt of
+Vigor lists it, and equipping it fills Waist (Belt of Vim returns to
+carried), Healing Surge Value stat 0 → 1, surge value 17 → 18.
 
 ## Broader feat-power audit
 
