@@ -13,10 +13,302 @@
       <grant name="ID_FMP_POWER_6592" type="Power" />
     </rules>
   </AppendNodes>
+  <!-- Path of Destruction (ID_FMP_FEAT_1706) grants its encounter feat power
+       under the record name "Path of Destruction (Channel Divinity)", which
+       only tells it apart from the unrelated Tharashk Wayfinder daily attack
+       of the same name (ID_FMP_POWER_7609, referenced by ID only). The feat's
+       power carries the feat's name (owner decision, 2026-10-25). -->
+  <AppendNodes internal-id="ID_FMP_POWER_8178" name="Path of Destruction" />
   <!-- Arcane Prodigy retains its existing tier scaling and class metadata. -->
   <AppendNodes internal-id="ID_FMP_FEAT_669">
     <rules>
       <grant name="ID_FMP_POWER_9782" type="Power" />
     </rules>
   </AppendNodes>
+  <!-- Blade Initiate: the complete daily feat power ID_FMP_POWER_7691
+       ("Swordmage Warding", Display "Feat Power") exists but nothing grants
+       it. Its name is the class feature it invokes, not a disambiguated
+       variant of the feat's, so it is kept. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_650">
+    <rules>
+      <grant name="ID_FMP_POWER_7691" type="Power" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Feats (and two Student of the Plague traits) whose text describes a
+       limited-use ability the player invokes, with no power record at all.
+       Each record is structure for a power card: usage, action, target or
+       trigger, written as a concise original summary of the mechanics. No
+       published prose is copied (D089); the feat's own description stays the
+       full text. The legacy builder showed no power for any of these. A
+       triggered ability whose text names no action is "No Action". Each power
+       carries the feat's (or trait's) name and is granted by it. The audit
+       and classification are in docs/tasks-triage.md, item 8. -->
+  <!-- Bravo (ID_FMP_FEAT_1280). -->
+  <RulesElement internal-id="ID_4ECB_POWER_BRAVO" name="Bravo" type="Power" source="Dragon Magazine 373">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_MINOR_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Minor Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Target"> One creature you can see </specific>
+    <specific name="Effect"> The target becomes your prey. You gain a +2 bonus to attack rolls and damage rolls against it until the end of your next turn. </specific>
+    <specific name="Special"> The target stays your prey until it drops to 0 hit points or fewer, you end this effect as a free action, or the encounter ends. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_1280">
+    <rules>
+      <grant name="ID_4ECB_POWER_BRAVO" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Brawling Warrior (ID_FMP_FEAT_2544). -->
+  <RulesElement internal-id="ID_4ECB_POWER_BRAWLING_WARRIOR" name="Brawling Warrior" type="Power" source="Martial Power 2">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Requirement"> Use this power during your turn while wielding a weapon in one hand and nothing in the other. </specific>
+    <specific name="Effect"> Choose one: a +1 bonus to an attack roll you just made, or a +1 bonus to AC until the start of your next turn. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2544">
+    <rules>
+      <grant name="ID_4ECB_POWER_BRAWLING_WARRIOR" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Cyclone Warrior (ID_FMP_FEAT_2545). -->
+  <RulesElement internal-id="ID_4ECB_POWER_CYCLONE_WARRIOR" name="Cyclone Warrior" type="Power" source="Martial Power 2">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Requirement"> Use this power during your turn while wearing light armor or chainmail and wielding a weapon in each hand. </specific>
+    <specific name="Effect"> Until the end of your turn, you gain a +1 bonus to damage rolls with melee attacks and close attacks. The bonus is +2 at 11th level and +3 at 21st level. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2545">
+    <rules>
+      <grant name="ID_4ECB_POWER_CYCLONE_WARRIOR" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Defender of the Wild (ID_FMP_FEAT_671). -->
+  <RulesElement internal-id="ID_4ECB_POWER_DEFENDER_OF_THE_WILD" name="Defender of the Wild" type="Power" source="Player's Handbook 2">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Target"> Each enemy adjacent to you </specific>
+    <specific name="Effect"> You mark each target until the end of your next turn. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_671">
+    <rules>
+      <grant name="ID_4ECB_POWER_DEFENDER_OF_THE_WILD" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Infernal Captain's Pact (ID_FMP_FEAT_1068). -->
+  <RulesElement internal-id="ID_4ECB_POWER_INFERNAL_CAPTAINS_PACT" name="Infernal Captain's Pact" type="Power" source="Dragon Magazine 369">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_MINOR_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Minor Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Target"> The nearest enemy you can see </specific>
+    <specific name="Effect"> The target is under your Infernal Captain's Curse and sheds bright light in a 5-square radius, like a torch. When you hit the target with an attack, choose an ally: the target grants that ally combat advantage for the ally's next attack. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_1068">
+    <rules>
+      <grant name="ID_4ECB_POWER_INFERNAL_CAPTAINS_PACT" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Student of the Sword (ID_FMP_FEAT_334). -->
+  <RulesElement internal-id="ID_4ECB_POWER_STUDENT_OF_THE_SWORD" name="Student of the Sword" type="Power" source="Player's Handbook">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Effect"> You gain a +1 bonus to your next attack roll with a melee weapon of the category you chose for this feat (one-handed or two-handed). Whether that attack hits or misses, you mark its target until the end of your next turn. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_334">
+    <rules>
+      <grant name="ID_4ECB_POWER_STUDENT_OF_THE_SWORD" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Sly Dodge (ID_FMP_FEAT_917). -->
+  <RulesElement internal-id="ID_4ECB_POWER_SLY_DODGE" name="Sly Dodge" type="Power" source="Martial Power">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> An enemy makes an opportunity attack against you. </specific>
+    <specific name="Effect"> You add your Charisma modifier to your AC against the triggering attack. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_917">
+    <rules>
+      <grant name="ID_4ECB_POWER_SLY_DODGE" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Twilight Adept (ID_FMP_FEAT_2549). -->
+  <RulesElement internal-id="ID_4ECB_POWER_TWILIGHT_ADEPT" name="Twilight Adept" type="Power" source="Martial Power 2">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Requirement"> Use this power during your turn. </specific>
+    <specific name="Effect"> Until the end of your turn, you gain the benefit of the rogue's Cunning Sneak class feature. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2549">
+    <rules>
+      <grant name="ID_4ECB_POWER_TWILIGHT_ADEPT" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Warden's Endurance (ID_FMP_FEAT_1940). -->
+  <RulesElement internal-id="ID_4ECB_POWER_WARDENS_ENDURANCE" name="Warden's Endurance" type="Power" source="Primal Power">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> Your turn starts while a save can end an effect on you. </specific>
+    <specific name="Effect"> Make a saving throw against one such effect. On a save, it ends immediately and does not affect you this turn. On a failure, you still save against it at the end of your turn. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_1940">
+    <rules>
+      <grant name="ID_4ECB_POWER_WARDENS_ENDURANCE" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Wrathful Warrior (ID_FMP_FEAT_2550). -->
+  <RulesElement internal-id="ID_4ECB_POWER_WRATHFUL_WARRIOR" name="Wrathful Warrior" type="Power" source="Martial Power 2">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> You are hit by a melee attack or a close attack. </specific>
+    <specific name="Effect"> You gain temporary hit points equal to your Constitution modifier. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2550">
+    <rules>
+      <grant name="ID_4ECB_POWER_WRATHFUL_WARRIOR" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Practiced Killer (ID_FMP_FEAT_3615). -->
+  <RulesElement internal-id="ID_4ECB_POWER_PRACTICED_KILLER" name="Practiced Killer" type="Power" source="Dragon Magazine 400">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> You hit with a weapon attack using a one-handed weapon, a garrote, a blowgun or a shortbow. </specific>
+    <specific name="Effect"> The attack deals 1d8 extra damage: 2d8 at 11th level and 3d8 at 21st level. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_3615">
+    <rules>
+      <grant name="ID_4ECB_POWER_PRACTICED_KILLER" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Berserker's Fury (ID_FMP_FEAT_664). -->
+  <RulesElement internal-id="ID_4ECB_POWER_BERSERKERS_FURY" name="Berserker's Fury" type="Power" source="Player's Handbook 2">
+    <Category>ID_INTERNAL_CATEGORY_DAILY_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Daily </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Effect"> You gain a +2 bonus to damage rolls until the end of the encounter. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_664">
+    <rules>
+      <grant name="ID_4ECB_POWER_BERSERKERS_FURY" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Flamespeed (ID_INTERNAL_CLASS_FEATURE_FLAMESPEED). -->
+  <RulesElement internal-id="ID_4ECB_POWER_FLAMESPEED" name="Flamespeed" type="Power" source="Forgotten Realms Player's Guide">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_MINOR_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Minor Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Effect"> Until the end of your next turn, you gain a +1 bonus to speed, or a +2 bonus when you charge or run. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_FLAMESPEED">
+    <rules>
+      <grant name="ID_4ECB_POWER_FLAMESPEED" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Larger than Life (ID_INTERNAL_CLASS_FEATURE_LARGER_THAN_LIFE). -->
+  <RulesElement internal-id="ID_4ECB_POWER_LARGER_THAN_LIFE" name="Larger than Life" type="Power" source="Forgotten Realms Player's Guide">
+    <Category>ID_INTERNAL_CATEGORY_DAILY_USAGE,ID_INTERNAL_CATEGORY_FREE_ACTION</Category>
+    <specific name="Power Usage"> Daily </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Free Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Effect"> The reach of an attack you make increases by 1. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_LARGER_THAN_LIFE">
+    <rules>
+      <grant name="ID_4ECB_POWER_LARGER_THAN_LIFE" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Secret of Enduring Vigor (ID_FMP_FEAT_2687). -->
+  <RulesElement internal-id="ID_4ECB_POWER_SECRET_OF_ENDURING_VIGOR" name="Secret of Enduring Vigor" type="Power" source="Player's Handbook 3">
+    <Category>ID_INTERNAL_CATEGORY_DAILY_USAGE,ID_INTERNAL_CATEGORY_IMMEDIATE_INTERRUPT</Category>
+    <specific name="Power Usage"> Daily </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Immediate Interrupt </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> You drop to 0 hit points or fewer. </specific>
+    <specific name="Effect"> You spend a healing surge. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2687">
+    <rules>
+      <grant name="ID_4ECB_POWER_SECRET_OF_ENDURING_VIGOR" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Secret of Escape (ID_FMP_FEAT_2662). -->
+  <RulesElement internal-id="ID_4ECB_POWER_SECRET_OF_ESCAPE" name="Secret of Escape" type="Power" source="Player's Handbook 3">
+    <Category>ID_INTERNAL_CATEGORY_DAILY_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Daily </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> You drop to 0 hit points or fewer and don't die. </specific>
+    <specific name="Effect"> You teleport to a square adjacent to an ally within 10 squares of you. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2662">
+    <rules>
+      <grant name="ID_4ECB_POWER_SECRET_OF_ESCAPE" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Glorious Victory (ID_FMP_FEAT_2203). -->
+  <RulesElement internal-id="ID_4ECB_POWER_GLORIOUS_VICTORY" name="Glorious Victory" type="Power" source="Player's Handbook Races: Dragonborn">
+    <Category>ID_INTERNAL_CATEGORY_ENCOUNTER_USAGE,ID_INTERNAL_CATEGORY_NO_ACTION</Category>
+    <specific name="Power Usage"> Encounter </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> No Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Trigger"> You reduce an enemy to 0 hit points or fewer with an attack. </specific>
+    <specific name="Effect"> You can spend a healing surge. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_2203">
+    <rules>
+      <grant name="ID_4ECB_POWER_GLORIOUS_VICTORY" type="Power" />
+    </rules>
+  </AppendNodes>
+  <!-- Fast Manifestation (ID_FMP_FEAT_922). -->
+  <RulesElement internal-id="ID_4ECB_POWER_FAST_MANIFESTATION" name="Fast Manifestation" type="Power" source="Dragon Magazine 367">
+    <Category>ID_INTERNAL_CATEGORY_DAILY_USAGE,ID_INTERNAL_CATEGORY_MINOR_ACTION</Category>
+    <specific name="Power Usage"> Daily </specific>
+    <specific name="Display"> Feat Power </specific>
+    <specific name="Action Type"> Minor Action </specific>
+    <specific name="Attack Type"> Personal </specific>
+    <specific name="Effect"> You change your elemental manifestation. If you have used the encounter power of your previous manifestation, you can still use the new manifestation's encounter power. </specific>
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_FEAT_922">
+    <rules>
+      <grant name="ID_4ECB_POWER_FAST_MANIFESTATION" type="Power" />
+    </rules>
+  </AppendNodes>
+
 </D20Rules>

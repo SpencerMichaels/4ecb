@@ -17,8 +17,17 @@ the remaining equipment/content work are recorded with the triage.
 
 Battle Awareness and Arcane Prodigy now grant their existing encounter powers
 (`content/corrections/9C-feat-powers.part`). The legacy builder never granted
-them, so saved legacy power lists lack them; parity baseline unchanged. The
-other encounter-use feats remain the open audit in the triage.
+them, so saved legacy power lists lack them; parity baseline unchanged.
+Triage item 8 audited the remaining 99 limited-use feats without a power
+grant: Blade Initiate now grants its existing Swordmage Warding feat power,
+and 17 feats (two through Student of the Plague traits) gain structural
+`ID_4ECB_POWER_*` records with original summaries (D089), each one card with
+the right usage and action. The other 78 are riders, recovery, ritual, Action
+Point or transitive grants; Far Thought, Coincidental Success and Secret of
+Reawakening await the owner. Path of Destruction's feat power now carries the
+feat's name. CBLoader parity clean; parity baseline unchanged. Some feats
+still show both card and reminder (listed in the triage) pending a refinement
+of the access-only reminder rule.
 
 Loadout slots are single-sourced: the builder's resolver moved to
 `sheet-model/src/loadout-slots.ts`, the sheet model projects its slots, and the

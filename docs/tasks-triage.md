@@ -2,16 +2,16 @@
 
 ## Complexity order and disposition
 
-| Order | Task slice                                         | Complexity               | Disposition                                                                                 |
-| ----- | -------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
-| 1     | Action Point action label                          | Trivial verification     | Already correct: Free Action; retain.                                                       |
-| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                      |
-| 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                          |
-| 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                         |
-| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                 |
-| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                         |
-| 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Done (D097): inventory, loadout and wealth are one current state; history kept for export.  |
-| 8     | Remaining encounter-use feat powers                | Large audit/content work | Classify transitive grants, missing powers and passive modifiers before adding corrections. |
+| Order | Task slice                                         | Complexity               | Disposition                                                                                   |
+| ----- | -------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------- |
+| 1     | Action Point action label                          | Trivial verification     | Already correct: Free Action; retain.                                                         |
+| 2     | Hu's inactive saved Divine Fortune                 | Small investigation      | Expected preserved selection; no missing choice or calculation defect.                        |
+| 3     | Plain feat reminder/reference titles               | Small                    | Implemented and regression tested.                                                            |
+| 4     | Retain Action Point benefit reminders              | Small                    | Implemented after owner approved all such benefits.                                           |
+| 5     | Battle Awareness and Arcane Prodigy missing grants | Small content correction | Done: `content/corrections/9C-feat-powers.part` grants the existing powers.                   |
+| 6     | Symbol of Hope/Gouge loadout disagreement          | Medium                   | Slot resolver shared; remaining builder/sheet gap for Hu is item 7.                           |
+| 7     | Belt of Vigor ownership/equipment history          | Medium–large             | Done (D097): inventory, loadout and wealth are one current state; history kept for export.    |
+| 8     | Remaining encounter-use feat powers                | Large audit/content work | Done: 99 audited; 1 existing power granted, 18 structural powers added, 3 left for the owner. |
 
 This is an investigation and quick-win checkpoint, not closure of the equipment
 or full feat-power work. Keep those items open in this order within M5.7.
@@ -124,16 +124,73 @@ has the same-named fighter utility, so nothing is doubled. A private probe
 the feat's tier stat is 1 at level 12. `pnpm parity:baseline` is unchanged
 (it compares only powers the legacy save cached).
 
-Active-use candidates without same-named powers include Student of the Sword,
-Defender of the Wild, Sly Dodge, Infernal Captain's Pact, Bravo, Warden's
-Endurance, Brawling/Cyclone/Wrathful Warrior, Twilight Adept and Practiced
-Killer. Trace transitive grants and exact actions before adding structural
-power definitions. D089 forbids copying published prose into tracked
-corrections; consider references to the privately loaded source description
-or original concise summaries. Keep passive improvements as modifiers where
-appropriate. Validate grants, usage, action type, sheet cards and absence of
-duplicates on exact fixtures. The supplied characters are private diagnostics,
-not public test dependencies or new same-profile legacy goldens.
+**Item 8 audit (2026-10-25).** The merged corpus (CBLoader parts plus
+`content/corrections`) has 99 feats whose text or short description states a
+limited use ("once per encounter/day/round", "1/encounter", "1/day",
+"1/round") and that have no direct or transitive Power grant/select; 23 are
+multiclass. (The earlier count of 56 used a narrower encounter-only search.)
+Each was traced through its rules, selected class features, `_DisplayPowers`,
+power-replace targets and every unreferenced classless power record. The
+legacy builder shows no power for any of them: its power lists contain only
+granted Power elements, and the two private saves with a feat that now gets
+a card (GeranHulmaster's Student of the Sword, RaidonKane's Larger than Life)
+list none.
+
+| Class                                 | Count                | Feats                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Disposition                                                                                                                                                                                                                                   |
+| ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (a) existing record, not granted      | 1                    | Blade Initiate (`ID_FMP_POWER_7691` "Swordmage Warding", Daily Minor)                                                                                                                                                                                                                                                                                                                                                                                                                                               | Granted in `9C-feat-powers.part`; name kept (it names the invoked class feature, not a variant of the feat's).                                                                                                                                |
+| (c) new structural record             | 17 feats, 18 records | Bravo, Brawling Warrior, Cyclone Warrior, Defender of the Wild, Infernal Captain's Pact, Student of the Sword, Sly Dodge, Twilight Adept, Warden's Endurance, Wrathful Warrior, Practiced Killer, Berserker's Fury, Student of the Plague (records on its Flamespeed and Larger than Life traits), Secret of Enduring Vigor, Secret of Escape, Glorious Victory, Fast Manifestation                                                                                                                                 | `ID_4ECB_POWER_*` records (Display "Feat Power", usage, action, target/trigger/requirement, original one-line effect summary; no copied prose) granted by the feat or trait and named after it. A trigger with no stated action is No Action. |
+| (b) already granted transitively      | 2                    | Pact Initiate, Focused Talent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Their selected class feature grants the power and modifies its usage.                                                                                                                                                                         |
+| (b) replaces/swaps a power            | 2                    | Psionic Complement, Psionic Dabbler                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Existing `replace` rules.                                                                                                                                                                                                                     |
+| (b) Action Point benefit              | 3                    | Arcane Mastery, Inspiring Leader, Tactical Leader                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Already on the Action Point card (textstrings).                                                                                                                                                                                               |
+| (b) grants a class feature            | 2                    | Battle Berserker (Berserker Fury, 1/day), Sneak of Shadows (Sneak Attack)                                                                                                                                                                                                                                                                                                                                                                                                                                           | The feature is not a power in its own class either; reminder stays.                                                                                                                                                                           |
+| (b) modifies another power or feature | 25                   | Avernian Emissary Wrath, Body Fuel, Champion of Nature, Daring Performer, Draji Aspirant, Effortless Dilettante, Golden Lion of Urik, Halfling Beast Mastery, Holy Dilettante, Improved Tome of Readiness, Killer's Insight, Nibenay's Glory Practice, Nibenese Bride, Persistent Challenge, Prophetic Preparation, Ruinspoke Scrounger, Sneaky Gnome, Sniper's Aim, Spirit Master of Lalali-Puy, Spirit Talker of Lalali-Puy, Sudden Call, Tyrian Bureaucrat, Velvet Blade Trick, Vital Form, Yellow Cloak of Urik | Rider on an existing power/feature; no power.                                                                                                                                                                                                 |
+| (b) resource recovery rider           | 13                   | Arcane/Divine/Martial/Monastic/Primal/Psionic Vampire, Critical Reserve, Elemental Warrior, Gambler's Word, Primal Resurgence, Renewed by Blood, Spare Infusion, Student of the Athanaeum                                                                                                                                                                                                                                                                                                                           | Regains a surge, power point or power use when something else happens; reminder.                                                                                                                                                              |
+| (b) ritual cost/mastery               | 18                   | Binding/Deception/Divination/Exploration/Scrying/Travel/Warding Mastery, Master Communicator, Mother's Bloom, Pupil of the All-Father, River-Born Ritualist, Vistani Guardian/Healer/Jongleur/Pathfinding/Seer/Thief, Wild Sage                                                                                                                                                                                                                                                                                     | Ritual allowance (freebee statadds); no power.                                                                                                                                                                                                |
+| (b) once-per-round rider              | 13                   | Betrayal of Body, Cleaving Axe, Clever Tail, Commanding Form, Cosmic Blade Channeling, Duty's Virtue, Eldritch Fusillade Expertise, Marked Scourge, Shard Link, Springing Charge, Stinging Swarm, Storm Blade Channeling, Whip Training                                                                                                                                                                                                                                                                             | Not a limited-use power.                                                                                                                                                                                                                      |
+| owner judgment                        | 3                    | Far Thought, Coincidental Success, Secret of Reawakening                                                                                                                                                                                                                                                                                                                                                                                                                                                            | See below.                                                                                                                                                                                                                                    |
+
+Total 99 (1 + 17 + 78 class (b) + 3). Student of the Plague's other trait,
+Sight of the Unseen, already grants darkvision.
+
+Owner-judgment items, with recommendations:
+
+- **Far Thought** grants permanent `Telepathy` vision, but the feat allows
+  5 minutes of telepathy once per day. Recommend a Daily power and removing
+  the permanent sense; not done because it changes Senses output.
+- **Coincidental Success** (skill-challenge check rider) and **Secret of
+  Reawakening** (aspect change and racial-power recovery on recovering from
+  dying): recommend leaving them as reminders (not combat powers).
+- **Psionic Vampire**'s second clause (once per encounter, minor action:
+  lose a surge for 2 power points) could be a card; recommend leaving it with
+  the recovery riders unless the owner wants mixed-clause feats split.
+
+Related findings outside this regex (not changed): Ranger's Powerful Strike
+and Disrupting Shot describe a power swap but have only `_DisplayPowers` and
+no `replace` rule; Blowgun Expert's `power-replace="uncanny aim:…"` and Gythka
+Novice's `"Gythka Claw Scoop:…"` name no power (the records are "Uncanny Aim
+(Blowgun)" and "Gythka Claw Swoop"), so those swaps cannot resolve. Feats that
+add uses of an existing power (Epic Recovery, Discipline Adept, Reaping
+Renewal, …) are (b) modifiers.
+
+Verification: `scripts/build-private-content.sh` CBLoader parity check
+clean (38339 records, none missing/extra/changed); the pack has 38373
+records (+18) and an unchanged 41 import warnings. A private synthetic probe
+(`tmp/feat-powers/item8-probe.ts`) gives each of the 19 feats/traits (and
+Path of Destruction) exactly one power and one card with the expected usage
+and action at levels 1, 11 and 21, none unsupported. Before/after across the
+31 `sample-chars` and 9 SampleHeroes: only GeranHulmaster gains one
+Student of the Sword card (Encounter, Free) and RaidonKane one Larger than
+Life card (Daily, Free); no duplicate cards. `pnpm parity:baseline` has no
+new mismatches (it compares only powers the legacy save cached).
+
+Card and reminder both shown (the 97266f2 rule keeps a reminder whose text
+has a number, bonus or "when you hit"; to be refined by the coordinator):
+Blade Initiate, Bravo, Brawling Warrior, Cyclone Warrior (also has a tier
+statadd), Infernal Captain's Pact, Student of the Sword, Berserker's Fury
+and Flamespeed (synthetic probe); GeranHulmaster shows the Student of the
+Sword card plus the reminders of the feat and of its Student of One-Handed
+Weapons class feature. The other 11 drop their reminder.
 
 ## Quick presentation fixes and rules confirmation
 
@@ -168,9 +225,11 @@ dispositions are recorded by the coordinating change.
 
 - The Battle Awareness feat power's record name ("Battle Awareness Feat") is
   corrected to the feat's name in `9C-feat-powers.part`. Of 107 feat → power
-  grants, the only other suffixed name is Path of Destruction (Channel
-  Divinity), which the legacy builder already showed; left as is pending the
-  owner.
+  grants, the only other suffixed name was Path of Destruction (Channel
+  Divinity) (`ID_FMP_POWER_8178`, feat `ID_FMP_FEAT_1706`); by owner decision
+  (2026-10-25) it is renamed "Path of Destruction" there too. The unrelated
+  Tharashk Wayfinder daily of that name (`ID_FMP_POWER_7609`) is referenced
+  only by ID. No private sample has the feat.
 - References print `displayPrerequisites` (print-prereqs, else plain-prose
   Prereqs), never rule grammar such as `~MULTICLASS` or `!ID_…`.
 - A grant/select-only feature whose granted power has its own card is
