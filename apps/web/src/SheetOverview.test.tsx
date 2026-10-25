@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   buildSheetModel,
@@ -460,7 +461,28 @@ describe("real-data sheet overview", () => {
     const notes = html
       .split('aria-label="Session notes"')[1]!
       .split("</article>")[0]!;
-    expect(notes.match(/class="sp-writing-lines"/g)).toHaveLength(3);
+    // Session notes, Treasure and XP share one ruling: real bordered rules,
+    // never a background gradient (Firefox printed Treasure without lines).
+    const ruled = notes.match(
+      /<div class="sp-writing-lines" aria-hidden="true">(?:<i><\/i>)+<\/div>/g,
+    );
+    expect(ruled).toHaveLength(3);
+    expect(notes.split("Treasure</h3>")[1]).toMatch(
+      /^<div class="sp-panel-content"><div class="sp-writing-lines"/,
+    );
+    const sheetStyles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    const rulingRules = sheetStyles
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .split("}")
+      .filter((rule) => rule.includes(".sp-writing-lines"));
+    expect(rulingRules.join("}")).not.toMatch(/gradient|background/);
+    expect(sheetStyles).toMatch(
+      /\.sp-writing-lines > i \{[^}]*border-bottom: 1px solid/,
+    );
+    expect(sheetStyles).toMatch(/\.sp-writing-lines \{[^}]*overflow: hidden/);
     expect(notes).not.toContain('class="ov-page-number"');
     expect(notes).not.toContain("<footer");
     expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(

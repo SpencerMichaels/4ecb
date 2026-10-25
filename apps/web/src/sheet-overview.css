@@ -1825,14 +1825,19 @@ body:has(.sp-prototype) {
   padding: 0.04in 0.025in;
   border-bottom: 1px solid #e0e4e7;
 }
+/* Rules are real borders (see WritingLines.tsx), never a background gradient:
+   Firefox prints hard-stop gradients as shadings that printers drop. */
 .sp-writing-lines {
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent calc(0.25in - 1px),
-    #d5dadd calc(0.25in - 1px),
-    #d5dadd 0.25in
-  );
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.sp-writing-lines > i {
+  flex: none;
+  box-sizing: border-box;
+  height: 0.25in;
+  border-bottom: 1px solid #d5dadd;
 }
 .sp-treasure {
   height: 0.85in;

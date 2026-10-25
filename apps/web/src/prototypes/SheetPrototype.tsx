@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Icon, type IconName } from "../Icon";
 import { ActionTypeIcon } from "../ActionTypeIcon";
 import { PrintPowerVariants } from "../PrintPowerVariants";
+import { WritingLines } from "../WritingLines";
 
 // Deliberately synthetic. No private character, content pack, or stored state is read.
 const abilities: readonly [string, string, string][] = [
@@ -515,7 +516,7 @@ function Scratchpad() {
             </div>
           </Panel>
           <Panel title="Treasure & consumables" icon="item">
-            <div className="sp-writing-lines sp-treasure" />
+            <WritingLines className="sp-treasure" />
           </Panel>
         </div>
         <div className="sp-column">
@@ -560,7 +561,7 @@ function Scratchpad() {
             <ReminderList />
           </Panel>
           <Panel title="Conditions & temporary effects" icon="edit">
-            <div className="sp-writing-lines sp-conditions" />
+            <WritingLines className="sp-conditions" />
           </Panel>
         </div>
       </div>
@@ -876,7 +877,7 @@ function EquipmentRecord() {
               Return the brass key to the keeper at Northbridge. Ask about the
               abandoned watchtower before leaving town.
             </p>
-            <div className="sp-writing-lines sp-record-notes" />
+            <WritingLines className="sp-record-notes" />
           </Panel>
         </div>
       </div>

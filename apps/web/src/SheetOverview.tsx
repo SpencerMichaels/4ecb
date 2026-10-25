@@ -26,6 +26,7 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { StatGroup } from "./StatTiles";
+import { WritingLines } from "./WritingLines";
 import {
   CONDITIONAL_MODIFIER_GROUPS,
   conditionalModifierText,
@@ -1460,14 +1461,14 @@ function SessionNotes({
             </span>
           }
         >
-          <div className="sp-writing-lines" />
+          <WritingLines />
         </Panel>
         <div className="ov-session-ledgers">
           <Panel title="Treasure" icon="circle-dollar-sign">
-            <div className="sp-writing-lines" />
+            <WritingLines />
           </Panel>
           <Panel title="XP" icon="favorite">
-            <div className="sp-writing-lines" />
+            <WritingLines />
           </Panel>
         </div>
       </div>
