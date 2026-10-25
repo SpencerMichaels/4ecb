@@ -730,11 +730,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.IsKiFocus": code(
-      "Ki focus detection, including the mundane Ki Focus gear (ID_FMP_GEAR_115).",
-      "item-fields.ts legacyIsKiFocus (LootImplement's 'Ki Focuses', the 'Ki Focuses Implement' channel); equipment-ui.ts MUNDANE_IMPLEMENT_IDS for the shop",
+      "Ki focus detection, including the mundane Ki Focus gear (ID_FMP_GEAR_115). BuildWeaponsList (-Module-.cs ~22325) calls BuildKiList (~22237) for each equipped ki focus: one synthetic ki-focused loot per owned weapon base not already listed, pairing the bare base with the ki focus.",
+      "item-fields.ts legacyIsKiFocus (LootImplement's 'Ki Focuses', the 'Ki Focuses Implement' channel); equipment-ui.ts MUNDANE_IMPLEMENT_IDS for the shop; powers.ts ki-focused weapon rows (2f9566d, BuildKiList)",
       test(
         POWERS,
         "names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type",
+      ),
+      test(
+        POWERS,
+        "adds a ki-focused row per owned weapon base for an equipped ki focus (native BuildKiList)",
       ),
     ),
     "D20Workspace.IsStaff": code(
@@ -1649,10 +1653,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.PowerStats": partial(
       "Per-power stat block: DetermineWeapon/DeterminePower, IsValidPowerCombo, rows only with a Hit line, an EffectPower or the Healing keyword, no weapon for [B] hits, Commander's Strike by name gets no rows; then attack, damage, strikers, keywords, globals, versatile, misc, bonuses, healing, stacking.",
-      "powers.ts evaluatePowers; Commander's Strike still gets rows (legacy gives it none)",
+      "powers.ts evaluatePowers; Commander's Strike still gets rows (legacy gives it none). D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats",
       test(
         POWERS,
         "calculates no rows for a power with neither an attack nor a Hit line",
+      ),
+      test(
+        POWERS,
+        "gives a fixed-bonus summoned creature only creature and power-keyed bonuses (D095)",
       ),
       test(
         POWERS,
