@@ -321,6 +321,14 @@ damage as a next-turn conditional expression rather than an immediate hit.
 Exact synthetic fixtures pin all three forms. Unknown prose still takes the
 explicit unsupported path.
 
+A dice-less damage expression (the hit text up to its first " damage", with no
+sentence ending before it) that starts with an ability modifier is flat damage,
+as native `CalcDamage` computes it: Staggering Note's "Charisma modifier
+thunder damage" is the bare modifier. Native `IsDamageRoll` is false for it, so
+the weapon's enhancement, `damage rolls`, `:damage` keyword stats and
+versatile do not apply; `damage` and `:nonroll-damage` do (the latter also for
+damage rolls), and striker reminders still attach.
+
 Power prose naming a `beast's <ability> modifier` is not a character-ability
 reference. Such a clause is excluded from ordinary ability math and emits
 `companion-ability:<power-id>` until the selected companion occurrence and its

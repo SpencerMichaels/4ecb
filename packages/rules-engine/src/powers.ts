@@ -1438,9 +1438,24 @@ function combatStatComponents(
      * `weapon damage rolls` too.
      */
     globalStats?: { readonly weaponRolls: boolean };
+    /**
+     * Native IsDamageRoll (the damage has dice): false for flat damage
+     * ("Charisma modifier thunder damage"), which reads neither `:damage`
+     * keyword stats nor `damage rolls` (PowerStats/CalcKeywords), only
+     * `damage` and `:nonroll-damage`. Defaults to true.
+     */
+    damageRoll?: boolean;
   },
 ): PowerComponent[] {
-  const suffix = `${kind}:${fieldName}`;
+  const damageRoll = fieldName === "damage" && context.damageRoll !== false;
+  // Native CalcKeywords: `:damage` stats only for a damage roll,
+  // `:nonroll-damage` for any damage.
+  const channels: readonly string[] =
+    fieldName === "attack"
+      ? ["attack"]
+      : damageRoll
+        ? ["damage", "nonroll-damage"]
+        : ["nonroll-damage"];
   const globalNames = new Set(
     context.globalStats === undefined
       ? []
@@ -1451,7 +1466,7 @@ function combatStatComponents(
           ]
         : [
             "damage",
-            "damage rolls",
+            ...(damageRoll ? ["damage rolls"] : []),
             ...(context.globalStats.weaponRolls ? ["weapon damage rolls"] : []),
           ],
   );
@@ -1473,24 +1488,29 @@ function combatStatComponents(
     // parenthesized limits identify the selected base/enchantment, not any
     // other implement in the inventory. The evaluated contribution has already
     // enforced training/prerequisites, conditions and numeric expressions.
-    const qualified = normalized.match(/^(.*):(attack|damage)(?:\((.*)\))?$/);
+    const qualified = normalized.match(
+      /^(.*):(attack|damage|nonroll-damage)(?:\((.*)\))?$/,
+    );
     if (
       qualified &&
-      qualified[2] === fieldName &&
+      channels.includes(qualified[2]!) &&
       qualified[1]!.split(",").every((tag) => tags.has(key(tag))) &&
       (qualified[3] === undefined ||
         limiterNames(equipment, context.byId).has(qualified[3]))
     )
       return true;
     if (qualified?.[3] !== undefined) return false;
-    if (normalized === suffix) return true;
-    if (normalized.endsWith(`,${suffix}`)) {
-      const qualifier = normalized.slice(0, -suffix.length - 1);
-      return equipment.tags.includes(qualifier);
-    }
-    return [...equipment.tags, ...powerTags].some(
-      (tag) => normalized === `${tag}:${fieldName}`,
-    );
+    return channels.some((channel) => {
+      const suffix = `${kind}:${channel}`;
+      if (normalized === suffix) return true;
+      if (normalized.endsWith(`,${suffix}`)) {
+        const qualifier = normalized.slice(0, -suffix.length - 1);
+        return equipment.tags.includes(qualifier);
+      }
+      return [...equipment.tags, ...powerTags].some(
+        (tag) => normalized === `${tag}:${channel}`,
+      );
+    });
   });
   const seen = new Set<string>();
   const components: { component: PowerComponent; bonusType?: string }[] =
@@ -1619,6 +1639,30 @@ const abilityNames = [
   "Wisdom",
   "Charisma",
 ] as const;
+
+/**
+ * Native CalcDamage for a damage expression without dice: the hit text up to
+ * its first " damage" (none when a sentence ends before it) whose first word
+ * is an ability followed by " modifier" (ParseAbilityMod on "+0") deals flat
+ * damage, e.g. Staggering Note's "Charisma modifier thunder damage" is 6.
+ * Returns the expression's own constant (0), or undefined when the
+ * expression is not flat damage.
+ */
+function nativeFlatDamageBase(hitClause: string): number | undefined {
+  const end = hitClause.toLocaleLowerCase().indexOf(" damage");
+  if (end < 0) return undefined;
+  const sentence = hitClause.indexOf(".");
+  if (sentence >= 0 && sentence < end) return undefined;
+  const expression = hitClause.slice(0, end).trim();
+  if (/\d+d\d+|\[[WB]\]/iu.test(expression)) return undefined;
+  if (
+    new RegExp(`^(?:${abilityNames.join("|")}) modifier\\b`, "iu").test(
+      expression,
+    )
+  )
+    return 0;
+  return undefined;
+}
 
 function highestAbility(
   stats: Readonly<Record<string, EvaluatedStat>>,
@@ -3137,6 +3181,14 @@ export function evaluatePowers(input: {
                 .join("+")
             : fixedMatch?.[1]);
         const ongoing = /\bongoing\b/i.test(hitLine ?? "");
+        // Native CalcDamage: dice-less flat damage; IsDamageRoll is false, so
+        // the weapon's enhancement and roll-only bonuses do not apply.
+        const flatBase =
+          dice === undefined && specialDamage === undefined
+            ? nativeFlatDamageBase(selectedHitClause ?? "")
+            : undefined;
+        const flat = flatBase !== undefined;
+        const hasDamage = dice !== undefined || flat;
         const primaryDamageClause = withoutCompanionAbilityDamage(
           (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "",
         );
@@ -3181,7 +3233,7 @@ export function evaluatePowers(input: {
           specialDamage?.ability === undefined &&
           abilityNames.some((ability) => ability === attackStat);
         const halved = followsAttack && keyAbility?.halfDamage === true;
-        if (dice !== undefined)
+        if (hasDamage)
           damageComponents.push(
             ...(followsAttack
               ? additiveAbilities.map(() => attackStat)
@@ -3234,7 +3286,7 @@ export function evaluatePowers(input: {
         // enhancement, sharing one maximum with pact-blade transfers of the
         // same bonus ("[Doesn't Stack]").
         const offHandEnhancement = pairedImplement?.enhancement ?? 0;
-        if (dice !== undefined && !abilityOnly)
+        if (hasDamage && !abilityOnly)
           damageComponents.push(
             ...combatStatComponents(
               input.stats,
@@ -3251,8 +3303,10 @@ export function evaluatePowers(input: {
                 attackStat,
                 globalStats: { weaponRolls },
                 nativeKeywords,
-                typedExtras:
-                  offHandEnhancement === 0
+                damageRoll: !flat,
+                typedExtras: flat
+                  ? []
+                  : offHandEnhancement === 0
                     ? enhancementExtra
                     : [
                         ...enhancementExtra,
@@ -3279,7 +3333,7 @@ export function evaluatePowers(input: {
             value: 1,
           });
         if (
-          dice !== undefined &&
+          hasDamage &&
           !abilityOnly &&
           implementPower &&
           equipment.weaponDefinition
@@ -3292,7 +3346,14 @@ export function evaluatePowers(input: {
               "weapon",
               "damage",
               attackType,
-              { keywords, defense, byId, basicAttackKind, nativeKeywords },
+              {
+                keywords,
+                defense,
+                byId,
+                basicAttackKind,
+                nativeKeywords,
+                damageRoll: !flat,
+              },
             ),
           );
         // Native CalcDamage parses only the damage expression: the hit line
@@ -3303,11 +3364,13 @@ export function evaluatePowers(input: {
           damageExpression.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ??
             0,
         );
-        if (dice !== undefined && !abilityOnly && powerDamageBonus !== 0)
+        if (hasDamage && !abilityOnly && powerDamageBonus !== 0)
           damageComponents.push({
             label: "power damage bonus",
             value: powerDamageBonus,
           });
+        if (flatBase !== undefined && flatBase !== 0)
+          damageComponents.push({ label: "power damage", value: flatBase });
         const uniqueDamageComponents = uniquePowerComponents(damageComponents);
         const damageBonus = uniqueDamageComponents.reduce(
           (sum, component) => sum + component.value,
@@ -3327,7 +3390,7 @@ export function evaluatePowers(input: {
                 },
               ]
             : []),
-          ...(dice === undefined
+          ...(!hasDamage
             ? []
             : conditionalStrikerDamage({
                 activeDefinitionIds: input.activeDefinitionIds,
@@ -3347,15 +3410,17 @@ export function evaluatePowers(input: {
         return {
           ...(specialDamage?.expression !== undefined
             ? { damage: specialDamage.expression }
-            : dice === undefined
-              ? ongoing
-                ? { damage: "Ongoing" }
-                : {}
-              : {
-                  damage: abilityOnly
-                    ? String(damageBonus)
-                    : formatDamage(dice, damageBonus),
-                }),
+            : flat
+              ? { damage: String(damageBonus) }
+              : dice === undefined
+                ? ongoing
+                  ? { damage: "Ongoing" }
+                  : {}
+                : {
+                    damage: abilityOnly
+                      ? String(damageBonus)
+                      : formatDamage(dice, damageBonus),
+                  }),
           ...(damageType === undefined ? {} : { damageType: key(damageType) }),
           damageComponents: uniqueDamageComponents,
           conditionalDamage,

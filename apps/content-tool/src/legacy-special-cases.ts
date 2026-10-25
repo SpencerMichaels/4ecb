@@ -1530,6 +1530,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
       test(
         POWERS,
+        "deals flat damage from a dice-less expression, without roll-only bonuses (native CalcDamage)",
+      ),
+      test(
+        POWERS,
         "recognizes ongoing damage expressed through an ability modifier",
       ),
     ),
@@ -1718,7 +1722,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcKeywords": partial(
       "Keyword channel matching (:damage, :nonroll-damage, :attack, :info, parenthesized limiters incl. the bound augment); 'weapon attack rolls'/'weapon damage rolls' for weapon powers.",
-      "powers.ts combatStatComponents / powerAdditionalEffects; ':nonroll-damage' (6 Staff of Missile Mastery items) is not read",
+      "powers.ts combatStatComponents / powerAdditionalEffects; combatStatComponents reads ':nonroll-damage' for any damage and ':damage' only for a damage roll (IsDamageRoll); powerAdditionalEffects reminders do not read ':nonroll-damage'",
       test(
         POWERS,
         "keeps conditional reminders and keyword info separate from totals and alternate equipment",

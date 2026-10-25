@@ -693,6 +693,57 @@ describe("power evaluation", () => {
     ).toBe("1d8+4");
   });
 
+  it("deals flat damage from a dice-less expression, without roll-only bonuses (native CalcDamage)", () => {
+    const damageFor = (hit: string) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "rod",
+            definitionIds: ["ROD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 6),
+          damage: combatStat("damage", 1),
+          "damage rolls": combatStat("damage rolls", 2),
+          "implement:damage": combatStat("implement:damage", 4),
+          "implement:nonroll-damage": combatStat("implement:nonroll-damage", 8),
+        },
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Note", "Power", {
+            Keywords: "Arcane, Implement",
+            "Attack Type": "Ranged 10",
+            Attack: "Charisma vs. Will",
+            Hit: hit,
+          }),
+          entity("ROD", "Synthetic Rod +3", "Magic Item", {
+            "Magic Item Type": "Rod",
+            Enhancement: "+3 attack rolls and damage rolls",
+          }),
+        ],
+      })[0]?.variants.find(({ equipmentId }) => equipmentId === "rod")?.damage;
+
+    // Flat: Charisma, `damage` and `:nonroll-damage` only (IsDamageRoll is
+    // false, so no enhancement, `damage rolls` or `:damage`).
+    expect(
+      damageFor(
+        "Charisma modifier thunder damage, and you push the target 2 squares.",
+      ),
+    ).toBe("15");
+    // A roll reads every channel and the enhancement.
+    expect(damageFor("1d6 + Charisma modifier thunder damage.")).toBe("1d6+24");
+    // A sentence ending before " damage" is not a damage expression.
+    expect(
+      damageFor("Charisma modifier. The target takes damage."),
+    ).toBeUndefined();
+  });
+
   it("adds versatile damage only when the legacy two-handed choice is set", () => {
     const entities = [
       entity("POWER", "Synthetic Strike", "Power", {
