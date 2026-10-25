@@ -581,6 +581,75 @@ describe("printed overview data", () => {
     ).toBe(false);
     expect(m.overview?.features).toHaveLength(3);
   });
+  it("drops a feat reminder when its only in-play effect is a carded power", () => {
+    const power = {
+      ...feat,
+      id: "power:synthetic-interrupt",
+      name: "Synthetic Awareness",
+      type: "Power",
+      description: "",
+      specifics: [],
+      rules: [],
+    };
+    const grantFeat = (id: string, description: string) => ({
+      ...feat,
+      id,
+      name: id,
+      description,
+      specifics: [],
+      rules: [
+        {
+          name: "select",
+          attributes: [{ name: "type", value: "Skill Training" }],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: power.id },
+            { name: "type", value: "Power" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 1,
+        },
+      ],
+    });
+    const only = grantFeat(
+      "Synthetic awareness feat",
+      "You gain training in one skill. Once per encounter, when an adjacent enemy shifts, you can make a melee basic attack against it.",
+    );
+    const extra = grantFeat(
+      "Synthetic awareness plus",
+      "Once per encounter, when an adjacent enemy shifts, you can attack it. When you use this power, you can shift 1 square.",
+    );
+    const reminders = (powers: readonly { id: string; name: string }[]) =>
+      buildSheetModel(
+        {
+          ...snapshot,
+          selectedRules: [only, extra].map((e) => ({
+            id: e.id,
+            name: e.name,
+            type: e.type,
+          })),
+          powers: powers.map((p) => ({
+            ...p,
+            usage: "Encounter",
+            weapons: [],
+          })),
+        },
+        [only, extra, power],
+      ).overview?.reminders.map((r) => r.label);
+    expect(reminders([{ id: power.id, name: power.name }])).toEqual([
+      extra.name,
+    ]);
+    // Without the power's card, the feat's prose is the only place it appears.
+    expect(reminders([])).toEqual(
+      expect.arrayContaining([only.name, extra.name]),
+    );
+  });
   it("excludes grant/choice-only wrappers despite evocative flavor, retaining mixed benefits", () => {
     const wrapper = {
       ...feat,

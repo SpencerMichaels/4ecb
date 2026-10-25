@@ -163,3 +163,17 @@ nix develop path:. -c pnpm vitest run packages/sheet-model/src/feature-choices.t
 
 Result: 4 files / 109 tests passed. Release-wide checks and remaining task
 dispositions are recorded by the coordinating change.
+
+## Follow-ups from owner review (2026-10-24)
+
+- The Battle Awareness feat power's record name ("Battle Awareness Feat") is
+  corrected to the feat's name in `9C-feat-powers.part`. Of 107 feat → power
+  grants, the only other suffixed name is Path of Destruction (Channel
+  Divinity), which the legacy builder already showed; left as is pending the
+  owner.
+- References print `displayPrerequisites` (print-prereqs, else plain-prose
+  Prereqs), never rule grammar such as `~MULTICLASS` or `!ID_…`.
+- A grant/select-only feature whose granted power has its own card is
+  access-only: its prose describes the card. A number, bonus, penalty or added
+  per-use effect still keeps the reminder. Across the 31 private samples this
+  newly drops only Battle Awareness.

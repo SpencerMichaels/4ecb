@@ -1,5 +1,6 @@
 import {
   displayPrerequisites,
+  getAttribute,
   isUserFacingSpecific,
   type ContentEntity,
 } from "@4ecb/content-domain";
@@ -161,11 +162,32 @@ function hasPlayReminder(summary: string, description: string): boolean {
 function accessOnly(
   entity: ContentEntity | undefined,
   benefit: string,
+  carded: ReadonlySet<string> = new Set(),
 ): boolean {
   const selectorOnly = Boolean(
     entity?.rules.length &&
     entity.rules.every((rule) => /^(?:grant|select)$/i.test(rule.name)),
   );
+  // A grant/select-only feature whose granted power has its own card: prose
+  // describing that power (shifts, attacks, damage) is on the card. Only a
+  // number, bonus, penalty or an effect added to a use marks a benefit of the
+  // feature itself.
+  const grantsCardedPower = Boolean(
+    entity?.rules.some(
+      (rule) =>
+        /^grant$/i.test(rule.name) &&
+        key(getAttribute(rule.attributes, "type") ?? "") === "power" &&
+        carded.has(key(getAttribute(rule.attributes, "name") ?? "")),
+    ),
+  );
+  if (
+    selectorOnly &&
+    grantsCardedPower &&
+    !/[+-]\s*\d|\b(?:bonus(?!\s+(?:feat|power)\b)|penalty|in addition)\b|\bwhen(?:ever)? you (?:use|spend|hit)\b/i.test(
+      benefit,
+    )
+  )
+    return true;
   // Access and shared-use prose is not an independent benefit. Do not mistake
   // "once per encounter" for an effect when all native rules grant/select powers.
   // Keep mixed benefits, including manual effects absent from native statements.
@@ -245,6 +267,9 @@ export function withSheetOverview(
     input.content.map((entity) => [key(entity.id), entity]),
   );
   const features: OverviewFeature[] = [];
+  const cardedPowers = new Set(
+    model.powers.flatMap((power) => (power.id ? [key(power.id)] : [])),
+  );
   const referenceMetadata = featureReferenceMetadata(input);
   const seen = new Set<string>();
   for (const group of model.features)
@@ -330,9 +355,9 @@ export function withSheetOverview(
         fullTextAvailable: Boolean(description || fields.length),
         ...(entity ? referenceMetadata.get(key(entity.id)) : undefined),
         playReminder:
-          !accessOnly(entity, benefit || summary) &&
+          !accessOnly(entity, benefit || summary, cardedPowers) &&
           hasPlayReminder(summary, benefit),
-        accessOnly: accessOnly(entity, benefit || summary),
+        accessOnly: accessOnly(entity, benefit || summary, cardedPowers),
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
     }
