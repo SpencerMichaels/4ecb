@@ -5,6 +5,9 @@
        Reuse those records rather than duplicating their published text. -->
   <!-- Battle Awareness: the feat power is distinct from the same-named
        fighter utility power (ID_FMP_POWER_1440). -->
+  <!-- The feat power's record is named "Battle Awareness Feat" to tell it
+       apart from the utility; a feat's power carries the feat's own name. -->
+  <AppendNodes internal-id="ID_FMP_POWER_6592" name="Battle Awareness" />
   <AppendNodes internal-id="ID_FMP_FEAT_911">
     <rules>
       <grant name="ID_FMP_POWER_6592" type="Power" />
