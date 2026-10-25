@@ -14,6 +14,7 @@ import type { CharacterPortrait } from "@4ecb/character-domain";
 import {
   combinedDefenseModifiers,
   featureChoiceText,
+  powerActionRank,
   withoutDanglingChoiceLeadIn,
   type CharacterSheetModel,
   type SheetCard,
@@ -45,7 +46,6 @@ import {
   LOADOUT_SLOT_COLUMNS,
   ORDERED_LOADOUT_SLOTS,
 } from "./equipment-ui";
-import { powerActionRank } from "./power-card-order";
 import { referenceCurrency } from "./reference-currency";
 import {
   paginateTracking,

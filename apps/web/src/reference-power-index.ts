@@ -17,7 +17,7 @@ const compact = (value: string) =>
     .replace(/\bvs\.\s*/gi, "vs ")
     .replace(/\s*\+\s*/g, "+")
     .trim();
-export { isRulesReferencePower } from "./power-card-order";
+export { isRulesReferencePower } from "@4ecb/sheet-model";
 
 /** Weapon-independent authored formulas; never substitute an equipment total. */
 export function referencePowerRows(

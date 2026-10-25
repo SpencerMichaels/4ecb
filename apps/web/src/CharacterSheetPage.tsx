@@ -23,7 +23,11 @@ import {
   buildEvaluatedSheetModel,
   buildSheetModel,
   featureChoiceText,
+  isSheetPlayCard,
+  sheetCardDeck,
+  sortedPowerCards,
   type CharacterSheetModel,
+  type SheetDeckCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -33,12 +37,6 @@ import { Icon } from "./Icon";
 import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
-import { sortedPowerCards } from "./power-card-order";
-import {
-  isPlayCard,
-  printableSheetCards,
-  type PrintableCard,
-} from "./print-card-sequence";
 import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
 import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
@@ -80,13 +78,13 @@ function PrintCard({
   portrait,
   characterLevel,
 }: {
-  readonly card: PrintableCard;
+  readonly card: SheetDeckCard;
   readonly model: CharacterSheetModel;
   readonly name: string;
   readonly portrait: CharacterPortrait | undefined;
   readonly characterLevel: number;
 }) {
-  if (isPlayCard(card))
+  if (isSheetPlayCard(card))
     return card.kind === "play-character" ? (
       <PrintCharacterCard model={model} name={name} portrait={portrait} />
     ) : (
@@ -405,7 +403,10 @@ export function CharacterSheetPage({
       </>
     );
   const powerCards = sortedPowerCards(model.powers);
-  const printableCards = printableSheetCards(model);
+  const screenItems = model.items.filter((card) => !card.hiddenByDefault);
+  const printableCards = sheetCardDeck(model).filter(
+    ({ defaultShown }) => defaultShown,
+  );
   const printCardPages = chunks(printableCards, 9);
   const characterLevel =
     Number(
@@ -588,11 +589,11 @@ export function CharacterSheetPage({
               ))}
             </ul>
           )}
-          {model.items.length === 0 ? null : (
+          {screenItems.length === 0 ? null : (
             <div className="view-item-reference">
               <h3>Item reference</h3>
               <div className="view-card-grid">
-                {model.items.map((card, index) => (
+                {screenItems.map((card, index) => (
                   <ItemCard
                     key={`${card.name}-${index}`}
                     card={card}
@@ -700,14 +701,14 @@ export function CharacterSheetPage({
               key={`print-card-page-${pageIndex}`}
             >
               <div className="print-card-grid">
-                {page.map((card, index) => (
+                {page.map(({ card, key }) => (
                   <PrintCard
                     card={card}
                     model={model}
                     name={characterName}
                     portrait={character.portrait}
                     characterLevel={characterLevel}
-                    key={`${card.kind}-${isPlayCard(card) ? "" : (card.id ?? card.name)}-${index}`}
+                    key={key}
                   />
                 ))}
               </div>

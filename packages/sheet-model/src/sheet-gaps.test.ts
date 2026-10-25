@@ -9,7 +9,8 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import { deityDomains, deityDomainsText } from "./deity-reference";
 import { godFragmentPowerCard } from "./god-fragment-card";
 import { buildEvaluatedSheetModel, type SheetCard } from "./index";
-import { sheetItemSetCards, withItemSetCards } from "./item-set-card";
+import { sheetCardDeck } from "./card-deck";
+import { sheetItemSetCards } from "./item-set-card";
 
 type Occurrence = EvaluatedCharacter["occurrences"][number];
 
@@ -339,20 +340,22 @@ describe("item sets", () => {
       fields: [],
     });
     const [set] = sheet.itemSets!;
-    const deck = withItemSetCards(
-      [card("CROWN"), card("RING"), card("CLOAK"), card("OTHER")],
-      [set!],
-    );
-    expect(deck.map(({ id }) => id)).toEqual([
-      "CROWN",
-      "RING",
-      "CLOAK",
-      "SET",
-      "OTHER",
-    ]);
-    // A set whose pieces print no card closes the deck.
+    const ids = (items: SheetCard[]) =>
+      sheetCardDeck({ powers: [], companions: [], items, itemSets: [set!] })
+        .filter(({ group }) => group === "items")
+        .map(({ card }) => (card as SheetCard).id);
     expect(
-      withItemSetCards([card("RING")], [set!]).map(({ id }) => id),
-    ).toEqual(["RING", "SET"]);
+      ids([card("CROWN"), card("RING"), card("CLOAK"), card("OTHER")]),
+    ).toEqual(["CROWN", "RING", "CLOAK", "SET", "OTHER"]);
+    // A set whose pieces print no card closes the deck.
+    expect(ids([card("RING")])).toEqual(["RING", "SET"]);
+    // A piece hidden by its holding doesn't hold the set's card.
+    expect(
+      ids([
+        card("CROWN"),
+        { ...card("CLOAK"), hiddenByDefault: true },
+        card("OTHER"),
+      ]),
+    ).toEqual(["CROWN", "SET", "CLOAK", "OTHER"]);
   });
 });

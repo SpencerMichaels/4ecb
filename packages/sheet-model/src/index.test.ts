@@ -1528,7 +1528,12 @@ describe("sheet model", () => {
       scroll.name,
       "Unresolved custom keepsake",
     ]);
-    expect(legacy.items.map(({ name }) => name)).toEqual([scroll.name]);
+    expect(
+      legacy.items.map(({ name, hiddenByDefault }) => [name, hiddenByDefault]),
+    ).toEqual([
+      [scroll.name, undefined],
+      ["Unresolved custom keepsake", true],
+    ]);
 
     const inventory = [
       ...content.map((entity, index) => ({
@@ -1662,7 +1667,16 @@ describe("sheet model", () => {
       scroll.name,
       "Unresolved custom keepsake",
     ]);
-    expect(evaluated.items.map(({ name }) => name)).toEqual([scroll.name]);
+    expect(
+      evaluated.items.map(({ name, holdingId, hiddenByDefault }) => [
+        name,
+        holdingId,
+        hiddenByDefault,
+      ]),
+    ).toEqual([
+      [scroll.name, "entry-3", undefined],
+      ["Unresolved custom keepsake", "custom-entry", true],
+    ]);
   });
 
   it("rejects nonconvergent evaluations and never fabricates missing abilities", () => {

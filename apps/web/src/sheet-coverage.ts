@@ -63,6 +63,8 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
         for (const part of value.split(" / "))
           addIdentity("Hybrid Class", part);
     }
+  // Items whose holding asks for no card are not on the sheet.
+  const printedItems = sheet.items.filter((card) => !card.hiddenByDefault);
   const ids = (values: readonly { readonly id?: string }[]) =>
     new Set(values.flatMap(({ id }) => (id === undefined ? [] : [key(id)])));
   return {
@@ -72,12 +74,12 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
     powerNames: new Set(sheet.powers.map(({ name }) => key(name))),
     // An item set card lists its set's benefits.
     itemIds: new Set([
-      ...ids(sheet.items),
+      ...ids(printedItems),
       ...(sheet.itemSets ?? []).flatMap(({ benefits }) =>
         benefits.map(({ id }) => key(id)),
       ),
     ]),
-    itemNames: sheet.items.map(({ name }) => key(name)),
+    itemNames: printedItems.map(({ name }) => key(name)),
     // The Deity reference entry names its domains.
     referenceIds: new Set([
       ...ids(sheet.learnedReferences),

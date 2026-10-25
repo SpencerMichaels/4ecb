@@ -440,7 +440,10 @@ describe("printed overview data", () => {
         ],
       },
     ]);
-    expect(m.items).toEqual([]);
+    // The holding asks for no card: the card stays in the model, hidden.
+    expect(m.items.map(({ hiddenByDefault }) => hiddenByDefault)).toEqual([
+      true,
+    ]);
   });
   it("assigns reminder categories from feature and equipped item provenance", () => {
     const entities = ["Feat", "Class Feature", "Racial Trait"].map(

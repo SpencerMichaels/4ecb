@@ -83,10 +83,22 @@ export {
   isGodFragmentEntity,
 } from "./god-fragment-card";
 export {
+  isRulesReferencePower,
+  isSheetPlayCard,
+  SHEET_DECK_GROUPS,
+  sheetCardDeck,
+  sheetItemCardKeyBase,
+  sheetPowerCardKeyBase,
+  sortedPowerCards,
+  type SheetDeckCard,
+  type SheetDeckEntry,
+  type SheetDeckGroup,
+  type SheetPlayCard,
+} from "./card-deck";
+export {
   itemSetOf,
   sheetItemSetCard,
   sheetItemSetCards,
-  withItemSetCards,
   type SheetItemSetBenefit,
   type SheetItemSetCard,
 } from "./item-set-card";
@@ -182,6 +194,13 @@ export interface SheetFeatureEntry extends SheetValue {
 
 export interface SheetCard {
   readonly id?: string;
+  /** An item card's inventory holding (evaluated sheets), its stable key. */
+  readonly holdingId?: string;
+  /**
+   * An item whose holding asks for no card (legacy `showPowerCard="0"`): it
+   * stays in the model, and the sheet layout decides whether it prints.
+   */
+  readonly hiddenByDefault?: boolean;
   readonly kind: "power" | "item";
   readonly name: string;
   readonly itemType?: string;
@@ -1185,6 +1204,9 @@ export function createSheetPowerCardFinder(
  * Crit, a Heartwood Spear's spear is heavy thrown with a range).
  */
 export function sheetItemCard(input: {
+  /** The inventory holding the card shows, its stable sheet key (D099). */
+  readonly holdingId?: string | undefined;
+  readonly hiddenByDefault?: boolean | undefined;
   readonly name: string;
   readonly entities: readonly ContentEntity[];
   readonly itemType?: string | undefined;
@@ -1200,6 +1222,8 @@ export function sheetItemCard(input: {
   const entity = entities.at(-1);
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
+    ...(input.holdingId === undefined ? {} : { holdingId: input.holdingId }),
+    ...(input.hiddenByDefault === true ? { hiddenByDefault: true } : {}),
     kind: "item",
     name: input.name,
     itemType: input.itemType ?? entity?.type ?? "Item",
@@ -1459,12 +1483,11 @@ export function buildSheetModel(
     };
   });
   const itemCards: SheetCard[] = lootPresentations
-    .filter(({ loot, referenceKind }) =>
-      Boolean(loot.showPowerCard && referenceKind === undefined),
-    )
+    .filter(({ referenceKind }) => referenceKind === undefined)
     .map(({ loot, element, entity, itemEntities }) => {
       return {
         ...(element?.id === undefined ? {} : { id: element.id }),
+        ...(loot.showPowerCard ? {} : { hiddenByDefault: true }),
         kind: "item" as const,
         name: loot.name,
         itemType: entity?.type ?? element?.type ?? "Item",
@@ -1877,10 +1900,11 @@ export function buildEvaluatedSheetModel(
   });
   const itemCards: SheetCard[] = inventoryPresentations.flatMap(
     ({ entry, original, entity, itemEntities, name, referenceKind }) => {
-      if (original?.showPowerCard === false || referenceKind !== undefined)
-        return [];
+      if (referenceKind !== undefined) return [];
       return [
         sheetItemCard({
+          holdingId: entry.id,
+          hiddenByDefault: original?.showPowerCard === false,
           name,
           entities: itemEntities,
           itemType: entity?.type ?? original?.elements.at(-1)?.type,

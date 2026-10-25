@@ -8,8 +8,6 @@ import {
   type EvaluatedItemSet,
 } from "@4ecb/rules-engine";
 
-import type { SheetCard } from "./index";
-
 const key = (value: string) => value.trim().toLocaleLowerCase();
 
 /** One benefit of an item set, by the pieces it needs. */
@@ -121,29 +119,4 @@ export function sheetItemSetCards(
   return [...sets.values()].map((set) =>
     sheetItemSetCard(set, lookup, evaluated, textStrings),
   );
-}
-
-/**
- * The printed item deck: each set's card follows the last of its pieces'
- * item cards (a set without a printed piece card closes the deck).
- */
-export function withItemSetCards(
-  items: readonly SheetCard[],
-  itemSets: readonly SheetItemSetCard[],
-): (SheetCard | SheetItemSetCard)[] {
-  const after = new Map<number, SheetItemSetCard[]>();
-  const trailing: SheetItemSetCard[] = [];
-  for (const set of itemSets) {
-    const pieces = new Set(set.pieceIds.map(key));
-    let last = -1;
-    items.forEach((card, index) => {
-      if (card.id !== undefined && pieces.has(key(card.id))) last = index;
-    });
-    if (last < 0) trailing.push(set);
-    else after.set(last, [...(after.get(last) ?? []), set]);
-  }
-  return [
-    ...items.flatMap((card, index) => [card, ...(after.get(index) ?? [])]),
-    ...trailing,
-  ];
 }

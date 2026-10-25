@@ -15,7 +15,6 @@ const a4Styles = readFileSync(
 );
 const sheetSource = [
   "./CharacterSheetPage.tsx",
-  "./print-card-sequence.ts",
   "./PowerCard.tsx",
   "./ItemCard.tsx",
   "./use-print-card-fit.ts",
@@ -269,10 +268,6 @@ describe("print layout contract", () => {
     expect(sheetSource).toContain(
       'name={isPersonal(attack.target) ? "attack-personal" : "target"}',
     );
-    expect(sheetSource).toContain('["action point", "second wind"]');
-    expect(
-      sheetSource.indexOf('{ kind: "play-skills" as const },'),
-    ).toBeLessThan(sheetSource.indexOf("...specialCards,"));
     expect(sheetSource).not.toContain("&nbsp;");
     expect(styles).not.toContain(".print-card-action-band.is-empty");
     expect(styles).toMatch(
