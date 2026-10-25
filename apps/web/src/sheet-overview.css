@@ -1538,7 +1538,6 @@ body:has(.sp-prototype) {
   margin-top: 0.07in !important;
 }
 .ov-power-trackers {
-  container-type: inline-size;
   --ov-tracking-column-width: 0.26in;
 }
 .ov-power-trackers .sp-encounter {
@@ -1642,10 +1641,10 @@ body:has(.sp-prototype) {
   border: 1px solid #8f9aa2;
   border-radius: 3px;
 }
-@container (min-width: 3.6in) {
-  .ov-tracking-panels.has-both {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  }
+/* Unconditional: Firefox's print layout ignores container queries, and the
+   tracking region is always page width. */
+.ov-tracking-panels.has-both {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
 }
 .ov-power-trackers .sp-usage-table col:first-child {
   width: auto;

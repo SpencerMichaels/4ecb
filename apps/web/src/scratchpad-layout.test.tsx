@@ -47,6 +47,17 @@ describe("scratchpad measured tracking layout", () => {
     )?.[1];
     expect(rule).toContain("gap: 0.04in");
   });
+  it("places daily tracking beside encounters without container queries", () => {
+    const styles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    // Firefox's print layout ignores @container, stacking dailies off the page.
+    expect(styles).not.toContain("@container");
+    expect(styles).toMatch(
+      /\n\.ov-tracking-panels\.has-both\s*\{\s*grid-template-columns: minmax\(0, 1\.5fr\) minmax\(0, 1fr\);/,
+    );
+  });
   it("top-aligns shared-use tracking boxes to the group heading", () => {
     const styles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),
