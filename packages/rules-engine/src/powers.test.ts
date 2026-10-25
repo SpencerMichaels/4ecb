@@ -820,6 +820,78 @@ describe("power evaluation", () => {
     expect(variant(dual, "Carried Dagger")?.attackBonus).toBe(5);
   });
 
+  it("adds a ki-focused row per owned weapon base for an equipped ki focus (native BuildKiList)", () => {
+    const evaluate = (kiEquipped: number) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "ki",
+            definitionIds: ["KI"],
+            quantity: 1,
+            equippedQuantity: kiEquipped,
+            acquiredLevel: 1,
+          },
+          {
+            id: "magic-blade",
+            definitionIds: ["BLADE", "WEAPON_ENCHANT"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          // A second holding of the same base adds no second ki row.
+          {
+            id: "plain-blade",
+            definitionIds: ["BLADE"],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 2) },
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Strike", "Power", {
+            Keywords: "Weapon",
+            "Attack Type": "Melee weapon",
+            Attack: "Strength vs. AC",
+            Hit: "1[W] + Strength modifier damage.",
+          }),
+          entity("KI", "Synthetic Ki Focus +2", "Magic Item", {
+            "Magic Item Type": "Ki Focus",
+            Enhancement: "+2",
+          }),
+          entity("BLADE", "Wrist Blade", "Weapon", {
+            Damage: "1d4",
+            "Proficiency Bonus": "3",
+            Group: "Light Blade",
+            "Weapon Category": "Simple Melee",
+          }),
+          entity("WEAPON_ENCHANT", "Keen Weapon +1", "Magic Item", {
+            "Magic Item Type": "Weapon",
+            Enhancement: "+1",
+          }),
+        ],
+      })[0];
+    const names = (power: ReturnType<typeof evaluate>) =>
+      power?.variants.map((entry) => entry.equipmentName) ?? [];
+
+    const equipped = evaluate(1);
+    const focused = equipped?.variants.filter(
+      (entry) => entry.equipmentName === "Synthetic Ki Focused Wrist Blade +2",
+    );
+    // The bare base (the weapon's own +1 dropped) with the focus's +2.
+    expect(focused).toHaveLength(1);
+    expect(focused?.[0]?.attackBonus).toBe(7);
+    expect(focused?.[0]?.damage).toBe("1d4+4");
+    expect(names(equipped)).toContain("Keen Wrist Blade +1");
+    // An unequipped ki focus adds nothing.
+    expect(names(evaluate(0))).not.toContain(
+      "Synthetic Ki Focused Wrist Blade +2",
+    );
+  });
+
   it("applies recovered weapon-field ability bonuses only to eligible families", () => {
     const powers = evaluatePowers({
       level: 8,

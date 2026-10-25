@@ -221,6 +221,9 @@ interface Loadout {
    * reads for an implement power's row. */
   readonly lootBase?: ContentEntity;
   readonly lootEnchant?: ContentEntity;
+  /** Native BuildKiList: the weapon holding a synthetic ki-focused loot was
+   * built from; the loot takes that holding's hand. */
+  readonly kiFocusedFrom?: string;
 }
 
 function key(value: string): string {
@@ -477,6 +480,58 @@ function boundAugment(
   return owned ? byId.get(key(baseId)) : undefined;
 }
 
+/**
+ * Native BuildWeaponsList/BuildKiList (D20RulesEngine): each owned loot
+ * whose base is an equipped ki focus (IsKiFocus) adds, after itself, one
+ * synthetic loot per owned weapon base not already seen earlier in the loot
+ * list (BaseElemAlreadySeen): the bare base weapon (the weapon's own
+ * enchantment and overrides dropped) enchanted by the ki focus, with the
+ * weapon loot's count and equip-count — "Shadow Master Ki Focused Wrist
+ * Razors +1" (CharLootName). The synthetic loot lives only on the weapons
+ * list, so DetermineOffhand never picks it as another item's off hand.
+ */
+function withKiFocusedWeapons(
+  inventory: readonly CharacterInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly {
+  readonly entry: CharacterInventoryEntry;
+  readonly kiSource?: CharacterInventoryEntry;
+}[] {
+  const owned = inventory.filter((item) => item.quantity > 0);
+  const weaponBase = (entry: CharacterInventoryEntry) => {
+    const base = byId.get(key(entry.definitionIds[0] ?? ""));
+    return base !== undefined && key(base.type) === "weapon" ? base : undefined;
+  };
+  return owned.flatMap((entry) => {
+    const ki = byId.get(key(entry.definitionIds[0] ?? ""));
+    if (entry.equippedQuantity <= 0 || !legacyIsKiFocus(ki) || ki === undefined)
+      return [{ entry }];
+    const focused = owned.flatMap((weapon, index) => {
+      const base = weaponBase(weapon);
+      if (
+        base === undefined ||
+        owned
+          .slice(0, index)
+          .some((earlier) => weaponBase(earlier)?.id === base.id)
+      )
+        return [];
+      return [
+        {
+          entry: {
+            id: `${weapon.id}#ki:${entry.id}`,
+            definitionIds: [base.id, ki.id],
+            quantity: weapon.quantity,
+            equippedQuantity: weapon.equippedQuantity,
+            acquiredLevel: weapon.acquiredLevel,
+          },
+          kiSource: weapon,
+        },
+      ];
+    });
+    return [{ entry }, ...focused];
+  });
+}
+
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
@@ -485,7 +540,7 @@ function loadouts(
 ): readonly Loadout[] {
   const implementResolver = legacyImplementResolver(byId, byName);
   const result: Loadout[] = [];
-  for (const entry of inventory.filter((item) => item.quantity > 0)) {
+  for (const { entry, kiSource } of withKiFocusedWeapons(inventory, byId)) {
     const parts = entry.definitionIds.flatMap((id) => {
       const entity = byId.get(key(id));
       return entity === undefined ? [] : [entity];
@@ -666,8 +721,10 @@ function loadouts(
       // Native DetermineOffhand: a weapon, or loot LootImplement names
       // other than a ki focus.
       offhandCandidate:
-        key(baseRecord?.type ?? "") === "weapon" ||
-        (lootImplement !== undefined && !/ki focus/iu.test(lootImplement)),
+        kiSource === undefined &&
+        (key(baseRecord?.type ?? "") === "weapon" ||
+          (lootImplement !== undefined && !/ki focus/iu.test(lootImplement))),
+      ...(kiSource === undefined ? {} : { kiFocusedFrom: kiSource.id }),
       staff,
       ...(baseRecord === undefined ? {} : { lootBase: baseRecord }),
       ...(enchantRecord === undefined ? {} : { lootEnchant: enchantRecord }),
@@ -708,10 +765,18 @@ function loadouts(
           (item) => item.equipped && key(item.name) === key(mainHandName),
         );
   if (mainIndex < 0) return result;
+  const mainId = result[mainIndex]?.id;
   const handed = result.map((item, index): Loadout =>
     !item.equipped || (!item.weaponDefinition && !item.implementDefinition)
       ? item
-      : { ...item, hand: index === mainIndex ? "main" : "off" },
+      : {
+          ...item,
+          hand:
+            index === mainIndex ||
+            (item.kiFocusedFrom !== undefined && item.kiFocusedFrom === mainId)
+              ? "main"
+              : "off",
+        },
   );
   return handed.map((item) => {
     if (item.hand === undefined) return item;
@@ -719,6 +784,7 @@ function loadouts(
       (candidate) =>
         candidate.hand !== undefined &&
         candidate.hand !== item.hand &&
+        candidate.kiFocusedFrom === undefined &&
         (item.weaponDefinition
           ? candidate.weaponDefinition
           : candidate.implementDefinition),
