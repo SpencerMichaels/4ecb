@@ -1250,7 +1250,7 @@ async function checkReferences(client) {
       equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-stack')].some(pair=>{
         const equipped=pair.querySelector('.ov-reference-pane:has(.ov-equipped-table)');
         const currency=pair.querySelector('.ov-currency-pane');
-        return equipped.querySelector('h3').textContent.startsWith('Equipped') && currency.querySelector('h3').textContent==='Currency' &&
+        return equipped.querySelector('h3').textContent.startsWith('Worn/Held Items') && currency.querySelector('h3').textContent==='Currency' &&
           currency.getBoundingClientRect().bottom < equipped.getBoundingClientRect().top &&
           Math.abs(equipped.getBoundingClientRect().width-currency.getBoundingClientRect().width)<1 &&
           [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
@@ -1265,8 +1265,11 @@ async function checkReferences(client) {
       weaponIndependentIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
         !cell.textContent.trim() || /^(?:STR|CON|DEX|INT|WIS|CHA|Primary ability|See card)/i.test(cell.textContent.trim())),
       equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:nth-child(odd)')]).filter(cell=>cell.textContent.trim()).every(cell=>cell.querySelector('.icon')),
-      inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody td')].some(cell=>
-        cell.textContent.startsWith('Synthetic item 01') && cell.querySelector('.ov-equipped-marker') && cell.previousElementSibling?.getAttribute('aria-label')==='Quantity 1')),
+      // Carried Items lists only unequipped copies: item 01 (1 of 1 equipped) is
+      // absent and item 02 (1 of 2 equipped) shows the one carried copy.
+      carriedExcludesEquipped:(()=>{const cells=pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table tbody td')]);
+        return !cells.some(cell=>cell.textContent.startsWith('Synthetic item 01')) && cells.some(cell=>
+          cell.textContent.startsWith('Synthetic item 02') && cell.previousElementSibling?.getAttribute('aria-label')==='Quantity 1');})(),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
       monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
@@ -1307,7 +1310,7 @@ async function checkReferences(client) {
       state.inlinePowerActions &&
       state.weaponIndependentIndexAttacks &&
       state.equippedIcons &&
-      state.inventoryIncludesEquipped &&
+      state.carriedExcludesEquipped &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,

@@ -1801,7 +1801,6 @@ interface ReferencePart {
   tableCategory?: string;
   slotCells?: readonly { label: string; icon: IconName }[];
   rightSlotCells?: readonly { label: string; icon: IconName }[];
-  equippedInventory?: boolean;
   inventoryIndex?: number;
   inventoryWeight?: number | undefined;
 }
@@ -2062,9 +2061,10 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           INVENTORY_CATEGORIES.find(
             (category) => category.id === item.category,
           ) ?? INVENTORY_CATEGORIES.at(-1)!,
+        // Carried Items lists only the copies not worn or held.
         quantity: equipped
           ? Math.min(item.quantity, item.equipped)
-          : item.quantity,
+          : Math.max(0, item.quantity - item.equipped),
       }))
       .filter((item) => item.quantity > 0)
       .sort(
@@ -2078,7 +2078,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     if (equipped || entries.length || model.encumbrance)
       result.push({
         id: `inventory:${equipped}`,
-        name: equipped ? "Equipped" : "Inventory",
+        name: equipped ? "Worn/Held Items" : "Carried Items",
         group: "Items",
         source: "",
         ...(equipped
@@ -2092,13 +2092,10 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         parts: entries.map((item) => ({
           ...(!equipped
             ? {
-                inventoryWeight: item.weight,
+                inventoryWeight: item.carriedWeight,
               }
             : {}),
           ...(!equipped ? { tableCategory: item.inventoryCategory.label } : {}),
-          ...(!equipped && item.equipped > 0
-            ? { equippedInventory: true }
-            : {}),
           ...(equipped
             ? {
                 slotCells: (item.slots.length
@@ -2466,12 +2463,10 @@ function ReferenceCard({
       >
         <header>
           <Icon name="item" />
-          <h3>Inventory{entry.continued ? " (continued)" : ""}</h3>
-          {entry.parts.some((part) => part.equippedInventory) ? (
-            <span className="ov-inventory-legend">
-              <sup>E</sup> Equipped
-            </span>
-          ) : null}
+          <h3>
+            {entry.name}
+            {entry.continued ? " (continued)" : ""}
+          </h3>
         </header>
         <div className="sp-feature-body ov-inventory-columns">
           {columns.map((parts, i) =>
@@ -2587,12 +2582,6 @@ function ReferenceCard({
               {entry.level === undefined ? "Level —" : `Level ${entry.level}`}
             </span>
           ) : null}
-          {entry.id.startsWith("inventory:false") &&
-          parts.some((part) => part.equippedInventory) ? (
-            <span className="ov-inventory-legend">
-              <sup>E</sup> Equipped
-            </span>
-          ) : null}
         </header>
       ) : null}
       <div className="sp-feature-body">
@@ -2643,17 +2632,7 @@ function ReferenceCard({
                       </td>
                       <td>
                         <span className="ov-inventory-item">
-                          <span>
-                            {row[0]}
-                            {part.equippedInventory ? (
-                              <sup
-                                className="ov-equipped-marker"
-                                aria-label="Equipped"
-                              >
-                                E
-                              </sup>
-                            ) : null}
-                          </span>
+                          <span>{row[0]}</span>
                           {part.inventoryWeight === undefined ? null : (
                             <span className="ov-inventory-weight">
                               {part.inventoryWeight.toLocaleString("en-US", {
@@ -2701,14 +2680,6 @@ function ReferenceCard({
                           ) : (
                             cell
                           )}
-                          {part.equippedInventory && column === 0 ? (
-                            <sup
-                              className="ov-equipped-marker"
-                              aria-label="Equipped"
-                            >
-                              E
-                            </sup>
-                          ) : null}
                         </td>
                       ))}
                     </tr>

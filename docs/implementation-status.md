@@ -796,7 +796,7 @@ Still open:
 Commit `3e61a5e`.
 
 - **Proficiencies.** A Proficiencies pane on the Character Reference pages,
-  after Equipped and Inventory (not on page 1, per the owner). It has one line
+  after Worn/Held Items and Carried Items (not on page 1, per the owner). It has one line
   per kind: armor, shields, weapons, implements. A group proficiency collapses
   what it grants. Code: `packages/sheet-model/src/proficiencies.ts`.
 - **Sub-choices on their parent feature's row** (owner-approved rule;
@@ -2155,6 +2155,13 @@ categories. The print harness verifies computed backgrounds for two consecutive
 three-item categories, not merely the assigned stripe classes.
 Verification: production build and all four Chromium overview-only print cases
 pass, including that computed-style regression; Firefox was not rerun.
+Worn/Held vs Carried split (2026-10-25, owner decision): the sheet panes are
+renamed "Worn/Held Items" (was Equipped) and "Carried Items" (was Inventory).
+Carried Items lists only unequipped copies (quantity minus equipped; a fully
+equipped holding is absent), with each row weight taken from sheet-model's new
+`OverviewInventory.carriedWeight`. The equipped superscript and legend are
+removed. Encumbrance stays the evaluated total, including equipped gear. The
+builder's Equipment/Inventory/Loadout/Shop naming is unchanged.
 Redundant carried/stored character-note cards are omitted. Equipment/Currency
 are measured as a stacked block; inventory pagination retains complete category groups
 and repeats category headings at continuation starts. The equipment-layout

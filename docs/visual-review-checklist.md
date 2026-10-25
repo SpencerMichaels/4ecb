@@ -285,11 +285,11 @@ Settings → Builder & Equipment.
   - **Wrong if:** "Hybrid", or only one class.
 - [ ] **Proficiencies pane**
   - **Where:** `beatrix` → `?preview=1`, Character Reference pages, after the
-    Equipped and Inventory panes.
+    Worn/Held Items and Carried Items panes.
   - **Expect:** "Armor: cloth, leather, hide, chainmail", "Weapons: simple
     melee, military melee, simple ranged, fey pact of the white well weapon",
     "Implements: rod, wand". There's no Shields line because she has none.
-  - **Wrong if:** capitalised values, the pane before Inventory, or an empty
+  - **Wrong if:** capitalised values, the pane before Carried Items, or an empty
     label.
 - [ ] **Sub-choices on feature rows.**
   - **Where:** `beatrix` → `?preview=1`, Character Reference pages (Class

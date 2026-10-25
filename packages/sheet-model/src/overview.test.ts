@@ -238,6 +238,45 @@ describe("printed overview data", () => {
     expect(model.overview?.inventory[0]?.category).toBe("weapons");
     expect(model.overview?.inventory[0]?.quantity).toBe(2);
   });
+  it("projects the weight of the unequipped copies beside the holding total", () => {
+    const dagger: ContentEntity = {
+      id: "weapon:dagger",
+      name: "Dagger",
+      type: "Weapon",
+      source: "",
+      sources: [],
+      attributes: [],
+      categories: [],
+      specifics: [
+        { name: "Weight", value: "1 lb", ordinal: 0, extraAttributes: [] },
+      ],
+      rules: [],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "public", sourceOrdinal: 0 },
+    };
+    const model = buildSheetModel(
+      {
+        ...snapshot,
+        loot: [
+          {
+            name: "Dagger",
+            count: 3,
+            equippedCount: 1,
+            showPowerCard: true,
+            elements: [{ id: dagger.id, name: "Dagger", type: "Weapon" }],
+          },
+        ],
+      },
+      [dagger],
+    );
+    expect(model.overview?.inventory[0]).toMatchObject({
+      quantity: 3,
+      equipped: 1,
+      weight: 3,
+      carriedWeight: 2,
+    });
+  });
   it("replaces a core feature's grant wrapper with its owned power reminder once", () => {
     const feature = {
       ...feat,

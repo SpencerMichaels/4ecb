@@ -407,6 +407,7 @@ describe("real-data sheet overview", () => {
             slots: [],
             fields: [],
             weight: 8,
+            carriedWeight: 8,
           },
           {
             name: "Unknown weight",
@@ -422,6 +423,7 @@ describe("real-data sheet overview", () => {
             slots: [],
             fields: [],
             weight: 0,
+            carriedWeight: 0,
           },
         ],
       },
@@ -657,7 +659,7 @@ describe("real-data sheet overview", () => {
     ];
     const entry: ReferenceEntry = {
       id: "inventory:false",
-      name: "Inventory",
+      name: "Carried Items",
       group: "Items",
       source: "",
       parts,
@@ -717,7 +719,7 @@ describe("real-data sheet overview", () => {
     const parts = inventoryParts("Gear", 10);
     const entry: ReferenceEntry = {
       id: "inventory:false",
-      name: "Inventory",
+      name: "Carried Items",
       group: "Items",
       source: "",
       parts,
@@ -2576,14 +2578,13 @@ describe("real-data sheet overview", () => {
       />,
     );
     expect(html).toContain("The full synthetic description is preserved.");
-    expect(
-      html.match(/<td>Synthetic blade(?:<sup[^>]*>E<\/sup>)?<\/td>/g),
-    ).toHaveLength(1);
-    expect(html).toContain(
-      '<span>Synthetic blade<sup class="ov-equipped-marker"',
-    );
+    expect(html.match(/<td>Synthetic blade<\/td>/g)).toHaveLength(1);
+    expect(html).toContain("<span>Synthetic blade</span>");
+    expect(html).toContain('aria-label="Quantity 1"');
+    expect(html).not.toContain("ov-equipped-marker");
     expect(html).toContain("Main hand");
-    expect(html).toContain(">Inventory</h3>");
+    expect(html).toContain(">Worn/Held Items</h3>");
+    expect(html).toContain(">Carried Items</h3>");
   });
   it("makes equipped inventory a slot-first lookup and omits carried slot labels", () => {
     const item = (
@@ -2648,17 +2649,20 @@ describe("real-data sheet overview", () => {
     expect(equippedRows).toContainEqual(["Off hand", "—"]);
     expect(equippedRows.some((row) => row[0] === "Ki focus")).toBe(false);
     expect(entries.find((entry) => entry.id === "inventory:true")?.name).toBe(
-      "Equipped",
+      "Worn/Held Items",
+    );
+    expect(entries.find((entry) => entry.id === "inventory:false")?.name).toBe(
+      "Carried Items",
     );
     const carried = tables("inventory:false");
     expect(
       carried.every((table) => table.headers?.join("/") === "Item/Qty"),
     ).toBe(true);
     expect(carried.flatMap((table) => table.rows)).toEqual([
-      ["A sword", "2"],
-      ["Boots", "2"],
-      ["Unslotted symbol", "2"],
-      ["Z helmet", "2"],
+      ["A sword", "1"],
+      ["Boots", "1"],
+      ["Unslotted symbol", "1"],
+      ["Z helmet", "1"],
     ]);
     expect(
       entries
@@ -2682,7 +2686,7 @@ describe("real-data sheet overview", () => {
         ),
     ).toEqual(["hard-hat", "sword", "item", "footprints"]);
   });
-  it("includes equipped-only holdings and total stack quantities with equipped superscripts", () => {
+  it("lists only unequipped copies under Carried Items and the equipped ones under Worn/Held Items", () => {
     const fixture = {
       ...model,
       overview: {
@@ -2692,13 +2696,17 @@ describe("real-data sheet overview", () => {
             name: "Equipped only",
             quantity: 1,
             equipped: 1,
+            weight: 15,
+            carriedWeight: 0,
             slots: ["body"],
             fields: [],
           },
           {
-            name: "Stack",
-            quantity: 5,
-            equipped: 2,
+            name: "Daggers",
+            quantity: 3,
+            equipped: 1,
+            weight: 3,
+            carriedWeight: 2,
             slots: ["main-hand"],
             fields: [],
           },
@@ -2712,21 +2720,31 @@ describe("real-data sheet overview", () => {
         ],
       },
     };
-    const inventory = references(fixture).find(
-      (entry) => entry.id === "inventory:false",
-    )!;
+    const entries = references(fixture);
+    const carried = entries.find((entry) => entry.id === "inventory:false")!;
+    expect(carried.name).toBe("Carried Items");
     expect(
-      inventory.parts.flatMap((part) =>
+      carried.parts.flatMap((part) =>
         part.block.kind === "table" ? part.block.rows : [],
       ),
     ).toEqual([
       ["Carried only", "3"],
-      ["Equipped only", "1"],
-      ["Stack", "5"],
+      ["Daggers", "2"],
     ]);
-    expect(
-      inventory.parts.map((part) => Boolean(part.equippedInventory)),
-    ).toEqual([false, true, true]);
+    // The row weight is sheet-model's weight of the carried copies only.
+    expect(carried.parts.map((part) => part.inventoryWeight)).toEqual([
+      undefined,
+      2,
+    ]);
+    const worn = entries.find((entry) => entry.id === "inventory:true")!;
+    expect(worn.name).toBe("Worn/Held Items");
+    const wornItems = worn.parts.flatMap((part) =>
+      part.block.kind === "table"
+        ? part.block.rows.flatMap((row) => [row[1], row[3]])
+        : [],
+    );
+    expect(wornItems).toContain("Equipped only");
+    expect(wornItems).toContain("Daggers");
     const html = renderToStaticMarkup(
       <SheetOverview
         model={fixture}
@@ -2735,11 +2753,18 @@ describe("real-data sheet overview", () => {
         paper="letter"
       />,
     );
-    expect(html.match(/class="ov-equipped-marker"/g)).toHaveLength(2);
+    expect(html).not.toContain("ov-equipped-marker");
+    expect(html).not.toContain("ov-inventory-legend");
+    expect(html).not.toContain("<span>Equipped only</span>");
+    expect(html).toContain('aria-label="Quantity 2"');
+    expect(html).toContain(">Worn/Held Items</h3>");
+    expect(html).toContain(">Carried Items</h3>");
+    expect(html).not.toContain(">Inventory</h3>");
+    expect(html).not.toContain(">Equipped</h3>");
     expect(html).toContain('class="ov-slot-cell"');
     expect(html).toContain("lucide-shirt");
   });
-  it("places side-by-side carried/stored Currency above two-column Equipped", () => {
+  it("places side-by-side carried/stored Currency above two-column Worn/Held Items", () => {
     const fixture = {
       ...model,
       currency: [
@@ -2773,7 +2798,7 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('class="ov-reference-card ov-equipment-stack"');
     expect(html).toContain(">Currency</h3>");
     expect(html.indexOf(">Currency</h3>")).toBeLessThan(
-      html.indexOf(">Equipped</h3>"),
+      html.indexOf(">Worn/Held Items</h3>"),
     );
     expect(equipped.group).toBe("Items");
     expect(html).toContain('aria-label="Carried currency"');

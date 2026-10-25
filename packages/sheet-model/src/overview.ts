@@ -84,6 +84,8 @@ export interface OverviewInventory {
   readonly baseItemType?: string | undefined;
   /** Total weight of the listed quantity, not a per-copy weight. */
   readonly weight?: number | undefined;
+  /** Total weight of the unequipped (carried) copies only. */
+  readonly carriedWeight?: number | undefined;
   readonly name: string;
   readonly quantity: number;
   readonly equipped: number;

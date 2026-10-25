@@ -1626,6 +1626,11 @@ export function buildSheetModel(
           definitions: itemEntities,
           complete: itemEntities.length === loot.elements.length,
         }),
+        carriedWeight: inventoryHoldingWeight({
+          quantity: Math.max(0, loot.count - loot.equippedCount),
+          definitions: itemEntities,
+          complete: itemEntities.length === loot.elements.length,
+        }),
         quantity: loot.count,
         equipped: loot.equippedCount,
         slots:
@@ -2138,6 +2143,14 @@ export function buildEvaluatedSheetModel(
         equipped: entry.equippedQuantity,
         weight: inventoryHoldingWeight({
           quantity: entry.quantity,
+          definitions: itemEntities,
+          complete: entry.definitionIds.length === itemEntities.length,
+          override: Object.entries(entry.overrides ?? {}).find(
+            ([name]) => name.toLowerCase() === "weight",
+          )?.[1],
+        }),
+        carriedWeight: inventoryHoldingWeight({
+          quantity: Math.max(0, entry.quantity - entry.equippedQuantity),
           definitions: itemEntities,
           complete: entry.definitionIds.length === itemEntities.length,
           override: Object.entries(entry.overrides ?? {}).find(

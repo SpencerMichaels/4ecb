@@ -685,16 +685,6 @@ body:has(.sp-prototype) {
   vertical-align: -0.12em;
   margin-right: 0.3em;
 }
-.ov-equipped-marker {
-  margin-left: 0.2em;
-  font-size: 7pt;
-}
-.ov-inventory-legend {
-  margin-left: auto;
-  font-size: 8pt;
-  font-weight: 400;
-  white-space: nowrap;
-}
 .ov-page-number {
   margin-left: auto;
 }

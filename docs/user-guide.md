@@ -250,6 +250,10 @@ On **View sheet**, select Letter or A4, optional blank hit points, power/item
 cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
+The sheet's **Worn/Held Items** pane lists equipped gear by loadout slot, and
+**Carried Items** lists only the copies that are not equipped (three daggers
+with one equipped shows two). The encumbrance total still counts everything.
+
 The browser-level **Settings → Display → Count coin weight** checkbox controls
 whether carried coins contribute to sheet encumbrance. It starts enabled; turn
 it off for groups that ignore coin weight. Stored coins never count. Changing
