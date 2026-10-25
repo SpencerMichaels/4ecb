@@ -8,7 +8,6 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
-import { importDnd4e } from "@4ecb/legacy-dnd4e";
 import type { DeityAlignmentConstraint } from "./builder-ui";
 import {
   builderIssueGroups,
@@ -17,7 +16,6 @@ import {
   deityAlignmentIssue,
   evaluationFailedIssue,
   missingHoldingContentIssues,
-  nameMatchedContentIssues,
   savedOccurrenceNames,
   withCharacterIssues,
 } from "./builder-diagnostics";
@@ -561,7 +559,6 @@ describe("character issues outside rules evaluation", () => {
         errors: [],
         houseRules: [],
         updates: [],
-        notes: [],
       },
       [issue],
     );
@@ -633,7 +630,6 @@ describe("deity alignment", () => {
         errors: [],
         houseRules: [],
         updates: [],
-        notes: [],
       },
       [failed],
     );
@@ -890,91 +886,6 @@ describe("missing-content issues", () => {
       groups.errors.filter(({ title }) => title === "Buckler"),
     ).toHaveLength(1);
     expect(groups.warnings.map(({ title }) => title)).toEqual(["Lucky Charm"]);
-  });
-});
-
-describe("records matched by name on import", () => {
-  const content = [
-    { id: "L1", name: "1", type: "Level", rules: [] },
-    { id: "OURS_THEME", name: "Ghost of the Past", type: "Theme", rules: [] },
-    { id: "OURS_STONE", name: "Ioun Stone", type: "Magic Item", rules: [] },
-  ];
-  const { build } = importDnd4e(
-    `<D20Character game-system="D&amp;D4E"><CharacterSheet/><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Ghost of the Past" type="Theme" internal-id="THEIRS_THEME" charelem="t"/></RulesElement><loot count="1" equip-count="0"><RulesElement name="Ioun Stone" type="Magic Item" internal-id="THEIRS_STONE"/></loot></Level></D20Character>`,
-    { matchMissingDefinitionsIn: content },
-  );
-  const byId = new Map(
-    content.map((entity) => [
-      entity.id.toLocaleLowerCase(),
-      entity as unknown as ContentEntity,
-    ]),
-  );
-
-  it("stay listed as notes, reviewable after import", () => {
-    const issues = nameMatchedContentIssues(build, byId);
-    expect(issues).toEqual([
-      {
-        key: "import:matched:THEIRS_THEME",
-        kind: "note",
-        title: "Ghost of the Past (Theme)",
-        detail:
-          "Your file saved it as THEIRS_THEME, which the game content doesn't have, so it uses OURS_THEME, the one record with the same name and type.",
-        effect:
-          "The character and its exports use the matched record. Check it's the one you meant.",
-      },
-      expect.objectContaining({
-        key: "import:matched:THEIRS_STONE",
-        target: { kind: "inventory", entryId: "legacy:loot:1:0" },
-      }),
-    ]);
-    const groups = withCharacterIssues(
-      {
-        unresolved: [],
-        warnings: [],
-        errors: [],
-        houseRules: [],
-        updates: [],
-        notes: [],
-      },
-      issues,
-    );
-    expect(groups.notes).toHaveLength(2);
-    expect(groups.warnings).toEqual([]);
-  });
-
-  it("are absent when nothing was matched", () => {
-    expect(
-      nameMatchedContentIssues(
-        importDnd4e(`<D20Character><CharacterSheet/><Level/></D20Character>`)
-          .build,
-        byId,
-      ),
-    ).toEqual([]);
-  });
-
-  it("explain a name the file saved with the character's class appended", () => {
-    const classContent = [
-      { id: "L1", name: "1", type: "Level", rules: [] },
-      { id: "RANGER", name: "Ranger", type: "Class", rules: [] },
-      { id: "OURS_GUIDE", name: "Mountain Guide", type: "Class Feature" },
-    ].map((entity) => ({ rules: [], ...entity }));
-    const imported = importDnd4e(
-      `<D20Character game-system="D&amp;D4E"><CharacterSheet/><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Ranger" type="Class" internal-id="RANGER" charelem="c"/><RulesElement name="Mountain Guide (Ranger)" type="Class Feature" internal-id="THEIRS_GUIDE" charelem="g"/></RulesElement></Level></D20Character>`,
-      { matchMissingDefinitionsIn: classContent },
-    );
-    expect(
-      nameMatchedContentIssues(
-        imported.build,
-        new Map(
-          classContent.map((entity) => [
-            entity.id.toLocaleLowerCase(),
-            entity as unknown as ContentEntity,
-          ]),
-        ),
-      ).map((issue) => issue.detail),
-    ).toEqual([
-      "Your file saved “Mountain Guide (Ranger)” as THEIRS_GUIDE, which the game content doesn't have, so it uses OURS_GUIDE, the one record of that type named without your class (Ranger).",
-    ]);
   });
 });
 

@@ -807,7 +807,7 @@ can return. The evaluation lists each saved pick whose select rule's
 evaluation data for diagnostics and development. Dormant picks are silent in
 the UI (owner decision 2026-10-25): no Diagnostics group, badge, warning or
 note, because a pick only a `.dnd4e` save holds means nothing to a player and
-reads as a bug. They are preserved silently and kept on export.
+reads as a bug. They are preserved silently and kept on export (see D098).
 
 This is recovered generic behavior, not a Ranger exception. In the original
 content, `ID_INTERNAL_GRANTS_RANGER` places
@@ -2663,8 +2663,8 @@ Decision:
   characters), on by default.
 - Each changed identity keeps its saved name and type and records the saved
   ID as `importedDefinitionId`; the untouched original stays in
-  `legacyEnvelope.sourceXml`. Exports write the matched ID (D091). The
-  builder lists each match as a note in Diagnostics.
+  `legacyEnvelope.sourceXml`. Exports write the matched ID (D091). Matches are
+  silent in the UI (D098); the import report keeps them.
 
 Implemented in `packages/legacy-dnd4e/src/definition-matching.ts`.
 
@@ -2715,6 +2715,31 @@ Implemented in `packages/character-domain/src/build.ts`,
 `packages/legacy-dnd4e/src/{index,writer}.ts`,
 `packages/rules-engine/src/build-projection.ts` and
 `packages/sheet-model/src/index.ts`.
+
+### D098 — Success and non-actionable states are silent
+
+Status: accepted (2026-10-25). Product-owner decision.
+
+"We should never display a nonactionable notification, or notification
+indicating that success occurred. Success should happen cleanly and
+silently."
+
+Decision:
+
+- No toast, banner, badge, Diagnostics group or status line reports success
+  ("Imported", "N choices applied", "Authoritative rules evaluation") or a
+  state the player can do nothing about.
+- `.dnd4e` storage artifacts never surface as user-facing issues: dormant
+  saved picks (D043) and records matched by name on import (D096) are kept
+  silently for export. The import report and `EvaluatedCharacter` still
+  carry them as data for diagnostics and development.
+- Problems the player can act on (warnings, errors, missing content, house
+  rules, content updates), progress and loading indicators, and empty states
+  inside always-present controls remain.
+
+Implemented in `apps/web/src/builder-diagnostics.ts`,
+`apps/web/src/CharacterEditorPage.tsx`, `apps/web/src/import-report.ts`,
+`apps/web/src/ChoiceEditors.tsx` and `apps/web/src/CharacterSheetPage.tsx`.
 
 ## Deferred decisions and decision points
 

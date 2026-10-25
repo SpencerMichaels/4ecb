@@ -930,22 +930,6 @@ items check that it looks right.
     the table opens one or two rows off, or on a list long enough to page it
     opens on a page without the pick.
 
-## Import name matching
-
-- [ ] **Import setting and match notes.**
-  - **Where:** Settings → "Importing characters" (right column, above
-    Backups & storage); then import `sample-chars/Erdan 11.dnd4e` from the
-    library and open it in the builder.
-  - **Expect:** the "Match missing content by name" checkbox and its help
-    text sit like the other options. After import, one toast summarizes the
-    matches (eight names, then "and N more"). In the builder status bar an
-    import icon with a count (35 for Erdan) sits after the error badge in a
-    muted color and opens Diagnostics, whose "Matched by name on import"
-    group lists each record (theme children read "… as Level 1 …" in the
-    toast).
-  - **Wrong if:** the toast overflows the screen at 140% zoom, the badge is
-    colored like a warning or error, or the group crowds the real problems.
-
 ## Conditional modifiers (2026-10-23)
 
 These use imported sample characters (`sample-chars/*.dnd4e`). Texts, group

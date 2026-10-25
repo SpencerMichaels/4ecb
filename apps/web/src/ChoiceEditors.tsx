@@ -188,11 +188,8 @@ export function BuildPresetPanel({
     );
   };
   const apply = (plan: BuildPresetPlan) => {
-    const applied =
-      plan.command.kind === "batch" ? plan.command.commands.length : 1;
-    setApplyStatus(
-      `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
-    );
+    // Applying is its own feedback: the choices fill in.
+    setApplyStatus(undefined);
     onDispatch(plan.command);
   };
   // Like any table: a click shows a preset, a double-click (or Enter)

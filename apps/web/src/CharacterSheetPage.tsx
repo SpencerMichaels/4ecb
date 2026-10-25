@@ -372,16 +372,8 @@ export function CharacterSheetPage({
       ? "Open game content settings"
       : "Review the character library";
   const sourceNotice =
-    model.source === "authoritative-evaluation" && evaluation !== undefined ? (
-      <>
-        <strong>Authoritative rules evaluation.</strong> Values, selections,
-        inventory, and power variants were regenerated from the exact bound
-        profile. The character is{" "}
-        {evaluation.complete ? "complete" : "incomplete"}
-        {" and "}
-        {evaluation.legal ? "rules legal" : "has legality findings"}.
-      </>
-    ) : model.source === "native-empty" ? (
+    model.source === "authoritative-evaluation" ? undefined : model.source ===
+      "native-empty" ? (
       <>
         <strong>No cached calculation snapshot.</strong> This character was
         created in the web builder and needs its exact content profile for an
@@ -500,19 +492,16 @@ export function CharacterSheetPage({
           </div>
         </header>
 
-        <aside
-          className={
-            model.source === "authoritative-evaluation"
-              ? "view-source-status status"
-              : "view-source-status cache-warning"
-          }
-          aria-live="polite"
-        >
-          <span>{sourceNotice}</span>
-          {model.source === "authoritative-evaluation" ? null : (
+        {/* An exact evaluation is the expected case and needs no notice. */}
+        {sourceNotice === undefined ? null : (
+          <aside
+            className="view-source-status cache-warning"
+            aria-live="polite"
+          >
+            <span>{sourceNotice}</span>
             <a href={recoveryHref}>{recoveryLabel}</a>
-          )}
-        </aside>
+          </aside>
+        )}
 
         <nav aria-label="Character view sections" className="view-section-nav">
           <a href="#view-summary">Summary</a>

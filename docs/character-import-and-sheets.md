@@ -173,10 +173,9 @@ given `FREEBEE` marker, `LOOTNOTE_<id>__<id>__<name>`) follow the match.
 The import report's `definitionMatching` lists `matched` (saved ID, name,
 type, new ID, basis), `ambiguous` and `unmatched`. Changed identities keep
 their saved name and type plus `importedDefinitionId`; exports write the new
-ID. After import a toast summarizes the matches, and the builder's
-Diagnostics keeps one "Matched by name on import" note per saved ID
-(`nameMatchedContentIssues`), reached from the import badge in the builder
-status bar. Unmatched IDs remain missing-content issues as before.
+ID. Matches are silent in the UI (D098): no toast, badge or Diagnostics note;
+the report and `importedDefinitionId` keep them. Unmatched IDs remain
+missing-content issues as before.
 
 Native creation starts from the active pack's exact ID/digest and canonical
 `ID_INTERNAL_LEVEL_1` definition. It persists a level-1 root, six base ability

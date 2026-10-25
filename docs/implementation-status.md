@@ -8,6 +8,13 @@ owner's report; its Divine Fortune item was corrected to **inactive saved
 choice**, not missing choice; dormant picks are now silent in the UI and kept
 for export (owner decision 2026-10-25, D043).
 
+Success and non-actionable notices are silent (D098, 2026-10-25): the builder
+no longer shows "Inactive saved choices" or "Matched by name on import"
+(Diagnostics groups and their status badges), the import toast appears only
+for warnings, applying a build preset no longer says "N choices applied", and
+the sheet drops its "Authoritative rules evaluation" notice. The evaluator and
+import report keep that data.
+
 Action Point benefits now remain in "Remember in play" as well as on their
 card. This owner-approved exception applies to self, ally and beast-companion
 Action Point notes, including effects otherwise represented by conditional
@@ -100,7 +107,7 @@ total). Import now:
 - matches a saved ID the content lacks to the one same-named, same-type
   record, a renamed child through its matched parent's grants, and a trailing
   "(Class)" for one of the character's classes (D096; Settings → Importing
-  characters, default on; matches listed in Diagnostics) — `93c7051`,
+  characters, default on; matches silent in the UI since D098) — `93c7051`,
   `19cad84`, `8f450cb`. Erdan 11: 33 → 6 missing records, Max Unger 12: 32 → 5,
   Hunzu 10's items resolve (AC 31 → 34, as cached);
 - seats a saved child only in a select of its own type, and warns about one no
