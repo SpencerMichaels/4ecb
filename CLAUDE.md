@@ -226,7 +226,8 @@ Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 build/retraining/details/equipment[+loadout]/shop/diagnostics/house-rules via query;
 Diagnostics and House rules open from the status badges, Overview is gone), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
-for the per-character sheet layout — D099, `?print=1` auto-opens the print
+for the per-character sheet layout via on-paper card/section menus in
+`SheetEditMenu.tsx` — D099, `?print=1` auto-opens the print
 dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
 changes move focus to the new main landmark. Every builder tab shares the

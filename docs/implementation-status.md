@@ -12,8 +12,12 @@ holding has `showPowerCard=false` stay in the model as `hiddenByDefault`
 `CharacterRecord.sheetLayout` with a lenient normalizer, saved by
 `updateMetadata` without moving `updatedAt`; `applySheetLayout` in
 sheet-model; the print preview's "Sheet: View | Edit" control and
-`#/characters/<id>?preview=1&edit=1`; Edit mode's "Sheet contents" panel
-(page/section toggles, card hide/show by group, arm-then-confirm reset);
+`#/characters/<id>?preview=1&edit=1`; Edit mode's on-paper menus on every
+card and optional section (corner button, right-click, Menu key/Shift+F10,
+long press: Hide/Show), a toolbar "Show hidden" toggle that reveals hidden
+cards and sections dimmed on screen only (`beforeprint` turns it off), and
+an arm-then-confirm reset in the toolbar (the first cut's "Sheet contents"
+checkbox panel was replaced the same day after owner feedback);
 silent serialized saves with a retry alert on failure. Item cards toggle
 the holding's `showPowerCard` flag, which never reaches evaluation input,
 and the sheet page keeps layout and flags out of the evaluated character's

@@ -2779,20 +2779,35 @@ Decision:
   so page numbers chain without them. Layout never computes a value.
 - The print preview has View and Edit modes
   (`#/characters/<id>?preview=1&edit=1`; `?print=1` is always View; the
-  builder and library link to View). Edit keeps the paper preview with a
-  "Sheet contents" panel (beside the pages from 80rem, a drawer below):
-  page/section toggles (page 1 shown disabled-checked), card hide/show in
-  deck order with group bulk toggles, and an arm-then-confirm "Reset sheet
-  to defaults" (layout cleared, every holding prints its card). Saves are
-  silent and serialized (D098); only a failure shows, with a retry.
+  builder and library link to View). Edit keeps the paper preview and puts
+  the controls on the paper (owner feedback 2026-10-25, replacing a
+  "Sheet contents" checkbox panel): every card and every optional section's
+  first page has a menu — an always-visible corner button ("Card options
+  for <name>" / "Section options for <name>"), right-click, the Menu key or
+  Shift+F10, or a long press — with "Hide card"/"Show card" or "Hide
+  section"/"Show section"; page 1 has none, and an empty reference group
+  prints no page, so it has none either. This mirrors the legacy CharTracker
+  card menu's "Hide"; its one-shot "Restore Hidden Power Cards" becomes a
+  toolbar "Show hidden" toggle (off by default, not saved): on, hidden cards
+  stay in their deck position dimmed and marked "Hidden", and hidden
+  sections show as dimmed placeholders where their pages would be (so page
+  numbers still match the printout); each one's menu offers "Show". Printing
+  always omits hidden cards and sections — `beforeprint` turns the reveal
+  and every edit control off synchronously. The overlays are out of flow
+  (card overlays take their card's grid area), screen-only and never inside
+  probe copies, so they change no card size or fit. The toolbar also has an
+  arm-then-confirm "Reset sheet to defaults" (layout cleared, every holding
+  prints its card; disabled at the defaults). Bulk group toggles were
+  dropped. Saves are silent and serialized (D098); only a failure shows,
+  with a retry.
 - Later phases (reminder show/hide and custom reminders, which supersede
   the "Action Point reminder policy (2026-10-24)"; card ordering) extend the
-  same type.
+  same type and add their actions to the same on-paper menus.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
 `packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
-`apps/web/src/{CharacterSheetPage,SheetContentsPanel,SheetOverview}.tsx`
+`apps/web/src/{CharacterSheetPage,SheetEditMenu,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 
 ## Deferred decisions and decision points

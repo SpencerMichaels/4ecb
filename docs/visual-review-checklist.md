@@ -968,41 +968,46 @@ sample-character diff; check only layout and fit.
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
 
-## Sheet Edit mode (2026-10-25, D099 phases 0–1)
+## Sheet Edit mode (2026-10-25, D099 phases 0–1, on-paper menus)
 
-Labels, saving, page numbering and "no re-evaluation" are verified by tests;
-check only layout and feel. Any character works; Hu (`hu`) has item cards
-and several reference groups.
+Labels, menu semantics (button, right-click, Menu key/Shift+F10, long
+press, Escape), saving, page numbering, print omission of hidden things and
+"no re-evaluation" are verified by tests; check only layout and feel. Any
+character works; Hu (`hu`) has item cards and several reference groups.
 
-- [ ] **View | Edit toggle and the Sheet contents panel.**
+- [ ] **Corner menu buttons on the paper.**
   - **Where:** `hu` → `?preview=1`, click **Edit** in the toolbar's "Sheet"
-    control; at 100% and at 140% browser zoom on the 1920px display, light
-    and dark mode.
-  - **Expect:** the URL becomes `?preview=1&edit=1`; the paper pages stay
-    centred in the left column and a "Sheet contents" panel sits on the
-    right, sticky under the toolbar and scrolling on its own: Pages (Page 1
-    summary checked and greyed, then Play scratchpad, Feature reference, Item
-    reference, Power index, Rituals & practices, Character profile, Session
-    notes; empty groups say "Nothing to print"), then Play cards, Companions
-    ("No companion cards." when none), Powers and Items, each with Show
-    all/Hide all, then "Reset sheet to defaults". Back still returns to the
-    builder in one step.
-  - **Wrong if:** the panel overlaps a page or the toolbar's Print button,
-    the page is pushed under the panel, a horizontal scrollbar appears at
-    140%, or the panel's text is unreadable in dark mode.
-- [ ] **Narrow window drawer.**
-  - **Where:** the same page with the window under ~1280 CSS px (or 200%
-    zoom).
-  - **Expect:** no side panel; a "Sheet contents" button in the toolbar
-    opens the panel as a drawer from the right with a close (×) button.
-  - **Wrong if:** the drawer can't be closed, covers the toolbar without a
-    shadow edge, or the button shows at wide widths.
-- [ ] **Hiding things on paper.**
-  - **Where:** in Edit, untick a power, an item and Play scratchpad.
-  - **Expect:** the cards disappear and later cards close up 9 per page; the
-    scratchpad page goes and every later page number drops by one; the
-    hidden power still has its scratchpad row once the scratchpad is back.
-    Reload: the choices persist; the library's "last modified" order doesn't
-    change. Reset (click twice) restores everything.
-  - **Wrong if:** a gap is left where a card was, page numbers skip, or
-    probe/measurement artefacts show on screen.
+    control; at 100% and 140% browser zoom, light and dark mode.
+  - **Expect:** the toolbar shows View | Edit, a **Show hidden** checkbox,
+    **Reset sheet to defaults** (greyed while nothing is hidden) and Print.
+    Every card has a small white square ⋮ button in its top-right corner,
+    and the first page of the scratchpad, each reference group and session
+    notes has one in its top-right corner; page 1 has none. Cards keep
+    exactly the size and text fit they have in View. View mode shows none of
+    these controls.
+  - **Wrong if:** a button hides something important on the card (name,
+    usage), a card's text size changes between View and Edit, the toolbar
+    wraps badly or scrolls sideways at 140%, or the ⋮ is unreadable in dark
+    mode.
+- [ ] **Menu feel.**
+  - **Where:** the same page: click a card's ⋮; right-click elsewhere on a
+    card; on a phone or touch screen, long-press a card.
+  - **Expect:** a small menu ("Hide card") opens under the button or at the
+    pointer, inside the window even near its right/bottom edge, in the app's
+    theme colours; the browser's own context menu doesn't appear; scrolling
+    or clicking elsewhere closes it; a long press doesn't select text.
+  - **Wrong if:** the menu is clipped by the page edge, opens behind the
+    toolbar, or a long press also opens the native callout.
+- [ ] **Hide, Show hidden, Show again.**
+  - **Where:** hide a power, an item and the Play scratchpad from their
+    menus; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
+  - **Expect:** hidden cards vanish and later cards close up 9 per page;
+    with **Show hidden** they return in place, dimmed with grey stripes, a
+    dashed outline and a dark "Hidden" tag; the scratchpad is a short dimmed
+    strip "Hidden · Play scratchpad" with its own ⋮ (**Show section**). The
+    browser's print preview never contains hidden cards, the strip or any ⋮.
+    Reload: choices persist and **Show hidden** is off again. Reset (click
+    twice) restores everything.
+  - **Wrong if:** a dimmed card is hard to tell from a shown one, the
+    "Hidden" tag covers the card name badly, the strip is unreadable in dark
+    mode, or the printout has gaps or wrong page numbers.

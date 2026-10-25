@@ -251,13 +251,19 @@ cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
 The print preview's toolbar switches **Sheet: View | Edit**. **Edit** keeps
-the paper preview and opens **Sheet contents** beside it (on a narrow window,
-open it from the toolbar's **Sheet contents** button). There you choose which
-pages print — the play scratchpad, each full-reference group (features, item
-reference, power index, rituals & practices, character profile) and session
-notes; page 1 always prints — and which cards print, by group with **Show
-all**/**Hide all**. Hiding a power's card keeps it on the scratchpad and in the
-power index, and page numbers close up around hidden pages. An item's card
+the paper preview and adds a small menu button to the top corner of every
+card and of the first page of every optional section — the play scratchpad,
+each full-reference group (features, item reference, power index, rituals &
+practices, character profile) and session notes; page 1 always prints. Open
+it with the button, a right-click, the keyboard's Menu key or Shift+F10, or a
+long press on a touch screen, then choose **Hide card** or **Hide section**.
+Hidden things leave the preview exactly as they leave the printout. Tick
+**Show hidden** in the toolbar to see them again, dimmed and marked
+"Hidden" (sections as a short placeholder), and choose **Show card** or
+**Show section** from their menu to bring them back; printing never includes
+hidden things, whether or not **Show hidden** is ticked. Hiding a power's
+card keeps it on the scratchpad and in the power index, and page numbers
+close up around hidden pages. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset sheet to defaults** (click
 again to confirm) prints everything again. Changes save automatically, are

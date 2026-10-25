@@ -465,7 +465,8 @@ pure `applySheetLayout` (`packages/sheet-model/src/sheet-layout.ts`) selects
 which cards and sections print without computing any value, and item cards
 follow their holdings' legacy `showPowerCard` flags, applied after evaluation.
 The sheet page keeps layout and those flags in their own state, so editing
-them (print preview Edit mode, `?preview=1&edit=1`) never re-evaluates the
+them (print preview Edit mode, `?preview=1&edit=1`, whose on-paper menus are
+screen-only overlays outside every measured region) never re-evaluates the
 character.
 
 Print settings form a persisted `SheetRenderProfile` with paper size, orientation,

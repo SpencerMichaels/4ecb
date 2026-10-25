@@ -541,9 +541,10 @@
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
-/* Print preview Edit mode (D099): the paper preview with the "Sheet
-   contents" panel beside it on wide screens (an 8.5in page fits beside it
-   at 140% zoom on a 1920px display), else a drawer from the toolbar. */
+/* Print preview Edit mode (D099): each card and optional section carries an
+   on-paper menu (corner button, right-click, long press). The overlays are
+   out of flow and screen-only, so they never change what prints or fits.
+   The paper is white in both themes, so on-paper controls use paper ink. */
 .sheet-page.is-print-preview .print-preview-toolbar {
   flex-wrap: wrap;
 }
@@ -554,6 +555,30 @@
   gap: 0.5rem;
 }
 
+.sheet-edit-tools {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.sheet-show-hidden {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.sheet-edit-tools .danger-action {
+  color: var(--danger);
+}
+
+.sheet-edit-tools .danger-action[data-armed="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
+}
+
 .sheet-layout-save-error {
   align-items: center;
   display: flex;
@@ -562,136 +587,139 @@
   justify-content: space-between;
 }
 
-.sheet-contents-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-sizing: border-box;
-  display: none;
-  overflow-y: auto;
-  padding: 0.75rem 1rem 1rem;
+/* Card overlays take their card's grid area (an absolutely positioned grid
+   child is placed by grid-row/grid-column without joining auto-placement). */
+.sheet-page.is-sheet-editing .print-card-grid {
+  position: relative;
 }
 
-.sheet-contents-header {
+.sheet-edit-target {
+  inset: 0;
+  position: absolute;
+  -webkit-touch-callout: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.sheet-edit-target[data-hidden] {
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(255 255 255 / 78%) 0 0.5rem,
+    rgb(223 229 233 / 78%) 0.5rem 1rem
+  );
+  outline: 2px dashed #56616a;
+  outline-offset: -2px;
+}
+
+.sheet-edit-hidden-marker {
+  background: #20272a;
+  border-radius: 2px;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  left: 0.3rem;
+  line-height: 1.2;
+  padding: 0.15rem 0.5rem;
+  position: absolute;
+  top: 0.3rem;
+}
+
+button.sheet-edit-menu-button {
+  background: #fff;
+  border: 1px solid #abb3b8;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
+  color: #20272a;
+  height: 1.9rem;
+  opacity: 0.88;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+  width: 1.9rem;
+}
+
+button.sheet-edit-menu-button:hover,
+button.sheet-edit-menu-button:focus-visible,
+button.sheet-edit-menu-button[aria-expanded="true"] {
+  opacity: 1;
+}
+
+/* A section's control sits on its first page's top corner: a zero-height
+   anchor before the page holds a page-sized overlay. */
+.sheet-section-edit {
+  height: 0;
+  margin: 0 auto;
+  position: relative;
+  width: var(--sp-page-width, 8.5in);
+}
+
+.sheet-section-edit > .sheet-edit-target {
+  bottom: auto;
+  height: var(--sp-page-height, 11in);
+}
+
+/* "Show hidden": a hidden section is a short dimmed placeholder where its
+   pages would be, so page numbers keep matching the printout. */
+.sheet-hidden-section {
+  box-sizing: border-box;
+  margin: 0 auto 30px;
+  max-width: 100%;
+  min-height: 3.5rem;
+  position: relative;
+  width: var(--sp-page-width, 8.5in);
+}
+
+.sheet-hidden-section > .sheet-edit-target {
   align-items: center;
   display: flex;
-  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 2.75rem 0 0.75rem;
 }
 
-.sheet-contents-header h2 {
-  font-size: 1.1rem;
-  margin: 0;
+.sheet-hidden-section .sheet-edit-hidden-marker {
+  position: static;
 }
 
-.sheet-contents-group {
-  border: 0;
-  border-top: 1px solid var(--border);
-  margin: 0.75rem 0 0;
-  padding: 0.5rem 0 0;
-}
-
-.sheet-contents-group > legend {
+.sheet-hidden-section-label {
+  color: #20272a;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 0 0.4rem 0 0;
+  line-height: 1.2;
 }
 
-.sheet-contents-bulk {
-  display: flex;
-  gap: 0.4rem;
-  margin-bottom: 0.35rem;
+.sheet-hidden-section button.sheet-edit-menu-button {
+  top: calc(50% - 0.95rem);
 }
 
-.sheet-contents-list {
+.sheet-edit-menu {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 28%);
+  color: var(--text);
   list-style: none;
   margin: 0;
-  padding: 0;
-}
-
-.sheet-contents-list > li {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.6rem;
-  justify-content: space-between;
-  padding: 0.15rem 0;
-}
-
-.sheet-contents-list label {
-  align-items: baseline;
-  display: inline-flex;
-  gap: 0.45rem;
-  min-width: 0;
-}
-
-.sheet-contents-hint,
-.sheet-contents-empty {
-  color: var(--muted);
-  font-size: 0.9em;
-}
-
-.sheet-contents-empty {
-  margin: 0.2rem 0;
-}
-
-.sheet-contents-reset {
-  border-top: 1px solid var(--border);
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-}
-
-.sheet-contents-toggle {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.4rem;
-}
-
-/* Narrow: a drawer over the preview, opened from the toolbar. */
-.sheet-page.is-sheet-editing .sheet-contents-panel[data-open] {
-  bottom: 0;
-  box-shadow: -0.25rem 0 1rem rgb(0 0 0 / 25%);
-  display: block;
-  max-width: calc(100vw - 2rem);
+  min-width: 10rem;
+  padding: 0.25rem;
   position: fixed;
-  right: 0;
-  top: 0;
-  width: 24rem;
-  z-index: 30;
+  z-index: 40;
 }
 
-@media screen and (min-width: 80rem) {
-  .sheet-page.is-sheet-editing {
-    align-items: start;
-    column-gap: 1.5rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 22rem;
-  }
+.sheet-edit-menu button {
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  color: inherit;
+  display: block;
+  padding: 0.4rem 0.75rem;
+  text-align: start;
+  width: 100%;
+}
 
-  .sheet-page.is-sheet-editing > .print-preview-toolbar {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  .sheet-page.is-sheet-editing > .sheet-preview-pages {
-    grid-column: 1;
-    grid-row: 2;
-    min-width: 0;
-  }
-
-  .sheet-page.is-sheet-editing > .sheet-contents-panel,
-  .sheet-page.is-sheet-editing > .sheet-contents-panel[data-open] {
-    box-shadow: none;
-    display: block;
-    grid-column: 2;
-    grid-row: 2;
-    max-height: calc(100vh - 5rem);
-    max-width: none;
-    position: sticky;
-    top: 4rem;
-    width: auto;
-    z-index: auto;
-  }
-
-  .sheet-page.is-sheet-editing .sheet-contents-toggle,
-  .sheet-page.is-sheet-editing .sheet-contents-close {
-    display: none;
-  }
+.sheet-edit-menu button:hover,
+.sheet-edit-menu button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }

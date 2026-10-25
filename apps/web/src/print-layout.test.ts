@@ -348,7 +348,11 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.paper-a4 \.print-reference-card\s*\{[\s\S]*?height:\s*86\.8mm;[\s\S]*?width:\s*63mm;/,
     );
-    expect(sheetSource).toContain("chunks(resolvedLayout.deck, 9)");
+    // Print cuts only shown cards into 9-card pages; Edit mode's "Show
+    // hidden" reveal is screen-only.
+    expect(sheetSource).toMatch(
+      /chunks\(\s*revealHidden\s*\?\s*resolvedLayout\.cards\s*:\s*resolvedLayout\.cards\.filter\(\(card\) => card\.shown\),\s*9,/,
+    );
     expect(sheetSource).toContain("powerActionLabel(card.actionType)");
     expect(sheetSource).toContain("powerTextAtLevel(value, characterLevel)");
     expect(sheetSource).toContain('.replace(/\\bFortitude\\b/gi, "Fort")');

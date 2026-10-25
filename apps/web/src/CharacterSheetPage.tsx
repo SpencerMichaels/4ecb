@@ -54,12 +54,11 @@ import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
-import { referenceSections, SheetOverview } from "./SheetOverview";
+import { SheetOverview, type SheetSectionControl } from "./SheetOverview";
 import { SegmentedControl } from "./SegmentedControl";
-import {
-  SheetContentsPanel,
-  sheetContentsSections,
-} from "./SheetContentsPanel";
+import { SheetEditTarget, usePrinting } from "./SheetEditMenu";
+import { sheetCardLabel, SHEET_SECTION_LABELS } from "./sheet-edit-labels";
+import { useArmedAction } from "./useArmedAction";
 
 const characters = new CharacterRepository();
 
@@ -179,7 +178,10 @@ export function CharacterSheetPage({
   const [itemCardsShown, setItemCardsShown] = useState<
     ReadonlyMap<string, boolean>
   >(() => new Map());
-  const [contentsOpen, setContentsOpen] = useState(false);
+  // Edit mode's "Show hidden" reveal: a per-visit view toggle, not saved.
+  const [showHidden, setShowHidden] = useState(false);
+  const printing = usePrinting();
+  const resetAction = useArmedAction("sheet-reset-trigger");
   const [saveError, setSaveError] = useState<string>();
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const latestPresentation = useRef({ sheetLayout, itemCardsShown });
@@ -409,14 +411,45 @@ export function CharacterSheetPage({
         : applySheetLayout(model, sheetLayout, { itemCardsShown }),
     [model, sheetLayout, itemCardsShown],
   );
-  const contentsSections = useMemo(
-    () =>
-      model === undefined || !sheetEditing
-        ? []
-        : sheetContentsSections(
-            referenceSections(model).map((entries) => entries.length),
-          ),
-    [model, sheetEditing],
+  const sectionControl = useCallback<SheetSectionControl>(
+    (section, hidden) => {
+      const label = SHEET_SECTION_LABELS[section];
+      const menuLabel = `Section options for ${label}`;
+      const items = [
+        hidden
+          ? {
+              label: "Show section",
+              onSelect: () => showSection(section, true),
+            }
+          : {
+              label: "Hide section",
+              onSelect: () => showSection(section, false),
+            },
+      ];
+      if (!hidden)
+        return (
+          <div className="sheet-section-edit print-excluded">
+            <SheetEditTarget
+              className="sheet-section-edit-target"
+              items={items}
+              menuLabel={menuLabel}
+            />
+          </div>
+        );
+      return showHidden ? (
+        <div className="sheet-hidden-section print-excluded">
+          <SheetEditTarget
+            className="sheet-hidden-section-target"
+            hidden
+            items={items}
+            menuLabel={menuLabel}
+          >
+            <span className="sheet-hidden-section-label">{label}</span>
+          </SheetEditTarget>
+        </div>
+      ) : null;
+    },
+    [showHidden, showSection],
   );
   // A saved PDF is named "Ingi - Level 8.pdf", from the title and print path.
   const pdfTitle =
@@ -557,9 +590,19 @@ export function CharacterSheetPage({
   const screenItems = resolvedLayout.deck.flatMap(({ card, group }) =>
     group === "items" && card.kind === "item" ? [card] : [],
   );
-  // Hidden cards leave the deck before it is cut into 9-card pages.
-  const printCardPages = chunks(resolvedLayout.deck, 9);
   const editing = showPrintPreview && sheetEditing;
+  // Printing always drops Edit mode's controls and its hidden-card reveal.
+  const editControls = editing && !printing;
+  const revealHidden = editControls && showHidden;
+  // Hidden cards leave the deck before it is cut into 9-card pages; "Show
+  // hidden" keeps them in their deck position, dimmed, on screen only.
+  const printCardPages = chunks(
+    revealHidden
+      ? resolvedLayout.cards
+      : resolvedLayout.cards.filter((card) => card.shown),
+    9,
+  );
+  const resetArmed = resetAction.isArmed("sheet");
   const resettable =
     sheetLayout !== undefined ||
     [...itemCardsShown.values()].some((shown) => !shown);
@@ -614,24 +657,45 @@ export function CharacterSheetPage({
               ["edit", "Edit"],
             ]}
             value={editing ? "edit" : "view"}
-            onChange={(mode) => {
-              setContentsOpen(false);
-              onSheetModeChange?.(mode === "edit");
-            }}
+            onChange={(mode) => onSheetModeChange?.(mode === "edit")}
           />
-          <span className="print-preview-toolbar-end">
-            {editing ? (
+          {editing ? (
+            <span className="sheet-edit-tools">
+              <label className="sheet-show-hidden">
+                <input
+                  checked={showHidden}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setShowHidden(event.currentTarget.checked)
+                  }
+                />
+                <span>Show hidden</span>
+              </label>
               <button
-                aria-controls="sheet-contents-panel"
-                aria-expanded={contentsOpen}
-                className="sheet-contents-toggle"
+                aria-label={
+                  resetArmed
+                    ? "Confirm resetting the sheet to defaults"
+                    : "Reset sheet to defaults"
+                }
+                className="danger-action"
+                data-armed={resetArmed || undefined}
+                data-sheet-reset-trigger="sheet"
+                disabled={!resettable}
                 type="button"
-                onClick={() => setContentsOpen((open) => !open)}
+                onClick={() => {
+                  if (!resetArmed) {
+                    resetAction.arm("sheet");
+                    return;
+                  }
+                  resetAction.disarm();
+                  resetPresentation();
+                }}
               >
-                <Icon name="layers" />
-                Sheet contents
+                {resetArmed ? "Confirm reset" : "Reset sheet to defaults"}
               </button>
-            ) : null}
+            </span>
+          ) : null}
+          <span className="print-preview-toolbar-end">
             <button
               aria-label="Print or save as PDF"
               className="icon-only-button button-icon"
@@ -651,18 +715,6 @@ export function CharacterSheetPage({
             </div>
           )}
         </div>
-      ) : null}
-      {editing ? (
-        <SheetContentsPanel
-          layout={resolvedLayout}
-          sections={contentsSections}
-          open={contentsOpen}
-          resettable={resettable}
-          onClose={() => setContentsOpen(false)}
-          onSectionShown={showSection}
-          onCardsShown={showCards}
-          onReset={resetPresentation}
-        />
       ) : null}
       <div className="screen-sheet-view">
         <header className="view-sheet-header">
@@ -889,7 +941,6 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      {/* The printed pages, beside Edit mode's contents panel. */}
       <div className="sheet-preview-pages">
         <SheetOverview
           model={model}
@@ -897,6 +948,7 @@ export function CharacterSheetPage({
           portrait={character.portrait}
           paper={paper}
           hiddenSections={resolvedLayout.hiddenSections}
+          {...(editControls ? { sectionControl } : {})}
         >
           {(firstCardPage) =>
             printCardPages.map((page, pageIndex) => (
@@ -915,6 +967,33 @@ export function CharacterSheetPage({
                       key={key}
                     />
                   ))}
+                  {/* Edit overlays sit in the cards' grid areas, out of flow,
+                      so the cards and their fitting never change. */}
+                  {editControls
+                    ? page.map((entry, index) => (
+                        <SheetEditTarget
+                          className="sheet-card-edit print-excluded"
+                          hidden={!entry.shown}
+                          items={[
+                            entry.shown
+                              ? {
+                                  label: "Hide card",
+                                  onSelect: () => showCards([entry], false),
+                                }
+                              : {
+                                  label: "Show card",
+                                  onSelect: () => showCards([entry], true),
+                                },
+                          ]}
+                          key={`edit-${entry.key}`}
+                          menuLabel={`Card options for ${sheetCardLabel(entry)}`}
+                          style={{
+                            gridColumn: (index % 3) + 1,
+                            gridRow: Math.floor(index / 3) + 1,
+                          }}
+                        />
+                      ))
+                    : null}
                 </div>
                 <footer className="print-card-page-footer">
                   <span>Power &amp; Item Cards</span>
