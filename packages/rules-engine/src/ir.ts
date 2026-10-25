@@ -89,6 +89,25 @@ export interface ReplaceRule extends BaseRule {
   readonly label?: string;
 }
 
+/**
+ * Native `power-replace="GAIN:LOSE"` (D20Choice PowerReplaceCategory and
+ * ChoiceMatch): GAIN names the one Power gained (a name or ID; a leading
+ * `$` makes it a choice instead), LOSE is the category a lost power must
+ * match. Without a ':' every owned power qualifies.
+ */
+export function splitPowerReplace(value: string): {
+  readonly gain: string;
+  readonly lose: string;
+} {
+  const separator = value.indexOf(":");
+  return separator < 0
+    ? { gain: value.trim(), lose: "" }
+    : {
+        gain: value.slice(0, separator).trim(),
+        lose: value.slice(separator + 1).trim(),
+      };
+}
+
 export interface SuggestRule extends BaseRule {
   readonly kind: "suggest";
   readonly name: string;

@@ -27,8 +27,10 @@ import {
 } from "./expressions";
 import {
   parseRules,
+  splitPowerReplace,
   type ExecutableRule,
   type ModifyRule,
+  type ReplaceRule,
   type SelectRule,
 } from "./ir";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
@@ -50,7 +52,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v59-2026-10-25-fixed-bonus-creature-damage";
+  "evaluated-character-v60-2026-10-25-native-power-replace";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1813,6 +1815,123 @@ function evaluateCharacterInternal(
     candidateCache.set(cacheKey, decisions);
     return decisions;
   };
+  /** A Power select matching `category`, for category checks only. */
+  const powerCategoryRule = (
+    source: ReplaceRule["source"],
+    category: string | undefined,
+  ): SelectRule => ({
+    kind: "select",
+    source,
+    type: "Power",
+    number: 1,
+    ...(category === undefined || category.length === 0 ? {} : { category }),
+    optional: false,
+    existing: false,
+  });
+  /**
+   * Native `power-replace="GAIN:LOSE"` (D20Choice ChoiceMatch,
+   * BuildReplaceList, CheckReplaceElem, PowerReplaceCategory). Any power the
+   * character holds at the replacement's level that matches LOSE can be
+   * lost, except one gained by another multiclass or power-replace swap; the
+   * gain is the one Power named by GAIN (exact name, ID or "Name Power"),
+   * held under the swap's provider, not in the lost power's slot. A GAIN
+   * starting with `$` (Secrets of Belial's `$$NOT_CLASS`) is instead a
+   * choice of a power matching `GAIN,LOSE` of the lost power's level or
+   * lower. Only chosen powers can be lost here; native also allows granted
+   * ones.
+   */
+  const powerReplaceOptions = (
+    rule: ReplaceRule & { readonly powerReplace: string },
+    provider: CharacterOccurrence,
+    level: number,
+    slot: ReturnType<typeof replacementSlot>,
+    detailed: boolean,
+  ): NonNullable<EvaluatedChoice["replacementOptions"]> => {
+    const { gain, lose } = splitPowerReplace(rule.powerReplace);
+    const loseRule = powerCategoryRule(rule.source, lose);
+    const gainedBySwap = (candidate: CharacterOccurrence): boolean => {
+      if (candidate.replacesId === undefined) return false;
+      const parent = savedById.get(candidate.parentId ?? "");
+      const parentDefinition =
+        parent === undefined ? undefined : index.get(parent.definitionId);
+      if (parentDefinition === undefined) return false;
+      const parentRule = parseRules(
+        parentDefinition.id,
+        parentDefinition.rules,
+      ).find((value) => value.source.ordinal === candidate.ruleOrdinal);
+      return (
+        parentRule?.kind === "replace" &&
+        (parentRule.powerReplace !== undefined ||
+          parentRule.multiclass !== undefined)
+      );
+    };
+    const named = gain.startsWith("$")
+      ? undefined
+      : (index.find(gain, "Power") ??
+        (key(index.get(gain)?.type ?? "") === "power"
+          ? index.get(gain)
+          : undefined) ??
+        index.find(gain.replace(/\s+power$/i, ""), "Power"));
+    if (!gain.startsWith("$") && named === undefined) return [];
+    const excluded = (lost: CharacterOccurrence) => [
+      lost.id,
+      ...(slot.selected === undefined ? [] : [slot.selected.id]),
+    ];
+    return saved.flatMap((candidate) => {
+      const lost = index.get(candidate.definitionId);
+      if (
+        lost === undefined ||
+        key(lost.type) !== "power" ||
+        candidate.kind !== "choice" ||
+        candidate.id === slot.selected?.id ||
+        candidate.acquiredLevel > level ||
+        !slot.held(candidate) ||
+        gainedBySwap(candidate) ||
+        candidateFor(loseRule, provider, lost).reasons.includes("category")
+      )
+        return [];
+      const selectedGain =
+        slot.selected?.replacesId === candidate.id
+          ? index.get(slot.selected.definitionId)
+          : undefined;
+      let gains: readonly CandidateDecision[];
+      if (named !== undefined)
+        gains = [
+          candidateFor(powerCategoryRule(rule.source, ""), provider, named),
+        ];
+      else {
+        const lostLevel = field(lost, "Level")?.trim();
+        const gainRule = powerCategoryRule(
+          rule.source,
+          [gain, lose, lostLevel].filter((part) => part).join(","),
+        );
+        gains = detailed
+          ? candidatesFor(gainRule, provider)
+          : selectedGain === undefined
+            ? []
+            : [candidateFor(gainRule, provider, selectedGain)];
+      }
+      return [
+        {
+          replacesOccurrenceId: candidate.id,
+          definitionId: candidate.definitionId,
+          candidates: gains
+            .filter(
+              (decision) =>
+                key(decision.definitionId) !== key(candidate.definitionId),
+            )
+            .map((decision) =>
+              markOwned(
+                decision,
+                level,
+                excluded(candidate),
+                slot.heldThenReplaced,
+              ),
+            ),
+        },
+      ];
+    });
+  };
 
   for (const occurrence of occurrences) {
     const entity = index.get(occurrence.definitionId);
@@ -2047,130 +2166,153 @@ function evaluateCharacterInternal(
           const detailedReplacement =
             candidateDetailLevels === undefined ||
             candidateDetailReplacementChoiceIds.has(replacementChoiceId);
-          const { selected, held, heldThenReplaced } = replacementSlot(
+          const slot = replacementSlot(
             occurrence,
             rule.source.ordinal,
             replacementLevel,
           );
-          const replacementOptions = saved
-            .filter((candidate) => {
-              const candidateType = key(
-                index.get(candidate.definitionId)?.type ?? "",
-              );
-              const powerOnly =
-                rule.powerReplace !== undefined ||
-                rule.multiclass !== undefined ||
-                rule.powerSwap !== undefined;
-              // Martial Power p. 42: instead of a feat, a power or a skill,
-              // a retrain can change the beast companion.
-              const ordinaryRetraining =
-                rule.retrain === undefined ||
-                ["feat", "power", "skill training"].includes(candidateType) ||
-                isBeastCompanionEntity(index.get(candidate.definitionId));
-              return (
-                held(candidate) &&
-                candidate.acquiredLevel < replacementLevel &&
-                candidate.kind === "choice" &&
-                ordinaryRetraining &&
-                (!powerOnly || candidateType === "power")
-              );
-            })
-            .flatMap((candidate) => {
-              let original = candidate;
-              const visited = new Set<string>();
-              while (
-                original.replacesId !== undefined &&
-                !visited.has(original.id)
-              ) {
-                visited.add(original.id);
-                const previous = saved.find(
-                  (value) => value.id === original.replacesId,
-                );
-                if (previous === undefined) break;
-                original = previous;
-              }
-              const originalProvider = saved.find(
-                (provider) => provider.id === original.parentId,
-              );
-              const originalDefinition =
-                originalProvider === undefined
-                  ? undefined
-                  : index.get(originalProvider.definitionId);
-              const originalSelect =
-                originalDefinition === undefined
-                  ? undefined
-                  : parseRules(originalDefinition.id, originalDefinition.rules)
-                      .filter(
-                        (candidateRule): candidateRule is SelectRule =>
-                          candidateRule.kind === "select",
-                      )
-                      .find(
-                        (candidateRule) =>
-                          candidateRule.source.ordinal === original.ruleOrdinal,
-                      );
-              if (
-                originalProvider === undefined ||
-                originalSelect === undefined
-              )
-                return [];
-              const selectedReplacement =
-                selected?.replacesId === candidate.id
-                  ? index.get(selected.definitionId)
-                  : undefined;
-              const gainSelect =
-                rule.powerSwap === undefined
-                  ? originalSelect
-                  : { ...originalSelect, category: rule.powerSwap };
-              const gainProvider =
-                rule.powerSwap === undefined ? originalProvider : occurrence;
-              // Native CheckReplaceElem: a power swap can only lose a power
-              // that matches its own category (class, usage, level or
-              // lower), so a level-13 encounter swap never offers a daily.
-              const lost = index.get(candidate.definitionId);
-              if (
-                rule.powerSwap !== undefined &&
-                candidate.id !== selected?.replacesId &&
-                lost !== undefined &&
-                candidateFor(gainSelect, gainProvider, lost).reasons.includes(
-                  "category",
+          const { selected, held, heldThenReplaced } = slot;
+          const powerReplace = rule.powerReplace;
+          const replacementOptions =
+            powerReplace !== undefined
+              ? powerReplaceOptions(
+                  { ...rule, powerReplace },
+                  occurrence,
+                  replacementLevel,
+                  slot,
+                  detailedReplacement,
                 )
-              )
-                return [];
-              return [
-                {
-                  replacesOccurrenceId: candidate.id,
-                  definitionId: candidate.definitionId,
-                  // Retraining X into X changes nothing, so it isn't offered.
-                  candidates: detailedReplacement
-                    ? candidatesFor(gainSelect, gainProvider)
-                        .filter(
-                          (decision) =>
-                            key(decision.definitionId) !==
-                            key(candidate.definitionId),
-                        )
-                        .map((decision) =>
-                          markOwned(
-                            decision,
-                            replacementLevel,
-                            [
-                              candidate.id,
-                              ...(selected === undefined ? [] : [selected.id]),
-                            ],
-                            heldThenReplaced,
-                          ),
-                        )
-                    : selectedReplacement === undefined
-                      ? []
-                      : [
-                          candidateFor(
-                            gainSelect,
-                            gainProvider,
-                            selectedReplacement,
-                          ),
-                        ],
-                },
-              ];
-            });
+              : saved
+                  .filter((candidate) => {
+                    const candidateType = key(
+                      index.get(candidate.definitionId)?.type ?? "",
+                    );
+                    const powerOnly =
+                      rule.powerReplace !== undefined ||
+                      rule.multiclass !== undefined ||
+                      rule.powerSwap !== undefined;
+                    // Martial Power p. 42: instead of a feat, a power or a skill,
+                    // a retrain can change the beast companion.
+                    const ordinaryRetraining =
+                      rule.retrain === undefined ||
+                      ["feat", "power", "skill training"].includes(
+                        candidateType,
+                      ) ||
+                      isBeastCompanionEntity(index.get(candidate.definitionId));
+                    return (
+                      held(candidate) &&
+                      candidate.acquiredLevel < replacementLevel &&
+                      candidate.kind === "choice" &&
+                      ordinaryRetraining &&
+                      (!powerOnly || candidateType === "power")
+                    );
+                  })
+                  .flatMap((candidate) => {
+                    let original = candidate;
+                    const visited = new Set<string>();
+                    while (
+                      original.replacesId !== undefined &&
+                      !visited.has(original.id)
+                    ) {
+                      visited.add(original.id);
+                      const previous = saved.find(
+                        (value) => value.id === original.replacesId,
+                      );
+                      if (previous === undefined) break;
+                      original = previous;
+                    }
+                    const originalProvider = saved.find(
+                      (provider) => provider.id === original.parentId,
+                    );
+                    const originalDefinition =
+                      originalProvider === undefined
+                        ? undefined
+                        : index.get(originalProvider.definitionId);
+                    const originalSelect =
+                      originalDefinition === undefined
+                        ? undefined
+                        : parseRules(
+                            originalDefinition.id,
+                            originalDefinition.rules,
+                          )
+                            .filter(
+                              (candidateRule): candidateRule is SelectRule =>
+                                candidateRule.kind === "select",
+                            )
+                            .find(
+                              (candidateRule) =>
+                                candidateRule.source.ordinal ===
+                                original.ruleOrdinal,
+                            );
+                    if (
+                      originalProvider === undefined ||
+                      originalSelect === undefined
+                    )
+                      return [];
+                    const selectedReplacement =
+                      selected?.replacesId === candidate.id
+                        ? index.get(selected.definitionId)
+                        : undefined;
+                    const gainSelect =
+                      rule.powerSwap === undefined
+                        ? originalSelect
+                        : { ...originalSelect, category: rule.powerSwap };
+                    const gainProvider =
+                      rule.powerSwap === undefined
+                        ? originalProvider
+                        : occurrence;
+                    // Native CheckReplaceElem: a power swap can only lose a power
+                    // that matches its own category (class, usage, level or
+                    // lower), so a level-13 encounter swap never offers a daily.
+                    const lost = index.get(candidate.definitionId);
+                    if (
+                      rule.powerSwap !== undefined &&
+                      candidate.id !== selected?.replacesId &&
+                      lost !== undefined &&
+                      candidateFor(
+                        gainSelect,
+                        gainProvider,
+                        lost,
+                      ).reasons.includes("category")
+                    )
+                      return [];
+                    return [
+                      {
+                        replacesOccurrenceId: candidate.id,
+                        definitionId: candidate.definitionId,
+                        // Retraining X into X changes nothing, so it isn't offered.
+                        candidates: detailedReplacement
+                          ? candidatesFor(gainSelect, gainProvider)
+                              .filter(
+                                (decision) =>
+                                  key(decision.definitionId) !==
+                                  key(candidate.definitionId),
+                              )
+                              .map((decision) =>
+                                markOwned(
+                                  decision,
+                                  replacementLevel,
+                                  [
+                                    candidate.id,
+                                    ...(selected === undefined
+                                      ? []
+                                      : [selected.id]),
+                                  ],
+                                  heldThenReplaced,
+                                ),
+                              )
+                          : selectedReplacement === undefined
+                            ? []
+                            : [
+                                candidateFor(
+                                  gainSelect,
+                                  gainProvider,
+                                  selectedReplacement,
+                                ),
+                              ],
+                      },
+                    ];
+                  });
           choices.push({
             id: replacementChoiceId,
             level: replacementLevel,

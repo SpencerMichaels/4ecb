@@ -180,6 +180,8 @@ const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
 const ENCUMBRANCE = "packages/sheet-model/src/encumbrance.test.ts";
 const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
+const CONFORMANCE =
+  "packages/rules-engine/src/construction-conformance.test.ts";
 
 export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
   {
@@ -250,7 +252,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Choice.CheckReplaceElem": partial(
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (Display 'attack' at-wills), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining; the multiclass Display 'attack' and hybrid CheckHybridPower limits are not reproduced",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; the multiclass Display 'attack' and hybrid CheckHybridPower limits are not reproduced",
+      test(CONFORMANCE, "reads a bare level as that level or lower"),
+      test(
+        CONFORMANCE,
+        "applies the swap: the lost power is gone and the named power is held",
+      ),
     ),
     "?A0x7555d940.FromDilettante": code(
       "Powers chosen through the Dilettante racial trait (ID_FMP_RACIAL_TRAIT_643) are treated as out-of-class/encounter; OverrideStat then reads 'dilettante:key ability' (Adept Dilettante).",

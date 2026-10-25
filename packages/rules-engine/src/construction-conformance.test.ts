@@ -236,7 +236,7 @@ describe("native construction conformance", () => {
     ["retrain", { retrain: "true" }],
     ["multiclass", { multiclass: "Synthetic class" }],
     ["power swap", { powerswap: "Synthetic,encounter,1" }],
-    ["power replace", { "power-replace": "Synthetic,encounter,1" }],
+    ["power replace", { "power-replace": "NEW:Synthetic,encounter,1" }],
   ] as const)(
     "keeps explicit source occurrence identity for %s replacement",
     (_label, mode) => {
@@ -282,6 +282,136 @@ describe("native construction conformance", () => {
       );
     },
   );
+
+  describe("power-replace (native PowerReplaceCategory)", () => {
+    const power = (
+      id: string,
+      name: string,
+      categories: readonly string[],
+      level?: string,
+    ): ContentEntity => ({
+      ...entity(id, name, "Power"),
+      categories,
+      specifics:
+        level === undefined
+          ? []
+          : [{ name: "Level", value: level, extraAttributes: [], ordinal: 0 }],
+    });
+    const content = (powerReplace: string) => [
+      entity("CLASS_SLOTS", "Class slots", "Feature", [
+        statement("select", { type: "Power", number: "4" }, 0),
+      ]),
+      entity("SWAP_FEAT", "Swap feat", "Feat", [
+        statement("replace", { "power-replace": powerReplace }, 0),
+      ]),
+      power("UTILITY_2", "Utility two", ["utility"], "2"),
+      power("UTILITY_6", "Utility six", ["utility"], "6"),
+      power("UTILITY_10", "Utility ten", ["utility"], "10"),
+      power("ATTACK_7", "Attack seven", ["encounter", "attack"], "7"),
+      power("GAINED", "Gained power", ["utility"], "6"),
+      power("OTHER", "Other utility", ["utility"], "6"),
+    ];
+    const saved = (swapLevel: number) => [
+      occurrence("slots", "CLASS_SLOTS", 1, "root"),
+      ...["UTILITY_2", "UTILITY_6", "UTILITY_10", "ATTACK_7"].map(
+        (definitionId, choiceIndex) =>
+          occurrence(`pick-${definitionId}`, definitionId, 1, "choice", {
+            parentId: "slots",
+            ruleOrdinal: 0,
+            choiceIndex,
+          }),
+      ),
+      occurrence("swap", "SWAP_FEAT", swapLevel, "grabbag"),
+    ];
+    const replacement = (powerReplace: string, swapLevel = 10) =>
+      evaluateCharacter(
+        input(10, saved(swapLevel)),
+        content(powerReplace),
+      ).choices.find((choice) => choice.type === "Replacement");
+
+    it("loses only a power matching the category after ':' and gains the named power", () => {
+      const choice = replacement("gained power:utility,6+");
+      expect(
+        choice?.replacementOptions?.map((option) => option.definitionId),
+      ).toEqual(["UTILITY_6", "UTILITY_10"]);
+      for (const option of choice?.replacementOptions ?? [])
+        expect(
+          option.candidates.map((candidate) => candidate.definitionId),
+        ).toEqual(["GAINED"]);
+    });
+
+    it("reads a bare level as that level or lower", () => {
+      expect(
+        replacement("GAINED:utility,6")?.replacementOptions?.map(
+          (option) => option.definitionId,
+        ),
+      ).toEqual(["UTILITY_2", "UTILITY_6"]);
+    });
+
+    it("finds the gained power by ID and offers powers held at the swap's own level", () => {
+      const choice = replacement("GAINED:encounter,attack", 1);
+      expect(
+        choice?.replacementOptions?.map((option) => [
+          option.definitionId,
+          option.candidates.map((candidate) => candidate.definitionId),
+        ]),
+      ).toEqual([["ATTACK_7", ["GAINED"]]]);
+    });
+
+    it("offers nothing when the gained power does not exist", () => {
+      expect(replacement("Missing power:utility")?.replacementOptions).toEqual(
+        [],
+      );
+    });
+
+    it("applies the swap: the lost power is gone and the named power is held", () => {
+      const result = evaluateCharacter(
+        input(10, [
+          ...saved(10),
+          occurrence("gain", "GAINED", 10, "choice", {
+            parentId: "swap",
+            ruleOrdinal: 0,
+            replacesId: "pick-UTILITY_6",
+          }),
+        ]),
+        content("Gained power:utility,6+"),
+      );
+      expect(result.activeDefinitionIds).toContain("GAINED");
+      expect(result.activeDefinitionIds).not.toContain("UTILITY_6");
+      expect(
+        result.diagnostics.filter(
+          (diagnostic) => diagnostic.severity === "error",
+        ),
+      ).toEqual([]);
+    });
+
+    it("reads a power's level from its category number when it has no Level field", () => {
+      const result = evaluateCharacter(
+        input(3, [occurrence("slot", "SLOT", 1, "root")]),
+        [
+          entity("SLOT", "Encounter slot", "Feature", [
+            statement(
+              "select",
+              { type: "Power", number: "1", Category: "encounter,1" },
+              0,
+            ),
+          ]),
+          power("CATEGORY_LEVEL", "Category level", ["encounter", "1"]),
+          power("NO_LEVEL", "No level", ["encounter"]),
+        ],
+      );
+      const candidates = result.choices[0]?.candidates ?? [];
+      expect(
+        candidates.find(
+          (candidate) => candidate.definitionId === "CATEGORY_LEVEL",
+        )?.eligible,
+      ).toBe(true);
+      expect(
+        candidates.find((candidate) => candidate.definitionId === "NO_LEVEL")
+          ?.reasons,
+      ).toContain("category");
+    });
+  });
 
   it("lets a level's retrain change the beast companion (Martial Power p. 42)", () => {
     const beast = (id: string, name: string): ContentEntity => ({

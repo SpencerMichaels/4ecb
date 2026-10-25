@@ -121,6 +121,29 @@ replacement chain, while legality is decided by the active replacement slot.
 Ordinary retraining continues to inherit its source select until its distinct
 mode rules are implemented from equivalent evidence.
 
+`power-replace="GAIN:LOSE"` is its own mode (native `PowerReplaceCategory`,
+`ChoiceMatch`, `BuildReplaceList`, `CheckReplaceElem`). GAIN names the one
+Power gained: an exact, case-insensitive name, an ID, or "Name Power". LOSE is
+an ordinary category string that an owned power must match to be lost. There
+is no class restriction unless LOSE names one. A bare level `N` means level N
+or lower, and `N+` means N or higher. The power may be held at the swap's own
+level, but not if another multiclass or power-replace swap gained it. The gain
+belongs to the swap's provider; it does not take over the lost power's slot.
+If GAIN names no power, the swap offers nothing. A GAIN starting with `$`
+(Secrets of Belial's `$$NOT_CLASS`) is a choice instead: any power matching
+`GAIN,LOSE` at the lost power's level or lower. Two native behaviours are not
+reproduced. Only chosen powers can be lost here, while native also allows
+granted ones. The hybrid `CheckHybridPower` limit is also missing.
+
+A power's level for category matching is its Level field, or else, when the
+record has no Level field at all, the bare number in its `<Category>`, which is
+where native reads it. An empty Level field stays level 0, as before. Two power
+records have only the category number: Power Strike and Backstab. They become
+choosable in a regular class encounter slot once their prerequisite feat is
+owned (Powerful Strike, Thief's Backstab). This is how the legacy builder
+offers them. Where the two values disagree (four records), the Level field
+wins.
+
 ## Verified parity and performance
 
 The supplied private level-8 character matches all 72 numeric aliases shared by

@@ -159,9 +159,21 @@ function numericMatch(
     value.toLocaleUpperCase() === "$$LEVEL" ? String(level) : value;
   const match = /^(\d+)(\+|-(\d+))?$/.exec(substituted);
   if (match === null) return undefined;
+  // Native CategoryMatch::Matches reads a power's level from the bare number
+  // in its <Category>. Records nearly always repeat it as a Level field, and
+  // that field wins where the two disagree (four records); a power with only
+  // the category number (Power Strike, Backstab) still has that level. Only
+  // a power with no Level field at all falls back; an empty one stays level
+  // 0 (cantrips and other at-wills match any "N" slot, as before).
+  const levelField = entity.specifics.find(
+    (field) => field.name.toLocaleLowerCase() === "level",
+  )?.value;
   const entityLevel = Number(
-    entity.specifics.find((field) => field.name.toLocaleLowerCase() === "level")
-      ?.value,
+    levelField !== undefined
+      ? levelField
+      : entity.type.toLocaleLowerCase() === "power"
+        ? entity.categories.find((category) => /^\s*\d+\s*$/.test(category))
+        : undefined,
   );
   if (!Number.isFinite(entityLevel)) return false;
   const minimum = Number(match[1]);
