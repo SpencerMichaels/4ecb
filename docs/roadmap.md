@@ -948,8 +948,8 @@ character before it is fixed, one slice per item.
   Play data card lines, stat-tile tooltips, power-card reminders). Left:
   `damage(<item>)` textstrings (Challenge-Seeking), `ally.melee:damage`
   (Infernal Pincer), one `check:<other>` example.
-- **From four more player saves (2026-10-23, not yet baselined):** Villain's
-  Menace damage +4 too high (`copy of character`, Fighter L5); a ki-focus
+- **From four more player saves (2026-10-23, baselined):** ~~Villain's Menace
+  damage +4~~ (fixed `da275bc`, 29 powers); a ki-focus
   weapon (Shadow Master Ki Focused Wrist Razors) gets no rows (`Valria`);
   Staggering Note's flat damage missing, Well of Shadows secondary damage
   parsed as "Ongoing", no Arcane Wisp familiar card (`Sylestine`).

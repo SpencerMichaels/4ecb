@@ -91,6 +91,15 @@ KrizDevvon level 14's feats saved as illegal stubs, and Hystan_Original_7 saved
 without the gear part. Ghost of the Past keeps its Language choice (the
 records the players used omit it; both texts grant a language).
 
+**Later the same day:** four more player saves (`copy of character`,
+`tgretgtyrhv e`, `Valria`, `Sylestine`) joined the accepted baseline (31
+characters). A power's flat damage bonus is read only from its damage
+expression, as native `CalcDamage` reads the hit line up to its first
+"damage" (`da275bc`, cache v55): 29 hit lines had added a follow-up rider
+(Villain's Menace +4, Great Cleave, Warlord's Strike, Tactician's Favor, …).
+1418 tests pass. Valria's ki-focus wrist razors and Sylestine's three gaps are
+queued in the roadmap.
+
 **Open:**
 
 - Hunzu 10's Divine Bolts (legacy omits Eagle Eye Goggles' `ranged basic`
