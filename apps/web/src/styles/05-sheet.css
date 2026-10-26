@@ -603,15 +603,9 @@
 }
 
 .sheet-edit-target[data-hidden] {
-  background: rgb(255 255 255 / 72%);
+  background: rgb(255 255 255 / 30%);
   outline: 2px dashed #56616a;
   outline-offset: -2px;
-}
-
-/* Fade a hidden card's dark title band less, so its name stays readable
-   (the header is about 0.3in: a 0.23in minimum plus padding). */
-.sheet-card-edit.sheet-edit-target[data-hidden] {
-  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 40%) 0 0.3in, #000 0.3in);
 }
 
 /* No visible control: a focus ring only while tabbing between overlays. */

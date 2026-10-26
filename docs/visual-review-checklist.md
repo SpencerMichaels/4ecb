@@ -1001,7 +1001,7 @@ character works; Hu (`hu`) has item cards and several reference groups.
   - **Where:** right-click a power, an item and the Play scratchpad; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
   - **Expect:** hidden cards vanish and later cards close up 9 per page;
     with **Show hidden** they return in place, dimmed (no stripes, no tag)
-    with a dashed outline, the title band less faded; the scratchpad is a short dimmed
+    evenly faded with a dashed outline; the scratchpad is a short dimmed
     strip "Hidden · Play scratchpad" (right-click it for **Show section**). The
     browser's print preview never contains hidden cards, the strip or any focus ring.
     Reload: choices persist and **Show hidden** is off again. Reset (click
