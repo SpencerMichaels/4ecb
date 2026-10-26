@@ -30,7 +30,9 @@ export function SegmentedControl<Value extends string>({
               checked={value === option}
               onChange={() => onChange(option)}
             />
-            {optionLabel}
+            <span className="segmented-control-text" data-text={optionLabel}>
+              {optionLabel}
+            </span>
           </label>
         ))}
       </div>

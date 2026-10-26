@@ -21,11 +21,17 @@ export const SHEET_REFERENCE_GROUP_IDS = [
 
 export type SheetReferenceGroupId = (typeof SHEET_REFERENCE_GROUP_IDS)[number];
 
-/** Optional sheet sections; page 1 always prints. */
+/** Sheet sections, each of which can be left out; "summary" is page 1 with
+ *  its continuation pages. */
 export type SheetSectionId =
-  "scratchpad" | "session-notes" | `reference:${SheetReferenceGroupId}`;
+  | "summary"
+  | "scratchpad"
+  | "session-notes"
+  | `reference:${SheetReferenceGroupId}`;
 
+/** In print order. */
 export const SHEET_SECTION_IDS: readonly SheetSectionId[] = [
+  "summary",
   "scratchpad",
   ...SHEET_REFERENCE_GROUP_IDS.map((group) => `reference:${group}` as const),
   "session-notes",
@@ -87,7 +93,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
   };
 }
 
-/** Shows or hides one optional section. */
+/** Shows or hides one sheet section. */
 export function withSheetSectionShown(
   layout: SheetLayout | undefined,
   section: SheetSectionId,

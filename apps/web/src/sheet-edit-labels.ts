@@ -1,8 +1,9 @@
 import type { SheetSectionId } from "@4ecb/character-domain";
 import { isSheetPlayCard, type SheetLayoutCard } from "@4ecb/sheet-model";
 
-/** Edit mode's names for the sheet's optional sections (D099). */
+/** Edit mode's names for the sheet's sections (D099). */
 export const SHEET_SECTION_LABELS: Readonly<Record<SheetSectionId, string>> = {
+  summary: "Page 1 summary",
   scratchpad: "Play scratchpad",
   "reference:features": "Feature reference",
   "reference:items": "Item reference",

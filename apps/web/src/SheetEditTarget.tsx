@@ -18,7 +18,7 @@ const togglesTarget = (event: ReactKeyboardEvent) =>
   (event.key === "F10" && event.shiftKey);
 
 /**
- * An Edit-mode overlay over one sheet card or section (D099). It never
+ * An Edit-mode overlay over one sheet card (D099). It never
  * changes what it covers: it is absolutely positioned by its container's CSS,
  * screen-only, and never inside measured probe copies. Like the legacy
  * builder's card "Hide", a right-click hides or shows what it covers; there
@@ -38,7 +38,7 @@ export function SheetEditTarget({
   readonly style?: CSSProperties;
   /** What the overlay covers, for its accessible name ("Hide Arc Strike"). */
   readonly name: string;
-  /** Hidden from print but revealed by "Show hidden": dimmed. */
+  /** Hidden from print, still shown dimmed in Edit mode. */
   readonly hidden?: boolean;
   readonly onToggle: () => void;
   readonly children?: ReactNode;
@@ -47,8 +47,8 @@ export function SheetEditTarget({
 
   const toggle = () => {
     const target = targetRef.current;
-    // Toggling may remove this overlay (hiding with "Show hidden" off), so
-    // remember the neighbouring overlay to keep keyboard focus on the sheet.
+    // Should a toggle re-render this overlay away, fall back to its
+    // neighbour so keyboard focus stays on the sheet.
     const focused = target !== null && document.activeElement === target;
     const controls = [
       ...document.querySelectorAll<HTMLElement>(".sheet-edit-target"),
@@ -91,7 +91,7 @@ export function SheetEditTarget({
 
 /**
  * Whether the browser is printing. `beforeprint` runs before print layout
- * and the state flips synchronously there, so Edit mode's "Show hidden"
+ * and the state flips synchronously there, so Edit mode's hidden-card
  * reveal and its overlays are gone from every printout.
  */
 export function usePrinting(): boolean {

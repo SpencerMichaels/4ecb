@@ -29,8 +29,9 @@ describe("sheet layout", () => {
     });
   });
 
-  it("lists every optional section, page 1 excluded", () => {
+  it("lists every section in print order, page 1 summary first", () => {
     expect(SHEET_SECTION_IDS).toEqual([
+      "summary",
       "scratchpad",
       "reference:features",
       "reference:items",
@@ -39,6 +40,15 @@ describe("sheet layout", () => {
       "reference:profile",
       "session-notes",
     ]);
+  });
+
+  it("round-trips a hidden page 1 summary", () => {
+    const hidden = withSheetSectionShown(undefined, "summary", false);
+    expect(hidden).toEqual({ version: 1, hiddenSections: ["summary"] });
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(hidden)))).toEqual(
+      hidden,
+    );
+    expect(withSheetSectionShown(hidden, "summary", true)).toBeUndefined();
   });
 
   it("stores only deltas from the default sheet", () => {

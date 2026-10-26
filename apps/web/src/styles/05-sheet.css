@@ -541,19 +541,24 @@
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
-/* Print preview Edit mode (D099): each card and optional section carries an
-   on-paper right-click toggle (Enter, Space or the Menu key on a focused
-   overlay). The overlays are
-   out of flow and screen-only, so they never change what prints or fits.
-   The paper is white in both themes, so on-paper controls use paper ink. */
+/* Print preview Edit mode (D099): each card carries an on-paper right-click
+   toggle (Enter, Space or the Menu key on a focused overlay); optional
+   sections are ticked in the toolbar's Pages menu. The overlays are out of
+   flow and screen-only, so they never change what prints or fits. The paper
+   is white in both themes, so on-paper controls use paper ink.
+
+   The toolbar packs from the start, so Back and View | Edit keep their place
+   whether or not Edit mode's tools follow them; Print stays at the end. */
 .sheet-page.is-print-preview .print-preview-toolbar {
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .print-preview-toolbar-end {
   align-items: center;
   display: inline-flex;
   gap: 0.5rem;
+  margin-inline-start: auto;
 }
 
 .sheet-edit-tools {
@@ -563,11 +568,37 @@
   gap: 0.5rem 1rem;
 }
 
-.sheet-show-hidden {
+.sheet-pages-trigger {
   align-items: center;
   display: inline-flex;
-  gap: 0.4rem;
-  white-space: nowrap;
+  gap: 0.35rem;
+}
+
+.sheet-pages-trigger .icon {
+  height: 1rem;
+  width: 1rem;
+}
+
+/* The Pages menu opens under its trigger, toward the page. */
+.sheet-pages-menu.action-menu-options {
+  left: 0;
+  max-width: calc(100vw - 2rem);
+  min-width: 15rem;
+  right: auto;
+}
+
+.sheet-pages-menu > label {
+  align-items: center;
+  border-radius: 2px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+}
+
+.sheet-pages-menu > label:hover {
+  background: var(--surface-subtle);
 }
 
 .sheet-edit-tools .danger-action {
@@ -602,15 +633,10 @@
   z-index: 2;
 }
 
-/* A hidden section's placeholder strip. */
-.sheet-edit-target[data-hidden] {
-  outline: 2px dashed #56616a;
-  outline-offset: -2px;
-}
-
-/* "Show hidden" on a card: its header and bottom type bar ("Encounter
-   Power · Level 3") show as usual, the rest of its body is blank (visibility keeps the
-   layout and the border), and a large faint "Hidden" sits in the middle. */
+/* A hidden card in Edit mode: its header and bottom type bar ("Encounter
+   Power · Level 3") show as usual, the rest of its body is blank (visibility
+   keeps the layout and the border), and a large faint "Hidden" sits in the
+   middle. */
 .sheet-concealed-card {
   display: contents;
 }
@@ -650,44 +676,4 @@
 .sheet-edit-target:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: -3px;
-}
-
-/* A section's control sits on its first page's top corner: a zero-height
-   anchor before the page holds a page-sized overlay. */
-.sheet-section-edit {
-  height: 0;
-  margin: 0 auto;
-  position: relative;
-  width: var(--sp-page-width, 8.5in);
-}
-
-.sheet-section-edit > .sheet-edit-target {
-  bottom: auto;
-  height: var(--sp-page-height, 11in);
-}
-
-/* "Show hidden": a hidden section is a short dimmed placeholder where its
-   pages would be, so page numbers keep matching the printout. */
-.sheet-hidden-section {
-  box-sizing: border-box;
-  margin: 0 auto 30px;
-  max-width: 100%;
-  min-height: 3.5rem;
-  position: relative;
-  width: var(--sp-page-width, 8.5in);
-}
-
-.sheet-hidden-section > .sheet-edit-target {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-  padding: 0 0.75rem;
-}
-
-.sheet-hidden-section-label {
-  color: #20272a;
-  font-family: system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.2;
 }

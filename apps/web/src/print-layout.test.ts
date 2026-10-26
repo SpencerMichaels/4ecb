@@ -348,10 +348,10 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.paper-a4 \.print-reference-card\s*\{[\s\S]*?height:\s*86\.8mm;[\s\S]*?width:\s*63mm;/,
     );
-    // Print cuts only shown cards into 9-card pages; Edit mode's "Show
-    // hidden" reveal is screen-only.
+    // Print cuts only shown cards into 9-card pages; Edit mode's reveal of
+    // hidden cards is screen-only (editControls is off while printing).
     expect(sheetSource).toMatch(
-      /chunks\(\s*revealHidden\s*\?\s*resolvedLayout\.cards\s*:\s*resolvedLayout\.cards\.filter\(\(card\) => card\.shown\),\s*9,/,
+      /chunks\(\s*editControls\s*\?\s*resolvedLayout\.cards\s*:\s*resolvedLayout\.cards\.filter\(\(card\) => card\.shown\),\s*9,/,
     );
     expect(sheetSource).toContain("powerActionLabel(card.actionType)");
     expect(sheetSource).toContain("powerTextAtLevel(value, characterLevel)");
@@ -451,5 +451,25 @@ describe("print layout contract", () => {
       /\.sheet-concealed-card \.print-reference-card \.print-card-type\s*\{\s*visibility:\s*visible;/,
     );
     expect(appStyles).not.toMatch(/\.sheet-concealed-card[^{]*footer/);
+  });
+
+  it("keeps View | Edit in place whether or not Edit mode's tools show", () => {
+    // Packed from the start (not space-between), so the tools that follow the
+    // control in Edit mode never move it; Print is pushed to the end.
+    expect(styles).toMatch(
+      /\.sheet-page\.is-print-preview \.print-preview-toolbar \{[^}]*justify-content: flex-start;/,
+    );
+    expect(styles).toMatch(
+      /\.print-preview-toolbar-end \{[^}]*margin-inline-start: auto;/,
+    );
+    // Each segmented option reserves its bold (selected) width.
+    expect(styles).toMatch(
+      /\.segmented-control-text::after \{[^}]*content: attr\(data-text\);[^}]*font-weight: 800;[^}]*visibility: hidden;/,
+    );
+  });
+
+  it("has no on-paper section controls or hidden-section strips (D099)", () => {
+    expect(styles).not.toMatch(/\.sheet-section-edit|\.sheet-hidden-section/);
+    expect(styles).toMatch(/\.sheet-pages-menu\.action-menu-options \{/);
   });
 });

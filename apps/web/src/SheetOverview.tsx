@@ -1,7 +1,6 @@
 import {
   Children,
   createContext,
-  Fragment,
   isValidElement,
   useCallback,
   useContext,
@@ -3041,14 +3040,12 @@ function Details({
   name,
   startPage,
   hiddenSections,
-  sectionControl,
   onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
   startPage: number;
   hiddenSections: ReadonlySet<SheetSectionId>;
-  sectionControl: SheetSectionControl | undefined;
   onPageCount: (count: number) => void;
 }) {
   const sections = useMemo(() => referenceSections(model), [model]);
@@ -3076,28 +3073,23 @@ function Details({
   );
   return (
     <>
-      {sections.map((entries, index) => {
-        const section: SheetSectionId = `reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`;
-        const hidden = hiddenSections.has(section);
-        return (
-          <Fragment key={index}>
-            {/* An empty group prints no page, so it has nothing to edit. */}
-            {entries.length === 0 ? null : sectionControl?.(section, hidden)}
-            {hidden ? null : (
-              <ReferencePages
-                model={model}
-                name={name}
-                entries={entries}
-                wide={index === 1 || index === 2}
-                startPage={
-                  startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
-                }
-                onPageCount={callbacks[index]!}
-              />
-            )}
-          </Fragment>
-        );
-      })}
+      {sections.map((entries, index) =>
+        hiddenSections.has(
+          `reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`,
+        ) ? null : (
+          <ReferencePages
+            key={index}
+            model={model}
+            name={name}
+            entries={entries}
+            wide={index === 1 || index === 2}
+            startPage={
+              startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
+            }
+            onPageCount={callbacks[index]!}
+          />
+        ),
+      )}
     </>
   );
 }
@@ -3541,22 +3533,12 @@ function ReferencePages({
   );
 }
 const NO_HIDDEN_SECTIONS: ReadonlySet<SheetSectionId> = new Set();
-/**
- * Edit mode's control for one optional section (D099), rendered just before
- * the section's first page (or where it would be, when hidden). It must be
- * screen-only and out of flow so it never changes what prints or measures.
- */
-export type SheetSectionControl = (
-  section: SheetSectionId,
-  hidden: boolean,
-) => ReactNode;
 export function SheetOverview({
   model,
   name,
   portrait,
   paper,
   hiddenSections = NO_HIDDEN_SECTIONS,
-  sectionControl,
   children,
 }: {
   model: CharacterSheetModel;
@@ -3565,15 +3547,17 @@ export function SheetOverview({
   paper: "letter" | "a4";
   /** Sections the sheet layout leaves out (D099); they count no pages. */
   hiddenSections?: ReadonlySet<SheetSectionId>;
-  /** Edit mode's per-section controls; absent in View mode. */
-  sectionControl?: SheetSectionControl;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
     model: CharacterSheetModel;
     indices: readonly number[];
   }>();
-  const [continuationPages, setContinuationPages] = useState(0);
+  const [measuredContinuationPages, setContinuationPages] = useState(0);
+  // Page 1 and its continuation pages go together; with them hidden the
+  // next printed section starts at page 1.
+  const summaryShown = !hiddenSections.has("summary");
+  const summaryPages = summaryShown ? 1 + measuredContinuationPages : 0;
   const [measuredScratchpadPages, setScratchpadPages] = useState(1);
   const scratchpadShown = !hiddenSections.has("scratchpad");
   const scratchpadPages = scratchpadShown ? measuredScratchpadPages : 0;
@@ -3598,28 +3582,30 @@ export function SheetOverview({
     return <>{typeof children === "function" ? children(1) : children}</>;
   const overviewClass = `sheet-overview sp-prototype sp-paper-${paper} print-only`;
   const notesShown = !hiddenSections.has("session-notes");
-  const notesControl = sectionControl?.("session-notes", !notesShown);
   return (
     <>
       <div className={overviewClass}>
-        <Summary
-          model={model}
-          name={name}
-          portrait={portrait}
-          onVisibleReminders={onVisibleReminders}
-        />
-        <SummaryContinuationPages
-          model={model}
-          name={name}
-          entries={continuationEntries}
-          onPageCount={setContinuationPages}
-        />
-        {sectionControl?.("scratchpad", !scratchpadShown)}
+        {summaryShown ? (
+          <>
+            <Summary
+              model={model}
+              name={name}
+              portrait={portrait}
+              onVisibleReminders={onVisibleReminders}
+            />
+            <SummaryContinuationPages
+              model={model}
+              name={name}
+              entries={continuationEntries}
+              onPageCount={setContinuationPages}
+            />
+          </>
+        ) : null}
         {scratchpadShown ? (
           <Scratchpad
             model={model}
             name={name}
-            startPage={2 + continuationPages}
+            startPage={1 + summaryPages}
             onPageCount={setScratchpadPages}
           />
         ) : null}
@@ -3628,19 +3614,17 @@ export function SheetOverview({
         <Details
           model={model}
           name={name}
-          startPage={2 + continuationPages + scratchpadPages}
+          startPage={1 + summaryPages + scratchpadPages}
           hiddenSections={hiddenSections}
-          sectionControl={sectionControl}
           onPageCount={setDetailsPages}
         />
       </div>
       {typeof children === "function"
-        ? children(2 + continuationPages + scratchpadPages + detailsPages)
+        ? children(1 + summaryPages + scratchpadPages + detailsPages)
         : children}
-      {notesShown || notesControl != null ? (
+      {notesShown ? (
         <div className={overviewClass}>
-          {notesControl}
-          {notesShown ? <SessionNotes model={model} name={name} /> : null}
+          <SessionNotes model={model} name={name} />
         </div>
       ) : null}
     </>

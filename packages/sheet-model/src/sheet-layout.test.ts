@@ -73,7 +73,7 @@ describe("applySheetLayout", () => {
         version: 1,
         hiddenCards: ["power:arc", "play:skills", "item:a", "power:gone"],
         shownCards: ["item:def:cached"],
-        hiddenSections: ["scratchpad"],
+        hiddenSections: ["summary", "scratchpad"],
       },
       { itemCardsShown: new Map([["b", true]]) },
     );
@@ -89,7 +89,7 @@ describe("applySheetLayout", () => {
     expect(resolved.cards.find(({ key }) => key === "item:b")?.holdingId).toBe(
       "b",
     );
-    expect([...resolved.hiddenSections]).toEqual(["scratchpad"]);
+    expect([...resolved.hiddenSections]).toEqual(["summary", "scratchpad"]);
   });
 
   it("moves a set card when the holding flags hide its pieces", () => {

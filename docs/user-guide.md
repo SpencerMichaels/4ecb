@@ -251,24 +251,24 @@ cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
 The print preview's toolbar switches **Sheet: View | Edit**. **Edit** keeps
-the paper preview and lets you right-click any card, or the first page of any
-optional section — the play scratchpad, each full-reference group (features,
-item reference, power index, rituals & practices, character profile) and
-session notes; page 1 always prints. From the keyboard, Tab to a card or
-section and press Enter, Space, the Menu key or Shift+F10. Each right-click
-hides it, and right-clicking a hidden one shows it again.
-Hidden things leave the preview exactly as they leave the printout. Tick
-**Show hidden** in the toolbar to see them again in place: a hidden
-card keeps its header and its bottom type bar (such as "Encounter Power ·
-Level 3"), with a large faint "Hidden" where its text was
-(sections as a short "Hidden" placeholder), and right-click them to bring
-them back; printing never includes
-hidden things, whether or not **Show hidden** is ticked. Hiding a power's
-card keeps it on the scratchpad and in the power index, and page numbers
-close up around hidden pages. An item's card
+the paper preview and lets you right-click any card to hide it, and
+right-click a hidden one to show it again. From the keyboard, Tab to a card
+and press Enter, Space, the Menu key or Shift+F10. In Edit mode a hidden card
+stays in place, keeping its header and its bottom type bar (such as
+"Encounter Power · Level 3"), with a large faint "Hidden" where its text
+was; View mode and the printout leave it out. Hiding a power's card keeps it
+on the scratchpad and in the power index.
+
+To choose which pages print, open **Pages** in the Edit toolbar and tick or
+untick each section: Page 1 summary (with any continuation pages), the play
+scratchpad, each full-reference group (features, item reference, power
+index, rituals & practices, character profile) and session notes. Untick
+Page 1 summary and the rest to reprint only some cards. An unticked section
+leaves the preview and the printout, and page numbers close up around it.
+Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
-exported to the original Character Builder. **Reset sheet to defaults** (click
-again to confirm) prints everything again. Changes save automatically, are
+exported to the original Character Builder. **Reset** (click again to
+confirm) prints everything again. Changes save automatically, are
 kept per character in backups and copies, and don't change the character's
 "last modified" time; printing (**Print or save PDF**, or **PDF** from the
 library) always uses the saved choices.

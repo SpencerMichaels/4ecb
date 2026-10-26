@@ -44,16 +44,21 @@ holding has `showPowerCard=false` stay in the model as `hiddenByDefault`
 `updateMetadata` without moving `updatedAt`; `applySheetLayout` in
 sheet-model; the print preview's "Sheet: View | Edit" control and
 `#/characters/<id>?preview=1&edit=1`; Edit mode's right-click hide/show on
-every card and optional section (or Enter/Space/Menu key on a focused one;
-no menu, no visible per-card button), a toolbar "Show hidden" toggle that reveals hidden
-cards (header and type bar kept, body marked "Hidden") and sections on screen only (`beforeprint` turns it off), and
-an arm-then-confirm reset in the toolbar (the first cut's "Sheet contents"
+every card (or Enter/Space/Menu key on a focused one; no menu, no visible
+per-card button), with hidden cards always shown in Edit mode (header and
+type bar kept, body marked "Hidden") and omitted in View and print
+(`beforeprint` turns the reveal off); a toolbar Pages menu
+(`SheetPagesMenu.tsx`) with one checkbox per section — page 1 summary with
+its continuations, scratchpad, each reference group, session notes; none
+locked — replacing section right-click and the "Show hidden" toggle; and
+an arm-then-confirm Reset in the toolbar (the first cut's "Sheet contents"
 checkbox panel was replaced the same day after owner feedback);
 silent serialized saves with a retry alert on failure. Item cards toggle
 the holding's `showPowerCard` flag, which never reaches evaluation input,
 and the sheet page keeps layout and flags out of the evaluated character's
 state (a jsdom test asserts one evaluation across toggles). Hidden sections
-count no pages. Phases 2–4 (reminders, ordering) remain.
+count no pages; hiding page 1 restarts numbering at the next printed page.
+Phases 2–4 (reminders, ordering) remain.
 
 Verification: `pnpm vitest run packages apps`, typecheck, lint and
 format clean. `pnpm check:print` not run (headless Chromium cannot start

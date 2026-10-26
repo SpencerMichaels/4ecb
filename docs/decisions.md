@@ -2769,8 +2769,9 @@ Decision:
 - Cards and sections have stable keys built in sheet-model from
   provenance, never text: `power:<definitionId>` (legacy name fallback +
   `#n`), `item:<holdingId>`, `item-set:<id>`, `companion:<id>`,
-  `play:character`/`play:skills`; sections `scratchpad`, `session-notes`
-  and `reference:<features|items|power-index|rituals|profile>`. A retrained
+  `play:character`/`play:skills`; sections `summary` (page 1 and its
+  continuation pages), `scratchpad`, `session-notes` and
+  `reference:<features|items|power-index|rituals|profile>`. A retrained
   power is a new card and starts from defaults.
 - The card deck order (`sheetCardDeck`) lives in sheet-model, and the pure
   `applySheetLayout` selects what prints: hidden cards leave the deck before
@@ -2780,39 +2781,49 @@ Decision:
 - The print preview has View and Edit modes
   (`#/characters/<id>?preview=1&edit=1`; `?print=1` is always View; the
   builder and library link to View). Edit keeps the paper preview and puts
-  the controls on the paper (owner feedback 2026-10-25, replacing a
-  "Sheet contents" checkbox panel): every card and every optional section's
-  first page hides or shows on right-click, like the legacy builder's
-  card "Hide" (keyboard: focus the overlay, "Hide <name>" / "Show <name>",
-  then Enter, Space, the Menu key or Shift+F10); a plain click does nothing,
-  leaving it for dragging. Owner follow-ups (2026-10-25): no visible per-card
-  button and no long press — the ⋮ buttons were too noisy and touch screens
-  are out of scope for now; and no menu while hide/show is the only card
-  action (a menu returns only with a second action, e.g. Customize); page 1 has none, and an empty reference group
-  prints no page, so it has none either. This mirrors the legacy CharTracker
-  card menu's "Hide"; its one-shot "Restore Hidden Power Cards" becomes a
-  toolbar "Show hidden" toggle (off by default, not saved): on, hidden cards
-  stay in their deck position with their header and type bar as printed and the rest of the body blanked behind a large faint
-  "Hidden" (border kept) — owner, 2026-10-25, after
-  dimming overlays proved either too faint or too opaque, and hidden
-  sections show as dimmed placeholders where their pages would be (so page
-  numbers still match the printout); each one's menu offers "Show". Printing
-  always omits hidden cards and sections — `beforeprint` turns the reveal
-  and every edit control off synchronously. The overlays are out of flow
-  (card overlays take their card's grid area), screen-only and never inside
-  probe copies, so they change no card size or fit. The toolbar also has an
-  arm-then-confirm "Reset sheet to defaults" (layout cleared, every holding
-  prints its card; disabled at the defaults). Bulk group toggles were
-  dropped. Saves are silent and serialized (D098); only a failure shows,
-  with a retry.
+  the card controls on the paper (owner feedback 2026-10-25, replacing a
+  "Sheet contents" checkbox panel): every card hides or shows on
+  right-click, like the legacy builder's card "Hide" (keyboard: focus the
+  overlay, "Hide <name>" / "Show <name>", then Enter, Space, the Menu key or
+  Shift+F10); a plain click does nothing, leaving it for dragging. Owner
+  follow-ups (2026-10-25): no visible per-card button and no long press —
+  the ⋮ buttons were too noisy and touch screens are out of scope for now;
+  and no menu while hide/show is the only card action (a menu returns only
+  with a second action, e.g. Customize). Edit mode always shows hidden cards
+  (the legacy one-shot "Restore Hidden Power Cards" became a "Show hidden"
+  toggle, then the owner dropped the toggle): a hidden card stays in its deck
+  position with its header and type bar as printed and the rest of the body
+  blanked behind a large faint "Hidden" (border kept). View mode and
+  printing always omit hidden cards — `beforeprint` turns Edit's reveal and
+  every edit control off synchronously. The card overlays are out of flow
+  (they take their card's grid area), screen-only and never inside probe
+  copies, so they change no card size or fit.
+- Sections are not right-clicked (owner, 2026-10-25: right-clicking an
+  entire page is unintuitive). Edit's toolbar has a **Pages** button
+  opening a small popover (`SheetPagesMenu.tsx`, sharing ActionMenu's
+  dismissal: Escape returns focus to the button, an outside click or Tab out
+  closes) with one ordinary checkbox per section in print order: Page 1
+  summary (page 1 with its continuation pages), Play scratchpad, each
+  reference group, Session notes. No row is locked (owner: e.g. hide page 1
+  to reprint only some cards) and a group that prints nothing for this
+  character is an ordinary row too. A hidden section simply does not
+  render, and later pages renumber from 1; hiding every section and card
+  leaves an empty preview with no notice.
+- The toolbar packs from the start (Back, View | Edit, then Edit's Pages and
+  Reset; Print at the end), and each View | Edit option reserves its bold
+  width, so the control never moves between modes. Reset is an
+  arm-then-confirm "Reset" / "Confirm reset" button (accessible name "Reset
+  sheet layout to defaults"): layout cleared, every holding prints its card;
+  disabled at the defaults. Bulk group toggles were dropped. Saves are
+  silent and serialized (D098); only a failure shows, with a retry.
 - Later phases (reminder show/hide and custom reminders, which supersede
   the "Action Point reminder policy (2026-10-24)"; card ordering) extend the
-  same type and add their actions to the same on-paper menus.
+  same type; card actions join the on-paper overlays.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
 `packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
-`apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetOverview}.tsx`
+`apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetPagesMenu,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 
 ## Deferred decisions and decision points

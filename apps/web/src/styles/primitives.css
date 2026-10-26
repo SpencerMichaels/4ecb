@@ -219,6 +219,25 @@ button.dialog-close {
   position: relative;
 }
 
+/* Each option reserves its bold (selected) width, so picking one never
+   nudges its neighbours or anything after the control. */
+.segmented-control-text {
+  align-items: center;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.segmented-control-text::after {
+  content: attr(data-text);
+  content: attr(data-text) / "";
+  font-weight: 800;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  visibility: hidden;
+}
+
 .segmented-control-options > label:has(input:focus-visible) {
   outline: 3px solid var(--focus);
   outline-offset: 2px;

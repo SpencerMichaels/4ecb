@@ -968,48 +968,53 @@ sample-character diff; check only layout and fit.
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
 
-## Sheet Edit mode (2026-10-25, D099 phases 0–1, right-click hide/show)
+## Sheet Edit mode (2026-10-25, D099 phases 0–1: card right-click, Pages menu)
 
-Labels, menu semantics (button, right-click, Menu key/Shift+F10, long
-press, Escape), saving, page numbering, print omission of hidden things and
-"no re-evaluation" are verified by tests; check only layout and feel. Any
-character works; Hu (`hu`) has item cards and several reference groups.
+Labels, keyboard toggles, the Pages menu's open/close and focus behaviour,
+saving, page numbering, print omission of hidden things, the toolbar's
+order and "no re-evaluation" are verified by tests; check only layout and
+feel. Any character works; Hu (`hu`) has item cards and several reference
+groups.
 
-- [ ] **Edit mode on the paper.**
-  - **Where:** `hu` → `?preview=1`, click **Edit** in the toolbar's "Sheet"
-    control; at 100% and 140% browser zoom, light and dark mode.
-  - **Expect:** the toolbar shows View | Edit, a **Show hidden** checkbox,
-    **Reset sheet to defaults** (greyed while nothing is hidden) and Print.
-    Cards and pages look exactly as in View — no per-card buttons. Tabbing
-    from the toolbar moves a clear focus ring card by card (and onto the
-    first page of the scratchpad, each reference group and session notes,
-    never page 1). Cards keep
-    exactly the size and text fit they have in View. View mode shows none of
-    these controls.
-  - **Wrong if:** any button or marker appears on shown cards, a card's
-    text size changes between View and Edit, the toolbar wraps badly or
-    scrolls sideways at 140%, or the focus ring is hard to see.
-- [ ] **Right-click feel.**
-  - **Where:** the same page: right-click a card, and a section's first
-    page; left-click a card; Tab to a card and press Enter.
-  - **Expect:** right-click hides it at once (no menu), and the browser's
-    own context menu doesn't appear; a left click does nothing; Enter
-    toggles the focused card.
-  - **Wrong if:** a menu or the browser's menu appears, or a left click
-    hides something.
-- [ ] **Hide, Show hidden, Show again.**
-  - **Where:** right-click a power, an item and the Play scratchpad; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
-  - **Expect:** hidden cards vanish and later cards close up 9 per page;
-    with **Show hidden** they return in place with their header and type bar at full
-    strength and border kept, the body blank with a large faint "Hidden" in
-    the middle; the scratchpad is a short dimmed
-    strip "Hidden · Play scratchpad" (right-click it for **Show section**). The
-    browser's print preview never contains hidden cards, the strip or any focus ring.
-    Reload: choices persist and **Show hidden** is off again. Reset (click
+- [ ] **Edit toolbar.**
+  - **Where:** `hu` → `?preview=1`; click **View** and **Edit** in the
+    toolbar's "Sheet" control several times; at 100% and 140% browser zoom,
+    light and dark mode.
+  - **Expect:** Back and View | Edit stay exactly where they are in both
+    modes (neither the control's edge nor the line between View and Edit
+    moves); Edit adds **Pages** and **Reset** (greyed while nothing is
+    hidden) after them, and Print stays at the right end. No "Show hidden"
+    checkbox. Cards and pages look exactly as in View — no per-card buttons.
+  - **Wrong if:** View | Edit jumps sideways when switching, the toolbar
+    wraps badly or scrolls sideways at 140%, or Reset's label is long.
+- [ ] **Pages menu.**
+  - **Where:** Edit mode → click **Pages**; untick Play scratchpad and
+    Session notes, then Page 1 summary; press Escape; reopen and click on the
+    paper. At 140% zoom and in dark mode.
+  - **Expect:** a small panel opens right under the button, in the app's
+    theme colours, with eight ordinary checkboxes (Page 1 summary first,
+    Session notes last), none greyed; the first one is focused. Unticking
+    removes those pages at once with no message, page numbers restart from
+    the next printed page (cards at page 1 with everything else unticked),
+    and the panel stays open. Escape closes it with focus back on Pages; a
+    click elsewhere closes it.
+  - **Wrong if:** the panel is clipped, overflows the window at 140%, is
+    unreadable in dark mode, sits behind the paper, or a placeholder strip
+    is left where a section was.
+- [ ] **Card right-click feel.**
+  - **Where:** right-click a power card and an item card; left-click a
+    card; Tab to a card and press Enter; then the browser's print preview
+    (Ctrl+P).
+  - **Expect:** right-click hides it at once (no menu, and no browser
+    context menu); it stays in place with its header and type bar at full
+    strength and border kept, the body blank with a large faint "Hidden".
+    A left click does nothing; Enter toggles the focused card. The
+    browser's print preview has no hidden cards and no focus ring; View
+    mode leaves hidden cards out. Reload: choices persist. Reset (click
     twice) restores everything.
-  - **Wrong if:** a hidden card is hard to tell from a shown one, its
-    header is faded or covered, any body text shows through, the strip is unreadable in dark
-    mode, or the printout has gaps or wrong page numbers.
+  - **Wrong if:** a hidden card is hard to tell from a shown one, its header
+    is faded or covered, any body text shows through, a hidden card prints,
+    or the printout has gaps or wrong page numbers.
 
 ## Granted choices in a feat's flow (2026-10-25)
 

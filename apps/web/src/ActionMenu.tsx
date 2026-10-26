@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 
 import { Icon, type IconName } from "./Icon";
+import { useDismissiblePopover } from "./use-dismissible-popover";
 
 export interface ActionMenuItem {
   readonly label: string;
@@ -42,27 +43,14 @@ export function ActionMenu({
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    root.current
-      ?.querySelector<HTMLElement>(".action-menu-options button:not(:disabled)")
-      ?.focus();
-    const dismissOutside = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const dismissWithEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      setOpen(false);
-      trigger.current?.focus();
-    };
-    document.addEventListener("pointerdown", dismissOutside);
-    document.addEventListener("keydown", dismissWithEscape);
-    return () => {
-      document.removeEventListener("pointerdown", dismissOutside);
-      document.removeEventListener("keydown", dismissWithEscape);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismissiblePopover({
+    open,
+    close,
+    root,
+    trigger,
+    focusSelector: ".action-menu-options button:not(:disabled)",
+  });
 
   return (
     <div className="action-menu" ref={root}>

@@ -54,10 +54,11 @@ import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
-import { SheetOverview, type SheetSectionControl } from "./SheetOverview";
+import { SheetOverview } from "./SheetOverview";
+import { SheetPagesMenu } from "./SheetPagesMenu";
 import { SegmentedControl } from "./SegmentedControl";
 import { SheetEditTarget, usePrinting } from "./SheetEditTarget";
-import { sheetCardLabel, SHEET_SECTION_LABELS } from "./sheet-edit-labels";
+import { sheetCardLabel } from "./sheet-edit-labels";
 import { useArmedAction } from "./useArmedAction";
 
 const characters = new CharacterRepository();
@@ -178,8 +179,6 @@ export function CharacterSheetPage({
   const [itemCardsShown, setItemCardsShown] = useState<
     ReadonlyMap<string, boolean>
   >(() => new Map());
-  // Edit mode's "Show hidden" reveal: a per-visit view toggle, not saved.
-  const [showHidden, setShowHidden] = useState(false);
   const printing = usePrinting();
   const resetAction = useArmedAction("sheet-reset-trigger");
   const [saveError, setSaveError] = useState<string>();
@@ -411,35 +410,6 @@ export function CharacterSheetPage({
         : applySheetLayout(model, sheetLayout, { itemCardsShown }),
     [model, sheetLayout, itemCardsShown],
   );
-  const sectionControl = useCallback<SheetSectionControl>(
-    (section, hidden) => {
-      const label = SHEET_SECTION_LABELS[section];
-      const onToggle = () => showSection(section, hidden);
-      if (!hidden)
-        return (
-          <div className="sheet-section-edit print-excluded">
-            <SheetEditTarget
-              className="sheet-section-edit-target"
-              name={label}
-              onToggle={onToggle}
-            />
-          </div>
-        );
-      return showHidden ? (
-        <div className="sheet-hidden-section print-excluded">
-          <SheetEditTarget
-            className="sheet-hidden-section-target"
-            hidden
-            name={label}
-            onToggle={onToggle}
-          >
-            <span className="sheet-hidden-section-label">Hidden · {label}</span>
-          </SheetEditTarget>
-        </div>
-      ) : null;
-    },
-    [showHidden, showSection],
-  );
   // A saved PDF is named "Ingi - Level 8.pdf", from the title and print path.
   const pdfTitle =
     character === undefined
@@ -582,11 +552,10 @@ export function CharacterSheetPage({
   const editing = showPrintPreview && sheetEditing;
   // Printing always drops Edit mode's controls and its hidden-card reveal.
   const editControls = editing && !printing;
-  const revealHidden = editControls && showHidden;
-  // Hidden cards leave the deck before it is cut into 9-card pages; "Show
-  // hidden" keeps them in their deck position, dimmed, on screen only.
+  // Hidden cards leave the deck before it is cut into 9-card pages; Edit
+  // mode keeps them in their deck position, dimmed, on screen only.
   const printCardPages = chunks(
-    revealHidden
+    editControls
       ? resolvedLayout.cards
       : resolvedLayout.cards.filter((card) => card.shown),
     9,
@@ -650,21 +619,20 @@ export function CharacterSheetPage({
           />
           {editing ? (
             <span className="sheet-edit-tools">
-              <label className="sheet-show-hidden">
-                <input
-                  checked={showHidden}
-                  type="checkbox"
-                  onChange={(event) =>
-                    setShowHidden(event.currentTarget.checked)
-                  }
-                />
-                <span>Show hidden</span>
-              </label>
+              <SheetPagesMenu
+                hiddenSections={resolvedLayout.hiddenSections}
+                onShowSection={showSection}
+              />
               <button
                 aria-label={
                   resetArmed
-                    ? "Confirm resetting the sheet to defaults"
-                    : "Reset sheet to defaults"
+                    ? "Confirm resetting the sheet layout"
+                    : "Reset sheet layout to defaults"
+                }
+                title={
+                  resetArmed
+                    ? "Confirm resetting the sheet layout"
+                    : "Reset sheet layout to defaults"
                 }
                 className="danger-action"
                 data-armed={resetArmed || undefined}
@@ -680,7 +648,7 @@ export function CharacterSheetPage({
                   resetPresentation();
                 }}
               >
-                {resetArmed ? "Confirm reset" : "Reset sheet to defaults"}
+                {resetArmed ? "Confirm reset" : "Reset"}
               </button>
             </span>
           ) : null}
@@ -937,7 +905,6 @@ export function CharacterSheetPage({
           portrait={character.portrait}
           paper={paper}
           hiddenSections={resolvedLayout.hiddenSections}
-          {...(editControls ? { sectionControl } : {})}
         >
           {(firstCardPage) =>
             printCardPages.map((page, pageIndex) => (
@@ -957,8 +924,9 @@ export function CharacterSheetPage({
                         key={key}
                       />
                     );
-                    // "Show hidden": keep the header, blank the body. The
-                    // wrapper is display: contents, so size and fit hold.
+                    // Edit mode keeps a hidden card's header and blanks its
+                    // body. The wrapper is display: contents, so size and
+                    // fit hold.
                     return shown ? (
                       printed
                     ) : (

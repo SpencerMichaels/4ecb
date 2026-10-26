@@ -65,28 +65,42 @@ export interface SheetLayout {
 - Route: `#/characters/<id>?preview=1&edit=1`; toolbar
   "Sheet: View | Edit" segmented control (always present); Print works from
   either; `?print=1` stays view-only.
-- Edit mode keeps the WYSIWYG paper preview with the controls on the paper
+- Edit mode keeps the WYSIWYG paper preview. Cards are toggled on the paper
   (owner feedback 2026-10-25 replaced the first "Sheet contents" checkbox
-  panel): right-clicking a card, or an optional section's first page,
-  hides or shows it directly — no menu while hide/show is the only action
-  (keyboard: focus it, Enter, Space, Menu key or Shift+F10). No visible
-  per-card button and no touch gestures — owner: too noisy, desktop only for
-  now. A plain click does nothing, leaving it for dragging cards later. A toolbar "Show hidden" toggle reveals hidden cards in their deck
-  position, with their header and type bar as printed and the rest of the body blanked behind a large faint
-  "Hidden" (border kept), and hidden sections as dimmed placeholders, each with
-  printing always omits them. Legacy CharTracker had the card
-  "Hide" menu item and a one-shot "Restore Hidden Power Cards".
+  panel): right-clicking a card hides or shows it directly — no menu while
+  hide/show is the only action (keyboard: focus it, Enter, Space, Menu key or
+  Shift+F10). No visible per-card button and no touch gestures — owner: too
+  noisy, desktop only for now. A plain click does nothing, leaving it for
+  dragging cards later. Edit mode always shows hidden cards in their deck
+  position, with their header and type bar as printed and the rest of the
+  body blanked behind a large faint "Hidden" (border kept); View mode and
+  printing always omit them. Legacy CharTracker had the card "Hide" menu item
+  and a one-shot "Restore Hidden Power Cards".
+- Sections are ticked in a toolbar **Pages** menu (owner 2026-10-25:
+  right-clicking a whole page was unintuitive): a popover under the button
+  with one ordinary checkbox per section in print order — Page 1 summary
+  (with its continuation pages), Play scratchpad, each reference group,
+  Session notes. No row is locked or disabled (e.g. hide page 1 to reprint
+  only some cards); a section that prints nothing for this character is
+  still an ordinary row. A hidden section simply does not render and later
+  pages renumber; hiding everything leaves an empty preview with no notice.
+  The menu closes on Escape (focus back to the button), an outside click or
+  tabbing out.
+- The toolbar packs from the start (Back, View | Edit, then Edit's Pages and
+  Reset), so View | Edit never moves between modes; Print stays at the end.
 - Silent saves via a serialized queue (no "Saved" notice, D098; failures show
   an actionable error). Keep layout in its own state so layout edits never
   re-evaluate the character.
-- Global "Reset sheet to defaults" in the toolbar (arm-then-confirm).
+- Global **Reset** in the toolbar (arm-then-confirm: "Reset", then "Confirm
+  reset"; its accessible name says "Reset sheet layout to defaults"). It
+  clears card and section choices.
 
 ## 3. Controls
 
 **Must-have**
 
-1. Section hide/show on each optional section's first page: scratchpad,
-   session notes, each reference group. Page 1 always printed (no control).
+1. Section hide/show in the toolbar Pages menu: page 1 summary, scratchpad,
+   each reference group, session notes; none locked.
 2. Card hide/show by right-click (bulk group toggles dropped).
    Hiding a card removes only the card (scratchpad usage boxes, power index
    unchanged).
@@ -127,8 +141,9 @@ sheet-model with keys.
 0. **Done.** Stable identity (item card IDs, deck into sheet-model); no
    visible change. Reminder candidate IDs/`coveredBy` move to phase 2.
 1. **Done.** `SheetLayout` + persistence, route/toggle, right-click hide/show
-   on cards and sections, the "Show hidden" toggle, global reset
-   (the first cut's "Sheet contents" panel was replaced the same day).
+   on cards, the toolbar Pages menu for sections, global reset (the first
+   cut's "Sheet contents" panel was replaced the same day; section
+   right-click and the "Show hidden" toggle were replaced on 2026-10-25).
 2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
    removal.
 3. Card ordering by click-and-drag. (On-paper hide/show: done in phase 1.)
