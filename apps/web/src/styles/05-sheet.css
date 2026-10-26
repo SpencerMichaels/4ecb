@@ -608,8 +608,8 @@
   outline-offset: -2px;
 }
 
-/* "Show hidden" on a card: its header and footer bar (source, category,
-   level) show as usual, the rest of its body is blank (visibility keeps the
+/* "Show hidden" on a card: its header and bottom type bar ("Encounter
+   Power · Level 3") show as usual, the rest of its body is blank (visibility keeps the
    layout and the border), and a large faint "Hidden" sits in the middle. */
 .sheet-concealed-card {
   display: contents;
@@ -619,9 +619,9 @@
   visibility: hidden;
 }
 
-/* Visibility is inherited but overridable, so a footer nested in the body
-   (companion cards) comes back too. */
-.sheet-concealed-card .print-reference-card footer {
+/* Visibility is inherited but overridable, so the type bar comes back
+   wherever it sits in the card. */
+.sheet-concealed-card .print-reference-card .print-card-type {
   visibility: visible;
 }
 

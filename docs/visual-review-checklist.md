@@ -1000,7 +1000,7 @@ character works; Hu (`hu`) has item cards and several reference groups.
 - [ ] **Hide, Show hidden, Show again.**
   - **Where:** right-click a power, an item and the Play scratchpad; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
   - **Expect:** hidden cards vanish and later cards close up 9 per page;
-    with **Show hidden** they return in place with their header and footer bar at full
+    with **Show hidden** they return in place with their header and type bar at full
     strength and border kept, the body blank with a large faint "Hidden" in
     the middle; the scratchpad is a short dimmed
     strip "Hidden · Play scratchpad" (right-click it for **Show section**). The

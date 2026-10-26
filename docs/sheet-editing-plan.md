@@ -72,7 +72,7 @@ export interface SheetLayout {
   (keyboard: focus it, Enter, Space, Menu key or Shift+F10). No visible
   per-card button and no touch gestures — owner: too noisy, desktop only for
   now. A plain click does nothing, leaving it for dragging cards later. A toolbar "Show hidden" toggle reveals hidden cards in their deck
-  position, with their header and footer bar as printed and the rest of the body blanked behind a large faint
+  position, with their header and type bar as printed and the rest of the body blanked behind a large faint
   "Hidden" (border kept), and hidden sections as dimmed placeholders, each with
   printing always omits them. Legacy CharTracker had the card
   "Hide" menu item and a one-shot "Restore Hidden Power Cards".

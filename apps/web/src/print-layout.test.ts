@@ -442,13 +442,14 @@ describe("print layout contract", () => {
     );
   });
 
-  it("keeps a revealed hidden card's header and footer, blanking the body", () => {
+  it("keeps a revealed hidden card's header and type bar, blanking the body", () => {
     expect(appStyles).toMatch(
       /\.sheet-concealed-card > \.print-reference-card > :not\(header\)\s*\{\s*visibility:\s*hidden;/,
     );
-    // Footers nested in the body (companion cards) come back too.
+    // The bottom type bar ("Encounter Power · Level 3") comes back.
     expect(appStyles).toMatch(
-      /\.sheet-concealed-card \.print-reference-card footer\s*\{\s*visibility:\s*visible;/,
+      /\.sheet-concealed-card \.print-reference-card \.print-card-type\s*\{\s*visibility:\s*visible;/,
     );
+    expect(appStyles).not.toMatch(/\.sheet-concealed-card[^{]*footer/);
   });
 });
