@@ -113,7 +113,10 @@ pnpm regenerate:edited-dnd4e
 
 The locally built pack is `tmp/content/full-local.4ecp`; legacy sample
 characters are in `sample-chars/*.dnd4e` (both ignored). They are the inputs for
-checking real-character output against legacy PDFs.
+checking real-character output against legacy PDFs, and `parity:baseline`
+covers only them and the SampleHeroes: copy every player's legacy-builder save
+(e.g. one attached to a bug report) into `sample-chars/` and re-accept the
+baseline, never leave it in `scratch/` or Downloads.
 
 Small-group deployment (static PWA container, no backend):
 

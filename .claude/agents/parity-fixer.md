@@ -51,7 +51,9 @@ working between messages.
    Classify a legacy value as older-builder/content-revision only with direct
    evidence. Note: `CharacterBuilder/SampleChars/SampleHeroes/*` were saved by
    an older legacy builder; `sample-chars/*` are current-builder player saves
-   (some reference homebrew we lack).
+   (some reference homebrew we lack). A player save you are given that is
+   not in `sample-chars/` yet should be copied there (the baseline only covers
+   that folder and SampleHeroes); tell the orchestrator you did.
 4. **Implement generically.** No per-feat special cases; IDs or names keyed in
    code go through `EXCEPTION_IDS`/`EXCEPTION_NAMES` in
    `packages/rules-engine/src/exceptions.ts`. Content-specific errata go in
