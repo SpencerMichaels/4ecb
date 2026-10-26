@@ -6,6 +6,7 @@ import {
   sheetSectionCopies,
   sheetSectionOrder,
   withHoldingCardsShown,
+  withSheetCardOrder,
   withSheetCardsShown,
   withSheetSectionCopies,
   withSheetSectionOrder,
@@ -110,6 +111,54 @@ describe("sheet layout", () => {
       version: 1,
       hiddenSections: ["scratchpad"],
       sectionCopies: { "session-notes": 3 },
+    });
+  });
+
+  it("stores a card order only when it differs from the default, keeping vanished keys", () => {
+    const defaults = ["play:character", "play:skills", "power:a", "item:b"];
+    const moved = ["power:a", "play:character", "play:skills", "item:b"];
+    const ordered = withSheetCardOrder(undefined, moved, defaults);
+    expect(ordered).toEqual({ version: 1, cardOrder: moved });
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(ordered)))).toEqual(
+      ordered,
+    );
+    // Back to the default order stores nothing.
+    expect(withSheetCardOrder(ordered, defaults, defaults)).toBeUndefined();
+    // Leniently: non-strings and repeats drop.
+    expect(
+      normalizeSheetLayout({
+        version: 1,
+        cardOrder: ["power:a", 3, null, "power:a", "", "item:b"],
+      }),
+    ).toEqual({ version: 1, cardOrder: ["power:a", "item:b"] });
+    expect(
+      normalizeSheetLayout({ version: 1, cardOrder: "x" }),
+    ).toBeUndefined();
+    // A stored card that left the deck keeps its place after the key it
+    // followed, so it comes back there.
+    const withGone = withSheetCardOrder(
+      undefined,
+      ["power:gone", "power:a", "play:character", "power:x", "item:b"],
+      ["play:character", "power:a", "power:gone", "power:x", "item:b"],
+    );
+    expect(
+      withSheetCardOrder(
+        withGone,
+        ["power:a", "item:b", "play:character", "power:x"],
+        ["play:character", "power:a", "power:x", "item:b"],
+      )?.cardOrder,
+    ).toEqual(["power:gone", "power:a", "item:b", "play:character", "power:x"]);
+    // Ordering combines with hiding.
+    expect(
+      withSheetCardsShown(
+        ordered,
+        [{ key: "power:a", defaultShown: true }],
+        false,
+      ),
+    ).toEqual({
+      version: 1,
+      hiddenCards: ["power:a"],
+      cardOrder: moved,
     });
   });
 

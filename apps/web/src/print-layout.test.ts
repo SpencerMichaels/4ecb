@@ -478,5 +478,12 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.sheet-sections-row\[data-drop="after"\] \{[^}]*var\(--focus\)/,
     );
+    // Dragging a card marks the side of the target card it lands on.
+    expect(styles).toMatch(
+      /\.sheet-card-edit\[data-drop="before"\] \{[^}]*box-shadow: -3px 0 0 var\(--focus\)/,
+    );
+    expect(styles).toMatch(
+      /\.sheet-card-edit\[data-drop="after"\] \{[^}]*box-shadow: 3px 0 0 var\(--focus\)/,
+    );
   });
 });

@@ -1,6 +1,8 @@
 # Editable character sheet — plan (owner-reviewed 2026-10-25)
 
-Status: **approved; phases 0–1 done (2026-10-25, D099); phase 2 next.** Owner task (tasks.txt): allow editing the
+Status: **approved; phases 0, 1 and 3 done (2026-10-25, D099); phase 2
+(reminders) postponed by the owner, who had phase 3 built first.** Owner
+task (tasks.txt): allow editing the
 character sheet with view and edit modes — moving/hiding cards, choosing
 reference sections, pinning or removing reminders — and, if manual reminders
 land, drop the "all Action Point riders are reminders" special case.
@@ -70,8 +72,8 @@ export interface SheetLayout {
   panel): right-clicking a card hides or shows it directly — no menu while
   hide/show is the only action (keyboard: focus it, Enter, Space, Menu key or
   Shift+F10). No visible per-card button and no touch gestures — owner: too
-  noisy, desktop only for now. A plain click does nothing, leaving it for
-  dragging cards later. Edit mode always shows hidden cards in their deck
+  noisy, desktop only for now. A plain click does nothing; pressing and
+  dragging moves the card (phase 3). Edit mode always shows hidden cards in their deck
   position, with their header and type bar as printed and the rest of the
   body blanked behind a large faint "Hidden" (border kept); View mode and
   printing always omit them. Legacy CharTracker had the card "Hide" menu item
@@ -153,9 +155,14 @@ sheet-model with keys.
    section right-click and the "Show hidden" toggle were replaced on
    2026-10-25).
 2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
-   removal.
-3. Card ordering by click-and-drag. (On-paper hide/show and section
-   ordering: done in phase 1.)
+   removal. Postponed by the owner (phase 3 landed first).
+3. **Done (built before phase 2).** Card ordering by click-and-drag: drag a
+   card's Edit overlay onto another card, on any page, with a focus-coloured
+   drop-edge rule on the target's left or right; any card moves anywhere and
+   hidden cards keep their place. Drag only for now (owner: no Alt+Arrow
+   keys; the app has almost no other key bindings). `cardOrder` is stored
+   only when it differs from the default deck order and merged as in §4.
+   (On-paper hide/show and section ordering: done in phase 1.)
 4. Optional: reminder ordering, print scope, app-wide default layout.
 
 Each phase: synthetic tests (key stability, repository/backup round trip,

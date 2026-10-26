@@ -15,18 +15,8 @@ import {
 
 import { Icon } from "./Icon";
 import { SHEET_SECTION_LABELS } from "./sheet-edit-labels";
+import { movedBefore } from "./SheetEditTarget";
 import { useDismissiblePopover } from "./use-dismissible-popover";
-
-/** `order` with `section` moved to just before `before` (or to the end). */
-function moved(
-  order: readonly SheetSectionId[],
-  section: SheetSectionId,
-  before: SheetSectionId | undefined,
-): SheetSectionId[] {
-  const rest = order.filter((id) => id !== section);
-  const index = before === undefined ? rest.length : rest.indexOf(before);
-  return [...rest.slice(0, index), section, ...rest.slice(index)];
-}
 
 /**
  * Edit mode's "Sections" toolbar menu (D099): one row per sheet section in
@@ -93,7 +83,7 @@ export function SheetSectionsMenu({
     const target = index + step;
     if (target < 0 || target >= sectionOrder.length) return;
     const before = step < 0 ? sectionOrder[target] : sectionOrder[target + 1];
-    onReorder(moved(sectionOrder, section, before));
+    onReorder(movedBefore(sectionOrder, section, before));
     setRefocus(section);
   };
 
@@ -161,7 +151,7 @@ export function SheetSectionsMenu({
                     ? sectionOrder[index + 1]
                     : section;
                   if (before !== dragged)
-                    onReorder(moved(sectionOrder, dragged, before));
+                    onReorder(movedBefore(sectionOrder, dragged, before));
                 }
                 endDrag();
               }}

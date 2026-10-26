@@ -3,6 +3,7 @@ import {
   useState,
   useEffect,
   type CSSProperties,
+  type DragEvent as ReactDragEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -17,6 +18,41 @@ const togglesTarget = (event: ReactKeyboardEvent) =>
   event.key === "ContextMenu" ||
   (event.key === "F10" && event.shiftKey);
 
+/** `order` with `entry` moved to just before `before` (or to the end). */
+export function movedBefore<Entry>(
+  order: readonly Entry[],
+  entry: Entry,
+  before: Entry | undefined,
+): Entry[] {
+  const rest = order.filter((other) => other !== entry);
+  const index = before === undefined ? rest.length : rest.indexOf(before);
+  return [...rest.slice(0, index), entry, ...rest.slice(index)];
+}
+
+/** Dragging one overlay onto another to move what it covers (D099). */
+export interface SheetEditDrag {
+  /** This overlay's card is the one being dragged. */
+  readonly dragging: boolean;
+  /** A drag of ours is in progress, so this overlay accepts drops. */
+  readonly accepting: boolean;
+  /** Where a drop would land, marked by a rule on that edge. */
+  readonly dropEdge?: "before" | "after";
+  /** The element drawn under the pointer while dragging. */
+  readonly image?: (target: HTMLElement) => Element | null | undefined;
+  readonly onStart: () => void;
+  /** The pointer is over this overlay's leading or trailing half. */
+  readonly onOver: (after: boolean) => void;
+  readonly onLeave: () => void;
+  readonly onDrop: (after: boolean) => void;
+  readonly onEnd: () => void;
+}
+
+/** Whether the pointer is over the trailing (right) half of the target. */
+const afterMiddle = (event: ReactDragEvent<HTMLElement>) => {
+  const box = event.currentTarget.getBoundingClientRect();
+  return event.clientX > box.left + box.width / 2;
+};
+
 /**
  * An Edit-mode overlay over one sheet card (D099). It never
  * changes what it covers: it is absolutely positioned by its container's CSS,
@@ -24,7 +60,8 @@ const togglesTarget = (event: ReactKeyboardEvent) =>
  * builder's card "Hide", a right-click hides or shows what it covers; there
  * is no menu and no visible button (owner, 2026-10-25). Keyboard users focus
  * the overlay and press Enter, Space, the Menu key or Shift+F10. A plain
- * click does nothing, leaving it free for dragging cards later.
+ * click does nothing; pressing and dragging the overlay onto another moves
+ * the card there (`drag`, mouse only: no keyboard or touch equivalent yet).
  */
 export function SheetEditTarget({
   className,
@@ -32,6 +69,8 @@ export function SheetEditTarget({
   name,
   hidden = false,
   onToggle,
+  drag,
+  dataKey,
   children,
 }: {
   readonly className: string;
@@ -41,6 +80,9 @@ export function SheetEditTarget({
   /** Hidden from print, still shown dimmed in Edit mode. */
   readonly hidden?: boolean;
   readonly onToggle: () => void;
+  readonly drag?: SheetEditDrag;
+  /** Identifies what the overlay covers (`data-key`). */
+  readonly dataKey?: string;
   readonly children?: ReactNode;
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
@@ -68,11 +110,47 @@ export function SheetEditTarget({
       aria-label={`${hidden ? "Show" : "Hide"} ${name}`}
       aria-pressed={hidden}
       className={`sheet-edit-target ${className}`}
+      data-dragging={drag?.dragging || undefined}
+      data-drop={drag?.dropEdge}
       data-hidden={hidden || undefined}
+      data-key={dataKey}
+      draggable={drag === undefined ? undefined : true}
       ref={targetRef}
       role="button"
       style={style}
       tabIndex={0}
+      onDragStart={(event) => {
+        if (drag === undefined) return;
+        drag.onStart();
+        if (!event.dataTransfer) return;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", name);
+        const image = drag.image?.(event.currentTarget);
+        if (image) {
+          const box = event.currentTarget.getBoundingClientRect();
+          event.dataTransfer.setDragImage(
+            image,
+            event.clientX - box.left,
+            event.clientY - box.top,
+          );
+        }
+      }}
+      onDragOver={(event) => {
+        if (!drag?.accepting) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+        drag.onOver(afterMiddle(event));
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          drag?.onLeave();
+      }}
+      onDrop={(event) => {
+        if (!drag?.accepting) return;
+        event.preventDefault();
+        drag.onDrop(afterMiddle(event));
+      }}
+      onDragEnd={() => drag?.onEnd()}
       onContextMenu={(event: ReactMouseEvent) => {
         event.preventDefault();
         toggle();

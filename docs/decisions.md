@@ -2743,7 +2743,8 @@ Implemented in `apps/web/src/builder-diagnostics.ts`,
 
 ### D099 — The printed sheet has an editable, per-character layout
 
-Status: accepted (2026-10-25), phases 0–1 implemented. Product-owner plan
+Status: accepted (2026-10-25), phases 0, 1 and 3 implemented (phase 2
+postponed by the owner). Product-owner plan
 and decisions in `docs/sheet-editing-plan.md` §7.
 
 Decision:
@@ -2754,7 +2755,7 @@ Decision:
   and `portrait`. No schema bump; backups, export, duplicate and trash carry
   it unchanged; the rules engine and `.dnd4e` import/export never see it.
   It stores only deltas from the default sheet (`hiddenSections`,
-  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`), so new cards get default behavior; vanished
+  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`, `cardOrder`), so new cards get default behavior; vanished
   keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
   leniently (malformed entries are dropped; an empty layout is the default).
 - Item cards are the exception (owner decision 1): whether a holding prints
@@ -2841,9 +2842,29 @@ Decision:
   section and card shown), every holding prints its card; disabled at the
   defaults. Bulk group toggles were dropped. Saves are silent and
   serialized (D098); only a failure shows, with a retry.
+- Cards reorder (phase 3, owner decision 4 "cards move anywhere in the
+  deck"; built before phase 2, which the owner postponed): in Edit mode,
+  press on a card's overlay and drag it onto another card, on any page
+  (native drag and drop; the card itself is the drag image and fades in
+  place). A focus-coloured rule in the gap on the target card's left or
+  right edge marks whether it lands before or after it; dropping on the
+  first card's left half or the last card's right half moves a card to
+  either end. A plain click still does nothing and right-click still
+  hides/shows. Drag only for now: the owner dropped the planned Alt+Arrow
+  keys (the app has almost no other key bindings). Any card moves anywhere,
+  including Play data, Skills, Action Point, Second Wind and item cards, and
+  hidden cards keep their place (Edit mode shows them in deck position) and
+  move like any other. The order is stored as `cardOrder` (deck card keys)
+  only when it differs from the default deck order; the lenient normalizer
+  drops non-strings and repeats, Reset clears it, and a new order keeps
+  stored keys of cards no longer in the deck after the key they followed.
+  `applySheetLayout` merges it with the current deck before print cuts it
+  into 9-card pages (plan §4): listed cards in stored order, a card the
+  order does not list (new since it was saved) right after its nearest
+  default-order predecessor, vanished keys ignored.
 - Later phases (reminder show/hide and custom reminders, which supersede
-  the "Action Point reminder policy (2026-10-24)"; card ordering) extend the
-  same type; card actions join the on-paper overlays.
+  the "Action Point reminder policy (2026-10-24)") extend the same type;
+  card actions join the on-paper overlays.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

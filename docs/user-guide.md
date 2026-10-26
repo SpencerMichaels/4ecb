@@ -259,6 +259,15 @@ stays in place, keeping its header and its bottom type bar (such as
 was; View mode and the printout leave it out. Hiding a power's card keeps it
 on the scratchpad and in the power index.
 
+To move a card, press on it in Edit mode and drag it onto another card, on
+any page: a blue rule on the left or right edge of the card under the
+pointer shows whether it lands before or after that card. Any card can go
+anywhere, including Play data, Skills, Action Point, Second Wind and item
+cards, and hidden cards move too. Cards fill each page of nine in the new
+order. New cards (a power learned later) appear next to the card they
+follow by default. Moving cards is drag-only for now; there is no keyboard
+equivalent.
+
 To choose what prints and in what order, open **Sections** in the Edit
 toolbar. Each row is a section with a checkbox: Overview (page 1, with any
 continuation pages), the play scratchpad, each full-reference group
@@ -272,7 +281,7 @@ numbers, so you can print extra copies: use the − and + buttons on their
 rows, or type a number. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset** (click again to
-confirm) prints everything again. Changes save automatically, are
+confirm) prints everything again, in the default order. Changes save automatically, are
 kept per character in backups and copies, and don't change the character's
 "last modified" time; printing (**Print or save PDF**, or **PDF** from the
 library) always uses the saved choices.

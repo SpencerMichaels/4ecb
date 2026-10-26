@@ -741,8 +741,12 @@ reminder control and card ordering (plan and owner decisions:
    (section ordering pulled forward), with copies of the unnumbered
    scratchpad and session notes; and a global Reset in the toolbar.
 2. Reminders: show/hide, custom reminders, provenance hints, and removal of
-   the Action Point reminder special case.
-3. Card ordering (on-paper controls landed with phase 1).
+   the Action Point reminder special case. Postponed by the owner; phase 3
+   landed first.
+3. **Done (2026-10-25).** Card ordering: drag a card onto another, on any
+   page, in Edit mode (drag only, no keyboard reorder for now); stored as
+   `cardOrder` only when it differs from the default deck order and merged
+   with the current deck (new cards follow their default predecessor).
 4. Optional: reminder ordering, one-off print scope.
 
 ### Exit criteria

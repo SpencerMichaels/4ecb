@@ -11,6 +11,7 @@ import { CharacterRepository } from "@4ecb/browser-storage";
 import {
   characterDisplayName,
   normalizeSheetLayout,
+  withSheetCardOrder,
   withSheetCardsShown,
   withSheetSectionCopies,
   withSheetSectionOrder,
@@ -60,7 +61,7 @@ import { printWithFileName } from "./print-file-name";
 import { SheetOverview } from "./SheetOverview";
 import { SheetSectionsMenu } from "./SheetSectionsMenu";
 import { SegmentedControl } from "./SegmentedControl";
-import { SheetEditTarget, usePrinting } from "./SheetEditTarget";
+import { movedBefore, SheetEditTarget, usePrinting } from "./SheetEditTarget";
 import { sheetCardLabel } from "./sheet-edit-labels";
 import { useArmedAction } from "./useArmedAction";
 
@@ -430,6 +431,35 @@ export function CharacterSheetPage({
         ? undefined
         : applySheetLayout(model, sheetLayout, { itemCardsShown }),
     [model, sheetLayout, itemCardsShown],
+  );
+  // Dragging a card onto another moves it (D099): the dragged card's key,
+  // and the card and edge it would land on.
+  const [draggedCard, setDraggedCard] = useState<string>();
+  const [cardDrop, setCardDrop] = useState<{
+    readonly key: string;
+    readonly after: boolean;
+  }>();
+  const endCardDrag = useCallback(() => {
+    setDraggedCard(undefined);
+    setCardDrop(undefined);
+  }, []);
+  const moveCard = useCallback(
+    (key: string, target: string, after: boolean) => {
+      if (resolvedLayout === undefined || key === target) return;
+      const order = resolvedLayout.cards.map((card) => card.key);
+      const before = after ? order[order.indexOf(target) + 1] : target;
+      if (before === key) return;
+      const next = movedBefore(order, key, before);
+      if (next.every((entry, index) => entry === order[index])) return;
+      updateLayout(
+        withSheetCardOrder(
+          latestPresentation.current.sheetLayout,
+          next,
+          resolvedLayout.defaultCardOrder,
+        ),
+      );
+    },
+    [resolvedLayout, updateLayout],
   );
   // A saved PDF is named "Ingi - Level 8.pdf", from the title and print path.
   const pdfTitle =
@@ -975,6 +1005,50 @@ export function CharacterSheetPage({
                           hidden={!entry.shown}
                           key={`edit-${entry.key}`}
                           name={sheetCardLabel(entry)}
+                          dataKey={entry.key}
+                          drag={{
+                            dragging: draggedCard === entry.key,
+                            accepting: draggedCard !== undefined,
+                            ...(cardDrop?.key === entry.key &&
+                            draggedCard !== entry.key
+                              ? {
+                                  dropEdge: cardDrop.after ? "after" : "before",
+                                }
+                              : {}),
+                            // The card itself (a hidden card's wrapper is
+                            // display: contents) follows the pointer.
+                            image: (target) => {
+                              const card =
+                                target.parentElement?.children[index];
+                              return card?.classList.contains(
+                                "sheet-concealed-card",
+                              )
+                                ? card.firstElementChild
+                                : card;
+                            },
+                            onStart: () => setDraggedCard(entry.key),
+                            onOver: (after) =>
+                              setCardDrop((current) =>
+                                current?.key === entry.key &&
+                                current.after === after
+                                  ? current
+                                  : { key: entry.key, after },
+                              ),
+                            onLeave: () =>
+                              setCardDrop((current) =>
+                                current?.key === entry.key
+                                  ? undefined
+                                  : current,
+                              ),
+                            onDrop: (after) => {
+                              // The dragged overlay may move to another page
+                              // and never see dragend, so the drop ends it.
+                              if (draggedCard !== undefined)
+                                moveCard(draggedCard, entry.key, after);
+                              endCardDrag();
+                            },
+                            onEnd: endCardDrag,
+                          }}
                           onToggle={() => showCards([entry], !entry.shown)}
                           {...(entry.shown
                             ? {}

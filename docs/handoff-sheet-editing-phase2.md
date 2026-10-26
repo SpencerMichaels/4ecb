@@ -1,5 +1,14 @@
 # Handoff: editable sheet, phase 2 (reminders)
 
+> **Update (2026-10-25):** the owner postponed phase 2 and had **phase 3
+> (card ordering) built first**: in Edit mode a card's overlay drags onto
+> another card, on any page (native drag and drop, focus-coloured drop-edge
+> rule; drag only, no keyboard reorder), stored as `SheetLayout.cardOrder`
+> and merged in `applySheetLayout` (D099). The overlays are now
+> `draggable`, so a plain click on a card still does nothing but pressing
+> and dragging moves it — keep that in mind if phase 2 adds pointer
+> behaviour to page 1.
+
 Written 2026-10-25 at the end of the session that built phases 0–1. Read this
 with [`sheet-editing-plan.md`](sheet-editing-plan.md) (the plan and owner
 decisions) and D099 in [`decisions.md`](decisions.md). Where this doc and the

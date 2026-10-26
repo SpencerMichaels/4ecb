@@ -5,7 +5,7 @@ import { SHEET_SECTION_IDS } from "@4ecb/character-domain";
 import { isSheetPlayCard, sheetCardDeck } from "./card-deck";
 import type { SheetCard } from "./index";
 import type { SheetItemSetCard } from "./item-set-card";
-import { applySheetLayout } from "./sheet-layout";
+import { applySheetLayout, orderedCards } from "./sheet-layout";
 
 const power = (id: string): SheetCard => ({
   kind: "power",
@@ -105,6 +105,60 @@ describe("applySheetLayout", () => {
       "session-notes": 2,
     });
     expect(resolved.sectionOrder).toHaveLength(SHEET_SECTION_IDS.length);
+  });
+
+  it("orders the deck by the stored card order before the deck is cut", () => {
+    const resolved = applySheetLayout(model, {
+      version: 1,
+      cardOrder: ["item:a", "power:gone", "power:bolt", "play:character"],
+      hiddenCards: ["power:bolt"],
+    });
+    // Listed cards keep their stored relative order; unlisted ones follow
+    // their nearest default predecessor (play:skills after play:character,
+    // power:arc after play:skills); the vanished key is ignored. The hidden
+    // card keeps its place among every card and only leaves the printed
+    // deck.
+    expect(keys(resolved.cards)).toEqual([
+      "item:a",
+      "item-set:set",
+      "item:b",
+      "item:def:cached",
+      "power:bolt",
+      "play:character",
+      "play:skills",
+      "power:arc",
+    ]);
+    expect(keys(resolved.deck)).toEqual([
+      "item:a",
+      "item-set:set",
+      "play:character",
+      "play:skills",
+      "power:arc",
+    ]);
+    expect(resolved.defaultCardOrder).toEqual(
+      keys(applySheetLayout(model, undefined).cards),
+    );
+  });
+
+  it("places new cards after their nearest default predecessor", () => {
+    const deck = ["a", "b", "c", "d", "e"].map((key) => ({ key }));
+    expect(keys(orderedCards(deck, []))).toEqual(["a", "b", "c", "d", "e"]);
+    // a and e were reordered; b, c and d are new since the order was saved.
+    expect(keys(orderedCards(deck, ["e", "a"]))).toEqual([
+      "e",
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+    // A new first card opens the deck.
+    expect(keys(orderedCards(deck, ["c", "b", "x"]))).toEqual([
+      "a",
+      "c",
+      "d",
+      "e",
+      "b",
+    ]);
   });
 
   it("moves a set card when the holding flags hide its pieces", () => {

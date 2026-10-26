@@ -1,5 +1,33 @@
 # Implementation status
 
+## Editable printed sheet, phase 3: card ordering (2026-10-25)
+
+Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).
+Built before phase 2 (reminders), which the owner has postponed. In the
+print preview's Edit mode, pressing on a card and dragging it onto another
+card, on any page, moves it there (native drag and drop on the existing
+card overlays; a focus-coloured rule in the gap on the target card's left or
+right edge marks before/after; the dragged card fades). Any card moves
+anywhere, including Play data, Skills, Action Point, Second Wind and item
+cards; hidden cards keep and change their place like any other. Drag only:
+the owner dropped the planned Alt+Arrow keys (the app has almost no other
+key bindings). The order is `SheetLayout.cardOrder` (deck card keys,
+lenient normalizer drops non-strings and repeats), stored by
+`withSheetCardOrder` only when it differs from the default deck order and
+keeping stored keys of cards that left the deck after the key they
+followed; Reset clears it. `applySheetLayout` merges it per plan §4
+(`orderedCards`: listed cards in stored order, unlisted new cards after
+their nearest default predecessor, vanished keys ignored) before print
+cuts the deck into 9-card pages, and reports `defaultCardOrder`. Saves are
+the existing silent serialized layout saves; a reorder never re-evaluates.
+
+Verification: focused vitest (character-domain and sheet-model layout,
+repository round trip, `CharacterSheetPage.editing.test.tsx` drag test,
+`print-layout.test.ts` drop-rule CSS), `pnpm vitest run packages apps`,
+typecheck, lint, format:check and `FOURECB_SKIP_PRINT_CHECK=1
+scripts/check.sh`. `pnpm check:print` not run (headless Chromium cannot
+start in the Nix shell); dragging is the owner's visual check.
+
 ## Player reports: background benefits, pact-blade damage, granted choices (2026-10-25)
 
 A background benefit is marked `already-class-skill` (shown as a redundant
@@ -62,7 +90,8 @@ the holding's `showPowerCard` flag, which never reaches evaluation input,
 and the sheet page keeps layout and flags out of the evaluated character's
 state (a jsdom test asserts one evaluation across toggles). Hidden sections
 count no pages; numbering starts at 1 on the first printed section.
-Phases 2–4 (reminders, ordering) remain.
+Phases 2 and 4 (reminders, optional extras) remain; phase 3 (card
+ordering) landed first, above.
 
 Verification: `pnpm vitest run packages apps`, typecheck, lint and
 format clean. `pnpm check:print` not run (headless Chromium cannot start

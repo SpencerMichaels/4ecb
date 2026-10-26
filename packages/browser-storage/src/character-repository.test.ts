@@ -467,6 +467,7 @@ describe("CharacterRepository", () => {
       version: 1 as const,
       hiddenSections: ["scratchpad" as const],
       hiddenCards: ["power:id_fmp_power_1"],
+      cardOrder: ["power:id_fmp_power_1", "play:character"],
     };
     const saved = await storage.updateMetadata("character-one", {
       sheetLayout: layout,

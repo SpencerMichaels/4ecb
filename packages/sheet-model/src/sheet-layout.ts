@@ -26,6 +26,9 @@ export interface ResolvedSheetLayout {
   readonly deck: readonly SheetDeckEntry[];
   /** Every deck card in deck order, shown or not, for the sheet editor. */
   readonly cards: readonly SheetLayoutCard[];
+  /** The same cards' keys in default deck order (no player ordering), for
+   *  storing a new order as a delta (`withSheetCardOrder`). */
+  readonly defaultCardOrder: readonly string[];
   readonly hiddenSections: ReadonlySet<SheetSectionId>;
   /** Every section, hidden or not, in print order. */
   readonly sectionOrder: readonly SheetSectionId[];
@@ -40,7 +43,9 @@ export interface ResolvedSheetLayout {
  *
  * Item cards with a holding follow `itemCardsShown` (the holdings' current
  * `showPowerCard` flags, applied after evaluation), else the card's
- * `hiddenByDefault`; every other card follows the layout's deltas.
+ * `hiddenByDefault`; every other card follows the layout's deltas. The
+ * layout's `cardOrder` orders every card, shown or hidden (`orderedCards`),
+ * before print cuts the deck into 9-card pages.
  */
 export function applySheetLayout(
   model: Pick<CharacterSheetModel, "powers" | "items" | "companions"> &
@@ -62,14 +67,17 @@ export function applySheetLayout(
       ? !hiddenCards.has(entry.key)
       : shownCards.has(entry.key);
   };
-  const cards = sheetCardDeck(model, shown).map((entry): SheetLayoutCard => {
-    const holdingId = holdingOf(entry);
-    return {
-      ...entry,
-      shown: shown(entry),
-      ...(holdingId === undefined ? {} : { holdingId }),
-    };
-  });
+  const defaultCards = sheetCardDeck(model, shown);
+  const cards = orderedCards(defaultCards, layout?.cardOrder ?? []).map(
+    (entry): SheetLayoutCard => {
+      const holdingId = holdingOf(entry);
+      return {
+        ...entry,
+        shown: shown(entry),
+        ...(holdingId === undefined ? {} : { holdingId }),
+      };
+    },
+  );
   const hiddenSections = new Set(
     (layout?.hiddenSections ?? []).filter((id) =>
       SHEET_SECTION_IDS.includes(id),
@@ -85,6 +93,7 @@ export function applySheetLayout(
         defaultShown,
       })),
     cards,
+    defaultCardOrder: defaultCards.map(({ key }) => key),
     hiddenSections,
     sectionOrder: sheetSectionOrder(layout?.sectionOrder),
     sectionCopies: Object.fromEntries(
@@ -94,4 +103,32 @@ export function applySheetLayout(
       ]),
     ) as Record<SheetCopyableSectionId, number>,
   };
+}
+
+/**
+ * The deck in the player's order (D099, plan §4 "Card order merge"): cards
+ * the stored order lists keep its relative order; a card it does not list
+ * (new since the order was saved) follows its nearest default-order
+ * predecessor, or opens the deck when it has none. Stored keys of cards no
+ * longer in the deck are ignored. Shown and hidden cards are ordered alike,
+ * so a hidden card keeps its place.
+ */
+export function orderedCards<Entry extends { readonly key: string }>(
+  defaultOrder: readonly Entry[],
+  stored: readonly string[],
+): Entry[] {
+  if (stored.length === 0) return [...defaultOrder];
+  const byKey = new Map(defaultOrder.map((entry) => [entry.key, entry]));
+  const result = [...new Set(stored)].flatMap((key) => {
+    const entry = byKey.get(key);
+    return entry === undefined ? [] : [entry];
+  });
+  const listed = new Set(result);
+  defaultOrder.forEach((entry, index) => {
+    if (listed.has(entry)) return;
+    const predecessor = defaultOrder[index - 1];
+    const at = predecessor === undefined ? -1 : result.indexOf(predecessor);
+    result.splice(at + 1, 0, entry);
+  });
+  return result;
 }

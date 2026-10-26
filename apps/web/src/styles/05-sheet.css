@@ -701,6 +701,27 @@
   z-index: 2;
 }
 
+/* Cards move by dragging their overlay onto another card (D099). */
+.sheet-card-edit.sheet-edit-target {
+  cursor: grab;
+}
+
+/* The card being dragged fades on the paper (the overlay is otherwise
+   transparent; the paper stays light in dark mode). */
+.sheet-card-edit.sheet-edit-target[data-dragging] {
+  background: rgb(255 255 255 / 60%);
+}
+
+/* Where a dragged card lands: a focus-coloured rule in the gap on that side
+   of the target card. */
+.sheet-card-edit[data-drop="before"] {
+  box-shadow: -3px 0 0 var(--focus);
+}
+
+.sheet-card-edit[data-drop="after"] {
+  box-shadow: 3px 0 0 var(--focus);
+}
+
 /* A hidden card in Edit mode: its header and bottom type bar ("Encounter
    Power · Level 3") show as usual, the rest of its body is blank (visibility
    keeps the layout and the border), and a large faint "Hidden" sits in the

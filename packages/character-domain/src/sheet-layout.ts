@@ -53,6 +53,9 @@ export interface SheetLayout {
   readonly sectionOrder?: readonly SheetSectionId[];
   /** How many copies of a repeatable section print, stored only when not 1. */
   readonly sectionCopies?: SheetSectionCopies;
+  /** Deck card keys in the player's order, stored only when it differs from
+   *  the default deck order; sheet-model merges it with the current deck. */
+  readonly cardOrder?: readonly string[];
 }
 
 /** Sections a player may print several copies of. */
@@ -126,12 +129,14 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     ? undefined
     : order;
   const sectionCopies = copies(record.sectionCopies);
+  const cardOrder = strings(record.cardOrder);
   if (
     hiddenSections.length === 0 &&
     hiddenCards.length === 0 &&
     shownCards.length === 0 &&
     sectionOrder === undefined &&
-    sectionCopies === undefined
+    sectionCopies === undefined &&
+    cardOrder.length === 0
   )
     return undefined;
   return {
@@ -141,6 +146,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     ...(shownCards.length === 0 ? {} : { shownCards }),
     ...(sectionOrder === undefined ? {} : { sectionOrder }),
     ...(sectionCopies === undefined ? {} : { sectionCopies }),
+    ...(cardOrder.length === 0 ? {} : { cardOrder }),
   };
 }
 
@@ -181,6 +187,34 @@ export function withSheetSectionOrder(
   order: readonly SheetSectionId[],
 ): SheetLayout | undefined {
   return normalizeSheetLayout({ ...layout, sectionOrder: order });
+}
+
+/**
+ * Puts the deck's cards in a new order: `order` is every current deck card
+ * (shown or hidden) in the player's order, `defaultOrder` the same cards in
+ * default deck order. Nothing is stored when the two agree. Stored keys of
+ * cards no longer in the deck are kept, each after the key it followed, so
+ * a card that temporarily leaves the deck comes back where it was.
+ */
+export function withSheetCardOrder(
+  layout: SheetLayout | undefined,
+  order: readonly string[],
+  defaultOrder: readonly string[],
+): SheetLayout | undefined {
+  const cardOrder = [...new Set(order)];
+  if (
+    cardOrder.length === defaultOrder.length &&
+    cardOrder.every((key, index) => key === defaultOrder[index])
+  )
+    return normalizeSheetLayout({ ...layout, cardOrder: [] });
+  const stored = layout?.cardOrder ?? [];
+  stored.forEach((key, index) => {
+    if (cardOrder.includes(key)) return;
+    const before = stored[index - 1];
+    const at = before === undefined ? -1 : cardOrder.indexOf(before);
+    cardOrder.splice(at + 1, 0, key);
+  });
+  return normalizeSheetLayout({ ...layout, cardOrder });
 }
 
 /** Shows or hides one sheet section. */

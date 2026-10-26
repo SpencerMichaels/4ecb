@@ -340,7 +340,7 @@ describe("character sheet Edit mode", () => {
     expect(overlay.querySelector("button")).toBeNull();
     expect(overlay.getAttribute("role")).toBe("button");
     expect(overlay.tabIndex).toBe(0);
-    // A plain click does nothing (left free for dragging cards later).
+    // A plain click does nothing (pressing and dragging moves the card).
     await act(async () => overlay.click());
     expect(runtime.updateMetadata).not.toHaveBeenCalled();
     let event: MouseEvent | undefined;
@@ -763,6 +763,109 @@ describe("character sheet Edit mode", () => {
     // changes no page number.
     expect(pageNumber('[aria-label="Play scratchpad"]')).toBeUndefined();
     expect(pageNumber(".print-card-page")).toBe(cardsBefore);
+  });
+
+  it("moves a card by dragging it onto another, marking the drop edge, without re-evaluating", async () => {
+    runtime.record = {
+      ...record(),
+      sheetLayout: { version: 1, hiddenCards: ["power:id_arc_strike"] },
+    };
+    await renderSheet(true);
+    const overlays = () => [
+      ...container.querySelectorAll<HTMLElement>(".sheet-card-edit"),
+    ];
+    const order = () => overlays().map((overlay) => overlay.dataset.key);
+    const byKey = (key: string) =>
+      overlays().find((overlay) => overlay.dataset.key === key)!;
+    const defaults = order();
+    expect(defaults.slice(0, 2)).toEqual(["play:character", "play:skills"]);
+    expect(defaults).toContain("power:id_arc_strike");
+    expect(defaults.at(-1)).toBe("item:holding-cloak");
+    expect(overlays().every((overlay) => overlay.draggable)).toBe(true);
+    const fire = async (target: Element, type: string, clientX = 0) => {
+      await act(async () =>
+        target.dispatchEvent(
+          new MouseEvent(type, { bubbles: true, cancelable: true, clientX }),
+        ),
+      );
+    };
+
+    // A hidden card drags like any other and keeps its place among them.
+    await fire(byKey("power:id_arc_strike"), "dragstart");
+    expect(byKey("power:id_arc_strike").hasAttribute("data-dragging")).toBe(
+      true,
+    );
+    // jsdom cards have no width, so x = 0 is the target's leading half
+    // (drop before it) and any x > 0 its trailing half (drop after it).
+    await fire(byKey("play:character"), "dragover", 0);
+    expect(byKey("play:character").getAttribute("data-drop")).toBe("before");
+    await fire(byKey("play:character"), "dragover", 5);
+    expect(byKey("play:character").getAttribute("data-drop")).toBe("after");
+    await fire(byKey("play:character"), "dragover", 0);
+    await fire(byKey("play:character"), "drop", 0);
+    await settle();
+    const moved = [
+      "power:id_arc_strike",
+      ...defaults.filter((key) => key !== "power:id_arc_strike"),
+    ];
+    expect(order()).toEqual(moved);
+    expect(container.querySelector("[data-drop], [data-dragging]")).toBeNull();
+    expect(byKey("power:id_arc_strike").hasAttribute("data-hidden")).toBe(true);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: {
+        version: 1,
+        hiddenCards: ["power:id_arc_strike"],
+        cardOrder: moved,
+      },
+    });
+
+    // Play data drops after the last card.
+    await fire(byKey("play:character"), "dragstart");
+    await fire(byKey("item:holding-cloak"), "dragover", 5);
+    await fire(byKey("item:holding-cloak"), "drop", 5);
+    await settle();
+    expect(order().at(-1)).toBe("play:character");
+
+    // Dropping a card where it already is saves nothing.
+    const saves = runtime.updateMetadata.mock.calls.length;
+    await fire(byKey("play:skills"), "dragstart");
+    await fire(byKey("power:id_arc_strike"), "dragover", 5);
+    await fire(byKey("power:id_arc_strike"), "drop", 5);
+    await fire(byKey("play:skills"), "dragstart");
+    await fire(byKey("play:skills"), "drop", 0);
+    await settle();
+    expect(runtime.updateMetadata).toHaveBeenCalledTimes(saves);
+
+    // A drag that is not one of ours is never accepted.
+    const foreign = new MouseEvent("dragover", {
+      bubbles: true,
+      cancelable: true,
+    });
+    await act(async () => byKey("play:skills").dispatchEvent(foreign));
+    expect(foreign.defaultPrevented).toBe(false);
+
+    // View mode prints the shown cards in the new order; dragging back to
+    // the default order stores no order at all.
+    await renderSheet(false);
+    const printed = [...container.querySelectorAll(".print-card-grid > *")];
+    expect(printed[0]?.classList.contains("print-play-skills-card")).toBe(true);
+    expect(printed.at(-1)?.classList.contains("print-play-character")).toBe(
+      true,
+    );
+    expect(cardPageText()).not.toContain("Arc Strike");
+    await renderSheet(true);
+    await fire(byKey("power:id_arc_strike"), "dragstart");
+    const after = defaults[defaults.indexOf("power:id_arc_strike") - 1]!;
+    await fire(byKey(after), "drop", 5);
+    await fire(byKey("play:character"), "dragstart");
+    await fire(byKey("play:skills"), "drop", 0);
+    await settle();
+    expect(order()).toEqual(defaults);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: { version: 1, hiddenCards: ["power:id_arc_strike"] },
+    });
+    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
   it("chains page numbers through a hidden, reordered layout and resets both", async () => {
