@@ -453,6 +453,21 @@ describe("print layout contract", () => {
     expect(appStyles).not.toMatch(/\.sheet-concealed-card[^{]*footer/);
   });
 
+  it("fades a hidden reminder row in Edit mode under an out-of-flow mark", () => {
+    expect(appStyles).toMatch(
+      /\.sheet-reminder-edit\s*\{\s*position:\s*relative;/,
+    );
+    expect(appStyles).toMatch(
+      /\.sheet-reminder-edit\[data-hidden\] > :not\(\.sheet-hidden-reminder-mark\)\s*\{\s*opacity:\s*0\.35;/,
+    );
+    // The mark never changes the row's measured height or catches clicks.
+    expect(appStyles).toMatch(
+      /\.sheet-hidden-reminder-mark\s*\{[^}]*pointer-events:\s*none;[^}]*position:\s*absolute;/,
+    );
+    // Probe copies are never styled as edit rows.
+    expect(appStyles).not.toMatch(/\.ov-reminder-probe[^{]*sheet-reminder/);
+  });
+
   it("keeps View | Edit in place whether or not Edit mode's tools show", () => {
     // Packed from the start (not space-between), so the tools that follow the
     // control in Edit mode never move it; Print is pushed to the end.

@@ -8,6 +8,7 @@ import {
   withHoldingCardsShown,
   withSheetCardOrder,
   withSheetCardsShown,
+  withSheetReminderShown,
   withSheetSectionCopies,
   withSheetSectionOrder,
   withSheetSectionShown,
@@ -208,5 +209,50 @@ describe("sheet layout", () => {
     const updated = withHoldingCardsShown(inventory, ["b"], false);
     expect(updated[0]).toBe(inventory[0]);
     expect(updated[1]).toEqual({ ...entry("b"), showPowerCard: false });
+  });
+
+  it("stores reminder choices only as deltas from their defaults", () => {
+    expect(
+      normalizeSheetLayout({
+        version: 1,
+        reminders: {
+          "feature:a": "hide",
+          "effect:b": "show",
+          "item:c": "pin",
+          "": "hide",
+          ["x".repeat(600)]: "hide",
+        },
+      }),
+    ).toEqual({
+      version: 1,
+      reminders: { "feature:a": "hide", "effect:b": "show" },
+    });
+    expect(normalizeSheetLayout({ version: 1, reminders: [] })).toBeUndefined();
+    const detected = { id: "feature:a", defaultShown: true };
+    const rider = { id: "effect:b", defaultShown: false };
+    const hidden = withSheetReminderShown(undefined, detected, false);
+    expect(hidden).toEqual({ version: 1, reminders: { "feature:a": "hide" } });
+    const both = withSheetReminderShown(hidden, rider, true);
+    expect(both).toEqual({
+      version: 1,
+      reminders: { "feature:a": "hide", "effect:b": "show" },
+    });
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(both)))).toEqual(
+      both,
+    );
+    // Back to a default: the choice is dropped, and so is an empty layout.
+    expect(withSheetReminderShown(both, rider, false)).toEqual(hidden);
+    expect(withSheetReminderShown(hidden, detected, true)).toBeUndefined();
+    // Choices for reminders that vanished are kept, not pruned.
+    expect(
+      withSheetReminderShown(
+        { version: 1, reminders: { "feature:gone": "hide" } },
+        rider,
+        true,
+      ),
+    ).toEqual({
+      version: 1,
+      reminders: { "feature:gone": "hide", "effect:b": "show" },
+    });
   });
 });

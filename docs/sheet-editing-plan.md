@@ -1,11 +1,11 @@
 # Editable character sheet — plan (owner-reviewed 2026-10-25)
 
-Status: **approved; phases 0, 1 and 3 done (2026-10-25, D099); phase 2
-(reminders) postponed by the owner, who had phase 3 built first.** Owner
+Status: **approved; phases 0–3 done (D099): 0, 1 and 3 on 2026-10-25,
+phase 2 (reminders) on 2026-10-26.** Owner
 task (tasks.txt): allow editing the
 character sheet with view and edit modes — moving/hiding cards, choosing
-reference sections, pinning or removing reminders — and, if manual reminders
-land, drop the "all Action Point riders are reminders" special case.
+reference sections, pinning or removing reminders — and drop the "all
+Action Point riders are reminders" special case.
 
 ## Today
 
@@ -20,10 +20,10 @@ land, drop the "all Action Point riders are reminders" special case.
 - `CharacterRecord` already carries non-build metadata (`sheetSettings`,
   unused per D083; `portrait`) saved via `CharacterRepository.updateMetadata`;
   backups/duplicate copy the whole record.
-- Missing stable IDs: reminders have none; item cards have none.
-- Action Point special case: `overview.ts` `actionPointEffects` block, decision
-  "Action Point reminder policy (2026-10-24)".
-- Holdings' legacy `showPowerCard=false` already hides item cards, with no UI.
+- (Before phase 0/2) reminders and item cards had no stable ids; the Action
+  Point special case lived in `overview.ts` (`actionPointEffects`, decision
+  "Action Point reminder policy (2026-10-24)", now superseded); holdings'
+  legacy `showPowerCard=false` hid item cards with no UI.
 
 ## 1. Data model (proposed D099)
 
@@ -40,12 +40,6 @@ export interface SheetLayout {
   readonly shownCards?: readonly string[]; // overrides default-hidden (imported showPowerCard=false)
   readonly cardOrder?: readonly string[];
   readonly reminders?: Readonly<Record<string, "show" | "hide">>;
-  readonly customReminders?: readonly {
-    readonly id: string;
-    readonly label: string;
-    readonly text: string;
-    readonly category?: OverviewReminderCategory;
-  }[];
 }
 ```
 
@@ -55,9 +49,9 @@ export interface SheetLayout {
 - **Stable keys built in sheet-model from provenance, never text:**
   `power:<definitionId>` (name fallback + `#n` for legacy caches/duplicates),
   `item:<holdingId>`, `item-set:<id>`, `companion:<id>`, `play:*`; reminders
-  `feature:<definitionId>`, `item:<holdingId>:<property>`,
-  `effect:<source>:<provider>`, `core:<featureId>:<label>`; fixed reference
-  group constants.
+  `feature:<definitionId>`, `item:<holdingId>` (an item's properties are
+  one reminder), `effect:<sourceKey>:<provider>` (`def:`/`inv:`/`prov:`
+  source keys), `#n` on a repeat; fixed reference group constants.
 - Vanished keys are ignored, not pruned (a temporary disappearance restores the
   choice); Reset clears all. Re-buys keep the holding ID (D097); a retrained
   power is a new card.
@@ -112,17 +106,13 @@ export interface SheetLayout {
 2. Card hide/show by right-click (bulk group toggles dropped).
    Hiding a card removes only the card (scratchpad usage boxes, power index
    unchanged).
-3. Reminder show/hide over every candidate, with per-row Default reset and a
-   provenance hint for suppressed duplicates ("On the Action Point card").
-4. Custom reminders (add/edit/delete; label, text, category). Typed numbers
-   don't update — say so in the panel.
-5. Reset (global and per section).
-6. Remove the Action Point special case together with 3–4.
+3. Reminder show/hide by right-click on page 1 (done, phase 2; rules in §4).
+4. Global Reset (done; it also clears reminder choices).
+5. Remove the Action Point special case (done with 3).
 
 **Nice-to-have:** card reorder (click-and-drag; a right-click menu returns only if
 a second card action, e.g. legacy-style Customize, is added); reminder ordering; one-off print scope (Everything / Sheet pages /
-Cards); app-wide default layout; editing an auto reminder's text as
-"copy to custom + hide original"; named print profiles (defer).
+Cards); app-wide default layout; named print profiles (defer).
 
 ## 4. Applying it (sheet-model)
 
@@ -132,16 +122,34 @@ deck, hidden sections and an editor model, shared by print, the future M6
 view and play. The deck (`sheetCardDeck`) moves from the web app into
 sheet-model with keys.
 
-- Reminder dedup becomes decidable after the fact: `withSheetOverview` emits
-  `reminderCandidates` with `id`, `defaultShown` and `coveredBy` surfaces
-  instead of splicing; today's `reminders`/`summaryReminders` become the
-  default-layout result. A candidate shows if pinned, or if default-shown and
-  no covering surface is still visible (so hiding the Action Point card
-  brings its riders back).
+- Reminders (phase 2, owner-approved rules): `withSheetOverview` emits
+  `reminderCandidates` with `id` and `defaultShown` instead of splicing;
+  `reminders`/`summaryReminders` are the default-layout result.
+  - Detected reminders (page 1's reminders before phase 2) are on by
+    default; riders — reminders a power card's rider line
+    (`additionalEffects`) already prints — are off by default. Action
+    Point riders are ordinary riders.
+  - Never twice on one page: a reminder another page-1 pane (Conditional
+    modifiers, defensive traits) or the companion card's notes already
+    show is never a candidate. Only power-card riders become toggleable
+    duplicates.
+  - One row per source: a source's riders fold into its detected row, or
+    else into one rider row in the source's own wording (Gauntlets of
+    Blood: "You gain a +2 bonus to damage rolls against bloodied
+    targets"), falling back to the rider text; turning it on prints it
+    once.
+  - `applySheetLayout` decides: explicit hide drops, explicit show keeps,
+    otherwise `defaultShown`. Showing a rider (pinning) keeps the card's
+    line; hiding a card never changes a reminder.
+  - Edit mode only: right-clicking a reminder row on page 1 or a
+    continuation page toggles it, with no menu and no keyboard binding.
+    Rows that are off stay in place in their category, faded and marked
+    "Hidden"; Edit fits page 1 with them included (so it may run longer
+    than the print). View mode and print show only rows that are on;
+    `beforeprint` strips the edit UI and hidden rows; probe copies never
+    carry edit behaviour.
 - Card order merge: default order, user-listed cards in their relative order,
   new cards after their nearest default predecessor.
-- Action Point riders become ordinary candidates covered by the AP card; the
-  2026-10-24 policy is superseded by D099.
 - Layout only selects/orders model output; it never computes a value.
 
 ## 5. Phases
@@ -154,8 +162,9 @@ sheet-model with keys.
    (the first cut's "Sheet contents" panel was replaced the same day;
    section right-click and the "Show hidden" toggle were replaced on
    2026-10-25).
-2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
-   removal. Postponed by the owner (phase 3 landed first).
+2. **Done (2026-10-26, after phase 3).** Reminders: right-click show/hide
+   of page-1 reminder rows, power-card riders offered off by default, AP
+   special-case removal (rules in §4).
 3. **Done (built before phase 2).** Card ordering by click-and-drag: drag a
    card's Edit overlay onto another card, on any page, with a focus-coloured
    drop-edge rule on the target's left or right; any card moves anywhere and
@@ -173,9 +182,19 @@ roadmap as an M5.x slice before M5.8).
 ## 6. Risks
 
 Re-evaluation on every save; probe-measurement corruption (keep controls out
-of measured regions and probe copies); both reminder lists must go through the
-layout; weak keys for legacy-cache sheets; stale numbers in custom reminders;
+of measured regions and probe copies); weak keys for legacy-cache sheets;
 scope creep into the M6 interactive view.
+
+## Proposed, not approved
+
+The owner decided against these for phase 2 (2026-10-26); they need a new
+decision before anyone builds them:
+
+- Custom reminders (add/edit/delete; label, text, category).
+- Provenance hints for riders ("On the Action Point card").
+- Per-row or per-section reset of reminder choices.
+- Starring entries on reference pages.
+- Bringing a rider back automatically when its card is hidden.
 
 ## 7. Owner decisions (2026-10-25)
 
@@ -186,11 +205,12 @@ scope creep into the M6 interactive view.
    evaluation). `sheetLayout` covers every other card.
 2. **No app-wide default layout for now**; maybe later.
 3. **Reminders slot into the section matching their category** (feat, class
-   feature, racial trait, item property, …). A custom reminder picks one of
-   those categories; "Other reminders" is only the fallback when none fits.
+   feature, racial trait, item property, …); "Other reminders" is only the
+   fallback when none fits.
 4. **Cards move anywhere in the deck.**
 5. **Layout edits do not touch "last modified".**
 6. **A retrained power starts from defaults.**
 7. **Pinned reminders may repeat other surfaces** — that is exactly what
-   pinning is for.
+   pinning is for. Refined 2026-10-26: only power-card riders can be
+   pinned; a reminder another page-1 pane already shows is never offered.
 8. **The builder links to View mode.**

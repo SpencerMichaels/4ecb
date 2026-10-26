@@ -446,6 +446,91 @@ describe("character sheet Edit mode", () => {
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
   });
 
+  it("toggles a page-1 reminder row on right-click, showing hidden rows only in Edit", async () => {
+    // An Action Point rider: printed on the Action Point card, so its
+    // page-1 reminder is off by default.
+    runtime.evaluate = vi.fn(
+      async (input: EvaluationInput): Promise<EvaluatedCharacter> => ({
+        ...evaluateCharacter(input, []),
+        powers: [arcStrike],
+        textContributions: [
+          {
+            name: "Action Point",
+            value:
+              "Ward Tattoo:When you spend an action point, gain resist 5 fire",
+            providerId: "ward",
+            providerName: "Ward Tattoo",
+            definitionId: "ward",
+          },
+        ],
+      }),
+    );
+    const row = () =>
+      [
+        ...container.querySelectorAll<HTMLElement>(
+          ".ov-reminder-region .sp-reminders > div",
+        ),
+      ].find((entry) => entry.textContent?.includes("Ward Tattoo"));
+    await renderSheet(false);
+    expect(row()).toBeUndefined();
+
+    await renderSheet(true);
+    expect(row()?.hasAttribute("data-hidden")).toBe(true);
+    expect(
+      row()?.querySelector(".sheet-hidden-reminder-mark")?.textContent,
+    ).toBe("Hidden");
+    // Probe copies carry no edit behaviour or marks.
+    expect(
+      container.querySelector(
+        ".ov-reminder-probe .sheet-reminder-edit, .ov-reminder-probe .sheet-hidden-reminder-mark",
+      ),
+    ).toBeNull();
+    // A right-click toggles directly: no menu opens.
+    let event: MouseEvent | undefined;
+    await act(async () => {
+      event = rightClick(row()!);
+    });
+    await settle();
+    expect(event?.defaultPrevented).toBe(true);
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+    expect(row()?.hasAttribute("data-hidden")).toBe(false);
+    expect(row()?.querySelector(".sheet-hidden-reminder-mark")).toBeNull();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: {
+        version: 1,
+        reminders: {
+          "effect:prov:ward:ward tattoo": "show",
+        },
+      },
+    });
+
+    // Printing strips the edit UI; a shown row prints.
+    await act(async () => window.dispatchEvent(new Event("beforeprint")));
+    expect(row()?.classList.contains("sheet-reminder-edit")).toBe(false);
+    await act(async () => window.dispatchEvent(new Event("afterprint")));
+
+    await renderSheet(false);
+    expect(row()).toBeDefined();
+    expect(row()?.classList.contains("sheet-reminder-edit")).toBe(false);
+    // Right-clicking in View mode changes nothing.
+    await act(async () => {
+      rightClick(row()!);
+    });
+    await settle();
+    expect(runtime.updateMetadata).toHaveBeenCalledTimes(1);
+
+    // Hiding it again returns to the default layout; print leaves it out.
+    await renderSheet(true);
+    await toggle(row()!);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: null,
+    });
+    await act(async () => window.dispatchEvent(new Event("beforeprint")));
+    expect(row()).toBeUndefined();
+    await act(async () => window.dispatchEvent(new Event("afterprint")));
+    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
+  });
+
   it("opens the Sections menu under its trigger and closes it with Escape, outside clicks or Tab", async () => {
     await renderSheet(true);
     const trigger = sectionsTrigger()!;

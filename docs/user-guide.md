@@ -268,6 +268,16 @@ order. New cards (a power learned later) appear next to the card they
 follow by default. Moving cards is drag-only for now; there is no keyboard
 equivalent.
 
+Page 1's "Remember in play" reminders work the same way in Edit mode:
+right-click a reminder to hide it, and right-click a hidden one to show it
+again. Hidden reminders stay in their place, faded and marked "Hidden", so
+page 1 in Edit mode can run longer than the printout. Edit mode also lists,
+already hidden, the reminders a power card's rider line prints (such as
+Action Point benefits or an item's bonus against bloodied targets): show one
+to keep it on page 1 as well as on its cards. Reminders that page 1's other
+panes already show, such as Conditional modifiers, are never offered.
+Reminders that continue on the overview's next pages toggle the same way.
+
 To choose what prints and in what order, open **Sections** in the Edit
 toolbar. Each row is a section with a checkbox: Overview (page 1, with any
 continuation pages), the play scratchpad, each full-reference group
@@ -281,7 +291,8 @@ numbers, so you can print extra copies: use the − and + buttons on their
 rows, or type a number. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset** (click again to
-confirm) prints everything again, in the default order. Changes save automatically, are
+confirm) prints everything again, in the default order, with the default
+reminders. Changes save automatically, are
 kept per character in backups and copies, and don't change the character's
 "last modified" time; printing (**Print or save PDF**, or **PDF** from the
 library) always uses the saved choices.

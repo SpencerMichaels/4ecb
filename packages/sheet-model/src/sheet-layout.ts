@@ -10,6 +10,7 @@ import {
 
 import { sheetCardDeck, type SheetDeckEntry } from "./card-deck";
 import type { CharacterSheetModel, SheetCard } from "./index";
+import type { OverviewReminderCandidate } from "./overview";
 
 export interface SheetLayoutCard extends SheetDeckEntry {
   /** Whether the card prints under this layout. */
@@ -19,6 +20,11 @@ export interface SheetLayoutCard extends SheetDeckEntry {
    * card; absent for every card the layout's own lists control.
    */
   readonly holdingId?: string;
+}
+
+export interface SheetLayoutReminder extends OverviewReminderCandidate {
+  /** Whether the reminder prints on page 1 under this layout. */
+  readonly shown: boolean;
 }
 
 export interface ResolvedSheetLayout {
@@ -34,6 +40,9 @@ export interface ResolvedSheetLayout {
   readonly sectionOrder: readonly SheetSectionId[];
   /** How many copies of each repeatable section print (at least 1). */
   readonly sectionCopies: Readonly<Record<SheetCopyableSectionId, number>>;
+  /** Every page-1 reminder candidate in page order, shown or not; page 1
+   *  prints the shown ones. */
+  readonly reminders: readonly SheetLayoutReminder[];
 }
 
 /**
@@ -46,10 +55,14 @@ export interface ResolvedSheetLayout {
  * `hiddenByDefault`; every other card follows the layout's deltas. The
  * layout's `cardOrder` orders every card, shown or hidden (`orderedCards`),
  * before print cuts the deck into 9-card pages.
+ *
+ * Page-1 reminders: an explicit "hide" drops one, an explicit "show" keeps
+ * it, otherwise its `defaultShown` applies. Hiding a card never changes a
+ * reminder.
  */
 export function applySheetLayout(
   model: Pick<CharacterSheetModel, "powers" | "items" | "companions"> &
-    Partial<Pick<CharacterSheetModel, "itemSets">>,
+    Partial<Pick<CharacterSheetModel, "itemSets" | "overview">>,
   layout: SheetLayout | undefined,
   options: { readonly itemCardsShown?: ReadonlyMap<string, boolean> } = {},
 ): ResolvedSheetLayout {
@@ -102,7 +115,32 @@ export function applySheetLayout(
         sheetSectionCopies(layout, section),
       ]),
     ) as Record<SheetCopyableSectionId, number>,
+    reminders: reminderCandidates(model.overview).map((reminder) => {
+      const choice = layout?.reminders?.[reminder.id];
+      return {
+        ...reminder,
+        shown: choice === undefined ? reminder.defaultShown : choice === "show",
+      };
+    }),
   };
+}
+
+/** The overview's reminder candidates; a model without them (built before
+ * candidates existed) offers its printed reminders, each shown. */
+function reminderCandidates(
+  overview: CharacterSheetModel["overview"],
+): readonly OverviewReminderCandidate[] {
+  if (overview === undefined) return [];
+  return (
+    overview.reminderCandidates ??
+    (overview.summaryReminders ?? overview.reminders).map(
+      (reminder, index) => ({
+        ...reminder,
+        id: `unlisted:${index}`,
+        defaultShown: true,
+      }),
+    )
+  );
 }
 
 /**

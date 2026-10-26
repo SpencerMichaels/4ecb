@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
 import {
@@ -24,6 +25,7 @@ import {
   powerActionRank,
   withoutDanglingChoiceLeadIn,
   type CharacterSheetModel,
+  type OverviewReminder,
   type SheetCard,
   type SheetPowerVariant,
   type SheetValue,
@@ -397,14 +399,29 @@ function Values({
 function Reminders({
   values,
   indices,
+  onToggle,
 }: {
   values: readonly ReminderEntry[];
   indices?: readonly number[];
+  onToggle?: ((id: string) => void) | undefined;
 }) {
   return (
     <div className="sp-reminders">
       {values.map((entry, index) => (
-        <div key={index} data-reminder-index={indices?.[index]}>
+        <div
+          key={index}
+          data-reminder-index={indices?.[index]}
+          data-hidden={entry.shown === false || undefined}
+          {...(onToggle === undefined || entry.id === undefined
+            ? {}
+            : {
+                className: "sheet-reminder-edit",
+                onContextMenu: (event: ReactMouseEvent) => {
+                  event.preventDefault();
+                  onToggle(entry.id!);
+                },
+              })}
+        >
           <strong>
             {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}
             {entry.choice ? `: ${entry.choice}` : null}
@@ -420,20 +437,31 @@ function Reminders({
           ) : (
             <Prose value={entry.value} />
           )}
+          {/* Edit mode marks a hidden row; out of flow, so the row keeps
+              the height its probe copy measured. */}
+          {onToggle !== undefined && entry.shown === false ? (
+            <span className="sheet-hidden-reminder-mark">Hidden</span>
+          ) : null}
         </div>
       ))}
     </div>
   );
 }
-type ReminderEntry = NonNullable<
-  CharacterSheetModel["overview"]
->["reminders"][number];
+/** A page-1 reminder; sheet layout rows (D099) carry their id and whether
+ *  they print, and Edit mode lists hidden ones too. */
+type ReminderEntry = OverviewReminder & {
+  readonly id?: string;
+  readonly shown?: boolean;
+};
 function ReminderPanels({
   values,
   visibleIndices,
+  onToggle,
 }: {
   values: readonly ReminderEntry[];
   visibleIndices?: readonly number[] | undefined;
+  /** Edit mode's right-click toggle; never on measured probe copies. */
+  onToggle?: ((id: string) => void) | undefined;
 }) {
   const categories = [
     "Class features",
@@ -466,6 +494,7 @@ function ReminderPanels({
             <Reminders
               values={entries.map(({ entry }) => entry)}
               indices={entries.map(({ index }) => index)}
+              onToggle={onToggle}
             />
           </Panel>
         ) : null;
@@ -647,16 +676,19 @@ function SummaryColumns({
   model,
   children,
   continuationPage = 2,
+  summaryReminders,
   onVisibleReminders,
+  onToggleReminder,
 }: {
   model: CharacterSheetModel;
   children: ReactNode;
   /** Where reminders that do not fit continue. */
   continuationPage?: number;
+  /** Page 1's reminder rows, in page order. */
+  summaryReminders: readonly ReminderEntry[];
   onVisibleReminders: (indices: readonly number[]) => void;
+  onToggleReminder?: ((id: string) => void) | undefined;
 }) {
-  const overview = model.overview!;
-  const summaryReminders = overview.summaryReminders ?? overview.reminders;
   const ref = useRef<HTMLDivElement>(null);
   const slots = new Map(
     Children.toArray(children).flatMap((child) =>
@@ -810,7 +842,7 @@ function SummaryColumns({
       active = false;
       observer.disconnect();
     };
-  }, [model, children, leftCount, panes.length]);
+  }, [model, summaryReminders, children, leftCount, panes.length]);
   const renderPane = (pane: (typeof panes)[number]) => (
     <div className="ov-flow-pane" data-summary-pane={pane.id} key={pane.id}>
       {pane.content}
@@ -833,6 +865,7 @@ function SummaryColumns({
           <ReminderPanels
             values={summaryReminders}
             visibleIndices={visibleIndices}
+            onToggle={onToggleReminder}
           />
           {reminders.length < summaryReminders.length ? (
             <p className="sp-caption">
@@ -910,13 +943,17 @@ function Summary({
   name,
   portrait,
   startPage = 1,
+  reminders,
   onVisibleReminders,
+  onToggleReminder,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   startPage?: number;
+  reminders: readonly ReminderEntry[];
   onVisibleReminders: (indices: readonly number[]) => void;
+  onToggleReminder?: ((id: string) => void) | undefined;
 }) {
   const overview = model.overview!;
   return (
@@ -1039,7 +1076,9 @@ function Summary({
       <SummaryColumns
         model={model}
         continuationPage={startPage + 1}
+        summaryReminders={reminders}
         onVisibleReminders={onVisibleReminders}
+        onToggleReminder={onToggleReminder}
       >
         <SummaryPane id="defenses">
           {overview.defensiveTraits?.length ||
@@ -3136,6 +3175,7 @@ function SummaryContinuationPages({
   startPage = 2,
   entries,
   onPageCount,
+  onToggleReminder,
 }: {
   model: CharacterSheetModel;
   name: string;
@@ -3143,6 +3183,7 @@ function SummaryContinuationPages({
   startPage?: number;
   entries: readonly ReferenceEntry[];
   onPageCount: (count: number) => void;
+  onToggleReminder?: ((id: string) => void) | undefined;
 }) {
   const probe = useRef<HTMLElement>(null);
   const values = useMemo(
@@ -3203,7 +3244,12 @@ function SummaryContinuationPages({
     footerTitle: "Character Summary · continued",
   };
   const content = (indices?: readonly number[]) => (
-    <ReminderPanels values={values} visibleIndices={indices} />
+    <ReminderPanels
+      values={values}
+      visibleIndices={indices}
+      // The measured copy never carries edit behaviour.
+      onToggle={indices === undefined ? undefined : onToggleReminder}
+    />
   );
   return (
     <>
@@ -3520,6 +3566,8 @@ export function SheetOverview({
   sectionOrder = SHEET_SECTION_IDS,
   sectionCopies = NO_SECTION_COPIES,
   cardPageCount = 0,
+  reminders,
+  onToggleReminder,
   children,
 }: {
   model: CharacterSheetModel;
@@ -3534,10 +3582,15 @@ export function SheetOverview({
   sectionCopies?: Readonly<Partial<Record<SheetCopyableSectionId, number>>>;
   /** How many card pages `children` renders. */
   cardPageCount?: number;
+  /** Page 1's reminder rows from the sheet layout (D099), in page order;
+   *  Edit mode includes hidden rows. Defaults to the model's own. */
+  reminders?: readonly ReminderEntry[];
+  /** Edit mode: right-clicking a reminder row toggles it. */
+  onToggleReminder?: (id: string) => void;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
-    model: CharacterSheetModel;
+    rows: readonly ReminderEntry[];
     indices: readonly number[];
   }>();
   // Measured page counts: the summary's continuation pages, the scratchpad
@@ -3559,21 +3612,26 @@ export function SheetOverview({
     };
   }, []);
   const references = useMemo(() => referenceSections(model), [model]);
+  const reminderRows = useMemo(
+    () =>
+      reminders ??
+      model.overview?.summaryReminders ??
+      model.overview?.reminders ??
+      [],
+    [model, reminders],
+  );
   const onVisibleReminders = useCallback(
     (indices: readonly number[]) => {
-      setSummarySelection({ model, indices });
+      setSummarySelection({ rows: reminderRows, indices });
     },
-    [model],
+    [reminderRows],
   );
   const continuationEntries = useMemo(
     () =>
-      model.overview && summarySelection?.model === model
-        ? summaryContinuationEntries(
-            model.overview.summaryReminders ?? model.overview.reminders,
-            summarySelection.indices,
-          )
+      summarySelection?.rows === reminderRows
+        ? summaryContinuationEntries(reminderRows, summarySelection.indices)
         : [],
-    [model, summarySelection],
+    [reminderRows, summarySelection],
   );
   if (!model.overview)
     return <>{typeof children === "function" ? children(1) : children}</>;
@@ -3617,7 +3675,9 @@ export function SheetOverview({
             name={name}
             portrait={portrait}
             startPage={startPage}
+            reminders={reminderRows}
             onVisibleReminders={onVisibleReminders}
+            onToggleReminder={onToggleReminder}
           />
           <SummaryContinuationPages
             model={model}
@@ -3625,6 +3685,7 @@ export function SheetOverview({
             startPage={startPage + 1}
             entries={continuationEntries}
             onPageCount={pageCountSetters.summary}
+            onToggleReminder={onToggleReminder}
           />
         </>
       );

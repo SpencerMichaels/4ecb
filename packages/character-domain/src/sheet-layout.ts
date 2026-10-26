@@ -56,6 +56,27 @@ export interface SheetLayout {
   /** Deck card keys in the player's order, stored only when it differs from
    *  the default deck order; sheet-model merges it with the current deck. */
   readonly cardOrder?: readonly string[];
+  /** Page-1 reminder ids (sheet-model `reminderCandidates`) the player
+   *  showed or hid, stored only where the choice differs from the
+   *  reminder's default. */
+  readonly reminders?: SheetReminderChoices;
+}
+
+export type SheetReminderChoices = Readonly<Record<string, "show" | "hide">>;
+
+/** Valid stored reminder choices, at most {@link MAX_ENTRIES}. */
+function reminderChoices(value: unknown): SheetReminderChoices | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(
+      (entry): entry is [string, "show" | "hide"] =>
+        entry[0].length > 0 &&
+        entry[0].length <= MAX_KEY_LENGTH &&
+        (entry[1] === "show" || entry[1] === "hide"),
+    )
+    .slice(0, MAX_ENTRIES);
+  return entries.length === 0 ? undefined : Object.fromEntries(entries);
 }
 
 /** Sections a player may print several copies of. */
@@ -130,13 +151,15 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     : order;
   const sectionCopies = copies(record.sectionCopies);
   const cardOrder = strings(record.cardOrder);
+  const reminders = reminderChoices(record.reminders);
   if (
     hiddenSections.length === 0 &&
     hiddenCards.length === 0 &&
     shownCards.length === 0 &&
     sectionOrder === undefined &&
     sectionCopies === undefined &&
-    cardOrder.length === 0
+    cardOrder.length === 0 &&
+    reminders === undefined
   )
     return undefined;
   return {
@@ -147,6 +170,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     ...(sectionOrder === undefined ? {} : { sectionOrder }),
     ...(sectionCopies === undefined ? {} : { sectionCopies }),
     ...(cardOrder.length === 0 ? {} : { cardOrder }),
+    ...(reminders === undefined ? {} : { reminders }),
   };
 }
 
@@ -215,6 +239,30 @@ export function withSheetCardOrder(
     cardOrder.splice(at + 1, 0, key);
   });
   return normalizeSheetLayout({ ...layout, cardOrder });
+}
+
+/**
+ * Shows or hides one page-1 reminder. `defaultShown` says whether it prints
+ * by default, so a choice matching the default is dropped rather than
+ * stored. Choices for reminders that no longer exist are kept.
+ */
+export function withSheetReminderShown(
+  layout: SheetLayout | undefined,
+  reminder: { readonly id: string; readonly defaultShown: boolean },
+  shown: boolean,
+): SheetLayout | undefined {
+  const others = Object.fromEntries(
+    Object.entries(layout?.reminders ?? {}).filter(
+      ([id]) => id !== reminder.id,
+    ),
+  );
+  return normalizeSheetLayout({
+    ...layout,
+    reminders:
+      shown === reminder.defaultShown
+        ? others
+        : { ...others, [reminder.id]: shown ? "show" : "hide" },
+  });
 }
 
 /** Shows or hides one sheet section. */

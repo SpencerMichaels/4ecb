@@ -2,6 +2,9 @@
 
 ### Action Point reminder policy (2026-10-24)
 
+Status: superseded by D099 (2026-10-26): Action Point riders are ordinary
+power-card riders, offered in Edit mode but off by default.
+
 Owner decision: retain all Action Point benefit reminders in "Remember in
 play", even when the Action Point card or another specific surface repeats
 them. These benefits can influence the decision to spend a point. This applies
@@ -2743,8 +2746,8 @@ Implemented in `apps/web/src/builder-diagnostics.ts`,
 
 ### D099 — The printed sheet has an editable, per-character layout
 
-Status: accepted (2026-10-25), phases 0, 1 and 3 implemented (phase 2
-postponed by the owner). Product-owner plan
+Status: accepted (2026-10-25), phases 0–3 implemented (phase 2, reminders,
+on 2026-10-26, after phase 3). Product-owner plan
 and decisions in `docs/sheet-editing-plan.md` §7.
 
 Decision:
@@ -2755,7 +2758,8 @@ Decision:
   and `portrait`. No schema bump; backups, export, duplicate and trash carry
   it unchanged; the rules engine and `.dnd4e` import/export never see it.
   It stores only deltas from the default sheet (`hiddenSections`,
-  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`, `cardOrder`), so new cards get default behavior; vanished
+  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`, `cardOrder`,
+  `reminders`), so new cards and reminders get default behavior; vanished
   keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
   leniently (malformed entries are dropped; an empty layout is the default).
 - Item cards are the exception (owner decision 1): whether a holding prints
@@ -2862,13 +2866,45 @@ Decision:
   into 9-card pages (plan §4): listed cards in stored order, a card the
   order does not list (new since it was saved) right after its nearest
   default-order predecessor, vanished keys ignored.
-- Later phases (reminder show/hide and custom reminders, which supersede
-  the "Action Point reminder policy (2026-10-24)") extend the same type;
-  card actions join the on-paper overlays.
+- Page-1 reminders show and hide (phase 2, owner-approved 2026-10-26;
+  supersedes the "Action Point reminder policy (2026-10-24)"). There are
+  two kinds of candidate. **Detected** reminders (the page-1 reminders as
+  before) are on by default. **Riders** — reminders a power card's rider
+  line (`additionalEffects`) already prints, which the old dedup removed —
+  are off by default; Action Point riders are ordinary riders now (the
+  `actionPointEffects` special case is gone). A reminder another page-1
+  pane already shows (Conditional modifiers, defensive traits) or the
+  companion card's notes show is never a candidate, so nothing prints twice
+  on one page. One row per source: a source's riders fold into its detected
+  row, or else into one rider row worded as the source (an item's property
+  text, e.g. Gauntlets of Blood's "You gain a +2 bonus to damage rolls
+  against bloodied targets"), the rider text only when the source has none.
+  `withSheetOverview` emits `reminderCandidates` (`id`, `defaultShown`)
+  in page order without splicing; `reminders`/`summaryReminders` are the
+  default-layout result. Ids come from provenance, never text:
+  `feature:<definitionId>` (`feature:<group>:<name>` without content),
+  `item:<holdingId>` (an equipped item's grouped actionable properties;
+  `item:name:<name>` without a holding), `effect:<sourceKey>:<provider>`
+  (`sourceKey` is `def:<definitionId>`, `inv:<holdingId>` or
+  `prov:<providerId>`), with `#2`… on a repeat. `SheetLayout.reminders`
+  maps ids to "show"/"hide", stored only where it differs from the default
+  (`withSheetReminderShown`); vanished ids are ignored, not pruned, and
+  Reset clears them. `applySheetLayout` decides: an explicit hide drops a
+  reminder, an explicit show keeps it, otherwise `defaultShown`. Showing a
+  rider (pinning) never removes the card's line, and hiding a card never
+  changes a reminder. In Edit mode, right-clicking a reminder row on page 1
+  or its continuation pages toggles it with no menu (no keyboard binding,
+  owner); rows that are off stay in place in their category, faded under a
+  faint "Hidden" (out of flow, so the row keeps its probe height). Edit mode
+  fits page 1 with those rows included, so it may run longer than the
+  print. View mode and print (`beforeprint`) show only rows that are on,
+  without edit behaviour; probe copies never carry it. Toggling never
+  re-evaluates. Custom reminders, provenance hints, per-row or per-section
+  reset, starring and reminder ordering were not approved.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
-`packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
+`packages/sheet-model/src/{card-deck,sheet-layout,overview}.ts`,
 `apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetSectionsMenu,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 

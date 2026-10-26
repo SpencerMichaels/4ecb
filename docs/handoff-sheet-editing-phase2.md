@@ -1,5 +1,14 @@
 # Handoff: editable sheet, phase 2 (reminders)
 
+> **Done (2026-10-26).** Phase 2 is built to the owner's approved rules,
+> recorded in [`sheet-editing-plan.md`](sheet-editing-plan.md) §4 and D099:
+> right-click toggles page-1 (and continuation) reminder rows in Edit mode;
+> power-card riders, Action Point riders included, are offered off by
+> default, one row per source; same-page duplicates are never offered. The
+> "Proposed interaction" section below is **superseded**, and its custom
+> reminders, provenance hints, per-row reset and "comes back when the card
+> is hidden" rule were not approved (plan: "Proposed, not approved").
+
 > **Update (2026-10-25):** the owner postponed phase 2 and had **phase 3
 > (card ordering) built first**: in Edit mode a card's overlay drags onto
 > another card, on any page (native drag and drop, focus-coloured drop-edge
@@ -80,7 +89,7 @@ designs predate the owner's feedback below.
    keep; else shown if `defaultShown` and no covering surface is still
    visible — a hidden card counts as not visible).
 
-## Proposed interaction (CONFIRM WITH THE OWNER BEFORE BUILDING)
+## Proposed interaction (superseded 2026-10-26; see the note at the top)
 
 Following the pattern the owner settled on:
 

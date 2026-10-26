@@ -1,9 +1,35 @@
 # Implementation status
 
+## Editable printed sheet, phase 2: reminders (2026-10-26)
+
+Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).
+`withSheetOverview` (`packages/sheet-model/src/overview.ts`) now emits
+`reminderCandidates` with provenance ids (`feature:<definitionId>`,
+`item:<holdingId>`, `effect:<sourceKey>:<provider>`) and `defaultShown`:
+detected reminders on, power-card riders (Action Point riders included; the
+`actionPointEffects` special case and its policy are superseded) off, one
+row per source in the source's own wording, and reminders another page-1
+pane or the companion card shows never offered. `reminders` /
+`summaryReminders` are the default-layout result, so default sheets change
+only by dropping Action Point riders. `SheetLayout.reminders` stores
+"show"/"hide" deltas (`withSheetReminderShown`; lenient normalizer;
+vanished ids kept; Reset clears), and `applySheetLayout` resolves them
+into `ResolvedSheetLayout.reminders`. In Edit mode a right-click on a
+page-1 or continuation reminder row toggles it (no menu, no keyboard
+binding); rows that are off stay in place, faded under a faint "Hidden";
+View mode and print show only rows that are on. Toggling never
+re-evaluates (jsdom test) and saves silently.
+
+Verification: `pnpm vitest run packages apps`, typecheck, lint, format and
+`FOURECB_SKIP_PRINT_CHECK=1 bash scripts/check.sh` clean. A private probe
+over `sample-chars/` confirmed the only default page-1 change is Action
+Point riders leaving page 1. `pnpm check:print` not run (headless Chromium
+cannot start in the Nix shell); the owner checks the page visually.
+
 ## Editable printed sheet, phase 3: card ordering (2026-10-25)
 
 Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).
-Built before phase 2 (reminders), which the owner has postponed. In the
+Built before phase 2 (reminders, done 2026-10-26, above). In the
 print preview's Edit mode, pressing on a card and dragging it onto another
 card, on any page, moves it there (native drag and drop on the existing
 card overlays; a focus-coloured rule in the gap on the target card's left or
@@ -90,8 +116,7 @@ the holding's `showPowerCard` flag, which never reaches evaluation input,
 and the sheet page keeps layout and flags out of the evaluated character's
 state (a jsdom test asserts one evaluation across toggles). Hidden sections
 count no pages; numbering starts at 1 on the first printed section.
-Phases 2 and 4 (reminders, optional extras) remain; phase 3 (card
-ordering) landed first, above.
+Phase 4 (optional extras) remains; phases 2 and 3 are above.
 
 Verification: `pnpm vitest run packages apps`, typecheck, lint and
 format clean. `pnpm check:print` not run (headless Chromium cannot start

@@ -35,7 +35,6 @@ import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
-import { ACTION_POINT_ID } from "./universal-action-cards";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -110,6 +109,21 @@ export interface OverviewReminder extends SheetValue {
     | "Item properties"
     | "Other reminders";
 }
+/**
+ * A page-1 reminder the sheet layout can show or hide (D099). Its id comes
+ * from provenance, never text: `feature:<definitionId>` (a feature's own
+ * summary, or `feature:<group>:<name>` without content), `item:<holdingId>`
+ * (an equipped item's actionable properties; `item:name:<name>` without a
+ * holding id) or `effect:<sourceKey>:<provider>` (a power card rider line
+ * whose source has no row of its own; the source key is `def:<definitionId>`,
+ * `inv:<holdingId>` or `prov:<providerId>`), with `#2`, `#3`… on a repeat.
+ */
+export interface OverviewReminderCandidate extends OverviewReminder {
+  readonly id: string;
+  /** Detected reminders print by default; riders that a power card's rider
+   *  line already prints do not. */
+  readonly defaultShown: boolean;
+}
 const reminderCategories: Readonly<
   Record<string, NonNullable<OverviewReminder["category"]>>
 > = {
@@ -145,6 +159,10 @@ export interface SheetOverview {
   readonly reminders: readonly OverviewReminder[];
   /** Page-one candidates before expanded core-power reference descriptions. */
   readonly summaryReminders?: readonly OverviewReminder[];
+  /** Every reminder page 1 can show, in page order, with its default; the
+   *  default-shown ones are `summaryReminders` (or `reminders`). Reminders
+   *  another page-1 pane or the companion card shows are never candidates. */
+  readonly reminderCandidates?: readonly OverviewReminderCandidate[];
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
@@ -592,10 +610,30 @@ export function withSheetOverview(
           ],
         );
   const reminders: OverviewReminder[] = [];
-  const reminderSources = new Map<OverviewReminder, readonly string[]>();
+  // Each reminder's provenance: the source keys that match it to the
+  // entries other surfaces show, its stable id (sheet layout, D099) and
+  // whether its text is the source's own wording (a feature's or an item's)
+  // rather than a power card's rider line.
+  const reminderMeta = new Map<
+    OverviewReminder,
+    {
+      readonly sources: readonly string[];
+      readonly id: string;
+      readonly sourceText: boolean;
+    }
+  >();
   const reminderByFeature = new Map<string, number>();
   const reminderKeys = new Map<string, OverviewReminder>();
+  const usedIds = new Set<string>();
+  const uniqueId = (id: string) => {
+    let unique = id;
+    for (let n = 2; usedIds.has(unique); n++) unique = `${id}#${n}`;
+    usedIds.add(unique);
+    return unique;
+  };
   const addReminder = (
+    reminderId: string,
+    sourceText: boolean,
     label: string,
     value: string,
     category: OverviewReminder["category"] = "Other reminders",
@@ -607,9 +645,11 @@ export function withSheetOverview(
     if (!value.trim()) return;
     const existing = reminderKeys.get(identity);
     if (existing !== undefined) {
-      reminderSources.set(existing, [
-        ...new Set([...(reminderSources.get(existing) ?? []), ...sources]),
-      ]);
+      const meta = reminderMeta.get(existing)!;
+      reminderMeta.set(existing, {
+        ...meta,
+        sources: [...new Set([...meta.sources, ...sources])],
+      });
       return;
     }
     const reminder: OverviewReminder = {
@@ -620,15 +660,23 @@ export function withSheetOverview(
       ...(choice === undefined ? {} : { choice }),
     };
     reminderKeys.set(identity, reminder);
-    reminderSources.set(reminder, sources);
+    reminderMeta.set(reminder, {
+      sources,
+      id: uniqueId(reminderId),
+      sourceText,
+    });
     reminders.push(reminder);
   };
+  const featureReminderId = (feature: OverviewFeature) =>
+    `feature:${feature.id}`;
   for (const feature of features)
     if (
       ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
       feature.playReminder
     ) {
       addReminder(
+        featureReminderId(feature),
+        true,
         feature.name,
         feature.summary || feature.description,
         reminderCategory(feature.group),
@@ -650,6 +698,10 @@ export function withSheetOverview(
     input.content,
   ))
     addReminder(
+      reminder.sourceId === undefined
+        ? `item:name:${key(reminder.label)}`
+        : `item:${reminder.sourceId}`,
+      true,
       reminder.label,
       reminder.value,
       "Item properties",
@@ -691,10 +743,16 @@ export function withSheetOverview(
           ...(choice === undefined ? {} : { choice }),
         };
         if (existing !== undefined) {
-          reminderSources.set(canonical, featureSources(feature));
+          const replaced = reminders[existing]!;
+          reminderMeta.set(canonical, {
+            ...reminderMeta.get(replaced)!,
+            sources: featureSources(feature),
+          });
           reminders[existing] = canonical;
         } else {
           addReminder(
+            featureReminderId(feature),
+            true,
             canonical.label,
             canonical.value,
             canonical.category,
@@ -714,11 +772,14 @@ export function withSheetOverview(
       const identity = `${effect.provenanceId ?? key(effect.provider ?? feature?.name ?? "")}:${key(effect.text)}`;
       if (seenEffects.has(identity)) continue;
       seenEffects.add(identity);
+      const provider = effect.provider ?? feature?.name ?? power.name;
       // An access-only feature can still be the known source of an evaluated
       // conditional effect. Keep that effect's text, but do not lose its category
       // merely because the feature's own description is only a power grant.
       addReminder(
-        effect.provider ?? feature?.name ?? power.name,
+        `effect:${sourceOf(effect.provenanceId)[0] ?? (feature ? definitionSourceKey(feature.id) : "-")}:${key(provider)}`,
+        false,
+        provider,
         effect.text,
         feature ? reminderCategory(feature.group) : "Other reminders",
         undefined,
@@ -740,7 +801,9 @@ export function withSheetOverview(
     input.evaluatedStats ?? {},
     model.skills.map(({ label }) => label),
   ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId));
-  const represented: { sources: readonly string[]; text: string }[] = [
+  // What page 1's other panes and the companion card show: a reminder they
+  // already cover is never offered (never twice on one page).
+  const paneEntries: { sources: readonly string[]; text: string }[] = [
     ...conditional.map((modifier) => ({
       sources: sourceKeys(modifier.provenanceId, modifier.source),
       text: modifier.text,
@@ -761,12 +824,6 @@ export function withSheetOverview(
       ],
       text: `${trait.label}: ${trait.value}`,
     })),
-    ...model.powers.flatMap((power) =>
-      (power.additionalEffects ?? []).map((effect) => ({
-        sources: sourceKeys(effect.provenanceId, effect.provider),
-        text: effect.text,
-      })),
-    ),
     ...model.companions.flatMap((card) =>
       "notes" in card
         ? card.notes.map((note) => ({
@@ -776,44 +833,92 @@ export function withSheetOverview(
         : [],
     ),
   ];
+  // Power cards' rider lines (the Action Point card's included): a reminder
+  // they cover is a rider, offered but off by default (D099).
+  const riderEntries = model.powers.flatMap((power) =>
+    (power.additionalEffects ?? []).map((effect) => ({
+      sources: sourceKeys(effect.provenanceId, effect.provider),
+      text: effect.text,
+    })),
+  );
   // A power card's own reminder line, whatever its provenance.
-  const cardLines = new Set(
-    model.powers.flatMap((power) =>
-      (power.additionalEffects ?? []).map((effect) => key(effect.text)),
-    ),
-  );
-  // These benefits can influence when to spend a point, so keep them visible
-  // before the player consults the Action Point card (owner policy, 2026-10-24).
-  const actionPointEffects = model.powers
-    .filter((power) => power.id === ACTION_POINT_ID)
-    .flatMap((power) => power.additionalEffects ?? []);
-  const actionPointSources = new Set(
-    actionPointEffects.flatMap((effect) =>
-      sourceKeys(effect.provenanceId, effect.provider),
-    ),
-  );
-  const actionPointTexts = new Set(
-    actionPointEffects.map((effect) => key(effect.text)),
-  );
-  const redundant = (reminder: OverviewReminder) => {
-    const sources = new Set(reminderSources.get(reminder) ?? []);
-    if (
-      actionPointTexts.has(key(reminder.value)) ||
-      [...sources].some((source) => actionPointSources.has(source))
-    )
-      return false;
-    if (cardLines.has(key(reminder.value))) return true;
-    if (sources.size === 0) return false;
-    return reminderCovered(
-      reminder.value,
-      represented
+  const cardLines = new Set(riderEntries.map((entry) => key(entry.text)));
+  const coverage = (reminder: OverviewReminder) => {
+    const sources = new Set(reminderMeta.get(reminder)?.sources ?? []);
+    const matching = (entries: typeof paneEntries) =>
+      entries
         .filter((entry) => entry.sources.some((source) => sources.has(source)))
-        .map((entry) => entry.text),
-    );
+        .map((entry) => entry.text);
+    if (
+      sources.size > 0 &&
+      reminderCovered(reminder.value, matching(paneEntries))
+    )
+      return "pane";
+    if (cardLines.has(key(reminder.value))) return "rider";
+    if (
+      sources.size > 0 &&
+      reminderCovered(reminder.value, [
+        ...matching(paneEntries),
+        ...matching(riderEntries),
+      ])
+    )
+      return "rider";
+    return "detected";
   };
-  for (let index = reminders.length - 1; index >= 0; index--)
-    if (redundant(reminders[index]!)) reminders.splice(index, 1);
-  const summaryReminders = [...reminders];
+  const status = new Map(
+    reminders.map((reminder) => [reminder, coverage(reminder)] as const),
+  );
+  // One row per source: a source's riders fold into its detected row, or
+  // else into one rider row in the source's own wording (an item's
+  // property, a feature's summary) before a card's rider text.
+  const detectedSources = new Set(
+    reminders.flatMap((reminder) =>
+      status.get(reminder) === "detected"
+        ? (reminderMeta.get(reminder)?.sources ?? [])
+        : [],
+    ),
+  );
+  const riderGroups: { keys: Set<string>; members: OverviewReminder[] }[] = [];
+  for (const reminder of reminders) {
+    if (status.get(reminder) !== "rider") continue;
+    const sources = reminderMeta.get(reminder)?.sources ?? [];
+    if (sources.some((source) => detectedSources.has(source))) continue;
+    const group = riderGroups.find((group) =>
+      sources.some((source) => group.keys.has(source)),
+    );
+    if (group === undefined)
+      riderGroups.push({ keys: new Set(sources), members: [reminder] });
+    else {
+      sources.forEach((source) => group.keys.add(source));
+      group.members.push(reminder);
+    }
+  }
+  const riderRows = new Set(
+    riderGroups.map(
+      ({ members }) =>
+        members.find((member) => reminderMeta.get(member)?.sourceText) ??
+        members[0]!,
+    ),
+  );
+  const byAllies = (a: OverviewReminder, b: OverviewReminder) =>
+    Number(/\ball(?:y|ies)\b/i.test(b.value)) -
+    Number(/\ball(?:y|ies)\b/i.test(a.value));
+  const reminderCandidates: OverviewReminderCandidate[] = reminders
+    .filter(
+      (reminder) =>
+        status.get(reminder) === "detected" || riderRows.has(reminder),
+    )
+    .sort(byAllies)
+    .map((reminder) => ({
+      ...reminder,
+      id: reminderMeta.get(reminder)!.id,
+      defaultShown: status.get(reminder) === "detected",
+    }));
+  // The default layout's page-1 reminders.
+  const summaryReminders = reminders
+    .filter((reminder) => status.get(reminder) === "detected")
+    .sort(byAllies);
+  reminders.splice(0, reminders.length, ...summaryReminders);
   const corePowers = corePowerReminders({
     ...input,
     powers: model.powers,
@@ -846,16 +951,7 @@ export function withSheetOverview(
         value: power.value,
         category: "Class features",
       });
-  reminders.sort(
-    (a, b) =>
-      Number(/\ball(?:y|ies)\b/i.test(b.value)) -
-      Number(/\ball(?:y|ies)\b/i.test(a.value)),
-  );
-  summaryReminders.sort(
-    (a, b) =>
-      Number(/\ball(?:y|ies)\b/i.test(b.value)) -
-      Number(/\ball(?:y|ies)\b/i.test(a.value)),
-  );
+  reminders.sort(byAllies);
   const soleClass = soleClassName(input.selections);
   const hp = number(stat("Hit Points"));
   const saves = stat("Saving Throws", "Saving Throw Bonus", "Saving Throw");
@@ -934,6 +1030,7 @@ export function withSheetOverview(
       inventory: input.inventory.filter((item) => item.quantity > 0),
       reminders,
       ...(corePowers.length ? { summaryReminders } : {}),
+      reminderCandidates,
     },
   };
 }

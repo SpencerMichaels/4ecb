@@ -1587,6 +1587,18 @@ describe("real-data sheet overview", () => {
     expect(summaryContinuationEntries(values, [0, 1, 2])).toEqual([]);
     expect(summaryContinuationEntries([], [])).toEqual([]);
   });
+  it("carries a sheet layout row's id and state onto its continuation page", () => {
+    // Continuation pages render `reminder`, so Edit mode's right-click
+    // toggle and hidden marking work there as on page 1.
+    const row = {
+      id: "feature:feat:aim",
+      shown: false,
+      label: "Sure Aim",
+      value: "Ranged bonus.",
+      category: "Feats" as const,
+    };
+    expect(summaryContinuationEntries([row], [])[0]!.reminder).toBe(row);
+  });
   it("bullets distinct reminder elements without splitting paragraphs into new bullets", () => {
     const first =
       "When you defend, gain a benefit.\n\nYou may apply it to an ally.";

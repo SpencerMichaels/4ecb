@@ -230,7 +230,9 @@ build/retraining/details/equipment[+loadout]/shop/diagnostics/house-rules via qu
 Diagnostics and House rules open from the status badges, Overview is gone), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
 for the per-character sheet layout: right-click hide/show and drag-to-reorder on cards
-(`SheetEditTarget.tsx`) and the toolbar Sections menu of sections
+(`SheetEditTarget.tsx`), right-click hide/show on page-1 reminder rows
+(`SheetOverview.tsx`; power-card riders offered off by default) and the
+toolbar Sections menu of sections
 (`SheetSectionsMenu.tsx`: hide/show and reorder) — D099, `?print=1` auto-opens the print
 dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
@@ -264,7 +266,8 @@ separate header or level rail.
   default order (Play data → Skills → Action Point → Second Wind → `sortedPowerCards`
   → items) come from `sheetCardDeck` in `sheet-model/src/card-deck.ts`, with
   stable provenance card keys; `applySheetLayout`
-  (`sheet-model/src/sheet-layout.ts`) applies the character's `sheetLayout` (including its `cardOrder`)
+  (`sheet-model/src/sheet-layout.ts`) applies the character's `sheetLayout` (including its `cardOrder`
+  and page-1 `reminders` choices over the overview's `reminderCandidates`)
   and item `showPowerCard` flags (D099). `print-item-presentation.ts` and
   `reference-power-index.ts` shape card/index text. `StatTiles.tsx` is shared
   by page 1, play cards and the builder header.

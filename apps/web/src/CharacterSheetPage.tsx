@@ -13,6 +13,7 @@ import {
   normalizeSheetLayout,
   withSheetCardOrder,
   withSheetCardsShown,
+  withSheetReminderShown,
   withSheetSectionCopies,
   withSheetSectionOrder,
   withSheetSectionShown,
@@ -431,6 +432,32 @@ export function CharacterSheetPage({
         ? undefined
         : applySheetLayout(model, sheetLayout, { itemCardsShown }),
     [model, sheetLayout, itemCardsShown],
+  );
+  // Page 1's reminder rows: Edit mode (never while printing) lists hidden
+  // rows too, in place; View mode and print only the shown ones.
+  const reminderRows = useMemo(
+    () =>
+      showPrintPreview && sheetEditing && !printing
+        ? resolvedLayout?.reminders
+        : resolvedLayout?.reminders.filter((reminder) => reminder.shown),
+    [resolvedLayout, showPrintPreview, sheetEditing, printing],
+  );
+  // Right-clicking a page-1 reminder row in Edit mode shows or hides it.
+  const toggleReminder = useCallback(
+    (id: string) => {
+      const reminder = resolvedLayout?.reminders.find(
+        (candidate) => candidate.id === id,
+      );
+      if (reminder === undefined) return;
+      updateLayout(
+        withSheetReminderShown(
+          latestPresentation.current.sheetLayout,
+          reminder,
+          !reminder.shown,
+        ),
+      );
+    },
+    [resolvedLayout, updateLayout],
   );
   // Dragging a card onto another moves it (D099): the dragged card's key,
   // and the card and edge it would land on.
@@ -966,6 +993,8 @@ export function CharacterSheetPage({
           sectionOrder={resolvedLayout.sectionOrder}
           sectionCopies={resolvedLayout.sectionCopies}
           cardPageCount={printCardPages.length}
+          {...(reminderRows === undefined ? {} : { reminders: reminderRows })}
+          {...(editControls ? { onToggleReminder: toggleReminder } : {})}
         >
           {(firstCardPage) =>
             printCardPages.map((page, pageIndex) => (

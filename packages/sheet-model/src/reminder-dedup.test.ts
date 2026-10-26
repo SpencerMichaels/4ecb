@@ -8,7 +8,8 @@ import type {
 } from "@4ecb/rules-engine";
 
 import { buildSheetModel, type SheetCard } from "./index";
-import { withSheetOverview } from "./overview";
+import { withSheetOverview, type OverviewInventory } from "./overview";
+import { applySheetLayout } from "./sheet-layout";
 import { withUniversalActionCards } from "./universal-action-cards";
 
 function entity(
@@ -162,7 +163,10 @@ const occurrences: CharacterOccurrence[] = [swift, style, aim, guard].map(
   }),
 );
 
-function overview(extraPowers: readonly SheetCard[] = []) {
+function overview(
+  extraPowers: readonly SheetCard[] = [],
+  extraInventory: readonly OverviewInventory[] = [],
+) {
   const selectedRules = entities.map(({ id, name, type }) => ({
     id,
     name,
@@ -226,54 +230,93 @@ function overview(extraPowers: readonly SheetCard[] = []) {
             },
           ],
         },
+        ...extraInventory,
       ],
     },
   ).overview!;
 }
 
+const actionPointCards = () =>
+  withUniversalActionCards([], {
+    textContributions: [
+      {
+        name: "Action Point",
+        value: "Ward Tattoo:When you spend an action point, gain resist 5 fire",
+        providerId: "loot:tattoo:definition:0",
+        providerName: "Ward Tattoo",
+        definitionId: "tattoo",
+      },
+      {
+        name: "ALLY.Action Point",
+        value:
+          "Helpful Leader:When an ally spends an action point, that ally gains +2 to attack",
+        providerId: "leader",
+        providerName: "Helpful Leader",
+        definitionId: "leader",
+      },
+      {
+        name: "BEAST.Action Point",
+        value:
+          "Beast Bond:When your companion spends an action point, it gains +2 to damage",
+        providerId: "bond",
+        providerName: "Beast Bond",
+        definitionId: "bond",
+      },
+    ],
+  } as unknown as EvaluatedCharacter);
+
+// An item whose property a power card's rider line also prints.
+const bloodGauntlets: OverviewInventory = {
+  id: "loot:2",
+  name: "Gauntlets of Blood",
+  quantity: 1,
+  equipped: 1,
+  slots: ["hands"],
+  fields: [
+    {
+      label: "Property",
+      value: "You gain a +2 bonus to damage rolls against bloodied targets.",
+    },
+  ],
+};
+const bloodRider = (name: string, provenanceId: string): SheetCard => ({
+  kind: "power",
+  name,
+  fields: [],
+  additionalEffects: [
+    {
+      source: "authoritative-evaluation",
+      provider: "Gauntlets of Blood",
+      provenanceId,
+      text: "+2 to damage rolls against bloodied targets.",
+    },
+  ],
+});
+
 describe("Remember in play deduplication", () => {
-  it("keeps self, ally and companion Action Point benefits beside their card", () => {
-    const cards = withUniversalActionCards([], {
-      textContributions: [
-        {
-          name: "Action Point",
-          value:
-            "Ward Tattoo:When you spend an action point, gain resist 5 fire",
-          providerId: "loot:tattoo:definition:0",
-          providerName: "Ward Tattoo",
-          definitionId: "tattoo",
-        },
-        {
-          name: "ALLY.Action Point",
-          value:
-            "Helpful Leader:When an ally spends an action point, that ally gains +2 to attack",
-          providerId: "leader",
-          providerName: "Helpful Leader",
-          definitionId: "leader",
-        },
-        {
-          name: "BEAST.Action Point",
-          value:
-            "Beast Bond:When your companion spends an action point, it gains +2 to damage",
-          providerId: "bond",
-          providerName: "Beast Bond",
-          definitionId: "bond",
-        },
-      ],
-    } as unknown as EvaluatedCharacter);
+  it("offers Action Point riders as ordinary riders, off by default", () => {
+    const cards = actionPointCards();
     const result = overview(cards);
-    for (const effect of cards.find((card) => card.name === "Action Point")!
-      .additionalEffects!) {
-      expect(result.reminders).toContainEqual(
+    const effects = cards.find(
+      (card) => card.name === "Action Point",
+    )!.additionalEffects!;
+    for (const effect of effects) {
+      expect(result.reminders).not.toContainEqual(
         expect.objectContaining({ value: effect.text }),
       );
+      expect(result.reminderCandidates).toContainEqual(
+        expect.objectContaining({ value: effect.text, defaultShown: false }),
+      );
     }
-    // Ordinary card and conditional-stat duplication is still suppressed.
-    expect(result.reminders.map(({ label }) => label)).not.toContain(
-      "Sure Aim",
-    );
-    expect(result.reminders.map(({ label }) => label)).not.toContain(
-      "Steady Guard",
+    expect(
+      result
+        .reminderCandidates!.filter(({ defaultShown }) => !defaultShown)
+        .map(({ id }) => id),
+    ).toEqual(
+      expect.arrayContaining([
+        "effect:prov:leader:ally · helpful leader",
+        "effect:prov:bond:beast companion · beast bond",
+      ]),
     );
   });
   it("drops reminders a more specific place shows in full, by provenance", () => {
@@ -303,5 +346,123 @@ describe("Remember in play deduplication", () => {
     expect(result.summaryReminders ?? result.reminders).toEqual(
       result.reminders,
     );
+  });
+
+  it("offers power-card riders off by default, never same-page duplicates", () => {
+    const result = overview();
+    expect(
+      result.reminderCandidates!.map(({ id, label, defaultShown }) => [
+        id,
+        label,
+        defaultShown,
+      ]),
+    ).toEqual([
+      // Ally reminders lead, as on the printed page.
+      ["feature:feat:aim", "Sure Aim", false],
+      ["feature:class:style", "Hunter Style", true],
+    ]);
+    // Swift Stride and Steady Guard (Conditional modifiers pane) and the
+    // ward's save bonus (its saving throws row) are never offered.
+    const labels = result.reminderCandidates!.map(({ label }) => label);
+    expect(labels).not.toContain("Swift Stride");
+    expect(labels).not.toContain("Steady Guard");
+    expect(labels).not.toContain("Leather Ward of Recovery +1");
+  });
+  it("prints exactly the default-shown candidates by default", () => {
+    const result = overview(
+      [...actionPointCards(), bloodRider("Strike", "x")],
+      [bloodGauntlets],
+    );
+    const shown = result.reminderCandidates!.filter(
+      ({ defaultShown }) => defaultShown,
+    );
+    expect(result.reminders).toHaveLength(shown.length);
+    result.reminders.forEach((reminder, index) =>
+      expect(shown[index]).toEqual({
+        ...reminder,
+        id: shown[index]!.id,
+        defaultShown: true,
+      }),
+    );
+    // Riders are offered, but only as hidden rows.
+    expect(result.reminderCandidates!.length).toBeGreaterThan(shown.length);
+  });
+  it("offers one row per source, in the source's own wording", () => {
+    const result = overview(
+      [
+        bloodRider("Strike", "loot:2:definition:0"),
+        bloodRider("Smash", "loot:2:definition:0"),
+      ],
+      [bloodGauntlets],
+    );
+    const rows = result.reminderCandidates!.filter(({ value }) =>
+      /bloodied targets/.test(value),
+    );
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: "item:loot:2",
+        label: "Gauntlets of Blood",
+        value: "You gain a +2 bonus to damage rolls against bloodied targets.",
+        category: "Item properties",
+        defaultShown: false,
+      }),
+    ]);
+    // Without the item's own text, the rider's text is the row.
+    const riderOnly = overview([
+      bloodRider("Strike", "loot:2:definition:0"),
+    ]).reminderCandidates!.filter(({ value }) =>
+      /bloodied targets/.test(value),
+    );
+    expect(riderOnly).toEqual([
+      expect.objectContaining({
+        id: "effect:inv:loot:2:gauntlets of blood",
+        value: "+2 to damage rolls against bloodied targets.",
+        defaultShown: false,
+      }),
+    ]);
+  });
+  it("keeps reminder ids stable when the text changes", () => {
+    const ids = (summary: string) => {
+      const changed = { ...style, description: summary };
+      changed.specifics = [{ ...style.specifics[0]!, value: summary }];
+      entities[1] = changed;
+      try {
+        return overview().reminderCandidates!.map(({ id }) => id);
+      } finally {
+        entities[1] = style;
+      }
+    };
+    expect(ids(style.description)).toEqual(
+      ids(`${style.description} Reworded errata.`),
+    );
+  });
+  it("lets the sheet layout show riders and hide detected reminders", () => {
+    const sheet = {
+      powers: [],
+      items: [],
+      companions: [],
+      overview: overview(),
+    };
+    const shown = (layout?: Parameters<typeof applySheetLayout>[1]) =>
+      applySheetLayout(sheet, layout)
+        .reminders.filter((reminder) => reminder.shown)
+        .map(({ label }) => label);
+    expect(shown()).toEqual(["Hunter Style"]);
+    expect(
+      shown({ version: 1, reminders: { "feature:feat:aim": "show" } }),
+    ).toEqual(["Sure Aim", "Hunter Style"]);
+    expect(
+      shown({
+        version: 1,
+        reminders: {
+          "feature:feat:aim": "show",
+          "feature:class:style": "hide",
+        },
+      }),
+    ).toEqual(["Sure Aim"]);
+    // Stored choices for reminders that no longer exist are ignored.
+    expect(
+      shown({ version: 1, reminders: { "feature:gone": "hide" } }),
+    ).toEqual(["Hunter Style"]);
   });
 });

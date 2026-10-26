@@ -740,9 +740,12 @@ reminder control and card ordering (plan and owner decisions:
    included, none locked) whose rows reorder by drag or Alt+Up/Alt+Down
    (section ordering pulled forward), with copies of the unnumbered
    scratchpad and session notes; and a global Reset in the toolbar.
-2. Reminders: show/hide, custom reminders, provenance hints, and removal of
-   the Action Point reminder special case. Postponed by the owner; phase 3
-   landed first.
+2. **Done (2026-10-26, after phase 3).** Reminders: right-click a page-1
+   reminder row (or a continuation row) in Edit mode to hide or show it;
+   power-card riders, Action Point riders included, are offered off by
+   default (the Action Point special case is gone), one row per source;
+   same-page duplicates are never offered. Custom reminders, provenance
+   hints, per-row/per-section reset and starring were not approved.
 3. **Done (2026-10-25).** Card ordering: drag a card onto another, on any
    page, in Edit mode (drag only, no keyboard reorder for now); stored as
    `cardOrder` only when it differs from the default deck order and merged
