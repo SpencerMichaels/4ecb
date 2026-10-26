@@ -1791,6 +1791,126 @@ export function groupLevelChoices(
   return { backgrounds, skillTraining, ordinary };
 }
 
+/**
+ * How a level's Build-tab choices are presented: backgrounds and skill
+ * training each share one editor, positional slots of one select rule share
+ * one table, and a choice opened by the preceding pick joins its flow (a
+ * feat's granted class feature is step 2 under the feat). `presentationChoices`
+ * holds the one choice that stands for each unit, in the level's order.
+ */
+export interface LevelChoicePresentation {
+  readonly grouped: GroupedLevelChoices;
+  readonly repeatedGroupByChoiceId: ReadonlyMap<
+    string,
+    readonly EvaluatedChoice[]
+  >;
+  readonly dependentFlowByChoiceId: ReadonlyMap<
+    string,
+    readonly EvaluatedChoice[]
+  >;
+  readonly presentationChoices: readonly EvaluatedChoice[];
+}
+
+export function presentLevelChoices(
+  primaryLevelChoices: readonly EvaluatedChoice[],
+): LevelChoicePresentation {
+  const grouped = groupLevelChoices(primaryLevelChoices);
+  const repeatedGroupByChoiceId = new Map(
+    groupRepeatedChoiceSlots(grouped.ordinary).flatMap((group) =>
+      group.map((choice) => [choice.id, group] as const),
+    ),
+  );
+  const dependentFlowByChoiceId = new Map(
+    groupDependentChoiceFlows(
+      grouped.ordinary.filter(
+        (choice) => !repeatedGroupByChoiceId.has(choice.id),
+      ),
+    )
+      .filter((flow) => flow.length > 1)
+      .flatMap((flow) => flow.map((choice) => [choice.id, flow] as const)),
+  );
+  const presentationChoices = primaryLevelChoices.filter((choice) => {
+    if (grouped.backgrounds.includes(choice))
+      return choice === grouped.backgrounds[0];
+    if (grouped.skillTraining.includes(choice))
+      return choice === grouped.skillTraining[0];
+    const repeated = repeatedGroupByChoiceId.get(choice.id);
+    if (repeated !== undefined) return choice === repeated[0];
+    const flow = dependentFlowByChoiceId.get(choice.id);
+    return flow === undefined || choice === flow[0];
+  });
+  return {
+    grouped,
+    repeatedGroupByChoiceId,
+    dependentFlowByChoiceId,
+    presentationChoices,
+  };
+}
+
+/** Build-tab choices proper: not details, optional retraining or presets. */
+export function isPrimaryBuildChoice(choice: EvaluatedChoice): boolean {
+  return (
+    !isCharacterDetailChoice(choice) &&
+    !isOptionalRetrainingChoice(choice) &&
+    !isBuildPresetChoice(choice)
+  );
+}
+
+/**
+ * The level tab that actually shows `choice`: the tab of the unit it is
+ * presented in, not the tab its own type would suggest. A class feature a
+ * feat grants (Hybrid Talent) is step 2 of that feat's flow on the Feats tab,
+ * so an issue for it must lead there rather than to the Class tab.
+ */
+export function presentedChoiceSection(
+  choice: EvaluatedChoice,
+  presentation: LevelChoicePresentation,
+): LegacyChoiceSection {
+  return legacyChoiceSection(presentationUnitRoot(choice, presentation));
+}
+
+/** Ids of every later step of a dependent flow (not the flow's first pick). */
+export function dependentFlowStepIds(
+  presentation: LevelChoicePresentation,
+): ReadonlySet<string> {
+  return new Set(
+    [...presentation.dependentFlowByChoiceId].flatMap(([id, flow]) =>
+      flow[0]?.id === id ? [] : [id],
+    ),
+  );
+}
+
+/**
+ * The first unresolved flow step a pick just opened (absent from
+ * `previousStepIds`), e.g. Hybrid Talent's class feature after the feat is
+ * picked, so the page can bring it into view below the feat's table.
+ */
+export function openedFlowStepId(
+  previousStepIds: ReadonlySet<string>,
+  presentation: LevelChoicePresentation,
+): string | undefined {
+  for (const flow of new Set(presentation.dependentFlowByChoiceId.values()))
+    for (const step of flow.slice(1))
+      if (!previousStepIds.has(step.id) && isUnresolvedChoice(step))
+        return step.id;
+  return undefined;
+}
+
+/** The presentation choice standing for the unit that shows `choice`. */
+export function presentationUnitRoot(
+  choice: EvaluatedChoice,
+  presentation: LevelChoicePresentation,
+): EvaluatedChoice {
+  const { backgrounds, skillTraining } = presentation.grouped;
+  if (backgrounds.includes(choice)) return backgrounds[0]!;
+  if (skillTraining.includes(choice)) return skillTraining[0]!;
+  return (
+    presentation.repeatedGroupByChoiceId.get(choice.id)?.[0] ??
+    presentation.dependentFlowByChoiceId.get(choice.id)?.[0] ??
+    choice
+  );
+}
+
 export function selectedDefinitionId(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,

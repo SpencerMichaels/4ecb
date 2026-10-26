@@ -83,9 +83,6 @@ import {
   evaluationAtHorizon,
   findOccurrence,
   groupChoicesByLegacyWorkflow,
-  groupDependentChoiceFlows,
-  groupLevelChoices,
-  groupRepeatedChoiceSlots,
   isCandidateSelectable,
   isCharacterDetailChoice,
   isBuildPresetChoice,
@@ -94,6 +91,12 @@ import {
   isRequiredClassDeityChoice,
   isUnresolvedChoice,
   pickLegality,
+  presentLevelChoices,
+  presentedChoiceSection,
+  presentationUnitRoot,
+  dependentFlowStepIds,
+  openedFlowStepId,
+  isPrimaryBuildChoice,
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
@@ -321,6 +324,9 @@ export function CharacterEditorPage({
     navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
   );
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  // The choice an issue led to, scrolled into view once its tab renders it
+  // (it can sit below a window-height table, as step 2 of a feat's flow).
+  const [scrollToChoiceId, setScrollToChoiceId] = useState<string>();
   // The accordion item the user opened (or null: all folded) on one level
   // tab; elsewhere, and after a tab change or Review jump, the default rules.
   const [settingLevel, setSettingLevel] = useState(false);
@@ -924,35 +930,13 @@ export function CharacterEditorPage({
       return [ability, delta] as const;
     }),
   );
-  const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
-  const repeatedChoiceGroups = groupRepeatedChoiceSlots(
-    groupedLevelChoices.ordinary,
-  );
-  const repeatedGroupByChoiceId = new Map(
-    repeatedChoiceGroups.flatMap((group) =>
-      group.map((choice) => [choice.id, group] as const),
-    ),
-  );
-  const dependentChoiceFlows = groupDependentChoiceFlows(
-    groupedLevelChoices.ordinary.filter(
-      (choice) => !repeatedGroupByChoiceId.has(choice.id),
-    ),
-  ).filter((flow) => flow.length > 1);
-  const dependentFlowByChoiceId = new Map(
-    dependentChoiceFlows.flatMap((flow) =>
-      flow.map((choice) => [choice.id, flow] as const),
-    ),
-  );
-  const presentationChoices = primaryLevelChoices.filter((choice) => {
-    if (groupedLevelChoices.backgrounds.includes(choice))
-      return choice === groupedLevelChoices.backgrounds[0];
-    if (groupedLevelChoices.skillTraining.includes(choice))
-      return choice === groupedLevelChoices.skillTraining[0];
-    const repeated = repeatedGroupByChoiceId.get(choice.id);
-    if (repeated !== undefined) return choice === repeated[0];
-    const flow = dependentFlowByChoiceId.get(choice.id);
-    return flow === undefined || choice === flow[0];
-  });
+  const levelChoicePresentation = presentLevelChoices(primaryLevelChoices);
+  const {
+    grouped: groupedLevelChoices,
+    repeatedGroupByChoiceId,
+    dependentFlowByChoiceId,
+    presentationChoices,
+  } = levelChoicePresentation;
   const legacyChoiceSections = (() => {
     const sections = groupChoicesByLegacyWorkflow(presentationChoices);
     if (requiredClassDeityChoices.length === 0) return sections;
@@ -1001,8 +985,19 @@ export function CharacterEditorPage({
         ];
   const levelSectionTabs: readonly LevelChoiceTab[] =
     displayedChoiceSections.map(({ section }) => section);
+  const selectedChoice = primaryLevelChoices.find(
+    (choice) => choice.id === selectedChoiceId,
+  );
+  // The unit root that shows the selected choice (itself, or the pick whose
+  // flow it is a later step of).
+  const selectedUnitRoot =
+    selectedChoice === undefined
+      ? undefined
+      : presentationUnitRoot(selectedChoice, levelChoicePresentation);
   const selectedChoiceSection = displayedChoiceSections.find(({ choices }) =>
-    choices.some((choice) => choice.id === selectedChoiceId),
+    choices.some(
+      (choice) => choice.id === selectedChoiceId || choice === selectedUnitRoot,
+    ),
   )?.section;
   const preferredLevelSection =
     displayedChoiceSections.find(
@@ -1029,11 +1024,15 @@ export function CharacterEditorPage({
   )?.id;
   // Arriving at a tab selects its first unresolved choice, or none when
   // every choice is filled, so filled slots start folded to their picks.
+  // A choice shown inside another's unit (step 2 of a feat's flow) counts as
+  // on the tab, so an issue that leads to it keeps its unit open.
+  const selectedChoiceOnTab = activeSectionChoices.some(
+    (choice) => choice.id === selectedChoiceId || choice === selectedUnitRoot,
+  );
   useEffect(() => {
-    if (activeSectionChoices.some((choice) => choice.id === selectedChoiceId))
-      return;
+    if (selectedChoiceOnTab) return;
     setSelectedChoiceId(arrivalChoiceId(activeSectionChoices));
-  }, [activeSectionChoices, selectedChoiceId]);
+  }, [activeSectionChoices, selectedChoiceOnTab]);
   // An accordion item the user opened stays open only for that tab visit:
   // leaving the tab by any route (level picker, current-level change, browser
   // history) drops it, so coming back arrives folded again.
@@ -1043,6 +1042,15 @@ export function CharacterEditorPage({
       accordionOverrideForTab(current, arrivedTabKey),
     );
   }, [arrivedTabKey]);
+  // Runs after each render until the issue's choice is on the page (its
+  // level may still be evaluating, its accordion item still opening).
+  useEffect(() => {
+    if (scrollToChoiceId === undefined) return;
+    const element = document.getElementById(choiceSectionId(scrollToChoiceId));
+    if (element === null) return;
+    element.scrollIntoView?.({ block: "start" });
+    setScrollToChoiceId(undefined);
+  });
 
   useEffect(() => {
     if (
@@ -1093,6 +1101,35 @@ export function CharacterEditorPage({
     setInspectedOption(undefined);
   }
 
+  // A pick that opens a new step of its flow (Hybrid Talent's class feature
+  // under the feat table) brings that step into view, as Review does. The
+  // first evaluation published after a rules-changing edit is that edit's
+  // result; compare its flow steps with the ones shown before it.
+  const [pickAwaitingEvaluation, setPickAwaitingEvaluation] = useState(false);
+  const [seenFlowSteps, setSeenFlowSteps] = useState<{
+    readonly evaluation: EvaluatedCharacter;
+    readonly level: number;
+    readonly stepIds: ReadonlySet<string>;
+  }>();
+  if (
+    planningEvaluation !== undefined &&
+    seenFlowSteps?.evaluation !== planningEvaluation
+  ) {
+    setSeenFlowSteps({
+      evaluation: planningEvaluation,
+      level: selectedLevel,
+      stepIds: dependentFlowStepIds(levelChoicePresentation),
+    });
+    if (pickAwaitingEvaluation) {
+      setPickAwaitingEvaluation(false);
+      const opened =
+        seenFlowSteps?.level === selectedLevel
+          ? openedFlowStepId(seenFlowSteps.stepIds, levelChoicePresentation)
+          : undefined;
+      if (opened !== undefined) setScrollToChoiceId(opened);
+    }
+  }
+
   function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
     const queue = saveQueue.current;
@@ -1100,8 +1137,10 @@ export function CharacterEditorPage({
     try {
       const previous = active.current;
       const next = active.dispatch(command);
-      if (!sameRulesInputs(previous, next))
+      if (!sameRulesInputs(previous, next)) {
         setEvaluationStatus("Evaluating current build and plan…");
+        setPickAwaitingEvaluation(true);
+      }
       setRevision((value) => value + 1);
       queue.enqueue(next, "Saved locally");
     } catch (reason: unknown) {
@@ -1386,9 +1425,19 @@ export function CharacterEditorPage({
       onNavigate(characterId, { workspace: "retraining", level: choice.level });
       return;
     }
-    const section = legacyChoiceSection(choice);
+    // The tab that presents the choice, which for a choice granted by
+    // another pick (a feat's class feature) is the granting pick's tab.
+    const section = presentedChoiceSection(
+      choice,
+      presentLevelChoices(
+        choicesAtLevel(choice.level, planningEvaluation).filter(
+          isPrimaryBuildChoice,
+        ),
+      ),
+    );
     setSelectedLevel(choice.level);
     setSelectedChoiceId(choice.id);
+    setScrollToChoiceId(choice.id);
     setSelectedSectionByLevel((current) => ({
       ...current,
       [choice.level]: section,
@@ -1401,6 +1450,7 @@ export function CharacterEditorPage({
   };
   const activateLevelSection = (section: LevelChoiceTab): void => {
     setAccordionOverride(undefined);
+    setScrollToChoiceId(undefined);
     setSelectedSectionByLevel((current) => ({
       ...current,
       [selectedLevel]: section,
@@ -1422,6 +1472,7 @@ export function CharacterEditorPage({
     requestedSection?: LevelChoiceTab,
   ): void => {
     setAccordionOverride(undefined);
+    setScrollToChoiceId(undefined);
     try {
       const command = planningHorizonCommand(
         build,
@@ -1442,6 +1493,7 @@ export function CharacterEditorPage({
       const ordered = groupChoicesByLegacyWorkflow(primary).flatMap(
         ({ choices: sectionChoices }) => sectionChoices,
       );
+      const presentation = presentLevelChoices(primary);
       const rememberedSection =
         requestedSection ?? selectedSectionByLevel[level];
       const destinationChoices =
@@ -1451,7 +1503,8 @@ export function CharacterEditorPage({
               (choice) =>
                 (isRequiredClassDeityChoice(choice)
                   ? "Class"
-                  : legacyChoiceSection(choice)) === rememberedSection,
+                  : presentedChoiceSection(choice, presentation)) ===
+                rememberedSection,
             );
       setSelectedLevel(level);
       setSelectedChoiceId(arrivalChoiceId(destinationChoices));

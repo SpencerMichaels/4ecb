@@ -1,6 +1,6 @@
 # Implementation status
 
-## Player reports: background benefits and pact-blade damage (2026-10-25)
+## Player reports: background benefits, pact-blade damage, granted choices (2026-10-25)
 
 A background benefit is marked `already-class-skill` (shown as a redundant
 house-rule pick and left out of the default candidates) only when redundant
@@ -17,9 +17,19 @@ Implement Spellcaster's: Beatrix's five Sword of the White Well rows were +2
 high and now match legacy (38/38 power fields). Evaluation cache bumped to
 v61.
 
+A choice granted by an earlier pick on the same level (Hybrid Talent's class
+feature) stays a later step of the granting pick's flow on its tab (owner
+decision). Review now routes by the tab that presents the choice
+(`presentedChoiceSection`, shared `presentLevelChoices` grouping) instead of
+the choice's own type, which sent players to an empty Class tab; it opens
+the flow and scrolls the step into view. A pick that opens a new flow step
+scrolls to it the same way. Visual checks are in
+[`visual-review-checklist.md`](visual-review-checklist.md).
+
 Verification: `pnpm vitest run packages apps`, typecheck, lint and format
 clean; `pnpm parity:baseline` unchanged on all 40 characters; Beatrix
-`evaluate:character` 101/101 cached numeric fields.
+`evaluate:character` 101/101 cached numeric fields; the Hybrid Talent flow
+checked in a jsdom render of the Build tab on the private pack.
 
 ## Editable printed sheet, phases 0–1 (2026-10-25)
 

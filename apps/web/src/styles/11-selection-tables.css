@@ -448,6 +448,8 @@
 .choice-flow-step + .choice-flow-step {
   border-top: 1px solid var(--border);
   padding-top: 1.25rem;
+  /* An issue scrolls a later step (a feat's granted choice) into view. */
+  scroll-margin-top: 1rem;
 }
 
 .choice-flow-step-heading {

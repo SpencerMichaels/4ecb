@@ -19,6 +19,8 @@ import {
   accordionOverrideForTab,
   arrivalChoiceId,
   defaultAccordionUnit,
+  dependentFlowStepIds,
+  openedFlowStepId,
   isUnresolvedChoice,
   abilityScoreBonus,
   abilityScoreDisplay,
@@ -61,7 +63,9 @@ import {
   isAbilityIncreaseChoiceType,
   isCompanionChoiceType,
   isOptionalRetrainingChoice,
+  isPrimaryBuildChoice,
   jumpToLevelCommand,
+  legacyChoiceSection,
   levelChoiceProgress,
   levelRailChoiceStatus,
   pickLegality,
@@ -72,6 +76,9 @@ import {
   powerTableAttackLabel,
   powerTableAttackTitle,
   powerTableLevel,
+  presentLevelChoices,
+  presentedChoiceSection,
+  presentationUnitRoot,
   primaryDetailTypeLabel,
   selectedCandidateDecision,
   shouldOmitIndividualChoiceHeading,
@@ -2116,6 +2123,121 @@ describe("builder planning UI", () => {
     ).toEqual([["feat", "mastery", "replacement"], ["utility"]]);
   });
 
+  it("leads to a feat-granted class feature on the tab that presents it", () => {
+    const statement = (
+      name: string,
+      attributes: Readonly<Record<string, string>>,
+      ordinal: number,
+    ): RuleStatement => ({
+      name,
+      attributes: Object.entries(attributes).map(([attribute, value]) => ({
+        name: attribute,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const entity = (
+      id: string,
+      type: string,
+      rules: readonly RuleStatement[] = [],
+    ): ContentEntity => ({ ...level(0, rules), id, name: id, type });
+    // Hybrid Talent's shape: a feat whose one rule selects a class feature.
+    const talent = entity("FEAT_TALENT", "Feat", [
+      statement("select", { type: "Class Feature", number: "1" }, 0),
+    ]);
+    // Two slots from one rule stay a repeated group on their own type's tab.
+    const twofold = entity("FEAT_TWOFOLD", "Feat", [
+      statement("select", { type: "Class Feature", number: "2" }, 0),
+    ]);
+    const entities = [
+      level(1, [
+        statement("select", { type: "Feat", number: "1" }, 0),
+        statement("select", { type: "Feat", number: "1" }, 1),
+      ]),
+      talent,
+      twofold,
+      entity("FEATURE_ARMOR", "Class Feature"),
+      entity("FEATURE_SONG", "Class Feature"),
+    ];
+    const featOccurrence = (id: string, definition: ContentEntity) => ({
+      id,
+      identity: {
+        definitionId: definition.id,
+        name: definition.name,
+        type: definition.type,
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    });
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(
+        {
+          ...build,
+          levels: [
+            {
+              level: 1,
+              root: {
+                ...build.levels[0]!.root,
+                children: [
+                  featOccurrence("talent", talent),
+                  featOccurrence("twofold", twofold),
+                ],
+              },
+            },
+          ],
+        },
+        entities,
+      ),
+      entities,
+    );
+    const primary = choicesAtLevel(1, evaluation).filter(isPrimaryBuildChoice);
+    const presentation = presentLevelChoices(primary);
+    const granted = primary.find(
+      (choice) => choice.providerOccurrenceId === "talent",
+    );
+    const twofoldSlots = primary.filter(
+      (choice) => choice.providerOccurrenceId === "twofold",
+    );
+
+    expect(granted).toMatchObject({ type: "Class Feature" });
+    expect(isUnresolvedChoice(granted!)).toBe(true);
+    expect(twofoldSlots).toHaveLength(2);
+    // Its own type says Class, but it is step 2 of the feat's flow.
+    expect(legacyChoiceSection(granted!)).toBe("Class");
+    expect(presentedChoiceSection(granted!, presentation)).toBe("Feats");
+    expect(presentationUnitRoot(granted!, presentation)).toMatchObject({
+      type: "Feat",
+      selectedOccurrenceId: "talent",
+    });
+    for (const slot of twofoldSlots)
+      expect(presentedChoiceSection(slot, presentation)).toBe("Class");
+    // Picking the feat opened its step: the page brings it into view once.
+    expect(dependentFlowStepIds(presentation)).toEqual(new Set([granted!.id]));
+    expect(openedFlowStepId(new Set(), presentation)).toBe(granted!.id);
+    expect(
+      openedFlowStepId(dependentFlowStepIds(presentation), presentation),
+    ).toBeUndefined();
+    // Every evaluated Build-tab choice is reachable through a presented unit
+    // on the tab the issue list routes it to.
+    const sections = groupChoicesByLegacyWorkflow(
+      presentation.presentationChoices,
+    );
+    for (const choice of primary) {
+      const root = presentationUnitRoot(choice, presentation);
+      expect(
+        sections.find(
+          ({ section }) =>
+            section === presentedChoiceSection(choice, presentation),
+        )?.choices,
+        choice.id,
+      ).toContain(root);
+    }
+  });
+
   it("presents a selected race's evaluated ability bonus after point buy", () => {
     const statement = (
       name: string,
@@ -2232,19 +2354,9 @@ describe("builder planning UI", () => {
       projectBuildForEvaluation(selectedBuild, entities),
       entities,
     );
-    const ordinary = groupLevelChoices(choicesAtLevel(1, evaluation)).ordinary;
-    const dependentFlows = groupDependentChoiceFlows(ordinary).filter(
-      (flow) => flow.length > 1,
+    const { presentationChoices } = presentLevelChoices(
+      groupLevelChoices(choicesAtLevel(1, evaluation)).ordinary,
     );
-    const dependentFlowByChoiceId = new Map(
-      dependentFlows.flatMap((flow) =>
-        flow.map((choice) => [choice.id, flow] as const),
-      ),
-    );
-    const presentationChoices = ordinary.filter((choice) => {
-      const flow = dependentFlowByChoiceId.get(choice.id);
-      return flow === undefined || choice === flow[0];
-    });
     const sections = groupChoicesByLegacyWorkflow(presentationChoices);
     const abilityChoice = sections.find(
       ({ section }) => section === "Ability Scores",

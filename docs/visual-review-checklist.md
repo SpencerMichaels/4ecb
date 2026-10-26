@@ -1011,3 +1011,26 @@ character works; Hu (`hu`) has item cards and several reference groups.
   - **Wrong if:** a dimmed card is hard to tell from a shown one, the
     "Hidden" tag covers the card name badly, the strip is unreadable in dark
     mode, or the printout has gaps or wrong page numbers.
+
+## Granted choices in a feat's flow (2026-10-25)
+
+- [ ] **A pick that opens a step scrolls to it.**
+  - **Where:** a new hybrid character (e.g. Hybrid Barbarian/Cleric), level
+    1, Feats tab, Feat item; double-click Hybrid Talent (expand General if
+    needed). Then pick a feature. Also pick Toughness on another character.
+  - **Expect:** the page jumps (no animation) so the "2 Class Feature"
+    heading sits near the top with a small margin, listing the hybrid
+    classes' features; picking the feature doesn't scroll again; Toughness
+    doesn't scroll at all. Same at 140% zoom.
+  - **Wrong if:** step 2 stays below the feat table, or a pick that opens
+    nothing scrolls the page.
+- [ ] **Review leads to the step.**
+  - **Where:** the same character before picking the feature: the
+    unresolved-choices badge → Review on "Level 1 Class Feature".
+  - **Expect:** level 1 Feats tab, the Feat item open, the page scrolled to
+    "2 Class Feature"; picking a feature clears the issue.
+  - **Wrong if:** Review lands on the Class tab, or step 2 is off-screen.
+- [ ] **Imported Hybrid Talent stays editable.**
+  - **Where:** import `sample-chars/Sylestine.dnd4e`, level 4 → Feats, open
+    "Feat: Hybrid Talent, Bard Armor Proficiency".
+  - **Expect:** step 2 shows Bard Armor Proficiency selected and changeable.

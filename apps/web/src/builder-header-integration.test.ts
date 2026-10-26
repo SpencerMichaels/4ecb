@@ -229,4 +229,29 @@ describe("one table or none at a time", () => {
     expect(source).toContain('toggleAccordion("presets")');
     expect(choiceEditors).not.toContain("<summary>Starting presets</summary>");
   });
+
+  it("leads an issue to the tab and step that present its choice", () => {
+    const handler = source.slice(
+      source.indexOf("const navigateToDiagnosticIssue ="),
+      source.indexOf("const activateLevelSection ="),
+    );
+
+    // A feat-granted class feature is step 2 of the feat's flow on the
+    // Feats tab, not on the Class tab its own type suggests.
+    expect(handler).toContain("presentedChoiceSection(");
+    expect(handler).not.toContain("legacyChoiceSection(choice)");
+    expect(handler).toContain("setScrollToChoiceId(choice.id)");
+    expect(source).toContain(
+      "document.getElementById(choiceSectionId(scrollToChoiceId))",
+    );
+    // A pick that opens a new flow step scrolls to it the same way.
+    expect(source).toContain(
+      "openedFlowStepId(seenFlowSteps.stepIds, levelChoicePresentation)",
+    );
+    expect(source).toContain(
+      "if (opened !== undefined) setScrollToChoiceId(opened);",
+    );
+    // Instant scrolling only, so reduced-motion users never get animation.
+    expect(source).not.toContain('behavior: "smooth"');
+  });
 });
