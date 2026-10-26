@@ -8,20 +8,15 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { createPortal, flushSync } from "react-dom";
-
-import { Icon } from "./Icon";
 
 export interface SheetEditMenuItem {
   readonly label: string;
   readonly onSelect: () => void;
 }
 
-const LONG_PRESS_MS = 550;
-const LONG_PRESS_SLOP_PX = 10;
 const VIEWPORT_MARGIN_PX = 8;
 
 /** Whether a key press asks for the context menu (Menu key or Shift+F10). */
@@ -31,9 +26,9 @@ const opensContextMenu = (event: ReactKeyboardEvent) =>
 /**
  * An Edit-mode overlay over one sheet card or section (D099). It never
  * changes what it covers: it is absolutely positioned by its container's CSS,
- * screen-only, and never inside measured probe copies. Its menu opens from
- * the always-visible corner button, a right-click, the Menu key or
- * Shift+F10, or a long press on touch screens.
+ * screen-only, and never inside measured probe copies. Like the legacy
+ * builder, its menu opens on right-click; keyboard users focus the overlay
+ * and press the Menu key or Shift+F10. There is no visible button.
  */
 export function SheetEditTarget({
   className,
@@ -45,7 +40,7 @@ export function SheetEditTarget({
 }: {
   readonly className: string;
   readonly style?: CSSProperties;
-  /** The accessible name of the corner button and its menu. */
+  /** The accessible name of the overlay and its menu. */
   readonly menuLabel: string;
   /** Hidden from print but revealed by "Show hidden": dimmed and marked. */
   readonly hidden?: boolean;
@@ -53,26 +48,22 @@ export function SheetEditTarget({
   readonly children?: ReactNode;
 }) {
   const menuId = useId();
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const targetRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
-  const longPress = useRef<{
-    readonly timer: number;
-    readonly x: number;
-    readonly y: number;
-  }>(undefined);
   const [menu, setMenu] = useState<{ x: number; y: number }>();
   const open = menu !== undefined;
 
   const openAt = useCallback((x: number, y: number) => {
     setMenu((current) => current ?? { x, y });
   }, []);
-  const openFromButton = useCallback(() => {
-    const rect = buttonRef.current?.getBoundingClientRect();
-    openAt(rect?.right ?? 0, rect?.bottom ?? 0);
+  // From the keyboard: at the overlay's top-right corner.
+  const openFromTarget = useCallback(() => {
+    const rect = targetRef.current?.getBoundingClientRect();
+    openAt(rect?.right ?? 0, rect?.top ?? 0);
   }, [openAt]);
   const close = useCallback((restoreFocus: boolean) => {
     setMenu(undefined);
-    if (restoreFocus) buttonRef.current?.focus();
+    if (restoreFocus) targetRef.current?.focus();
   }, []);
 
   // Keep the menu inside the viewport, and focus its first item.
@@ -93,8 +84,7 @@ export function SheetEditTarget({
     const dismissOutside = (event: PointerEvent) => {
       if (
         event.target instanceof Node &&
-        (menuRef.current?.contains(event.target) ||
-          buttonRef.current?.contains(event.target))
+        menuRef.current?.contains(event.target)
       )
         return;
       close(false);
@@ -110,44 +100,12 @@ export function SheetEditTarget({
     };
   }, [open, close]);
 
-  const cancelLongPress = () => {
-    if (longPress.current !== undefined)
-      window.clearTimeout(longPress.current.timer);
-    longPress.current = undefined;
-  };
-  useEffect(() => cancelLongPress, []);
-
   const onContextMenu = (event: ReactMouseEvent) => {
     event.preventDefault();
     if (open) return;
     // A keyboard-raised context menu has no pointer position.
-    const fromKeyboard =
-      buttonRef.current?.contains(event.target as Node) === true ||
-      (event.clientX === 0 && event.clientY === 0);
-    if (fromKeyboard) openFromButton();
+    if (event.clientX === 0 && event.clientY === 0) openFromTarget();
     else openAt(event.clientX, event.clientY);
-  };
-  const onPointerDown = (event: ReactPointerEvent) => {
-    if (event.pointerType !== "touch" || open) return;
-    cancelLongPress();
-    const { clientX: x, clientY: y } = event;
-    longPress.current = {
-      x,
-      y,
-      timer: window.setTimeout(() => {
-        longPress.current = undefined;
-        openAt(x, y);
-      }, LONG_PRESS_MS),
-    };
-  };
-  const onPointerMove = (event: ReactPointerEvent) => {
-    const start = longPress.current;
-    if (
-      start !== undefined &&
-      Math.hypot(event.clientX - start.x, event.clientY - start.y) >
-        LONG_PRESS_SLOP_PX
-    )
-      cancelLongPress();
   };
 
   const onMenuKeyDown = (event: ReactKeyboardEvent<HTMLUListElement>) => {
@@ -186,54 +144,44 @@ export function SheetEditTarget({
   };
 
   const select = (item: SheetEditMenuItem) => {
-    const button = buttonRef.current;
+    const target = targetRef.current;
     // The choice may remove this overlay (hiding with "Show hidden" off), so
-    // remember the neighbouring control to keep keyboard focus on the sheet.
+    // remember the neighbouring overlay to keep keyboard focus on the sheet.
     const controls = [
-      ...document.querySelectorAll<HTMLElement>(".sheet-edit-menu-button"),
+      ...document.querySelectorAll<HTMLElement>(".sheet-edit-target"),
     ];
-    const index = button === null ? -1 : controls.indexOf(button);
+    const index = target === null ? -1 : controls.indexOf(target);
     const fallback = controls[index + 1] ?? controls[index - 1];
     setMenu(undefined);
     item.onSelect();
     window.requestAnimationFrame(() => {
-      if (button?.isConnected) button.focus();
+      if (target?.isConnected) target.focus();
       else if (fallback?.isConnected) fallback.focus();
     });
   };
 
   return (
     <div
+      aria-controls={open ? menuId : undefined}
+      aria-expanded={open}
+      aria-haspopup="menu"
+      aria-label={menuLabel}
       className={`sheet-edit-target ${className}`}
       data-hidden={hidden || undefined}
+      ref={targetRef}
+      role="button"
       style={style}
+      tabIndex={0}
       onContextMenu={onContextMenu}
-      onPointerCancel={cancelLongPress}
-      onPointerDown={onPointerDown}
-      onPointerLeave={cancelLongPress}
-      onPointerMove={onPointerMove}
-      onPointerUp={cancelLongPress}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget || !opensContextMenu(event))
+          return;
+        event.preventDefault();
+        openFromTarget();
+      }}
     >
       {hidden ? <span className="sheet-edit-hidden-marker">Hidden</span> : null}
       {children}
-      <button
-        aria-controls={open ? menuId : undefined}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={menuLabel}
-        className="icon-only-button button-icon sheet-edit-menu-button"
-        ref={buttonRef}
-        title={menuLabel}
-        type="button"
-        onClick={() => (open ? close(false) : openFromButton())}
-        onKeyDown={(event) => {
-          if (!opensContextMenu(event)) return;
-          event.preventDefault();
-          openFromButton();
-        }}
-      >
-        <Icon name="more" />
-      </button>
       {/* In the body: clear of the paper's overflow and colour overrides. */}
       {open
         ? createPortal(

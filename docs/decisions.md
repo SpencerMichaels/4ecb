@@ -2782,10 +2782,12 @@ Decision:
   builder and library link to View). Edit keeps the paper preview and puts
   the controls on the paper (owner feedback 2026-10-25, replacing a
   "Sheet contents" checkbox panel): every card and every optional section's
-  first page has a menu — an always-visible corner button ("Card options
-  for <name>" / "Section options for <name>"), right-click, the Menu key or
-  Shift+F10, or a long press — with "Hide card"/"Show card" or "Hide
-  section"/"Show section"; page 1 has none, and an empty reference group
+  first page has a right-click menu, as in the legacy builder (keyboard:
+  focus the overlay, "Card options for <name>" / "Section options for
+  <name>", then the Menu key or Shift+F10), with "Hide card"/"Show card" or
+  "Hide section"/"Show section". Owner follow-up (2026-10-25): no visible
+  per-card button and no long press — the ⋮ buttons were too noisy and touch
+  screens are out of scope for now; page 1 has none, and an empty reference group
   prints no page, so it has none either. This mirrors the legacy CharTracker
   card menu's "Hide"; its one-shot "Restore Hidden Power Cards" becomes a
   toolbar "Show hidden" toggle (off by default, not saved): on, hidden cards

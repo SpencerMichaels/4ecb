@@ -38,7 +38,6 @@ import {
   Dice5,
   Coins,
   Download,
-  EllipsisVertical,
   Eye,
   FileText,
   FolderInput,
@@ -191,7 +190,6 @@ export type IconName =
   | "level"
   | "lock"
   | "medal"
-  | "more"
   | "new-character"
   | "orbit"
   | "package-open"
@@ -279,7 +277,6 @@ const icons: Record<IconName, LucideIcon> = {
   dumbbell: Dumbbell,
   edit: Pencil,
   eye: Eye,
-  more: EllipsisVertical,
   favorite: Star,
   feat: Sparkles,
   "flask-conical": FlaskConical,

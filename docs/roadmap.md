@@ -734,7 +734,7 @@ reminder control and card ordering (plan and owner decisions:
    deck in sheet-model (`sheetCardDeck`); no visible change.
 1. **Done (2026-10-25).** `SheetLayout` persistence, `?preview=1&edit=1`
    and the toolbar View | Edit control; on-paper card and section menus
-   (corner button, right-click, keyboard, long press) to hide/show cards
+   (right-click, or the Menu key on a focused card) to hide/show cards
    (item cards via `showPowerCard`) and sections, a "Show hidden" toggle
    that reveals hidden things dimmed for per-item restore, and global
    reset in the toolbar.

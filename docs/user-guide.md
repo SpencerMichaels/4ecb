@@ -251,12 +251,12 @@ cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
 The print preview's toolbar switches **Sheet: View | Edit**. **Edit** keeps
-the paper preview and adds a small menu button to the top corner of every
-card and of the first page of every optional section — the play scratchpad,
-each full-reference group (features, item reference, power index, rituals &
-practices, character profile) and session notes; page 1 always prints. Open
-it with the button, a right-click, the keyboard's Menu key or Shift+F10, or a
-long press on a touch screen, then choose **Hide card** or **Hide section**.
+the paper preview and lets you right-click any card, or the first page of any
+optional section — the play scratchpad, each full-reference group (features,
+item reference, power index, rituals & practices, character profile) and
+session notes; page 1 always prints. From the keyboard, Tab to a card or
+section and press the Menu key or Shift+F10. Choose **Hide card** or **Hide
+section**.
 Hidden things leave the preview exactly as they leave the printout. Tick
 **Show hidden** in the toolbar to see them again, dimmed and marked
 "Hidden" (sections as a short placeholder), and choose **Show card** or

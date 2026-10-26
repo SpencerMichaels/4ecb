@@ -975,37 +975,37 @@ press, Escape), saving, page numbering, print omission of hidden things and
 "no re-evaluation" are verified by tests; check only layout and feel. Any
 character works; Hu (`hu`) has item cards and several reference groups.
 
-- [ ] **Corner menu buttons on the paper.**
+- [ ] **Edit mode on the paper.**
   - **Where:** `hu` → `?preview=1`, click **Edit** in the toolbar's "Sheet"
     control; at 100% and 140% browser zoom, light and dark mode.
   - **Expect:** the toolbar shows View | Edit, a **Show hidden** checkbox,
     **Reset sheet to defaults** (greyed while nothing is hidden) and Print.
-    Every card has a small white square ⋮ button in its top-right corner,
-    and the first page of the scratchpad, each reference group and session
-    notes has one in its top-right corner; page 1 has none. Cards keep
+    Cards and pages look exactly as in View — no per-card buttons. Tabbing
+    from the toolbar moves a clear focus ring card by card (and onto the
+    first page of the scratchpad, each reference group and session notes,
+    never page 1). Cards keep
     exactly the size and text fit they have in View. View mode shows none of
     these controls.
-  - **Wrong if:** a button hides something important on the card (name,
-    usage), a card's text size changes between View and Edit, the toolbar
-    wraps badly or scrolls sideways at 140%, or the ⋮ is unreadable in dark
-    mode.
+  - **Wrong if:** any button or marker appears on shown cards, a card's
+    text size changes between View and Edit, the toolbar wraps badly or
+    scrolls sideways at 140%, or the focus ring is hard to see.
 - [ ] **Menu feel.**
-  - **Where:** the same page: click a card's ⋮; right-click elsewhere on a
-    card; on a phone or touch screen, long-press a card.
-  - **Expect:** a small menu ("Hide card") opens under the button or at the
-    pointer, inside the window even near its right/bottom edge, in the app's
-    theme colours; the browser's own context menu doesn't appear; scrolling
-    or clicking elsewhere closes it; a long press doesn't select text.
+  - **Where:** the same page: right-click a card, and a section's first
+    page; Tab to a card and press the Menu key.
+  - **Expect:** a small menu ("Hide card") opens at the pointer (or the
+    card's top-right corner from the keyboard), inside the window even near
+    its right/bottom edge, in the app's theme colours; the browser's own
+    context menu doesn't appear; scrolling or clicking elsewhere closes it.
   - **Wrong if:** the menu is clipped by the page edge, opens behind the
-    toolbar, or a long press also opens the native callout.
+    toolbar, or the browser's menu also appears.
 - [ ] **Hide, Show hidden, Show again.**
   - **Where:** hide a power, an item and the Play scratchpad from their
     menus; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
   - **Expect:** hidden cards vanish and later cards close up 9 per page;
     with **Show hidden** they return in place, dimmed with grey stripes, a
     dashed outline and a dark "Hidden" tag; the scratchpad is a short dimmed
-    strip "Hidden · Play scratchpad" with its own ⋮ (**Show section**). The
-    browser's print preview never contains hidden cards, the strip or any ⋮.
+    strip "Hidden · Play scratchpad" (right-click it for **Show section**). The
+    browser's print preview never contains hidden cards, the strip or any focus ring.
     Reload: choices persist and **Show hidden** is off again. Reset (click
     twice) restores everything.
   - **Wrong if:** a dimmed card is hard to tell from a shown one, the

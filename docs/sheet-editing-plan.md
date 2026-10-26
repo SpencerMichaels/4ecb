@@ -67,9 +67,10 @@ export interface SheetLayout {
   either; `?print=1` stays view-only.
 - Edit mode keeps the WYSIWYG paper preview with the controls on the paper
   (owner feedback 2026-10-25 replaced the first "Sheet contents" checkbox
-  panel): each card and each optional section's first page has a menu
-  (corner button, right-click, Menu key/Shift+F10, long press) with
-  Hide/Show. A toolbar "Show hidden" toggle reveals hidden cards dimmed in
+  panel): each card and each optional section's first page has a
+  right-click menu with Hide/Show, like the legacy builder (keyboard: focus
+  the card, Menu key or Shift+F10). No visible per-card button and no touch
+  gestures — owner: too noisy, desktop only for now. A toolbar "Show hidden" toggle reveals hidden cards dimmed in
   their deck position and hidden sections as dimmed placeholders, each with
   "Show"; printing always omits them. Legacy CharTracker had the card
   "Hide" menu item and a one-shot "Restore Hidden Power Cards".

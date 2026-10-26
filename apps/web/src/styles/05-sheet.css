@@ -542,7 +542,7 @@
 }
 
 /* Print preview Edit mode (D099): each card and optional section carries an
-   on-paper menu (corner button, right-click, long press). The overlays are
+   on-paper right-click menu (Menu key or Shift+F10 on a focused overlay). The overlays are
    out of flow and screen-only, so they never change what prints or fits.
    The paper is white in both themes, so on-paper controls use paper ink. */
 .sheet-page.is-print-preview .print-preview-toolbar {
@@ -625,24 +625,14 @@
   top: 0.3rem;
 }
 
-button.sheet-edit-menu-button {
-  background: #fff;
-  border: 1px solid #abb3b8;
-  border-radius: 2px;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
-  color: #20272a;
-  height: 1.9rem;
-  opacity: 0.88;
-  position: absolute;
-  right: 0.25rem;
-  top: 0.25rem;
-  width: 1.9rem;
+/* No visible control: a focus ring only while tabbing between overlays. */
+.sheet-edit-target:focus {
+  outline: none;
 }
 
-button.sheet-edit-menu-button:hover,
-button.sheet-edit-menu-button:focus-visible,
-button.sheet-edit-menu-button[aria-expanded="true"] {
-  opacity: 1;
+.sheet-edit-target:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
 }
 
 /* A section's control sits on its first page's top corner: a zero-height
@@ -687,10 +677,6 @@ button.sheet-edit-menu-button[aria-expanded="true"] {
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.2;
-}
-
-.sheet-hidden-section button.sheet-edit-menu-button {
-  top: calc(50% - 0.95rem);
 }
 
 .sheet-edit-menu {

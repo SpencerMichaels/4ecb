@@ -44,8 +44,8 @@ holding has `showPowerCard=false` stay in the model as `hiddenByDefault`
 `updateMetadata` without moving `updatedAt`; `applySheetLayout` in
 sheet-model; the print preview's "Sheet: View | Edit" control and
 `#/characters/<id>?preview=1&edit=1`; Edit mode's on-paper menus on every
-card and optional section (corner button, right-click, Menu key/Shift+F10,
-long press: Hide/Show), a toolbar "Show hidden" toggle that reveals hidden
+card and optional section (right-click, or Menu key/Shift+F10 on a focused
+card: Hide/Show; no visible per-card button), a toolbar "Show hidden" toggle that reveals hidden
 cards and sections dimmed on screen only (`beforeprint` turns it off), and
 an arm-then-confirm reset in the toolbar (the first cut's "Sheet contents"
 checkbox panel was replaced the same day after owner feedback);

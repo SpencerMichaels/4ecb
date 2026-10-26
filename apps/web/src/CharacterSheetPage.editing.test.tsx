@@ -162,7 +162,17 @@ const pageText = (label: string) =>
     .map((page) => page.textContent)
     .join("\n");
 const optionsButton = (label: string) =>
-  container.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
+  container.querySelector<HTMLElement>(`[aria-label="${label}"]`);
+const rightClick = (target: Element, clientX = 40, clientY = 60) => {
+  const event = new MouseEvent("contextmenu", {
+    bubbles: true,
+    cancelable: true,
+    clientX,
+    clientY,
+  });
+  target.dispatchEvent(event);
+  return event;
+};
 const cardOptions = (name: string) => optionsButton(`Card options for ${name}`);
 const sectionOptions = (name: string) =>
   optionsButton(`Section options for ${name}`);
@@ -172,9 +182,11 @@ const menuItems = () =>
   [
     ...document.body.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
   ].map((item) => item.textContent);
-async function choose(button: HTMLButtonElement | null, item: string) {
-  expect(button, item).not.toBeNull();
-  await act(async () => button!.click());
+async function choose(overlay: HTMLElement | null, item: string) {
+  expect(overlay, item).not.toBeNull();
+  await act(async () => {
+    rightClick(overlay!);
+  });
   const target = [
     ...document.body.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
   ].find((entry) => entry.textContent === item);
@@ -243,10 +255,10 @@ describe("character sheet Edit mode", () => {
     await renderSheet(true);
     for (const name of ["Play data", "Skills", "Arc Strike", "Synthetic Cloak"])
       expect(cardOptions(name), name).not.toBeNull();
-    const button = cardOptions("Arc Strike")!;
-    expect(button.getAttribute("aria-haspopup")).toBe("menu");
-    expect(button.getAttribute("aria-expanded")).toBe("false");
-    expect(button.closest(".sheet-edit-target")?.className).toContain(
+    const overlay = cardOptions("Arc Strike")!;
+    expect(overlay.getAttribute("aria-haspopup")).toBe("menu");
+    expect(overlay.getAttribute("aria-expanded")).toBe("false");
+    expect(overlay.closest(".sheet-edit-target")?.className).toContain(
       "print-excluded",
     );
     // Overlays never sit inside the measured probe copies.
@@ -269,16 +281,24 @@ describe("character sheet Edit mode", () => {
     expect(reset?.disabled).toBe(true);
   });
 
-  it("opens a card menu from the button, right-click, keyboard and long press", async () => {
+  it("opens a card menu on right-click, or the keyboard, with no visible button", async () => {
     await renderSheet(true);
-    const button = cardOptions("Arc Strike")!;
-    await act(async () => button.click());
+    const overlay = cardOptions("Arc Strike")!;
+    // Like the legacy builder: right-click only, no per-card button.
+    expect(overlay.querySelector("button")).toBeNull();
+    expect(overlay.getAttribute("role")).toBe("button");
+    expect(overlay.tabIndex).toBe(0);
+    let event: MouseEvent | undefined;
+    await act(async () => {
+      event = rightClick(overlay);
+    });
+    expect(event?.defaultPrevented).toBe(true);
     const menu = openMenu();
     expect(menu?.getAttribute("aria-label")).toBe(
       "Card options for Arc Strike",
     );
-    expect(button.getAttribute("aria-expanded")).toBe("true");
-    expect(button.getAttribute("aria-controls")).toBe(menu?.id);
+    expect(overlay.getAttribute("aria-expanded")).toBe("true");
+    expect(overlay.getAttribute("aria-controls")).toBe(menu?.id);
     expect(menuItems()).toEqual(["Hide card"]);
     expect(document.activeElement?.textContent).toBe("Hide card");
     await act(async () =>
@@ -287,18 +307,11 @@ describe("character sheet Edit mode", () => {
       ),
     );
     expect(openMenu()).toBeNull();
-    expect(document.activeElement).toBe(button);
+    expect(document.activeElement).toBe(overlay);
 
-    const overlay = button.closest(".sheet-edit-target")!;
-    const rightClick = new MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      clientX: 40,
-      clientY: 60,
+    await act(async () => {
+      rightClick(overlay);
     });
-    await act(async () => overlay.dispatchEvent(rightClick));
-    expect(rightClick.defaultPrevented).toBe(true);
-    expect(menuItems()).toEqual(["Hide card"]);
     // A click elsewhere closes it.
     await act(async () =>
       document.body.dispatchEvent(
@@ -307,45 +320,22 @@ describe("character sheet Edit mode", () => {
     );
     expect(openMenu()).toBeNull();
 
-    await act(async () =>
-      button.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "F10",
-          shiftKey: true,
-          bubbles: true,
-        }),
-      ),
-    );
-    expect(menuItems()).toEqual(["Hide card"]);
-    await act(async () =>
-      document.activeElement!.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
-      ),
-    );
-    await act(async () =>
-      button.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "ContextMenu", bubbles: true }),
-      ),
-    );
-    expect(menuItems()).toEqual(["Hide card"]);
-    await act(async () =>
-      document.activeElement!.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
-      ),
-    );
-
-    const press = new MouseEvent("pointerdown", {
-      bubbles: true,
-      clientX: 40,
-      clientY: 60,
-    });
-    Object.defineProperty(press, "pointerType", { value: "touch" });
-    await act(async () => overlay.dispatchEvent(press));
-    expect(openMenu()).toBeNull();
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 650));
-    });
-    expect(menuItems()).toEqual(["Hide card"]);
+    for (const init of [
+      { key: "F10", shiftKey: true },
+      { key: "ContextMenu" },
+    ]) {
+      await act(async () =>
+        overlay.dispatchEvent(
+          new KeyboardEvent("keydown", { ...init, bubbles: true }),
+        ),
+      );
+      expect(menuItems()).toEqual(["Hide card"]);
+      await act(async () =>
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        ),
+      );
+    }
   });
 
   it("hides cards and sections from their menus without re-evaluating, saving silently", async () => {
