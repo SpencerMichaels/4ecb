@@ -16,7 +16,7 @@ only by dropping Action Point riders. `SheetLayout.reminders` stores
 vanished ids kept; Reset clears), and `applySheetLayout` resolves them
 into `ResolvedSheetLayout.reminders`. In Edit mode a right-click on a
 page-1 or continuation reminder row toggles it (no menu, no keyboard
-binding); rows that are off stay in place, faded under a faint "Hidden";
+binding); rows that are off stay in place, faded (no mark, owner);
 View mode and print show only rows that are on. Toggling never
 re-evaluates (jsdom test) and saves silently.
 

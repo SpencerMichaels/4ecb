@@ -453,17 +453,11 @@ describe("print layout contract", () => {
     expect(appStyles).not.toMatch(/\.sheet-concealed-card[^{]*footer/);
   });
 
-  it("fades a hidden reminder row in Edit mode under an out-of-flow mark", () => {
+  it("fades a hidden reminder row in Edit mode, with no mark", () => {
     expect(appStyles).toMatch(
-      /\.sheet-reminder-edit\s*\{\s*position:\s*relative;/,
+      /\.sheet-reminder-edit\[data-hidden\]\s*\{\s*opacity:\s*0\.35;/,
     );
-    expect(appStyles).toMatch(
-      /\.sheet-reminder-edit\[data-hidden\] > :not\(\.sheet-hidden-reminder-mark\)\s*\{\s*opacity:\s*0\.35;/,
-    );
-    // The mark never changes the row's measured height or catches clicks.
-    expect(appStyles).toMatch(
-      /\.sheet-hidden-reminder-mark\s*\{[^}]*pointer-events:\s*none;[^}]*position:\s*absolute;/,
-    );
+    expect(appStyles).not.toMatch(/sheet-hidden-reminder-mark/);
     // Probe copies are never styled as edit rows.
     expect(appStyles).not.toMatch(/\.ov-reminder-probe[^{]*sheet-reminder/);
   });

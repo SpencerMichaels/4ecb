@@ -437,11 +437,6 @@ function Reminders({
           ) : (
             <Prose value={entry.value} />
           )}
-          {/* Edit mode marks a hidden row; out of flow, so the row keeps
-              the height its probe copy measured. */}
-          {onToggle !== undefined && entry.shown === false ? (
-            <span className="sheet-hidden-reminder-mark">Hidden</span>
-          ) : null}
         </div>
       ))}
     </div>

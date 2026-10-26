@@ -2894,8 +2894,8 @@ Decision:
   rider (pinning) never removes the card's line, and hiding a card never
   changes a reminder. In Edit mode, right-clicking a reminder row on page 1
   or its continuation pages toggles it with no menu (no keyboard binding,
-  owner); rows that are off stay in place in their category, faded under a
-  faint "Hidden" (out of flow, so the row keeps its probe height). Edit mode
+  owner); rows that are off stay in place in their category, faded, with no
+  "Hidden" mark (owner, 2026-10-26: the fade is enough). Edit mode
   fits page 1 with those rows included, so it may run longer than the
   print. View mode and print (`beforeprint`) show only rows that are on,
   without edit behaviour; probe copies never carry it. Toggling never

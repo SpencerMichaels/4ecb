@@ -143,8 +143,8 @@ sheet-model with keys.
     line; hiding a card never changes a reminder.
   - Edit mode only: right-clicking a reminder row on page 1 or a
     continuation page toggles it, with no menu and no keyboard binding.
-    Rows that are off stay in place in their category, faded and marked
-    "Hidden"; Edit fits page 1 with them included (so it may run longer
+    Rows that are off stay in place in their category, faded (no "Hidden"
+    mark, owner); Edit fits page 1 with them included (so it may run longer
     than the print). View mode and print show only rows that are on;
     `beforeprint` strips the edit UI and hidden rows; probe copies never
     carry edit behaviour.

@@ -270,7 +270,7 @@ equivalent.
 
 Page 1's "Remember in play" reminders work the same way in Edit mode:
 right-click a reminder to hide it, and right-click a hidden one to show it
-again. Hidden reminders stay in their place, faded and marked "Hidden", so
+again. Hidden reminders stay in their place, faded, so
 page 1 in Edit mode can run longer than the printout. Edit mode also lists,
 already hidden, the reminders a power card's rider line prints (such as
 Action Point benefits or an item's bonus against bloodied targets): show one

@@ -476,14 +476,11 @@ describe("character sheet Edit mode", () => {
 
     await renderSheet(true);
     expect(row()?.hasAttribute("data-hidden")).toBe(true);
+    // Only faded: no "Hidden" mark over the text.
+    expect(row()?.textContent).not.toMatch(/Hidden/);
+    // Probe copies carry no edit behaviour.
     expect(
-      row()?.querySelector(".sheet-hidden-reminder-mark")?.textContent,
-    ).toBe("Hidden");
-    // Probe copies carry no edit behaviour or marks.
-    expect(
-      container.querySelector(
-        ".ov-reminder-probe .sheet-reminder-edit, .ov-reminder-probe .sheet-hidden-reminder-mark",
-      ),
+      container.querySelector(".ov-reminder-probe .sheet-reminder-edit"),
     ).toBeNull();
     // A right-click toggles directly: no menu opens.
     let event: MouseEvent | undefined;
@@ -494,7 +491,6 @@ describe("character sheet Edit mode", () => {
     expect(event?.defaultPrevented).toBe(true);
     expect(container.querySelector('[role="menu"]')).toBeNull();
     expect(row()?.hasAttribute("data-hidden")).toBe(false);
-    expect(row()?.querySelector(".sheet-hidden-reminder-mark")).toBeNull();
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: {
         version: 1,
