@@ -87,7 +87,9 @@ export interface SheetLayout {
   renumber; hiding everything leaves an empty preview with no notice. Rows
   reorder by dragging (grip handle, drop-edge rule) or Alt+Up / Alt+Down on
   a focused row, and the sheet prints in that order with page numbers
-  chained through it. The menu closes on Escape (focus back to the button),
+  chained through it. Play scratchpad and Session notes print no page number
+  and take none, and their rows have a − [n] + copies stepper (at least 1;
+  the whole page set repeats at its place in the order). The menu closes on Escape (focus back to the button),
   an outside click or tabbing out.
 - The toolbar packs from the start (Back, View | Edit, then Edit's Sections
   and Reset), so View | Edit never moves between modes; Print stays at the

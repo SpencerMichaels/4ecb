@@ -2754,7 +2754,7 @@ Decision:
   and `portrait`. No schema bump; backups, export, duplicate and trash carry
   it unchanged; the rules engine and `.dnd4e` import/export never see it.
   It stores only deltas from the default sheet (`hiddenSections`,
-  `hiddenCards`, `shownCards`, `sectionOrder`), so new cards get default behavior; vanished
+  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`), so new cards get default behavior; vanished
   keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
   leniently (malformed entries are dropped; an empty layout is the default).
 - Item cards are the exception (owner decision 1): whether a holding prints
@@ -2818,7 +2818,21 @@ Decision:
   `SheetOverview` renders the sections in that order and chains page
   numbers through it (hidden sections count no pages; the overview's
   continuation pages stay with it and its "more reminders on page N" note
-  follows; unnumbered session notes still count their page).
+  follows).
+- Play scratchpad and Session notes print no page number and take none
+  (owner, 2026-10-25): the numbered sections run on as if those pages were
+  not there (e.g. Overview 1, two scratchpads, cards 2–4, notes, reference
+  5…), and the scratchpad's "Tracking continues on the next page…" names no
+  page. Their footers keep the title and centred identity; the empty number
+  column balances the grid.
+- Those two rows also carry a copies stepper (− button, number field, +
+  button: "Fewer copies of …" / "Copies of …" / "More copies of …"): at
+  least 1 (the checkbox prints none), no maximum; a typed whole number saves
+  at once and anything else reverts on blur. Stored as `sectionCopies`
+  only above 1 (the normalizer drops non-integers and counts below 1); the
+  section prints its whole page set that many times, one after another, at
+  its place in the order. Only the grip drags a row, so the checkbox and
+  field keep ordinary pointer input. Reset restores one copy.
 - The toolbar packs from the start (Back, View | Edit, then Edit's
   Sections and Reset; Print at the end), and each View | Edit option
   reserves its bold width, so the control never moves between modes. Reset

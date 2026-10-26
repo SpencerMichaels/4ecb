@@ -267,7 +267,9 @@ profile), Power & item cards and session notes. Untick a row to leave that
 section out of the preview and the printout; untick Overview and the rest
 to reprint only some cards. Drag a row by its grip (or focus it and press
 Alt+Up or Alt+Down) to move it; the sheet prints in the new order and page
-numbers follow it. Escape or a click elsewhere closes the menu. An item's card
+numbers follow it. The play scratchpad and session notes print without page
+numbers, so you can print extra copies: use the − and + buttons on their
+rows, or type a number. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset** (click again to
 confirm) prints everything again. Changes save automatically, are

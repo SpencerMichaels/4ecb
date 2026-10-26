@@ -1,6 +1,9 @@
 import {
+  SHEET_COPYABLE_SECTION_IDS,
   SHEET_SECTION_IDS,
+  sheetSectionCopies,
   sheetSectionOrder,
+  type SheetCopyableSectionId,
   type SheetLayout,
   type SheetSectionId,
 } from "@4ecb/character-domain";
@@ -26,6 +29,8 @@ export interface ResolvedSheetLayout {
   readonly hiddenSections: ReadonlySet<SheetSectionId>;
   /** Every section, hidden or not, in print order. */
   readonly sectionOrder: readonly SheetSectionId[];
+  /** How many copies of each repeatable section print (at least 1). */
+  readonly sectionCopies: Readonly<Record<SheetCopyableSectionId, number>>;
 }
 
 /**
@@ -82,5 +87,11 @@ export function applySheetLayout(
     cards,
     hiddenSections,
     sectionOrder: sheetSectionOrder(layout?.sectionOrder),
+    sectionCopies: Object.fromEntries(
+      SHEET_COPYABLE_SECTION_IDS.map((section) => [
+        section,
+        sheetSectionCopies(layout, section),
+      ]),
+    ) as Record<SheetCopyableSectionId, number>,
   };
 }

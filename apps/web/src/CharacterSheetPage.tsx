@@ -12,11 +12,13 @@ import {
   characterDisplayName,
   normalizeSheetLayout,
   withSheetCardsShown,
+  withSheetSectionCopies,
   withSheetSectionOrder,
   withSheetSectionShown,
   type CharacterPortrait,
   type CharacterRecord,
   type SheetLayout,
+  type SheetCopyableSectionId,
   type SheetSectionId,
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
@@ -358,6 +360,17 @@ export function CharacterSheetPage({
       ),
     [updateLayout],
   );
+  const setSectionCopies = useCallback(
+    (section: SheetCopyableSectionId, count: number) =>
+      updateLayout(
+        withSheetSectionCopies(
+          latestPresentation.current.sheetLayout,
+          section,
+          count,
+        ),
+      ),
+    [updateLayout],
+  );
   const reorderSections = useCallback(
     (order: readonly SheetSectionId[]) =>
       updateLayout(
@@ -632,7 +645,9 @@ export function CharacterSheetPage({
             <span className="sheet-edit-tools">
               <SheetSectionsMenu
                 hiddenSections={resolvedLayout.hiddenSections}
+                sectionCopies={resolvedLayout.sectionCopies}
                 sectionOrder={resolvedLayout.sectionOrder}
+                onCopies={setSectionCopies}
                 onReorder={reorderSections}
                 onShowSection={showSection}
               />
@@ -919,6 +934,7 @@ export function CharacterSheetPage({
           paper={paper}
           hiddenSections={resolvedLayout.hiddenSections}
           sectionOrder={resolvedLayout.sectionOrder}
+          sectionCopies={resolvedLayout.sectionCopies}
           cardPageCount={printCardPages.length}
         >
           {(firstCardPage) =>

@@ -536,17 +536,15 @@ describe("character sheet Edit mode", () => {
   it("drops page 1 and its continuations when the summary is hidden, renumbering from 1", async () => {
     await renderSheet(true);
     expect(container.querySelector(".sp-identity")).not.toBeNull();
-    const scratchpadDefault = Number(
-      pageNumber('[aria-label="Play scratchpad"]'),
-    );
-    expect(scratchpadDefault).toBeGreaterThan(1);
+    const firstCardPage = Number(pageNumber(".print-card-page"));
+    expect(firstCardPage).toBeGreaterThan(1);
     await openSections();
     await tick("Overview");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: { version: 1, hiddenSections: ["summary"] },
     });
     expect(container.querySelector(".sp-identity")).toBeNull();
-    expect(pageNumber('[aria-label="Play scratchpad"]')).toBe("1");
+    expect(Number(pageNumber(".print-card-page"))).toBe(firstCardPage - 1);
 
     // A cards-only sheet starts its card pages at page 1; with the cards
     // hidden too the preview is simply empty, with no notice.
@@ -707,7 +705,12 @@ describe("character sheet Edit mode", () => {
     await openSections();
     const row = (label: string) =>
       sectionCheckbox(label)!.closest<HTMLElement>(".sheet-sections-row")!;
-    expect(row("Session notes").draggable).toBe(true);
+    const handle = (label: string) =>
+      row(label).querySelector<HTMLElement>(".sheet-sections-handle")!;
+    // Only the grip drags, so the checkbox and copies field stay ordinary.
+    expect(handle("Session notes").draggable).toBe(true);
+    expect(row("Session notes").draggable).toBe(false);
+    const cardsBefore = pageNumber(".print-card-page");
     expect(
       row("Session notes").querySelector(".sheet-sections-handle .icon"),
     ).not.toBeNull();
@@ -718,7 +721,7 @@ describe("character sheet Edit mode", () => {
         ),
       );
     };
-    await fire(row("Session notes"), "dragstart");
+    await fire(handle("Session notes"), "dragstart");
     expect(row("Session notes").hasAttribute("data-dragging")).toBe(true);
     // jsdom rows have no height, so any pointer at or above y = 0 is the
     // target's top half: drop before it.
@@ -756,8 +759,10 @@ describe("character sheet Edit mode", () => {
       "Session notes",
       "Play scratchpad",
     ]);
-    // Session notes take a page, so the scratchpad moves to page 3.
-    expect(pageNumber('[aria-label="Play scratchpad"]')).toBe("3");
+    // Session notes and the scratchpad print unnumbered, so moving them
+    // changes no page number.
+    expect(pageNumber('[aria-label="Play scratchpad"]')).toBeUndefined();
+    expect(pageNumber(".print-card-page")).toBe(cardsBefore);
   });
 
   it("chains page numbers through a hidden, reordered layout and resets both", async () => {
@@ -775,7 +780,7 @@ describe("character sheet Edit mode", () => {
       container.querySelector('[aria-label="Character summary"]'),
     ).toBeNull();
     expect(pageNumber(".print-card-page")).toBe("1");
-    expect(pageNumber('[aria-label="Play scratchpad"]')).toBe("2");
+    expect(pageNumber('[aria-label="Play scratchpad"]')).toBeUndefined();
     await openSections();
     // Missing ids follow the stored ones in default order.
     expect(menuOrder()).toEqual([
@@ -804,6 +809,133 @@ describe("character sheet Edit mode", () => {
     // The open menu follows the reset order.
     expect(menuOrder()[0]).toBe("Overview");
     expect(menuOrder().at(-2)).toBe("Power & item cards");
+  });
+
+  it("sets scratchpad and session notes copies with − / + or a typed number", async () => {
+    await renderSheet(true);
+    await openSections();
+    const control = (name: string) =>
+      sectionsMenu()!.querySelector<HTMLElement>(`[aria-label="${name}"]`);
+    const field = () =>
+      control("Copies of Play scratchpad") as HTMLInputElement;
+    const papers = (title: string) =>
+      container.querySelectorAll(`.sheet-overview > [aria-label="${title}"]`)
+        .length;
+    // Only the two repeatable sections have a stepper.
+    expect(
+      sectionsMenu()!.querySelectorAll(".sheet-sections-copies"),
+    ).toHaveLength(2);
+    expect(control("Copies of Overview")).toBeNull();
+    expect(field().value).toBe("1");
+    const fewer = control(
+      "Fewer copies of Play scratchpad",
+    ) as HTMLButtonElement;
+    // Present at 1, but it cannot go lower (untick the row to print none).
+    expect(fewer.disabled).toBe(true);
+    const single = papers("Play scratchpad");
+    await act(async () => control("More copies of Play scratchpad")!.click());
+    await settle();
+    expect(field().value).toBe("2");
+    expect(fewer.disabled).toBe(false);
+    expect(papers("Play scratchpad")).toBe(single * 2);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: { version: 1, sectionCopies: { scratchpad: 2 } },
+    });
+
+    // Typing saves a valid count at once; anything else reverts on blur.
+    const type = async (value: string) => {
+      const setValue = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      await act(async () => {
+        setValue.call(field(), value);
+        field().dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await settle();
+    };
+    await type("4");
+    expect(papers("Play scratchpad")).toBe(single * 4);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: { version: 1, sectionCopies: { scratchpad: 4 } },
+    });
+    const saves = runtime.updateMetadata.mock.calls.length;
+    for (const bad of ["", "0", "2.5"]) {
+      await type(bad);
+      expect(runtime.updateMetadata.mock.calls.length, bad).toBe(saves);
+    }
+    await act(async () =>
+      field().dispatchEvent(new FocusEvent("focusout", { bubbles: true })),
+    );
+    expect(field().value).toBe("4");
+
+    await act(async () => control("More copies of Session notes")!.click());
+    await act(async () => control("More copies of Session notes")!.click());
+    await settle();
+    expect(papers("Session notes")).toBe(3);
+    // Copies take no page numbers, wherever the sections sit.
+    expect(
+      container.querySelector(
+        '.sheet-overview > [aria-label="Play scratchpad"] .ov-page-number',
+      ),
+    ).toBeNull();
+    // Hidden sections print no copies; showing them again keeps the count.
+    await tick("Session notes");
+    expect(papers("Session notes")).toBe(0);
+    await tick("Session notes");
+    expect(papers("Session notes")).toBe(3);
+    await act(async () => fewer.click());
+    await settle();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: {
+        version: 1,
+        sectionCopies: { scratchpad: 3, "session-notes": 3 },
+      },
+    });
+    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).not.toMatch(/\bSaved\b/);
+
+    // Reset restores one copy of each.
+    const reset = () =>
+      container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
+    await act(async () => reset().click());
+    await act(async () => reset().click());
+    await settle();
+    expect(papers("Play scratchpad")).toBe(single);
+    expect(papers("Session notes")).toBe(1);
+    expect(field().value).toBe("1");
+  });
+
+  it("numbers only the numbered sections around copies in a custom order", async () => {
+    runtime.record = {
+      ...record(),
+      sheetLayout: {
+        version: 1,
+        sectionOrder: ["summary", "scratchpad", "cards", "session-notes"],
+        sectionCopies: { scratchpad: 2, "session-notes": 2 },
+      },
+    };
+    await renderSheet(false);
+    // Overview 1, two unnumbered scratchpads, cards from 2, two unnumbered
+    // session notes.
+    expect(printedPages().slice(0, 4)).toEqual([
+      "Character summary",
+      "Play scratchpad",
+      "Play scratchpad",
+      "cards",
+    ]);
+    expect(pageNumber('[aria-label="Character summary"]')).toBe("1");
+    expect(pageNumber(".print-card-page")).toBe("2");
+    for (const title of ["Play scratchpad", "Session notes"])
+      expect(
+        container.querySelector(
+          `.sheet-overview > [aria-label="${title}"] .ov-page-number`,
+        ),
+        title,
+      ).toBeNull();
+    expect(
+      printedPages().filter((page) => page === "Session notes"),
+    ).toHaveLength(2);
   });
 
   it("shows a failed save as an alert with a retry", async () => {

@@ -52,7 +52,9 @@ type bar kept, body marked "Hidden") and omitted in View and print
 its continuations, scratchpad, each reference group, the card pages,
 session notes; none locked — replacing section right-click and the "Show
 hidden" toggle, whose rows reorder by drag or Alt+Up/Alt+Down (stored as
-`sectionOrder`, rendered in that order with chained page numbers); and
+`sectionOrder`, rendered in that order with chained page numbers) and
+whose scratchpad and session-notes rows set how many copies print
+(`sectionCopies`; both print unnumbered and take no page number); and
 an arm-then-confirm Reset in the toolbar (the first cut's "Sheet contents"
 checkbox panel was replaced the same day after owner feedback);
 silent serialized saves with a retry alert on failure. Item cards toggle

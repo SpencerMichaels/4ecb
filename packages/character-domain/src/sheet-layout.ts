@@ -51,6 +51,40 @@ export interface SheetLayout {
   /** Every section in print order, stored only when it differs from
    *  `SHEET_SECTION_IDS`. */
   readonly sectionOrder?: readonly SheetSectionId[];
+  /** How many copies of a repeatable section print, stored only when not 1. */
+  readonly sectionCopies?: SheetSectionCopies;
+}
+
+/** Sections a player may print several copies of. */
+export const SHEET_COPYABLE_SECTION_IDS = [
+  "scratchpad",
+  "session-notes",
+] as const;
+
+export type SheetCopyableSectionId =
+  (typeof SHEET_COPYABLE_SECTION_IDS)[number];
+
+export type SheetSectionCopies = Readonly<
+  Partial<Record<SheetCopyableSectionId, number>>
+>;
+
+export const isSheetCopyableSection = (
+  section: SheetSectionId,
+): section is SheetCopyableSectionId =>
+  SHEET_COPYABLE_SECTION_IDS.some((id) => id === section);
+
+/** Valid stored copy counts: whole numbers of at least 2 (1 is the default). */
+function copies(value: unknown): SheetSectionCopies | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+  const record = value as Record<string, unknown>;
+  const entries = SHEET_COPYABLE_SECTION_IDS.flatMap((section) => {
+    const count = record[section];
+    return typeof count === "number" && Number.isSafeInteger(count) && count > 1
+      ? [[section, count] as const]
+      : [];
+  });
+  return entries.length === 0 ? undefined : Object.fromEntries(entries);
 }
 
 const MAX_ENTRIES = 2000;
@@ -91,11 +125,13 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
   )
     ? undefined
     : order;
+  const sectionCopies = copies(record.sectionCopies);
   if (
     hiddenSections.length === 0 &&
     hiddenCards.length === 0 &&
     shownCards.length === 0 &&
-    sectionOrder === undefined
+    sectionOrder === undefined &&
+    sectionCopies === undefined
   )
     return undefined;
   return {
@@ -104,7 +140,30 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     ...(hiddenCards.length === 0 ? {} : { hiddenCards }),
     ...(shownCards.length === 0 ? {} : { shownCards }),
     ...(sectionOrder === undefined ? {} : { sectionOrder }),
+    ...(sectionCopies === undefined ? {} : { sectionCopies }),
   };
+}
+
+/** How many copies of a section print (1 unless the layout says more). */
+export function sheetSectionCopies(
+  layout: SheetLayout | undefined,
+  section: SheetSectionId,
+): number {
+  return isSheetCopyableSection(section)
+    ? (copies(layout?.sectionCopies)?.[section] ?? 1)
+    : 1;
+}
+
+/** Sets how many copies of a repeatable section print (at least 1). */
+export function withSheetSectionCopies(
+  layout: SheetLayout | undefined,
+  section: SheetCopyableSectionId,
+  count: number,
+): SheetLayout | undefined {
+  return normalizeSheetLayout({
+    ...layout,
+    sectionCopies: { ...layout?.sectionCopies, [section]: count },
+  });
 }
 
 /**

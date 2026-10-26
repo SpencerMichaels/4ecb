@@ -346,7 +346,7 @@ always a duplicate. Ally bonuses on the companion card leave the pane.
 The measured page-1 reminder selection now sends omitted reminders directly to
 an optional summary continuation starting on physical page 2, suitable as the
 summary's reverse side. No continuation page is emitted when all reminders fit.
-The scratchpad follows these pages and its page labels adjust accordingly.
+The scratchpad follows these pages; like Session notes it prints no page number and takes none (owner, 2026-10-25, D099).
 Continuation reminders retain category labels and distinct item-benefit bullets;
 the shared measured reference-card paginator preserves unusually long entries
 across adjacent continuation columns/pages rather than clipping or shrinking

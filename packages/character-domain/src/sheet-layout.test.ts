@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeSheetLayout,
   SHEET_SECTION_IDS,
+  sheetSectionCopies,
   sheetSectionOrder,
   withHoldingCardsShown,
   withSheetCardsShown,
+  withSheetSectionCopies,
   withSheetSectionOrder,
   withSheetSectionShown,
 } from "./sheet-layout";
@@ -76,6 +78,38 @@ describe("sheet layout", () => {
       version: 1,
       hiddenSections: ["summary"],
       sectionOrder: order,
+    });
+  });
+
+  it("stores section copies only above 1, dropping invalid counts", () => {
+    const two = withSheetSectionCopies(undefined, "scratchpad", 2);
+    expect(two).toEqual({ version: 1, sectionCopies: { scratchpad: 2 } });
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(two)))).toEqual(two);
+    expect(sheetSectionCopies(two, "scratchpad")).toBe(2);
+    expect(sheetSectionCopies(two, "session-notes")).toBe(1);
+    expect(sheetSectionCopies(two, "summary")).toBe(1);
+    expect(withSheetSectionCopies(two, "scratchpad", 1)).toBeUndefined();
+    expect(
+      normalizeSheetLayout({
+        version: 1,
+        sectionCopies: {
+          scratchpad: 2.5,
+          "session-notes": 0,
+          summary: 3,
+          cards: "4",
+        },
+      }),
+    ).toBeUndefined();
+    expect(
+      normalizeSheetLayout({
+        version: 1,
+        sectionCopies: { "session-notes": 3, scratchpad: -1 },
+        hiddenSections: ["scratchpad"],
+      }),
+    ).toEqual({
+      version: 1,
+      hiddenSections: ["scratchpad"],
+      sectionCopies: { "session-notes": 3 },
     });
   });
 

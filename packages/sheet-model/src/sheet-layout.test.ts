@@ -67,6 +67,10 @@ describe("applySheetLayout", () => {
     ]);
     expect(resolved.hiddenSections.size).toBe(0);
     expect(resolved.sectionOrder).toEqual(SHEET_SECTION_IDS);
+    expect(resolved.sectionCopies).toEqual({
+      scratchpad: 1,
+      "session-notes": 1,
+    });
   });
 
   it("hides and shows cards from the layout, and items from their holdings", () => {
@@ -78,6 +82,7 @@ describe("applySheetLayout", () => {
         shownCards: ["item:def:cached"],
         hiddenSections: ["summary", "scratchpad"],
         sectionOrder: ["cards"],
+        sectionCopies: { "session-notes": 2 },
       },
       { itemCardsShown: new Map([["b", true]]) },
     );
@@ -95,6 +100,10 @@ describe("applySheetLayout", () => {
     );
     expect([...resolved.hiddenSections]).toEqual(["summary", "scratchpad"]);
     expect(resolved.sectionOrder[0]).toBe("cards");
+    expect(resolved.sectionCopies).toEqual({
+      scratchpad: 1,
+      "session-notes": 2,
+    });
     expect(resolved.sectionOrder).toHaveLength(SHEET_SECTION_IDS.length);
   });
 

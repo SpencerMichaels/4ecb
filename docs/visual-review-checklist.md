@@ -970,7 +970,7 @@ sample-character diff; check only layout and fit.
 
 ## Sheet Edit mode (2026-10-25, D099 phases 0–1: card right-click, Sections menu)
 
-Labels, keyboard toggles and Alt+Arrow moves, the Sections menu's
+Labels, keyboard toggles and Alt+Arrow moves, copies counts, the Sections menu's
 open/close and focus behaviour, drag-and-drop reordering, saving, page
 numbering in any order, print omission of hidden things, the toolbar's
 order and "no re-evaluation" are verified by tests; check only layout and
@@ -1016,6 +1016,19 @@ groups.
     where the row lands, the browser opens or searches the dragged text,
     the page numbers skip or repeat, or the overview's "more reminders on
     page N" note names the wrong page.
+- [ ] **Sections menu: copies.**
+  - **Where:** in the Sections menu, click + on Play scratchpad twice and
+    type 3 into Session notes' field; then Print preview (Ctrl+P). At 140%
+    zoom and in dark mode.
+  - **Expect:** each of those two rows ends with a compact − [n] + group
+    that fits on the row (− greyed at 1); the scratchpad's whole page set
+    appears three times in a row and session notes three times. None of
+    those pages shows a page number (the footer's title and identity stay
+    where they were, the right end simply empty), and the numbered pages
+    run on without gaps.
+  - **Wrong if:** the stepper wraps or crowds the label, the number field
+    shows spin arrows or is unreadable in dark mode, a scratchpad or notes
+    page shows a number, or the footer looks lopsided without it.
 - [ ] **Card right-click feel.**
   - **Where:** right-click a power card and an item card; left-click a
     card; Tab to a card and press Enter; then the browser's print preview

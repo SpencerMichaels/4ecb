@@ -37,8 +37,11 @@ designs predate the owner's feedback below.
     ordinary checkbox, none locked. Rows reorder by drag or Alt+Up/Alt+Down
     (`sectionOrder` in `SheetLayout`, stored only when it differs from the
     default); `SheetOverview` renders sections in that order with chained
-    page numbers. Landed in `7496961` (section checkboxes, toolbar fixes)
-    and the reorder commit right after it — check `git log` before starting.
+    page numbers. Play scratchpad and Session notes print unnumbered (they
+    take no page number) and their rows have a − [n] + copies stepper
+    (`sectionCopies`, stored only above 1). Landed in `7496961` (section
+    checkboxes, toolbar fixes), `2b279b3` (reorder, Sections/Overview names)
+    and the copies commit after them — check `git log` before starting.
   - **Reset** (short label; armed state "Confirm reset") restores everything.
 
 ## Phase 2 scope

@@ -634,6 +634,41 @@
   padding: 0.4rem 0.65rem 0.4rem 0.3rem;
 }
 
+/* Copies: a compact − [n] + group at the row's end. */
+.sheet-sections-copies {
+  align-items: center;
+  display: inline-flex;
+  flex: none;
+  margin-inline-end: 0.35rem;
+}
+
+.sheet-sections-copies > button {
+  align-items: center;
+  display: inline-flex;
+  font-weight: 700;
+  height: 1.6rem;
+  justify-content: center;
+  line-height: 1;
+  min-width: 1.6rem;
+  padding: 0;
+}
+
+.sheet-sections-copies > input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  height: 1.6rem;
+  margin-inline: 0.15rem;
+  padding: 0 0.2rem;
+  text-align: center;
+  width: 3.5ch;
+}
+
+.sheet-sections-copies > input::-webkit-inner-spin-button,
+.sheet-sections-copies > input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .sheet-edit-tools .danger-action {
   color: var(--danger);
 }

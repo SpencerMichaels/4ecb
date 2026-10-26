@@ -738,7 +738,8 @@ reminder control and card ordering (plan and owner decisions:
    cards always shown in Edit mode (header kept, body marked "Hidden"); a
    toolbar Sections menu of section checkboxes (overview and card pages
    included, none locked) whose rows reorder by drag or Alt+Up/Alt+Down
-   (section ordering pulled forward); and a global Reset in the toolbar.
+   (section ordering pulled forward), with copies of the unnumbered
+   scratchpad and session notes; and a global Reset in the toolbar.
 2. Reminders: show/hide, custom reminders, provenance hints, and removal of
    the Action Point reminder special case.
 3. Card ordering (on-paper controls landed with phase 1).

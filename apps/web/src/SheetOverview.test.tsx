@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
-import type { SheetSectionId } from "@4ecb/character-domain";
+import { SHEET_SECTION_IDS, type SheetSectionId } from "@4ecb/character-domain";
 import { describe, expect, it } from "vitest";
 import {
   buildSheetModel,
@@ -1221,9 +1221,10 @@ describe("real-data sheet overview", () => {
         {(firstPage) => <span data-card-start={firstPage} />}
       </SheetOverview>,
     );
-    expect(html).toContain('data-card-start="3"');
+    // The unnumbered scratchpad takes no number: cards follow page 1.
+    expect(html).toContain('data-card-start="2"');
     expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
-      html.indexOf('data-card-start="3"'),
+      html.indexOf('data-card-start="2"'),
     );
   });
   it("leaves hidden sections out and numbers later pages without them", () => {
@@ -1244,6 +1245,59 @@ describe("real-data sheet overview", () => {
     expect(hidden).not.toContain('aria-label="Play scratchpad"');
     expect(hidden).not.toContain('aria-label="Session notes"');
     expect(render([])).toContain('aria-label="Play scratchpad"');
+  });
+  it("repeats copied sections in the chosen order, numbering only the numbered pages", () => {
+    const render = (copies: {
+      scratchpad?: number;
+      "session-notes"?: number;
+    }) =>
+      renderToStaticMarkup(
+        <SheetOverview
+          model={model}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          sectionOrder={[
+            "scratchpad",
+            "summary",
+            "session-notes",
+            "cards",
+            ...SHEET_SECTION_IDS.filter(
+              (id) =>
+                !["scratchpad", "summary", "session-notes", "cards"].includes(
+                  id,
+                ),
+            ),
+          ]}
+          sectionCopies={copies}
+          cardPageCount={3}
+        >
+          {(firstPage) => <span data-card-start={firstPage} />}
+        </SheetOverview>,
+      );
+    const count = (html: string, title: string) =>
+      html.match(new RegExp(`<article[^>]*aria-label="${title}"`, "g"))
+        ?.length ?? 0;
+    const single = render({});
+    const copied = render({ scratchpad: 2, "session-notes": 3 });
+    // Every copy of the whole scratchpad set prints (the measuring probe
+    // stays one), then three session notes pages.
+    expect(count(copied, "Play scratchpad")).toBe(
+      count(single, "Play scratchpad") + 1,
+    );
+    expect(count(copied, "Session notes")).toBe(3);
+    // Copies come first in this order but take no numbers: the overview is
+    // page 1 and the cards start at 2.
+    expect(
+      copied.split('aria-label="Character summary"')[1]!.split("</article>")[0],
+    ).toContain('class="ov-page-number">1</span>');
+    expect(copied).toContain('data-card-start="2"');
+    expect(copied.indexOf('aria-label="Play scratchpad"')).toBeLessThan(
+      copied.indexOf('aria-label="Character summary"'),
+    );
+    expect(copied.lastIndexOf('aria-label="Session notes"')).toBeLessThan(
+      copied.indexOf("data-card-start"),
+    );
   });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(
@@ -1333,7 +1387,8 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("Ingi · Dwarf Paladin 7");
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Date");
-    expect(footer).toContain('class="ov-page-number">2</span>');
+    // Scratchpad pages carry no page number.
+    expect(footer).not.toContain("ov-page-number");
     expect(html).not.toContain('class="sp-running-header');
     expect(html).not.toContain("ov-scratch-session");
   });
@@ -2910,7 +2965,7 @@ describe("real-data sheet overview", () => {
     const footer = scratchpad
       .split('class="sp-page-footer ov-reference-footer"')[1]!
       .split("</footer>")[0]!;
-    expect(footer).toContain('class="ov-page-number">2</span>');
+    expect(footer).not.toContain("ov-page-number");
     expect(footer).toContain("Overview fixture");
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Character reference");

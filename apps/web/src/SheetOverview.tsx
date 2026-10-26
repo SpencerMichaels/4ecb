@@ -15,6 +15,7 @@ import {
   SHEET_REFERENCE_GROUP_IDS,
   SHEET_SECTION_IDS,
   type CharacterPortrait,
+  type SheetCopyableSectionId,
   type SheetSectionId,
 } from "@4ecb/character-domain";
 import {
@@ -1496,12 +1497,13 @@ function SessionNotes({
 function Scratchpad({
   model,
   name,
-  startPage,
+  copies = 1,
   onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
-  startPage: number;
+  /** How many times the whole page set prints, one after another. */
+  copies?: number;
   onPageCount: (count: number) => void;
 }) {
   const rows = useMemo(() => overviewTrackingRows(model, true), [model]);
@@ -1639,14 +1641,16 @@ function Scratchpad({
       )}
     />
   );
-  return (
-    <>
+  // Scratchpad pages carry no page number, so the numbered sections run on
+  // as if they were not there; only the first copy is measured.
+  const printedCopy = (copy: number) => (
+    <Fragment key={copy}>
       <Paper
         name={name}
         title="Play scratchpad"
-        page={startPage}
+        page={null}
         source={model.source}
-        pageRef={pageRef}
+        {...(copy === 0 ? { pageRef } : {})}
         footerIdentity={identityLine}
         footerTitle="Scratchpad"
       >
@@ -1731,12 +1735,12 @@ function Scratchpad({
         </div>
         <div
           className="ov-power-trackers sp-column ov-scratch-powers"
-          ref={regionRef}
+          ref={copy === 0 ? regionRef : undefined}
         >
           {renderTracking(first)}
           {layout.length > 1 ? (
             <p className="sp-caption ov-tracking-caption">
-              Tracking continues on page {startPage + 1}…
+              Tracking continues on the next page…
             </p>
           ) : null}
         </div>
@@ -1746,7 +1750,7 @@ function Scratchpad({
           key={index}
           name={name}
           title="Power usage · continued"
-          page={startPage + index + 1}
+          page={null}
           source={model.source}
           footerIdentity={identityLine}
           footerTitle="Scratchpad · continued"
@@ -1765,11 +1769,16 @@ function Scratchpad({
           ) : null}
         </Paper>
       ))}
+    </Fragment>
+  );
+  return (
+    <>
+      {Array.from({ length: copies }, (_, copy) => printedCopy(copy))}
       <div className="ov-measure" aria-hidden="true">
         <Paper
           name={name}
           title="Play scratchpad"
-          page=""
+          page={null}
           source={model.source}
           footerIdentity={identityLine}
           footerTitle="Scratchpad"
@@ -1781,14 +1790,14 @@ function Scratchpad({
               consumables={consumables}
             />
             <p className="sp-caption ov-tracking-caption">
-              Tracking continues on page {startPage + 1}…
+              Tracking continues on the next page…
             </p>
           </div>
         </Paper>
         <Paper
           name={name}
           title="Power usage · continued"
-          page=""
+          page={null}
           source={model.source}
           pageRef={nextPaper}
           footerIdentity={identityLine}
@@ -3492,6 +3501,9 @@ function ReferencePages({
   );
 }
 const NO_HIDDEN_SECTIONS: ReadonlySet<SheetSectionId> = new Set();
+const NO_SECTION_COPIES: Readonly<
+  Partial<Record<SheetCopyableSectionId, number>>
+> = {};
 type MeasuredSection = "summary" | "scratchpad" | `reference:${string}`;
 /**
  * The printed sheet's sections in the layout's order (D099), each starting
@@ -3506,6 +3518,7 @@ export function SheetOverview({
   paper,
   hiddenSections = NO_HIDDEN_SECTIONS,
   sectionOrder = SHEET_SECTION_IDS,
+  sectionCopies = NO_SECTION_COPIES,
   cardPageCount = 0,
   children,
 }: {
@@ -3517,6 +3530,8 @@ export function SheetOverview({
   hiddenSections?: ReadonlySet<SheetSectionId>;
   /** Every section in print order. */
   sectionOrder?: readonly SheetSectionId[];
+  /** How many copies of each repeatable section print. */
+  sectionCopies?: Readonly<Partial<Record<SheetCopyableSectionId, number>>>;
   /** How many card pages `children` renders. */
   cardPageCount?: number;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
@@ -3569,12 +3584,13 @@ export function SheetOverview({
       // The overview and its continuation pages go together.
       case "summary":
         return 1 + (measured.summary ?? 0);
+      // The scratchpad and session notes print unnumbered, so the numbered
+      // pages run on as if they were not there.
       case "scratchpad":
-        return measured.scratchpad ?? 1;
+      case "session-notes":
+        return 0;
       case "cards":
         return cardPageCount;
-      case "session-notes":
-        return 1;
       default:
         return measured[section] ?? 0;
     }
@@ -3617,12 +3633,15 @@ export function SheetOverview({
         <Scratchpad
           model={model}
           name={name}
-          startPage={startPage}
+          copies={sectionCopies.scratchpad ?? 1}
           onPageCount={pageCountSetters.scratchpad}
         />
       );
     else if (section === "session-notes")
-      pages = <SessionNotes model={model} name={name} />;
+      pages = Array.from(
+        { length: sectionCopies["session-notes"] ?? 1 },
+        (_, copy) => <SessionNotes key={copy} model={model} name={name} />,
+      );
     else {
       const index = SHEET_REFERENCE_GROUP_IDS.findIndex(
         (group) => `reference:${group}` === section,
