@@ -740,6 +740,11 @@
   visibility: visible;
 }
 
+/* The Skills card has no header; its column heading row stands in. */
+.sheet-concealed-card .print-play-skills thead {
+  visibility: visible;
+}
+
 .sheet-card-edit.sheet-edit-target[data-hidden] {
   align-items: center;
   display: flex;

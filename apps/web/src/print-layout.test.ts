@@ -451,6 +451,10 @@ describe("print layout contract", () => {
       /\.sheet-concealed-card \.print-reference-card \.print-card-type\s*\{\s*visibility:\s*visible;/,
     );
     expect(appStyles).not.toMatch(/\.sheet-concealed-card[^{]*footer/);
+    // The Skills card's column heading row is its header.
+    expect(appStyles).toMatch(
+      /\.sheet-concealed-card \.print-play-skills thead\s*\{\s*visibility:\s*visible;/,
+    );
   });
 
   it("fades a hidden reminder row in Edit mode, with no mark", () => {
