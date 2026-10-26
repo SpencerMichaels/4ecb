@@ -230,8 +230,8 @@ build/retraining/details/equipment[+loadout]/shop/diagnostics/house-rules via qu
 Diagnostics and House rules open from the status badges, Overview is gone), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
 for the per-character sheet layout: right-click hide/show on cards
-(`SheetEditTarget.tsx`) and the toolbar Pages menu of sections
-(`SheetPagesMenu.tsx`) — D099, `?print=1` auto-opens the print
+(`SheetEditTarget.tsx`) and the toolbar Sections menu of sections
+(`SheetSectionsMenu.tsx`: hide/show and reorder) — D099, `?print=1` auto-opens the print
 dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
 changes move focus to the new main landmark. Every builder tab shares the
@@ -256,7 +256,8 @@ separate header or level rail.
   new rule in the file of the surface it styles; tests read the combined CSS
   through `test-styles.ts` (`appStyles`).
 - **Print layout.** `SheetOverview.tsx` renders page 1, continuations,
-  scratchpad, reference pages and Session Notes, fitting content by measuring
+  scratchpad, reference pages, the card pages (its children) and Session
+  Notes in the layout's section order (D099), fitting content by measuring
   hidden "probe" copies (`ov-pane-probe`, `ov-reminder-probe`). Power and
   item cards are `PowerCard.tsx`/`ItemCard.tsx` (fit hook in
   `use-print-card-fit.ts`) plus `PrintPlayCards.tsx`. The deck and its

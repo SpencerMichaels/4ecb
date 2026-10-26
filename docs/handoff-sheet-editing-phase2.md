@@ -30,12 +30,15 @@ designs predate the owner's feedback below.
     strength, the rest of the body blank behind a large faint "HIDDEN"
     (`.sheet-concealed-card` wrapper, `display: contents`). View mode and
     print never show them (`usePrinting`/`beforeprint`).
-  - **Sections:** a toolbar **Pages** popover of checkboxes, one per section,
-    none locked (Page 1 summary is hideable too, via a new `summary` section
-    id; numbering restarts at 1). **In progress at handoff:** that change and
-    a follow-up adding drag-to-reorder sections (a `sectionOrder` layout field
-    and a "Power & item cards" row) were being committed by a subagent —
-    check `git log` for them before starting.
+  - **Sections:** a toolbar **Sections** popover (`SheetSectionsMenu.tsx`)
+    with one row per section in print order — Overview (the `summary` id:
+    page 1 by default, with its continuation pages), Play scratchpad, each
+    reference group, Power & item cards (`cards`), Session notes — each an
+    ordinary checkbox, none locked. Rows reorder by drag or Alt+Up/Alt+Down
+    (`sectionOrder` in `SheetLayout`, stored only when it differs from the
+    default); `SheetOverview` renders sections in that order with chained
+    page numbers. Landed in `7496961` (section checkboxes, toolbar fixes)
+    and the reorder commit right after it — check `git log` before starting.
   - **Reset** (short label; armed state "Confirm reset") restores everything.
 
 ## Phase 2 scope
@@ -73,7 +76,7 @@ Following the pattern the owner settled on:
   Edit mode shows hidden/suppressed reminders (marked, like hidden cards);
   View/print don't. Right-clicking a suppressed duplicate shows it = pinning,
   so pinning may need no separate control.
-- Custom reminders: an "Add reminder" entry (toolbar or the Pages-style
+- Custom reminders: an "Add reminder" entry (toolbar or the Sections-style
   menu); right-clicking a custom reminder offers Edit / Delete — two
   actions, so a small menu is justified there (the owner's rule: no menu for
   a single action).

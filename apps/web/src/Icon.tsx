@@ -53,6 +53,7 @@ import {
   Gem,
   Gift,
   GraduationCap,
+  GripVertical,
   Hand,
   Handbag,
   HardHat,
@@ -173,6 +174,7 @@ export type IconName =
   | "filter"
   | "gem"
   | "gift"
+  | "grip"
   | "hand"
   | "heart"
   | "heart-plus"
@@ -286,6 +288,7 @@ const icons: Record<IconName, LucideIcon> = {
   filter: Funnel,
   gem: Gem,
   gift: Gift,
+  grip: GripVertical,
   hand: Hand,
   heart: Heart,
   "heart-plus": HeartPlus,

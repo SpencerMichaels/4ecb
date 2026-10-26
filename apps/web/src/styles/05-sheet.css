@@ -543,7 +543,7 @@
 
 /* Print preview Edit mode (D099): each card carries an on-paper right-click
    toggle (Enter, Space or the Menu key on a focused overlay); optional
-   sections are ticked in the toolbar's Pages menu. The overlays are out of
+   sections are ticked and ordered in the toolbar's Sections menu. The overlays are out of
    flow and screen-only, so they never change what prints or fits. The paper
    is white in both themes, so on-paper controls use paper ink.
 
@@ -568,37 +568,70 @@
   gap: 0.5rem 1rem;
 }
 
-.sheet-pages-trigger {
+.sheet-sections-trigger {
   align-items: center;
   display: inline-flex;
   gap: 0.35rem;
 }
 
-.sheet-pages-trigger .icon {
+.sheet-sections-trigger .icon {
   height: 1rem;
   width: 1rem;
 }
 
-/* The Pages menu opens under its trigger, toward the page. */
-.sheet-pages-menu.action-menu-options {
+/* The Sections menu opens under its trigger, toward the page. */
+.sheet-sections-menu.action-menu-options {
   left: 0;
   max-width: calc(100vw - 2rem);
   min-width: 15rem;
   right: auto;
 }
 
-.sheet-pages-menu > label {
+/* A row drags by its handle or anywhere on it; a 2px focus-coloured rule
+   on the row's top or bottom edge marks where it will drop. */
+.sheet-sections-row {
   align-items: center;
   border-radius: 2px;
+  display: flex;
+  gap: 0.15rem;
+  padding-inline-start: 0.2rem;
+}
+
+.sheet-sections-row:hover {
+  background: var(--surface-subtle);
+}
+
+.sheet-sections-row[data-dragging] {
+  opacity: 0.5;
+}
+
+.sheet-sections-row[data-drop="before"] {
+  box-shadow: inset 0 2px 0 var(--focus);
+}
+
+.sheet-sections-row[data-drop="after"] {
+  box-shadow: inset 0 -2px 0 var(--focus);
+}
+
+.sheet-sections-handle {
+  color: var(--muted);
+  cursor: grab;
+  display: inline-flex;
+}
+
+.sheet-sections-handle .icon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.sheet-sections-row > label {
+  align-items: center;
   color: var(--text);
   cursor: pointer;
   display: flex;
+  flex: 1;
   gap: 0.5rem;
-  padding: 0.4rem 0.65rem;
-}
-
-.sheet-pages-menu > label:hover {
-  background: var(--surface-subtle);
+  padding: 0.4rem 0.65rem 0.4rem 0.3rem;
 }
 
 .sheet-edit-tools .danger-action {

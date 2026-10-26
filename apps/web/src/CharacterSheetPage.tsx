@@ -12,6 +12,7 @@ import {
   characterDisplayName,
   normalizeSheetLayout,
   withSheetCardsShown,
+  withSheetSectionOrder,
   withSheetSectionShown,
   type CharacterPortrait,
   type CharacterRecord,
@@ -55,7 +56,7 @@ import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
 import { SheetOverview } from "./SheetOverview";
-import { SheetPagesMenu } from "./SheetPagesMenu";
+import { SheetSectionsMenu } from "./SheetSectionsMenu";
 import { SegmentedControl } from "./SegmentedControl";
 import { SheetEditTarget, usePrinting } from "./SheetEditTarget";
 import { sheetCardLabel } from "./sheet-edit-labels";
@@ -357,6 +358,13 @@ export function CharacterSheetPage({
       ),
     [updateLayout],
   );
+  const reorderSections = useCallback(
+    (order: readonly SheetSectionId[]) =>
+      updateLayout(
+        withSheetSectionOrder(latestPresentation.current.sheetLayout, order),
+      ),
+    [updateLayout],
+  );
   const showCards = useCallback(
     (cards: readonly SheetLayoutCard[], shown: boolean) => {
       const holdingIds = cards.flatMap(({ holdingId }) =>
@@ -553,13 +561,16 @@ export function CharacterSheetPage({
   // Printing always drops Edit mode's controls and its hidden-card reveal.
   const editControls = editing && !printing;
   // Hidden cards leave the deck before it is cut into 9-card pages; Edit
-  // mode keeps them in their deck position, dimmed, on screen only.
-  const printCardPages = chunks(
-    editControls
-      ? resolvedLayout.cards
-      : resolvedLayout.cards.filter((card) => card.shown),
-    9,
-  );
+  // mode keeps them in their deck position, dimmed, on screen only. The
+  // "cards" section hides every card page.
+  const printCardPages = resolvedLayout.hiddenSections.has("cards")
+    ? []
+    : chunks(
+        editControls
+          ? resolvedLayout.cards
+          : resolvedLayout.cards.filter((card) => card.shown),
+        9,
+      );
   const resetArmed = resetAction.isArmed("sheet");
   const resettable =
     sheetLayout !== undefined ||
@@ -619,8 +630,10 @@ export function CharacterSheetPage({
           />
           {editing ? (
             <span className="sheet-edit-tools">
-              <SheetPagesMenu
+              <SheetSectionsMenu
                 hiddenSections={resolvedLayout.hiddenSections}
+                sectionOrder={resolvedLayout.sectionOrder}
+                onReorder={reorderSections}
                 onShowSection={showSection}
               />
               <button
@@ -905,6 +918,8 @@ export function CharacterSheetPage({
           portrait={character.portrait}
           paper={paper}
           hiddenSections={resolvedLayout.hiddenSections}
+          sectionOrder={resolvedLayout.sectionOrder}
+          cardPageCount={printCardPages.length}
         >
           {(firstCardPage) =>
             printCardPages.map((page, pageIndex) => (

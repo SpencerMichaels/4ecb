@@ -2476,6 +2476,8 @@ describe("real-data sheet overview", () => {
   it("pluralizes the reminder continuation caption", () => {
     expect(moreRemindersCaption(1)).toBe("1 more reminder on page 2…");
     expect(moreRemindersCaption(3)).toBe("3 more reminders on page 2…");
+    // A reordered sheet continues the overview on the page after it.
+    expect(moreRemindersCaption(2, 5)).toBe("2 more reminders on page 5…");
   });
   it("moves an ordered suffix of whole panes when the left column fills", () => {
     expect(fittingSummaryPaneCount([80, 180, 130, 100], 520, 10)).toBe(4);

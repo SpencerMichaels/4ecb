@@ -185,27 +185,44 @@ async function toggle(target: HTMLElement | null) {
   });
   await settle();
 }
-const pagesTrigger = () =>
+const sectionsTrigger = () =>
   [
     ...container.querySelectorAll<HTMLButtonElement>(
       ".print-preview-toolbar button",
     ),
-  ].find((button) => button.textContent === "Pages");
-const pagesMenu = () =>
+  ].find((button) => button.textContent === "Sections");
+const sectionsMenu = () =>
   container.querySelector<HTMLElement>(
-    '[role="group"][aria-label="Pages to print"]',
+    '[role="group"][aria-label="Sections to print"]',
   );
-const pageCheckbox = (label: string) =>
-  [...(pagesMenu()?.querySelectorAll<HTMLInputElement>("input") ?? [])].find(
+const sectionCheckbox = (label: string) =>
+  [...(sectionsMenu()?.querySelectorAll<HTMLInputElement>("input") ?? [])].find(
     (input) =>
       input.closest("label")?.querySelector("span")?.textContent === label,
   );
-async function openPages() {
-  await act(async () => pagesTrigger()!.click());
-  expect(pagesMenu()).not.toBeNull();
+const menuOrder = () =>
+  [
+    ...(sectionsMenu()?.querySelectorAll(".sheet-sections-row label") ?? []),
+  ].map((label) => label.querySelector("span")?.textContent);
+const pageNumber = (selector: string) =>
+  container.querySelector(`${selector} .ov-page-number`)?.textContent;
+/** Printed pages in document order ("cards" for a card page), probes left out. */
+const printedPages = () =>
+  [
+    ...container.querySelectorAll<HTMLElement>(
+      ".sheet-overview > .sp-paper, .print-card-page",
+    ),
+  ].map((page) =>
+    page.classList.contains("print-card-page")
+      ? "cards"
+      : (page.getAttribute("aria-label") ?? ""),
+  );
+async function openSections() {
+  await act(async () => sectionsTrigger()!.click());
+  expect(sectionsMenu()).not.toBeNull();
 }
 async function tick(label: string) {
-  const input = pageCheckbox(label);
+  const input = sectionCheckbox(label);
   expect(input, label).toBeDefined();
   await act(async () => input!.click());
   await settle();
@@ -244,7 +261,7 @@ describe("character sheet Edit mode", () => {
     expect(JSON.stringify(flagged(false))).toBe(JSON.stringify(flagged(true)));
   });
 
-  it("offers View and Edit, with card overlays and the Pages menu only in Edit", async () => {
+  it("offers View and Edit, with card overlays and the Sections menu only in Edit", async () => {
     await renderSheet(false);
     const modes = [
       ...container.querySelectorAll<HTMLInputElement>(
@@ -260,7 +277,7 @@ describe("character sheet Edit mode", () => {
       container.querySelector(".segmented-control legend")?.textContent,
     ).toBe("Sheet");
     expect(container.querySelector(".sheet-edit-target")).toBeNull();
-    expect(pagesTrigger()).toBeUndefined();
+    expect(sectionsTrigger()).toBeUndefined();
     await act(async () => modes[1]!.click());
     expect(onSheetModeChange).toHaveBeenLastCalledWith(true);
 
@@ -285,7 +302,7 @@ describe("character sheet Edit mode", () => {
     expect(
       container.querySelector('.print-preview-toolbar input[type="checkbox"]'),
     ).toBeNull();
-    expect(pagesTrigger()?.getAttribute("aria-expanded")).toBe("false");
+    expect(sectionsTrigger()?.getAttribute("aria-expanded")).toBe("false");
     const reset = container.querySelector<HTMLButtonElement>(
       "[data-sheet-reset-trigger]",
     );
@@ -429,43 +446,43 @@ describe("character sheet Edit mode", () => {
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
   });
 
-  it("opens the Pages menu under its trigger and closes it with Escape, outside clicks or Tab", async () => {
+  it("opens the Sections menu under its trigger and closes it with Escape, outside clicks or Tab", async () => {
     await renderSheet(true);
-    const trigger = pagesTrigger()!;
+    const trigger = sectionsTrigger()!;
     expect(trigger.querySelector(".icon")).not.toBeNull();
-    expect(pagesMenu()).toBeNull();
-    await openPages();
+    expect(sectionsMenu()).toBeNull();
+    await openSections();
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    expect(trigger.getAttribute("aria-controls")).toBe(pagesMenu()!.id);
+    expect(trigger.getAttribute("aria-controls")).toBe(sectionsMenu()!.id);
     // Focus moves into the menu, to its first checkbox.
-    expect(document.activeElement).toBe(pageCheckbox("Page 1 summary"));
+    expect(document.activeElement).toBe(sectionCheckbox("Overview"));
 
     await act(async () =>
       document.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
       ),
     );
-    expect(pagesMenu()).toBeNull();
+    expect(sectionsMenu()).toBeNull();
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(trigger);
 
-    await openPages();
+    await openSections();
     await act(async () =>
       document.body.dispatchEvent(
         new PointerEvent("pointerdown", { bubbles: true }),
       ),
     );
-    expect(pagesMenu()).toBeNull();
+    expect(sectionsMenu()).toBeNull();
 
-    await openPages();
+    await openSections();
     // Tab moves between its checkboxes; leaving the menu closes it.
-    const inside = pageCheckbox("Session notes")!;
+    const inside = sectionCheckbox("Session notes")!;
     await act(async () =>
-      pageCheckbox("Play scratchpad")!.dispatchEvent(
+      sectionCheckbox("Play scratchpad")!.dispatchEvent(
         new FocusEvent("focusout", { bubbles: true, relatedTarget: inside }),
       ),
     );
-    expect(pagesMenu()).not.toBeNull();
+    expect(sectionsMenu()).not.toBeNull();
     await act(async () =>
       inside.dispatchEvent(
         new FocusEvent("focusout", {
@@ -474,7 +491,7 @@ describe("character sheet Edit mode", () => {
         }),
       ),
     );
-    expect(pagesMenu()).toBeNull();
+    expect(sectionsMenu()).toBeNull();
     expect(runtime.updateMetadata).not.toHaveBeenCalled();
   });
 
@@ -484,20 +501,23 @@ describe("character sheet Edit mode", () => {
       sheetLayout: { version: 1, hiddenSections: ["reference:rituals"] },
     };
     await renderSheet(true);
-    await openPages();
-    const rows = [...pagesMenu()!.querySelectorAll("label")].map((label) => ({
-      name: label.querySelector("span")?.textContent,
-      checked: label.querySelector("input")?.checked,
-      disabled: label.querySelector("input")?.disabled,
-    }));
+    await openSections();
+    const rows = [...sectionsMenu()!.querySelectorAll("label")].map(
+      (label) => ({
+        name: label.querySelector("span")?.textContent,
+        checked: label.querySelector("input")?.checked,
+        disabled: label.querySelector("input")?.disabled,
+      }),
+    );
     expect(rows.map(({ name }) => name)).toEqual([
-      "Page 1 summary",
+      "Overview",
       "Play scratchpad",
       "Feature reference",
       "Item reference",
       "Power index",
       "Rituals & practices",
       "Character profile",
+      "Power & item cards",
       "Session notes",
     ]);
     // No locked rows, even for a section that prints nothing for this
@@ -506,7 +526,7 @@ describe("character sheet Edit mode", () => {
       expect(row.disabled, row.name).toBe(false);
       expect(row.checked, row.name).toBe(row.name !== "Rituals & practices");
     }
-    expect(pagesMenu()!.querySelector(".sheet-pages-hint")).toBeNull();
+    expect(sectionsMenu()!.querySelector(".sheet-pages-hint")).toBeNull();
     await tick("Rituals & practices");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: null,
@@ -514,16 +534,14 @@ describe("character sheet Edit mode", () => {
   });
 
   it("drops page 1 and its continuations when the summary is hidden, renumbering from 1", async () => {
-    const pageNumber = (selector: string) =>
-      container.querySelector(`${selector} .ov-page-number`)?.textContent;
     await renderSheet(true);
     expect(container.querySelector(".sp-identity")).not.toBeNull();
     const scratchpadDefault = Number(
       pageNumber('[aria-label="Play scratchpad"]'),
     );
     expect(scratchpadDefault).toBeGreaterThan(1);
-    await openPages();
-    await tick("Page 1 summary");
+    await openSections();
+    await tick("Overview");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: { version: 1, hiddenSections: ["summary"] },
     });
@@ -565,16 +583,16 @@ describe("character sheet Edit mode", () => {
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
   });
 
-  it("hides and shows sections from the Pages menu without re-evaluating, saving silently", async () => {
+  it("hides and shows sections from the Sections menu without re-evaluating, saving silently", async () => {
     await renderSheet(true);
     expect(pageText("Play scratchpad")).toContain("Arc Strike");
     expect(pageText("Session notes")).not.toBe("");
-    await openPages();
+    await openSections();
     await tick("Play scratchpad");
     // The menu stays open for the next pick; the section's pages are gone,
     // with no placeholder left behind.
-    expect(pagesMenu()).not.toBeNull();
-    expect(pageCheckbox("Play scratchpad")?.checked).toBe(false);
+    expect(sectionsMenu()).not.toBeNull();
+    expect(sectionCheckbox("Play scratchpad")?.checked).toBe(false);
     expect(pageText("Play scratchpad")).toBe("");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: { version: 1, hiddenSections: ["scratchpad"] },
@@ -624,6 +642,170 @@ describe("character sheet Edit mode", () => {
     });
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
   });
+  it("hides every card page with the Power & item cards row", async () => {
+    await renderSheet(true);
+    expect(cardPageText()).toContain("Arc Strike");
+    await openSections();
+    await tick("Power & item cards");
+    expect(container.querySelector(".print-card-page")).toBeNull();
+    expect(container.querySelector(".sheet-card-edit")).toBeNull();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: { version: 1, hiddenSections: ["cards"] },
+    });
+    // The power keeps its scratchpad row.
+    expect(pageText("Play scratchpad")).toContain("Arc Strike");
+    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves a focused row with Alt+Up and Alt+Down, keeping focus on it", async () => {
+    await renderSheet(true);
+    await openSections();
+    const cards = () => sectionCheckbox("Power & item cards")!;
+    cards().focus();
+    const press = async (key: "ArrowUp" | "ArrowDown", altKey = true) => {
+      await act(async () =>
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key, altKey, bubbles: true }),
+        ),
+      );
+      await settle();
+    };
+    await press("ArrowUp", false);
+    expect(runtime.updateMetadata).not.toHaveBeenCalled();
+    await press("ArrowDown");
+    expect(menuOrder().at(-1)).toBe("Power & item cards");
+    expect(document.activeElement).toBe(cards());
+    for (let step = 0; step < 9; step += 1) await press("ArrowUp");
+    expect(menuOrder()[0]).toBe("Power & item cards");
+    expect(document.activeElement).toBe(cards());
+    expect(sectionsMenu()).not.toBeNull();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: {
+        version: 1,
+        sectionOrder: [
+          "cards",
+          "summary",
+          "scratchpad",
+          "reference:features",
+          "reference:items",
+          "reference:power-index",
+          "reference:rituals",
+          "reference:profile",
+          "session-notes",
+        ],
+      },
+    });
+    // The card pages now print first, from page 1, and the overview follows.
+    expect(printedPages()[0]).toBe("cards");
+    expect(pageNumber(".print-card-page")).toBe("1");
+    expect(pageNumber('[aria-label="Character summary"]')).toBe("2");
+    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
+  });
+
+  it("reorders by dragging a row onto another, marking where it will drop", async () => {
+    await renderSheet(true);
+    await openSections();
+    const row = (label: string) =>
+      sectionCheckbox(label)!.closest<HTMLElement>(".sheet-sections-row")!;
+    expect(row("Session notes").draggable).toBe(true);
+    expect(
+      row("Session notes").querySelector(".sheet-sections-handle .icon"),
+    ).not.toBeNull();
+    const fire = async (target: Element, type: string, clientY = 0) => {
+      await act(async () =>
+        target.dispatchEvent(
+          new MouseEvent(type, { bubbles: true, cancelable: true, clientY }),
+        ),
+      );
+    };
+    await fire(row("Session notes"), "dragstart");
+    expect(row("Session notes").hasAttribute("data-dragging")).toBe(true);
+    // jsdom rows have no height, so any pointer at or above y = 0 is the
+    // target's top half: drop before it.
+    await fire(row("Play scratchpad"), "dragover", 0);
+    expect(row("Play scratchpad").getAttribute("data-drop")).toBe("before");
+    await fire(row("Play scratchpad"), "dragover", 5);
+    expect(row("Play scratchpad").getAttribute("data-drop")).toBe("after");
+    await fire(row("Play scratchpad"), "dragover", 0);
+    await fire(row("Play scratchpad"), "drop", 0);
+    await settle();
+    expect(menuOrder().slice(0, 3)).toEqual([
+      "Overview",
+      "Session notes",
+      "Play scratchpad",
+    ]);
+    expect(container.querySelector("[data-drop], [data-dragging]")).toBeNull();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: {
+        version: 1,
+        sectionOrder: [
+          "summary",
+          "session-notes",
+          "scratchpad",
+          "reference:features",
+          "reference:items",
+          "reference:power-index",
+          "reference:rituals",
+          "reference:profile",
+          "cards",
+        ],
+      },
+    });
+    expect(printedPages().slice(0, 3)).toEqual([
+      "Character summary",
+      "Session notes",
+      "Play scratchpad",
+    ]);
+    // Session notes take a page, so the scratchpad moves to page 3.
+    expect(pageNumber('[aria-label="Play scratchpad"]')).toBe("3");
+  });
+
+  it("chains page numbers through a hidden, reordered layout and resets both", async () => {
+    runtime.record = {
+      ...record(),
+      sheetLayout: {
+        version: 1,
+        hiddenSections: ["summary"],
+        sectionOrder: ["cards", "scratchpad", "summary"],
+      },
+    };
+    await renderSheet(true);
+    expect(printedPages()[0]).toBe("cards");
+    expect(
+      container.querySelector('[aria-label="Character summary"]'),
+    ).toBeNull();
+    expect(pageNumber(".print-card-page")).toBe("1");
+    expect(pageNumber('[aria-label="Play scratchpad"]')).toBe("2");
+    await openSections();
+    // Missing ids follow the stored ones in default order.
+    expect(menuOrder()).toEqual([
+      "Power & item cards",
+      "Play scratchpad",
+      "Overview",
+      "Feature reference",
+      "Item reference",
+      "Power index",
+      "Rituals & practices",
+      "Character profile",
+      "Session notes",
+    ]);
+    expect(sectionCheckbox("Overview")?.checked).toBe(false);
+    const reset = () =>
+      container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
+    await act(async () => reset().click());
+    await act(async () => reset().click());
+    await settle();
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: null,
+      itemCardsShown: { "holding-cloak": true },
+    });
+    expect(printedPages()[0]).toBe("Character summary");
+    expect(pageNumber('[aria-label="Character summary"]')).toBe("1");
+    // The open menu follows the reset order.
+    expect(menuOrder()[0]).toBe("Overview");
+    expect(menuOrder().at(-2)).toBe("Power & item cards");
+  });
+
   it("shows a failed save as an alert with a retry", async () => {
     runtime.updateMetadata = vi.fn(async () => {
       throw new Error("Storage is full");

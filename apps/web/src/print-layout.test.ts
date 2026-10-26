@@ -470,6 +470,13 @@ describe("print layout contract", () => {
 
   it("has no on-paper section controls or hidden-section strips (D099)", () => {
     expect(styles).not.toMatch(/\.sheet-section-edit|\.sheet-hidden-section/);
-    expect(styles).toMatch(/\.sheet-pages-menu\.action-menu-options \{/);
+    expect(styles).toMatch(/\.sheet-sections-menu\.action-menu-options \{/);
+    // Dragging a section row marks its drop edge in the focus colour.
+    expect(styles).toMatch(
+      /\.sheet-sections-row\[data-drop="before"\] \{[^}]*var\(--focus\)/,
+    );
+    expect(styles).toMatch(
+      /\.sheet-sections-row\[data-drop="after"\] \{[^}]*var\(--focus\)/,
+    );
   });
 });

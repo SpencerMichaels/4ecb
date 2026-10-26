@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeSheetLayout,
   SHEET_SECTION_IDS,
+  sheetSectionOrder,
   withHoldingCardsShown,
   withSheetCardsShown,
+  withSheetSectionOrder,
   withSheetSectionShown,
 } from "./sheet-layout";
 
@@ -29,7 +31,7 @@ describe("sheet layout", () => {
     });
   });
 
-  it("lists every section in print order, page 1 summary first", () => {
+  it("lists every section in default print order, the overview first", () => {
     expect(SHEET_SECTION_IDS).toEqual([
       "summary",
       "scratchpad",
@@ -38,11 +40,46 @@ describe("sheet layout", () => {
       "reference:power-index",
       "reference:rituals",
       "reference:profile",
+      "cards",
       "session-notes",
     ]);
   });
 
-  it("round-trips a hidden page 1 summary", () => {
+  it("stores a section order only when it differs from the default", () => {
+    const order = [
+      "cards",
+      ...SHEET_SECTION_IDS.filter((id) => id !== "cards"),
+    ] as const;
+    const reordered = withSheetSectionOrder(undefined, order);
+    expect(reordered).toEqual({ version: 1, sectionOrder: order });
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(reordered)))).toEqual(
+      reordered,
+    );
+    expect(withSheetSectionOrder(reordered, SHEET_SECTION_IDS)).toBeUndefined();
+    // Leniently: unknown and repeated ids drop, missing ones follow in
+    // default order.
+    expect(
+      normalizeSheetLayout({
+        version: 1,
+        sectionOrder: ["session-notes", "page-1", 3, "session-notes", "cards"],
+      })?.sectionOrder,
+    ).toEqual([
+      "session-notes",
+      "cards",
+      ...SHEET_SECTION_IDS.filter(
+        (id) => id !== "session-notes" && id !== "cards",
+      ),
+    ]);
+    expect(sheetSectionOrder(undefined)).toEqual(SHEET_SECTION_IDS);
+    // Hiding and ordering combine.
+    expect(withSheetSectionShown(reordered, "summary", false)).toEqual({
+      version: 1,
+      hiddenSections: ["summary"],
+      sectionOrder: order,
+    });
+  });
+
+  it("round-trips a hidden overview", () => {
     const hidden = withSheetSectionShown(undefined, "summary", false);
     expect(hidden).toEqual({ version: 1, hiddenSections: ["summary"] });
     expect(normalizeSheetLayout(JSON.parse(JSON.stringify(hidden)))).toEqual(

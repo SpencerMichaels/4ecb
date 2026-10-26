@@ -3,13 +3,14 @@ import { isSheetPlayCard, type SheetLayoutCard } from "@4ecb/sheet-model";
 
 /** Edit mode's names for the sheet's sections (D099). */
 export const SHEET_SECTION_LABELS: Readonly<Record<SheetSectionId, string>> = {
-  summary: "Page 1 summary",
+  summary: "Overview",
   scratchpad: "Play scratchpad",
   "reference:features": "Feature reference",
   "reference:items": "Item reference",
   "reference:power-index": "Power index",
   "reference:rituals": "Rituals & practices",
   "reference:profile": "Character profile",
+  cards: "Power & item cards",
   "session-notes": "Session notes",
 };
 

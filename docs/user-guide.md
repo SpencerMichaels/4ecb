@@ -259,13 +259,15 @@ stays in place, keeping its header and its bottom type bar (such as
 was; View mode and the printout leave it out. Hiding a power's card keeps it
 on the scratchpad and in the power index.
 
-To choose which pages print, open **Pages** in the Edit toolbar and tick or
-untick each section: Page 1 summary (with any continuation pages), the play
-scratchpad, each full-reference group (features, item reference, power
-index, rituals & practices, character profile) and session notes. Untick
-Page 1 summary and the rest to reprint only some cards. An unticked section
-leaves the preview and the printout, and page numbers close up around it.
-Escape or a click elsewhere closes the menu. An item's card
+To choose what prints and in what order, open **Sections** in the Edit
+toolbar. Each row is a section with a checkbox: Overview (page 1, with any
+continuation pages), the play scratchpad, each full-reference group
+(features, item reference, power index, rituals & practices, character
+profile), Power & item cards and session notes. Untick a row to leave that
+section out of the preview and the printout; untick Overview and the rest
+to reprint only some cards. Drag a row by its grip (or focus it and press
+Alt+Up or Alt+Down) to move it; the sheet prints in the new order and page
+numbers follow it. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset** (click again to
 confirm) prints everything again. Changes save automatically, are

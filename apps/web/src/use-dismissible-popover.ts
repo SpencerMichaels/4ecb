@@ -2,7 +2,7 @@ import { useEffect, type RefObject } from "react";
 
 /**
  * The behaviour shared by the app's small anchored popovers (ActionMenu, the
- * sheet's Pages menu): while open, focus moves to the first enabled control
+ * sheet's Sections menu): while open, focus moves to the first enabled control
  * matching `focusSelector`; Escape closes and returns focus to the trigger;
  * a pointer press outside `root`, or Tab moving focus out of it, closes.
  */

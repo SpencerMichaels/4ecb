@@ -21,19 +21,22 @@ export const SHEET_REFERENCE_GROUP_IDS = [
 
 export type SheetReferenceGroupId = (typeof SHEET_REFERENCE_GROUP_IDS)[number];
 
-/** Sheet sections, each of which can be left out; "summary" is page 1 with
- *  its continuation pages. */
+/** Sheet sections, each of which can be left out or moved: "summary" is the
+ *  overview (page 1 by default) with its continuation pages, "cards" every
+ *  power and item card page. */
 export type SheetSectionId =
   | "summary"
+  | "cards"
   | "scratchpad"
   | "session-notes"
   | `reference:${SheetReferenceGroupId}`;
 
-/** In print order. */
+/** In default print order. */
 export const SHEET_SECTION_IDS: readonly SheetSectionId[] = [
   "summary",
   "scratchpad",
   ...SHEET_REFERENCE_GROUP_IDS.map((group) => `reference:${group}` as const),
+  "cards",
   "session-notes",
 ];
 
@@ -45,6 +48,9 @@ export interface SheetLayout {
   readonly hiddenCards?: readonly string[];
   /** Keys of cards hidden by default that print anyway. */
   readonly shownCards?: readonly string[];
+  /** Every section in print order, stored only when it differs from
+   *  `SHEET_SECTION_IDS`. */
+  readonly sectionOrder?: readonly SheetSectionId[];
 }
 
 const MAX_ENTRIES = 2000;
@@ -79,10 +85,17 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
   const hiddenSections = strings(record.hiddenSections).filter(isSectionId);
   const hiddenCards = strings(record.hiddenCards);
   const shownCards = strings(record.shownCards);
+  const order = sheetSectionOrder(record.sectionOrder);
+  const sectionOrder = order.every(
+    (id, index) => id === SHEET_SECTION_IDS[index],
+  )
+    ? undefined
+    : order;
   if (
     hiddenSections.length === 0 &&
     hiddenCards.length === 0 &&
-    shownCards.length === 0
+    shownCards.length === 0 &&
+    sectionOrder === undefined
   )
     return undefined;
   return {
@@ -90,7 +103,25 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     ...(hiddenSections.length === 0 ? {} : { hiddenSections }),
     ...(hiddenCards.length === 0 ? {} : { hiddenCards }),
     ...(shownCards.length === 0 ? {} : { shownCards }),
+    ...(sectionOrder === undefined ? {} : { sectionOrder }),
   };
+}
+
+/**
+ * Every section in print order: a stored order's known ids (unknown ones
+ * dropped), then any missing ones in default order.
+ */
+export function sheetSectionOrder(stored: unknown): SheetSectionId[] {
+  const listed = [...new Set(strings(stored).filter(isSectionId))];
+  return [...listed, ...SHEET_SECTION_IDS.filter((id) => !listed.includes(id))];
+}
+
+/** Puts the sections in a new print order. */
+export function withSheetSectionOrder(
+  layout: SheetLayout | undefined,
+  order: readonly SheetSectionId[],
+): SheetLayout | undefined {
+  return normalizeSheetLayout({ ...layout, sectionOrder: order });
 }
 
 /** Shows or hides one sheet section. */

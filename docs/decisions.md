@@ -2754,7 +2754,7 @@ Decision:
   and `portrait`. No schema bump; backups, export, duplicate and trash carry
   it unchanged; the rules engine and `.dnd4e` import/export never see it.
   It stores only deltas from the default sheet (`hiddenSections`,
-  `hiddenCards`, `shownCards`), so new cards get default behavior; vanished
+  `hiddenCards`, `shownCards`, `sectionOrder`), so new cards get default behavior; vanished
   keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
   leniently (malformed entries are dropped; an empty layout is the default).
 - Item cards are the exception (owner decision 1): whether a holding prints
@@ -2769,9 +2769,9 @@ Decision:
 - Cards and sections have stable keys built in sheet-model from
   provenance, never text: `power:<definitionId>` (legacy name fallback +
   `#n`), `item:<holdingId>`, `item-set:<id>`, `companion:<id>`,
-  `play:character`/`play:skills`; sections `summary` (page 1 and its
-  continuation pages), `scratchpad`, `session-notes` and
-  `reference:<features|items|power-index|rituals|profile>`. A retrained
+  `play:character`/`play:skills`; sections `summary` (the overview: page 1 by default, with its continuation
+  pages), `scratchpad`, `reference:<features|items|power-index|rituals|profile>`,
+  `cards` (every card page) and `session-notes`, in that default order. A retrained
   power is a new card and starts from defaults.
 - The card deck order (`sheetCardDeck`) lives in sheet-model, and the pure
   `applySheetLayout` selects what prints: hidden cards leave the deck before
@@ -2799,23 +2799,34 @@ Decision:
   (they take their card's grid area), screen-only and never inside probe
   copies, so they change no card size or fit.
 - Sections are not right-clicked (owner, 2026-10-25: right-clicking an
-  entire page is unintuitive). Edit's toolbar has a **Pages** button
-  opening a small popover (`SheetPagesMenu.tsx`, sharing ActionMenu's
+  entire page is unintuitive). Edit's toolbar has a **Sections** button
+  opening a small popover (`SheetSectionsMenu.tsx`, sharing ActionMenu's
   dismissal: Escape returns focus to the button, an outside click or Tab out
-  closes) with one ordinary checkbox per section in print order: Page 1
-  summary (page 1 with its continuation pages), Play scratchpad, each
-  reference group, Session notes. No row is locked (owner: e.g. hide page 1
-  to reprint only some cards) and a group that prints nothing for this
-  character is an ordinary row too. A hidden section simply does not
-  render, and later pages renumber from 1; hiding every section and card
-  leaves an empty preview with no notice.
-- The toolbar packs from the start (Back, View | Edit, then Edit's Pages and
-  Reset; Print at the end), and each View | Edit option reserves its bold
-  width, so the control never moves between modes. Reset is an
-  arm-then-confirm "Reset" / "Confirm reset" button (accessible name "Reset
-  sheet layout to defaults"): layout cleared, every holding prints its card;
-  disabled at the defaults. Bulk group toggles were dropped. Saves are
-  silent and serialized (D098); only a failure shows, with a retry.
+  closes) with one row per section in print order, each an ordinary
+  checkbox: Overview (page 1 by default, with its continuation pages), Play
+  scratchpad, each reference group, Power & item cards (every card page;
+  single cards still hide by right-click) and Session notes. No row is
+  locked (owner: e.g. hide the overview to reprint only some cards) and a
+  group that prints nothing for this character is an ordinary row too. A
+  hidden section simply does not render; hiding every section leaves an
+  empty preview with no notice.
+- Sections reorder (owner, 2026-10-25): drag a row (native drag and drop,
+  a grip handle on each row, a focus-coloured rule marking the drop edge),
+  or press Alt+Up / Alt+Down on a focused row. The order is stored as
+  `sectionOrder` only when it differs from `SHEET_SECTION_IDS`; the lenient
+  normalizer drops unknown ids and appends missing ones in default order.
+  `SheetOverview` renders the sections in that order and chains page
+  numbers through it (hidden sections count no pages; the overview's
+  continuation pages stay with it and its "more reminders on page N" note
+  follows; unnumbered session notes still count their page).
+- The toolbar packs from the start (Back, View | Edit, then Edit's
+  Sections and Reset; Print at the end), and each View | Edit option
+  reserves its bold width, so the control never moves between modes. Reset
+  is an arm-then-confirm "Reset" / "Confirm reset" button (accessible name
+  "Reset sheet layout to defaults"): layout cleared (default order, every
+  section and card shown), every holding prints its card; disabled at the
+  defaults. Bulk group toggles were dropped. Saves are silent and
+  serialized (D098); only a failure shows, with a retry.
 - Later phases (reminder show/hide and custom reminders, which supersede
   the "Action Point reminder policy (2026-10-24)"; card ordering) extend the
   same type; card actions join the on-paper overlays.
@@ -2823,7 +2834,7 @@ Decision:
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
 `packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
-`apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetPagesMenu,SheetOverview}.tsx`
+`apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetSectionsMenu,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 
 ## Deferred decisions and decision points

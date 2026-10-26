@@ -1,5 +1,6 @@
 import {
   SHEET_SECTION_IDS,
+  sheetSectionOrder,
   type SheetLayout,
   type SheetSectionId,
 } from "@4ecb/character-domain";
@@ -23,6 +24,8 @@ export interface ResolvedSheetLayout {
   /** Every deck card in deck order, shown or not, for the sheet editor. */
   readonly cards: readonly SheetLayoutCard[];
   readonly hiddenSections: ReadonlySet<SheetSectionId>;
+  /** Every section, hidden or not, in print order. */
+  readonly sectionOrder: readonly SheetSectionId[];
 }
 
 /**
@@ -78,5 +81,6 @@ export function applySheetLayout(
       })),
     cards,
     hiddenSections,
+    sectionOrder: sheetSectionOrder(layout?.sectionOrder),
   };
 }

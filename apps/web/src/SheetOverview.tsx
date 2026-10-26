@@ -1,6 +1,7 @@
 import {
   Children,
   createContext,
+  Fragment,
   isValidElement,
   useCallback,
   useContext,
@@ -12,6 +13,7 @@ import {
 } from "react";
 import {
   SHEET_REFERENCE_GROUP_IDS,
+  SHEET_SECTION_IDS,
   type CharacterPortrait,
   type SheetSectionId,
 } from "@4ecb/character-domain";
@@ -637,16 +639,19 @@ interface SummaryPaneProps {
 function SummaryPane({ children }: SummaryPaneProps) {
   return <>{children}</>;
 }
-export const moreRemindersCaption = (count: number) =>
-  `${count} more ${count === 1 ? "reminder" : "reminders"} on page 2…`;
+export const moreRemindersCaption = (count: number, page = 2) =>
+  `${count} more ${count === 1 ? "reminder" : "reminders"} on page ${page}…`;
 
 function SummaryColumns({
   model,
   children,
+  continuationPage = 2,
   onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   children: ReactNode;
+  /** Where reminders that do not fit continue. */
+  continuationPage?: number;
   onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
@@ -830,14 +835,17 @@ function SummaryColumns({
           />
           {reminders.length < summaryReminders.length ? (
             <p className="sp-caption">
-              {moreRemindersCaption(summaryReminders.length - reminders.length)}
+              {moreRemindersCaption(
+                summaryReminders.length - reminders.length,
+                continuationPage,
+              )}
             </p>
           ) : null}
         </section>
         <div className="ov-reminder-probe" aria-hidden="true">
           <ReminderPanels values={summaryReminders} />
           <p className="sp-caption">
-            {moreRemindersCaption(summaryReminders.length)}
+            {moreRemindersCaption(summaryReminders.length, continuationPage)}
           </p>
         </div>
       </section>
@@ -900,11 +908,13 @@ function Summary({
   model,
   name,
   portrait,
+  startPage = 1,
   onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
+  startPage?: number;
   onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
@@ -912,7 +922,7 @@ function Summary({
     <Paper
       name={name}
       title="Character summary"
-      page={1}
+      page={startPage}
       source={model.source}
       footerIdentity={["Race", "Class", "Level"]
         .map((label) => find(model.identity, label))
@@ -1025,7 +1035,11 @@ function Summary({
           values={[{ label: "Speed", value: find(model.resources, "Speed") }]}
         />
       </section>
-      <SummaryColumns model={model} onVisibleReminders={onVisibleReminders}>
+      <SummaryColumns
+        model={model}
+        continuationPage={startPage + 1}
+        onVisibleReminders={onVisibleReminders}
+      >
         <SummaryPane id="defenses">
           {overview.defensiveTraits?.length ||
           overview.conditionalModifiers?.length ? (
@@ -3035,64 +3049,6 @@ export function referenceSections(
       ),
   );
 }
-function Details({
-  model,
-  name,
-  startPage,
-  hiddenSections,
-  onPageCount,
-}: {
-  model: CharacterSheetModel;
-  name: string;
-  startPage: number;
-  hiddenSections: ReadonlySet<SheetSectionId>;
-  onPageCount: (count: number) => void;
-}) {
-  const sections = useMemo(() => referenceSections(model), [model]);
-  const [measured, setCounts] = useState<readonly number[]>([0, 0, 0, 0, 0]);
-  // A hidden group prints nothing, so later page numbers move up.
-  const counts = measured.map((count, index) =>
-    hiddenSections.has(`reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`)
-      ? 0
-      : count,
-  );
-  const totalPages = counts.reduce((sum, count) => sum + count, 0);
-  useLayoutEffect(() => onPageCount(totalPages), [onPageCount, totalPages]);
-  const callbacks = useMemo(
-    () =>
-      Array.from(
-        { length: 5 },
-        (_, index) => (count: number) =>
-          setCounts((old) =>
-            old[index] === count
-              ? old
-              : old.map((value, n) => (n === index ? count : value)),
-          ),
-      ),
-    [],
-  );
-  return (
-    <>
-      {sections.map((entries, index) =>
-        hiddenSections.has(
-          `reference:${SHEET_REFERENCE_GROUP_IDS[index]!}`,
-        ) ? null : (
-          <ReferencePages
-            key={index}
-            model={model}
-            name={name}
-            entries={entries}
-            wide={index === 1 || index === 2}
-            startPage={
-              startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
-            }
-            onPageCount={callbacks[index]!}
-          />
-        ),
-      )}
-    </>
-  );
-}
 
 /** Only reminders omitted by the measured summary belong on its continuation. */
 export function summaryContinuationEntries(
@@ -3168,11 +3124,14 @@ export function paginateReminderColumns(
 function SummaryContinuationPages({
   model,
   name,
+  startPage = 2,
   entries,
   onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
+  /** The first continuation page's number. */
+  startPage?: number;
   entries: readonly ReferenceEntry[];
   onPageCount: (count: number) => void;
 }) {
@@ -3256,7 +3215,7 @@ function SummaryContinuationPages({
           key={index}
           name={name}
           title="Character summary · continued"
-          page={index + 2}
+          page={startPage + index}
           source={model.source}
           {...footer}
         >
@@ -3533,12 +3492,21 @@ function ReferencePages({
   );
 }
 const NO_HIDDEN_SECTIONS: ReadonlySet<SheetSectionId> = new Set();
+type MeasuredSection = "summary" | "scratchpad" | `reference:${string}`;
+/**
+ * The printed sheet's sections in the layout's order (D099), each starting
+ * where the previous one ends: hidden sections count no pages, so numbering
+ * chains without them. The card pages are the caller's `children`, rendered
+ * at the "cards" position with their first page number.
+ */
 export function SheetOverview({
   model,
   name,
   portrait,
   paper,
   hiddenSections = NO_HIDDEN_SECTIONS,
+  sectionOrder = SHEET_SECTION_IDS,
+  cardPageCount = 0,
   children,
 }: {
   model: CharacterSheetModel;
@@ -3547,21 +3515,35 @@ export function SheetOverview({
   paper: "letter" | "a4";
   /** Sections the sheet layout leaves out (D099); they count no pages. */
   hiddenSections?: ReadonlySet<SheetSectionId>;
+  /** Every section in print order. */
+  sectionOrder?: readonly SheetSectionId[];
+  /** How many card pages `children` renders. */
+  cardPageCount?: number;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
     model: CharacterSheetModel;
     indices: readonly number[];
   }>();
-  const [measuredContinuationPages, setContinuationPages] = useState(0);
-  // Page 1 and its continuation pages go together; with them hidden the
-  // next printed section starts at page 1.
-  const summaryShown = !hiddenSections.has("summary");
-  const summaryPages = summaryShown ? 1 + measuredContinuationPages : 0;
-  const [measuredScratchpadPages, setScratchpadPages] = useState(1);
-  const scratchpadShown = !hiddenSections.has("scratchpad");
-  const scratchpadPages = scratchpadShown ? measuredScratchpadPages : 0;
-  const [detailsPages, setDetailsPages] = useState(0);
+  // Measured page counts: the summary's continuation pages, the scratchpad
+  // and each reference group.
+  const [measured, setMeasured] = useState<
+    Readonly<Partial<Record<MeasuredSection, number>>>
+  >({});
+  const pageCountSetters = useMemo(() => {
+    const setter = (section: MeasuredSection) => (count: number) =>
+      setMeasured((old) =>
+        old[section] === count ? old : { ...old, [section]: count },
+      );
+    return {
+      summary: setter("summary"),
+      scratchpad: setter("scratchpad"),
+      reference: SHEET_REFERENCE_GROUP_IDS.map((group) =>
+        setter(`reference:${group}`),
+      ),
+    };
+  }, []);
+  const references = useMemo(() => referenceSections(model), [model]);
   const onVisibleReminders = useCallback(
     (indices: readonly number[]) => {
       setSummarySelection({ model, indices });
@@ -3581,52 +3563,94 @@ export function SheetOverview({
   if (!model.overview)
     return <>{typeof children === "function" ? children(1) : children}</>;
   const overviewClass = `sheet-overview sp-prototype sp-paper-${paper} print-only`;
-  const notesShown = !hiddenSections.has("session-notes");
-  return (
-    <>
-      <div className={overviewClass}>
-        {summaryShown ? (
-          <>
-            <Summary
-              model={model}
-              name={name}
-              portrait={portrait}
-              onVisibleReminders={onVisibleReminders}
-            />
-            <SummaryContinuationPages
-              model={model}
-              name={name}
-              entries={continuationEntries}
-              onPageCount={setContinuationPages}
-            />
-          </>
-        ) : null}
-        {scratchpadShown ? (
-          <Scratchpad
+  const pageCount = (section: SheetSectionId): number => {
+    if (hiddenSections.has(section)) return 0;
+    switch (section) {
+      // The overview and its continuation pages go together.
+      case "summary":
+        return 1 + (measured.summary ?? 0);
+      case "scratchpad":
+        return measured.scratchpad ?? 1;
+      case "cards":
+        return cardPageCount;
+      case "session-notes":
+        return 1;
+      default:
+        return measured[section] ?? 0;
+    }
+  };
+  let nextPage = 1;
+  const startPages = new Map<SheetSectionId, number>();
+  for (const section of sectionOrder) {
+    startPages.set(section, nextPage);
+    nextPage += pageCount(section);
+  }
+  const renderSection = (section: SheetSectionId, startPage: number) => {
+    if (section === "cards")
+      return (
+        <Fragment key={section}>
+          {typeof children === "function" ? children(startPage) : children}
+        </Fragment>
+      );
+    let pages: ReactNode;
+    if (section === "summary")
+      pages = (
+        <>
+          <Summary
             model={model}
             name={name}
-            startPage={1 + summaryPages}
-            onPageCount={setScratchpadPages}
+            portrait={portrait}
+            startPage={startPage}
+            onVisibleReminders={onVisibleReminders}
           />
-        ) : null}
-      </div>
-      <div className={overviewClass}>
-        <Details
+          <SummaryContinuationPages
+            model={model}
+            name={name}
+            startPage={startPage + 1}
+            entries={continuationEntries}
+            onPageCount={pageCountSetters.summary}
+          />
+        </>
+      );
+    else if (section === "scratchpad")
+      pages = (
+        <Scratchpad
           model={model}
           name={name}
-          startPage={1 + summaryPages + scratchpadPages}
-          hiddenSections={hiddenSections}
-          onPageCount={setDetailsPages}
+          startPage={startPage}
+          onPageCount={pageCountSetters.scratchpad}
         />
+      );
+    else if (section === "session-notes")
+      pages = <SessionNotes model={model} name={name} />;
+    else {
+      const index = SHEET_REFERENCE_GROUP_IDS.findIndex(
+        (group) => `reference:${group}` === section,
+      );
+      pages = (
+        <ReferencePages
+          model={model}
+          name={name}
+          entries={references[index] ?? []}
+          wide={index === 1 || index === 2}
+          startPage={startPage}
+          onPageCount={pageCountSetters.reference[index]!}
+        />
+      );
+    }
+    return (
+      <div className={overviewClass} key={section}>
+        {pages}
       </div>
-      {typeof children === "function"
-        ? children(1 + summaryPages + scratchpadPages + detailsPages)
-        : children}
-      {notesShown ? (
-        <div className={overviewClass}>
-          <SessionNotes model={model} name={name} />
-        </div>
-      ) : null}
+    );
+  };
+  return (
+    <>
+      {sectionOrder.map((section) =>
+        hiddenSections.has(section)
+          ? null
+          : renderSection(section, startPages.get(section)!),
+      )}
     </>
   );
 }

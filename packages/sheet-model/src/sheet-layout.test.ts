@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { SHEET_SECTION_IDS } from "@4ecb/character-domain";
+
 import { isSheetPlayCard, sheetCardDeck } from "./card-deck";
 import type { SheetCard } from "./index";
 import type { SheetItemSetCard } from "./item-set-card";
@@ -64,6 +66,7 @@ describe("applySheetLayout", () => {
       ["item:def:cached", false],
     ]);
     expect(resolved.hiddenSections.size).toBe(0);
+    expect(resolved.sectionOrder).toEqual(SHEET_SECTION_IDS);
   });
 
   it("hides and shows cards from the layout, and items from their holdings", () => {
@@ -74,6 +77,7 @@ describe("applySheetLayout", () => {
         hiddenCards: ["power:arc", "play:skills", "item:a", "power:gone"],
         shownCards: ["item:def:cached"],
         hiddenSections: ["summary", "scratchpad"],
+        sectionOrder: ["cards"],
       },
       { itemCardsShown: new Map([["b", true]]) },
     );
@@ -90,6 +94,8 @@ describe("applySheetLayout", () => {
       "b",
     );
     expect([...resolved.hiddenSections]).toEqual(["summary", "scratchpad"]);
+    expect(resolved.sectionOrder[0]).toBe("cards");
+    expect(resolved.sectionOrder).toHaveLength(SHEET_SECTION_IDS.length);
   });
 
   it("moves a set card when the holding flags hide its pieces", () => {

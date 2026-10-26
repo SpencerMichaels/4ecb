@@ -76,18 +76,22 @@ export interface SheetLayout {
   body blanked behind a large faint "Hidden" (border kept); View mode and
   printing always omit them. Legacy CharTracker had the card "Hide" menu item
   and a one-shot "Restore Hidden Power Cards".
-- Sections are ticked in a toolbar **Pages** menu (owner 2026-10-25:
-  right-clicking a whole page was unintuitive): a popover under the button
-  with one ordinary checkbox per section in print order — Page 1 summary
-  (with its continuation pages), Play scratchpad, each reference group,
-  Session notes. No row is locked or disabled (e.g. hide page 1 to reprint
-  only some cards); a section that prints nothing for this character is
-  still an ordinary row. A hidden section simply does not render and later
-  pages renumber; hiding everything leaves an empty preview with no notice.
-  The menu closes on Escape (focus back to the button), an outside click or
-  tabbing out.
-- The toolbar packs from the start (Back, View | Edit, then Edit's Pages and
-  Reset), so View | Edit never moves between modes; Print stays at the end.
+- Sections are ticked and ordered in a toolbar **Sections** menu (owner
+  2026-10-25: right-clicking a whole page was unintuitive): a popover under
+  the button with one row per section in print order, each an ordinary
+  checkbox — Overview (page 1 by default, with its continuation pages),
+  Play scratchpad, each reference group, Power & item cards, Session notes.
+  No row is locked or disabled (e.g. hide the overview to reprint only some
+  cards); a section that prints nothing for this character is still an
+  ordinary row. A hidden section simply does not render and later pages
+  renumber; hiding everything leaves an empty preview with no notice. Rows
+  reorder by dragging (grip handle, drop-edge rule) or Alt+Up / Alt+Down on
+  a focused row, and the sheet prints in that order with page numbers
+  chained through it. The menu closes on Escape (focus back to the button),
+  an outside click or tabbing out.
+- The toolbar packs from the start (Back, View | Edit, then Edit's Sections
+  and Reset), so View | Edit never moves between modes; Print stays at the
+  end.
 - Silent saves via a serialized queue (no "Saved" notice, D098; failures show
   an actionable error). Keep layout in its own state so layout edits never
   re-evaluate the character.
@@ -99,8 +103,8 @@ export interface SheetLayout {
 
 **Must-have**
 
-1. Section hide/show in the toolbar Pages menu: page 1 summary, scratchpad,
-   each reference group, session notes; none locked.
+1. Section hide/show and ordering in the toolbar Sections menu: overview,
+   scratchpad, each reference group, card pages, session notes; none locked.
 2. Card hide/show by right-click (bulk group toggles dropped).
    Hiding a card removes only the card (scratchpad usage boxes, power index
    unchanged).
@@ -141,12 +145,15 @@ sheet-model with keys.
 0. **Done.** Stable identity (item card IDs, deck into sheet-model); no
    visible change. Reminder candidate IDs/`coveredBy` move to phase 2.
 1. **Done.** `SheetLayout` + persistence, route/toggle, right-click hide/show
-   on cards, the toolbar Pages menu for sections, global reset (the first
-   cut's "Sheet contents" panel was replaced the same day; section
-   right-click and the "Show hidden" toggle were replaced on 2026-10-25).
+   on cards, the toolbar Sections menu (hide/show and drag or Alt+Arrow
+   reorder of sections, pulled forward from the nice-to-haves), global reset
+   (the first cut's "Sheet contents" panel was replaced the same day;
+   section right-click and the "Show hidden" toggle were replaced on
+   2026-10-25).
 2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
    removal.
-3. Card ordering by click-and-drag. (On-paper hide/show: done in phase 1.)
+3. Card ordering by click-and-drag. (On-paper hide/show and section
+   ordering: done in phase 1.)
 4. Optional: reminder ordering, print scope, app-wide default layout.
 
 Each phase: synthetic tests (key stability, repository/backup round trip,

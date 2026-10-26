@@ -968,10 +968,11 @@ sample-character diff; check only layout and fit.
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
 
-## Sheet Edit mode (2026-10-25, D099 phases 0–1: card right-click, Pages menu)
+## Sheet Edit mode (2026-10-25, D099 phases 0–1: card right-click, Sections menu)
 
-Labels, keyboard toggles, the Pages menu's open/close and focus behaviour,
-saving, page numbering, print omission of hidden things, the toolbar's
+Labels, keyboard toggles and Alt+Arrow moves, the Sections menu's
+open/close and focus behaviour, drag-and-drop reordering, saving, page
+numbering in any order, print omission of hidden things, the toolbar's
 order and "no re-evaluation" are verified by tests; check only layout and
 feel. Any character works; Hu (`hu`) has item cards and several reference
 groups.
@@ -982,25 +983,39 @@ groups.
     light and dark mode.
   - **Expect:** Back and View | Edit stay exactly where they are in both
     modes (neither the control's edge nor the line between View and Edit
-    moves); Edit adds **Pages** and **Reset** (greyed while nothing is
-    hidden) after them, and Print stays at the right end. No "Show hidden"
+    moves); Edit adds **Sections** and **Reset** (greyed while nothing is
+    changed) after them, and Print stays at the right end. No "Show hidden"
     checkbox. Cards and pages look exactly as in View — no per-card buttons.
   - **Wrong if:** View | Edit jumps sideways when switching, the toolbar
     wraps badly or scrolls sideways at 140%, or Reset's label is long.
-- [ ] **Pages menu.**
-  - **Where:** Edit mode → click **Pages**; untick Play scratchpad and
-    Session notes, then Page 1 summary; press Escape; reopen and click on the
+- [ ] **Sections menu: show and hide.**
+  - **Where:** Edit mode → click **Sections**; untick Play scratchpad and
+    Session notes, then Overview; press Escape; reopen and click on the
     paper. At 140% zoom and in dark mode.
   - **Expect:** a small panel opens right under the button, in the app's
-    theme colours, with eight ordinary checkboxes (Page 1 summary first,
-    Session notes last), none greyed; the first one is focused. Unticking
-    removes those pages at once with no message, page numbers restart from
-    the next printed page (cards at page 1 with everything else unticked),
-    and the panel stays open. Escape closes it with focus back on Pages; a
-    click elsewhere closes it.
+    theme colours, with nine rows (Overview first, Power & item cards then
+    Session notes last), each a faint grip and an ordinary checkbox, none
+    greyed; the first checkbox is focused. Unticking removes those pages at
+    once with no message, page numbers restart from the next printed page,
+    and the panel stays open. Escape closes it with focus back on Sections;
+    a click elsewhere closes it.
   - **Wrong if:** the panel is clipped, overflows the window at 140%, is
     unreadable in dark mode, sits behind the paper, or a placeholder strip
     is left where a section was.
+- [ ] **Sections menu: reorder.**
+  - **Where:** drag Power & item cards by its grip to the top, then drag
+    Session notes between Overview and Play scratchpad; then focus a row's
+    checkbox and press Alt+Down twice. At 140% zoom and in dark mode.
+  - **Expect:** the cursor shows a grab hand over the grip; while dragging,
+    the dragged row dims and a thin focus-coloured line shows on the top or
+    bottom edge of the row under the pointer, matching where it drops. On
+    drop the pages move at once (cards first, then the overview), and page
+    numbers run 1, 2, 3… in the new order. Alt+Down moves the focused row
+    and keeps focus on it. Reset (click twice) restores the default order.
+  - **Wrong if:** the drop line is invisible in dark mode or doesn't match
+    where the row lands, the browser opens or searches the dragged text,
+    the page numbers skip or repeat, or the overview's "more reminders on
+    page N" note names the wrong page.
 - [ ] **Card right-click feel.**
   - **Where:** right-click a power card and an item card; left-click a
     card; Tab to a card and press Enter; then the browser's print preview

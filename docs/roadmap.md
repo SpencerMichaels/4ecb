@@ -736,8 +736,9 @@ reminder control and card ordering (plan and owner decisions:
    and the toolbar View | Edit control; right-click (or a key on a focused
    card) to hide/show cards (item cards via `showPowerCard`), with hidden
    cards always shown in Edit mode (header kept, body marked "Hidden"); a
-   toolbar Pages menu of section checkboxes (page 1 summary included, none
-   locked); and a global Reset in the toolbar.
+   toolbar Sections menu of section checkboxes (overview and card pages
+   included, none locked) whose rows reorder by drag or Alt+Up/Alt+Down
+   (section ordering pulled forward); and a global Reset in the toolbar.
 2. Reminders: show/hide, custom reminders, provenance hints, and removal of
    the Action Point reminder special case.
 3. Card ordering (on-paper controls landed with phase 1).
