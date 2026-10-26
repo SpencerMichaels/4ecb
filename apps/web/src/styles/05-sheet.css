@@ -602,10 +602,38 @@
   z-index: 2;
 }
 
+/* A hidden section's placeholder strip. */
 .sheet-edit-target[data-hidden] {
-  background: rgb(255 255 255 / 30%);
   outline: 2px dashed #56616a;
   outline-offset: -2px;
+}
+
+/* "Show hidden" on a card: its header prints as usual, its body is blank
+   (visibility keeps the layout and the border), and a large faint "Hidden"
+   sits in the middle of the body. */
+.sheet-concealed-card {
+  display: contents;
+}
+
+.sheet-concealed-card > .print-reference-card > :not(header) {
+  visibility: hidden;
+}
+
+.sheet-card-edit.sheet-edit-target[data-hidden] {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  outline: none;
+  padding-top: 0.3in;
+}
+
+.sheet-hidden-card-mark {
+  color: rgb(32 39 42 / 22%);
+  font-family: system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* No visible control: a focus ring only while tabbing between overlays. */

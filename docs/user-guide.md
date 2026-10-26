@@ -258,7 +258,8 @@ session notes; page 1 always prints. From the keyboard, Tab to a card or
 section and press Enter, Space, the Menu key or Shift+F10. Each right-click
 hides it, and right-clicking a hidden one shows it again.
 Hidden things leave the preview exactly as they leave the printout. Tick
-**Show hidden** in the toolbar to see them again, dimmed in place
+**Show hidden** in the toolbar to see them again in place: a hidden
+card keeps its header, with a large faint "Hidden" where its text was
 (sections as a short "Hidden" placeholder), and right-click them to bring
 them back; printing never includes
 hidden things, whether or not **Show hidden** is ticked. Hiding a power's

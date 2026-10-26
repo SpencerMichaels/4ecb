@@ -946,16 +946,27 @@ export function CharacterSheetPage({
                 key={`print-card-page-${pageIndex}`}
               >
                 <div className="print-card-grid">
-                  {page.map(({ card, key }) => (
-                    <PrintCard
-                      card={card}
-                      model={model}
-                      name={characterName}
-                      portrait={character.portrait}
-                      characterLevel={characterLevel}
-                      key={key}
-                    />
-                  ))}
+                  {page.map(({ card, key, shown }) => {
+                    const printed = (
+                      <PrintCard
+                        card={card}
+                        model={model}
+                        name={characterName}
+                        portrait={character.portrait}
+                        characterLevel={characterLevel}
+                        key={key}
+                      />
+                    );
+                    // "Show hidden": keep the header, blank the body. The
+                    // wrapper is display: contents, so size and fit hold.
+                    return shown ? (
+                      printed
+                    ) : (
+                      <div className="sheet-concealed-card" key={key}>
+                        {printed}
+                      </div>
+                    );
+                  })}
                   {/* Edit overlays sit in the cards' grid areas, out of flow,
                       so the cards and their fitting never change. */}
                   {editControls
@@ -966,6 +977,15 @@ export function CharacterSheetPage({
                           key={`edit-${entry.key}`}
                           name={sheetCardLabel(entry)}
                           onToggle={() => showCards([entry], !entry.shown)}
+                          {...(entry.shown
+                            ? {}
+                            : {
+                                children: (
+                                  <span className="sheet-hidden-card-mark">
+                                    Hidden
+                                  </span>
+                                ),
+                              })}
                           // An absolutely positioned grid item's auto end
                           // line is the container's edge, so span one track.
                           style={{

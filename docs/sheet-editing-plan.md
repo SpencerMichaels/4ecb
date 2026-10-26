@@ -71,10 +71,10 @@ export interface SheetLayout {
   hides or shows it directly — no menu while hide/show is the only action
   (keyboard: focus it, Enter, Space, Menu key or Shift+F10). No visible
   per-card button and no touch gestures — owner: too noisy, desktop only for
-  now. A plain click does nothing, leaving it for dragging cards later. A toolbar "Show hidden" toggle reveals hidden cards dimmed in
-  their deck position and hidden sections as dimmed placeholders, each with
-  printing always omits them. Hidden cards are only dimmed (no stripes, no
-  tag). Legacy CharTracker had the card
+  now. A plain click does nothing, leaving it for dragging cards later. A toolbar "Show hidden" toggle reveals hidden cards in their deck
+  position, with their header as printed and their body blanked behind a large faint
+  "Hidden" (border kept), and hidden sections as dimmed placeholders, each with
+  printing always omits them. Legacy CharTracker had the card
   "Hide" menu item and a one-shot "Restore Hidden Power Cards".
 - Silent saves via a serialized queue (no "Saved" notice, D098; failures show
   an actionable error). Keep layout in its own state so layout edits never

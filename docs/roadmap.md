@@ -736,7 +736,8 @@ reminder control and card ordering (plan and owner decisions:
    and the toolbar View | Edit control; right-click (or a key on a focused card)
    to hide/show cards
    (item cards via `showPowerCard`) and sections, a "Show hidden" toggle
-   that reveals hidden things dimmed for per-item restore, and global
+   that reveals hidden things (cards: header kept, body
+   marked "Hidden") for per-item restore, and global
    reset in the toolbar.
 2. Reminders: show/hide, custom reminders, provenance hints, and removal of
    the Action Point reminder special case.
