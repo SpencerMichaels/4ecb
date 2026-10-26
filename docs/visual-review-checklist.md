@@ -968,7 +968,7 @@ sample-character diff; check only layout and fit.
     attack (Hunter Fighting Style)".
   - **Wrong if:** a tile without conditional entries shows "Conditional:".
 
-## Sheet Edit mode (2026-10-25, D099 phases 0–1, on-paper menus)
+## Sheet Edit mode (2026-10-25, D099 phases 0–1, right-click hide/show)
 
 Labels, menu semantics (button, right-click, Menu key/Shift+F10, long
 press, Escape), saving, page numbering, print omission of hidden things and
@@ -989,21 +989,19 @@ character works; Hu (`hu`) has item cards and several reference groups.
   - **Wrong if:** any button or marker appears on shown cards, a card's
     text size changes between View and Edit, the toolbar wraps badly or
     scrolls sideways at 140%, or the focus ring is hard to see.
-- [ ] **Menu feel.**
+- [ ] **Right-click feel.**
   - **Where:** the same page: right-click a card, and a section's first
-    page; Tab to a card and press the Menu key.
-  - **Expect:** a small menu ("Hide card") opens at the pointer (or the
-    card's top-right corner from the keyboard), inside the window even near
-    its right/bottom edge, in the app's theme colours; the browser's own
-    context menu doesn't appear; scrolling or clicking elsewhere closes it.
-  - **Wrong if:** the menu is clipped by the page edge, opens behind the
-    toolbar, or the browser's menu also appears.
+    page; left-click a card; Tab to a card and press Enter.
+  - **Expect:** right-click hides it at once (no menu), and the browser's
+    own context menu doesn't appear; a left click does nothing; Enter
+    toggles the focused card.
+  - **Wrong if:** a menu or the browser's menu appears, or a left click
+    hides something.
 - [ ] **Hide, Show hidden, Show again.**
-  - **Where:** hide a power, an item and the Play scratchpad from their
-    menus; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
+  - **Where:** right-click a power, an item and the Play scratchpad; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
   - **Expect:** hidden cards vanish and later cards close up 9 per page;
-    with **Show hidden** they return in place, dimmed with grey stripes and
-    a dashed outline, with no tag over the title; the scratchpad is a short dimmed
+    with **Show hidden** they return in place, dimmed (no stripes, no tag)
+    with a dashed outline, the title band less faded; the scratchpad is a short dimmed
     strip "Hidden · Play scratchpad" (right-click it for **Show section**). The
     browser's print preview never contains hidden cards, the strip or any focus ring.
     Reload: choices persist and **Show hidden** is off again. Reset (click

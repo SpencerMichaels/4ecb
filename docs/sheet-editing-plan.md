@@ -67,12 +67,14 @@ export interface SheetLayout {
   either; `?print=1` stays view-only.
 - Edit mode keeps the WYSIWYG paper preview with the controls on the paper
   (owner feedback 2026-10-25 replaced the first "Sheet contents" checkbox
-  panel): each card and each optional section's first page has a
-  right-click menu with Hide/Show, like the legacy builder (keyboard: focus
-  the card, Menu key or Shift+F10). No visible per-card button and no touch
-  gestures — owner: too noisy, desktop only for now. A toolbar "Show hidden" toggle reveals hidden cards dimmed in
+  panel): right-clicking a card, or an optional section's first page,
+  hides or shows it directly — no menu while hide/show is the only action
+  (keyboard: focus it, Enter, Space, Menu key or Shift+F10). No visible
+  per-card button and no touch gestures — owner: too noisy, desktop only for
+  now. A plain click does nothing, leaving it for dragging cards later. A toolbar "Show hidden" toggle reveals hidden cards dimmed in
   their deck position and hidden sections as dimmed placeholders, each with
-  "Show"; printing always omits them. Legacy CharTracker had the card
+  printing always omits them. Hidden cards are only dimmed (no stripes, no
+  tag). Legacy CharTracker had the card
   "Hide" menu item and a one-shot "Restore Hidden Power Cards".
 - Silent saves via a serialized queue (no "Saved" notice, D098; failures show
   an actionable error). Keep layout in its own state so layout edits never
@@ -84,8 +86,8 @@ export interface SheetLayout {
 **Must-have**
 
 1. Section hide/show on each optional section's first page: scratchpad,
-   session notes, each reference group. Page 1 always printed (no menu).
-2. Card hide/show from each card's menu (bulk group toggles dropped).
+   session notes, each reference group. Page 1 always printed (no control).
+2. Card hide/show by right-click (bulk group toggles dropped).
    Hiding a card removes only the card (scratchpad usage boxes, power index
    unchanged).
 3. Reminder show/hide over every candidate, with per-row Default reset and a
@@ -95,8 +97,8 @@ export interface SheetLayout {
 5. Reset (global and per section).
 6. Remove the Action Point special case together with 3–4.
 
-**Nice-to-have:** card reorder (buttons, then drag; the on-paper menus are
-in place for "Move"); reminder ordering; one-off print scope (Everything / Sheet pages /
+**Nice-to-have:** card reorder (click-and-drag; a right-click menu returns only if
+a second card action, e.g. legacy-style Customize, is added); reminder ordering; one-off print scope (Everything / Sheet pages /
 Cards); app-wide default layout; editing an auto reminder's text as
 "copy to custom + hide original"; named print profiles (defer).
 
@@ -124,13 +126,12 @@ sheet-model with keys.
 
 0. **Done.** Stable identity (item card IDs, deck into sheet-model); no
    visible change. Reminder candidate IDs/`coveredBy` move to phase 2.
-1. **Done.** `SheetLayout` + persistence, route/toggle, on-paper card and
-   section menus with Hide/Show, the "Show hidden" toggle, global reset
+1. **Done.** `SheetLayout` + persistence, route/toggle, right-click hide/show
+   on cards and sections, the "Show hidden" toggle, global reset
    (the first cut's "Sheet contents" panel was replaced the same day).
 2. Reminders: show/hide, custom reminders, provenance hints, AP special-case
    removal.
-3. Card ordering. (On-paper controls: done in phase 1; ordering adds its
-   actions to the same menus.)
+3. Card ordering by click-and-drag. (On-paper hide/show: done in phase 1.)
 4. Optional: reminder ordering, print scope, app-wide default layout.
 
 Each phase: synthetic tests (key stability, repository/backup round trip,

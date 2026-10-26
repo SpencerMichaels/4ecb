@@ -733,8 +733,8 @@ reminder control and card ordering (plan and owner decisions:
 0. **Done (2026-10-25).** Stable card keys from provenance and the card
    deck in sheet-model (`sheetCardDeck`); no visible change.
 1. **Done (2026-10-25).** `SheetLayout` persistence, `?preview=1&edit=1`
-   and the toolbar View | Edit control; on-paper card and section menus
-   (right-click, or the Menu key on a focused card) to hide/show cards
+   and the toolbar View | Edit control; right-click (or a key on a focused card)
+   to hide/show cards
    (item cards via `showPowerCard`) and sections, a "Show hidden" toggle
    that reveals hidden things dimmed for per-item restore, and global
    reset in the toolbar.

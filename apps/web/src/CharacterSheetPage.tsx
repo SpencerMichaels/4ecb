@@ -56,7 +56,7 @@ import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
 import { SheetOverview, type SheetSectionControl } from "./SheetOverview";
 import { SegmentedControl } from "./SegmentedControl";
-import { SheetEditTarget, usePrinting } from "./SheetEditMenu";
+import { SheetEditTarget, usePrinting } from "./SheetEditTarget";
 import { sheetCardLabel, SHEET_SECTION_LABELS } from "./sheet-edit-labels";
 import { useArmedAction } from "./useArmedAction";
 
@@ -414,25 +414,14 @@ export function CharacterSheetPage({
   const sectionControl = useCallback<SheetSectionControl>(
     (section, hidden) => {
       const label = SHEET_SECTION_LABELS[section];
-      const menuLabel = `Section options for ${label}`;
-      const items = [
-        hidden
-          ? {
-              label: "Show section",
-              onSelect: () => showSection(section, true),
-            }
-          : {
-              label: "Hide section",
-              onSelect: () => showSection(section, false),
-            },
-      ];
+      const onToggle = () => showSection(section, hidden);
       if (!hidden)
         return (
           <div className="sheet-section-edit print-excluded">
             <SheetEditTarget
               className="sheet-section-edit-target"
-              items={items}
-              menuLabel={menuLabel}
+              name={label}
+              onToggle={onToggle}
             />
           </div>
         );
@@ -441,8 +430,8 @@ export function CharacterSheetPage({
           <SheetEditTarget
             className="sheet-hidden-section-target"
             hidden
-            items={items}
-            menuLabel={menuLabel}
+            name={label}
+            onToggle={onToggle}
           >
             <span className="sheet-hidden-section-label">Hidden · {label}</span>
           </SheetEditTarget>
@@ -974,19 +963,9 @@ export function CharacterSheetPage({
                         <SheetEditTarget
                           className="sheet-card-edit print-excluded"
                           hidden={!entry.shown}
-                          items={[
-                            entry.shown
-                              ? {
-                                  label: "Hide card",
-                                  onSelect: () => showCards([entry], false),
-                                }
-                              : {
-                                  label: "Show card",
-                                  onSelect: () => showCards([entry], true),
-                                },
-                          ]}
                           key={`edit-${entry.key}`}
-                          menuLabel={`Card options for ${sheetCardLabel(entry)}`}
+                          name={sheetCardLabel(entry)}
+                          onToggle={() => showCards([entry], !entry.shown)}
                           // An absolutely positioned grid item's auto end
                           // line is the container's edge, so span one track.
                           style={{

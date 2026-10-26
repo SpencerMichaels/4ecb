@@ -2782,17 +2782,18 @@ Decision:
   builder and library link to View). Edit keeps the paper preview and puts
   the controls on the paper (owner feedback 2026-10-25, replacing a
   "Sheet contents" checkbox panel): every card and every optional section's
-  first page has a right-click menu, as in the legacy builder (keyboard:
-  focus the overlay, "Card options for <name>" / "Section options for
-  <name>", then the Menu key or Shift+F10), with "Hide card"/"Show card" or
-  "Hide section"/"Show section". Owner follow-up (2026-10-25): no visible
-  per-card button and no long press — the ⋮ buttons were too noisy and touch
-  screens are out of scope for now; page 1 has none, and an empty reference group
+  first page hides or shows on right-click, like the legacy builder's
+  card "Hide" (keyboard: focus the overlay, "Hide <name>" / "Show <name>",
+  then Enter, Space, the Menu key or Shift+F10); a plain click does nothing,
+  leaving it for dragging. Owner follow-ups (2026-10-25): no visible per-card
+  button and no long press — the ⋮ buttons were too noisy and touch screens
+  are out of scope for now; and no menu while hide/show is the only card
+  action (a menu returns only with a second action, e.g. Customize); page 1 has none, and an empty reference group
   prints no page, so it has none either. This mirrors the legacy CharTracker
   card menu's "Hide"; its one-shot "Restore Hidden Power Cards" becomes a
   toolbar "Show hidden" toggle (off by default, not saved): on, hidden cards
-  stay in their deck position dimmed (no tag: owner, 2026-10-25 — the
-  dimming is enough and a tag covered the title), and hidden
+  stay in their deck position, only dimmed (no stripes or tag: owner,
+  2026-10-25 — the dimming is enough and a tag covered the title), and hidden
   sections show as dimmed placeholders where their pages would be (so page
   numbers still match the printout); each one's menu offers "Show". Printing
   always omits hidden cards and sections — `beforeprint` turns the reveal
@@ -2810,7 +2811,7 @@ Decision:
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
 `packages/sheet-model/src/{card-deck,sheet-layout}.ts`,
-`apps/web/src/{CharacterSheetPage,SheetEditMenu,SheetOverview}.tsx`
+`apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 
 ## Deferred decisions and decision points
