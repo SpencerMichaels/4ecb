@@ -1439,7 +1439,20 @@ function rowKeywordTags(
   return { tags, powerTags };
 }
 
-function combatStatComponents(
+type TypedPowerComponent = {
+  readonly component: PowerComponent;
+  readonly bonusType?: string;
+};
+
+/**
+ * The stat contributions a row reads for one channel, typed bonuses not yet
+ * stacked. Native PowerStats keeps one att_type_max/dmg_type_max list per row
+ * (D20Workspace.PowerStats, Module CalcDamage/CalcKeywords/CalcGlobal/
+ * DamageKeyword's GetCharStatMax), so a row that reads stats along two paths
+ * (an implement power used through a weapon) stacks their entries together
+ * with `stackTypedComponents`.
+ */
+function combatStatEntries(
   stats: Readonly<Record<string, EvaluatedStat>>,
   equipment: Loadout,
   power: ContentEntity,
@@ -1480,7 +1493,7 @@ function combatStatComponents(
      */
     damageRoll?: boolean;
   },
-): PowerComponent[] {
+): TypedPowerComponent[] {
   const damageRoll = fieldName === "damage" && context.damageRoll !== false;
   // Native CalcKeywords: `:damage` stats only for a damage roll,
   // `:nonroll-damage` for any damage.
@@ -1547,35 +1560,34 @@ function combatStatComponents(
     });
   });
   const seen = new Set<string>();
-  const components: { component: PowerComponent; bonusType?: string }[] =
-    relevant.flatMap(([name, stat]) => {
-      if (stat.contributions.length === 0)
-        return typeof stat.value === "number" && stat.value !== 0
-          ? [{ component: { label: name, value: stat.value } }]
-          : [];
-      return stat.contributions.flatMap((contribution) => {
-        if (
-          !contribution.applied ||
-          contribution.numericValue === undefined ||
-          seen.has(contribution.id)
-        )
-          return [];
-        seen.add(contribution.id);
-        return [
-          {
-            ...(contribution.bonusType
-              ? { bonusType: key(contribution.bonusType) }
-              : {}),
-            component: {
-              label: name,
-              value: contribution.numericValue,
-              source: contribution.providerName,
-              provenanceId: contribution.id,
-            },
+  const components: TypedPowerComponent[] = relevant.flatMap(([name, stat]) => {
+    if (stat.contributions.length === 0)
+      return typeof stat.value === "number" && stat.value !== 0
+        ? [{ component: { label: name, value: stat.value } }]
+        : [];
+    return stat.contributions.flatMap((contribution) => {
+      if (
+        !contribution.applied ||
+        contribution.numericValue === undefined ||
+        seen.has(contribution.id)
+      )
+        return [];
+      seen.add(contribution.id);
+      return [
+        {
+          ...(contribution.bonusType
+            ? { bonusType: key(contribution.bonusType) }
+            : {}),
+          component: {
+            label: name,
+            value: contribution.numericValue,
+            source: contribution.providerName,
+            provenanceId: contribution.id,
           },
-        ];
-      });
+        },
+      ];
     });
+  });
   // Registered first, so an equal stat bonus of the same type adds nothing.
   components.unshift(
     ...(context.typedExtras ?? []).map((extra) => ({
@@ -1583,9 +1595,25 @@ function combatStatComponents(
       component: extra.component,
     })),
   );
-  // Native AttackKeyword/DamageKeyword share typed maxima across matching
-  // channels; qualifying the same type more narrowly must not stack it twice.
-  const maxima = new Map<string, (typeof components)[number]>();
+  return components;
+}
+
+/**
+ * Native AttackKeyword/DamageKeyword share typed maxima across matching
+ * channels; qualifying the same type more narrowly must not stack it twice.
+ * The same contribution read along two paths counts once.
+ */
+function stackTypedComponents(
+  entries: readonly TypedPowerComponent[],
+): PowerComponent[] {
+  const seen = new Set<string>();
+  const components = entries.filter(({ component: { provenanceId } }) => {
+    if (provenanceId === undefined) return true;
+    if (seen.has(provenanceId)) return false;
+    seen.add(provenanceId);
+    return true;
+  });
+  const maxima = new Map<string, TypedPowerComponent>();
   for (const entry of components) {
     if (!entry.bonusType) continue;
     const old = maxima.get(entry.bonusType);
@@ -3053,40 +3081,42 @@ export function evaluatePowers(input: {
             label: "proficiency bonus",
             value: equipment.proficiency,
           });
+        // One typed maximum per row (native att_type_max) across both paths.
         attackComponents.push(
-          ...combatStatComponents(
-            input.stats,
-            equipment,
-            power,
-            weaponPower ? "weapon" : "implement",
-            "attack",
-            phaseAttackType,
-            {
-              keywords,
-              defense,
-              byId,
-              basicAttackKind,
-              attackStat,
-              typedExtras: enhancementExtra,
-              globalStats: { weaponRolls },
-              nativeKeywords,
-            },
-          ),
-        );
-        if (implementPower && equipment.weaponDefinition)
-          attackComponents.push(
-            ...combatStatComponents(
+          ...stackTypedComponents([
+            ...combatStatEntries(
               input.stats,
               equipment,
               power,
-              "weapon",
+              weaponPower ? "weapon" : "implement",
               "attack",
               phaseAttackType,
-              { keywords, defense, byId, basicAttackKind, nativeKeywords },
-            ).filter(({ provenanceId }) =>
-              provenanceId?.endsWith(":legacy-focused-expertise"),
+              {
+                keywords,
+                defense,
+                byId,
+                basicAttackKind,
+                attackStat,
+                typedExtras: enhancementExtra,
+                globalStats: { weaponRolls },
+                nativeKeywords,
+              },
             ),
-          );
+            ...(implementPower && equipment.weaponDefinition
+              ? combatStatEntries(
+                  input.stats,
+                  equipment,
+                  power,
+                  "weapon",
+                  "attack",
+                  phaseAttackType,
+                  { keywords, defense, byId, basicAttackKind, nativeKeywords },
+                ).filter(({ component: { provenanceId } }) =>
+                  provenanceId?.endsWith(":legacy-focused-expertise"),
+                )
+              : []),
+          ]),
+        );
         const powerBonus = powerBonusAtLevel(authoredLine, input.level);
         if (powerBonus !== 0)
           attackComponents.push({
@@ -3349,42 +3379,6 @@ export function evaluatePowers(input: {
             ),
             ...powerSpecificComponents(input.stats, power, "damage"),
           );
-        if (hasDamage && !abilityOnly && !fixedCreature)
-          damageComponents.push(
-            ...combatStatComponents(
-              input.stats,
-              equipment,
-              power,
-              weaponPower ? "weapon" : "implement",
-              "damage",
-              attackType,
-              {
-                keywords,
-                defense,
-                byId,
-                basicAttackKind,
-                attackStat,
-                globalStats: { weaponRolls },
-                nativeKeywords,
-                damageRoll: !flat,
-                typedExtras: flat
-                  ? []
-                  : offHandEnhancement === 0
-                    ? enhancementExtra
-                    : [
-                        ...enhancementExtra,
-                        {
-                          bonusType: "off-hand enhancement",
-                          component: {
-                            label: "off-hand implement enhancement bonus",
-                            value: offHandEnhancement,
-                            source: "Dual Implement Spellcaster",
-                          },
-                        },
-                      ],
-              },
-            ),
-          );
         if (
           dice !== undefined &&
           !fixedCreature &&
@@ -3396,30 +3390,66 @@ export function evaluatePowers(input: {
             label: "versatile weapon used two-handed",
             value: 1,
           });
-        if (
-          hasDamage &&
-          !abilityOnly &&
-          !fixedCreature &&
-          implementPower &&
-          equipment.weaponDefinition
-        )
+        // One typed maximum per row (native dmg_type_max): an implement power
+        // used through a weapon (a pact blade) also reads the weapon path, and
+        // a typed bonus there (the pact blade's transferred off-hand
+        // enhancement) must not stack with the same type on the implement
+        // path (Dual Implement Spellcaster's), as legacy's "[Doesn't Stack]".
+        if (hasDamage && !abilityOnly && !fixedCreature)
           damageComponents.push(
-            ...combatStatComponents(
-              input.stats,
-              equipment,
-              power,
-              "weapon",
-              "damage",
-              attackType,
-              {
-                keywords,
-                defense,
-                byId,
-                basicAttackKind,
-                nativeKeywords,
-                damageRoll: !flat,
-              },
-            ),
+            ...stackTypedComponents([
+              ...combatStatEntries(
+                input.stats,
+                equipment,
+                power,
+                weaponPower ? "weapon" : "implement",
+                "damage",
+                attackType,
+                {
+                  keywords,
+                  defense,
+                  byId,
+                  basicAttackKind,
+                  attackStat,
+                  globalStats: { weaponRolls },
+                  nativeKeywords,
+                  damageRoll: !flat,
+                  typedExtras: flat
+                    ? []
+                    : offHandEnhancement === 0
+                      ? enhancementExtra
+                      : [
+                          ...enhancementExtra,
+                          {
+                            bonusType: "off-hand enhancement",
+                            component: {
+                              label: "off-hand implement enhancement bonus",
+                              value: offHandEnhancement,
+                              source: "Dual Implement Spellcaster",
+                            },
+                          },
+                        ],
+                },
+              ),
+              ...(implementPower && equipment.weaponDefinition
+                ? combatStatEntries(
+                    input.stats,
+                    equipment,
+                    power,
+                    "weapon",
+                    "damage",
+                    attackType,
+                    {
+                      keywords,
+                      defense,
+                      byId,
+                      basicAttackKind,
+                      nativeKeywords,
+                      damageRoll: !flat,
+                    },
+                  )
+                : []),
+            ]),
           );
         // Native CalcDamage parses only the damage expression: the hit line
         // up to its first "damage". A "+N bonus to damage rolls" rider after

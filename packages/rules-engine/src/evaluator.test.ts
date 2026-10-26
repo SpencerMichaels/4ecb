@@ -1623,10 +1623,10 @@ describe("character evaluator", () => {
   });
 
   it("marks background class-skill benefits the class already grants", () => {
-    const classSkill = (skill: string) =>
+    const classSkill = (skill: string, bonus = false) =>
       entity(
-        `${skill.toUpperCase()}_CLASS`,
-        `${skill} class skill`,
+        `${skill.toUpperCase()}_${bonus ? "BONUS" : "CLASS"}`,
+        `${skill} class skill${bonus ? " and bonus" : ""}`,
         "Background Choice",
         {
           categories: ["BG_BENEFIT"],
@@ -1641,6 +1641,9 @@ describe("character evaluator", () => {
               },
               0,
             ),
+            ...(bonus
+              ? [rule("statadd", { name: `${skill} Misc`, value: "+1" }, 1)]
+              : []),
           ],
         },
       );
@@ -1678,6 +1681,8 @@ describe("character evaluator", () => {
         }),
         classSkill("Religion"),
         classSkill("Stealth"),
+        // The class skill is redundant, but the +1 bonus still applies.
+        classSkill("Religion", true),
       ],
     );
     expect(result.choices[0]?.candidates).toMatchObject([
@@ -1687,6 +1692,7 @@ describe("character evaluator", () => {
         reasons: ["already-class-skill"],
       },
       { definitionId: "STEALTH_CLASS", eligible: true, reasons: [] },
+      { definitionId: "RELIGION_BONUS", eligible: true, reasons: [] },
     ]);
   });
 

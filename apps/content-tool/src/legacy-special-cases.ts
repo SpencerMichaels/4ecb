@@ -1490,7 +1490,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcBAB": code(
       "Attack components: ability, half level, proficiency, enhancement; beast attack bonus.",
-      "powers.ts combatStatComponents",
+      "powers.ts combatStatEntries",
       test(
         POWERS,
         "adds a weapon's proficiency bonus only with its weapon proficiency",
@@ -1729,7 +1729,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AttackTypeKeywords": code(
       "Melee/Ranged/Area/Close channels from Attack Type ('melee or ranged weapon' by the weapon).",
-      "powers.ts combatStatComponents attackTypeTags",
+      "powers.ts combatStatEntries attackTypeTags",
       test(
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
@@ -1737,7 +1737,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcKeywords": partial(
       "Keyword channel matching (:damage, :nonroll-damage, :attack, :info, parenthesized limiters incl. the bound augment); 'weapon attack rolls'/'weapon damage rolls' for weapon powers.",
-      "powers.ts combatStatComponents / powerAdditionalEffects; combatStatComponents reads ':nonroll-damage' for any damage and ':damage' only for a damage roll (IsDamageRoll); powerAdditionalEffects reminders do not read ':nonroll-damage'",
+      "powers.ts combatStatEntries / powerAdditionalEffects; combatStatEntries reads ':nonroll-damage' for any damage and ':damage' only for a damage roll (IsDamageRoll); powerAdditionalEffects reminders do not read ':nonroll-damage'",
       test(
         POWERS,
         "keeps conditional reminders and keyword info separate from totals and alternate equipment",
@@ -1749,7 +1749,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AttackKeyword": code(
       "Typed maximum for attack channels.",
-      "powers.ts combatStatComponents maxima",
+      "powers.ts stackTypedComponents over combatStatEntries (one att_type_max per row)",
       test(
         POWERS,
         "shares typed bonus maxima across general and defense-specific implement channels",
@@ -1757,10 +1757,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.DamageKeyword": code(
       "Damage keyword components and typed maxima.",
-      "powers.ts combatStatComponents",
+      "powers.ts combatStatEntries + stackTypedComponents: one dmg_type_max per row, shared by an implement power's implement and weapon (pact blade) paths",
       test(
         POWERS,
         "applies one contribution once across overlapping implement and weapon channels",
+      ),
+      test(
+        POWERS,
+        "stacks a pact blade's typed bonus with Dual Implement Spellcaster's in one row maximum",
       ),
     ),
     "?A0x7555d940.AddPieces": generic("Component explanation text."),

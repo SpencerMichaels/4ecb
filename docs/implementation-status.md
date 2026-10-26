@@ -1,5 +1,26 @@
 # Implementation status
 
+## Player reports: background benefits and pact-blade damage (2026-10-25)
+
+A background benefit is marked `already-class-skill` (shown as a redundant
+house-rule pick and left out of the default candidates) only when redundant
+`UniversalClassSkill` grants are its only rules. Benefits that also add a
+skill bonus or language (Beatrix's Luskan Benefit: +1 Stealth/Thievery; about
+80 such benefits in the merged content) are ordinary picks again; 18
+class-skill-only benefits stay marked.
+
+A power row now applies one maximum per bonus type across both its implement
+and weapon paths, as native `D20Workspace.PowerStats` keeps one
+`att_type_max`/`dmg_type_max` list per row. Before, a pact blade's
+"off-hand enhancement" transfer survived the weapon path beside Dual
+Implement Spellcaster's: Beatrix's five Sword of the White Well rows were +2
+high and now match legacy (38/38 power fields). Evaluation cache bumped to
+v61.
+
+Verification: `pnpm vitest run packages apps`, typecheck, lint and format
+clean; `pnpm parity:baseline` unchanged on all 40 characters; Beatrix
+`evaluate:character` 101/101 cached numeric fields.
+
 ## Editable printed sheet, phases 0–1 (2026-10-25)
 
 Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).

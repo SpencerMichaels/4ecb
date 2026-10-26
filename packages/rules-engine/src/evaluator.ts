@@ -52,7 +52,7 @@ import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v60-2026-10-25-native-power-replace";
+  "evaluated-character-v61-2026-10-25-row-typed-maxima";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1555,16 +1555,19 @@ function evaluateCharacterInternal(
     }
   }
 
-  // A background benefit that adds a skill the character's class (or hybrid
-  // class) already lists as a class skill would do nothing, so it is marked
-  // and left out of the default candidate list.
+  // A background benefit that only adds skills the character's class (or
+  // hybrid class) already lists as class skills would do nothing, so it is
+  // marked and left out of the default candidate list. A benefit with any
+  // other rule (a skill bonus, a language) still has an effect, so redundant
+  // class-skill grants alone never mark it.
   const classSkillValues = new Set([
     ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
     ...(expressionContext.dynamicCategories?.$$HYBRID ?? []),
   ]);
   const grantsExistingClassSkill = (candidate: ContentEntity): boolean => {
     if (key(candidate.type) !== "background choice") return false;
-    const grants = parseRules(candidate.id, candidate.rules).flatMap((rule) =>
+    const rules = parseRules(candidate.id, candidate.rules);
+    const grants = rules.flatMap((rule) =>
       rule.kind === "modify" &&
       key(rule.field) === "universalclassskill" &&
       key(rule.value ?? "") === "true"
@@ -1573,6 +1576,7 @@ function evaluateCharacterInternal(
     );
     return (
       grants.length > 0 &&
+      grants.length === rules.length &&
       grants.every((rule) => {
         const skill =
           rule.name === undefined

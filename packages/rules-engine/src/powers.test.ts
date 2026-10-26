@@ -2966,6 +2966,97 @@ describe("power evaluation", () => {
     });
   });
 
+  it("stacks a pact blade's typed bonus with Dual Implement Spellcaster's in one row maximum", () => {
+    // Native PowerStats keeps one dmg_type_max per row: a pact blade's
+    // transferred "off-hand enhancement" (read on the weapon path of an
+    // implement power) and Dual Implement Spellcaster's bonus of the same
+    // type do not stack (legacy "[Doesn't Stack]").
+    const entities = [
+      entity("WARLOCK", "Warlock", "Class", {}),
+      entity("POWER", "Arcane Curse", "Power", {
+        Keywords: "Arcane, Implement",
+        Class: "WARLOCK",
+        "Attack Type": "Ranged 10",
+        Attack: "Charisma vs. Reflex",
+        Hit: "1d8 + Charisma modifier force damage.",
+      }),
+      entity("FEAT", "Dual Implement Spellcaster", "Feat", {}),
+      entity("DAGGER", "Dagger", "Weapon", {
+        Damage: "1d4",
+        Group: "Light Blade",
+        "Proficiency Bonus": "3",
+      }),
+      entity("BLADE", "Pact Blade +1", "Magic Item", {
+        "Magic Item Type": "Weapon",
+        Enhancement: "+1 attack rolls and damage rolls",
+        _ImplementForClass: "WARLOCK",
+      }),
+      entity("WAND", "Synthetic Wand +2", "Magic Item", {
+        "Magic Item Type": "Wand",
+        Enhancement: "+2 attack rolls and damage rolls",
+      }),
+    ];
+    const pactTransfer = (value: number): EvaluatedStat => ({
+      name: "BLADE:damage",
+      value,
+      contributions: [
+        {
+          id: "pact-transfer",
+          stat: "BLADE:damage",
+          value: String(value),
+          bonusType: "off-hand enhancement",
+          providerId: "pact",
+          providerName: "Pact Weapon",
+          numericValue: value,
+          applied: true,
+        },
+      ],
+    });
+    const bladeRow = (transfer: number) =>
+      evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["WARLOCK", "POWER", "FEAT"],
+        inventory: [
+          {
+            id: "blade",
+            name: "Pact Blade Dagger +1",
+            definitionIds: ["DAGGER", "BLADE"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "wand",
+            name: "Synthetic Wand +2",
+            definitionIds: ["WAND"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        textStrings: { _INTERNAL_MainHandWeapon: "Pact Blade Dagger +1" },
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 5),
+          "BLADE:damage": pactTransfer(transfer),
+        },
+        overlays: [],
+        entities,
+      })[0]?.variants.find(
+        (variant) => variant.equipmentName === "Pact Blade Dagger +1",
+      );
+    // Charisma 5 + blade enhancement 1 + one off-hand enhancement 2.
+    expect(bladeRow(2)?.damage).toBe("1d8+8");
+    expect(
+      bladeRow(2)?.damageComponents.filter(
+        (component) =>
+          component.label === "off-hand implement enhancement bonus" ||
+          component.label === "BLADE:damage",
+      ),
+    ).toHaveLength(1);
+    // The higher bonus of the type wins.
+    expect(bladeRow(3)?.damage).toBe("1d8+9");
+  });
+
   it("pairs dual implements by legacy DetermineOffhand without a hand selection", () => {
     const entities = [
       entity("POWER", "Arcane Bolt", "Power", {
