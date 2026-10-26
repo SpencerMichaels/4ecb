@@ -987,9 +987,11 @@ export function CharacterSheetPage({
                           ]}
                           key={`edit-${entry.key}`}
                           menuLabel={`Card options for ${sheetCardLabel(entry)}`}
+                          // An absolutely positioned grid item's auto end
+                          // line is the container's edge, so span one track.
                           style={{
-                            gridColumn: (index % 3) + 1,
-                            gridRow: Math.floor(index / 3) + 1,
+                            gridColumn: `${(index % 3) + 1} / span 1`,
+                            gridRow: `${Math.floor(index / 3) + 1} / span 1`,
                           }}
                         />
                       ))

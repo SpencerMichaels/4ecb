@@ -404,6 +404,14 @@ describe("character sheet Edit mode", () => {
     const overlay = cardOptions("Arc Strike")!.closest(".sheet-edit-target")!;
     expect(overlay.hasAttribute("data-hidden")).toBe(true);
     expect(overlay.textContent).toContain("Hidden");
+    // An absolutely positioned grid item spans to the grid's edge unless
+    // both lines are explicit, so each overlay covers exactly its card.
+    for (const target of container.querySelectorAll<HTMLElement>(
+      ".sheet-card-edit",
+    )) {
+      expect(target.style.gridColumn).toMatch(/^\d+ \/ span 1$/);
+      expect(target.style.gridRow).toMatch(/^\d+ \/ span 1$/);
+    }
     expect(
       cardOptions("Synthetic Cloak")
         ?.closest(".sheet-edit-target")
