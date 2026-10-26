@@ -444,7 +444,7 @@ export function CharacterSheetPage({
             items={items}
             menuLabel={menuLabel}
           >
-            <span className="sheet-hidden-section-label">{label}</span>
+            <span className="sheet-hidden-section-label">Hidden · {label}</span>
           </SheetEditTarget>
         </div>
       ) : null;

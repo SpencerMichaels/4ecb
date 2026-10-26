@@ -393,7 +393,8 @@ describe("character sheet Edit mode", () => {
     expect(cardPageText()).toContain("Arc Strike");
     const overlay = cardOptions("Arc Strike")!.closest(".sheet-edit-target")!;
     expect(overlay.hasAttribute("data-hidden")).toBe(true);
-    expect(overlay.textContent).toContain("Hidden");
+    // Dimmed only: no tag over the card's title.
+    expect(overlay.textContent).toBe("");
     // An absolutely positioned grid item spans to the grid's edge unless
     // both lines are explicit, so each overlay covers exactly its card.
     for (const target of container.querySelectorAll<HTMLElement>(

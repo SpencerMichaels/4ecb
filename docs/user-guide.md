@@ -258,8 +258,8 @@ session notes; page 1 always prints. From the keyboard, Tab to a card or
 section and press the Menu key or Shift+F10. Choose **Hide card** or **Hide
 section**.
 Hidden things leave the preview exactly as they leave the printout. Tick
-**Show hidden** in the toolbar to see them again, dimmed and marked
-"Hidden" (sections as a short placeholder), and choose **Show card** or
+**Show hidden** in the toolbar to see them again, dimmed in place
+(sections as a short "Hidden" placeholder), and choose **Show card** or
 **Show section** from their menu to bring them back; printing never includes
 hidden things, whether or not **Show hidden** is ticked. Hiding a power's
 card keeps it on the scratchpad and in the power index, and page numbers

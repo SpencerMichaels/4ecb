@@ -42,7 +42,7 @@ export function SheetEditTarget({
   readonly style?: CSSProperties;
   /** The accessible name of the overlay and its menu. */
   readonly menuLabel: string;
-  /** Hidden from print but revealed by "Show hidden": dimmed and marked. */
+  /** Hidden from print but revealed by "Show hidden": dimmed, no tag. */
   readonly hidden?: boolean;
   readonly items: readonly SheetEditMenuItem[];
   readonly children?: ReactNode;
@@ -180,7 +180,6 @@ export function SheetEditTarget({
         openFromTarget();
       }}
     >
-      {hidden ? <span className="sheet-edit-hidden-marker">Hidden</span> : null}
       {children}
       {/* In the body: clear of the paper's overflow and colour overrides. */}
       {open

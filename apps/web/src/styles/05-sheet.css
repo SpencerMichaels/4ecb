@@ -611,20 +611,6 @@
   outline-offset: -2px;
 }
 
-.sheet-edit-hidden-marker {
-  background: #20272a;
-  border-radius: 2px;
-  color: #fff;
-  font-family: system-ui, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  left: 0.3rem;
-  line-height: 1.2;
-  padding: 0.15rem 0.5rem;
-  position: absolute;
-  top: 0.3rem;
-}
-
 /* No visible control: a focus ring only while tabbing between overlays. */
 .sheet-edit-target:focus {
   outline: none;
@@ -664,11 +650,7 @@
   align-items: center;
   display: flex;
   gap: 0.75rem;
-  padding: 0 2.75rem 0 0.75rem;
-}
-
-.sheet-hidden-section .sheet-edit-hidden-marker {
-  position: static;
+  padding: 0 0.75rem;
 }
 
 .sheet-hidden-section-label {

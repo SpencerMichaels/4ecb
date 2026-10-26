@@ -1002,14 +1002,14 @@ character works; Hu (`hu`) has item cards and several reference groups.
   - **Where:** hide a power, an item and the Play scratchpad from their
     menus; tick **Show hidden**; then Print preview (Ctrl+P) with it ticked.
   - **Expect:** hidden cards vanish and later cards close up 9 per page;
-    with **Show hidden** they return in place, dimmed with grey stripes, a
-    dashed outline and a dark "Hidden" tag; the scratchpad is a short dimmed
+    with **Show hidden** they return in place, dimmed with grey stripes and
+    a dashed outline, with no tag over the title; the scratchpad is a short dimmed
     strip "Hidden · Play scratchpad" (right-click it for **Show section**). The
     browser's print preview never contains hidden cards, the strip or any focus ring.
     Reload: choices persist and **Show hidden** is off again. Reset (click
     twice) restores everything.
-  - **Wrong if:** a dimmed card is hard to tell from a shown one, the
-    "Hidden" tag covers the card name badly, the strip is unreadable in dark
+  - **Wrong if:** a dimmed card is hard to tell from a shown one, anything
+    covers the card's title, the strip is unreadable in dark
     mode, or the printout has gaps or wrong page numbers.
 
 ## Granted choices in a feat's flow (2026-10-25)

@@ -2791,7 +2791,8 @@ Decision:
   prints no page, so it has none either. This mirrors the legacy CharTracker
   card menu's "Hide"; its one-shot "Restore Hidden Power Cards" becomes a
   toolbar "Show hidden" toggle (off by default, not saved): on, hidden cards
-  stay in their deck position dimmed and marked "Hidden", and hidden
+  stay in their deck position dimmed (no tag: owner, 2026-10-25 — the
+  dimming is enough and a tag covered the title), and hidden
   sections show as dimmed placeholders where their pages would be (so page
   numbers still match the printout); each one's menu offers "Show". Printing
   always omits hidden cards and sections — `beforeprint` turns the reveal
