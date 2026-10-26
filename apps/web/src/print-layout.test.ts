@@ -441,4 +441,14 @@ describe("print layout contract", () => {
       /function Print(?:Power|Item)Card[\s\S]*?card\.flavor/,
     );
   });
+
+  it("keeps a revealed hidden card's header and footer, blanking the body", () => {
+    expect(appStyles).toMatch(
+      /\.sheet-concealed-card > \.print-reference-card > :not\(header\)\s*\{\s*visibility:\s*hidden;/,
+    );
+    // Footers nested in the body (companion cards) come back too.
+    expect(appStyles).toMatch(
+      /\.sheet-concealed-card \.print-reference-card footer\s*\{\s*visibility:\s*visible;/,
+    );
+  });
 });

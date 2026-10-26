@@ -46,7 +46,7 @@ sheet-model; the print preview's "Sheet: View | Edit" control and
 `#/characters/<id>?preview=1&edit=1`; Edit mode's right-click hide/show on
 every card and optional section (or Enter/Space/Menu key on a focused one;
 no menu, no visible per-card button), a toolbar "Show hidden" toggle that reveals hidden
-cards (header kept, body marked "Hidden") and sections on screen only (`beforeprint` turns it off), and
+cards (header and footer kept, body marked "Hidden") and sections on screen only (`beforeprint` turns it off), and
 an arm-then-confirm reset in the toolbar (the first cut's "Sheet contents"
 checkbox panel was replaced the same day after owner feedback);
 silent serialized saves with a retry alert on failure. Item cards toggle

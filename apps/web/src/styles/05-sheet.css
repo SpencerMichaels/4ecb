@@ -608,9 +608,9 @@
   outline-offset: -2px;
 }
 
-/* "Show hidden" on a card: its header prints as usual, its body is blank
-   (visibility keeps the layout and the border), and a large faint "Hidden"
-   sits in the middle of the body. */
+/* "Show hidden" on a card: its header and footer bar (source, category,
+   level) show as usual, the rest of its body is blank (visibility keeps the
+   layout and the border), and a large faint "Hidden" sits in the middle. */
 .sheet-concealed-card {
   display: contents;
 }
@@ -619,12 +619,18 @@
   visibility: hidden;
 }
 
+/* Visibility is inherited but overridable, so a footer nested in the body
+   (companion cards) comes back too. */
+.sheet-concealed-card .print-reference-card footer {
+  visibility: visible;
+}
+
 .sheet-card-edit.sheet-edit-target[data-hidden] {
   align-items: center;
   display: flex;
   justify-content: center;
   outline: none;
-  padding-top: 0.3in;
+  padding-block: 0.3in 0.25in;
 }
 
 .sheet-hidden-card-mark {
