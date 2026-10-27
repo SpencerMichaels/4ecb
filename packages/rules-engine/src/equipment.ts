@@ -1,3 +1,5 @@
+import { legacySlotMatches } from "./item-fields";
+
 /**
  * One equipped record as the wearing/not-wearing selectors see it (native
  * HasLoot/LootCheck). `categories` holds the record's categories by ID and
@@ -11,6 +13,9 @@ export interface EquippedItem {
   readonly categories: readonly string[];
   readonly properties: readonly string[];
   readonly slot?: string;
+  /** Native CharLootSlot of the holding (base rows only), which `SLOT:`
+   * selectors compare: "Main hand", "Off hand", "Two-hands", "Arms"... */
+  readonly lootSlot?: string;
   readonly hands?: number;
   readonly quantity: number;
   /** The holding's base record (CharLoot base), not its enchantment. */
@@ -93,9 +98,11 @@ export function matchesEquipmentSelector(
         (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "slot":
+      // Native HasLoot SLOT: compares each holding's CharLootSlot.
+      if (item.base === false) return false;
       return operand.length === 0
         ? item.slot !== undefined
-        : item.slot?.toLocaleLowerCase() === operand;
+        : legacySlotMatches(item.lootSlot ?? item.slot ?? "", operand);
     case "only-weapon":
       return (
         (item.type.toLocaleLowerCase() === "weapon" ||

@@ -122,6 +122,10 @@ export const EXCEPTION_NAMES = {
    * non-small versatile weapon two-handed. */
   smallSize: "Small",
   oneSizeLarger: "One Size Larger",
+  /** ItemSlot/CanUseLargeWeapons: Large weapons need Oversized (or One Size
+   * Larger); Ambidextrous holds a one-handed item off-hand. */
+  oversized: "Oversized",
+  ambidextrous: "Ambidextrous",
   /** Prerequisite MoreThanOneClass: this Class (or any CountsAsClass). */
   hybridClass: "Hybrid",
 } as const;

@@ -2417,6 +2417,119 @@ describe("character evaluator", () => {
     ).toBe(1);
   });
 
+  it("matches SLOT:off hand through each holding's CharLootSlot and keeps typed blade bonuses from stacking", () => {
+    const held = (
+      id: string,
+      definitionIds: string[],
+      options: {
+        equippedQuantity?: number;
+        overrides?: Record<string, string>;
+      } = {},
+    ): CharacterInventoryEntry => ({
+      id,
+      definitionIds,
+      quantity: options.equippedQuantity ?? 1,
+      equippedQuantity: options.equippedQuantity ?? 1,
+      acquiredLevel: 1,
+      ...(options.overrides === undefined
+        ? {}
+        : { overrides: options.overrides }),
+    });
+    // A warding shaped like the corrected Swordmage Warding: +1, or +3 with
+    // the off hand free, added to AC once per blade group but typed.
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          rule("statadd", { name: "Ward", value: "+1", type: "Ward" }, 0),
+          rule(
+            "statadd",
+            {
+              name: "Ward",
+              value: "+3",
+              type: "Ward",
+              "not-wearing": "SLOT:off hand",
+            },
+            1,
+          ),
+          rule(
+            "statadd",
+            {
+              name: "AC",
+              value: "+Ward",
+              type: "Ward",
+              wearing: "weapon:light blade",
+            },
+            2,
+          ),
+          rule(
+            "statadd",
+            {
+              name: "AC",
+              value: "+Ward",
+              type: "Ward",
+              wearing: "weapon:heavy blade",
+            },
+            3,
+          ),
+        ],
+      }),
+      entity("SWORD", "Arming sword", "Weapon", {
+        specifics: {
+          Group: "Heavy Blade",
+          "Hands Required": "One-Handed",
+          "Item Slot": "One-hand",
+        },
+      }),
+      entity("RAZOR", "Arm blade", "Weapon", {
+        specifics: {
+          Group: "Light Blade",
+          "Hands Required": "One-Handed",
+          Properties: "Off-hand",
+          "Item Slot": "Off-hand",
+          _AlternateSlot: "Arms",
+        },
+      }),
+      entity("GREAT", "Great blade", "Weapon", {
+        specifics: {
+          Group: "Heavy Blade",
+          "Hands Required": "Two-Handed",
+          "Item Slot": "Two-Hands",
+        },
+      }),
+      entity("SHIELD", "Buckler", "Armor", {
+        specifics: { "Item Slot": "Off-hand" },
+      }),
+    ];
+    const ac = (inventory: CharacterInventoryEntry[]) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [rootOccurrence],
+          inventory,
+        },
+        content,
+      ).stats.AC?.value ?? 0;
+
+    expect(ac([held("sword", ["SWORD"])])).toBe(3);
+    // Heavy and light blade both apply, but the typed bonus counts once and
+    // the razor in the off hand drops the warding to +1.
+    expect(ac([held("sword", ["SWORD"]), held("razor", ["RAZOR"])])).toBe(1);
+    // Worn on the arms (_AlternateSlot), the razor leaves the off hand free.
+    expect(
+      ac([
+        held("sword", ["SWORD"]),
+        held("razor", ["RAZOR"], { overrides: { _AlternateSlot: "1" } }),
+      ]),
+    ).toBe(3);
+    // An off-hand item alone, two of one item and a two-handed weapon all
+    // fill the off hand.
+    expect(ac([held("razor", ["RAZOR"])])).toBe(1);
+    expect(ac([held("razor", ["RAZOR"], { equippedQuantity: 2 })])).toBe(1);
+    expect(ac([held("great", ["GREAT"])])).toBe(1);
+    expect(ac([held("sword", ["SWORD"]), held("shield", ["SHIELD"])])).toBe(1);
+  });
+
   it("resolves weapon and armor fields through modify overlays, including BaseItem", () => {
     const result = evaluateCharacter(
       {

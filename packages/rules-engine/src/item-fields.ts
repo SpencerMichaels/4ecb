@@ -1,3 +1,4 @@
+import { formatInventoryItemName } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import type { FieldOverlay } from "./evaluator";
@@ -195,6 +196,174 @@ export function legacyIsStaff(entity: ContentEntity): boolean {
         EXCEPTION_NAMES.staffImplementAlternate,
       ].some((name) => key(name) === key(entity.name));
   }
+}
+
+/** Legacy IsDoubleWeapon. */
+export function legacyIsDoubleWeapon(
+  weapon: ContentEntity | undefined,
+): boolean {
+  if (weapon === undefined) return false;
+  return (
+    (key(rawField(weapon, "Hands Required") ?? "") === "two-handed" &&
+      /off-hand/iu.test(rawField(weapon, "Properties") ?? "")) ||
+    (rawField(weapon, "_Secondary End")?.trim() ?? "") !== ""
+  );
+}
+
+/** The character's item name, composed exactly as the inventory and sheet
+ * name it (e.g. "Aversion Quickbeam Staff +2"), never a joined part list. */
+export function equipmentName(parts: readonly ContentEntity[]): string {
+  return formatInventoryItemName(
+    parts.map((part) => ({
+      name: part.name,
+      type: part.type,
+      magicItemType: rawField(part, "Magic Item Type"),
+    })),
+  );
+}
+
+/** The character facts native ItemSlot and CharLootSlot read. */
+export interface LootSlotContext {
+  /** HasNamedRulesElement "Small" (Size). */
+  readonly small: boolean;
+  /** "Oversized" (Internal). */
+  readonly oversized: boolean;
+  /** "One Size Larger" (Internal). */
+  readonly oneSizeLarger: boolean;
+  /** "Ambidextrous" (Internal). */
+  readonly ambidextrous: boolean;
+  /** _wtoi(_INTERNAL_VersatileUsedTwoHanded) != 0. */
+  readonly versatileUsedTwoHanded: boolean;
+  /** The _INTERNAL_MainHandWeapon text: the main-hand item's name. */
+  readonly mainHandWeapon?: string;
+}
+
+/**
+ * Native ItemSlot (`-Module-.cs` ~19019): the base record's Item Slot as
+ * the character fills it. A staff is held off-hand; a Small character (not
+ * One Size Larger) cannot hold a non-small two-handed weapon and holds a
+ * non-small versatile one in two hands; a Large weapon needs Oversized or
+ * One Size Larger, which also lets a two-handed weapon be held in one hand;
+ * Ambidextrous makes a one-handed item an off-hand one.
+ */
+export function legacyItemSlot(
+  base: ContentEntity,
+  context: LootSlotContext,
+): string {
+  let slot = rawField(base, "Item Slot") ?? "";
+  const staff = legacyIsStaff(base);
+  if (staff) return "off-hand";
+  const weapon = key(base.type) === "weapon";
+  const smallItem =
+    /small/iu.test(rawField(base, "Properties") ?? "") || !weapon;
+  let oneSizeLarger = context.oneSizeLarger;
+  let small = context.small;
+  if (small && oneSizeLarger) {
+    oneSizeLarger = false;
+    small = false;
+  }
+  if (small && smallItem) small = false;
+  if (small) {
+    if (key(slot) === "two-hands") return "";
+    if (/versatile/iu.test(rawField(base, "Properties") ?? ""))
+      slot = "two-hands";
+  }
+  if (weapon && key(rawField(base, "Size") ?? "") === "large") {
+    const canUseLarge =
+      context.oversized || (context.oneSizeLarger && !context.small);
+    if (!canUseLarge) return "";
+  } else if (key(slot) === "two-hands" && oneSizeLarger) slot = "one-hand";
+  if (key(slot) === "one-hand" && context.ambidextrous) slot = "off-hand";
+  return slot;
+}
+
+/** One equipped holding as native CharLootSlot sees it. */
+export interface LootSlotHolding {
+  /** The holding's base record (CharLoot base). */
+  readonly base: ContentEntity;
+  /** CharLootName: the holding's custom or composed name. */
+  readonly name: string;
+  readonly equippedQuantity: number;
+  /** The loot's `_AlternateSlot` flag: worn in the base's alternate slot. */
+  readonly alternate: boolean;
+}
+
+/**
+ * Native CharLootSlot (`-Module-.cs` ~19151) for each equipped holding, the
+ * slot HasLoot's `SLOT:` selector compares: "Two-hands" for a double weapon,
+ * the record's `_AlternateSlot` (wrist razors on the arms) when the holding
+ * is worn there, "Main hand, off hand" for two equipped (not rings),
+ * "Two-hands" for a versatile weapon used two-handed, "Main hand" for a
+ * one-handed item (or the off-hand item named as the main-hand weapon when
+ * no one-handed item is equipped), "Off hand" for an off-hand item, else the
+ * ItemSlot.
+ */
+export function legacyLootSlots(
+  holdings: readonly LootSlotHolding[],
+  context: LootSlotContext,
+): string[] {
+  const itemSlots = holdings.map((holding) =>
+    legacyItemSlot(holding.base, context),
+  );
+  // Native SlotEquipped("one-hand"): a one-handed item, or two of an
+  // off-hand one.
+  const oneHandEquipped = holdings.some(
+    (holding, index) =>
+      holding.equippedQuantity >= 1 &&
+      (key(itemSlots[index] ?? "") === "one-hand" ||
+        (key(itemSlots[index] ?? "") === "off-hand" &&
+          holding.equippedQuantity > 1)),
+  );
+  return holdings.map((holding, index) => {
+    if (legacyIsDoubleWeapon(holding.base)) return "Two-hands";
+    if (holding.equippedQuantity <= 0) return itemSlots[index] ?? "";
+    if (holding.alternate)
+      return rawField(holding.base, "_AlternateSlot") ?? "";
+    let slot = itemSlots[index] ?? "";
+    if (holding.equippedQuantity === 2 && key(slot) !== "ring")
+      return "Main hand, off hand";
+    if (
+      /versatile/iu.test(rawField(holding.base, "Properties") ?? "") &&
+      context.versatileUsedTwoHanded &&
+      !legacySmallWithNonSmallWeapon(holding.base, context)
+    )
+      return "Two-hands";
+    if (key(slot) === "one-hand") return "Main hand";
+    if (
+      !oneHandEquipped &&
+      context.mainHandWeapon !== undefined &&
+      context.mainHandWeapon === holding.name
+    )
+      slot = "Main hand";
+    if (key(slot) === "off-hand") return "Off hand";
+    return slot;
+  });
+}
+
+/** Native SmallWithNonSmallWeapon. */
+function legacySmallWithNonSmallWeapon(
+  weapon: ContentEntity,
+  context: LootSlotContext,
+): boolean {
+  return (
+    context.small &&
+    !context.oneSizeLarger &&
+    !/small/iu.test(rawField(weapon, "Properties") ?? "")
+  );
+}
+
+/**
+ * Native HasLoot `SLOT:<slot>` (`-Module-.cs` ~19418): an equipped holding
+ * whose CharLootSlot is the slot (string-table equality, which ignores
+ * case); `off hand`/`off-hand` is also met by two equipped of one item or a
+ * two-handed one.
+ */
+export function legacySlotMatches(lootSlot: string, slot: string): boolean {
+  if (key(lootSlot) === key(slot)) return true;
+  return (
+    (key(slot) === "off-hand" || key(slot) === "off hand") &&
+    (key(lootSlot) === "main hand, off hand" || key(lootSlot) === "two-hands")
+  );
 }
 
 /** Native IsKiFocus (D20RulesEngine): the Ki Focus gear, or a magic item

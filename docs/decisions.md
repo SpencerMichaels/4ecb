@@ -2908,7 +2908,33 @@ Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `apps/web/src/{CharacterSheetPage,SheetEditTarget,SheetSectionsMenu,SheetOverview}.tsx`
 and `apps/web/src/routes.ts`.
 
-## Deferred decisions and decision points
+### D100 — Swordmage Warding counts once; hand slots follow native CharLootSlot
+
+Status: accepted (2026-10-26), owner-approved player bug fix.
+
+Context: a swordmage wielding a longsword and wrist razors got Swordmage
+Warding twice (+6 AC). The current WotC record adds the warding to AC in
+two untyped statadds, one for a light blade and one for a heavy blade, so
+both fire when both are wielded; older WotC data typed both lines
+"Swordmage Warding" (SampleHeroes `GeranHulmaster.dnd4e`). Legacy also gives
++6 there. Separately, the modern `SLOT:` selector compared the raw
+`Item Slot` ("Off-hand") with "off hand", so `SLOT:off hand` (Swordmage
+Warding's +3, Brawler Style, Brawler Guard, Guarded Flourish, Improved
+Swordmage Armor) never matched.
+
+Decision:
+
+- A content correction (`content/corrections/90-4ecb-corrections.part`)
+  types both AC lines "Swordmage Warding", so the bonus counts once (D091:
+  the class feature grants one field, +1 or +3).
+- `SLOT:` compares native `CharLootSlot` (`legacyLootSlots` in
+  `rules-engine/src/item-fields.ts`), so a shield, an off-hand weapon, two
+  of one weapon or a two-handed weapon fills the off hand, as native does.
+- The legacy loot `_AlternateSlot` flag (wrist razors on the arms) stays
+  where the importer already keeps it, in the holding's loot overrides; the
+  evaluator reads it there, as it reads `augment`. Export is unchanged and
+  loss-free. There is no builder control to move an item to its alternate
+  slot yet; that UI waits for an owner decision.
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.

@@ -5,6 +5,9 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { FieldOverlay } from "./evaluator";
 import {
   increaseDamageDie,
+  legacyItemSlot,
+  legacyLootSlots,
+  legacySlotMatches,
   legacyLootImplement,
   overlaidEntity,
   overlaidField,
@@ -175,5 +178,86 @@ describe("legacyLootImplement special implements", () => {
         resolve,
       ),
     ).toBe("instrument");
+  });
+});
+
+describe("legacy loot slots (native ItemSlot/CharLootSlot)", () => {
+  const plain = {
+    small: false,
+    oversized: false,
+    oneSizeLarger: false,
+    ambidextrous: false,
+    versatileUsedTwoHanded: false,
+  };
+  const sword = entity("SWORD", "Sword", "Weapon", {
+    "Hands Required": "One-Handed",
+    "Item Slot": "One-hand",
+    Properties: "Versatile",
+  });
+  const razor = entity("RAZOR", "Razor", "Weapon", {
+    "Item Slot": "Off-hand",
+    Properties: "Off-hand",
+    _AlternateSlot: "Arms",
+  });
+  const double = entity("DOUBLE", "Double sword", "Weapon", {
+    "Hands Required": "Two-Handed",
+    "Item Slot": "Two-Hands",
+    Properties: "Off-hand",
+  });
+  const ring = entity("RING", "Ring", "Magic Item", { "Item Slot": "Ring" });
+  const holding = (
+    base: ContentEntity,
+    equippedQuantity = 1,
+    alternate = false,
+  ) => ({ base, name: base.name, equippedQuantity, alternate });
+
+  it("names each equipped holding's hand slot", () => {
+    expect(
+      legacyLootSlots(
+        [
+          holding(sword),
+          holding(razor),
+          holding(double),
+          holding(ring, 2),
+          holding(razor, 1, true),
+        ],
+        plain,
+      ),
+    ).toEqual(["Main hand", "Off hand", "Two-hands", "Ring", "Arms"]);
+    expect(legacyLootSlots([holding(razor, 2)], plain)).toEqual([
+      "Main hand, off hand",
+    ]);
+    expect(
+      legacyLootSlots([holding(sword)], {
+        ...plain,
+        versatileUsedTwoHanded: true,
+      }),
+    ).toEqual(["Two-hands"]);
+    // With no one-handed item, the named main-hand weapon is the main hand.
+    expect(
+      legacyLootSlots([holding(razor)], { ...plain, mainHandWeapon: "Razor" }),
+    ).toEqual(["Main hand"]);
+  });
+
+  it("adjusts the Item Slot for size and Ambidextrous", () => {
+    const great = entity("GREAT", "Great", "Weapon", {
+      "Item Slot": "Two-Hands",
+    });
+    expect(legacyItemSlot(great, { ...plain, small: true })).toBe("");
+    expect(legacyItemSlot(sword, { ...plain, small: true })).toBe("two-hands");
+    expect(legacyItemSlot(great, { ...plain, oneSizeLarger: true })).toBe(
+      "one-hand",
+    );
+    expect(legacyItemSlot(sword, { ...plain, ambidextrous: true })).toBe(
+      "off-hand",
+    );
+  });
+
+  it("matches SLOT:off hand for off-hand, both-hands and two-handed slots", () => {
+    for (const slot of ["Off hand", "Main hand, off hand", "Two-hands"])
+      expect(legacySlotMatches(slot, "off hand")).toBe(true);
+    for (const slot of ["Main hand", "Arms", "Ring"])
+      expect(legacySlotMatches(slot, "off hand")).toBe(false);
+    expect(legacySlotMatches("Body", "body")).toBe(true);
   });
 });

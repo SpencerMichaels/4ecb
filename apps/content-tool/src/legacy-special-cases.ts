@@ -964,10 +964,18 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     HasLoot: code(
       "wearing/not-wearing selector dispatch (defensive, versatile, dual-wielding, dual-shield, slot, staff implement, only-weapon, _EquipmentEquiv).",
-      "equipment.ts matchesEquipmentSelector / equipmentPredicate over evaluator.ts equippedItems: overlay-resolved fields, categories by ID and name (Two-Handed, each weapon group), the record name, IsStaff and WeaponEquiv. _EquipmentEquiv has no record in the current pack",
+      "equipment.ts matchesEquipmentSelector / equipmentPredicate over evaluator.ts equippedItems: overlay-resolved fields, categories by ID and name (Two-Handed, each weapon group), the record name, IsStaff and WeaponEquiv; SLOT: compares each holding's CharLootSlot (item-fields.ts legacySlotMatches). _EquipmentEquiv has no record in the current pack",
       test(
         EVALUATOR,
         "reads weapon selectors through categories, names, staves and hand slots (native HasLoot)",
+      ),
+      test(
+        EVALUATOR,
+        "matches SLOT:off hand through each holding's CharLootSlot and keeps typed blade bonuses from stacking",
+      ),
+      test(
+        ITEM_FIELDS,
+        "matches SLOT:off hand for off-hand, both-hands and two-handed slots",
       ),
       test(
         EVALUATOR,
@@ -1070,9 +1078,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     IsLargeWeapon: code("Size 'Large' weapon.", "equipment-ui inventory names"),
-    CanUseLargeWeapons: notHandled(
+    CanUseLargeWeapons: partial(
       "Oversized / One Size Larger / Small character text strings change which weapon sizes fit.",
-      "size-based wielding is not modeled",
+      "item-fields.ts legacyItemSlot (SLOT: selectors only); equipment-ui loadout slots and weapon rows do not model size",
+      test(ITEM_FIELDS, "adjusts the Item Slot for size and Ambidextrous"),
     ),
     "?A0x0bed2cbe.SmallWithNonSmallWeapon": partial(
       "Small characters wield non-small weapons two-handed unless One Size Larger.",
@@ -1084,10 +1093,19 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.ItemSlot": partial(
       "Slot of a held item: staff as off-hand, versatile two-hands for Small characters, large weapons only with CanUseLargeWeapons, One Size Larger, Ambidextrous one-hand -> off-hand.",
-      "equipment-ui loadout slots read Item Slot; size, staff-as-off-hand and Ambidextrous are not modeled",
+      "item-fields.ts legacyItemSlot for SLOT: selectors; equipment-ui loadout slots read Item Slot, so size, staff-as-off-hand and Ambidextrous are not modeled there",
       test(EQUIPMENT_UI, "limits explicit loadout choices to authored slots"),
+      test(ITEM_FIELDS, "adjusts the Item Slot for size and Ambidextrous"),
     ),
-    "?A0x0bed2cbe.CharLootSlot": generic("Slot display names."),
+    "?A0x0bed2cbe.CharLootSlot": code(
+      "A holding's slot for HasLoot SLOT: — Two-hands (double weapon, versatile used two-handed), the _AlternateSlot when the loot is worn there, 'Main hand, off hand' for two equipped, Main hand (one-hand, or the _INTERNAL_MainHandWeapon item), Off hand, else ItemSlot.",
+      "item-fields.ts legacyLootSlots; the loot _AlternateSlot flag is read from the imported loot overrides",
+      test(ITEM_FIELDS, "names each equipped holding's hand slot"),
+      test(
+        EVALUATOR,
+        "matches SLOT:off hand through each holding's CharLootSlot and keeps typed blade bonuses from stacking",
+      ),
+    ),
     "D20Workspace.CharLootItemSlot": partial(
       "Item slots offered for equipping: ItemSlot plus the item's _AlternateSlot.",
       "equipment-ui loadout reads Item Slot only; _AlternateSlot (Spiked gauntlet, Wrist Razors, Dantrag's Bracers) is not offered",

@@ -1,5 +1,29 @@
 # Implementation status
 
+## Player report: Swordmage Warding counted twice (2026-10-26)
+
+D100. A swordmage with a longsword and wrist razors got Swordmage Warding
+twice (+6 AC): the record's two untyped AC lines (light blade, heavy blade)
+both fired. A content correction types them "Swordmage Warding" so the
+bonus counts once. The `SLOT:` selector now compares native `CharLootSlot`
+(`legacyLootSlots`/`legacySlotMatches` in `rules-engine/src/item-fields.ts`,
+with native `ItemSlot`'s staff, size and Ambidextrous adjustments) instead
+of the raw `Item Slot`, so `SLOT:off hand` (Swordmage Warding's +3, Brawler
+Style, Brawler Guard, Guarded Flourish, Improved Swordmage Armor) finally
+matches a shield, an off-hand weapon, two of one weapon or a two-handed
+weapon. A holding imported with the legacy `_AlternateSlot` loot flag
+(wrist razors on the arms) uses the base's `_AlternateSlot` slot; there is
+no builder control for that yet. Cache version v62. Expected AC for a
+swordmage: longsword alone +3; longsword and razor in hand +1; longsword and
+arms-slotted razor +3; rapier and razor +1; longsword and shield +1.
+
+Verification: synthetic tests in `evaluator.test.ts` and
+`item-fields.test.ts`, `pnpm vitest run packages apps`, typecheck, lint,
+format and `scripts/check.sh`. A private probe over Geran Hulmaster's
+variants gave the AC above; `pnpm parity:baseline` reported no mismatch
+added or fixed (no sample character wields an off-hand item with an
+affected feature), so the baseline was not re-accepted.
+
 ## Editable printed sheet, phase 2: reminders (2026-10-26)
 
 Roadmap M5.75, D099, [`sheet-editing-plan.md`](sheet-editing-plan.md).

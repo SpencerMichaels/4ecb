@@ -408,6 +408,18 @@ equipped Arms-slot base already occupies the arms slot and the enchantment is
 also Arms. Each definition runs once across holdings. Executing is not
 equipping: `wearing`/`not-wearing` predicates and weapon/implement rows still
 require an equipped holding (`lootExecutes`/`executedLoot` in `evaluator.ts`).
+
+A `SLOT:<slot>` selector follows native `HasLoot`: it compares each equipped
+holding's native `CharLootSlot` (`legacyLootSlots` in `item-fields.ts`), not
+the raw `Item Slot`, ignoring case. A one-handed item is "Main hand", an
+off-hand item "Off hand", two equipped of one item "Main hand, off hand", a
+double weapon or a versatile weapon used two-handed "Two-hands", and a
+holding whose loot carries the legacy `_AlternateSlot` flag (read from the
+imported loot overrides; wrist razors worn on the arms) the base's
+`_AlternateSlot` field. `SLOT:off hand` is also met by "Main hand, off hand"
+and "Two-hands". The Item Slot itself goes through native `ItemSlot` (a staff
+is off-hand; Small, Oversized, One Size Larger and Ambidextrous adjust it).
+There is no builder control for the arms slot yet.
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

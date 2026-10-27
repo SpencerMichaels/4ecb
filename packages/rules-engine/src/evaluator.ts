@@ -9,6 +9,7 @@ import {
   archeryMasteryPowerId,
   diverseStudyException,
   EXCEPTION_IDS,
+  EXCEPTION_NAMES,
   isLeveledRangerAtWillAttack,
   isCustomChoiceException,
   isUniversalSkill,
@@ -47,12 +48,19 @@ import {
   type EvaluatedBeastCompanion,
 } from "./beast-companion";
 import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
-import { legacyIsStaff, overlaidEntity, overlaidFields } from "./item-fields";
+import {
+  equipmentName,
+  legacyIsStaff,
+  legacyLootSlots,
+  overlaidEntity,
+  overlaidFields,
+  type LootSlotContext,
+} from "./item-fields";
 import { legacyKeywordList } from "./weapon-groups";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v61-2026-10-25-row-typed-maxima";
+  "evaluated-character-v62-2026-10-26-loot-slot";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -508,13 +516,14 @@ function equippedState(
   input: EvaluationInput,
   index: RulesIndex,
   overlays: readonly FieldOverlay[],
+  slotContext: LootSlotContext,
 ): EquipmentState {
   let builtFor = -1;
   let items: readonly EquippedItem[] = [];
   return {
     get items() {
       if (builtFor !== overlays.length) {
-        items = equippedItems(input, index, overlays);
+        items = equippedItems(input, index, overlays, slotContext);
         builtFor = overlays.length;
       }
       return items;
@@ -526,11 +535,39 @@ function equippedItems(
   input: EvaluationInput,
   index: RulesIndex,
   overlays: readonly FieldOverlay[],
+  slotContext: LootSlotContext,
 ): EquippedItem[] {
   const items: EquippedItem[] = [];
-  for (const entry of input.inventory.filter(
+  const equipped = input.inventory.filter(
     (item) => item.acquiredLevel <= input.level && item.equippedQuantity > 0,
-  )) {
+  );
+  const holdings = equipped.flatMap((entry) => {
+    const record = index.get(entry.definitionIds[0] ?? "");
+    if (record === undefined) return [];
+    const parts = entry.definitionIds.flatMap((id) => {
+      const part = index.get(id);
+      return part === undefined ? [] : [overlaidEntity(part, overlays)];
+    });
+    return [
+      {
+        entry,
+        holding: {
+          base: overlaidEntity(record, overlays),
+          name: entry.name ?? equipmentName(parts),
+          equippedQuantity: entry.equippedQuantity,
+          alternate: legacyLootFlag(entry, "_AlternateSlot"),
+        },
+      },
+    ];
+  });
+  const lootSlots = new Map(
+    legacyLootSlots(
+      holdings.map(({ holding }) => holding),
+      slotContext,
+    ).map((slot, holdingIndex) => [holdings[holdingIndex]?.entry, slot]),
+  );
+  for (const entry of equipped) {
+    const lootSlot = lootSlots.get(entry);
     entry.definitionIds.forEach((definitionId, definitionIndex) => {
       const record = index.get(definitionId);
       if (record === undefined) return;
@@ -593,6 +630,9 @@ function equippedItems(
         categories,
         properties,
         ...(slot === undefined ? {} : { slot }),
+        ...(definitionIndex === 0 && lootSlot !== undefined
+          ? { lootSlot }
+          : {}),
         ...(handsText.length === 0
           ? {}
           : { hands: /two/i.test(handsText) ? 2 : 1 }),
@@ -606,6 +646,42 @@ function equippedItems(
     });
   }
   return items;
+}
+
+/** A boolean loot attribute the importer keeps among a holding's legacy
+ * overrides (native lootAttrs, e.g. `_AlternateSlot="1"`). */
+function legacyLootFlag(entry: CharacterInventoryEntry, name: string): boolean {
+  const value = Object.entries(entry.overrides ?? {}).find(
+    ([attribute]) => key(attribute) === key(name),
+  )?.[1];
+  return value !== undefined && /^(1|true)$/iu.test(value.trim());
+}
+
+/** The character facts native ItemSlot/CharLootSlot read. */
+function lootSlotContext(
+  owned: readonly ContentEntity[],
+  textStrings: Readonly<Record<string, string>>,
+): LootSlotContext {
+  const owns = (type: string, name: string) =>
+    owned.some(
+      (entity) => key(entity.type) === type && key(entity.name) === key(name),
+    );
+  const text = (name: string) =>
+    Object.entries(textStrings).find(
+      ([textName]) => key(textName) === key(name),
+    )?.[1];
+  const mainHandWeapon = text("_INTERNAL_MainHandWeapon");
+  return {
+    small: owns("size", EXCEPTION_NAMES.smallSize),
+    oversized: owns("internal", EXCEPTION_NAMES.oversized),
+    oneSizeLarger: owns("internal", EXCEPTION_NAMES.oneSizeLarger),
+    ambidextrous: owns("internal", EXCEPTION_NAMES.ambidextrous),
+    // Native _wtoi(text) != 0.
+    versatileUsedTwoHanded:
+      (Number.parseInt(text("_INTERNAL_VersatileUsedTwoHanded") ?? "", 10) ||
+        0) !== 0,
+    ...(mainHandWeapon === undefined ? {} : { mainHandWeapon }),
+  };
 }
 
 function activeAt(rule: ExecutableRule, level: number): boolean {
@@ -1480,7 +1556,12 @@ function evaluateCharacterInternal(
           key,
         );
   const overlays: FieldOverlay[] = [];
-  const equipment = equippedState(currentInput, index, overlays);
+  const equipment = equippedState(
+    currentInput,
+    index,
+    overlays,
+    lootSlotContext(ownedDefinitions, currentInput.textStrings ?? {}),
+  );
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
     stats.add({

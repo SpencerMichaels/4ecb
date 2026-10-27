@@ -1,4 +1,3 @@
-import { formatInventoryItemName } from "@4ecb/character-domain";
 import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
 import type {
@@ -38,7 +37,9 @@ import {
 } from "./weapon-groups";
 import {
   IMPLEMENT_CLASS_FIELDS,
+  equipmentName,
   increaseDamageDie,
+  legacyIsDoubleWeapon,
   legacyIsKiFocus,
   legacyIsStaff,
   legacyLootImplement,
@@ -391,18 +392,6 @@ const emptyEntity: ContentEntity = {
   extensions: [],
   provenance: { sourceKey: "", sourceOrdinal: 0 },
 };
-
-/** The character's item name, composed exactly as the inventory and sheet
- * name it (e.g. "Aversion Quickbeam Staff +2"), never a joined part list. */
-function equipmentName(parts: readonly ContentEntity[]): string {
-  return formatInventoryItemName(
-    parts.map((part) => ({
-      name: part.name,
-      type: part.type,
-      magicItemType: field(part, "Magic Item Type"),
-    })),
-  );
-}
 
 /** Record lookups native LootImplement needs: WeaponEquiv and
  * FindRulesElement for an `_ImplementForClass` value. */
@@ -2444,16 +2433,6 @@ function weaponFitsPowerRange(item: Loadout, range: PowerRange): boolean {
   const melee = category.includes("melee");
   const ranged = category.includes("ranged") || (melee && item.rangedWeapon);
   return (melee && range.melee) || (ranged && range.ranged);
-}
-
-/** Legacy IsDoubleWeapon. */
-function legacyIsDoubleWeapon(weapon: ContentEntity | undefined): boolean {
-  if (weapon === undefined) return false;
-  return (
-    (key(field(weapon, "Hands Required") ?? "") === "two-handed" &&
-      /off-hand/iu.test(field(weapon, "Properties") ?? "")) ||
-    (field(weapon, "_Secondary End")?.trim() ?? "") !== ""
-  );
 }
 
 /**
