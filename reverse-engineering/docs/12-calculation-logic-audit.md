@@ -215,22 +215,12 @@ A power-row difference found on the way is likewise content revision: Hunzu
 
 ## Open questions for the owner
 
-- **Drizzt's dual-scimitar rows.** Since `6a2056c`, two scimitars count as
-  dual wielding for the `DUAL-WIELDING:heavy blade,light blade` Dexterity bonus,
-  as the power text describes; the older save's Cross-Body Parry and Blade
-  Dance rows omit it. Accept the new rows into the baseline, or keep legacy's?
-- **RaidonKane's Unarmed basic attack.** Native `WeaponBase` gives the row
-  the Unarmed attack record (group Unarmed), so Weapon Focus (Unarmed) adds
-  +2 damage (modern 1d4+5). His save, from an older builder and content
-  revision (its Weapon Focus writes `Unarmed group:damage` directly; its
-  Focused Expertise record no longer exists), shows 1d4+3. Accept the new
-  row into the baseline, or keep investigating?
-- **Uses per encounter display.** `EvaluatedPower.encounterUses` is evaluated
-  (`893f5b9`) but no surface shows it. Where should the use count appear
-  (power cards, play mode)?
-- **Starting gold.** Native `LevelUp` initializes money at level 1, and
-  legacy and the rulebook start a character with 100 gp. Should a new modern
-  character start with the same purse?
+All answered on 2026-10-28: SampleHeroes rows (Drizzt, Binwin, Geran,
+RaidonKane) are informational because `sample-chars/` is the canonical
+baseline; "Primary ability" follows native; the departures are recorded in
+D105; uses per encounter show on power cards; new characters start with
+100 gp. Associates (54 `Associate` records, e.g. the Fey Beast Tamer's
+blink dog) get their own data model as a follow-up.
 
 ## Unresolved evidence boundaries
 
