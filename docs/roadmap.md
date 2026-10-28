@@ -994,16 +994,16 @@ character before it is fixed, one slice per item.
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
   (`1b92954`).
-- **From the Swordmage Warding report (2026-10-27), open:**
-  1. Native type caps across stat links: `CalculateStatAddValue` evaluates a
-     linked stat against the parent's `type_max`, so a typed bonus reached
-     through a link doesn't stack with the same type already on the parent
-     (D100). The modern stat table caps within one stat only. Proposed:
-     audit which statlinks target stats with typed statadds, then implement
-     generically (awaiting owner go-ahead).
-  2. Large-weapon proficiency: native `IsProficient` denies proficiency with
-     a Large weapon without `CanUseLargeWeapons`; the modern check ignores
-     weapon size (D102 only raises the unwieldable issue).
+- ~~**From the Swordmage Warding report (2026-10-27)**~~: both done.
+  1. Statlinks share the parent stat's type caps (native
+     `CalculateStatAddValue`; D103, `9abfdb4`); the Warding content
+     correction is retired.
+  2. Large-weapon proficiency follows native `IsProficient` /
+     `CanUseLargeWeapons` (`02544d0`). Left (no numbers affected today): the
+     `defensive` selector ignores proficiency, "Implement Proficiency
+     (Proficient Weapons)" and Additional Proficiencies aren't read; native
+     drops zero-gated statadds inside a link and its untyped literal `0`
+     isn't modelled.
 - **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
   `UniversalClassSkill`, gated resistances, summoning powers whose creature
   attacks sit in " Standard action"/" Minor Action" fields (86+ powers; no

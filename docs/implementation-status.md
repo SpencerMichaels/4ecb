@@ -1,5 +1,32 @@
 # Implementation status
 
+## Statlinks share type caps; Large-weapon proficiency (2026-10-28)
+
+D103 (`9abfdb4`). As native `CalculateStatAddValue` does, a linked stat is
+evaluated against its parent stat's type caps, so a typed bonus reached
+through a link no longer stacks with the same type already on the parent
+(`StatAccumulator` in `rules-engine/src/stats.ts`, which now also follows
+native `AddStatValue`/`SetStatToZero` order and zeroing). The Swordmage
+Warding content correction (D100) is retired: the untyped WotC record now
+counts Warding once, and the typed correction would have given 0 under the
+native rule. A pack audit found 24 link pairs that can differ (AC ←
+Swordmage Warding, skills ← "X Misc", Passive Perception ← Perception,
+defenses ← Shield Bonus, attack ← Combat Superiority); among the 43 sample
+characters only DV changes on the uncorrected pack (AC 27 → 24, as with
+the correction).
+
+Large weapons (`02544d0`): native `IsProficient` gives no proficiency with a
+Large weapon without `CanUseLargeWeapons` (Oversized, or One Size Larger when
+not Small) and otherwise matches the name without " (large)". Modern used to
+match "X (Large)" literally, so a Large weapon was never proficient even
+with Oversized. Probe: Alysa Redfield with a Large longsword drops the +3
+proficiency without Oversized and matches legacy with it. No sample has a
+Large weapon. Cache version v66.
+
+Verification: 1532 tests pass, typecheck clean; full `parity:baseline` after
+both: no key changes (stats 3082/3124, powers 2015/2159, usage 744/756,
+action 742/754, main hand 59/59); accepted for the rebuilt pack.
+
 ## Loadout applies the character's size; unwieldable weapons are an issue (2026-10-27)
 
 D102 (part 2 of the Equipment-tab slot work, `cb945bd`). The evaluator
