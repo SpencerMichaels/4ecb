@@ -540,3 +540,33 @@ describe("superseded rules evaluations", () => {
     expect(delegate.signals[0]?.aborted).toBe(false);
   });
 });
+
+describe("rules cache warm-up", () => {
+  it("evaluates in the worker even when the result is already cached", async () => {
+    const evaluate = vi.fn(async () => ({}) as EvaluatedCharacter);
+    const runtime = new AppContentRuntime({
+      loadPack: vi.fn(async (packId: string) => pack(packId)),
+      createRulesClient: () =>
+        rulesClient(
+          vi.fn(async () => undefined),
+          evaluate,
+        ),
+    });
+    const client = await runtime.getRulesClient("core");
+    const input = {
+      level: 4,
+      candidateDetailLevels: [4],
+      includePowers: false,
+    } as unknown as EvaluationInput;
+    await client.evaluate(input);
+
+    client.warm?.(input);
+    expect(evaluate).toHaveBeenCalledTimes(2);
+    expect(evaluate).toHaveBeenLastCalledWith({
+      ...input,
+      candidateDetailLevels: [],
+      candidateDetailReplacementChoiceIds: [],
+      includePowers: false,
+    });
+  });
+});

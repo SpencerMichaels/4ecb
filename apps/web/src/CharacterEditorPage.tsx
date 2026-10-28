@@ -392,6 +392,7 @@ export function CharacterEditorPage({
   );
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
+  const rulesCachesWarmed = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -403,6 +404,7 @@ export function CharacterEditorPage({
     setInitialLoadSettled(false);
     characterLoadStartedAt.current = startedAt;
     firstEvaluationRecorded.current = false;
+    rulesCachesWarmed.current = false;
     void loadCharacter(characters, characterId)
       .then(async (loaded) => {
         recordLoadDuration("character-record-ready", startedAt, {
@@ -705,12 +707,13 @@ export function CharacterEditorPage({
           signal,
         )
       : undefined;
+    const planningInput = project(
+      { ...evaluationBuild, effectiveLevel: planningHorizon },
+      "planning",
+    );
     const planningRequest = client.evaluate(
       {
-        ...project(
-          { ...evaluationBuild, effectiveLevel: planningHorizon },
-          "planning",
-        ),
+        ...planningInput,
         candidateDetailLevels: planningCandidateDetailLevels(
           workspaceTab,
           selectedLevel,
@@ -724,6 +727,14 @@ export function CharacterEditorPage({
       },
       signal,
     );
+    // Results may come from the persistent cache without the worker building
+    // its level snapshots; build them now, queued behind the visible
+    // evaluations, so the first edit doesn't pay a cold evaluation. The
+    // planning horizon's snapshots cover every lower level.
+    if (!rulesCachesWarmed.current) {
+      rulesCachesWarmed.current = true;
+      client.warm?.(planningInput);
+    }
     const currentRequest = distinctCurrentRequest ?? planningRequest;
     const selectedLevelRequest =
       distinctSelectedRequest ??

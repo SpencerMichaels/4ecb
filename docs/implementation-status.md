@@ -16,6 +16,13 @@ identical requests stay shared. A running evaluation still finishes. Covered
 by `rules.worker.test.ts`, `rules-client.test.ts` and `app-runtime.test.ts`.
 No evaluation semantics changed, so no cache bump.
 
+A persistent-cache hit on opening a character left the worker's per-level
+prerequisite snapshots cold, so the first edit paid a full evaluation (~5 s
+for Hu). The editor now calls `RulesRuntimeClient.warm` once per opened
+character with the planning-horizon input: the worker evaluates it in the
+background (no candidate catalogs), queued behind the visible evaluations,
+so the UI loads as before and later edits reuse the warm snapshots.
+
 ## Player report: DV shows the off-hand weapon's to-hit (2026-10-28)
 
 DV (Hybrid Swordmage/Warlock) showed +9 MBA / +12 Eldritch Strike where

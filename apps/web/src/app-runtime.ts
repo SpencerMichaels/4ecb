@@ -39,6 +39,12 @@ export interface RulesRuntimeClient {
   ): Promise<ProfileMigrationPreview>;
   /** Optional: clients that can't report progress just show no percentage. */
   subscribeProgress?(listener: RulesProgressListener): () => void;
+  /**
+   * Optional: evaluates `input` in the worker in the background, ignoring
+   * cached results, so its per-level snapshots are ready before the first
+   * edit (a persistent-cache hit leaves the worker cold).
+   */
+  warm?(input: EvaluationInput): void;
   terminate(reason?: string): void;
 }
 
@@ -160,6 +166,18 @@ class MemoizedRulesClient implements RulesRuntimeClient {
 
   subscribeProgress(listener: RulesProgressListener): () => void {
     return this.#delegate.subscribeProgress?.(listener) ?? (() => undefined);
+  }
+
+  warm(input: EvaluationInput): void {
+    // Only the nested level snapshots are wanted, not candidate catalogs.
+    this.#delegate
+      .evaluate({
+        ...input,
+        candidateDetailLevels: [],
+        candidateDetailReplacementChoiceIds: [],
+        includePowers: false,
+      })
+      .catch(() => undefined);
   }
 
   /**
