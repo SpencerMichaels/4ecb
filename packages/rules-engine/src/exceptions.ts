@@ -145,6 +145,9 @@ export const EXCEPTION_NAMES = {
   dragonsWrath: "Dragon's Wrath",
   /** CalcBonuses: the "If you are a dwarf, …" rider needs this element. */
   dwarf: "Dwarf",
+  /** HigherLevelDamage: at 21st level its damage becomes "twice
+   * intelligence modifier damage." by name. */
+  chillingCloud: "Chilling Cloud",
 } as const;
 
 /**
