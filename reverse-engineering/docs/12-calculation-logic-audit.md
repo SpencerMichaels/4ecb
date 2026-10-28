@@ -81,14 +81,14 @@ traced.
 | Untyped literal 0 | An untyped, unlinked literal 0 that passes `StatAddApplies` sets the stat to 0 and ends the loop; later statadds are skipped; gated sums collected so far still apply. | Reproduced (`6a2056c`, D104): contributions report `zeroed`. | Inferred (code); probe confirmed the old modern value. | High | Armor Specialization (Chainmail), Battle Agility (armor check penalty), Level 30 `XP Needed`, and any native injection whose value is 0. |
 | Conditional statadds | A `condition`al statadd never adds; it feeds reminder text. Also skipped inside links. | Reproduced. | Confirmed (save): KrizDevvon's Will excludes two conditional lines. | High | None. |
 | Zero/non-zero gates | Gated statadds are summed separately; after the loop the non-zero group is added (untyped) if the ungated total is non-zero, else the zero group. Inside a linked stat the gated sums are local and discarded. | Reproduced (`6a2056c`, D104), including the drop inside links. | Inferred (code); `audit:selectors` finds no sample reaching a gate. | High | Resistances and Knowledge checks only; no gated stat is linked today. |
-| Half-point | A half-point statadd adds its own value; a per-call toggle adds +1 under its type on every second applying half-point statadd. A linked stat has its own toggle. | Fix in progress (committed on an unmerged branch). `main` adds ±0.5 and truncates, which matches for positive pairs only. | Confirmed (save): Alysa Redfield's Healing Surges 10 and Valria's Vampire surge adjustment; probe for two negative halves. | High | No content stat has two negative half-points; provenance shows fractions. |
+| Half-point | A half-point statadd adds its own value; a per-call toggle adds +1 under its type on every second applying half-point statadd. A linked stat has its own toggle. | Reproduced (`698a32d`). | Confirmed (save): Alysa Redfield's Healing Surges 10 and Valria's Vampire surge adjustment; probe for two negative halves. | High | No content stat has two negative half-points; provenance shows fractions. |
 | Linked stats | `CalculateStatAddValue` evaluates the linked stat with the **parent's** typed-maximum table; `ABILITYMOD` → modifier, then `HALF` (C truncation), then `MINONE`, then the multiplier; a negative multiplier marks a penalty. | Reproduced (D103; link flags in `6a2056c`). | Confirmed (save, D103). | High | Fixed before this audit. |
-| Ability modifier | `GetAbilityMod(score)` is 0 for a score of 0, else `score/2 − 5`. | Fix in progress (unmerged branch): `main` uses `floor((s − 10)/2)` everywhere, which differs only at 0. | Inferred (code). | High | Blank-score imports only. |
+| Ability modifier | `GetAbilityMod(score)` is 0 for a score of 0, else `score/2 − 5`. | Reproduced (`a07a872`): `abilityModifier(0)` is 0. | Inferred (code). | High | Blank-score imports only. |
 | Ability bases | Each pass first injects every base as an untyped literal. A blank (0) base is an untyped literal 0, so racial and level increases are discarded and the modifier is 0. | Engine rule reproduced (`6a2056c`); the blank-score modifier is fix in progress. Modern records default to 8/10, so only imported incomplete saves can be blank. | Confirmed (save shape: the base is the first statadd in every ability block); blank case inferred. | High | Incomplete legacy imports. |
 | Weight | `TallyLoot` sums loot weight × count across levels (excluding Transportation), truncates, and appends it as an untyped literal after rules; a total of 0 zeroes rule additions. | Reproduced; a holding whose definition the pack lacks makes Weight unknown by design. | Confirmed (save): Beldin Hammertongue 11's Weight is loot plus a rule +1. | High | Weight-0 edge only. |
-| Hybrid Power Points | `Psionics` injects 2/4/6 per owned augmentable at-will attack power of a psionic class (by power level), strips Augmentable from locked powers, and applies Psionic Conventionalist; the internal Hybrid Power Points record and Psionic Dabbler link it into Power Points. | Fix in progress (committed on an unmerged branch). | Confirmed (save): Beldin's Hybrid Power Points (unlinked, full Ardent); the linked case is inferred. | High | Power Points for hybrid psionic classes and Psionic Dabbler. |
+| Hybrid Power Points | `Psionics` injects 2/4/6 per owned augmentable at-will attack power of a psionic class (by power level), strips Augmentable from locked powers, and applies Psionic Conventionalist; the internal Hybrid Power Points record and Psionic Dabbler link it into Power Points. | Reproduced (`6d4b074`). | Confirmed (save): Beldin's Hybrid Power Points (unlinked, full Ardent); the linked case is inferred. | High | Power Points for hybrid psionic classes and Psionic Dabbler. |
 | Item-set counts | `GroupSetCounts` injects set counts as untyped literals. | Reproduced (`6a2056c`) for group sets; item sets are audited with equipment. | Inferred (code). | Medium | Set bonuses. |
-| Bracket substitution | Statadd and textstring stat names pass through `BracketSubstitute`: `[Select Name]` becomes the named select's chosen element name, or the literal "no selection". | Fix in progress (committed on an unmerged branch). `main` leaves the bracket in the stat name. | Inferred (code). | High | Signature Spell (Archspell) loses its attack bonus to the chosen daily. |
+| Bracket substitution | Statadd and textstring stat names pass through `BracketSubstitute`: `[Select Name]` becomes the named select's chosen element name, or the literal "no selection". | Reproduced (`8c2dd08`). | Inferred (code). | High | Signature Spell (Archspell) loses its attack bonus to the chosen daily. |
 | Aliases | `statalias` makes several names one stat. | Reproduced. | Confirmed (save). | High | None. |
 | `statmin` | Applies unless the stat exists and its stand-alone value is below N; "exists" means any statadd or link has named it. | Reproduced (`6a2056c`, D104). | Inferred (code); no sample reaches it. | High | Superior Defense-style heavy-armor AC. |
 | Level gating | A statadd recorded at level L is ignored when the stat is evaluated at an earlier level. | Reproduced by per-level evaluation. | Confirmed (save: `Level=` on every statadd). | High | None. |
@@ -138,7 +138,7 @@ column names only the formatting or formula native code adds.
 | Wisdom rider | `ExtractPowerMods` adds Wisdom for one exact attack-line ending (Hawk's Talon). | Fix in progress (single-power items). | Inferred (code). | High | 1 power. |
 | Alternative selection | `WhichAttack`: a melee-or-ranged dual line takes the ranged alternative with a ranged (or thrown) weapon; an "A, B, or C" line takes the highest. | Fix in progress (single-power items): `main` uses a narrower regex. | Inferred (code). | Medium | Attacks on the Run, Reactive Shot. |
 | Key-ability overrides | `OverrideStat`/`OverrideStatList`/`OverrideByAssociation`/`OverrideStatPower`. | Reproduced (`key-ability-overrides.ts`, power-ability choices). | Confirmed (parity). | High | None. |
-| Fey Pact Charisma | Two Fey Pact warlock saves attack with Charisma on Constitution attack lines (test_test's Diabolic Grasp, oleander_9's Feast of Souls). | Open (unexplained; modern uses Constitution). Override steps, Combat Virtuoso, power-ability choices and the grantor's key ability were ruled out. | Confirmed (save). | Medium | 3 points attack and damage on two saves. |
+| Fey Pact Charisma | Two Fey Pact warlock saves attack with Charisma on Constitution attack lines (test_test's Diabolic Grasp, oleander_9's Feast of Souls). | Not a native factor: the player's homebrew warlock-ability-options part rewrites 186 warlock attack lines to "Charisma or Constitution"; the pack lacks it. No modern change. | Confirmed (save). | Medium | 3 points attack and damage on two saves. |
 | Base attack | `CalcBAB`: ability through the attack's typed table, which also registers ability modifier, `HALF-LEVEL`, `Proficiency Bonus` and `Enhancement` caps; proficiency only for weapon powers; enhancement with any main-hand loot. | Reproduced for Enhancement; the other three caps are not shared. | Confirmed (parity) / inferred. | Medium | No content found that collides. |
 | Damage expression | `CalcDamage`: higher-level damage, "twice", "X modifier", added ability terms, multiple-ability choices, "highest"/"ability" → `HighestAbility`, damage stat → attack stat, then weapon dice, dice-only enhancement and Dual Implement Spellcaster. | Reproduced for common forms. "Your highest ability modifier" adds nothing on `main`: fix in progress with the attack-line fix. | Inferred (code), probe. | High | 39 Hit lines. |
 | `_DamageDie` | `ParseDamage` lets a power's `_DamageDie` field replace the size of the first die (set by `modify` from Empowered Dragon Breath and Greathorn). | Fix in progress (not read on `main`; missing from the special-case registry). | Inferred (code), probe. | High | Dragon Breath, Goring Charge dice size. |
@@ -195,18 +195,18 @@ A power-row difference found on the way is likewise content revision: Hunzu
    two WeaponBonuses regexes with the decoded table, C# truncation for the half
    flag, and an owner decision on the superset texts.
 3. **Hybrid Power Points (`Psionics`), bracket substitution, half-point
-   pairing, blank ability scores.** Fix in progress (committed on an unmerged
-   branch). Content typos found alongside are being corrected in the same
-   batch.
+   pairing, blank ability scores.** Reproduced (`8c2dd08`, `698a32d`,
+   `a07a872`, `6d4b074`). Three content target typos corrected (`6cb492b`);
+   five prose-bearing feat modify typos await an owner decision.
 4. **`_DamageDie` and Chilling Cloud.** Fix in progress with the single-power
    items (Hawk's Talon, Attacks on the Run/Reactive Shot). Add a `ParseDamage`
    entry to the registry.
 5. **Unarmed melee WeaponBase.** Open. Give the Unarmed row the record named
    by `Unarmed Weapon` (else `Unarmed attack`) as its keyword, proficiency and
    dice base.
-6. **Fey Pact Charisma on Constitution attack lines.** Open and unexplained.
-   Next step: find the native parent element that owns the power and its key
-   ability.
+6. **Fey Pact Charisma on Constitution attack lines.** Explained: player homebrew
+   (a warlock ability-options part) rewrites the attack lines; not a native
+   factor, no modern change.
 7. **Versatile +1 for a Small character's non-small weapon.** Open. Add the
    `SmallWithNonSmallWeapon` exclusion; this also matches the rulebook.
 8. **Smaller items.** `EnchantEquiv`, the three unshared base-attack caps,

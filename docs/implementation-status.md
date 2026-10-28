@@ -607,10 +607,10 @@ Remaining differences and their classification:
     armors). The DOMT items explain Str/Dex and their cascade (AC, Reflex,
     Initiative, skills, basic attacks) plus Arcana +5. The missing gear
     leaves Weight unknown.
-  - Oleander's Feast of Souls uses Charisma in the cache, but every copy
-    says Constitution and no native override (`OverrideStat` text strings,
-    association, Key Ability fields, `<power> <ability>` element) applies.
-    This stays unresolved and visible.
+  - Oleander's Feast of Souls (and test_test's Diabolic Grasp) use Charisma
+    in the cache because the player's homebrew `SGPWarlockAbilityOptionsBGUK.part`
+    (cbloader.org Homebrew) rewrites 186 warlock attack lines to "Charisma or
+    Constitution"; no native override applies and modern needs no change (2026-10-28).
   - Hystan's Weight 107 vs 109: Camouflaged Clothing is 4 lb in stock and 6
     lb in `40-gear.part`.
 - **Engine gaps the samples don't exercise:** `OverrideStat` key-ability
