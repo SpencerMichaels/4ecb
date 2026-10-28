@@ -556,6 +556,14 @@ one maximum per row (native `att_type_max`/`dmg_type_max`), so an implement
 power used through a pact blade applies one maximum across its implement- and weapon-path
 bonuses: the blade's transferred off-hand enhancement and Dual
 Implement Spellcaster's do not stack.
+A melee power's Unarmed row has native `WeaponBase`'s unarmed record as its
+base: the weapon the "Unarmed Weapon" text names (Belt of the Brawler's Club),
+else "Unarmed attack" (`withUnarmedWeaponBase`). Its name, ID, group, slot and
+properties join the keyword set (Brawler Style's `Unarmed group:attack`), its
+proficiency bonus applies with proficiency, and its Damage (after `modify`)
+stepped by `:die` stats is the [W] die; the "Unarmed Damage Die" text is only
+the fallback for a row without that record. Other powers' Unarmed rows have
+no base.
 A row's keyword set also takes native `AdditionalKeywords`: the
 `_PowerstatKeywords` of the power, its weapon base and its enchantment, read
 from the overlaid records, so a conditional `modify name="this"` list-addition

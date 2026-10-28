@@ -5133,3 +5133,100 @@ describe("native special attack and damage abilities", () => {
     });
   });
 });
+
+describe("native WeaponBase without a weapon and SmallWithNonSmallWeapon", () => {
+  // Real spellings: the PHB "Unarmed attack" record (ID_FMP_WEAPON_34), the
+  // Club, Brawler Style's `Unarmed group:attack` and Belt of the Brawler's
+  // `Unarmed Weapon` text.
+  const unarmedAttack = entity("ID_FMP_WEAPON_34", "Unarmed attack", "Weapon", {
+    Damage: "1d4",
+    "Proficiency Bonus": "",
+    "Weapon Category": "Improvised Melee",
+    "Hands Required": "One-Handed",
+    "Item Slot": "One-hand",
+    Group: "Unarmed",
+    Properties: "",
+  });
+  const club = entity("ID_FMP_WEAPON_2", "Club", "Weapon", {
+    Damage: "1d6",
+    "Proficiency Bonus": "2",
+    "Weapon Category": "Simple Melee",
+    "Hands Required": "One-Handed",
+    "Item Slot": "One-hand",
+    Group: "Mace",
+    Properties: "",
+  });
+  const clubProficiency = entity(
+    "ID_INTERNAL_PROFICIENCY_CLUB",
+    "Weapon Proficiency (Club)",
+    "Proficiency",
+    {},
+  );
+  const melee = entity("MELEE", "Synthetic Strike", "Power", {
+    Keywords: "Martial, Weapon",
+    "Attack Type": "Melee weapon",
+    Attack: "Strength vs. AC",
+    Hit: "1[W] + Strength modifier damage.",
+  });
+  const ranged = entity("RANGED", "Synthetic Throw", "Power", {
+    Keywords: "Martial, Weapon",
+    "Attack Type": "Ranged weapon",
+    Attack: "Dexterity vs. AC",
+    Hit: "1[W] + Dexterity modifier damage.",
+  });
+  const unarmedRow = (
+    power: ContentEntity,
+    textStrings: Record<string, string> = {},
+    statsExtra: Record<string, EvaluatedStat> = {},
+  ) =>
+    evaluatePowers({
+      level: 2,
+      activeDefinitionIds: [power.id, clubProficiency.id],
+      inventory: [],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "Dexterity modifier": stat("Dexterity modifier", 2),
+        ...statsExtra,
+      },
+      overlays: [],
+      textStrings,
+      entities: [power, unarmedAttack, club, clubProficiency],
+    })[0]?.variants.find(({ equipmentName }) => equipmentName === "Unarmed");
+
+  it("gives a melee power's Unarmed row the Unarmed attack record's keywords", () => {
+    const brawler = {
+      "Unarmed group:attack": combatStat("Unarmed group:attack", 2),
+      "Unarmed attack:damage": combatStat("Unarmed attack:damage", 1),
+    };
+    const row = unarmedRow(melee, {}, brawler);
+    expect(row?.attackBonus).toBe(4 + 1 + 2);
+    expect(row?.damage).toBe("1d4+5");
+    // A ranged power without a weapon has no WeaponBase.
+    expect(unarmedRow(ranged, {}, brawler)?.attackBonus).toBe(2 + 1);
+  });
+
+  it("uses the Unarmed Weapon text's record: its proficiency, die and group", () => {
+    const row = unarmedRow(
+      melee,
+      { "Unarmed Weapon": "Club" },
+      { "Unarmed group:attack": combatStat("Unarmed group:attack", 2) },
+    );
+    expect(row?.attackComponents).toContainEqual({
+      label: "proficiency bonus",
+      value: 2,
+    });
+    // The Club is a mace: Brawler Style's Unarmed group bonus is gone.
+    expect(row?.attackBonus).toBe(4 + 1 + 2);
+    expect(row?.damage).toBe("1d6+4");
+  });
+
+  it("steps the unarmed record's die with DieIncrease", () => {
+    expect(
+      unarmedRow(
+        melee,
+        {},
+        { "Unarmed group:die": combatStat("Unarmed group:die", 1) },
+      )?.damage,
+    ).toBe("1d6+4");
+  });
+});

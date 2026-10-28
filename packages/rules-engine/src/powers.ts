@@ -58,6 +58,7 @@ import {
   legacyIsStaff,
   legacyLootImplement,
   legacyLootSlotContext,
+  legacySmallWithNonSmallWeapon,
   modifiedFieldValue,
   withOverlaidItems,
 } from "./item-fields";
@@ -545,6 +546,82 @@ function withKiFocusedWeapons(
   });
 }
 
+/**
+ * Native AddWeaponKeywords' record part for a row's weapon base: "military"
+ * when its Weapon Category contains it ("military,heavy blade group"), its
+ * groups and "<group> group", Item Slot, Hands Required and Properties, and
+ * "thrown" for any thrown property. The caller adds the name and ID.
+ */
+function weaponRecordTags(
+  weapon: ContentEntity,
+  groups: readonly string[] = legacyKeywordList(field(weapon, "Group")),
+): string[] {
+  const properties = field(weapon, "Properties") ?? "";
+  return [
+    ...(/military/iu.test(field(weapon, "Weapon Category") ?? "")
+      ? ["military"]
+      : []),
+    ...groups,
+    ...groups.map((group) => `${group} group`),
+    field(weapon, "Item Slot") ?? "",
+    field(weapon, "Hands Required") ?? "",
+    ...properties.split(","),
+    ...(/thrown/iu.test(properties) ? ["thrown"] : []),
+  ];
+}
+
+/**
+ * Native WeaponBase without a weapon, for a melee power (-Module-.cs
+ * ~21085): the weapon record the "Unarmed Weapon" text names (Belt of the
+ * Brawler's Club), else "Unarmed Attack" (ID_FMP_WEAPON_34). Undefined when
+ * the content has neither. A non-melee power without a weapon has no base.
+ */
+function legacyUnarmedWeaponBase(
+  textStrings: Readonly<Record<string, string>>,
+  resolveWeapon: (reference: string) => ContentEntity | undefined,
+): ContentEntity | undefined {
+  const named = textValue(textStrings, EXCEPTION_NAMES.unarmedWeaponText);
+  return (
+    (named === undefined || named.trim() === ""
+      ? undefined
+      : resolveWeapon(named.trim())) ??
+    resolveWeapon(EXCEPTION_NAMES.unarmedAttack)
+  );
+}
+
+/**
+ * The Unarmed row of a melee power on its native WeaponBase: the record's
+ * keywords (AddWeaponKeywords: name, ID, groups, slot, properties, so
+ * `Unarmed group:attack` and `Unarmed attack:attack` apply), its proficiency
+ * bonus (GetProficiencyBonus: a Club's +2 when proficient) and its Damage
+ * stepped by DieIncrease (FigureWeaponDice; Brutal Brawler `modify`s the
+ * Unarmed attack record's Damage). The "Unarmed Damage Die" text is only
+ * FigureWeaponDice's fallback for a row without a base.
+ */
+function withUnarmedWeaponBase(
+  unarmed: Loadout,
+  base: ContentEntity,
+  resolveWeapon: (reference: string) => ContentEntity | undefined,
+): Loadout {
+  const damage = field(base, "Damage")?.trim();
+  return {
+    ...unarmed,
+    ...(damage === undefined || damage === "" ? {} : { weaponDamage: damage }),
+    proficiency: Number(field(base, "Proficiency Bonus")) || 0,
+    proficiencyNames: [legacyProficiencyWeaponName(base, resolveWeapon)],
+    ...(legacyIsLargeWeapon(base) ? { largeWeapon: true } : {}),
+    tags: ["unarmed", base.name, base.id, ...weaponRecordTags(base)]
+      .map(key)
+      .filter(Boolean),
+    properties: (field(base, "Properties") ?? "")
+      .split(",")
+      .map(key)
+      .filter(Boolean),
+    weaponCategory: key(field(base, "Weapon Category") ?? "") || "melee",
+    requirementBase: base,
+  };
+}
+
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
@@ -667,22 +744,7 @@ function loadouts(
               ...(keywordWeapon === weapon
                 ? []
                 : [keywordWeapon.name, keywordWeapon.id]),
-              // Native AddWeaponKeywords: "military" when the weapon's
-              // Weapon Category contains it ("military,heavy blade group").
-              ...(/military/iu.test(
-                field(keywordWeapon, "Weapon Category") ?? "",
-              )
-                ? ["military"]
-                : []),
-              ...keywordGroups,
-              ...keywordGroups.map((group) => `${group} group`),
-              field(keywordWeapon, "Item Slot") ?? "",
-              field(keywordWeapon, "Hands Required") ?? "",
-              ...(field(keywordWeapon, "Properties") ?? "").split(","),
-              // Native AddWeaponKeywords: any thrown property is "thrown".
-              ...(/thrown/iu.test(field(keywordWeapon, "Properties") ?? "")
-                ? ["thrown"]
-                : []),
+              ...weaponRecordTags(keywordWeapon, keywordGroups),
             ]),
       ]
         .map(key)
@@ -1161,7 +1223,9 @@ function figureWeaponDice(input: {
     ) === "two-handed"
       ? "1d10"
       : "1d8";
-  if (equipment.unarmed) return equipment.weaponDamage;
+  // Without a base (no Unarmed attack record) the unarmed die is final.
+  if (equipment.unarmed && equipment.requirementBase === undefined)
+    return equipment.weaponDamage;
   let die = equipment.weaponDamage;
   if (input.offhandTerm && input.offhand !== undefined) {
     const secondaryEnd =
@@ -1483,15 +1547,18 @@ function nativeRowKeywords(
     ...(input.origin?.multiclassFeat === true ? ["multiclass feat"] : []),
     ...input.classChannels.keywords,
   ];
-  // Without a weapon, a melee power's WeaponBase is the Unarmed weapon.
-  if (equipment.unarmed) {
+  // Without a weapon, a melee power's WeaponBase is the Unarmed weapon
+  // (withUnarmedWeaponBase), for weapon and non-weapon powers alike; there
+  // is no loot, so only the base's own channels below apply.
+  if (equipment.unarmed && equipment.requirementBase === undefined) {
     if (input.weaponPower && /melee/iu.test(input.attackType ?? ""))
       tags.push("melee weapon");
     return tags.map(key).filter(Boolean);
   }
-  const base = input.weaponPower
-    ? equipment.requirementBase
-    : equipment.lootBase;
+  const base =
+    input.weaponPower || equipment.unarmed
+      ? equipment.requirementBase
+      : equipment.lootBase;
   if (base === undefined) return tags.map(key).filter(Boolean);
   // Native WeaponEnchant: the enchantment, else a magic item base itself.
   const enchant =
@@ -1522,6 +1589,7 @@ function nativeRowKeywords(
   }
   if (isWeapon(base) && key(field(base, "Item Slot") ?? "") === "off-hand")
     tags.push("one-hand");
+  if (equipment.unarmed) return tags.map(key).filter(Boolean);
   const lootImplement = legacyLootImplement(base, enchant, input.resolve);
   if (!input.weaponPower) tags.push(...legacyKeywordList(lootImplement));
   if (legacyIsKiFocus(base) || legacyIsKiFocus(enchant))
@@ -2844,6 +2912,8 @@ function legacyRequirementContext(input: {
   readonly equipment: EquipmentState | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly byName: ReadonlyMap<string, readonly ContentEntity[]>;
+  /** Native WeaponBase without a weapon (legacyUnarmedWeaponBase). */
+  readonly unarmedBase: ContentEntity | undefined;
 }): (item: Loadout, meleePower: boolean) => PowerRequirementContext {
   const resolve = (reference: string, type?: string) =>
     input.byId.get(key(reference)) ??
@@ -2857,8 +2927,6 @@ function legacyRequirementContext(input: {
     return entity === undefined ? [] : [entity];
   });
   const sizeContext = legacyLootSlotContext(active);
-  // Legacy SmallWithNonSmallWeapon.
-  const small = sizeContext.small && !sizeContext.oneSizeLarger;
   const statText = (name: string): string | undefined => {
     if (input.textContributions === undefined)
       return textValue(input.textStrings, name);
@@ -2867,17 +2935,9 @@ function legacyRequirementContext(input: {
       .map((contribution) => contribution.value);
     return values.length === 0 ? undefined : values.join("+");
   };
-  const unarmedText = textValue(
-    input.textStrings,
-    EXCEPTION_NAMES.unarmedWeaponText,
-  );
-  const unarmedBase =
-    (unarmedText === undefined || unarmedText.trim() === ""
-      ? undefined
-      : resolveWeapon(unarmedText)) ??
-    resolveWeapon(EXCEPTION_NAMES.unarmedAttack);
+  const unarmedBase = input.unarmedBase;
   const smallWithNonSmall = (weapon: ContentEntity) =>
-    small && !/small/iu.test(field(weapon, "Properties") ?? "");
+    legacySmallWithNonSmallWeapon(weapon, sizeContext);
   const shared = {
     versatileUsedTwoHanded: smallWithNonSmall,
     statText,
@@ -2964,6 +3024,27 @@ export function evaluatePowers(input: {
     input.textStrings ?? {},
     loadoutState,
   );
+  // A melee power's Unarmed row attacks with native WeaponBase's unarmed
+  // record; any other power keeps the bare Unarmed row.
+  const resolveWeaponRecord = (reference: string) =>
+    byId.get(key(reference)) ??
+    byName.get(key(reference))?.find((entity) => key(entity.type) === "weapon");
+  const unarmedWeaponBase = legacyUnarmedWeaponBase(
+    input.textStrings ?? {},
+    resolveWeaponRecord,
+  );
+  const meleeEquipped =
+    unarmedWeaponBase === undefined
+      ? equipped
+      : equipped.map((item) =>
+          item.unarmed
+            ? withUnarmedWeaponBase(
+                item,
+                unarmedWeaponBase,
+                resolveWeaponRecord,
+              )
+            : item,
+        );
   const implementResolver = legacyImplementResolver(byId, byName);
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
@@ -2978,14 +3059,13 @@ export function evaluatePowers(input: {
   // Native IsProficient: a Large weapon needs CanUseLargeWeapons (Oversized,
   // or One Size Larger when not Small) before any proficiency counts, its
   // Proficient As included.
-  const canUseLargeWeapons = legacyCanUseLargeWeapons(
-    legacyLootSlotContext(
-      input.activeDefinitionIds.flatMap((id) => {
-        const entity = byId.get(key(id));
-        return entity === undefined ? [] : [entity];
-      }),
-    ),
+  const lootSlotContext = legacyLootSlotContext(
+    input.activeDefinitionIds.flatMap((id) => {
+      const entity = byId.get(key(id));
+      return entity === undefined ? [] : [entity];
+    }),
   );
+  const canUseLargeWeapons = legacyCanUseLargeWeapons(lootSlotContext);
   // Without any recorded weapon proficiency (incomplete or custom content),
   // keep the bonus rather than strip it from every weapon, as for implements.
   const proficientWithWeapon = (item: Loadout) =>
@@ -3001,8 +3081,8 @@ export function evaluatePowers(input: {
   );
   const arenaImprovised = (item: Loadout) =>
     hasArenaTraining &&
-    (item.unarmed ||
-      ((item.weaponDefinition || item.staff) &&
+    ((item.unarmed && item.requirementBase === undefined) ||
+      ((item.weaponDefinition || item.staff || item.unarmed) &&
         (!proficientWithWeapon(item) ||
           /improvised/iu.test(
             field(item.requirementBase ?? emptyEntity, "Weapon Category") ??
@@ -3028,6 +3108,7 @@ export function evaluatePowers(input: {
     equipment: input.equipment,
     byId,
     byName,
+    unarmedBase: unarmedWeaponBase,
   });
   const activePowerIds = [
     ...new Set(
@@ -3130,6 +3211,8 @@ export function evaluatePowers(input: {
         requirementContext(item, powerRange.melee),
         { extended: extendedRequirement },
       );
+    // Native WeaponBase: a melee power's Unarmed row uses the unarmed record.
+    const rowEquipped = powerRange.melee ? meleeEquipped : equipped;
     const candidates =
       !calculated ||
       key(power.id) === key(EXCEPTION_IDS.coordinatedAssaultAttack)
@@ -3138,15 +3221,15 @@ export function evaluatePowers(input: {
             ? // Legacy offers every owned weapon and implement (its
               // CheckPower accepts any); proficiency only marks the
               // variant (D081).
-              equipped.filter(ownedImplement)
+              rowEquipped.filter(ownedImplement)
             : weaponPower
-              ? equipped.filter(
+              ? rowEquipped.filter(
                   (item) =>
                     item.unarmed ||
                     (item.weaponDamage !== undefined &&
                       weaponFitsPowerRange(item, powerRange)),
                 )
-              : equipped.filter((item) => item.unarmed)
+              : rowEquipped.filter((item) => item.unarmed)
           ).filter((item) => !restricted(item));
     // A power only the beast attacks with uses none of the character's
     // equipment: one variant, not one per weapon with the same numbers.

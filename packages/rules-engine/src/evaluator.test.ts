@@ -1870,9 +1870,9 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(evaluated.stats["Unarmed group,weapon:attack"]?.value).toBe(2);
+    expect(evaluated.stats["Synthetic Strike:attack"]?.value).toBe(2);
     expect(
-      evaluated.stats["Unarmed group,weapon:attack"]?.contributions[0]
+      evaluated.stats["Synthetic Strike:attack"]?.contributions[0]
         ?.providerName,
     ).toBe("Focused Expertise (Synthetic Strike)");
   });

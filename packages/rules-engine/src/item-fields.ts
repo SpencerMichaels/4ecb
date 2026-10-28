@@ -401,8 +401,15 @@ export function legacyLootSlots(
   });
 }
 
-/** Native SmallWithNonSmallWeapon. */
-function legacySmallWithNonSmallWeapon(
+/**
+ * Native SmallWithNonSmallWeapon (`-Module-.cs` ~18801): a Small character
+ * (One Size Larger cancels it; Oversized does not) and a weapon whose
+ * Properties lack "small". Such a versatile weapon counts as used in two
+ * hands (VersatileUsedInTwoHands) but never earns the two-handed +1 damage
+ * (VersatileUsedTwoHanded ~18827, CalcVersatile ~25929), as the PHB
+ * versatile rule says for Small creatures.
+ */
+export function legacySmallWithNonSmallWeapon(
   weapon: ContentEntity,
   context: LootSlotContext,
 ): boolean {

@@ -1707,11 +1707,13 @@ function evaluateCharacterInternal(
     const weaponName = target.replaceAll("_", " ");
     const weapon = index.find(weaponName, "Weapon");
     if (weapon === undefined) continue;
-    const group = field(weapon, "Group");
-    if (group === undefined) continue;
+    // The save's own Stat names the weapon ("Monk Unarmed Strike:attack"),
+    // so the bonus follows that weapon, not its group: the Unarmed row
+    // (whose base is the Unarmed attack record, also "Unarmed group") does
+    // not get it.
     stats.add({
       id: `${occurrence.id}:legacy-focused-expertise`,
-      stat: `${group} group,weapon:attack`,
+      stat: `${weapon.name}:attack`,
       value: String(1 + Math.floor((Math.max(1, input.level) - 1) / 10)),
       bonusType: "Feat",
       providerId: occurrence.id,

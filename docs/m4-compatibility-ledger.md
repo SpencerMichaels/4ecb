@@ -161,7 +161,9 @@ honors that named choice instead of taking the first ability alternative.
 The final monk audit recovered eight attack fields from one shared path. The
 serialized components name `Focused Expertise (Monk Unarmed Strike) +2`; its
 generated internal definition is absent from the exact pack, but its stable ID
-encodes the target and the exact weapon record supplies the Unarmed group.
+encodes the target weapon. The save's own Stat names that weapon (`Monk Unarmed
+Strike:attack`), so the recovered stat is `<weapon>:attack`, not the group:
+the Unarmed row, whose base is the Unarmed attack record, does not get it.
 Recovering that tier-scaled generated stat and applying weapon-qualified attack
 bonuses when a monk weapon is used as an implement closes the basic attack and
 seven implement attacks. The two AC-target implement attacks and 12 dice fields

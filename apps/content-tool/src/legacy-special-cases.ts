@@ -978,12 +978,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WeaponBase": code(
       "Weapon base for a power: Unarmed Attack (or the 'Unarmed Weapon' text override) for melee without a weapon; WeaponEquiv; staff as Quarterstaff.",
-      "powers.ts unarmed loadout; Loadout.requirementBase and the 'Unarmed Weapon' text for requirements (EXCEPTION_NAMES)",
+      "powers.ts legacyUnarmedWeaponBase ('Unarmed Weapon' text, else EXCEPTION_NAMES.unarmedAttack) and withUnarmedWeaponBase: a melee power's Unarmed row takes the record's keywords (name, ID, group, slot, properties; nativeRowKeywords' weapon type and '<group> group(weapon)'), proficiency bonus (Belt of the Brawler's Club +2) and Damage stepped by DieIncrease; the same base feeds requirements, strikers and CalcBonuses. Loadout.requirementBase for weapons",
       test(REQUIREMENTS, "attacks with a staff as the Quarterstaff record"),
       test(
         REQUIREMENTS,
         "rejects Unarmed for a requirement its record cannot meet",
       ),
+      test(
+        POWERS,
+        "gives a melee power's Unarmed row the Unarmed attack record's keywords",
+      ),
+      test(
+        POWERS,
+        "uses the Unarmed Weapon text's record: its proficiency, die and group",
+      ),
+      test(POWERS, "steps the unarmed record's die with DieIncrease"),
     ),
     "?A0x7555d940.OffhandWeaponBase": code(
       "Off-hand base: a double weapon's _Secondary End, else WeaponBase.",
@@ -1031,7 +1040,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.ArenaTrainingImprovisedWeapon": code(
       "Arena Training (ID_FMP_CLASS_FEATURE_2893) lets non-proficient and improvised weapons use the improvised-weapon rules.",
-      "powers.ts arenaImprovised: Unarmed, a weapon (or staff) the character is not proficient with, or an Improvised one deals 1d8 (1d10 two-handed) with a +2 proficiency bonus",
+      "powers.ts arenaImprovised: Unarmed without a base, a weapon, staff or unarmed base (the Unarmed attack record is Improvised) the character is not proficient with, or an Improvised one deals 1d8 (1d10 two-handed) with a +2 proficiency bonus",
       test(
         POWERS,
         "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
@@ -1790,8 +1799,8 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.FigureWeaponDice": code(
-      "Weapon dice: the loot's damage override, the off-hand weapon for off-hand dice, DieIncrease ('<keyword>:die' stats), Arena Training improvised 1d8/1d10, unarmed 'Unarmed Damage Die' text string or 1d4.",
-      "powers.ts figureWeaponDice / dieIncreaseSteps over the row's keyword set (rowKeywordTags); the off-hand item is legacyOffhand (a double weapon's _Secondary End)",
+      "Weapon dice: the loot's damage override, the off-hand weapon for off-hand dice, DieIncrease ('<keyword>:die' stats), Arena Training improvised 1d8/1d10, without a weapon the melee WeaponBase record's Damage (Unarmed attack, or the 'Unarmed Weapon' record), else the 'Unarmed Damage Die' text string or 1d4.",
+      "powers.ts figureWeaponDice / dieIncreaseSteps over the row's keyword set (rowKeywordTags), the unarmed base via withUnarmedWeaponBase; the off-hand item is legacyOffhand (a double weapon's _Secondary End)",
       test(POWERS, "produces explainable weapon and unarmed variants with %s"),
       test(
         POWERS,
