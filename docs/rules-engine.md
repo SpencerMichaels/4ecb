@@ -153,7 +153,25 @@ records have only the category number: Power Strike and Backstab. They become
 choosable in a regular class encounter slot once their prerequisite feat is
 owned (Powerful Strike, Thief's Backstab). This is how the legacy builder
 offers them. Where the two values disagree (four records), the Level field
-wins.
+wins. A category level `N-N` is the exact level N (native reads only the first
+number). A power carrying a `_ThemePower` field also matches it at any level up
+to N. No shipped category uses that form.
+
+Theme powers (`_ThemePower`) follow native ThemePowerRestriction. Some Power
+selects carry exactly the `$$CLASS` prefix (not `$$CLASS_OR_MULTICLASS`) and a
+category naming neither utility nor at-will: the Level records' encounter and
+daily slots and similar class features. In such a select, a theme power is
+offered only when the character already holds, at that choice's level, another
+power matching the select's category whose `Class` field names one of its
+classes. The candidate reason is `theme-power`. So a theme power can replace a
+class encounter or daily power, but never the only one of its kind.
+
+Prerequisite name lookup follows native InternalizeElement. Its walk of
+same-named records skips three kinds of record: `Grants` records,
+`CountsAsRace` records unless the prerequisite belongs to a Feat, and a
+`Background` named "assassin". So the Assassin background never meets a bare
+`Assassin` clause. Two lookups bypass that walk: a record named by its internal
+ID, and one named as `<name> <type>` (for example `!Dwarf CountsAsRace`).
 
 ## Verified parity and performance
 

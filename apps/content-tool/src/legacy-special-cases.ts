@@ -170,6 +170,7 @@ const EXCEPTIONS = "packages/rules-engine/src/exceptions.test.ts";
 const EQUIPMENT = "packages/rules-engine/src/equipment.test.ts";
 const EVALUATOR = "packages/rules-engine/src/evaluator.test.ts";
 const PREREQUISITES = "packages/rules-engine/src/prerequisites.test.ts";
+const EXPRESSIONS = "packages/rules-engine/src/expressions.test.ts";
 const BEAST = "packages/rules-engine/src/beast-companion.test.ts";
 const FREEBEES = "packages/rules-engine/src/freebees.test.ts";
 const ITEM_SETS = "packages/rules-engine/src/item-sets.test.ts";
@@ -389,9 +390,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "powers.ts evaluatePowers",
       test(POWERS, "materializes and deduplicates psionic augment versions"),
     ),
-    LoadRulesDatabase: generic(
-      "Rules database load (_ThemePower index).",
-      LEGACY_IO,
+    LoadRulesDatabase: code(
+      "Rules database load; flags every Power carrying a _ThemePower field. ThemePowerRestriction (D20Choice::UpdateArrays) then makes those illegal in an exact $$CLASS Power select whose category names neither utility nor at-will, unless the character holds, at the choice's level, another element of that category whose Class field names one of its classes; CategoryMatch::Matches lets them through an exact-level 'N-N' category at any level up to N.",
+      "evaluator.ts themePowerRestricted (candidate reason 'theme-power'); expressions.ts numericMatch for 'N-N' (no shipped category uses it). The rest of the load is legacy file I/O.",
+      test(
+        EVALUATOR,
+        "keeps a theme power out of a $$CLASS encounter or daily slot until a class power of that kind is held",
+      ),
+      test(
+        EXPRESSIONS,
+        "reads an N-N level as exact, except for a theme power up to N",
+      ),
     ),
 
     // --- D20RulesEngine: prerequisite parser ---------------------------
@@ -522,8 +531,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "does not split and, or, or a comma inside a known name",
       ),
     ),
-    InternalizeElement: generic(
-      "Name lookup for a prerequisite token; excludes CountsAsRace for non-feats and the 'assassin' class/paragon name clash.",
+    InternalizeElement: code(
+      "Name lookup for a prerequisite token. Its walk of the same-named records skips Grants records, CountsAsRace records unless the prerequisite's owner is a Feat, and a Background named 'assassin' (so the Assassin background never meets a bare 'Assassin' clause); the internal-ID and '<name> <type>' links bypass the walk.",
+      "prerequisites.ts internalizedDefinitions (the name walk) and compositeElement / typed references (the '<name> <type>' link); the 'assassin' name is EXCEPTION_NAMES.assassinBackground. A non-feat's bare 'Shifter' (the corrections CountsAsRace) still resolves through the evaluator's owned-token lookup, as native SpecialCase 'shifter' does.",
+      test(
+        PREREQUISITES,
+        "skips what legacy InternalizeElement drops from a name lookup",
+      ),
+      test(
+        PREREQUISITES,
+        "resolves a bare race-family name through a granted CountsAsRace",
+      ),
     ),
     AnyClassSpecific: code(
       "'Any class-specific multiclass feat': every multiclass feat, plus Student of the Plague and Adept Dilettante by name.",

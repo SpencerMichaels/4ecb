@@ -128,6 +128,9 @@ export const EXCEPTION_NAMES = {
   ambidextrous: "Ambidextrous",
   /** Prerequisite MoreThanOneClass: this Class (or any CountsAsClass). */
   hybridClass: "Hybrid",
+  /** InternalizeElement: a prerequisite token "assassin" never matches a
+   * Background of that name (only the class and its features). */
+  assassinBackground: "assassin",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */
