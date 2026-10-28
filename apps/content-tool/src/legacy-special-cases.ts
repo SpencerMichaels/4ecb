@@ -994,10 +994,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "names a weapon by ID or name, across sizes and double-weapon ends",
       ),
     ),
-    "?A0x7555d940.WeaponEnchant": partial(
+    "?A0x7555d940.WeaponEnchant": code(
       "The enchantment a weapon power reads: the base's EnchantEquiv record, else the enchantment (or the base when the enchantment has no Enhancement), else a staff or magic-item base itself.",
-      "powers.ts uses the enchantment with Enhancement > 0; EnchantEquiv (10 items, e.g. Rod of Smiting, Boar Tusk Helm) is not read",
+      "powers.ts uses the enchantment with Enhancement > 0; for a weapon power (asWeaponPowerLoadout) the base's EnchantEquiv record (Rod of Smiting/Dispater, Boar Tusk Helm: 10 items) supplies the enhancement and the keyword enchantment. These items attack at all only through WeaponBase's WeaponEquiv, which BuildWeaponsList keeps (rods as maces, Boar Tusk, Feral Armor and Climbing Claws, shields): loadouts' weaponPowerOverrides. The row's Critical stays the item's own (native PowerStats reads none)",
       test(POWERS, "applies an implement enhancement to fixed power dice"),
+      test(
+        POWERS,
+        "attacks with a non-weapon loot's WeaponEquiv weapon and EnchantEquiv enchantment (native WeaponBase, WeaponEnchant)",
+      ),
     ),
     "?A0x7555d940.EnhancementBonus": code(
       "Attack/damage enhancement from WeaponEnchant's Enhancement, else the base's.",
@@ -1014,7 +1018,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WeaponBase": code(
       "Weapon base for a power: Unarmed Attack (or the 'Unarmed Weapon' text override) for melee without a weapon; WeaponEquiv; staff as Quarterstaff.",
-      "powers.ts legacyUnarmedWeaponBase ('Unarmed Weapon' text, else EXCEPTION_NAMES.unarmedAttack) and withUnarmedWeaponBase: a melee power's Unarmed row takes the record's keywords (name, ID, group, slot, properties; nativeRowKeywords' weapon type and '<group> group(weapon)'), proficiency bonus (Belt of the Brawler's Club +2) and Damage stepped by DieIncrease; the same base feeds requirements, strikers and CalcBonuses. Loadout.requirementBase for weapons",
+      "powers.ts legacyUnarmedWeaponBase ('Unarmed Weapon' text, else EXCEPTION_NAMES.unarmedAttack) and withUnarmedWeaponBase: a melee power's Unarmed row takes the record's keywords (name, ID, group, slot, properties; nativeRowKeywords' weapon type and '<group> group(weapon)'), proficiency bonus (Belt of the Brawler's Club +2) and Damage stepped by DieIncrease; the same base feeds requirements, strikers and CalcBonuses. Loadout.requirementBase for weapons; a non-weapon loot whose WeaponEquiv is a weapon (a rod as a mace, Boar Tusk Helm, Feral Armor) attacks as that weapon in weapon powers only (weaponPowerOverrides; it was missing from weapon power rows before)",
       test(REQUIREMENTS, "attacks with a staff as the Quarterstaff record"),
       test(
         REQUIREMENTS,
@@ -1070,9 +1074,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "matches each group's damage channel, including an overlaid group",
       ),
     ),
-    "?A0x7555d940.AddArenaWeapons": notHandled(
-      "With Arena Training, every 'Arena Weapon' property weapon's keywords join the power's keyword set.",
-      "no modern Arena Training channel",
+    "?A0x7555d940.AddArenaWeapons": code(
+      "When the row's WeaponBase has the 'Arena Weapon' property, every other Weapon record with it adds its keywords (AddWeaponKeywords) to the row's keyword set. Not Arena Training: no current record sets that property (Arena Training's picks list-add the 'Arena' group), so it only reaches homebrew.",
+      "powers.ts legacyArenaWeaponTags on the loot's keyword weapon, the WeaponEquiv weapon and the Unarmed base",
+      test(
+        POWERS,
+        "adds every other Arena Weapon's keywords to an Arena Weapon's row (native AddArenaWeapons)",
+      ),
     ),
     "?A0x7555d940.ArenaTrainingImprovisedWeapon": code(
       "Arena Training (ID_FMP_CLASS_FEATURE_2893) lets non-proficient and improvised weapons use the improvised-weapon rules.",
@@ -2006,9 +2014,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "uses the effective BA flag for eligibility and native basic-specific combat channels",
       ),
     ),
-    "?A0x7555d940.BuildKeywordSet": partial(
+    "?A0x7555d940.BuildKeywordSet": code(
       "Keyword set for channel matching: weapon keywords, Arena weapons, implement names ('<name> implement', 'Ki Focuses Implement', '<group> implement group'), 'two-weapon', 'two-melee-weapon(-close)', 'two-blade', 'two-melee-offhand(-close)', attack types, Keywords, _ExtraKeywords, '<feat> association', name, ID, _AugmentParent, Class and paragon path, Power Usage, 'multiclass'/'multiclass feat', 'melee basic'/'ranged basic', and AdditionalKeywords: the power's, WeaponBase's and WeaponEnchant's _PowerstatKeywords, a '<keyword>?<class ID>' entry only for that class's powers (PossibleInsert, IsClassPower through BaseClass).",
-      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass, and legacyPowerstatKeywords over the overlaid records: the 49 conditional implement overlays such as Staff of Divinity's 'holy symbol implement' and Eladrin Sword Wizardry's 'wand implement?ID_FMP_CLASS_9'; legacyPowerClassChannels gives BaseClass a paragon path's class prerequisite and InsertParagonPath's '<class> Paragon Path' category ID for Sorcerous Power; a path power's own ID was already a Class keyword, so Pact Reward's and Stalker Bloodline's ID_FMP_PARAGON_PATH_<n>:damage stats applied before). Still missing: Arena weapons (AddArenaWeapons)",
+      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass, and legacyPowerstatKeywords over the overlaid records: the 49 conditional implement overlays such as Staff of Divinity's 'holy symbol implement' and Eladrin Sword Wizardry's 'wand implement?ID_FMP_CLASS_9'; legacyPowerClassChannels gives BaseClass a paragon path's class prerequisite and InsertParagonPath's '<class> Paragon Path' category ID for Sorcerous Power; a path power's own ID was already a Class keyword, so Pact Reward's and Stalker Bloodline's ID_FMP_PARAGON_PATH_<n>:damage stats applied before). Arena weapons: legacyArenaWeaponTags (AddArenaWeapons)",
       test(
         POWERS,
         "matches bonuses keyed by the power's class ID and the weapon's ID",
@@ -2045,6 +2053,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         POWERS,
         "adds a paragon path power's ID and its '<class> Paragon Path' category (InsertParagonPath)",
+      ),
+      test(
+        POWERS,
+        "adds every other Arena Weapon's keywords to an Arena Weapon's row (native AddArenaWeapons)",
       ),
     ),
     "?A0x7555d940.IsBlade": code(

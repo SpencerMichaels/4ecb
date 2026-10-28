@@ -4478,6 +4478,87 @@ describe("weapon fields and dice (native C_RulesElementField, FigureWeaponDice)"
       damage: "1d8",
     });
   });
+
+  it("attacks with a non-weapon loot's WeaponEquiv weapon and EnchantEquiv enchantment (native WeaponBase, WeaponEnchant)", () => {
+    const magicWeapon = entity("MW2", "Magic Weapon +2", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Critical: "+2d6 damage",
+      Enhancement: "+2 attack rolls and damage rolls",
+    });
+    const entities = [
+      strike("STRIKE", "1[W] damage."),
+      entity("BOLT", "BOLT", "Power", {
+        Keywords: "Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Strength vs. Reflex",
+        Hit: "1d6 damage.",
+      }),
+      weapon("MACE", "Mace", {
+        "Weapon Category": "Simple Melee",
+        Group: "Mace",
+        "Item Slot": "One-hand",
+      }),
+      weapon("TUSK", "Boar Tusk", {
+        Damage: "1d10",
+        "Weapon Category": "Improvised Melee",
+        Group: "Unarmed",
+        "Item Slot": "Off-hand",
+      }),
+      magicWeapon,
+      entity("ROD", "Rod of Smiting +1", "Magic Item", {
+        "Magic Item Type": "Rod",
+        Critical: "+1d10 force damage per plus",
+        "Item Slot": "Off-hand",
+        Enhancement: "+1 attack rolls and damage rolls",
+        WeaponEquiv: "mace:weapon",
+        EnchantEquiv: "Magic Weapon +1",
+      }),
+      entity("HELM", "Boar Tusk Helm (heroic tier)", "Magic Item", {
+        "Magic Item Type": "Head Slot Item",
+        "Item Slot": "Head",
+        WeaponEquiv: "Boar Tusk",
+        EnchantEquiv: "Magic Weapon +2",
+      }),
+    ];
+    const [strikePower, bolt] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE", "BOLT"],
+      entities,
+      inventory: [held("rod", ["ROD"]), held("helm", ["HELM"], 0)],
+      stats: { "mace group:attack": combatStat("mace group:attack", 1) },
+      overlays: [],
+    });
+    expect(variant(strikePower, "rod")).toMatchObject({
+      attackBonus: 4,
+      damage: "1d8+1",
+      critical: "+1d10 force damage per plus",
+    });
+    expect(variant(strikePower, "helm")).toMatchObject({
+      attackBonus: 4,
+      damage: "1d10+2",
+    });
+    // Only a weapon power reads WeaponEquiv: the helm is no implement.
+    expect(variant(bolt, "helm")).toBeUndefined();
+  });
+
+  it("adds every other Arena Weapon's keywords to an Arena Weapon's row (native AddArenaWeapons)", () => {
+    const entities = [
+      strike("STRIKE", "1[W] damage."),
+      weapon("GLADIUS", "Gladius", { Properties: "Arena Weapon" }),
+      weapon("NET", "Net", { Properties: "Arena Weapon", Group: "Flail" }),
+      weapon("LONG", "Longsword"),
+    ];
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE"],
+      entities,
+      inventory: [held("gladius", ["GLADIUS"]), held("long", ["LONG"], 0)],
+      stats: { "Net:attack": combatStat("Net:attack", 1) },
+      overlays: [],
+    });
+    expect(variant(power, "gladius")?.attackBonus).toBe(3);
+    expect(variant(power, "long")?.attackBonus).toBe(2);
+  });
 });
 
 describe("native BuildKeywordSet channels", () => {

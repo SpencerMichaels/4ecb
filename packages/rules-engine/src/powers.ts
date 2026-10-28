@@ -251,6 +251,23 @@ interface Loadout {
   /** Native BuildKiList: the weapon holding a synthetic ki-focused loot was
    * built from; the loot takes that holding's hand. */
   readonly kiFocusedFrom?: string;
+  /** What a weapon power reads instead (`asWeaponPowerLoadout`): native
+   * WeaponBase's WeaponEquiv weapon for a non-weapon loot (a rod
+   * "functioning as a mace", Boar Tusk Helm's gore, Feral Armor's claw) and
+   * WeaponEnchant's EnchantEquiv record (Boar Tusk Helm's Magic Weapon +2). */
+  readonly weaponPowerOverrides?: Partial<Loadout>;
+}
+
+/**
+ * The loadout a weapon power's row uses: native WeaponBase and
+ * WeaponEnchant (-Module-.cs ~21085, ~21159) read WeaponEquiv and
+ * EnchantEquiv only when the power is a weapon power.
+ */
+function asWeaponPowerLoadout(item: Loadout): Loadout {
+  const { weaponPowerOverrides, ...rest } = item;
+  return weaponPowerOverrides === undefined
+    ? item
+    : { ...rest, ...weaponPowerOverrides };
 }
 
 function key(value: string): string {
@@ -439,7 +456,17 @@ function legacyWeaponEquiv(
   byId: ReadonlyMap<string, ContentEntity>,
   byName: ReadonlyMap<string, readonly ContentEntity[]>,
 ): ContentEntity | undefined {
-  const value = field(entity, "WeaponEquiv")?.trim() ?? "";
+  return legacyNamedRecord(field(entity, "WeaponEquiv"), byId, byName);
+}
+
+/** Native ParseNameType + FindRulesElement: a "name[:type]" or ID field
+ * value (WeaponEquiv, EnchantEquiv) as the record it names. */
+function legacyNamedRecord(
+  reference: string | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
+): ContentEntity | undefined {
+  const value = reference?.trim() ?? "";
   if (value === "") return undefined;
   const typed = /^(.*):([^:]*)$/u.exec(value);
   const name = (typed?.[1] ?? value).trim();
@@ -550,6 +577,27 @@ function weaponRecordTags(
 }
 
 /**
+ * Native AddArenaWeapons (BuildKeywordSet, -Module-.cs ~25583): when a row's
+ * weapon base has the "Arena Weapon" property, every other Weapon record
+ * with it adds its keywords too. No current content sets that property
+ * (Arena Training's picks add the "Arena" group instead), so this only
+ * matters for homebrew.
+ */
+function legacyArenaWeaponTags(
+  base: ContentEntity,
+  entities: Iterable<ContentEntity>,
+): string[] {
+  const arena = (record: ContentEntity) =>
+    /arena weapon/iu.test(field(record, "Properties") ?? "");
+  if (!arena(base)) return [];
+  const tags: string[] = [];
+  for (const record of entities)
+    if (record !== base && key(record.type) === "weapon" && arena(record))
+      tags.push(record.name, record.id, ...weaponRecordTags(record));
+  return tags;
+}
+
+/**
  * Native WeaponBase without a weapon, for a melee power (-Module-.cs
  * ~21085): the weapon record the "Unarmed Weapon" text names (Belt of the
  * Brawler's Club), else "Unarmed Attack" (ID_FMP_WEAPON_34). Undefined when
@@ -581,6 +629,7 @@ function withUnarmedWeaponBase(
   unarmed: Loadout,
   base: ContentEntity,
   resolveWeapon: (reference: string) => ContentEntity | undefined,
+  weapons: Iterable<ContentEntity>,
 ): Loadout {
   const damage = field(base, "Damage")?.trim();
   return {
@@ -589,7 +638,13 @@ function withUnarmedWeaponBase(
     proficiency: Number(field(base, "Proficiency Bonus")) || 0,
     proficiencyNames: [legacyProficiencyWeaponName(base, resolveWeapon)],
     ...(legacyIsLargeWeapon(base) ? { largeWeapon: true } : {}),
-    tags: ["unarmed", base.name, base.id, ...weaponRecordTags(base)]
+    tags: [
+      "unarmed",
+      base.name,
+      base.id,
+      ...weaponRecordTags(base),
+      ...legacyArenaWeaponTags(base, weapons),
+    ]
       .map(key)
       .filter(Boolean),
     properties: (field(base, "Properties") ?? "")
@@ -655,15 +710,91 @@ function loadouts(
       (weapon === undefined && lootImplement !== undefined
         ? baseRecord
         : undefined);
-    if (weapon === undefined && implement === undefined) continue;
-    const augment = boundAugment(entry, inventory, byId);
-    const critical = field(magic ?? emptyEntity, "Critical");
     const staff = baseRecord !== undefined && legacyIsStaff(baseRecord);
     // Native WeaponBase/IsStaffAsWeapon: a staff without a weapon part (a
     // magic or superior staff, the Staff Implement gear) attacks as the
     // Quarterstaff.
     const staffWeapon =
       weapon === undefined && (staff || /staff/i.test(magicType ?? ""));
+    // Native WeaponBase for a weapon power: a non-weapon loot's WeaponEquiv
+    // (the base's, else the enchantment's), which BuildWeaponsList keeps
+    // when it is a weapon: a Rod of Smiting attacks as a mace, a Boar Tusk
+    // Helm as its Boar Tusk.
+    const equivalent =
+      weapon !== undefined || staffWeapon || baseRecord === undefined
+        ? undefined
+        : (legacyWeaponEquiv(baseRecord, byId, byName) ??
+          (enchantRecord === undefined
+            ? undefined
+            : legacyWeaponEquiv(enchantRecord, byId, byName)));
+    const equivalentWeapon =
+      equivalent !== undefined && key(equivalent.type) === "weapon"
+        ? equivalent
+        : undefined;
+    // Native WeaponEnchant for a weapon power: the base's EnchantEquiv
+    // record first (Boar Tusk Helm's Magic Weapon +2).
+    const enchantEquivalent =
+      baseRecord === undefined
+        ? undefined
+        : legacyNamedRecord(field(baseRecord, "EnchantEquiv"), byId, byName);
+    if (
+      weapon === undefined &&
+      implement === undefined &&
+      equivalentWeapon === undefined
+    )
+      continue;
+    const augment = boundAugment(entry, inventory, byId);
+    const critical = field(magic ?? emptyEntity, "Critical");
+    const proficientAs = parts.flatMap((entity) => {
+      const value = field(entity, "Proficient As");
+      return value === undefined ? [] : [value];
+    });
+    const weaponPowerOverrides: Partial<Loadout> = {
+      ...(equivalentWeapon === undefined
+        ? {}
+        : {
+            weaponDamage:
+              entry.overrides?.Damage ??
+              field(equivalentWeapon, "Damage") ??
+              "1d8",
+            proficiency:
+              Number(field(equivalentWeapon, "Proficiency Bonus")) || 0,
+            proficiencyNames: [
+              legacyProficiencyWeaponName(equivalentWeapon, resolveWeapon),
+              ...proficientAs,
+            ],
+            ...(legacyIsLargeWeapon(equivalentWeapon)
+              ? { largeWeapon: true }
+              : {}),
+            weaponDefinition: true,
+            tags: [
+              ...parts.map((entity) => entity.name),
+              equivalentWeapon.name,
+              equivalentWeapon.id,
+              ...weaponRecordTags(equivalentWeapon),
+              ...legacyArenaWeaponTags(equivalentWeapon, byId.values()),
+            ]
+              .map(key)
+              .filter(Boolean),
+            properties: weaponPropertyText(
+              equivalentWeapon,
+              field(equivalentWeapon, "Properties") ?? "",
+            )
+              .split(",")
+              .map(key)
+              .filter(Boolean),
+            weaponCategory: key(
+              field(equivalentWeapon, "Weapon Category") ?? "",
+            ),
+            rangedWeapon: Boolean(field(equivalentWeapon, "Range")),
+          }),
+      ...(enchantEquivalent === undefined
+        ? {}
+        : {
+            enhancement: parseEnhancement(enchantEquivalent),
+            lootEnchant: enchantEquivalent,
+          }),
+    };
     // The parts are already overlay-resolved (Arena Training's "Arena").
     const groups =
       weapon === undefined ? [] : legacyKeywordList(field(weapon, "Group"));
@@ -701,10 +832,7 @@ function loadouts(
           : staffWeapon
             ? ["Quarterstaff"]
             : []),
-        ...parts.flatMap((entity) => {
-          const proficientAs = field(entity, "Proficient As");
-          return proficientAs === undefined ? [] : [proficientAs];
-        }),
+        ...proficientAs,
       ],
       ...(weapon !== undefined && legacyIsLargeWeapon(weapon)
         ? { largeWeapon: true }
@@ -724,6 +852,7 @@ function loadouts(
                 ? []
                 : [keywordWeapon.name, keywordWeapon.id]),
               ...weaponRecordTags(keywordWeapon, keywordGroups),
+              ...legacyArenaWeaponTags(keywordWeapon, byId.values()),
             ]),
       ]
         .map(key)
@@ -792,6 +921,9 @@ function loadouts(
       staff,
       ...(baseRecord === undefined ? {} : { lootBase: baseRecord }),
       ...(enchantRecord === undefined ? {} : { lootEnchant: enchantRecord }),
+      ...(Object.keys(weaponPowerOverrides).length === 0
+        ? {}
+        : { weaponPowerOverrides }),
     });
   }
   result.push({
@@ -3016,9 +3148,24 @@ export function evaluatePowers(input: {
                 item,
                 unarmedWeaponBase,
                 resolveWeaponRecord,
+                byId.values(),
               )
             : item,
         );
+  // A weapon power's rows read each loot through native WeaponBase/
+  // WeaponEnchant's weapon-power branch; one object per loot, so
+  // DetermineOffhand's identity tests hold.
+  const weaponViews = new Map<Loadout, Loadout>();
+  const asWeaponView = (item: Loadout) => {
+    let view = weaponViews.get(item);
+    if (view === undefined) {
+      view = asWeaponPowerLoadout(item);
+      weaponViews.set(item, view);
+    }
+    return view;
+  };
+  const weaponEquipped = equipped.map(asWeaponView);
+  const weaponMeleeEquipped = meleeEquipped.map(asWeaponView);
   const implementResolver = legacyImplementResolver(byId, byName);
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
@@ -3195,8 +3342,14 @@ export function evaluatePowers(input: {
         requirementContext(item, powerRange.melee),
         { extended: extendedRequirement },
       );
-    // Native WeaponBase: a melee power's Unarmed row uses the unarmed record.
-    const rowEquipped = powerRange.melee ? meleeEquipped : equipped;
+    // Native WeaponBase: a melee power's Unarmed row uses the unarmed
+    // record, and a weapon power reads WeaponEquiv/EnchantEquiv.
+    const powerEquipped = weaponPower ? weaponEquipped : equipped;
+    const rowEquipped = powerRange.melee
+      ? weaponPower
+        ? weaponMeleeEquipped
+        : meleeEquipped
+      : powerEquipped;
     const candidates =
       !calculated ||
       key(power.id) === key(EXCEPTION_IDS.coordinatedAssaultAttack)
@@ -3338,7 +3491,7 @@ export function evaluatePowers(input: {
       const nativeKeywords = nativeRowKeywords(equipment, {
         weaponPower,
         implementPower,
-        offhand: legacyOffhand(equipment, equipped),
+        offhand: legacyOffhand(equipment, powerEquipped),
         attackType,
         origin: channelOrigin,
         resolve: implementResolver,
@@ -3355,7 +3508,7 @@ export function evaluatePowers(input: {
         weaponBase:
           fieldBonusBase ??
           (equipment.unarmed && powerRange.melee ? emptyEntity : undefined),
-        hasOffhand: legacyOffhand(equipment, equipped) !== undefined,
+        hasOffhand: legacyOffhand(equipment, powerEquipped) !== undefined,
         ownsElement: (name) => ownedElementKeys.has(key(name)),
         abilityModifier: (ability) =>
           numericStat(input.stats, `${ability} modifier`),
@@ -3615,7 +3768,7 @@ export function evaluatePowers(input: {
       const attackStat = primaryAttack?.attackStat ?? "Unknown";
       const defense = primaryAttack?.defense ?? "Unknown";
       const attackComponents = primaryAttack?.attackComponents ?? [];
-      const offhandItem = legacyOffhand(equipment, equipped);
+      const offhandItem = legacyOffhand(equipment, powerEquipped);
       const weaponDie = (
         rowAttackType: string | undefined,
         rowAttackStat: string,
@@ -3862,7 +4015,7 @@ export function evaluatePowers(input: {
               : undefined
             : equipment.hand === "off"
               ? mainHandItem
-              : legacyOffhand(equipment, equipped);
+              : legacyOffhand(equipment, powerEquipped);
         const pairedImplement =
           implementPower &&
           arcanePower &&
