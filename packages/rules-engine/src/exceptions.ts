@@ -29,6 +29,10 @@ export const EXCEPTION_IDS = {
   coordinatedAssaultAttack: "ID_FMP_POWER_11615",
   /** WeaponBase/IsStaff: a staff used as a weapon is this Quarterstaff. */
   quarterstaff: "ID_FMP_WEAPON_10",
+  /** DualWieldingConditional `DUAL-WIELDING:rapier-blade`: the rapier,
+   *  matched as a substring of the weapon's ID. */
+  rapier: "ID_FMP_WEAPON_29",
+  largeRapier: "ID_INTERNAL_WEAPON_LARGE_RAPIER",
   /** ArenaTrainingImprovisedWeapon: the Arena Training class feature. */
   arenaTraining: "ID_FMP_CLASS_FEATURE_2893",
   /** MeetsItemRequirement: the Internal records two item Requirements need. */

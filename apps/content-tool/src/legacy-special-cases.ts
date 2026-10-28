@@ -942,12 +942,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
       ),
     ),
-    "?A0x0bed2cbe.WieldingDefensive": partial(
+    "?A0x0bed2cbe.WieldingDefensive": code(
       "'defensive' selector: dual-wielding with a proficient defensive weapon (staff as Quarterstaff).",
-      "equipment.ts defensive selector does not require dual wielding, proficiency or the staff-as-Quarterstaff base",
+      "equipment.ts wieldingDefensive: legacyIsDualWielding and an equipped base whose defensiveWeapon fact (evaluator.ts equippedItems: staff as the Quarterstaff, Defensive property, native IsProficient by owned Weapon Proficiency or the enchantment's Proficient As) is set. Feeds the Level 1 record's AC +1 Defensive",
       test(
-        EQUIPMENT,
-        "matches armor, weapon, slot, property, and versatile selectors",
+        EVALUATOR,
+        "reads DUAL-WIELDING and DEFENSIVE through native IsDualWielding (ItemSlot, double weapons, Ambidextrous)",
       ),
     ),
     "?A0x0bed2cbe.WieldingVersatile": code(
@@ -958,10 +958,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "matches armor, weapon, slot, property, and versatile selectors",
       ),
     ),
-    "?A0x0bed2cbe.DualWieldingConditional": partial(
+    "?A0x0bed2cbe.DualWieldingConditional": code(
       "Dual-wielding selectors: plain, 'off-hand' (every equipped weapon off-hand), 'rapier-blade' (a rapier, ID_FMP_WEAPON_29 or the large rapier, with an off-hand light blade), else every equipped weapon in the listed groups.",
-      "equipment.ts dual-wielding selector; 'rapier-blade' is not special-cased",
+      "equipment.ts dualWieldingConditional (EXCEPTION_IDS.rapier/largeRapier); every equipped weapon's Group must be in the operand list (ListContainsOneOf), so 'heavy blade,light blade' also accepts two light blades. Feeds Two-Weapon Defense, Cutting Steps, Hafted Defense, Bladestorm Technique, Cross-Body Parry, Blade Dance",
       test(EQUIPMENT, "recognizes dual-wielding projections"),
+      test(
+        EVALUATOR,
+        "reads DUAL-WIELDING and DEFENSIVE through native IsDualWielding (ItemSlot, double weapons, Ambidextrous)",
+      ),
     ),
     HasLoot: code(
       "wearing/not-wearing selector dispatch (defensive, versatile, dual-wielding, dual-shield, slot, staff implement, only-weapon, _EquipmentEquiv).",
@@ -1016,10 +1020,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "matches armor, weapon, slot, property, and versatile selectors",
       ),
     ),
-    "D20Workspace.IsDualWielding": partial(
+    "D20Workspace.IsDualWielding": code(
       "Dual wielding: an off-hand weapon (staff as Quarterstaff) plus a main-hand weapon, or a double weapon alone.",
-      "equipment.ts dual-wielding counts two equipped weapons; a lone double weapon (with CheckOnlyWeapon) does not count",
+      "equipment.ts legacyIsDualWielding: non-armor bases whose native ItemSlot (evaluator.ts itemSlot via legacyItemSlot, so Ambidextrous counts) is off-hand plus one-hand or a second off-hand (DWSlotEquipped), or a lone double weapon (doubleWeapon, staff as Quarterstaff) with CheckOnlyWeapon",
       test(EQUIPMENT, "recognizes dual-wielding projections"),
+      test(
+        EVALUATOR,
+        "reads DUAL-WIELDING and DEFENSIVE through native IsDualWielding (ItemSlot, double weapons, Ambidextrous)",
+      ),
     ),
     "D20Workspace.IsDoubleWeapon": code(
       "Double weapon: two-handed with off-hand property or a _Secondary End.",

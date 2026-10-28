@@ -19,6 +19,13 @@ export interface EvaluatedItemSet {
   readonly pieces: number;
   /** Benefits the count unlocks, in the set's `Benefits` order. */
   readonly activeBenefitIds: readonly string[];
+  /**
+   * A group set with an equipped piece and an entered party count: the
+   * party's pieces, which native GroupSetCounts (`-Module-.cs` ~19691)
+   * adds to the "<set id> Set Count" stat that benefits link (Heirlooms of
+   * Mazgorax's bonuses). Native adds nothing without the textstring.
+   */
+  readonly partyPieces?: number;
 }
 
 interface EntityIndex {
@@ -142,12 +149,12 @@ export function evaluateItemSets(
   const benefitOccurrences: CharacterOccurrence[] = [];
   for (const { set, level } of sets.values()) {
     let pieces = numeric(counts.evaluate(`${set.id} Set Count`).value);
-    if (
+    const partyPieces =
       isGroupItemSet(set) &&
       numeric(counts.evaluate(`${set.id} Equipped Count`).value) !== 0
-    ) {
-      pieces += itemSetPartyPieces(set.id, textStrings) ?? 0;
-    }
+        ? itemSetPartyPieces(set.id, textStrings)
+        : undefined;
+    pieces += partyPieces ?? 0;
     const active = itemSetBenefits(set, index).filter(
       (benefit) => pieces >= itemSetBenefitPieceCount(benefit),
     );
@@ -155,6 +162,7 @@ export function evaluateItemSets(
       setId: set.id,
       pieces,
       activeBenefitIds: active.map(({ id }) => id),
+      ...(partyPieces === undefined ? {} : { partyPieces }),
     });
     for (const benefit of active)
       if (!owned.has(key(benefit.id)))

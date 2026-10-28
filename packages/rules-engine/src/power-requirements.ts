@@ -1,6 +1,7 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { EXCEPTION_NAMES } from "./exceptions";
+import { legacyIsLargeWeapon } from "./item-fields";
 
 /**
  * Legacy `IsRestricted` / `OtherRestrictions` (D20RulesEngine): the fixed
@@ -134,6 +135,19 @@ export function legacyNormalizedWeaponName(
   const primary = field(weapon, "_Primary End");
   const named = (primary === "" ? undefined : resolveWeapon(primary)) ?? weapon;
   return named.name.replace(/ \(large\)$/iu, "");
+}
+
+/**
+ * The weapon native IsProficient names in "Weapon Proficiency (<name>)": a
+ * Large weapon by its NormalizedName, any other by its own name.
+ */
+export function legacyProficiencyWeaponName(
+  weapon: ContentEntity,
+  resolveWeapon: (reference: string) => ContentEntity | undefined,
+): string {
+  return legacyIsLargeWeapon(weapon)
+    ? legacyNormalizedWeaponName(weapon, resolveWeapon)
+    : weapon.name;
 }
 
 /** Legacy IsMonkWeapon for an item's weapon record. */

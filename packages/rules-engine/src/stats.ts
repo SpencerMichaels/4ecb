@@ -1,4 +1,5 @@
 import type { EquipmentState } from "./equipment";
+import { traceCondition } from "./condition-trace";
 import { equipmentPredicate } from "./equipment";
 import { abilityModifier } from "./derived-values";
 
@@ -15,6 +16,9 @@ export interface StatContribution {
   readonly zeroOnly?: boolean;
   readonly nonZeroOnly?: boolean;
   readonly halfPoint?: boolean;
+  /** Native `statmin="<Stat> <N>"`: applies only while the stat is at
+   *  least N. */
+  readonly statMinimum?: string;
   /** A conditional `textstring` (legacy StatBlock `statadd String=`): its
    *  value is literal text such as "+1d6", never a stat link. */
   readonly text?: boolean;
@@ -24,7 +28,13 @@ export interface EvaluatedContribution extends StatContribution {
   readonly numericValue?: number;
   readonly applied: boolean;
   readonly reason?:
-    "conditional" | "equipment" | "typed-stacking" | "zero-gate" | "cycle";
+    | "conditional"
+    | "equipment"
+    | "statmin"
+    | "typed-stacking"
+    | "zero-gate"
+    | "zeroed"
+    | "cycle";
 }
 
 export interface EvaluatedStat {
@@ -75,15 +85,23 @@ export class StatAccumulator {
     const trimmed = value.trim();
     if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed))
       return { kind: "number", value: Number(trimmed) };
-    const ability = /^([+-]?)ABILITYMOD\((.+)\)$/i.exec(trimmed);
-    if (ability?.[2] !== undefined)
+    // Native ParseStatAdd: ABILITYMOD(X), MINONEMOD(X) (at least 1) and
+    // HALFMOD(X) (halved) link X's ability modifier.
+    const ability = /^([+-]?)(ABILITYMOD|MINONEMOD|HALFMOD)\((.+)\)$/i.exec(
+      trimmed,
+    );
+    if (ability?.[3] !== undefined) {
+      const modifier = ability[2]!.toLocaleUpperCase();
       return {
         kind: "link",
-        stat: ability[2],
+        stat: ability[3],
         sign: ability[1] === "-" ? -1 : 1,
         abilityModifier: true,
+        ...(modifier === "MINONEMOD" ? { minimumOne: true } : {}),
+        ...(modifier === "HALFMOD" ? { half: true } : {}),
         bare: false,
       };
+    }
     const link = /^([+-])(.+)$/.exec(trimmed);
     if (link?.[1] !== undefined && link[2] !== undefined)
       return {
@@ -109,6 +127,37 @@ export class StatAccumulator {
     return { kind: "text", value: trimmed };
   }
 
+  /**
+   * Native StatAddApplies (`-Module-.cs` ~36109): `statmin="<Stat> <N>"`
+   * (split at the last space) holds unless the stat exists and its own
+   * value is below N.
+   */
+  #meetsStatMinimum(
+    contribution: StatContribution,
+    visiting: Set<string>,
+  ): boolean {
+    const minimum = contribution.statMinimum?.trim();
+    if (minimum === undefined || minimum.length === 0) return true;
+    const space = minimum.lastIndexOf(" ");
+    if (space < 0) return true;
+    const stat = minimum.slice(0, space);
+    const threshold = Number.parseInt(minimum.slice(space + 1).trim(), 10);
+    const canonical = this.#canonical(stat);
+    if (
+      !this.#contributions.some(
+        (candidate) => this.#canonical(candidate.stat) === canonical,
+      )
+    )
+      return true;
+    const value = this.#run(stat, visiting, undefined).value;
+    return traceCondition(
+      "statmin",
+      `${contribution.providerName}|${contribution.stat}|${minimum}`,
+      typeof value !== "number" ||
+        value >= (Number.isNaN(threshold) ? 0 : threshold),
+    );
+  }
+
   /** The value a contribution shows on its own, its link evaluated as a
    *  stand-alone stat (native `CalculateStatValue` with no `type_max`). */
   #raw(
@@ -120,9 +169,7 @@ export class StatAccumulator {
     if (parsed.kind !== "link") return parsed.value;
     const linked = this.#run(parsed.stat, visiting, undefined).value;
     if (typeof linked === "string") return parsed.bare ? linked : undefined;
-    return (
-      parsed.sign * (parsed.abilityModifier ? abilityModifier(linked) : linked)
-    );
+    return linkValue(parsed, linked);
   }
 
   /**
@@ -157,13 +204,25 @@ export class StatAccumulator {
     const candidates = this.#contributions.filter(
       (contribution) => this.#canonical(contribution.stat) === canonical,
     );
+    // A link (top-level evaluations start with nothing visited).
+    if (visiting.size > 0)
+      traceCondition("statlink", name, candidates.length > 0);
     const nested = shared !== undefined;
     const caps = shared?.caps ?? new Map<string, TypeCap>();
     const reports: Array<() => EvaluatedContribution> = [];
     let total = 0;
-    let untyped = 0;
     const strings: string[] = [];
-    for (const contribution of candidates) {
+    // Native keeps zero/non-zero-gated statadds apart from the stat's sum
+    // and adds one group once the sum is known. A linked stat's gated
+    // statadds go to locals that are never added (CalculateStatValue
+    // ~36239 rebinds its out-pointers only at the top level).
+    const gates: { zero: GatedValue[]; nonZero: GatedValue[] } = {
+      zero: [],
+      nonZero: [],
+    };
+    // Native: an untyped literal 0 sets the stat to 0 and ends it (~36222).
+    let zeroedAt: number | undefined;
+    for (const [position, contribution] of candidates.entries()) {
       const equipmentMatches =
         (contribution.wearing === undefined ||
           equipmentPredicate(this.#equipment, contribution.wearing)) &&
@@ -182,18 +241,35 @@ export class StatAccumulator {
         }));
         continue;
       }
-      if (
-        (contribution.zeroOnly === true && untyped !== 0) ||
-        (contribution.nonZeroOnly === true && untyped === 0)
-      ) {
+      if (!this.#meetsStatMinimum(contribution, next)) {
         if (nested) continue;
         const raw = this.#raw(contribution, next);
         reports.push(() => ({
           ...contribution,
           ...(typeof raw === "number" ? { numericValue: raw } : {}),
           applied: false,
-          reason: "zero-gate",
+          reason: "statmin",
         }));
+        continue;
+      }
+      if (contribution.zeroOnly === true || contribution.nonZeroOnly === true) {
+        if (nested) continue;
+        // Native CalculateStatAddValue: a literal, or a link evaluated
+        // against the parent's caps; added untyped and uncapped.
+        const parsed = this.#parse(contribution.value);
+        let value = 0;
+        if (parsed.kind === "number") value = parsed.value;
+        else if (parsed.kind === "link") {
+          const linked = this.#run(parsed.stat, next, {
+            caps,
+            credit: undefined,
+          }).value;
+          if (typeof linked === "number") value = linkValue(parsed, linked);
+        }
+        (contribution.zeroOnly === true ? gates.zero : gates.nonZero).push({
+          contribution,
+          value,
+        });
         continue;
       }
       const parsed: ParsedValue =
@@ -245,23 +321,28 @@ export class StatAccumulator {
           // Its pieces were added, and credited, inside the link; only the
           // linked stat's truncation is left to credit.
           total += linked.value;
-          untyped += linked.value;
           cell.value += linked.value - linked.total;
           if (!nested) reports.push(linkReport(contribution, cell));
           continue;
         }
-        numeric =
-          parsed.sign *
-          (parsed.abilityModifier
-            ? abilityModifier(linked.value)
-            : linked.value);
+        numeric = linkValue(parsed, linked.value);
       }
       if (contribution.halfPoint === true && numeric !== 0)
         numeric += numeric > 0 ? 0.5 : -0.5;
       const value = numeric;
+      if (typeKey === undefined && parsed.kind === "number" && value === 0) {
+        total = 0;
+        zeroedAt = position;
+        if (!nested)
+          reports.push(() => ({
+            ...contribution,
+            numericValue: 0,
+            applied: true,
+          }));
+        break;
+      }
       if (typeKey === undefined) {
         total += value;
-        untyped += value;
         cell.value += value;
         if (!nested)
           reports.push(() => ({
@@ -288,6 +369,46 @@ export class StatAccumulator {
           };
         });
     }
+    if (zeroedAt !== undefined && !nested) {
+      // Everything before the zero is undone, everything after unread.
+      const before = reports.splice(0, reports.length - 1);
+      const zero = reports.pop()!;
+      reports.push(
+        ...before.map((report) => () => {
+          const result = report();
+          return result.applied
+            ? { ...result, applied: false, reason: "zeroed" as const }
+            : result;
+        }),
+        zero,
+        ...candidates.slice(zeroedAt + 1).map((contribution) => () => ({
+          ...contribution,
+          applied: false,
+          reason: "zeroed" as const,
+        })),
+      );
+    }
+    if (!nested) {
+      // Native CalculateStatValue (~36266): a stat whose sum is non-zero
+      // adds its non-zero-gated statadds, else its zero-gated ones.
+      const nonZero = Math.trunc(total) !== 0;
+      const chosen = nonZero ? gates.nonZero : gates.zero;
+      for (const entry of chosen) total += entry.value;
+      for (const entry of [...gates.zero, ...gates.nonZero]) {
+        const applied = chosen.includes(entry);
+        traceCondition(
+          entry.contribution.zeroOnly === true ? "zero" : "non-zero",
+          `${entry.contribution.providerName}|${entry.contribution.stat}`,
+          applied,
+        );
+        reports.push(() => ({
+          ...entry.contribution,
+          numericValue: entry.value,
+          applied,
+          ...(applied ? {} : { reason: "zero-gate" as const }),
+        }));
+      }
+    }
     return {
       value:
         strings.length > 0 &&
@@ -310,9 +431,26 @@ type ParsedValue =
       readonly stat: string;
       readonly sign: 1 | -1;
       readonly abilityModifier: boolean;
+      /** MINONEMOD: the ability modifier, at least 1. */
+      readonly minimumOne?: boolean;
+      /** HALFMOD: half the ability modifier, rounded toward zero. */
+      readonly half?: boolean;
       /** A stat name without a sign, which may also name a text stat. */
       readonly bare: boolean;
     };
+
+/** Native CalculateStatAddValue (`-Module-.cs` ~36137): a link's value
+ *  from its linked stat, times its ±1 multiplier. */
+function linkValue(
+  parsed: Extract<ParsedValue, { kind: "link" }>,
+  linked: number,
+): number {
+  if (!parsed.abilityModifier) return parsed.sign * linked;
+  let result = abilityModifier(linked);
+  if (parsed.half === true) result = Math.trunc(result / 2);
+  if (parsed.minimumOne === true && result < 1) result = 1;
+  return parsed.sign * result;
+}
 
 /** What one top-level contribution has added to the stat. */
 interface CreditCell {
@@ -328,6 +466,11 @@ interface TypeCap {
   zeroSeen: boolean;
   blocked: boolean;
   holder?: { readonly cell: CreditCell; readonly value: number };
+}
+
+interface GatedValue {
+  readonly contribution: StatContribution;
+  readonly value: number;
 }
 
 interface SharedCaps {

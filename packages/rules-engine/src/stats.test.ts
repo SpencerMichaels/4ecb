@@ -226,4 +226,155 @@ describe("stat evaluation", () => {
     add(stats, "flat", "Skill", "+4");
     expect(stats.evaluate("Skill").value).toBe(4);
   });
+
+  it("adds zero/non-zero-gated statadds after the stat's sum, untyped (native CalculateStatValue)", () => {
+    // Venom Handler and Serpentine Armor: resist poison 5 only while no
+    // other poison resistance; both gated adds count (native sums them).
+    const none = new StatAccumulator();
+    none.add({
+      id: "venom",
+      stat: "resist:poison",
+      value: "+5",
+      bonusType: "resist",
+      zeroOnly: true,
+      providerId: "venom",
+      providerName: "Venom Handler",
+    });
+    none.add({
+      id: "armor",
+      stat: "resist:poison",
+      value: "+5",
+      bonusType: "resist",
+      zeroOnly: true,
+      providerId: "armor",
+      providerName: "Serpentine Armor +1",
+    });
+    expect(none.evaluate("resist:poison").value).toBe(10);
+    // A typed resistance listed after the gated add still closes the gate:
+    // the decision reads the whole sum, typed parts included.
+    const typed = new StatAccumulator();
+    typed.add({
+      id: "venom",
+      stat: "resist:poison",
+      value: "+5",
+      bonusType: "resist",
+      zeroOnly: true,
+      providerId: "venom",
+      providerName: "Venom Handler",
+    });
+    add(typed, "race", "resist:poison", "+3", "Racial");
+    const evaluated = typed.evaluate("resist:poison");
+    expect(evaluated.value).toBe(3);
+    expect(
+      evaluated.contributions.find((entry) => entry.id === "venom"),
+    ).toMatchObject({ applied: false, reason: "zero-gate" });
+    // Wand of Frost: +2 resist cold on top of a typed resistance, uncapped
+    // by the shared "resist" type; nothing without one.
+    const wand = new StatAccumulator();
+    add(wand, "genasi", "resist:cold", "+5", "resist");
+    wand.add({
+      id: "wand",
+      stat: "resist:cold",
+      value: "+2",
+      bonusType: "resist",
+      nonZeroOnly: true,
+      providerId: "wand",
+      providerName: "Wand of Frost +1",
+    });
+    expect(wand.evaluate("resist:cold").value).toBe(7);
+    const bare = new StatAccumulator();
+    bare.add({
+      id: "wand",
+      stat: "resist:cold",
+      value: "+2",
+      bonusType: "resist",
+      nonZeroOnly: true,
+      providerId: "wand",
+      providerName: "Wand of Frost +1",
+    });
+    expect(bare.evaluate("resist:cold").value).toBe(0);
+  });
+
+  it("applies a statmin statadd only while the named stat meets it (native StatAddApplies)", () => {
+    // Superior Defense: +1 AC at Dexterity 13 and another at Dexterity 15.
+    const superior = (dexterity: number) => {
+      const stats = new StatAccumulator();
+      add(stats, "base", "Dexterity", String(dexterity));
+      add(stats, "ac", "AC", "10");
+      for (const minimum of ["Dexterity 13", "Dexterity 15"])
+        stats.add({
+          id: minimum,
+          stat: "AC",
+          value: "+1",
+          statMinimum: minimum,
+          providerId: "superior",
+          providerName: "Superior Defense",
+        });
+      return stats.evaluate("AC");
+    };
+    expect(superior(12).value).toBe(10);
+    expect(superior(13).value).toBe(11);
+    expect(superior(15).value).toBe(12);
+    expect(
+      superior(14).contributions.find((entry) => entry.id === "Dexterity 15"),
+    ).toMatchObject({ applied: false, reason: "statmin" });
+  });
+
+  it("reads MINONEMOD and HALFMOD links (native ParseStatAdd)", () => {
+    const stats = new StatAccumulator();
+    add(stats, "con", "Constitution", "8");
+    add(stats, "cha", "Charisma", "15");
+    // Storm Adept: lightning damage + Constitution modifier, at least 1.
+    add(
+      stats,
+      "storm",
+      "lightning:damage",
+      "+MINONEMOD(Constitution)",
+      "Storm Adept",
+    );
+    // Shared Prescience: initiative + half the Charisma modifier.
+    add(
+      stats,
+      "prescience",
+      "Initiative Misc",
+      "+HALFMOD(Charisma)",
+      "Shared Prescience",
+    );
+    expect(stats.evaluate("lightning:damage").value).toBe(1);
+    expect(stats.evaluate("Initiative Misc").value).toBe(1);
+  });
+
+  it("drops a linked stat's gated statadds (native CalculateStatValue locals)", () => {
+    const stats = new StatAccumulator();
+    stats.add({
+      id: "gated",
+      stat: "Linked Resist",
+      value: "+5",
+      zeroOnly: true,
+      providerId: "gated",
+      providerName: "Gated",
+    });
+    add(stats, "link", "resist:fire", "+Linked Resist");
+    // On its own the linked stat adds its zero-gated statadd.
+    expect(stats.evaluate("Linked Resist").value).toBe(5);
+    // Through a link the gated statadd is dropped.
+    expect(stats.evaluate("resist:fire").value).toBe(0);
+  });
+
+  it("zeroes the stat and stops at an untyped literal 0 (native ~36222)", () => {
+    // Armor Specialization (Chainmail): Armor Penalty value=0 while in chain.
+    const stats = new StatAccumulator();
+    add(stats, "chain", "Armor Penalty", "-1");
+    add(stats, "specialization", "Armor Penalty", "0");
+    add(stats, "later", "Armor Penalty", "-2");
+    const evaluated = stats.evaluate("Armor Penalty");
+    expect(evaluated.value).toBe(0);
+    expect(
+      evaluated.contributions.map(({ id, applied }) => [id, applied]),
+    ).toEqual([
+      ["chain", false],
+      ["specialization", true],
+      ["later", false],
+    ]);
+  });
 });

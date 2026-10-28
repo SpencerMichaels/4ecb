@@ -93,7 +93,15 @@ const content = [
   }),
   entity("GROUP_2", "Synthetic Company Arms (2)", "Item Set Benefit", {
     specifics: { _Item_Set_ID: "GROUP", "Piece Count": "2" },
-    rules: [rule("statadd", { name: "Insight", value: "+2" }, 0)],
+    rules: [
+      rule("statadd", { name: "Insight", value: "+2" }, 0),
+      // Heirlooms of Mazgorax (2): a bonus equal to the party's pieces.
+      rule(
+        "statadd",
+        { name: "Diplomacy Misc", value: "+GROUP Set Count", type: "item" },
+        1,
+      ),
+    ],
   }),
   piece(
     "BLADE",
@@ -163,8 +171,18 @@ describe("item sets", () => {
   it("counts a group set's party pieces only while the character wields one", () => {
     const party = { "GROUP Set Count": "3" };
     expect(evaluate([holding("blade", "BLADE", 1)], party).itemSets).toEqual([
-      { setId: "GROUP", pieces: 3, activeBenefitIds: ["GROUP_2"] },
+      {
+        setId: "GROUP",
+        pieces: 3,
+        activeBenefitIds: ["GROUP_2"],
+        partyPieces: 3,
+      },
     ]);
+    // Native GroupSetCounts adds the party's pieces to the Set Count stat.
+    expect(
+      evaluate([holding("blade", "BLADE", 1)], party).stats["Diplomacy Misc"]
+        ?.value,
+    ).toBe(3);
     expect(evaluate([holding("blade", "BLADE", 0)], party).itemSets).toBe(
       undefined,
     );

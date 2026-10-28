@@ -25,6 +25,7 @@ import {
   isLegacyMonkWeapon,
   isPowerRestricted,
   legacyNormalizedWeaponName,
+  legacyProficiencyWeaponName,
   machineReadRequirement,
   WEAPON_REQUIREMENT_FIELD,
   weaponRequirementThrowsMelee,
@@ -630,11 +631,7 @@ function loadouts(
       // NormalizedName (its primary end, without " (large)").
       proficiencyNames: [
         ...(weapon !== undefined
-          ? [
-              legacyIsLargeWeapon(weapon)
-                ? legacyNormalizedWeaponName(weapon, resolveWeapon)
-                : weapon.name,
-            ]
+          ? [legacyProficiencyWeaponName(weapon, resolveWeapon)]
           : staffWeapon
             ? ["Quarterstaff"]
             : []),

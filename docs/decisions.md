@@ -3084,9 +3084,63 @@ Decision:
 - D100's Swordmage Warding content correction is removed.
 - Native also drops zero/non-zero-gated statadds inside a linked stat; no
   linked stat in the content carries one, so the modern zero gate is kept
-  unchanged.
+  unchanged. (Superseded by D104: the engine now drops them, as native.)
 
 Cache v66.
+
+### D104 — Conditions the engine never decided are audited; native gates and dual wielding
+
+Status: accepted (2026-10-28), owner-approved postmortem step 1 (follow-up to
+D100: `SLOT:off hand` never matched and nothing noticed).
+
+Context: `pnpm audit:selectors` (private corpus) traces every condition the
+evaluator decides (opt-in `condition-trace.ts` on `equipmentPredicate`,
+`requires`, zero/non-zero/`statmin` gates, statlinks, select categories)
+over the 43 sample characters and about 2,100 generated equipment probes,
+and flags operands that are never true, never false or unrecognized. It
+found engine gaps against native D20RulesEngine:
+
+- `statmin` (Superior Defense) was parsed but never evaluated. Native
+  `StatAddApplies` (`-Module-.cs` ~36109) drops the statadd while the named
+  stat is below the number.
+- Zero/non-zero gates were decided in order against the running untyped
+  sum. Native `CalculateStatValue` (~36160–36270) keeps gated statadds out
+  of the sum, adds them untyped and uncapped, and picks the non-zero group
+  when the finished sum is non-zero, else the zero group; a linked stat's
+  gated statadds land in locals that are never added. An untyped literal
+  `0` sets the stat to 0 and ends it (~36222).
+- `MINONEMOD(X)`/`HALFMOD(X)` statadd values (Storm Adept, Shared
+  Prescience) were read as links to a stat of that name. Native
+  `ParseStatAdd` (~31955) reads them as X's ability modifier, at least 1 /
+  halved.
+- `DUAL-WIELDING:` counted any two equipped weapons and matched multi-group
+  operands by assigning one weapon per group. Native `IsDualWielding`
+  (D20Workspace.cs, `DWSlotEquipped` ~18860) needs a non-armor item whose
+  ItemSlot is off-hand plus a one-hand one (or two off-hand items;
+  Ambidextrous makes one-hand items off-hand), or a lone double weapon;
+  `DualWieldingConditional` (~19300) then requires every equipped weapon's
+  Group to be in the operand list, and special-cases `rapier-blade`
+  (a rapier with an off-hand light blade, Bladestorm Technique).
+- `DEFENSIVE:` (the Level 1 record's AC +1) held for any equipped Defensive
+  weapon. Native `WieldingDefensive` (~19206) needs dual wielding and
+  proficiency with the Defensive weapon (staff read as the Quarterstaff);
+  PHB2's Defensive property agrees.
+- A group item set's party count (the "<set> Set Count" textstring) never
+  reached the "<set> Set Count" stat its benefits link. Native
+  `GroupSetCounts` (~19691) adds it while a piece is equipped and the
+  textstring exists.
+
+Decision: implement each as native does (cache v67). The audit stays as a
+standing check; a flagged operand is fixed or listed in its `TRIAGED` table
+with a reason. Content typos it found (misspelled `modify` targets such as
+"Predator's Strike", Stalwart Assault's "constition modifier") fail in
+native too and wait for an owner decision on corrections.
+
+Consequence: Drizzt (SampleHeroes, older builder) now gets Cross-Body Parry
+and Blade Dance's Dexterity damage with two scimitars, as native code and
+the power text ("two light blades, two heavy blades, or a heavy blade and a
+light blade") say; his cached rows omit it. The cause in that older save is
+not established.
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.

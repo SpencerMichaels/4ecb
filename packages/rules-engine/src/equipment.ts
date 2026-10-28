@@ -1,3 +1,5 @@
+import { traceCondition } from "./condition-trace";
+import { EXCEPTION_IDS } from "./exceptions";
 import { legacySlotMatches } from "./item-fields";
 import type { LegacyLoadoutState } from "./loadout-slots";
 
@@ -8,12 +10,27 @@ import type { LegacyLoadoutState } from "./loadout-slots";
  * category fields (one entry per Group); `properties` its Properties list.
  */
 export interface EquippedItem {
+  /** The holding (inventory entry). */
   readonly id: string;
+  /** The record's ID. */
+  readonly definitionId?: string;
   readonly name: string;
   readonly type: string;
   readonly categories: readonly string[];
   readonly properties: readonly string[];
+  /** The record's overlay-resolved Group list. */
+  readonly groups?: readonly string[];
   readonly slot?: string;
+  /** Native ItemSlot of the holding's base (`legacyItemSlot`): the Item
+   *  Slot as this character fills it (Ambidextrous makes "one-hand"
+   *  "off-hand"; a staff is "off-hand"). */
+  readonly itemSlot?: string;
+  /** Native IsDoubleWeapon of the base (a staff read as the Quarterstaff). */
+  readonly doubleWeapon?: boolean;
+  /** Native WieldingDefensive's weapon test: the base (a staff read as the
+   *  Quarterstaff) is a weapon with the Defensive property that the
+   *  character is proficient with (native IsProficient). */
+  readonly defensiveWeapon?: boolean;
   /** Native CharLootSlot of the holding (base rows only), which `SLOT:`
    * selectors compare: "Main hand", "Off hand", "Two-hands", "Arms"... */
   readonly lootSlot?: string;
@@ -117,8 +134,6 @@ export function matchesEquipmentSelector(
         properties.has("versatile") &&
         (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
-    case "defensive":
-      return properties.has("defensive");
     default:
       return (
         categories.has(value) ||
@@ -127,6 +142,103 @@ export function matchesEquipmentSelector(
         item.id.toLocaleLowerCase() === value
       );
   }
+}
+
+const ITEM_SLOT_KEY = (item: EquippedItem) =>
+  (item.itemSlot ?? item.slot ?? "").trim().toLocaleLowerCase();
+
+/** Equipped base records of the holdings (native CharLoot base elements). */
+function bases(state: EquipmentState): EquippedItem[] {
+  return state.items.filter((item) => item.quantity > 0 && item.base !== false);
+}
+
+/**
+ * Native IsDualWielding (D20Workspace.cs, DWSlotEquipped `-Module-.cs`
+ * ~18860): a non-armor holding whose ItemSlot is "off-hand" and another
+ * whose ItemSlot is "one-hand" (or more than one off-hand item), or a
+ * double weapon (a staff counts as the Quarterstaff) as the only hand item.
+ * Two one-handed weapons are not dual-wielding unless Ambidextrous makes
+ * one-handed weapons off-hand ones.
+ */
+export function legacyIsDualWielding(state: EquipmentState): boolean {
+  const held = bases(state).filter(
+    (item) => item.type.trim().toLocaleLowerCase() !== "armor",
+  );
+  const offHand = held
+    .filter((item) => ITEM_SLOT_KEY(item) === "off-hand")
+    .reduce((sum, item) => sum + item.quantity, 0);
+  if (
+    offHand > 0 &&
+    (offHand > 1 || held.some((item) => ITEM_SLOT_KEY(item) === "one-hand"))
+  )
+    return true;
+  return (
+    bases(state).some((item) => item.doubleWeapon === true) &&
+    onlyOneHandItem(state)
+  );
+}
+
+/** Whether any of a weapon's groups is in the comma list (native
+ *  ListContainsOneOf/ListContains, ignoring case). */
+function groupInList(item: EquippedItem, list: readonly string[]): boolean {
+  if (list.includes("*")) return true;
+  return (item.groups ?? []).some((group) =>
+    list.includes(group.trim().toLocaleLowerCase()),
+  );
+}
+
+/**
+ * Native DualWieldingConditional (`-Module-.cs` ~19300) for
+ * `DUAL-WIELDING:<operand>`: dual-wielding, and then for an empty operand
+ * nothing more; for `off-hand` every equipped weapon has the off-hand
+ * property; for `rapier-blade` a rapier and another weapon that is an
+ * off-hand light blade; otherwise every equipped weapon has a Group in the
+ * operand's comma list (so "heavy blade,light blade" is met by two light
+ * blades too).
+ */
+function dualWieldingConditional(
+  state: EquipmentState,
+  operand: string,
+): boolean {
+  if (!legacyIsDualWielding(state)) return false;
+  if (operand.length === 0) return true;
+  const weapons = bases(state).filter(
+    (item) => item.type.trim().toLocaleLowerCase() === "weapon",
+  );
+  const offHandProperty = (item: EquippedItem) =>
+    item.properties.some((property) => /off-hand/iu.test(property));
+  if (operand === "off-hand") return weapons.every(offHandProperty);
+  if (operand === "rapier-blade") {
+    const rapier = (item: EquippedItem) =>
+      [EXCEPTION_IDS.rapier, EXCEPTION_IDS.largeRapier].some((id) =>
+        (item.definitionId ?? "")
+          .toLocaleLowerCase()
+          .includes(id.toLocaleLowerCase()),
+      );
+    return (
+      weapons.some(rapier) &&
+      weapons.some(
+        (item) =>
+          !rapier(item) &&
+          offHandProperty(item) &&
+          (item.groups ?? []).some((group) => /light blade/iu.test(group)),
+      )
+    );
+  }
+  const list = selectorTerms(operand).map((term) => term.toLocaleLowerCase());
+  return weapons.every((item) => groupInList(item, list));
+}
+
+/**
+ * Native WieldingDefensive (`-Module-.cs` ~19206): dual-wielding with a
+ * Defensive weapon the character is proficient with (a staff read as the
+ * Quarterstaff).
+ */
+function wieldingDefensive(state: EquipmentState): boolean {
+  return (
+    legacyIsDualWielding(state) &&
+    bases(state).some((item) => item.defensiveWeapon === true)
+  );
 }
 
 const HAND_SLOTS = new Set(["two-hands", "one-hand", "off-hand"]);
@@ -153,7 +265,53 @@ function onlyOneHandItem(state: EquipmentState): boolean {
   return held.size <= 1;
 }
 
+/** Prefixes `matchesEquipmentSelector` dispatches on. */
+const ITEM_SELECTOR_PREFIXES = new Set([
+  "armor",
+  "weapon",
+  "implement",
+  "slot",
+  "only-weapon",
+  "versatile",
+]);
+
+/**
+ * Which matcher branch a `wearing`/`not-wearing` operand takes: `any`
+ * (`*`), `name` (no colon: a category, property, record name or ID), a
+ * prefix the matcher knows, `dual-wielding`/`dual-shield`, or
+ * `unrecognized` (a prefix nothing handles, matched as a whole name).
+ */
+export function equipmentSelectorBranch(selector: string): string {
+  const value = selector.trim().toLocaleLowerCase();
+  if (value === "*") return "any";
+  if (value.startsWith("dual-wielding:")) return "dual-wielding";
+  if (value === "defensive:") return "defensive";
+  if (
+    value === "dual-shields" ||
+    value === "dual-shielding:" ||
+    value === "dual-shield:"
+  )
+    return "dual-shield";
+  const colon = value.indexOf(":");
+  if (colon < 0) return "name";
+  const prefix = value.slice(0, colon);
+  return ITEM_SELECTOR_PREFIXES.has(prefix) ? prefix : "unrecognized";
+}
+
+/** Native HasLoot: whether the equipped holdings meet a `wearing` operand.
+ *  Reports each decision to the opt-in condition trace. */
 export function equipmentPredicate(
+  state: EquipmentState,
+  selector: string,
+): boolean {
+  return traceCondition(
+    "selector",
+    selector,
+    untracedEquipmentPredicate(state, selector),
+  );
+}
+
+function untracedEquipmentPredicate(
   state: EquipmentState,
   selector: string,
 ): boolean {
@@ -165,42 +323,12 @@ export function equipmentPredicate(
         (item) => item.quantity > 0 && matchesEquipmentSelector(item, value),
       )
     );
-  if (value.startsWith("dual-wielding:")) {
-    const operand = value.slice("dual-wielding:".length);
-    const weapons = state.items
-      .filter(
-        (item) =>
-          item.quantity > 0 && item.type.toLocaleLowerCase() === "weapon",
-      )
-      .flatMap((item) => Array.from({ length: item.quantity }, () => item));
-    const terms = selectorTerms(operand);
-    if (terms.length === 0) return weapons.length >= 2;
-    if (terms.length === 1)
-      return (
-        weapons.filter((item) =>
-          matchesEquipmentSelector(item, `weapon:${terms[0]}`),
-        ).length >= 2
-      );
-    const assign = (
-      remaining: readonly EquippedItem[],
-      index: number,
-    ): boolean => {
-      if (index >= terms.length) return true;
-      const term = terms[index];
-      if (term === undefined) return true;
-      return remaining.some(
-        (item, itemIndex) =>
-          matchesEquipmentSelector(item, `weapon:${term}`) &&
-          assign(
-            remaining.filter(
-              (_, candidateIndex) => candidateIndex !== itemIndex,
-            ),
-            index + 1,
-          ),
-      );
-    };
-    return assign(weapons, 0);
-  }
+  if (value.startsWith("dual-wielding:"))
+    return dualWieldingConditional(
+      state,
+      value.slice("dual-wielding:".length).trim(),
+    );
+  if (value === "defensive:") return wieldingDefensive(state);
   if (
     value === "dual-shields" ||
     value === "dual-shielding:" ||

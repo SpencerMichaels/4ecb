@@ -2418,6 +2418,159 @@ describe("character evaluator", () => {
     ).toBe(1);
   });
 
+  it("reads DUAL-WIELDING and DEFENSIVE through native IsDualWielding (ItemSlot, double weapons, Ambidextrous)", () => {
+    const held = (id: string, definitionId: string, count = 1) => ({
+      id,
+      definitionIds: [definitionId],
+      quantity: count,
+      equippedQuantity: count,
+      acquiredLevel: 1,
+    });
+    const statadd = (name: string, selector: string, ordinal: number) =>
+      rule("statadd", { name, value: "+1", wearing: selector }, ordinal);
+    const weapon = (
+      id: string,
+      name: string,
+      specifics: Record<string, string>,
+    ) => entity(id, name, "Weapon", { specifics });
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          statadd("Two-Weapon Defense", "DUAL-WIELDING:", 0),
+          statadd("Blade Dance", "DUAL-WIELDING:heavy blade,light blade", 1),
+          statadd("Bladestorm", "DUAL-WIELDING:rapier-blade", 2),
+          // The Level 1 record's defensive-weapon AC.
+          statadd("Defensive", "DEFENSIVE:", 3),
+        ],
+      }),
+      entity("AMBIDEXTROUS", "Ambidextrous", "Internal"),
+      entity("PROF_GYTHKA", "Weapon Proficiency (Gythka)", "Proficiency"),
+      entity(
+        "PROF_PARRYING",
+        "Weapon Proficiency (Parrying dagger)",
+        "Proficiency",
+      ),
+      weapon("LONGSWORD", "Longsword", {
+        Group: "Heavy Blade",
+        "Hands Required": "One-Handed",
+        "Item Slot": "One-hand",
+        Properties: "Versatile",
+      }),
+      weapon(EXCEPTION_IDS.rapier, "Rapier", {
+        Group: "Light Blade",
+        "Hands Required": "One-Handed",
+        "Item Slot": "One-hand",
+      }),
+      weapon("DAGGER", "Dagger", {
+        Group: "Light Blade",
+        "Hands Required": "One-Handed",
+        "Item Slot": "Off-hand",
+        Properties: "Light Thrown, Off-hand",
+      }),
+      weapon("PARRYING", "Parrying dagger", {
+        Group: "Light Blade",
+        "Hands Required": "One-Handed",
+        "Item Slot": "Off-hand",
+        Properties: "Off-hand, Defensive",
+      }),
+      weapon("GYTHKA", "Gythka", {
+        Group: "Spear",
+        "Hands Required": "One-Handed",
+        "Item Slot": "Two-Hands",
+        Properties: "Defensive, Heavy Thrown",
+        "_Secondary End": "GYTHKA_END",
+      }),
+      entity("SHIELD", "Light Shield", "Armor", {
+        specifics: { "Item Slot": "Off-hand" },
+      }),
+    ];
+    const owned = (definitionId: string) => ({
+      id: definitionId,
+      definitionId,
+      acquiredLevel: 1,
+      kind: "root" as const,
+    });
+    const evaluate = (
+      inventory: CharacterInventoryEntry[],
+      ambidextrous = false,
+      proficient = true,
+    ) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            ...(ambidextrous ? [owned("AMBIDEXTROUS")] : []),
+            ...(proficient
+              ? [owned("PROF_GYTHKA"), owned("PROF_PARRYING")]
+              : []),
+          ],
+          inventory,
+        },
+        content,
+      ).stats;
+    const value = (
+      stats: ReturnType<typeof evaluate>,
+      name: string,
+    ): number | string => stats[name]?.value ?? 0;
+
+    // A one-handed weapon and an off-hand weapon.
+    const swordAndDagger = evaluate([
+      held("sword", "LONGSWORD"),
+      held("dagger", "DAGGER"),
+    ]);
+    expect(value(swordAndDagger, "Two-Weapon Defense")).toBe(1);
+    expect(value(swordAndDagger, "Blade Dance")).toBe(1);
+    expect(value(swordAndDagger, "Bladestorm")).toBe(0);
+    // Two one-handed weapons are not dual-wielding without Ambidextrous.
+    expect(
+      value(evaluate([held("swords", "LONGSWORD", 2)]), "Two-Weapon Defense"),
+    ).toBe(0);
+    expect(
+      value(
+        evaluate([held("swords", "LONGSWORD", 2)], true),
+        "Two-Weapon Defense",
+      ),
+    ).toBe(1);
+    // Every weapon's group is in the list: two light blades qualify.
+    expect(value(evaluate([held("daggers", "DAGGER", 2)]), "Blade Dance")).toBe(
+      1,
+    );
+    // A rapier with an off-hand light blade.
+    expect(
+      value(
+        evaluate([
+          held("rapier", EXCEPTION_IDS.rapier),
+          held("dagger", "DAGGER"),
+        ]),
+        "Bladestorm",
+      ),
+    ).toBe(1);
+    // A double weapon alone is dual-wielding; a shield is not a weapon hand.
+    const gythka = evaluate([held("gythka", "GYTHKA")]);
+    expect(value(gythka, "Two-Weapon Defense")).toBe(1);
+    expect(value(gythka, "Defensive")).toBe(1);
+    expect(
+      value(
+        evaluate([held("sword", "LONGSWORD"), held("shield", "SHIELD")]),
+        "Two-Weapon Defense",
+      ),
+    ).toBe(0);
+    // A defensive weapon counts only while dual-wielding, and only with
+    // proficiency in it (native IsProficient).
+    expect(
+      value(evaluate([held("gythka", "GYTHKA")], false, false), "Defensive"),
+    ).toBe(0);
+    expect(value(evaluate([held("parry", "PARRYING")]), "Defensive")).toBe(0);
+    expect(
+      value(
+        evaluate([held("sword", "LONGSWORD"), held("parry", "PARRYING")]),
+        "Defensive",
+      ),
+    ).toBe(1);
+  });
+
   it("matches SLOT:off hand through each holding's CharLootSlot and keeps typed blade bonuses from stacking", () => {
     const held = (
       id: string,

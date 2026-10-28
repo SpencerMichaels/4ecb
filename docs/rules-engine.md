@@ -58,6 +58,25 @@ Swordmage Warding add it once); the link's result is then added under the
 link's own type. Applied contributions sum to the total: an untyped `+`
 link is credited with what its pieces actually added.
 
+A statadd applies only while its `requires`, `wearing`, `not-wearing` and
+`statmin` hold (native `StatAddApplies`; `statmin="Dexterity 13"` splits at
+the last space and fails while that stat is below the number). Zero- and
+non-zero-gated statadds (`zero="true"`, `non-zero="true"`, nearly all
+resistances) are kept out of the sum, valued untyped and uncapped, and once
+the top-level sum is known the stat adds all its non-zero-gated ones if the
+sum is non-zero, else all its zero-gated ones (native `CalculateStatValue`
+~36266, D104); a linked stat's gated statadds are dropped. An untyped
+literal `value="0"` sets the stat to 0 and ends it (Armor Specialization
+(Chainmail)'s Armor Penalty). `MINONEMOD(X)` and `HALFMOD(X)` link X's
+ability modifier at least 1 or halved, as `ABILITYMOD(X)` links it whole.
+
+`pnpm audit:selectors` (private corpus) records, through the opt-in
+condition trace (`condition-trace.ts`), whether every `wearing`/
+`not-wearing` operand, `requires` expression, zero/non-zero/`statmin`
+gate, statlink and select category in the pack is ever true and ever
+false on the sample characters and on generated equipment probes; a
+condition that is never true is reported, not silently ignored.
+
 The full local corpus contains 54,012 statements across 38,339 entities. The
 audit recognizes every observed opcode and attribute with no unexplained
 required field. Public tests use synthetic content; private files remain ignored.

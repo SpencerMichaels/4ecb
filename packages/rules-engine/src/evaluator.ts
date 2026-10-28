@@ -51,7 +51,11 @@ import {
 import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 import {
   equipmentName,
+  legacyCanUseLargeWeapons,
+  legacyIsDoubleWeapon,
+  legacyIsLargeWeapon,
   legacyIsStaff,
+  legacyItemSlot,
   legacyLootSlotContext,
   legacyLootSlots,
   overlaidEntity,
@@ -59,6 +63,8 @@ import {
   type LootSlotContext,
 } from "./item-fields";
 import { legacyKeywordList } from "./weapon-groups";
+import { legacyProficiencyWeaponName } from "./power-requirements";
+import { traceCondition, traceEvaluationState } from "./condition-trace";
 import {
   legacyLoadoutState,
   loadoutContext,
@@ -68,7 +74,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v66-2026-10-27-statlink-type-caps";
+  "evaluated-character-v67-2026-10-28-statmin-zero-gates";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -533,6 +539,7 @@ function equippedState(
   index: RulesIndex,
   overlays: readonly FieldOverlay[],
   slotContext: LootSlotContext,
+  proficiencies: ReadonlySet<string>,
 ): EquipmentState {
   let builtFor = -1;
   let items: readonly EquippedItem[] = [];
@@ -551,6 +558,7 @@ function equippedState(
           : { mainHandWeapon: loadout.mainHandWeapon }),
       },
       loadout,
+      proficiencies,
     );
     builtFor = overlays.length;
   };
@@ -613,8 +621,26 @@ function equippedItems(
   overlays: readonly FieldOverlay[],
   slotContext: LootSlotContext,
   loadout: LegacyLoadoutState,
+  proficiencies: ReadonlySet<string>,
 ): EquippedItem[] {
   const items: EquippedItem[] = [];
+  // Native IsProficient(weapon, enchant): an owned "Weapon Proficiency
+  // (<weapon>)", or one for the enchantment's "Proficient As"; a Large
+  // weapon needs CanUseLargeWeapons first.
+  const resolveWeapon = (reference: string) =>
+    index.get(reference) ?? index.find(reference, "Weapon");
+  const legacyIsProficient = (
+    weapon: ContentEntity,
+    enchant: ContentEntity | undefined,
+  ) => {
+    if (legacyIsLargeWeapon(weapon) && !legacyCanUseLargeWeapons(slotContext))
+      return false;
+    const proficientAs =
+      enchant === undefined ? "" : (field(enchant, "Proficient As") ?? "");
+    return [legacyProficiencyWeaponName(weapon, resolveWeapon), proficientAs]
+      .filter((name) => name.trim() !== "")
+      .some((name) => proficiencies.has(key(`Weapon Proficiency (${name})`)));
+  };
   const equipped = input.inventory.filter(
     (item) => item.acquiredLevel <= input.level && item.equippedQuantity > 0,
   );
@@ -701,13 +727,40 @@ function equippedItems(
           /ki focus/i.test(entity.name) ? "Ki Focus" : "",
         );
       const slot = field(entity, "Item Slot");
+      const enchantmentId = entry.definitionIds[1];
+      const enchantment =
+        enchantmentId === undefined ? undefined : index.get(enchantmentId);
+      // Native IsDualWielding and WieldingDefensive read a staff as the
+      // Quarterstaff.
+      const quarterstaff = index.get(EXCEPTION_IDS.quarterstaff);
+      const handWeapon =
+        legacyIsStaff(entity) && quarterstaff !== undefined
+          ? overlaidEntity(quarterstaff, overlays)
+          : entity;
       items.push({
         id: entry.id,
+        definitionId: entity.id,
         name: entity.name,
         type: entity.type,
         categories,
         properties,
+        groups: legacyKeywordList(field(entity, "Group")),
         ...(slot === undefined ? {} : { slot }),
+        ...(definitionIndex === 0
+          ? { itemSlot: legacyItemSlot(entity, slotContext) }
+          : {}),
+        ...(definitionIndex === 0 && legacyIsDoubleWeapon(handWeapon)
+          ? { doubleWeapon: true }
+          : {}),
+        ...(definitionIndex === 0 &&
+        key(handWeapon.type) === "weapon" &&
+        /defensive/iu.test(field(handWeapon, "Properties") ?? "") &&
+        legacyIsProficient(
+          handWeapon,
+          handWeapon === entity ? enchantment : undefined,
+        )
+          ? { defensiveWeapon: true }
+          : {}),
         ...(definitionIndex === 0 && lootSlot !== undefined
           ? { lootSlot }
           : {}),
@@ -1081,16 +1134,20 @@ function evaluateCharacterInternal(
         indexed.counts.get(definitionKey) === count ? [definitionKey] : [],
       ),
     );
-    return evaluateRequires(
-      expression,
-      ignored.size === 0
-        ? context
-        : {
-            ...context,
-            namedOwned: context.owned.filter(
-              (entity) => !ignored.has(key(entity.id)),
-            ),
-          },
+    return traceCondition(
+      "requires",
+      requires,
+      evaluateRequires(
+        expression,
+        ignored.size === 0
+          ? context
+          : {
+              ...context,
+              namedOwned: context.owned.filter(
+                (entity) => !ignored.has(key(entity.id)),
+              ),
+            },
+      ),
     );
   };
   const droppedBy = (
@@ -1610,7 +1667,17 @@ function evaluateCharacterInternal(
         );
   const overlays: FieldOverlay[] = [];
   const slotContext = legacyLootSlotContext(ownedDefinitions);
-  const equipment = equippedState(currentInput, index, overlays, slotContext);
+  const equipment = equippedState(
+    currentInput,
+    index,
+    overlays,
+    slotContext,
+    new Set(
+      ownedDefinitions
+        .filter((definition) => key(definition.type) === "proficiency")
+        .map((definition) => key(definition.name)),
+    ),
+  );
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
     stats.add({
@@ -1620,6 +1687,16 @@ function evaluateCharacterInternal(
       providerId: "base-abilities",
       providerName: "Base ability score",
     });
+  // Native GroupSetCounts: a group set's party pieces join its Set Count.
+  for (const set of itemSets.itemSets)
+    if (set.partyPieces !== undefined)
+      stats.add({
+        id: `item-set:${set.setId}`,
+        stat: `${set.setId} Set Count`,
+        value: String(set.partyPieces),
+        providerId: set.setId,
+        providerName: index.get(set.setId)?.name ?? set.setId,
+      });
   for (const occurrence of occurrences) {
     if (index.get(occurrence.definitionId) !== undefined) continue;
     const target = occurrence.definitionId.match(
@@ -1908,6 +1985,7 @@ function evaluateCharacterInternal(
         ownedIds,
       );
       match ||= isCustomChoiceException(candidate);
+      traceCondition("select-category", `${rule.type}|${rule.category}`, match);
       if (!match) reasons.push("category");
     }
     if (grantsExistingClassSkill(candidate))
@@ -2121,6 +2199,9 @@ function evaluateCharacterInternal(
             ...(rule.zero === undefined ? {} : { zeroOnly: true }),
             ...(rule.nonZero === undefined ? {} : { nonZeroOnly: true }),
             ...(rule.halfPoint === undefined ? {} : { halfPoint: true }),
+            ...(rule.statMinimum === undefined
+              ? {}
+              : { statMinimum: rule.statMinimum }),
           });
           break;
         }
@@ -3146,6 +3227,7 @@ function evaluateCharacterInternal(
       },
     ];
   });
+  traceEvaluationState(equipment, expressionContext);
   return {
     level: input.level,
     converged,
