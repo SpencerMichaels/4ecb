@@ -139,12 +139,6 @@ const TRIAGED: readonly Triaged[] = [
       "No record defines the stat in native either (0); Psionic Dabbler's hybrid power points need an owner decision on a content correction.",
   },
   {
-    kind: "statlink",
-    operand: "constition modifier",
-    reason:
-      'Stalwart Assault\'s conditional melee damage misspells "Constitution modifier"; native shows the same 0. Content correction pending an owner decision (D091).',
-  },
-  {
     kind: "select-category",
     operand: "Power|ID_FMP_CLASS_9,daily,lightning,4",
     reason:
@@ -160,13 +154,6 @@ const TRIAGED: readonly Triaged[] = [
     operand: /^(this|BaseItem)$/i,
     reason:
       "Context targets: `this` is the providing record and `BaseItem` the holding's base record (item-fields CONTEXT_TARGETS, evaluator overlay()).",
-  },
-  {
-    kind: "modify-target",
-    operand:
-      /^(Predator's Strike|Command's Strike|Overhwleming Strike|Ghost Sounds) \(Power\)$|^Catkcha \(Weapon\)$/,
-    reason:
-      "Misspelled targets (Predator Strike, Commander's Strike, Overwhelming Strike, Ghost Sound, Chatkcha): native finds nothing either. Content correction pending an owner decision (D091).",
   },
 ];
 

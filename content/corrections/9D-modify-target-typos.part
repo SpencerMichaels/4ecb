@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Misspelled power names in feat `modify` targets (pnpm audit:selectors):
+  no power has the misspelled name, so native attaches the feat's text to
+  nothing and the power card never shows it. The merge can only replace a
+  record's whole rules block, so each record's other statements are copied
+  verbatim beside the corrected one (the owner approved copying this short
+  official text). Merged after the CBLoader parts by
+  scripts/build-private-content.sh.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <!-- Bloodhound Style: "Predator's Strike" is Predator Strike (ID_FMP_POWER_4369). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1297"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1297">
+    <rules>
+      <modify name="Careful Attack" type="Power" Field="Bloodhound Style" value="If you hit with the melee version of this exploit against a creature granting combat advantage to you, the target is also slowed until the end of your next turn." />
+      <modify name="Disheartening Strike" type="Power" Field="Bloodhound Style" value="If you hit with the melee version of this exploit against a creature granting combat advantage to you, you can also slide the target 1 square." />
+      <modify name="Predator Strike" type="Power" Field="Bloodhound Style" value="If you have combat advantage against your target when you use this exploit, your beast companion can shift 1 square before the attack." />
+      <modify name="Tide of Iron" type="Power" Field="Bloodhound Style" value="If you hit with this exploit, you can slow the target until the end of your next turn instead of pushing it." />
+    </rules>
+  </AppendNodes>
+
+  <!-- Cruel Cut Style: "Predator's Strike" is Predator Strike (ID_FMP_POWER_4369). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1299"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1299">
+    <rules>
+      <modify name="Cleave" type="Power" Field="Cruel Cut Style" value="If no other enemies are adjacent to the target when you hit the target with this exploit, the target takes ongoing damage equal to your Wisdom modifier (save ends)." />
+      <modify name="Furious Smash" type="Power" Field="Cruel Cut Style" value="If your ally hits with the attack this exploit provides, the target takes ongoing damage equal to your Wisdom modifier (save ends)." />
+      <modify name="Predator Strike" type="Power" Field="Cruel Cut Style" value="If your beast companion hits with this exploit against a creature granting combat advantage to it, instead of adding your Wisdom modifier to the damage roll, you can have the target take ongoing damage equal to your Wisdom modifier (save ends)." />
+      <modify name="Riposte Strike" type="Power" Field="Cruel Cut Style" value="If you hit with the riposte this exploit grants, the target takes ongoing damage equal to your Wisdom modifier (save ends)." />
+    </rules>
+  </AppendNodes>
+
+  <!-- Corellon's Wrath Style: "Command's Strike" is Commander's Strike (ID_FMP_POWER_1061). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1298"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1298">
+    <rules>
+      <modify name="Commander's Strike" type="Power" Field="Corellon's Wrath Style" value="If the target of this exploit is a demon, drow, orc, or spider, your ally can add half your Intelligence modifier (round up) to the attack roll." />
+      <modify name="Crushing Surge" type="Power" Field="Corellon's Wrath Style" value="If you hit a demon, drow, orc, or spider with this exploit, you gain a number of extra temporary hit points equal to your Intelligence modifier." />
+      <modify name="Riposte Strike" type="Power" Field="Corellon's Wrath Style" value="If you hit a demon, drow, orc, or spider with this exploit, you can add your Intelligence modifier to the attack roll and damage roll of your riposte." />
+      <modify name="Twin Strike" type="Power" Field="Corellon's Wrath Style" value="If you hit a demon, drow, orc, or spider with this exploit, you deal extra damage equal to your Intelligence modifier." />
+    </rules>
+  </AppendNodes>
+
+  <!-- Power of Torment: "Overhwleming Strike" is Overwhelming Strike (ID_FMP_POWER_3423). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1471"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1471">
+    <rules>
+      <statadd name="Intimidate Misc" value="+2" type="Feat" />
+      <modify name="Ardent Strike" type="Power" Field="Power of Torment" value="If you hit, target grants combat advantage to your next ally who attacks it before the start of your next turn." />
+      <modify name="Astral Seal" type="Power" Field="Power of Torment" value="If you hit, target grants combat advantage to your next ally who attacks it before the start of your next turn." />
+      <modify name="Overwhelming Strike" type="Power" Field="Power of Torment" value="If you hit, target grants combat advantage to your next ally who attacks it before the start of your next turn." />
+      <modify name="Mantle of the Infidel" type="Power" Field="Power of Torment" value="If you hit, target grants combat advantage to your next ally who attacks it before the start of your next turn." />
+    </rules>
+  </AppendNodes>
+
+  <!-- Haunting Sounds: "Ghost Sounds" is Ghost Sound (ID_FMP_POWER_1217), which a second statement already modifies with the same text; drop the misspelled duplicate. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_3292"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3292">
+    <rules>
+      <modify name="Ghost Sound" type="Power" Field="Haunting Sounds" value="While you have at least 1 power point, you can use your ghost sound as an at-will power. When you use your ghost sound, you can spend 1 power point to gain combat advantage with your next attack made before the end of your turn against one enemy adjacent to the target object or square." />
+    </rules>
+  </AppendNodes>
+</D20Rules>
