@@ -2305,9 +2305,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       `${LEGACY_IO}. This is the saved stat-block reader; the rules-XML ParseStatAdd (?A0x1e9d9cdc, MINONEMOD/HALFMOD) is rules-engine stats.ts`,
     ),
     SaveStats: outOfScope(".dnd4e stat block writer.", LEGACY_IO),
-    "Campaign.FromXML": notHandled(
+    "Campaign.FromXML": outOfScope(
       ".dndcamp reader (Houserules/Restricted).",
-      ".dndcamp house rules/Restricted lists change legality; the modern app has no .dndcamp support (owner decision: build or out of scope)",
+      "out of scope (owner decision 2026-10-28): the modern app does not read .dndcamp campaign files, so their house rules and Restricted lists do not apply",
     ),
 
     // --- RulesEngineCommon --------------------------------------------

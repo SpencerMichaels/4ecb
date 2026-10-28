@@ -105,7 +105,7 @@ packages/
   sheet-model/         Semantic sheets, sections, and reference cards
   legacy-wotc/         WotC.index/container compatibility
   legacy-dnd4e/        Loss-preserving character import/export
-  legacy-campaign/     .dndcamp compatibility
+  legacy-campaign/     .dndcamp compatibility (out of scope, 2026-10-28)
   session-protocol/    Pairing, capabilities, encrypted message schemas
   browser-storage/     IndexedDB repositories, transactions, migration
   ui/                  Low-level accessible visual primitives
@@ -331,7 +331,7 @@ Compatibility packages isolate recovered quirks from the clean domain:
   CBLoader merge semantics already specified under `reverse-engineering/`.
 - `legacy-dnd4e` separates authoritative inputs from regenerated `CharacterSheet`
   and calculation caches, while preserving unknown extensions.
-- `legacy-campaign` maps restrictions and house-rule elements to a profile
+- `legacy-campaign` (out of scope since 2026-10-28) would map restrictions and house-rule elements to a profile
   overlay.
 
 Import produces a structured report containing mapped fields, preserved unknown

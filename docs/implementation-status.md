@@ -1,5 +1,27 @@
 # Implementation status
 
+## Owner decisions applied (2026-10-28)
+
+- Parity: `sample-chars/` saves are the canonical baseline; SampleHeroes
+  diffs are informational and no longer fail `parity:baseline` (`9406cf5`).
+- "Primary ability" and the bare "+ ability modifier" damage term use native
+  HighestAbility (`821f01b`, D070 amended); five prose-bearing typo modifies
+  corrected (`595b27f`).
+- D105 (`d5444dd`): rules-checked departures — Reactive Shot thrown/other
+  split, weapon riders once per attack (Giant's Wake), Psionic Dabbler power
+  points, chain/scale-only armor penalty for Armor Specialization (Chainmail)
+  and Battle Agility, and 13 weapon riders as content corrections; kept
+  departures documented with citations.
+- New characters start with 100 gp (`fbbd68a`); power cards show
+  "Encounter (2×)" (`f60c1b1`); locked augmentable powers list version 0 and
+  the Shifter prerequisite is native code (`7209676`); dragonshard augments
+  attach/detach by right-click in Equipment (`81e22d7`, `ac4e11f`); the
+  theme-power reason quotes the Dark Sun rule (`f900e82`); `.dndcamp` support
+  is out of scope.
+
+Verification: 1627 tests pass; pack rebuilt; full `parity:baseline` clean
+(accepted for the rebuilt pack). Cache v84.
+
 ## Overnight parity batch, part 2: calculation audit fixes (2026-10-28)
 
 `reverse-engineering/docs/12-calculation-logic-audit.md` (new) is the

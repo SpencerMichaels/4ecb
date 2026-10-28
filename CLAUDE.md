@@ -152,7 +152,7 @@ packages/
   sheet-model/         Evaluated snapshot -> semantic SheetDocument/cards
   legacy-wotc/         WotC.index / encrypted-container compatibility
   legacy-dnd4e/        Loss-preserving .dnd4e character import/export
-  legacy-campaign/     (planned) .dndcamp compatibility
+  legacy-campaign/     (out of scope) .dndcamp compatibility
   session-protocol/    (planned) Pairing, capabilities, encrypted message schemas
   browser-storage/     IndexedDB repositories, transactions, migrations
   ui/                  (planned) Low-level accessible visual primitives (deliberately thin)
@@ -212,9 +212,9 @@ character record + content profile + play state --> rules engine --> EvaluatedCh
   (sections + cards), consumed identically by browser reference view, print,
   and interactive play mode.
 - **Legacy compatibility** is isolated in `legacy-wotc` (encrypted
-  container/index/CBLoader semantics), `legacy-dnd4e` (`.dnd4e` import/export,
-  separating authoritative input from regenerated `CharacterSheet` caches),
-  and the planned `legacy-campaign` (`.dndcamp`; not built yet). Import produces a structured report
+  container/index/CBLoader semantics) and `legacy-dnd4e` (`.dnd4e` import/export,
+  separating authoritative input from regenerated `CharacterSheet` caches).
+  `.dndcamp` campaign support is out of scope. Import produces a structured report
   (mapped fields, preserved unknown data, missing refs, stale caches, lossy
   decisions); export is explicit about its target compatibility profile.
 - **Browser persistence** (`browser-storage`) uses IndexedDB with separate

@@ -994,30 +994,18 @@ character before it is fixed, one slice per item.
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
   (`1b92954`).
-- **Postmortem parity batch (2026-10-28, see implementation status and
-  `reverse-engineering/docs/12-calculation-logic-audit.md`):** done —
-  `audit:selectors`, native gates/statmin/dual wielding/DEFENSIVE,
-  prerequisite exclusions, theme-power restriction, power level scaling,
-  load-time self-modifies, power keywords and uses per encounter, stat-engine
-  gaps (bracket substitution, half-point, blank abilities, Hybrid Power
-  Points), special attack/damage abilities, CalcBonuses and WeaponBonuses,
-  the unarmed WeaponBase. Awaiting owner:
-  1. Parity rows on older SampleHeroes: Drizzt dual scimitars, Binwin Shield
-     Bash, Geran Hesitation Slash, RaidonKane unarmed damage.
-  2. "Primary ability" (126 powers): native highest-of-six vs modern class key
-     abilities.
-  3. D091 departures to confirm: WeaponBonuses Constitution superset (and
-     whether to extend it to 12 Dex/Con riders outside the table, incl.
-     Drizzt's powers); bare "Highest ability" lines; Reactive Shot; Ardent
-     Surge and Fight On uses; Giant's Wake Con counted twice; Psionic Dabbler
-     power points; Armor Specialization zeroing the shield penalty.
-  4. Five prose-bearing content typos (needs a 4ecb-only retarget command, or
-     leave).
-  5. Product: starting gold (legacy/PHB 100 gp), augment binding UI (11
-     samples own Siberys Shard of the Mage), companion stats on the sheet,
-     `encounterUses` on power cards, locked augmentable power rows, `.dndcamp`
-     support or out of scope, the theme-power reason label, the Shifter
-     CountsAsRace correction.
+- ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
+  status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
+  the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
+  canonical parity baseline (SampleHeroes informational); "Primary ability"
+  follows native; rules-checked departures recorded in D105; the five typo
+  modifies corrected; new characters start with 100 gp; power cards show
+  "Encounter (2×)"; augments attach/detach by right-click; locked
+  augmentable rows show version 0; Shifter is native code; `.dndcamp` is out
+  of scope; the theme-power reason quotes the Dark Sun rule. Open: the
+  companion display question (associates such as the Fey Beast Tamer blink
+  dog have no data model; beast companions and familiars already print as
+  cards).
 - ~~**From the Swordmage Warding report (2026-10-27)**~~: both done.
   1. Statlinks share the parent stat's type caps (native
      `CalculateStatAddValue`; D103, `9abfdb4`); the Warding content
