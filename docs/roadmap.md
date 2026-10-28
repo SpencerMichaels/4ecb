@@ -1008,11 +1008,11 @@ character before it is fixed, one slice per item.
      owner (D097 amendment): the current wallet must be the highest money key
      at or below the character's level — levelled-down saves (Beatrix,
      "copy of character") show and export a stale higher-level wallet.
-  3. Sheet display: power short descriptions in notes
-     (`NoteHolder.GetShortDescription`, ~820 records, 20 samples); monk
-     movement technique cards (`PowerCard.MonkMovementTechnique`,
-     `BasicUtils.IsMonkTechnique`, ~390 records, 4 samples);
-     `PowerCardPower.UpdatePowerCardPower`.
+  3. ~~Sheet display: power short descriptions in notes; monk movement
+     technique cards; `PowerCardPower.UpdatePowerCardPower`~~ — done
+     (`2ad4731`): `_CS_ShortDescription` notes with "@" hiding, a card class
+     block and Spellbook subtitle, the movement technique on the full
+     discipline's card. Layout choices await the owner's visual review.
   4. Number-changing power and item gaps: `AddArenaWeapons`;
      `WeaponEnchant` (EnchantEquiv, ~10 items); `PowerStats` (Commander's
      Strike rows); `SpecialCase` power lines (Warlock's Bargain, Final

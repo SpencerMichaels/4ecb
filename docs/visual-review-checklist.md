@@ -1141,3 +1141,53 @@ groups.
     At-Will" meta text readable in dark mode.
   - **Wrong if:** a "Trained Blink Dog" power card still prints, the card
     clips or overflows, or AC reads 28.
+
+## Feature notes and legacy power-card parts (2026-10-28, `2ad4731`)
+
+- [ ] **Feature notes follow legacy (`_CS_ShortDescription`).**
+  - **Where:** Erdan 11 → `?preview=1`, page 1 class features; then Flint
+    → `?preview=1`.
+  - **Expect:** Erdan lists "Weapon Mastery — Gain +1 to damage rolls of
+    weapon attacks" and "Level 7 Improved Disruptive Shot — Use three times
+    per encounter", not "Disruptive Shot" or "Level 3 Improved Disruptive
+    Shot". Flint lists Enchantment Apprentice and Pyromancy Apprentice, not
+    "Level 1 Mage Encounter Powers", "Mage Cantrips", "Magic Missile",
+    "Mage's Spellbook" or other "Level N Mage … Powers" rows; their powers are
+    still cards.
+  - **Wrong if:** a hidden row appears on page 1, the reference pages or
+    Remember in play; a note shows a trailing "@…"; a chosen power's card is
+    gone.
+  - **Decide:** Flint's spellbook picks no longer list under "Level 1 Mage
+    Encounter Powers", only as cards (legacy behaviour). OK?
+- [ ] **Class block in the card type bar.**
+  - **Where:** Hystan → `?preview=1`: Twin Strike, Master Diplomat, Mighty
+    Sprint; RaidonKane → Destined for Greatness; Hystan's Build tab power
+    rows.
+  - **Expect:** the bottom bar reads e.g. "At-Will power" left and "Ranger ·
+    Level 1" right; Master Diplomat "Diplomacy · Level 6", Mighty Sprint
+    "Athletics · …", Destined for Greatness "Adroit Explorer · Level 11"; a
+    basic attack shows no class. Fine at 140% zoom and in dark mode.
+  - **Wrong if:** the right text collides with the type label, clips or
+    overflows, or shows a class ID.
+  - **Decide:** keep "Class · Level N" at the bar's right, or a separate
+    CLASS/LEVEL row like legacy, or book style "Ranger Attack 1"? "Racial"
+    vs legacy's "Racial Power"?
+- [ ] **Spellbook subtitle.**
+  - **Where:** Jim Darkmagic → `?preview=1`: Expeditious Retreat and Freezing
+    Cloud vs Sleep.
+  - **Expect:** small uppercase "SPELLBOOK" at the right of the title band on
+    the two spellbook powers only; light in print; fine at 140% zoom and in
+    dark mode on panel cards.
+  - **Wrong if:** it wraps under the name, pushes the name off, or appears on
+    prepared powers.
+- [ ] **Monk movement technique on the discipline card.**
+  - **Where:** RaidonKane → `?preview=1`: Five Storms and Dragon's Tail; then
+    its Build tab with Five Storms selected.
+  - **Expect:** after the attack/Hit lines and before the weapon table, a thin
+    rule, "MOVEMENT TECHNIQUE", a band "Move" + "Personal" (Dragon's Tail
+    "Melee 1"), then "Effect: You shift 2 squares." The technique keeps its own
+    card (legacy). The builder pane shows it inside the Five Storms card only.
+  - **Wrong if:** the section is missing or clipped, its band runs past the
+    card edge, or the builder pane shows the technique twice.
+  - **Decide:** keep the technique's own card (legacy), or drop it now that
+    the discipline card carries it?

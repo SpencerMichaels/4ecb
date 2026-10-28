@@ -304,6 +304,9 @@ separate header or level rail.
   dark `--card-paper`/`--card-ink` on screen only; print stays light. Card type, usage, tone and action labels come only from
   `sheet-model/src/power-classification.ts` (`classifyPower`,
   `powerActionLabel`, `powerActionRank`) — never re-derive them in UI code.
+  A card's class block, Spellbook subtitle and monk movement technique come
+  from `sheet-model/src/power-card-header.ts`; feature notes (legacy
+  `_CS_ShortDescription`, "@" hiding) from `sheet-model/src/feature-notes.ts`.
   Other choices (class, race, feat…) use the same frame via
   `reference-entity-card` in `CandidateDetail.tsx`.
 - **Special cards.** `sheet-model/src/universal-action-cards.ts` synthesizes
