@@ -80,6 +80,25 @@ describe("rule IR", () => {
     ).toEqual(fixtures.map(([, kind]) => kind));
   });
 
+  it('keeps an empty statadd type="" as a type, unlike a missing one', () => {
+    expect(
+      parseRule(
+        "HEAVY_BARDING",
+        statement("statadd", {
+          name: "Armor Penalty",
+          value: "-2",
+          type: "",
+        }),
+      ),
+    ).toMatchObject({ kind: "statadd", bonusType: "" });
+    expect(
+      parseRule(
+        "UNTYPED",
+        statement("statadd", { name: "Armor Penalty", value: "-2" }),
+      ),
+    ).not.toHaveProperty("bonusType");
+  });
+
   it("retains unknown statements and attributes", () => {
     const parsed = parseRule(
       "P",

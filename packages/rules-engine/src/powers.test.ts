@@ -1613,6 +1613,67 @@ describe("power evaluation", () => {
     expect(row("Synthetic Strike", "unarmed")?.attackBonus).toBe(4);
   });
 
+  it("shares the attack's ability, half-level and proficiency caps with typed stats (native CalcBAB)", () => {
+    const typed = (name: string, value: number, bonusType: string) => ({
+      id: `${name}:${bonusType}`,
+      stat: name,
+      value: `+${value}`,
+      bonusType,
+      providerId: "feature",
+      providerName: "Synthetic feature",
+      numericValue: value,
+      applied: true,
+    });
+    const entities = [
+      entity("STRIKE", "Synthetic Strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("SWORD", "Longsword", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+        "Weapon Category": "Military Melee",
+      }),
+      entity("PROF", "Weapon Proficiency (Longsword)", "Proficiency", {}),
+    ];
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["STRIKE", "PROF"],
+      inventory: [
+        {
+          id: "sword",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        // Each typed like a built-in part: +2 "Proficiency Bonus" and +3
+        // "HALF-LEVEL" add nothing over the +3 proficiency and half level
+        // 4; +6 "abilmod" adds its excess over Strength's +4.
+        "attack rolls": {
+          name: "attack rolls",
+          value: 0,
+          contributions: [
+            typed("attack rolls", 2, "Proficiency Bonus"),
+            typed("attack rolls", 3, "HALF-LEVEL"),
+            typed("attack rolls", 6, "abilmod"),
+          ],
+        },
+      },
+      overlays: [],
+      entities,
+    });
+    const row = power?.variants.find(
+      (variant) => variant.equipmentId === "sword",
+    );
+    expect(row?.attackBonus).toBe(4 + 3 + 6 - 4 + 4);
+  });
+
   it("selects the current level line and highest listed ability", () => {
     const entities = [
       entity("POWER", "Theme blast", "Power", {

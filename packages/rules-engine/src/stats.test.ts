@@ -401,6 +401,85 @@ describe("stat evaluation", () => {
     ]);
   });
 
+  it("shows a linked conditional statadd with its sign and HALFMOD (D105)", () => {
+    // Native BuildConditionalString would print +3 and +1 here: the linked
+    // stat (or its ability modifier) without the link's sign or halving.
+    const stats = new StatAccumulator();
+    add(stats, "base", "Wisdom", "16");
+    add(stats, "bonus", "Linked Bonus", "+3");
+    for (const [id, value] of [
+      ["minus", "-Linked Bonus"],
+      ["half", "+HALFMOD(Wisdom)"],
+      ["plain", "+ABILITYMOD(Wisdom)"],
+    ] as const)
+      stats.add({
+        id,
+        stat: "Saving Throws",
+        value,
+        providerId: id,
+        providerName: id,
+        condition: "against poison effects",
+      });
+    const evaluated = stats.evaluate("Saving Throws");
+    expect(evaluated.value).toBe(0);
+    expect(
+      evaluated.contributions.map(({ id, numericValue, reason }) => [
+        id,
+        numericValue,
+        reason,
+      ]),
+    ).toEqual([
+      ["minus", -3, "conditional"],
+      ["half", 1, "conditional"],
+      ["plain", 3, "conditional"],
+    ]);
+  });
+
+  it('stacks every type="" statadd as one empty type (native FillStringField)', () => {
+    // Heavy Barding's `Armor Penalty value="-2" type=""`, twice: one empty
+    // type keeps the larger penalty; the untyped -1 still adds.
+    const stats = new StatAccumulator();
+    add(stats, "barding", "Armor Penalty", "-2", "");
+    add(stats, "barding-huge", "Armor Penalty", "-2", "");
+    add(stats, "untyped", "Armor Penalty", "-1");
+    expect(stats.evaluate("Armor Penalty").value).toBe(-3);
+    // A typed literal 0 of the empty type zeroes only that type, not the
+    // stat (an untyped literal 0 would).
+    add(stats, "zero", "Armor Penalty", "0", "");
+    add(stats, "later", "Armor Penalty", "-1");
+    expect(stats.evaluate("Armor Penalty").value).toBe(-2);
+  });
+
+  it("follows statadd order where native AddStatValue is order-dependent", () => {
+    // A `+` link (no penalty flag) to a negative stat and a same-type
+    // negative literal (a penalty): native keeps the later one when the
+    // link comes first (the penalty is lower and the type is negative),
+    // but the link replaces the penalty when it comes second (-1 > -3).
+    // No content has this shape; native evaluates element rules in tally
+    // order, then level roots, then loot (UpdateInternal), which the
+    // evaluator's occurrence order follows (inventory last).
+    const linkFirst = new StatAccumulator();
+    add(linkFirst, "base", "Linked", "-1");
+    add(linkFirst, "link", "Skill", "+Linked", "Item");
+    add(linkFirst, "penalty", "Skill", "-3", "Item");
+    expect(linkFirst.evaluate("Skill").value).toBe(-3);
+    const penaltyFirst = new StatAccumulator();
+    add(penaltyFirst, "base", "Linked", "-1");
+    add(penaltyFirst, "penalty", "Skill", "-3", "Item");
+    add(penaltyFirst, "link", "Skill", "+Linked", "Item");
+    expect(penaltyFirst.evaluate("Skill").value).toBe(-1);
+    // A bonus and a penalty of one type give the bonus in either order.
+    for (const order of [
+      ["bonus", "malus"],
+      ["malus", "bonus"],
+    ]) {
+      const stats = new StatAccumulator();
+      for (const id of order)
+        add(stats, id, "Skill", id === "bonus" ? "+2" : "-3", "Item");
+      expect(stats.evaluate("Skill").value).toBe(2);
+    }
+  });
+
   it("gives a blank (0) ability base score 0 and modifier 0 (native GetAbilityMod)", () => {
     // An imported incomplete save: the base is an untyped literal 0, so the
     // racial +2 after it is skipped and ABILITYMOD reads 0, not -5.

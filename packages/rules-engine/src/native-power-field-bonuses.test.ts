@@ -329,3 +329,53 @@ describe("native CalcBonuses build-option riders", () => {
     expect(row("Unarmed")?.damage).toBe("1d4+4");
   });
 });
+
+describe("native CalcBeast", () => {
+  const encloseThePrey = weaponPower("ENCLOSE", "Enclose the Prey", {
+    Keywords: "Beast, Martial, Weapon",
+    "Attack Type": "Melee weapon (beast 1)",
+    Hit: "2[W] + Strength modifier damage.",
+    " Beast":
+      "If your companion is a cat, a spider, or a wolf, the attack deals extra damage equal to your Wisdom modifier.",
+  });
+  const companion = (id: string, name: string) =>
+    entity(id, name, "Companion", {});
+
+  it("adds Wisdom to damage with a cat, spider or wolf Companion", () => {
+    for (const name of ["Cat", "Spider", "Wolf"]) {
+      const row = rows({
+        power: encloseThePrey,
+        inventory: [holding("SWORD")],
+        owned: [companion(`COMPANION_${name}`, name)],
+        stats: { "Wisdom modifier": 3 },
+      });
+      // 2d8 + Strength 4 + Wisdom 3.
+      expect(row("Longsword")?.damage).toBe("2d8+7");
+    }
+  });
+
+  it("adds nothing for another companion, a non-Companion cat or no weapon", () => {
+    const bear = rows({
+      power: encloseThePrey,
+      inventory: [holding("SWORD")],
+      owned: [companion("COMPANION_BEAR", "Bear")],
+      stats: { "Wisdom modifier": 3 },
+    });
+    expect(bear("Longsword")?.damage).toBe("2d8+4");
+    // Native iterates Companion elements only (a cat familiar is a Familiar).
+    const familiar = rows({
+      power: encloseThePrey,
+      inventory: [holding("SWORD")],
+      owned: [entity("FAMILIAR_CAT", "Cat", "Familiar", {})],
+      stats: { "Wisdom modifier": 3 },
+    });
+    expect(familiar("Longsword")?.damage).toBe("2d8+4");
+    // CalcMisc needs a wielded main-hand weapon.
+    const unarmed = rows({
+      power: encloseThePrey,
+      owned: [companion("COMPANION_WOLF", "Wolf")],
+      stats: { "Wisdom modifier": 3 },
+    });
+    expect(unarmed("Unarmed")?.damage).toBe("2d4+4");
+  });
+});

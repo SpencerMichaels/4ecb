@@ -66,7 +66,11 @@ against the parent stat's caps, so typed bonuses reached through links
 never stack with the parent's or with each other (two untyped AC links to
 Swordmage Warding add it once); the link's result is then added under the
 link's own type. Applied contributions sum to the total: an untyped `+`
-link is credited with what its pieces actually added.
+link is credited with what its pieces actually added. Types compare
+case-insensitively, and `type=""` is a type of its own (native interns the
+empty string), so two `type=""` statadds on one stat keep one maximum.
+Statadds apply in occurrence order, which follows native `UpdateInternal`
+where order can matter: element rules first, inventory statadds last.
 
 A statadd applies only while its `requires`, `wearing`, `not-wearing` and
 `statmin` hold (native `StatAddApplies`; `statmin="Dexterity 13"` splits at
@@ -625,7 +629,10 @@ channels share typed bonus maxima and deduplicate contribution provenance —
 one maximum per row (native `att_type_max`/`dmg_type_max`), so an implement
 power used through a pact blade applies one maximum across its implement- and weapon-path
 bonuses: the blade's transferred off-hand enhancement and Dual
-Implement Spellcaster's do not stack.
+Implement Spellcaster's do not stack. The attack's own parts hold their
+native `CalcBAB` types in that maximum ("abilmod", "HALF-LEVEL",
+"Proficiency Bonus", "Enhancement"), so a stat bonus of one of those types
+adds only its excess.
 A melee power's Unarmed row has native `WeaponBase`'s unarmed record as its
 base: the weapon the "Unarmed Weapon" text names (Belt of the Brawler's Club),
 else "Unarmed attack" (`withUnarmedWeaponBase`). Its name, ID, group, slot and

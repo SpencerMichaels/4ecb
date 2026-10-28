@@ -3226,6 +3226,13 @@ Kept modern, where native contradicts the text or nullifies the feature:
 - **"+ <ability> (off-hand weapon)" damage terms**: native looks up a stat
   named "<ability> (off-hand weapon)", which does not exist (adds 0); the
   builder adds the ability modifier. No current record has such a term.
+- **Conditional reminders of linked statadds** (2026-10-28): a reminder
+  states the bonus the statadd would add, with its `-` sign and
+  HALFMOD/MINONEMOD. Native `BuildConditionalString` (BasicUtils.cs ~149)
+  prints the linked stat's stand-alone value (or ability modifier) without
+  them, which would state a different bonus than the one the rule grants.
+  No content conditional has a negative or HALF/MINONE link today, so no
+  shown number changes (`StatAccumulator.#raw` in `stats.ts`).
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093

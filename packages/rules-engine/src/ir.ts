@@ -26,6 +26,9 @@ export interface StatAddRule extends BaseRule {
   readonly kind: "statadd";
   readonly name: string;
   readonly value: string;
+  /** Present but empty for `type=""`: native FillStringField interns ""
+   *  as a real type (`-Module-.cs` ~32018, ST_Enter ~36826), so every
+   *  `type=""` statadd shares one empty bonus type. */
   readonly bonusType?: string;
   readonly condition?: string;
   readonly wearing?: string;
@@ -223,7 +226,7 @@ export function parseRule(
         "statmin",
       ]);
       const values = {
-        bonusType: optional(statement, "type"),
+        bonusType: getAttribute(statement.attributes, "type")?.trim(),
         condition: optional(statement, "condition"),
         wearing: optional(statement, "wearing"),
         notWearing: optional(statement, "not-wearing"),

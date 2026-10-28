@@ -181,6 +181,18 @@ const NATIVE_BUILD_OPTION_BONUSES: readonly {
   },
 ];
 
+/** Native CalcBeast (Module ~25947): the one `Beast` field text it reads,
+ *  and the Companion names that make it add Wisdom to damage. */
+const NATIVE_BEAST_WISDOM_LINE =
+  "If your companion is a cat, a spider, or a wolf, the attack deals extra damage equal to your Wisdom modifier.";
+const WISDOM_BEAST_COMPANIONS = new Set(
+  [
+    EXCEPTION_NAMES.catCompanion,
+    EXCEPTION_NAMES.spiderCompanion,
+    EXCEPTION_NAMES.wolfCompanion,
+  ].map((name) => name.toLocaleLowerCase()),
+);
+
 /** Native `power_field` (StandardPowerField): never a CalcBonuses gate. */
 const STANDARD_POWER_FIELDS = new Set([
   "power type",
@@ -218,7 +230,9 @@ function signedLabel(ability: Ability, half: boolean, suffix: string): string {
  * - CalcMisc: a weapon power wielding a main-hand weapon; a `Weapon` field
  *   (indent ≤ 2) whose text is a `NATIVE_WEAPON_BONUSES` line, when the
  *   weapon base's Group is one of the line's groups (and an off-hand weapon
- *   is wielded for the two-weapon line).
+ *   is wielded for the two-weapon line); a `Beast` field (CalcBeast) whose
+ *   text is `NATIVE_BEAST_WISDOM_LINE` adds Wisdom to damage for each cat,
+ *   spider or wolf Companion the character has.
  * - CalcBonuses: any row; a field (indent ≤ 2, not a standard power field)
  *   named "Special", or naming an element the character has (Brutal
  *   Scoundrel, Rageblood Vigor, a pact, an aegis…), or named "axe" when the
@@ -235,6 +249,9 @@ export function nativePowerFieldBonuses(input: {
   readonly hasOffhand: boolean;
   /** Native FindCharElement: the character has an element by this name or ID. */
   readonly ownsElement: (name: string) => boolean;
+  /** The names of the character's Companion elements (native
+   *  IterateCharElements over the Companion type), for CalcBeast. */
+  readonly companionNames: readonly string[];
   readonly abilityModifier: (ability: Ability) => number;
 }): {
   readonly attack: readonly PowerFieldBonus[];
@@ -259,7 +276,22 @@ export function nativePowerFieldBonuses(input: {
   const appliedRiders = new Set<string>();
   if (input.weaponPower && input.mainhandWeapon)
     for (const { name, indent, value } of fields) {
-      if (indent > 2 || lower(name) !== "weapon") continue;
+      if (indent > 2) continue;
+      // CalcBeast: the exact line adds Wisdom once per owned cat, spider or
+      // wolf Companion (Enclose the Prey).
+      if (lower(name) === "beast") {
+        if (lower(value) !== lower(NATIVE_BEAST_WISDOM_LINE)) continue;
+        for (const companion of input.companionNames)
+          if (WISDOM_BEAST_COMPANIONS.has(lower(companion.trim())))
+            damage.push({
+              label:
+                "Wisdom modifier for having a cat, spider, or wolf companion",
+              value: input.abilityModifier("Wisdom"),
+              source: input.power.name,
+            });
+        continue;
+      }
+      if (lower(name) !== "weapon") continue;
       if (appliedRiders.has(lower(value))) continue;
       const bonus = NATIVE_WEAPON_BONUSES.find(
         (candidate) =>
