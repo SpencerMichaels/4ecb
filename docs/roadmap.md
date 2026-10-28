@@ -998,9 +998,8 @@ character before it is fixed, one slice per item.
   `reverse-engineering/docs/12-calculation-logic-audit.md` and the
   partial/not-handled entries in `apps/content-tool/src/legacy-special-cases.ts`
   (run `pnpm audit:legacy-special-cases`). No `sample-chars/` save exercises
-  the number-changing ones. Work top to bottom; strike items as they land.
-  0. Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
-     model, engine numbers, companion-style card — in progress.
+  the number-changing ones. Work top to bottom; strike items as they land. 0. Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
+  model, engine numbers, companion-style card — in progress.
   1. Prerequisite IR cache keyed on subject and text only, not on owned or
      known tokens: a cached result can outlive a change of choices (bug).
   2. Sheet display: power short descriptions in notes
