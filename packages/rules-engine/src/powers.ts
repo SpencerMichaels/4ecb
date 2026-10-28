@@ -41,6 +41,7 @@ import {
   legacyListContains,
   legacyListContainsOneOf,
 } from "./weapon-groups";
+import { nativePowerFieldBonuses } from "./native-power-field-bonuses";
 import {
   legacyLoadoutHints,
   legacyLoadoutState,
@@ -1831,54 +1832,6 @@ function uniquePowerComponents(
   });
 }
 
-function powerWeaponSpecificBonuses(
-  power: ContentEntity,
-  equipment: Loadout,
-  stats: Readonly<Record<string, EvaluatedStat>>,
-): {
-  readonly attack: readonly PowerComponent[];
-  readonly damage: readonly PowerComponent[];
-} {
-  const clauses = power.specifics
-    .filter((specific) => key(specific.name) === "weapon")
-    .map((specific) => specific.value);
-  const hasFamily = (families: readonly string[]) =>
-    families.some((family) => equipment.tags.includes(family));
-  const attack = clauses.flatMap((clause) => {
-    if (
-      !/bonus to the attack roll equal to one-half your Strength modifier/i.test(
-        clause,
-      ) ||
-      !hasFamily(["axe", "flail", "heavy blade", "pick"])
-    )
-      return [];
-    return [
-      {
-        label: "power weapon bonus",
-        value: Math.floor(numericStat(stats, "Strength modifier") / 2),
-        source: power.name,
-      },
-    ];
-  });
-  const damage = clauses.flatMap((clause) => {
-    if (
-      !/(?:attack deals extra damage|gain a bonus to the damage roll) equal to your Constitution modifier/i.test(
-        clause,
-      ) ||
-      !hasFamily(["axe", "hammer", "mace"])
-    )
-      return [];
-    return [
-      {
-        label: "Constitution modifier",
-        value: numericStat(stats, "Constitution modifier"),
-        source: power.name,
-      },
-    ];
-  });
-  return { attack, damage };
-}
-
 const abilityNames = [
   "Strength",
   "Constitution",
@@ -2864,6 +2817,13 @@ export function evaluatePowers(input: {
       byId,
       legacyLoadoutHints(input.textStrings),
     );
+  // Native FindCharElement: an owned element by name or ID.
+  const ownedElementKeys = new Set(
+    input.activeDefinitionIds.flatMap((id) => {
+      const entity = byId.get(key(id));
+      return entity === undefined ? [key(id)] : [key(id), key(entity.name)];
+    }),
+  );
   const equipped = loadouts(
     input.inventory,
     byId,
@@ -3185,11 +3145,22 @@ export function evaluatePowers(input: {
         resolve: implementResolver,
         classChannels,
       });
-      const weaponSpecific = powerWeaponSpecificBonuses(
+      // Native CalcMisc (`Weapon` fields) and CalcBonuses (build-option
+      // riders) on this row's WeaponBase; for an unarmed melee row without
+      // an `Unarmed Weapon` that is the Unarmed attack record (no group).
+      const fieldBonusBase = strikerWeapon(equipment).base;
+      const weaponSpecific = nativePowerFieldBonuses({
         power,
-        equipment,
-        input.stats,
-      );
+        weaponPower,
+        mainhandWeapon: !equipment.unarmed,
+        weaponBase:
+          fieldBonusBase ??
+          (equipment.unarmed && powerRange.melee ? emptyEntity : undefined),
+        hasOffhand: legacyOffhand(equipment, equipped) !== undefined,
+        ownsElement: (name) => ownedElementKeys.has(key(name)),
+        abilityModifier: (ability) =>
+          numericStat(input.stats, `${ability} modifier`),
+      });
       // Native CalcBAB/CalcDamage: the wielded item's enhancement is an
       // "Enhancement" bonus, so typed Enhancement stats (Inherent Bonuses)
       // add only what exceeds it.
@@ -3620,8 +3591,13 @@ export function evaluatePowers(input: {
                 : { label: `${ability} modifier`, value: modifier };
             }),
           );
-        if (dice !== undefined && !fixedCreature)
-          damageComponents.push(...weaponSpecific.damage);
+        // Native AddToDamage: CalcMisc/CalcBonuses riders add to any row's
+        // damage; a power with no damage expression (Bell Ringer) deals the
+        // rider alone.
+        const riderDamage = fixedCreature ? [] : weaponSpecific.damage;
+        damageComponents.push(...riderDamage);
+        const riderOnly =
+          !hasDamage && specialDamage === undefined && riderDamage.length > 0;
         const offHandImplements = handCandidates.filter(
           (candidate) =>
             candidate.hand === "off" &&
@@ -3795,7 +3771,7 @@ export function evaluatePowers(input: {
         return {
           ...(specialDamage?.expression !== undefined
             ? { damage: specialDamage.expression }
-            : flat
+            : flat || riderOnly
               ? { damage: String(damageBonus) }
               : dice === undefined
                 ? ongoing

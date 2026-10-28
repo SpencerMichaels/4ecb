@@ -165,6 +165,8 @@ const fixture = (character: string, detail: string) =>
   `private: ${character}: ${detail}`;
 
 const POWERS = "packages/rules-engine/src/powers.test.ts";
+const NATIVE_FIELD_BONUSES =
+  "packages/rules-engine/src/native-power-field-bonuses.test.ts";
 const REQUIREMENTS = "packages/rules-engine/src/power-requirements.test.ts";
 const EXCEPTIONS = "packages/rules-engine/src/exceptions.test.ts";
 const EQUIPMENT = "packages/rules-engine/src/equipment.test.ts";
@@ -1811,19 +1813,38 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(POWERS, "limits hybrid striker damage to its class powers"),
     ),
     "?A0x7555d940.CalcBonuses": code(
-      "Exact weapon-group prose fields add ability damage/attack; one Dwarf-only Wisdom line.",
-      "powers.ts powerWeaponSpecificBonuses",
+      "A power field (indent <= 2, not a standard power field) named 'Special', an owned element (Brutal Scoundrel, Rageblood Vigor, a pact, an aegis...) or 'axe' with an axe-group WeaponBase, whose text is one of the exact rider sentences, adds Int/Wis/Con/Str to damage or Str to the attack; the dwarf line also needs Dwarf.",
+      "native-power-field-bonuses.ts nativePowerFieldBonuses (NATIVE_BUILD_OPTION_BONUSES, STANDARD_POWER_FIELDS, EXCEPTION_NAMES.dwarf)",
+      test(
+        NATIVE_FIELD_BONUSES,
+        "adds the rider named by an owned element, on every row",
+      ),
+      test(
+        NATIVE_FIELD_BONUSES,
+        "adds Strength to the attack for the attack-roll sentences",
+      ),
+      test(NATIVE_FIELD_BONUSES, "needs a Dwarf for the Special dwarf line"),
+      test(NATIVE_FIELD_BONUSES, "applies an `Axe` rider only with an axe"),
+    ),
+    "?A0x7555d940.CalcMisc": partial(
+      "Power 'beast' fields (CalcBeast) and 'weapon' fields matched against the WeaponBonuses table by exact text, group and off-hand flag.",
+      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES) and, by D091, applies Constitution weapon riders outside the table for the weapons their sentence lists; the CalcBeast part is not ported",
       test(
         POWERS,
         "applies recovered weapon-field ability bonuses only to eligible families",
       ),
-    ),
-    "?A0x7555d940.CalcMisc": partial(
-      "Power 'beast' fields (CalcBeast) and 'weapon' fields matched against the WeaponBonuses table by exact text, group and off-hand flag.",
-      "powers.ts powerWeaponSpecificBonuses ports two WeaponBonuses lines; the rest of the table is not ported",
       test(
-        POWERS,
-        "applies recovered weapon-field ability bonuses only to eligible families",
+        NATIVE_FIELD_BONUSES,
+        "uses the table's weapon groups (the axe-only line, the hammer or mace line)",
+      ),
+      test(
+        NATIVE_FIELD_BONUSES,
+        "needs an off-hand weapon for the two-melee-weapons line",
+      ),
+      test(NATIVE_FIELD_BONUSES, "halves Strength with C# truncation"),
+      test(
+        NATIVE_FIELD_BONUSES,
+        "takes the weapons of a Constitution rider outside the table from its sentence (D091)",
       ),
     ),
     "?A0x7555d940.CalcBeast": partial(

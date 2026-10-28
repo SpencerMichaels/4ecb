@@ -143,6 +143,8 @@ export const EXCEPTION_NAMES = {
   razorStorm: "Razor Storm",
   dragonBreath: "Dragon Breath",
   dragonsWrath: "Dragon's Wrath",
+  /** CalcBonuses: the "If you are a dwarf, …" rider needs this element. */
+  dwarf: "Dwarf",
 } as const;
 
 /**
