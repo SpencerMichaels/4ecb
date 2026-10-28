@@ -7,6 +7,7 @@ import {
   freeRitualAllowanceTexts,
   knownRecords,
   ritualAllowanceStatuses,
+  ritualCostPercent,
   type EvaluatedCharacter,
   type KnownRecord,
   type RitualAllowance,
@@ -569,6 +570,7 @@ export function RitualsWorkspace({
                 inventory={build.inventory}
                 ownedDefinitions={ownedDefinitions}
                 walletCopper={walletCopper}
+                ritualCostPercent={ritualCostPercent(evaluation?.stats ?? {})}
                 knownDefinitionIds={knownIds}
                 onInspect={(entity, displayName) =>
                   setInspected({

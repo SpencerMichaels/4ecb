@@ -123,7 +123,11 @@ import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
-import { loadoutChangeCommand, loadoutContext } from "./equipment-ui";
+import {
+  acquisitionCommands,
+  loadoutChangeCommand,
+  loadoutContext,
+} from "./equipment-ui";
 import { useArmedAction } from "./useArmedAction";
 import { freebeeGiftCommand } from "./freebee-gifts";
 import { type InspectedOption } from "./CandidateSelectionTable";
@@ -2864,9 +2868,13 @@ export function CharacterEditorPage({
                     }
                     onPurchase={(entry, priceCopper) =>
                       dispatch({
-                        kind: "purchase-inventory",
-                        entry,
-                        priceCopper,
+                        kind: "batch",
+                        commands: acquisitionCommands(
+                          build.inventory,
+                          entry,
+                          priceCopper,
+                          byId,
+                        ),
                       })
                     }
                     onSell={(entry, priceCopper, percentage) =>

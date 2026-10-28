@@ -8,6 +8,7 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
+  acquisitionCommands,
   alchemicalFormulaItems,
   compatibleBaseItems,
   comparableSaleProceeds,
@@ -31,6 +32,8 @@ import {
   practiceKind,
   resolveLoadoutAssignments,
   recommendedMagicItemVariant,
+  shopAcquireBlockedReason,
+  shopAlsoImplementEnchantment,
   shopBrowseCategory,
   shopDisplayName,
   shopSlot,
@@ -778,20 +781,258 @@ describe("equipment catalog presentation", () => {
     const sword = entity("SWORD", "Longsword", "Weapon", {
       "Weapon Category": "Military Melee",
       Group: "Heavy Blade",
-      "Minimum Enhancement Bonus": "2",
     });
     const bow = entity("BOW", "Longbow", "Weapon", {
       "Weapon Category": "Military Ranged",
       Group: "Bow",
       Range: "20/40",
     });
-    expect(compatibleBaseItems(anyWeapon, [sword, bow])).toEqual([bow]);
-    expect(compatibleBaseItems(anyMelee, [sword, bow])).toEqual([]);
+    expect(compatibleBaseItems(anyWeapon, [sword, bow])).toEqual([bow, sword]);
+    expect(compatibleBaseItems(anyMelee, [sword, bow])).toEqual([sword]);
     const meleeTwo = entity("MELEE2", "Melee Weapon +2", "Magic Item", {
       "Magic Item Type": "Weapon",
       Weapon: "Any melee (melee weapon)",
     });
     expect(compatibleBaseItems(meleeTwo, [sword, bow])).toEqual([sword]);
+
+    // Armor enchantments never reach a shield (native ValidateShield).
+    const anyArmor = entity("ANY_ARMOR", "Delver's Armor +1", "Magic Item", {
+      "Magic Item Type": "Armor",
+      Armor: "Any",
+      Enhancement: "+1",
+    });
+    expect(compatibleBaseItems(anyArmor, [cloth, heavyShield])).toEqual([
+      cloth,
+    ]);
+  });
+
+  it("reads the Weapon field grammar as native IsValidWeapon does", () => {
+    const weapon = (
+      id: string,
+      name: string,
+      specifics: Readonly<Record<string, string>>,
+    ) => entity(id, name, "Weapon", specifics);
+    const longsword = weapon("ID_FMP_WEAPON_14", "Longsword", {
+      Group: "Heavy Blade",
+      "Weapon Category": "Military Melee",
+      "Hands Required": "One-Handed",
+      Properties: "Versatile",
+    });
+    const glaive = weapon("ID_FMP_WEAPON_25", "Glaive", {
+      Group: "Heavy Blade, Polearm",
+      "Weapon Category": "Military Melee",
+      "Hands Required": "Two-Handed",
+      Properties: "Reach",
+    });
+    const gauntlet = weapon("ID_FMP_WEAPON_48", "Spiked gauntlet", {
+      Group: "Unarmed",
+      "Weapon Category": "Simple Melee",
+      "Hands Required": "One-Handed",
+      Properties: "Off-hand",
+    });
+    const secondEnd = weapon(
+      "ID_FMP_WEAPON_89",
+      "Double sword (secondary end)",
+      {
+        Group: "Light Blade",
+        "Weapon Category": "Superior Melee",
+        "Hands Required": "One-Handed",
+      },
+    );
+    const doubleSword = weapon("ID_FMP_WEAPON_68", "Double sword", {
+      Group: "Heavy Blade",
+      "Weapon Category": "Superior Melee",
+      "Hands Required": "One-Handed",
+      Properties: "Defensive, Off-hand",
+      "_Secondary End": "ID_FMP_WEAPON_89",
+    });
+    const handaxe = weapon("ID_FMP_WEAPON_21", "Handaxe", {
+      Group: "Axe",
+      "Weapon Category": "Simple Melee",
+      "Hands Required": "One-Handed",
+      Properties: "Light Thrown, Off-hand",
+      Range: "5/10",
+    });
+    const catalog = [longsword, glaive, gauntlet, doubleSword, handaxe];
+    const entities = [...catalog, secondEnd];
+    const enchant = (name: string, field: string) =>
+      entity(`MAGIC_${name}`, `${name} +1`, "Magic Item", {
+        "Magic Item Type": "Weapon",
+        Weapon: field,
+      });
+    const offered = (field: string) =>
+      compatibleBaseItems(enchant(field, field), catalog, entities).map(
+        ({ name }) => name,
+      );
+    expect(offered("Any melee except reach weapons")).toEqual([
+      "Double sword",
+      "Handaxe",
+      "Longsword",
+      "Spiked gauntlet",
+    ]);
+    expect(offered("One-handed melee weapon")).toEqual([
+      "Double sword",
+      "Handaxe",
+      "Longsword",
+      "Spiked gauntlet",
+    ]);
+    expect(offered("Spiked gauntlets")).toEqual(["Spiked gauntlet"]);
+    expect(offered("Any thrown")).toEqual(["Handaxe"]);
+    expect(offered("Any Ranged")).toEqual(["Handaxe"]);
+    // A list matches a base's groups, its name, or a double weapon's
+    // secondary end group.
+    expect(offered("Polearm, Spear")).toEqual(["Glaive"]);
+    expect(offered("Light Blade")).toEqual(["Double sword"]);
+    expect(offered("Light blade, Axe (one-handed only)")).toEqual([
+      "Double sword",
+      "Handaxe",
+    ]);
+    // Native ListContains matches whole entries only, so plural names fit
+    // nothing (the content says "Axes, hammers, heavy blades").
+    expect(offered("Axes, hammers, heavy blades")).toEqual([]);
+  });
+
+  it("puts weapon enchantments on superior staffs and daggers, as implement enchantments", () => {
+    const quarterstaff = entity("ID_FMP_WEAPON_10", "Quarterstaff", "Weapon", {
+      Group: "Staff",
+      "Weapon Category": "Simple Melee",
+      "Hands Required": "Two-Handed",
+    });
+    const dagger = entity("ID_FMP_WEAPON_3", "Dagger", "Weapon", {
+      Group: "Light Blade",
+      "Weapon Category": "Simple Melee",
+      "Hands Required": "One-Handed",
+      Properties: "Light Thrown, Off-hand",
+      Range: "5/10",
+    });
+    const accurateStaff = entity(
+      "ID_FMP_SUPERIOR_IMPLEMENT_108",
+      "Accurate staff",
+      "Superior Implement",
+      { Group: "Staff", WeaponEquiv: "ID_FMP_WEAPON_10" },
+    );
+    const accurateDagger = entity(
+      "ID_FMP_SUPERIOR_IMPLEMENT_123",
+      "Accurate dagger",
+      "Superior Implement",
+      { Group: "Light Blade", WeaponEquiv: "ID_FMP_WEAPON_3" },
+    );
+    const accurateOrb = entity(
+      "ID_FMP_SUPERIOR_IMPLEMENT_100",
+      "Accurate orb",
+      "Superior Implement",
+      { Group: "Orb" },
+    );
+    const catalog = [
+      quarterstaff,
+      dagger,
+      accurateStaff,
+      accurateDagger,
+      accurateOrb,
+    ];
+    const lightBlade = entity("BLADE", "Duelist's Weapon +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Weapon: "Light Blade",
+    });
+    const anyMelee = entity("MELEE", "Lifedrinker Weapon +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Weapon: "Any melee",
+    });
+    const bow = entity("BOW", "Forceful Weapon +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Weapon: "Bow",
+    });
+    expect(
+      compatibleBaseItems(lightBlade, catalog).map(({ name }) => name),
+    ).toEqual(["Accurate dagger", "Dagger"]);
+    expect(
+      compatibleBaseItems(anyMelee, catalog).map(({ name }) => name),
+    ).toEqual(["Accurate dagger", "Accurate staff", "Dagger", "Quarterstaff"]);
+    expect(shopAlsoImplementEnchantment(lightBlade, catalog)).toBe(true);
+    expect(shopAlsoImplementEnchantment(bow, catalog)).toBe(false);
+  });
+
+  it("turns a slotless magic item naming one weapon into that base (TransformLoot)", () => {
+    const longsword = entity("ID_FMP_WEAPON_14", "Longsword", "Weapon", {
+      Group: "Heavy Blade",
+      "Weapon Category": "Military Melee",
+    });
+    const broadsword = entity("ID_FMP_WEAPON_60", "Broadsword", "Weapon", {
+      Group: "Heavy Blade",
+      "Weapon Category": "Military Melee",
+    });
+    const artifact = entity("NIGHTBRINGER", "Nightbringer", "Magic Item", {
+      "Magic Item Type": "Artifact",
+      Weapon: "Longsword",
+    });
+    const intelligent = entity("MOONLIGHT", "Moonlight +5", "Magic Item", {
+      "Magic Item Type": "Intelligent Item",
+      Weapon: "Light Blade",
+    });
+    const slotted = entity("FRAZ", "Staff of Fraz-Urb'luu", "Magic Item", {
+      "Magic Item Type": "Artifact",
+      "Item Slot": "Off-hand",
+      Weapon: "Longsword",
+    });
+    const catalog = [longsword, broadsword];
+    expect(compatibleBaseItems(artifact, catalog)).toEqual([longsword]);
+    expect(compatibleBaseItems(intelligent, catalog)).toEqual([]);
+    expect(compatibleBaseItems(slotted, catalog)).toEqual([]);
+  });
+
+  it("keeps enchantments and masterwork armor from being held alone", () => {
+    const leather = entity("ID_FMP_ARMOR_2", "Leather Armor", "Armor", {
+      "Armor Type": "Light",
+      "Armor Category": "Leather",
+    });
+    const feyleather = entity("ID_FMP_ARMOR_12", "Feyleather Armor", "Armor", {
+      "Armor Type": "Light",
+      "Armor Category": "Leather",
+      "Minimum Enhancement Bonus": "4",
+    });
+    const plateOnly = entity("PLATE", "Battleforged Armor +1", "Magic Item", {
+      "Magic Item Type": "Armor",
+      Armor: "Plate",
+      Enhancement: "+1",
+    });
+    const leatherFour = entity(
+      "LEATHER4",
+      "Bloodtheft Armor +4",
+      "Magic Item",
+      {
+        "Magic Item Type": "Armor",
+        Armor: "Leather",
+        Enhancement: "+4",
+      },
+    );
+    const leatherTwo = entity("LEATHER2", "Bloodtheft Armor +2", "Magic Item", {
+      "Magic Item Type": "Armor",
+      Armor: "Leather",
+      Enhancement: "+2",
+    });
+    const catalog = [leather, feyleather];
+    expect(compatibleBaseItems(leatherFour, catalog)).toEqual([
+      feyleather,
+      leather,
+    ]);
+    expect(compatibleBaseItems(leatherTwo, catalog)).toEqual([leather]);
+    expect(
+      shopAcquireBlockedReason(plateOnly, catalog, catalog, {}),
+    ).toBeDefined();
+    expect(
+      shopAcquireBlockedReason(leatherTwo, catalog, catalog, {}),
+    ).toBeUndefined();
+    expect(
+      shopAcquireBlockedReason(leather, catalog, catalog, {}),
+    ).toBeUndefined();
+    expect(
+      shopAcquireBlockedReason(feyleather, catalog, catalog, {}),
+    ).toBeDefined();
+    expect(
+      shopAcquireBlockedReason(feyleather, catalog, catalog, {
+        inherentBonuses: true,
+      }),
+    ).toBeUndefined();
   });
 
   it("limits explicit loadout choices to authored slots", () => {
@@ -1347,5 +1588,64 @@ describe("size rules in the Loadout (D102)", () => {
         loadoutContext({}, { ...facts, oneSizeLarger: true }),
       ),
     ).toEqual({ kind: "equip", slots: ["main-hand"], displaces: false });
+  });
+});
+
+describe("packaged gear (legacy CharacterLootItem.PackageManipulation)", () => {
+  const arrows = entity("ID_FMP_GEAR_11", "Arrows", "Gear", {
+    count: "30",
+    Gold: "1",
+    _RelatedElement: "ID_FMP_GEAR_58",
+  });
+  const arrow = entity("ID_FMP_GEAR_58", "Arrow", "Gear", {
+    count: "1",
+    Copper: "4",
+    _RelatedElement: "ID_FMP_GEAR_11",
+  });
+  const rope = entity("ID_FMP_GEAR_18", "Hempen Rope (50 ft.)", "Gear", {
+    count: "1",
+  });
+  const byId = new Map(
+    [arrows, arrow, rope].map((item) => [item.id.toLocaleLowerCase(), item]),
+  );
+  const build = (inventory: BuildInventoryEntry[]): CharacterBuild => ({
+    formatVersion: 3,
+    known: [],
+    effectiveLevel: 1,
+    levels: [],
+    grabbag: [],
+    inventory,
+    alternates: [],
+    baseAbilities: {},
+    textStrings: {},
+  });
+  const acquire = (
+    inventory: BuildInventoryEntry[],
+    item: ContentEntity,
+    quantity = 1,
+  ) =>
+    acquisitionCommands(
+      inventory,
+      { ...inventoryEntryForEntity(item, 1), quantity },
+      0,
+      byId,
+    )
+      .reduce(applyCharacterCommand, build(inventory))
+      .inventory.map((entry) => `${entry.elements[0]!.name} x${entry.quantity}`)
+      .sort();
+
+  it("folds single items into full packages and keeps the rest single", () => {
+    const singles = { ...holding(arrow), quantity: 29 };
+    expect(acquire([singles], arrow)).toEqual(["Arrows x1"]);
+    expect(acquire([singles], arrow, 3)).toEqual(["Arrow x2", "Arrows x1"]);
+    expect(acquire([singles], arrows)).toEqual(["Arrow x29", "Arrows x1"]);
+    expect(acquire([], arrow, 31)).toEqual(["Arrow x1", "Arrows x1"]);
+  });
+
+  it("adds unpackaged gear unchanged", () => {
+    expect(
+      acquisitionCommands([], inventoryEntryForEntity(rope, 1), 0, byId),
+    ).toHaveLength(1);
+    expect(acquire([], rope)).toEqual(["Hempen Rope (50 ft.) x1"]);
   });
 });

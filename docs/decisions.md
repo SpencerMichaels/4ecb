@@ -3371,6 +3371,48 @@ comparable). Rider prose inside a hit line ("damage equal to 10 + your
 Wisdom modifier") stays text. Players need a content republish
 (`scripts/publish-content.sh`) for the cards to appear.
 
+### D108 — Shop loot validity follows native IsValidLoot, with four fixes
+
+Status: accepted (2026-10-28), roadmap queue item 7.
+
+Context: the Shop paired enchantments with bases by its own reading of the
+Weapon/Armor fields. Native `D20Workspace.IsValidLoot`, `IsValidWeapon`,
+`ValidateShield`, `TransformLoot`, `LootCost` and the gear page's package
+handling (`CharacterLootItem.PackageManipulation`) decide what can be held.
+
+Decision: `apps/web/src/loot-validity.ts` ports them (native `ListContains`
+whole-entry matching, IsValidWeapon's phrases, a staff superior implement
+as Quarterstaff and a dagger by WeaponEquiv, masterwork armor alone only
+with Inherent Bonuses, Armor/Weapon enchantments never alone, a slotless
+magic item naming one weapon or armor becomes base + enchantment). Weapon
+enchantments that fit a superior implement also list under Implement
+enchantments (`EnchantmentItem.InitializeCategoryMembership`). Rituals cost
+`100 / (Ritual Cost Modifier + 1)` percent (Secret Formularies). Buying or
+giving Arrow/Arrows, Crossbow Bolt(s), Sling Bullet(s) or Journeybread(s)
+rebalances the pair into full packages plus singles. Deliberate differences
+(D091):
+
+- An Armor magic item whose Armor field names shields (Shield of Turathi
+  Defiance) may go on those shields; native has no path and never sells it.
+- An empty list entry matches nothing: native's `stristr("", "")` would make
+  barding (no Armor Category) a base for any item without an Armor field.
+  Barding is never a magic-armor base (legacy lists it in its own category).
+- A slotless item whose TransformLoot pair is invalid stays on its own;
+  native refuses the purchase.
+- Two content lists native cannot read are corrected in
+  `96-content-fixes.part`: Berserk Weapon's plural "Axes, hammers, heavy
+  blades" and Soulwarding Armor's "Chain, Scale, or Plate".
+- Presentation: legacy hides the package row while singles are owned and
+  shows the pair's total on the single row, and selling one single breaks a
+  package; the modern inventory lists both holdings with their own
+  quantities and sells from the exact holding.
+
+Consequences: 17 enchantments that offered no base now do (Warsoul, Reckless,
+Tigerclaw, Greater Stonewall Shield…), 38 artifacts and intelligent items
+come with their weapon or armor, "Any" armor enchantments no longer reach
+shields, and the 80 masterwork armors show disabled Buy/Give (with the
+reason) unless the character has Inherent Bonuses. Evaluation is unchanged.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 

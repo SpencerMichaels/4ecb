@@ -5,7 +5,11 @@ import type {
   BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { itemChoiceSlots, type ItemChoiceSlot } from "@4ecb/rules-engine";
+import {
+  EXCEPTION_IDS,
+  itemChoiceSlots,
+  type ItemChoiceSlot,
+} from "@4ecb/rules-engine";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
@@ -13,7 +17,7 @@ import { CompactChoiceButtons } from "./ChoiceEditors";
 import { itemKindLabel } from "./EntityCard";
 import {
   compatibleBaseItems,
-  entityCurrencyCopper,
+  lootPriceCopper,
   formatCopperPrice,
   groupMagicItemFamilies,
   inventoryDefinitionIds,
@@ -26,6 +30,8 @@ import {
   recommendedMagicItemVariant,
   RITUAL_BROWSE_CATEGORIES,
   SHOP_BROWSE_CATEGORIES,
+  shopAcquireBlockedReason,
+  shopAlsoImplementEnchantment,
   shopBrowseCategory,
   shopDisplayName,
   shopItemLevel,
@@ -364,6 +370,9 @@ interface ShopWorkspaceProps {
   readonly knownDefinitionIds?: ReadonlySet<string>;
   /** Learning mode: learn a record, paying `priceCopper` (0 when free). */
   readonly onLearn?: (entity: ContentEntity, priceCopper: number) => void;
+  /** Percent of market price the character pays for a ritual
+   * (`ritualCostPercent` of its evaluated stats); 100 by default. */
+  readonly ritualCostPercent?: number;
 }
 
 const PAGE_SIZE = 200;
@@ -470,7 +479,10 @@ export function ShopWorkspace({
   mode = "shop",
   knownDefinitionIds = NO_KNOWN_IDS,
   onLearn,
+  ritualCostPercent = 100,
 }: ShopWorkspaceProps) {
+  const priceOf = (entity: ContentEntity) =>
+    lootPriceCopper(entity, ritualCostPercent);
   const initialPreferences = useMemo(
     () => readShopSessionPreferences(undefined, mode),
     [mode],
@@ -583,9 +595,22 @@ export function ShopWorkspace({
   const categoryRecords = useMemo(
     () =>
       catalog.filter(
-        (entity) => browse === "all" || shopBrowseCategory(entity) === browse,
+        (entity) =>
+          browse === "all" ||
+          shopBrowseCategory(entity) === browse ||
+          (browse === "implement-enchantments" &&
+            shopAlsoImplementEnchantment(entity, catalog, entities)),
       ),
-    [browse, catalog],
+    [browse, catalog, entities],
+  );
+  const inherentBonuses = useMemo(
+    () =>
+      ownedDefinitions.some(
+        ({ id }) =>
+          id.toLocaleLowerCase() ===
+          EXCEPTION_IDS.inherentBonuses.toLocaleLowerCase(),
+      ),
+    [ownedDefinitions],
   );
   const advancedRecords = useMemo(
     () =>
@@ -616,7 +641,7 @@ export function ShopWorkspace({
           .includes(needle)
       )
         return false;
-      const price = entityCurrencyCopper(entity);
+      const price = priceOf(entity);
       if (
         affordable &&
         itemCanBeBought(entity) &&
@@ -640,6 +665,7 @@ export function ShopWorkspace({
     knownOnly,
     learning,
     ownedDefinitions,
+    ritualCostPercent,
     search,
     walletCopper,
   ]);
@@ -702,7 +728,7 @@ export function ShopWorkspace({
       if (sort.column === "name") return shopDisplayName(entity);
       if (sort.column === "level") return shopItemLevel(entity);
       if (sort.column === "price")
-        return entityCurrencyCopper(entity) ?? Number.MAX_SAFE_INTEGER;
+        return priceOf(entity) ?? Number.MAX_SAFE_INTEGER;
       return learning ? Number(known(entity)) : ownedCount(entity, inventory);
     };
     const leftValue = value(left);
@@ -725,7 +751,14 @@ export function ShopWorkspace({
         return { family, selected };
       })
       .sort((left, right) => compare(left.selected, right.selected));
-  }, [catalog, characterLevel, filtered, preferredVariants, sort]);
+  }, [
+    catalog,
+    characterLevel,
+    filtered,
+    preferredVariants,
+    ritualCostPercent,
+    sort,
+  ]);
   const pageRows = rows.slice(offset, offset + PAGE_SIZE);
 
   const selectSort = (column: SortColumn) => {
@@ -752,13 +785,10 @@ export function ShopWorkspace({
   const beginAcquire = (entity: ContentEntity, acquireMode: AcquireMode) => {
     // A learned record has no physical form or item choices to settle.
     if (learning) {
-      onLearn?.(
-        entity,
-        acquireMode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
-      );
+      onLearn?.(entity, acquireMode === "buy" ? (priceOf(entity) ?? 0) : 0);
       return;
     }
-    const compatible = compatibleBaseItems(entity, catalog);
+    const compatible = compatibleBaseItems(entity, catalog, entities);
     const hasStandardImplement = isImplementEnchantment(entity);
     const physicalChoiceCount =
       compatible.length + (hasStandardImplement ? 1 : 0);
@@ -767,7 +797,7 @@ export function ShopWorkspace({
       const physical = compatible[0];
       onAcquire(
         inventoryEntryForEntity(entity, characterLevel, physical),
-        acquireMode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
+        acquireMode === "buy" ? (priceOf(entity) ?? 0) : 0,
       );
       return;
     }
@@ -784,7 +814,7 @@ export function ShopWorkspace({
   };
 
   const physicalChoices = acquisition
-    ? compatibleBaseItems(acquisition.entity, catalog)
+    ? compatibleBaseItems(acquisition.entity, catalog, entities)
     : [];
   const nouns = acquisition ? physicalNouns(acquisition.entity) : undefined;
   const standardImplement =
@@ -901,9 +931,14 @@ export function ShopWorkspace({
     },
   ) => {
     const displayName = shopDisplayName(entity);
-    const price = entityCurrencyCopper(entity);
+    const price = priceOf(entity);
     const purchased = itemCanBeBought(entity);
     const canAfford = price !== undefined && price <= walletCopper;
+    const blocked = learning
+      ? undefined
+      : shopAcquireBlockedReason(entity, catalog, entities, {
+          inherentBonuses,
+        });
     const isKnown = known(entity);
     const proficiency = itemProficiencyStatus(entity, ownedDefinitions);
     const showIndent = options.disclosure || browse === "all";
@@ -1010,36 +1045,44 @@ export function ShopWorkspace({
           <div className="shop-row-actions">
             <span
               title={
-                !purchased
+                blocked ??
+                (!purchased
                   ? "This item cannot be purchased."
                   : !canAfford
                     ? "Insufficient funds"
-                    : undefined
+                    : undefined)
               }
             >
               <button
                 className="button-icon"
                 type="button"
                 aria-label={`Buy ${displayName}`}
-                title={!purchased ? "This item cannot be purchased." : "Buy"}
-                disabled={!purchased || !canAfford || isKnown}
+                title={
+                  blocked ??
+                  (!purchased ? "This item cannot be purchased." : "Buy")
+                }
+                disabled={
+                  blocked !== undefined || !purchased || !canAfford || isKnown
+                }
                 onClick={() => beginAcquire(entity, "buy")}
               >
                 <Icon name="shopping-cart" />
               </button>
             </span>
-            <button
-              className="button-icon"
-              type="button"
-              aria-label={
-                learning ? `Learn ${displayName} free` : `Give ${displayName}`
-              }
-              title={learning ? "Learn free" : "Give"}
-              disabled={isKnown}
-              onClick={() => beginAcquire(entity, "give")}
-            >
-              <Icon name="gift" />
-            </button>
+            <span title={blocked}>
+              <button
+                className="button-icon"
+                type="button"
+                aria-label={
+                  learning ? `Learn ${displayName} free` : `Give ${displayName}`
+                }
+                title={blocked ?? (learning ? "Learn free" : "Give")}
+                disabled={blocked !== undefined || isKnown}
+                onClick={() => beginAcquire(entity, "give")}
+              >
+                <Icon name="gift" />
+              </button>
+            </span>
           </div>
         </td>
       </tr>
@@ -1406,7 +1449,7 @@ export function ShopWorkspace({
                   resolvedItemChoiceChildren,
                 ),
                 acquisition.mode === "buy"
-                  ? (entityCurrencyCopper(acquisition.entity) ?? 0)
+                  ? (priceOf(acquisition.entity) ?? 0)
                   : 0,
               );
               dialogRef.current?.close();
@@ -1637,9 +1680,7 @@ export function ShopWorkspace({
                   <dd>
                     {acquisition.mode === "give"
                       ? "Free"
-                      : formatCopperPrice(
-                          entityCurrencyCopper(acquisition.entity),
-                        )}
+                      : formatCopperPrice(priceOf(acquisition.entity))}
                   </dd>
                 </div>
               </dl>
