@@ -1019,15 +1019,22 @@ character before it is fixed, one slice per item.
      import (`CharLootName`); `C_RulesElementField` augment overlays;
      stat-engine details (three unshared base-attack caps, `type=""`,
      conditional reminder text on linked statadds, a stacking-order test).
-  5. Legality: hybrid power picks (`CheckHybridPower`, `DisallowClass`,
+  5. Move content text parsing out of evaluation into pack generation (the
+     standing rule in CLAUDE.md/AGENTS.md): power attack/hit lines, increase
+     sentences, the WeaponBonuses table and CalcBonuses riders in `powers.ts`
+     (~34 parse sites), and the per-profile prerequisite internalization in
+     `prerequisites.ts`, stored as normalized fields/IR in the pack. Done after
+     item 4 so those fixes are ported once; the full parity baseline is the
+     safety net.
+  6. Legality: hybrid power picks (`CheckHybridPower`, `DisallowClass`,
      `D20Choice.CheckReplaceElem`; 5 hybrid samples); Dilettante
      prerequisites (`FindDilettante`, `ImplementDilettante`,
      `MeleeDilettante`); `CategoryOpt.Build` PowersAsClass (DV's Order Adept
      feature); `RulesElement.IsPsionicClass`.
-  6. Shop: `IsValidLoot`, `IsValidWeapon`, `TransformLoot`, `LootCost`,
+  7. Shop: `IsValidLoot`, `IsValidWeapon`, `TransformLoot`, `LootCost`,
      package entries, `EnchantmentItem.InitializeCategoryMembership`,
      `GearPageData.HasSingleItem`.
-  7. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
+  8. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
