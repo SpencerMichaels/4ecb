@@ -1271,7 +1271,8 @@ interface PowerClassChannels {
   /** Native BaseClass of the power's Class field (no character class): a
    * paragon path's class prerequisite, else the field itself. */
   readonly baseClass: string;
-  /** The power's own `_PowerstatKeywords` (AdditionalKeywords). */
+  /** InsertParagonPath's category ID and the power's own
+   * `_PowerstatKeywords` (AdditionalKeywords). */
   readonly keywords: readonly string[];
 }
 
@@ -1315,8 +1316,12 @@ function legacyParagonPathClass(
 /**
  * Native BuildKeywordSet's power-level class channels. BaseClass maps a
  * paragon path power to its path's class (IsClassPower, for qualified
- * `_PowerstatKeywords`); AdditionalKeywords adds the power's own
- * `_PowerstatKeywords`.
+ * `_PowerstatKeywords`); InsertParagonPath adds the ID of the
+ * "<class name> Paragon Path" record (Sorcerous Power's
+ * `ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage`); AdditionalKeywords
+ * adds the power's own `_PowerstatKeywords`. The path's own ID is already a
+ * Class keyword (`legacyPowerKeywordTags`), which Pact Reward's
+ * `ID_FMP_PARAGON_PATH_<n>:damage` stats match.
  */
 function legacyPowerClassChannels(
   power: ContentEntity,
@@ -1332,9 +1337,18 @@ function legacyPowerClassChannels(
       ? legacyParagonPathClass(owner, definitions, byId, byName)
       : undefined;
   const baseClass = pathClass?.id ?? classField;
+  // InsertParagonPath (Module ~25407): the "<class name> Paragon Path"
+  // record's ID, the category content keys path-power bonuses by.
+  const category =
+    pathClass === undefined
+      ? undefined
+      : byName.get(key(`${pathClass.name} Paragon Path`))?.[0];
   return {
     baseClass,
-    keywords: legacyPowerstatKeywords(powerstatKeywords, baseClass),
+    keywords: [
+      ...(category === undefined ? [] : [category.id]),
+      ...legacyPowerstatKeywords(powerstatKeywords, baseClass),
+    ],
   };
 }
 
@@ -1374,7 +1388,7 @@ function legacyPowerstatKeywords(
  *   melee weapons, "two-melee-weapon(-close)", "two-blade" for two blades,
  *   and "two-melee-offhand(-close)" when the main weapon is an off-hand one.
  * - FromMulticlassing: "multiclass" and "multiclass feat".
- * - AdditionalKeywords: the power-level channels of
+ * - InsertParagonPath and AdditionalKeywords: the power-level channels of
  *   `legacyPowerClassChannels`, then WeaponBase's and WeaponEnchant's
  *   `_PowerstatKeywords` (Staff of Divinity's conditional "holy symbol
  *   implement" for a Divine character).

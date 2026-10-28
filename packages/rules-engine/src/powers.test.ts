@@ -4519,6 +4519,70 @@ describe("native BuildKeywordSet channels", () => {
     expect(bonus("FIGHTER_POWER")).toEqual([]);
   });
 
+  it("adds a paragon path power's ID and its '<class> Paragon Path' category (InsertParagonPath)", () => {
+    const bolt = (id: string, classId: string) =>
+      entity(id, `Synthetic ${id}`, "Power", {
+        Keywords: "Arcane, Implement",
+        Class: classId,
+        "Attack Type": "Ranged 10",
+        Attack: "Charisma vs. Reflex",
+        Hit: "1d10 + Charisma modifier damage.",
+      });
+    const powers = rows(
+      [
+        entity("ID_FMP_CLASS_128", "Sorcerer", "Class", {}),
+        entity("ID_FMP_CLASS_7", "Warlock", "Class", {}),
+        entity(
+          "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH",
+          "Sorcerer Paragon Path",
+          "Category",
+          {},
+        ),
+        {
+          ...entity(
+            "ID_FMP_PARAGON_PATH_100",
+            "Synthetic Path",
+            "Paragon Path",
+            {},
+          ),
+          prerequisites: "Sorcerer",
+        },
+        {
+          ...entity(
+            "ID_FMP_PARAGON_PATH_234",
+            "Dragonbane Pactmaker",
+            "Paragon Path",
+            {},
+          ),
+          prerequisites: "Warlock",
+        },
+        bolt("SORCERER_POWER", "ID_FMP_CLASS_128"),
+        bolt("SORCERER_PATH_POWER", "ID_FMP_PARAGON_PATH_100"),
+        bolt("WARLOCK_PATH_POWER", "ID_FMP_PARAGON_PATH_234"),
+      ],
+      [],
+      [
+        // Sorcerous Power and Gloom Pact Reward.
+        "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage",
+        "ID_FMP_PARAGON_PATH_234:damage",
+      ],
+    );
+    const bonus = (id: string) =>
+      sources(
+        powers.find((power) => power.definitionId === id),
+        "Unarmed",
+      );
+
+    expect(bonus("SORCERER_POWER")).toEqual([]);
+    expect(bonus("SORCERER_PATH_POWER")).toEqual([
+      "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage",
+    ]);
+    // No "Warlock Paragon Path" record: only the path's own ID matches.
+    expect(bonus("WARLOCK_PATH_POWER")).toEqual([
+      "ID_FMP_PARAGON_PATH_234:damage",
+    ]);
+  });
+
   it("names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type", () => {
     const [power] = rows(
       [

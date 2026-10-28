@@ -1818,7 +1818,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.BuildKeywordSet": partial(
       "Keyword set for channel matching: weapon keywords, Arena weapons, implement names ('<name> implement', 'Ki Focuses Implement', '<group> implement group'), 'two-weapon', 'two-melee-weapon(-close)', 'two-blade', 'two-melee-offhand(-close)', attack types, Keywords, _ExtraKeywords, '<feat> association', name, ID, _AugmentParent, Class and paragon path, Power Usage, 'multiclass'/'multiclass feat', 'melee basic'/'ranged basic', and AdditionalKeywords: the power's, WeaponBase's and WeaponEnchant's _PowerstatKeywords, a '<keyword>?<class ID>' entry only for that class's powers (PossibleInsert, IsClassPower through BaseClass).",
-      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass, and legacyPowerstatKeywords over the overlaid records: the 49 conditional implement overlays such as Staff of Divinity's 'holy symbol implement' and Eladrin Sword Wizardry's 'wand implement?ID_FMP_CLASS_9'; legacyPowerClassChannels gives BaseClass a paragon path's class prerequisite). Still missing: the paragon path ID (InsertParagonPath) and Arena weapons (AddArenaWeapons)",
+      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass, and legacyPowerstatKeywords over the overlaid records: the 49 conditional implement overlays such as Staff of Divinity's 'holy symbol implement' and Eladrin Sword Wizardry's 'wand implement?ID_FMP_CLASS_9'; legacyPowerClassChannels gives BaseClass a paragon path's class prerequisite and InsertParagonPath's '<class> Paragon Path' category ID for Sorcerous Power; a path power's own ID was already a Class keyword, so Pact Reward's and Stalker Bloodline's ID_FMP_PARAGON_PATH_<n>:damage stats applied before). Still missing: Arena weapons (AddArenaWeapons)",
       test(
         POWERS,
         "matches bonuses keyed by the power's class ID and the weapon's ID",
@@ -1851,6 +1851,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         POWERS,
         "adds a '?<class ID>' _PowerstatKeywords entry only to that class's powers",
+      ),
+      test(
+        POWERS,
+        "adds a paragon path power's ID and its '<class> Paragon Path' category (InsertParagonPath)",
       ),
     ),
     "?A0x7555d940.IsBlade": code(

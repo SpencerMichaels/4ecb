@@ -550,7 +550,10 @@ from the overlaid records, so a conditional `modify name="this"` list-addition
 Implement Expertise (Holy Symbol). An entry "<keyword>?<class ID>" (Eladrin
 Sword Wizardry's "wand implement?ID_FMP_CLASS_9") joins only for that class's
 powers, a paragon path power counting as its path's prerequisite class
-(native `BaseClass`).
+(native `BaseClass`). A paragon path power's keywords hold the path's ID (its
+Class field; Pact Reward's `ID_FMP_PARAGON_PATH_<n>:damage`) and, per native
+`InsertParagonPath`, the ID of the "<class name> Paragon Path" record
+(Sorcerous Power's `ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage`).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
