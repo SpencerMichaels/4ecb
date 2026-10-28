@@ -3309,6 +3309,23 @@ export function evaluatePowers(input: {
         effectiveField(power, "_CalculatedHit", input.overlays),
       input.level,
     );
+    // Native CalcDamage (-Module-.cs ~24760): Defender's Gambit's damage is
+    // its indented secondary "\thit" field (" Hit" in the pack, "5[W] +
+    // Strength modifier.") without its last character, plus " damage.".
+    const indentedHit =
+      key(power.name) === key(EXCEPTION_NAMES.defendersGambit)
+        ? power.specifics.find(
+            (specific) =>
+              /^\s/u.test(specific.name) && key(specific.name) === "hit",
+          )?.value
+        : undefined;
+    const damageHitLine =
+      indentedHit === undefined
+        ? hitLine
+        : lineAtLevel(
+            `${indentedHit.trim().slice(0, -1)} damage.`,
+            input.level,
+          );
     const effectLine = effectiveField(power, "Effect", input.overlays);
     // Native ParseDamage: `_DamageDie` (set by a feat's `modify`, e.g.
     // Empowered Dragon Breath's d10) replaces the size of the dice.
@@ -3884,7 +3901,13 @@ export function evaluatePowers(input: {
         // Native ParseWeaponDmg: every N[W] term of the damage expression
         // (the text before "damage"; level lines and riders are not part of
         // it), each "(off-hand weapon)" one with the off-hand die.
-        const weaponTermPattern = /(\d*)\[W\]( \(off-hand weapon\))?/giu;
+        // D105: also "(off-hand)" (Deceptive Steel) and "(off-hand end)"
+        // (Binding Cahulaks), which native reads as main-hand dice; native
+        // also stops parsing at any such parenthetical, dropping the ability
+        // modifiers after it (Eruption of Steel's "(main weapon)"), which
+        // this keeps.
+        const weaponTermPattern =
+          /(\d*)\[W\]( \(off-hand(?: weapon| end)?\))?/giu;
         const expressionTerms = [
           ...(
             (selectedHitClause ?? "").split(/\bdamage\b/iu)[0] ?? ""
@@ -4232,7 +4255,7 @@ export function evaluatePowers(input: {
         };
       };
       const damage = calculateDamage(
-        hitLine,
+        damageHitLine,
         attackStat,
         attackType,
         keyAbilityDamage.get(primaryAttack?.ordinal ?? 1),

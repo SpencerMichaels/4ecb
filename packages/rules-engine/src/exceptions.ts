@@ -96,6 +96,8 @@ export const EXCEPTION_NAMES = {
   bondOfCensure: "Bond of Censure",
   /** PowerStats: this power (an ally's basic attack) gets no rows by name. */
   commandersStrike: "Commander's Strike",
+  /** CalcDamage: this power's damage is its indented secondary hit field. */
+  defendersGambit: "Defender's Gambit",
   /** NonDamagePower: this exact name, and names starting with the next. */
   exactingUtterance: "Exacting Utterance",
   forcedOpportunityPrefix: "Forced Opportunity",

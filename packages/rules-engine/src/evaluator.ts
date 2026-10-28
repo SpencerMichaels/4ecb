@@ -77,7 +77,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v87-2026-10-28-character-independent-prerequisite-ir";
+  "evaluated-character-v88-2026-10-28-weapon-equiv-rows-special-damage";
 
 export interface CharacterOccurrence {
   readonly id: string;

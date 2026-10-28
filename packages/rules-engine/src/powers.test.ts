@@ -4565,6 +4565,40 @@ describe("weapon fields and dice (native C_RulesElementField, FigureWeaponDice)"
     expect(variant(power, "unarmed")?.damage).toBe("1d6+1d6");
   });
 
+  it("deals Defender's Gambit's indented secondary hit and reads '(off-hand)' dice (native CalcDamage, D105)", () => {
+    const [gambit, deceptive] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["GAMBIT", "DECEPTIVE"],
+      entities: [
+        entity("GAMBIT", "Defender's Gambit", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          "Primary Attack": "Strength vs. Will",
+          Hit: "Until the end of your turn, you gain a power bonus to melee attack rolls and melee damage rolls against the target equal to your Wisdom modifier.",
+          Effect:
+            "The target can make a basic attack against you as an immediate reaction, and then you make a secondary attack against it as a free action.",
+          " Secondary Attack": "Strength vs. AC",
+          " Hit": "5[W] + Strength modifier.",
+          " Miss": "Half damage.",
+        }),
+        entity("DECEPTIVE", "Deceptive Steel", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "2[W] (off-hand) + Strength modifier damage. Until the end of your next turn, you also gain combat advantage and concealment against the target.",
+        }),
+        weapon("LONG", "Longsword"),
+        weapon("SHORT", "Short sword", { Damage: "1d6" }),
+      ],
+      inventory: [held("long", ["LONG"]), held("short", ["SHORT"])],
+      stats: { "Strength modifier": stat("Strength modifier", 3) },
+      overlays: [],
+    });
+    expect(variant(gambit, "long")?.damage).toBe("5d8+3");
+    expect(gambit?.unsupported).toEqual([]);
+    expect(variant(deceptive, "long")?.damage).toBe("2d6+3");
+  });
+
   it("gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency", () => {
     const [power] = evaluatePowers({
       level: 1,

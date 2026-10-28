@@ -1845,9 +1845,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "powers.ts lineAtLevel",
       test(POWERS, "handles primary attacks and prose level scaling"),
     ),
-    "?A0x7555d940.CalcDamage": partial(
+    "?A0x7555d940.CalcDamage": code(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon. A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit by name (EXCEPTION_NAMES.defendersGambit) deals its indented ' Hit' field plus ' damage.' (5[W] + Strength); NonDamagePower's powers deal none. D105 departures: a '+ <ability> (off-hand weapon)' term adds the ability modifier (native looks up a nonexistent stat; no current record has one), and every term after a parenthetical is read where native stops (Eruption of Steel, Deceptive Steel, Binding Cahulaks). A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
       test(
         POWERS,
@@ -1861,10 +1861,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         POWERS,
         "recognizes ongoing damage expressed through an ability modifier",
       ),
+      test(
+        POWERS,
+        "deals Defender's Gambit's indented secondary hit and reads '(off-hand)' dice (native CalcDamage, D105)",
+      ),
+      test(POWERS, "deals no damage with native NonDamagePower's powers"),
     ),
     "?A0x7555d940.FindWeaponDamage": code(
       "[W]/[B] dice and the '[W] (off-hand weapon)' term.",
-      "powers.ts calculateDamage reads every N[W] term; a '(off-hand weapon)' one (6 powers: Eruption of Steel, Whirling Frenzy, Twinclaw Rend, ...) takes the off-hand die",
+      "powers.ts calculateDamage reads every N[W] term; a '(off-hand weapon)' one (6 powers: Eruption of Steel, Whirling Frenzy, Twinclaw Rend, ...) takes the off-hand die, and (D105) so do Deceptive Steel's '(off-hand)' and Binding Cahulaks' '(off-hand end)', which native rolls with the main die",
       test(POWERS, "produces explainable weapon and unarmed variants with %s"),
       test(
         POWERS,

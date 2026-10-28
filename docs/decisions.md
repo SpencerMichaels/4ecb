@@ -3214,6 +3214,18 @@ Kept modern, where native contradicts the text or nullifies the feature:
   any melee weapon as a warlock implement") did nothing.
 - **"+N bonus and XdY" increase lines** (Sun Flare, Improved Razor Storm):
   the dice after the bonus are read; native parses from the first digit.
+- **Parenthetical weapon terms in damage** (added 2026-10-28, cache v88):
+  native CalcDamage (~24760) stops at the first term that is not followed by
+  "+", so Eruption of Steel's "2[W] (main weapon) + 2[W] (off-hand weapon) +
+  Strength modifier + Dexterity modifier" (Martial Power 2) deals 2[W] alone,
+  and Deceptive Steel's "2[W] (off-hand) + Strength modifier" and Binding
+  Cahulaks' "1[W] + 1[W] (off-hand end) + Strength modifier" lose Strength.
+  Native ParseWeaponDmg (~24133) also uses the main die for "(off-hand)" and
+  "(off-hand end)". The builder reads every term and rolls those two with the
+  off-hand weapon (a double weapon's other end), as the power text says.
+- **"+ <ability> (off-hand weapon)" damage terms**: native looks up a stat
+  named "<ability> (off-hand weapon)", which does not exist (adds 0); the
+  builder adds the ability modifier. No current record has such a term.
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093
