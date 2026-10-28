@@ -48,6 +48,7 @@ import {
   isBeastCompanionEntity,
   type EvaluatedBeastCompanion,
 } from "./beast-companion";
+import { evaluateAssociates, type EvaluatedAssociate } from "./associates";
 import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 import {
   equipmentName,
@@ -75,7 +76,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v85-2026-10-28-itemless-earlier-prerequisites";
+  "evaluated-character-v86-2026-10-28-associates";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -268,6 +269,8 @@ export interface EvaluatedCharacter {
   readonly loadoutSlotContext?: LoadoutSlotContext;
   /** The beast companion's statistics, when the character has one. */
   readonly beastCompanion?: EvaluatedBeastCompanion;
+  /** The associates the character has (D107), when any. */
+  readonly associates?: readonly EvaluatedAssociate[];
   /** Item sets the character has pieces of (legacy `ItemSetCount`). */
   readonly itemSets?: readonly EvaluatedItemSet[];
   readonly suggestions: readonly {
@@ -3406,6 +3409,14 @@ function evaluateCharacterInternal(
         fieldsOf: (entity) => applyFieldOverlays(entity, overlays),
         content: index,
       });
+  const associates = prerequisiteContextOnly
+    ? []
+    : evaluateAssociates({
+        level: input.level,
+        occurrences,
+        stats: evaluatedStats,
+        content: index,
+      });
   const powers =
     prerequisiteContextOnly || input.includePowers === false
       ? []
@@ -3527,6 +3538,7 @@ function evaluateCharacterInternal(
     powers,
     loadoutSlotContext: slotContext,
     ...(beastCompanion === undefined ? {} : { beastCompanion }),
+    ...(associates.length === 0 ? {} : { associates }),
     ...(itemSets.itemSets.length === 0 ? {} : { itemSets: itemSets.itemSets }),
     suggestions,
     diagnostics,

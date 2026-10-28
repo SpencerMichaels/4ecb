@@ -1,3 +1,12 @@
+import type {
+  AssociateAbilityName,
+  AssociateDamage,
+  AssociateDefenseName,
+  AssociateEntry,
+  AssociateHitPoints,
+  AssociateStatBlock,
+} from "@4ecb/content-domain";
+
 import type { EvaluatedContribution, EvaluatedStat } from "./stats";
 
 /**
@@ -573,6 +582,241 @@ export function beastCompanionStatistics(input: {
     conditionalBonuses,
     contributions: read.flatMap((stat) =>
       stat.contributions.filter((contribution) => contribution.applied),
+    ),
+  };
+}
+
+/** An associate's stat-block line with its master-relative numbers worked
+ *  out: `text` is the line as the card prints it. */
+export interface AssociateStatisticsLine {
+  readonly label?: string;
+  readonly text: string;
+  /** An attack line's bonus and defense, when the line prints them. */
+  readonly attackBonus?: number;
+  readonly defense?: string;
+  /** A hit line's damage at the master's level ("1d8 + 6"). */
+  readonly damage?: string;
+}
+
+export interface AssociateStatisticsEntry {
+  readonly name: string;
+  readonly keywords?: string;
+  readonly usage?: string;
+  readonly aura?: number;
+  /** The stat-block section of a power: Standard, Minor, Triggered, … */
+  readonly action?: string;
+  readonly lines: readonly AssociateStatisticsLine[];
+}
+
+/**
+ * An associate's numbers (D107): its stat block's master-relative values
+ * ("your bloodied value", "your defenses + 2", "your level + 5 vs. AC",
+ * "1d8 + one-half your level") over the master's evaluated stats at the
+ * master's level. Every surface reads these.
+ */
+export interface AssociateStatistics {
+  readonly hitPoints: number;
+  readonly hitPointsSource: AssociateHitPoints["kind"];
+  /** Half its hit points; absent for a 1-hit-point companion. */
+  readonly bloodied?: number;
+  readonly defenses: {
+    readonly ac: number;
+    readonly fortitude: number;
+    readonly reflex: number;
+    readonly will: number;
+  };
+  readonly initiative?: number;
+  readonly perception?: number;
+  readonly abilities?: Readonly<
+    Record<AssociateAbilityName, BeastCompanionAbility>
+  >;
+  readonly traits: readonly AssociateStatisticsEntry[];
+  readonly powers: readonly AssociateStatisticsEntry[];
+}
+
+const ASSOCIATE_DEFENSE_STATS: readonly (readonly [
+  AssociateDefenseName,
+  readonly string[],
+])[] = [
+  ["ac", ["AC", "Armor Class"]],
+  ["fortitude", ["Fortitude Defense", "Fortitude"]],
+  ["reflex", ["Reflex Defense", "Reflex"]],
+  ["will", ["Will Defense", "Will"]],
+];
+
+function firstNumericStat(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  names: readonly string[],
+): number {
+  for (const name of names) {
+    const value = numericStat(stats, name);
+    if (value !== undefined) return value;
+  }
+  return 0;
+}
+
+function signedTerm(value: number): string {
+  return value < 0 ? ` - ${-value}` : ` + ${value}`;
+}
+
+/**
+ * A damage expression at the master's level: dice, then the sum of every
+ * number ("one-half your level", "your Wisdom modifier", flat terms and the
+ * creature's damage bonus). "your Strength or Charisma modifier" gives one
+ * total per ability.
+ */
+function associateDamageText(
+  damage: AssociateDamage,
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  creatureBonus: number,
+): string {
+  const modifier = (ability: AssociateAbilityName) =>
+    numericStat(stats, `${ability} modifier`) ?? 0;
+  const dice = damage.terms.flatMap((term) =>
+    term.kind === "dice" ? [term.dice] : [],
+  );
+  let fixed = creatureBonus;
+  let alternatives: readonly AssociateAbilityName[] = [];
+  for (const term of damage.terms) {
+    if (term.kind === "flat") fixed += term.value;
+    else if (term.kind === "half-level") fixed += halfLevel(level);
+    else if (term.kind === "level") fixed += level;
+    else if (term.kind === "highest-ability")
+      fixed += Math.max(...BEAST_ABILITY_NAMES.map(modifier));
+    else if (term.kind === "ability") {
+      if (term.abilities.length === 1) fixed += modifier(term.abilities[0]!);
+      else alternatives = term.abilities;
+    }
+  }
+  const expression = (total: number) => {
+    const base = dice.join(" + ");
+    if (base === "") return String(total);
+    return total === 0 ? base : `${base}${signedTerm(total)}`;
+  };
+  const withType = (text: string) =>
+    damage.damageType === undefined ? text : `${text} ${damage.damageType}`;
+  if (alternatives.length === 0) return withType(expression(fixed));
+  return alternatives
+    .map(
+      (ability) =>
+        `${withType(expression(fixed + modifier(ability)))} (${ability})`,
+    )
+    .join(" or ");
+}
+
+/**
+ * An associate's statistics from its stat block (`AssociateStatBlock`, parsed
+ * at pack build) and its master's evaluated stats, at the master's level.
+ * A summoned creature (role "Summoned Creature") also takes the creature
+ * bonuses the content names `SUMMON.` (Alien Summoning) to its defenses,
+ * attack rolls and damage, as fixed-bonus creatures do (D095).
+ */
+export function associateStatistics(input: {
+  readonly block: AssociateStatBlock;
+  readonly stats: Readonly<Record<string, EvaluatedStat>>;
+  readonly level: number;
+}): AssociateStatistics {
+  const { block, stats, level } = input;
+  const summoned = /\bsummoned\b/i.test(block.role ?? "");
+  const creatureBonus = (stat: string) =>
+    summoned ? companionStatBonus(stats, "SUMMON", stat) : 0;
+
+  const hitPoints =
+    block.hitPoints.kind === "master-bloodied"
+      ? (bloodiedValue(numericStat(stats, "Hit Points")) ?? 0)
+      : block.hitPoints.kind === "master-surge-value"
+        ? (evaluatedHealingSurgeValue(stats) ?? 0)
+        : block.hitPoints.value;
+  const blockDefenses = block.defenses;
+  const defenses = Object.fromEntries(
+    ASSOCIATE_DEFENSE_STATS.map(([id, statNames]) => {
+      const value =
+        blockDefenses.kind === "fixed"
+          ? blockDefenses.values[id]
+          : blockDefenses.kind === "level"
+            ? blockDefenses.base[id] + level
+            : firstNumericStat(stats, statNames) +
+              blockDefenses.bonus[id] +
+              creatureBonus(statNames[0]!);
+      return [id, value];
+    }),
+  ) as AssociateStatistics["defenses"];
+
+  const lines = (entry: AssociateEntry): AssociateStatisticsLine[] =>
+    entry.lines.map((line): AssociateStatisticsLine => {
+      const label = line.label === undefined ? {} : { label: line.label };
+      const attack = line.attack;
+      if (attack?.bonus !== undefined) {
+        const attackBonus =
+          attack.bonus.kind === "fixed"
+            ? attack.bonus.value
+            : level + attack.bonus.plus + creatureBonus("attack rolls");
+        const defense = attack.defense ?? "";
+        return {
+          ...label,
+          text: `${attack.range}; ${attackBonus < 0 ? "" : "+"}${attackBonus} vs. ${defense}`,
+          attackBonus,
+          defense,
+        };
+      }
+      if (line.damage !== undefined) {
+        const step = [...(line.steps ?? [])]
+          .reverse()
+          .find((candidate) => level >= candidate.level);
+        const damage = associateDamageText(
+          step?.damage ?? line.damage,
+          level,
+          stats,
+          creatureBonus("damage"),
+        );
+        return {
+          ...label,
+          text: `${damage} damage${line.rest ?? ""}`,
+          damage,
+        };
+      }
+      return { ...label, text: line.text };
+    });
+  const entry = (
+    value: AssociateEntry & { readonly action?: string },
+  ): AssociateStatisticsEntry => ({
+    name: value.name,
+    ...(value.keywords === undefined ? {} : { keywords: value.keywords }),
+    ...(value.usage === undefined ? {} : { usage: value.usage }),
+    ...(value.aura === undefined ? {} : { aura: value.aura }),
+    ...(value.action === undefined ? {} : { action: value.action }),
+    lines: lines(value),
+  });
+
+  const optional = {
+    bloodied: hitPoints > 1 ? bloodiedValue(hitPoints) : undefined,
+    initiative:
+      block.initiative === undefined
+        ? undefined
+        : (numericStat(stats, "Initiative") ?? 0) + block.initiative.bonus,
+    perception:
+      block.perception === undefined
+        ? undefined
+        : (numericStat(stats, "Perception") ?? 0) + block.perception.bonus,
+    abilities:
+      block.abilities === undefined
+        ? undefined
+        : (Object.fromEntries(
+            BEAST_ABILITY_NAMES.map((ability) => {
+              const score = block.abilities![ability];
+              return [ability, { score, modifier: abilityModifier(score) }];
+            }),
+          ) as Record<AssociateAbilityName, BeastCompanionAbility>),
+  };
+  return {
+    hitPoints,
+    hitPointsSource: block.hitPoints.kind,
+    defenses,
+    traits: block.traits.map(entry),
+    powers: block.powers.map(entry),
+    ...Object.fromEntries(
+      Object.entries(optional).filter(([, value]) => value !== undefined),
     ),
   };
 }

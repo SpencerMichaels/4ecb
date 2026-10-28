@@ -1,4 +1,5 @@
 export * from "./ability-scores";
+export * from "./associates";
 export * from "./beast-companion";
 export * from "./build-projection";
 export * from "./condition-trace";
