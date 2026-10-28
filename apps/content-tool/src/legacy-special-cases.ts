@@ -319,6 +319,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x1e9d9cdc.CustomElement": generic(
       "Custom (homebrew) Language records get the Starting category; custom ritual scrolls get type Ritual.",
+      "applies only to custom (homebrew) records the modern app does not author; a custom Language would get the Starting category",
     ),
     "?A0x1e9d9cdc.InitStockTypes": generic(
       "Registers the stock entity types by name.",
@@ -347,20 +348,24 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Rules XML element parser (name, type, internal-id, source, revision-date).",
       "content-pack import",
     ),
-    RulesElementFromAttributes: generic(
+    RulesElementFromAttributes: code(
       "Resolves a saved element by internal-id, then by name and type.",
-      LEGACY_IO,
+      "legacy-dnd4e importDnd4e resolves by internal-id; with matchMissingDefinitionsIn a missing id falls back to the one same-named record of that type",
+      test(
+        "packages/legacy-dnd4e/src/definition-matching.test.ts",
+        "uses the one same-named record everywhere the build names one",
+      ),
     ),
-    PrereqListStart: generic("Writes a DependsOn block.", LEGACY_IO),
-    PrereqList: generic(
+    PrereqListStart: outOfScope("Writes a DependsOn block.", LEGACY_IO),
+    PrereqList: outOfScope(
       "Writes non-core, non-internal prerequisite dependencies.",
       LEGACY_IO,
     ),
-    "?A0x7f38ca63.ParseTextString": generic(
+    "?A0x7f38ca63.ParseTextString": outOfScope(
       "Character file text strings; skips the _CLASSNAME text string.",
       LEGACY_IO,
     ),
-    "?A0x7f38ca63.ParseCharacterPiece": generic(
+    "?A0x7f38ca63.ParseCharacterPiece": outOfScope(
       "Character file section dispatch (Campaign, loot, RulesElementTally, ...).",
       LEGACY_IO,
     ),
@@ -464,11 +469,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "'Heavy armor' proficiency: any armor proficiency whose armor is heavy.",
       "no unresolved record uses it",
     ),
-    Proficiency: generic(
+    Proficiency: code(
       "Builds '<kind> proficiency (<name>)' lookups for the proficiency parser.",
+      "prerequisites.ts proficiencySpecialCase",
+      test(
+        PREREQUISITES,
+        "carries a proficiency prefix to later weapon-group clauses",
+      ),
     ),
-    "?A0xf75eff9b.ProficiencyWeapon": generic(
+    "?A0xf75eff9b.ProficiencyWeapon": code(
       "Resolves the weapon named in a 'Weapon Proficiency (...)' record.",
+      "prerequisites.ts proficiencySpecialCase",
+      test(
+        PREREQUISITES,
+        "carries a proficiency prefix to later weapon-group clauses",
+      ),
     ),
     ByGroup: code(
       "Proficiency clause '<group>': weapon proficiencies whose weapon's Group contains it.",
@@ -608,8 +623,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "reads multiclass source and more-than-one-class clauses",
       ),
     ),
-    HealingInfusion: generic(
+    HealingInfusion: code(
       "Detects 'Healing Infusion:' power names for infusion-count clauses.",
+      "prerequisites.ts healing-infusion-power predicate",
+      test(PREREQUISITES, "reads %s [at least one healing infusion power]"),
     ),
     AnyFeat: code(
       "'Any X feat' / 'At least one X feat' / 'vampire bloodline feat' count feats by type.",
@@ -635,14 +652,25 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "drops an ignored alternative, as legacy InternalizeOr does",
       ),
     ),
-    Unrecognized: generic(
+    Unrecognized: code(
       "Unrecognized clauses become an illegal stub; four known non-clauses only suppress the debug log.",
-      "modern reports unrecognized clauses as unverified",
+      "prerequisites.ts: 'Unselectable' -> never (as legacy); other unrecognized clauses deliberately unverified rather than failing",
+      test(
+        PREREQUISITES,
+        "keeps unresolved markers and unknown prose unverified",
+      ),
     ),
     PrereqSpecialReason: generic(
       "Failure-reason text for exclusive (~) clauses.",
     ),
-    InitializeAbilityScores: generic("Ability score records except 'any'."),
+    InitializeAbilityScores: code(
+      "Ability score records except 'any'.",
+      "rules-engine ability-scores.ts ABILITY_SCORE_NAMES, the fixed six abilities",
+      test(
+        "packages/rules-engine/src/ability-scores.test.ts",
+        "starts with 22 points and accepts the standard array",
+      ),
+    ),
     ListContains: code(
       "'any' matches every list entry. CalcModifiedValue uses it to skip a list-addition the field already contains.",
       "content-domain legacyListContains; item-fields.ts modifiedFieldValue (shared by item fields and powers.ts power fields) leaves the field unchanged, so AllAsThrown's Heavy Thrown, Two-Fisted Shooter's and Crossbow Savant's Load Free and Power of Skill's Lightning no longer repeat",
@@ -744,9 +772,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "A base is ranged by a ranged Weapon Category or a Range (thrown).",
       "equipment-ui.ts compatibleBaseItems 'any ranged'",
     ),
-    "?A0x0bed2cbe.CharLootName": generic(
+    "?A0x0bed2cbe.CharLootName": partial(
       "Composes '<enchantment> <base>' item names, replacing implement/weapon words.",
-      "character-domain formatInventoryItemName",
+      "the name is an identity for _INTERNAL_MainHandWeapon/_INTERNAL_EquippedSymbol; modern matches the hint against formatInventoryItemName's D091 name (case-sensitive in loadout-slots named()), and never reads _INTERNAL_EquippedSymbol (symbol-slot holdings import unequipped)",
+      test(
+        LOADOUT_SLOTS,
+        "places imported holdings where native CharLootSlot puts them",
+      ),
     ),
     "?A0x0bed2cbe.TransformLoot": notHandled(
       "Buying a slotless magic item whose Weapon or Armor field names exactly one base turns it into that base plus the item as its enchantment.",
@@ -1337,9 +1369,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "powers.ts loadouts weaponDamage (entry.overrides.Damage)",
       test(POWERS, "produces explainable weapon and unarmed variants with %s"),
     ),
-    "D20Workspace.SetCharLootDamage": generic(
+    "D20Workspace.SetCharLootDamage": code(
       "Stores a loot damage override.",
-      "character-domain inventory overrides",
+      "character-domain inventory overrides.Damage, read by powers.ts weaponDamage",
+      test(POWERS, "produces explainable weapon and unarmed variants with %s"),
     ),
     "?A0x03aa98b1.ProcessModify": code(
       "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes; a modify with neither name nor select targets the provider's most recent child. A 'this' modify runs here only with conditions (requires/wearing/not-wearing; ParseOneRule applied the others at load) and modifies the providing record. CalcModifiedValue applies a list-addition (skipped when ListContains), else a die-increase, else the value.",
@@ -1490,7 +1523,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "takes the implement path for a power that is both Weapon and Implement",
       ),
     ),
-    "?A0x7555d940.IsClose": generic("Close burst/blast detection."),
+    "?A0x7555d940.IsClose": code(
+      "Close burst/blast detection.",
+      "powers.ts legacyPowerRange",
+      test(REQUIREMENTS, "marks `thrown melee` as a thrown melee power"),
+    ),
     "?A0x7555d940.WhichAttack": code(
       "Melee-or-ranged attack line selection by weapon, and the best of 'A, B, or C' abilities.",
       "powers.ts phaseAlternatives / attackLineAbility",
@@ -1901,8 +1938,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "stacks a pact blade's typed bonus with Dual Implement Spellcaster's in one row maximum",
       ),
     ),
-    "?A0x7555d940.AddPieces": generic("Component explanation text."),
-    "?A0x7555d940.PieceComment": generic("Component explanation text."),
+    "?A0x7555d940.AddPieces": generic(
+      "Component explanation text.",
+      "explanation text only; feeds no total",
+    ),
+    "?A0x7555d940.PieceComment": generic(
+      "Component explanation text.",
+      "explanation text only; feeds no total",
+    ),
     "D20Workspace.RulesElementEncounterUses": notHandled(
       "Six healing-word style powers by exact Special text get 2 uses per encounter (3 from level 16); _ADDITIONAL_USES field and stat add uses.",
       "use tracking belongs to the deferred M6 play tracker; add `_ADDITIONAL_USES` support and corrections then",
@@ -1960,7 +2003,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "derived-values.ts companionStatBonus",
       test(BEAST, "sums ALLY., COMPANION. and BEAST. bonuses"),
     ),
-    "BeastBlock.SetDefenses": generic("Companion defense line."),
+    "BeastBlock.SetDefenses": code(
+      "Companion defense line.",
+      "derived-values.ts BEAST_DEFENSE_STATS",
+      test(BEAST, "follows the Martial Power formulas for a 1st-level bear"),
+    ),
     "FamiliarBlock.Speed": code(
       "Familiar speed + companion speed bonuses, with Secondary Speed.",
       "derived-values.ts familiarSpeed / sheet-model familiar-card.ts",
@@ -2032,23 +2079,57 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Auto ability scores from suggestions or the class Key Abilities.",
       AUTO_BUILD,
     ),
-    "D20Workspace.LevelUp": generic(
+    "D20Workspace.LevelUp": notHandled(
       "New-level text strings: starting money 100 gp, stored money, residuum.",
-      "character-domain starting wealth",
+      "new native characters get no starting Carried Money (legacy and PHB: 100 gp); owner decision pending",
     ),
-    "D20Workspace.LoadInternal": generic(
+    "D20Workspace.LoadInternal": outOfScope(
       "Legacy file load and portrait paths.",
+      LEGACY_IO,
     ),
-    "D20Workspace.StockStatWeight": generic("Weight stat accessor."),
-    "D20Workspace.StockStatSTR": generic("Strength stat accessor."),
+    "D20Workspace.StockStatWeight": code(
+      "Weight stat accessor.",
+      "sheet-model encumbrance.ts sheetEncumbrance (with StrLoadAdjust and Weight Discount)",
+      test(
+        ENCUMBRANCE,
+        "uses base gear, signed quantities, decimal overrides and native weight exclusions",
+      ),
+      test(
+        ENCUMBRANCE,
+        "retains unknown money/gear/strength and clamps negative stock weight",
+      ),
+    ),
+    "D20Workspace.StockStatSTR": code(
+      "Strength stat accessor.",
+      "sheet-model encumbrance.ts sheetEncumbrance (with StrLoadAdjust and Weight Discount)",
+      test(
+        ENCUMBRANCE,
+        "retains unknown money/gear/strength and clamps negative stock weight",
+      ),
+    ),
     "D20Workspace.StockStatXPNeeded": generic("XP Needed stat accessor."),
     SetStoredMoney: generic("Stored money per level."),
-    "?A0x7f38ca63.WriteDetails": generic(".dnd4e details writer."),
-    "?A0x7f38ca63.WriteCompanions": generic(".dnd4e companions writer."),
-    "?A0x7f38ca63.WritePowerStat": generic(".dnd4e power stat writer."),
-    "?A0x7f38ca63.ParseStatAdd": generic(".dnd4e statadd reader."),
-    SaveStats: generic(".dnd4e stat block writer."),
-    "Campaign.FromXML": generic(".dndcamp reader (Houserules/Restricted)."),
+    "?A0x7f38ca63.WriteDetails": outOfScope(
+      ".dnd4e details writer.",
+      LEGACY_IO,
+    ),
+    "?A0x7f38ca63.WriteCompanions": outOfScope(
+      ".dnd4e companions writer.",
+      LEGACY_IO,
+    ),
+    "?A0x7f38ca63.WritePowerStat": outOfScope(
+      ".dnd4e power stat writer.",
+      LEGACY_IO,
+    ),
+    "?A0x7f38ca63.ParseStatAdd": outOfScope(
+      ".dnd4e statadd reader.",
+      `${LEGACY_IO}. This is the saved stat-block reader; the rules-XML ParseStatAdd (?A0x1e9d9cdc, MINONEMOD/HALFMOD) is rules-engine stats.ts`,
+    ),
+    SaveStats: outOfScope(".dnd4e stat block writer.", LEGACY_IO),
+    "Campaign.FromXML": notHandled(
+      ".dndcamp reader (Houserules/Restricted).",
+      ".dndcamp house rules/Restricted lists change legality; the modern app has no .dndcamp support (owner decision: build or out of scope)",
+    ),
 
     // --- RulesEngineCommon --------------------------------------------
     "MagicItem.CategoryName": code(
@@ -2094,7 +2175,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Hides the internal Monk Unarmed Strike weapon from the gear list.",
       "InternalOnly records are hidden by the shop",
     ),
-    "GearPageData.UpdateInternal": generic("Gear page grouping by slot."),
+    "GearPageData.UpdateInternal": code(
+      "Gear page grouping by slot.",
+      "sheet-model encumbrance.ts sheetEncumbrance (gear weight and load, with StrLoadAdjust and Weight Discount)",
+      test(
+        ENCUMBRANCE,
+        "uses base gear, signed quantities, decimal overrides and native weight exclusions",
+      ),
+    ),
     "GearPageData.UpdateHouseruledItems": generic(
       "Custom items list under Other.",
     ),
@@ -2318,11 +2406,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "PowerCardFactory.GenerateFromCharLoot": generic("Card kind labels."),
     "CharTracker/WeaponWorkspaceHolder.cs": generic(
       "Basic attacks and staff/rod default powers (Magic Missile, Eldritch Blast) on weapon cards.",
-      "modern basic attacks come from evaluated powers",
+      "modern basic attacks come from evaluated powers; the two-weapon decision is IsDualWeapon's (see that entry)",
     ),
     "BasicAttackHolder.GetBasicAttacks": generic(
       "Basic attack cards.",
-      "evaluated powers",
+      "evaluated powers; the two-weapon decision is IsDualWeapon's (see that entry)",
     ),
     "MiniCharPanel.PowerListing": generic("Basic attacks in the mini panel."),
     "PanelModelSenses.UpdatePanel": generic("Senses panel (darkvision)."),
