@@ -32,8 +32,9 @@ export interface NativePsionics {
     readonly name: string;
     readonly value: number;
   };
-  /** "Augmentable, " stripped from locked records' Keywords. */
-  readonly keywordOverlays: readonly FieldOverlay[];
+  /** "Augmentable, " stripped from locked records' Keywords, and
+   * `_SuppressAugments` on augmentable powers a Racial Trait chose. */
+  readonly overlays: readonly FieldOverlay[];
 }
 
 /**
@@ -61,7 +62,11 @@ export interface NativePsionics {
  * `IsUnlockedAugmentablePower` (D20Workspace.cs ~1625): the power has
  * `_AugmentVersions`, no `_SuppressAugments`, and was not chosen by a
  * Racial Trait (Dilettante) — read from the first occurrence of its
- * replacement chain, as native walks to the original choice.
+ * replacement chain, as native walks to the original choice. A power its
+ * Racial Trait locked gets a `_SuppressAugments` overlay, so later readers
+ * of the lock see the one condition native IsUnlockedAugmentablePower
+ * treats alike: power rows show a locked power's version 0 only, as native
+ * `CharPowerAugmentCount` (~1691) does.
  */
 export function nativePsionics(input: {
   readonly occurrences: readonly CharacterOccurrence[];
@@ -119,8 +124,9 @@ export function nativePsionics(input: {
       : fieldOf(entity, "Power Usage");
 
   let hybridPowerPoints = 0;
-  const keywordOverlays: FieldOverlay[] = [];
+  const lockOverlays: FieldOverlay[] = [];
   const stripped = new Set<string>();
+  const suppressed = new Set<string>();
   for (const occurrence of occurrences) {
     const entity = index.get(occurrence.definitionId);
     if (entity === undefined) continue;
@@ -129,11 +135,24 @@ export function nativePsionics(input: {
       const without = keywords.replaceAll("Augmentable, ", "");
       if (without !== keywords && !stripped.has(key(entity.id))) {
         stripped.add(key(entity.id));
-        keywordOverlays.push({
+        lockOverlays.push({
           providerOccurrenceId: occurrence.id,
           targetDefinitionIds: [entity.id],
           field: "Keywords",
           value: without,
+        });
+      }
+      if (
+        fieldOf(entity, "_AugmentVersions").length > 0 &&
+        fieldOf(entity, "_SuppressAugments").length === 0 &&
+        !suppressed.has(key(entity.id))
+      ) {
+        suppressed.add(key(entity.id));
+        lockOverlays.push({
+          providerOccurrenceId: occurrence.id,
+          targetDefinitionIds: [entity.id],
+          field: "_SuppressAugments",
+          value: "true",
         });
       }
       continue;
@@ -178,6 +197,6 @@ export function nativePsionics(input: {
   return {
     hybridPowerPoints,
     ...(conventionalist === undefined ? {} : { conventionalist }),
-    keywordOverlays,
+    overlays: lockOverlays,
   };
 }

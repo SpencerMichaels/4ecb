@@ -94,7 +94,10 @@ records lose "Augmentable, " from their Keywords. Psionic Conventionalist
 then takes 2/4/6 Power Points by the Level of the at-will it swapped out.
 Psionic Dabbler's swapped-in at-will counts by its record's own At-Will
 usage, although the feat's `modify` makes it Encounter (D105, PHB3 p195:
-the feat grants the points; native counts 0).
+the feat grants the points; native counts 0). A power locked by its Racial
+Trait also gets a `_SuppressAugments` overlay, and power rows list only
+version 0 of any locked augmentable power, as native `CharPowerAugmentCount`
+does for the sheet's cards.
 
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/
@@ -217,6 +220,9 @@ same-named records skips three kinds of record: `Grants` records,
 `Background` named "assassin". So the Assassin background never meets a bare
 `Assassin` clause. Two lookups bypass that walk: a record named by its internal
 ID, and one named as `<name> <type>` (for example `!Dwarf CountsAsRace`).
+When the walk finds nothing, native SpecialCase follows: a bare `Shifter`
+clause (feats, paragon paths, backgrounds, themes) is Razorclaw Shifter or
+Longtooth Shifter, each looked up the same way (`legacyClause`).
 
 ## Verified parity and performance
 

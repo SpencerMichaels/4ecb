@@ -898,6 +898,19 @@ function legacyClause(
 ): PrerequisiteIr | undefined {
   if (context.definitions === undefined) return undefined;
   const lower = normalized(canonical).replace(/\s+/g, " ");
+  // Legacy SpecialCase "shifter" (-Module-.cs ~29551, reached when the name
+  // walk finds nothing): Razorclaw Shifter or Longtooth Shifter, each read
+  // by InternalizeElement.
+  if (lower === EXCEPTION_NAMES.shifter)
+    return elementOf(
+      text,
+      [
+        EXCEPTION_NAMES.razorclawShifter,
+        EXCEPTION_NAMES.longtoothShifter,
+      ].flatMap((name) =>
+        withCountsAsAlternates(internalizedDefinitions(name, context), context),
+      ),
+    );
   const armor = /^training with (.+?)(?: armor\b.*)?$/.exec(lower);
   if (armor?.[1] !== undefined)
     return namedElement(

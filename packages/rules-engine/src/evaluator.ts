@@ -75,7 +75,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v83-2026-10-28-d105-rules-divergences";
+  "evaluated-character-v84-2026-10-28-locked-augment-rows";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2793,7 +2793,7 @@ function evaluateCharacterInternal(
   // Native `Psionics`/`PsionicConventionalist` run once every element's
   // rules have executed (D20Workspace.UpdateInternal ~249).
   const psionics = nativePsionics({ occurrences, saved, index, overlays });
-  overlays.push(...psionics.keywordOverlays);
+  overlays.push(...psionics.overlays);
   stats.add({
     id: "native:hybrid-power-points",
     stat: "Hybrid Power Points",
