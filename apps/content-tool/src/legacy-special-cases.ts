@@ -2208,9 +2208,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Auto ability scores from suggestions or the class Key Abilities.",
       AUTO_BUILD,
     ),
-    "D20Workspace.LevelUp": notHandled(
+    "D20Workspace.LevelUp": code(
       "New-level text strings: starting money 100 gp, stored money, residuum.",
-      "new native characters get no starting Carried Money (legacy and PHB: 100 gp); owner decision pending",
+      "character-domain newNativeCharacterRecord writes _PER_LEVEL_1_Carried Money = 100 gp (NATIVE_STARTING_CARRIED_MONEY; PHB: 'basic clothing and 100 gold pieces'); imported characters keep their saved wallets. An absent Stored Money resolves to 0 gp, and the app has no residuum field, so neither is written",
+      test(
+        "packages/character-domain/src/index.test.ts",
+        "creates an exact-profile native level-1 record carrying 100 gp without legacy cache claims",
+      ),
     ),
     "D20Workspace.LoadInternal": outOfScope(
       "Legacy file load and portrait paths.",
