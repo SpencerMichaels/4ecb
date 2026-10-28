@@ -75,6 +75,63 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("adds an item's statadds after every element's (native UpdateInternal: loot last)", () => {
+    // The one order-dependent AddStatValue shape: a feat's `+` link to a
+    // negative stat (no penalty flag) and an item's same-type -3 penalty.
+    // Native runs element rules first and EquipLoot last, so the penalty
+    // comes second and wins (-3); the other way round the link would
+    // replace it (-1).
+    const entities = [
+      entity("ROOT", "Character", "Root"),
+      entity("FEAT", "Synthetic Feat", "Feat", {
+        rules: [
+          rule("statadd", { name: "Feat Penalty", value: "-1" }, 0),
+          rule(
+            "statadd",
+            { name: "Stealth Misc", value: "+Feat Penalty", type: "item" },
+            1,
+          ),
+        ],
+      }),
+      entity("BOOTS", "Synthetic Boots", "Magic Item", {
+        specifics: { "Magic Item Type": "Feet", "Item Slot": "Feet" },
+        rules: [
+          rule(
+            "statadd",
+            { name: "Stealth Misc", value: "-3", type: "item" },
+            0,
+          ),
+        ],
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          { id: "feat", definitionId: "FEAT", acquiredLevel: 1, kind: "grabbag" },
+        ],
+        inventory: [
+          {
+            id: "boots",
+            definitionIds: ["BOOTS"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        candidateDetailLevels: [],
+      },
+      entities,
+    );
+    const stat = evaluated.stats["Stealth Misc"];
+    expect(stat?.contributions.map(({ providerName }) => providerName)).toEqual(
+      ["Synthetic Feat", "Synthetic Boots"],
+    );
+    expect(stat?.value).toBe(-3);
+  });
+
   it("internalizes a prerequisite the same whichever caller reads it first", () => {
     // A paragon path power reads its path's prerequisite (BaseClass) before
     // or after the path's choice is checked; the cached IR must not depend

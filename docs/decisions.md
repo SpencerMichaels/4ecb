@@ -3214,6 +3214,13 @@ Kept modern, where native contradicts the text or nullifies the feature:
   any melee weapon as a warlock implement") did nothing.
 - **"+N bonus and XdY" increase lines** (Sun Flare, Improved Razor Storm):
   the dice after the bonus are read; native parses from the first digit.
+- **Conditional reminders of linked statadds** (2026-10-28): a reminder
+  states the bonus the statadd would add, with its `-` sign and
+  HALFMOD/MINONEMOD. Native `BuildConditionalString` (BasicUtils.cs ~149)
+  prints the linked stat's stand-alone value (or ability modifier) without
+  them, which would state a different bonus than the one the rule grants.
+  No content conditional has a negative or HALF/MINONE link today, so no
+  shown number changes (`StatAccumulator.#raw` in `stats.ts`).
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093

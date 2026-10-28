@@ -47,6 +47,16 @@ function key(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
 
+/** A contribution's bonus type for `AddStatValue`, or undefined when it is
+ *  untyped. Native interns `type=""` as a real, empty type (see
+ *  `StatAddRule.bonusType`), so only a missing type is untyped; types
+ *  compare case-insensitively (the string table's `_wcsnicmp`). */
+function typeKeyOf(contribution: StatContribution): string | undefined {
+  return contribution.bonusType === undefined
+    ? undefined
+    : key(contribution.bonusType);
+}
+
 export class StatAccumulator {
   readonly #contributions: StatContribution[] = [];
   readonly #aliases = new Map<string, string>();
@@ -159,7 +169,12 @@ export class StatAccumulator {
   }
 
   /** The value a contribution shows on its own, its link evaluated as a
-   *  stand-alone stat (native `CalculateStatValue` with no `type_max`). */
+   *  stand-alone stat (native `CalculateStatValue` with no `type_max`).
+   *  Divergence (D105): native's conditional reminder text
+   *  (`BasicUtils.BuildConditionalString`) shows a linked statadd's
+   *  stand-alone stat, or its ability modifier, without the link's sign
+   *  and HALFMOD/MINONEMOD, misstating the bonus it summarises; this keeps
+   *  them, as the total would. */
   #raw(
     contribution: StatContribution,
     visiting: Set<string>,
@@ -234,11 +249,7 @@ export class StatAccumulator {
       if (contribution.halfPoint !== true) return 0;
       halfPointPending = !halfPointPending;
       if (halfPointPending) return 0;
-      const typeKey =
-        contribution.bonusType === undefined ||
-        contribution.bonusType.trim().length === 0
-          ? undefined
-          : key(contribution.bonusType);
+      const typeKey = typeKeyOf(contribution);
       if (typeKey === undefined) {
         cell.value += 1;
         return 1;
@@ -320,11 +331,7 @@ export class StatAccumulator {
       const cell: CreditCell = nested
         ? (shared.credit ?? { value: 0, capped: false })
         : { value: 0, capped: false };
-      const typeKey =
-        contribution.bonusType === undefined ||
-        contribution.bonusType.trim().length === 0
-          ? undefined
-          : key(contribution.bonusType);
+      const typeKey = typeKeyOf(contribution);
       let numeric: number;
       if (parsed.kind === "number") numeric = parsed.value;
       else {

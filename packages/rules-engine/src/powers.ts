@@ -1821,6 +1821,14 @@ function rowKeywordTags(
   return { tags, powerTags };
 }
 
+/** The bonus types native CalcBAB registers for a row's built-in attack
+ *  parts (besides "Enhancement"). */
+const NATIVE_ATTACK_TYPES = {
+  abilityModifier: "abilmod",
+  halfLevel: "HALF-LEVEL",
+  proficiency: "Proficiency Bonus",
+} as const;
+
 type TypedPowerComponent = {
   readonly component: PowerComponent;
   readonly bonusType?: string;
@@ -1850,9 +1858,10 @@ function combatStatEntries(
     attackStat?: string;
     nativeKeywords?: readonly string[];
     /**
-     * Built-in typed bonuses the row already holds (native CalcBAB and
-     * CalcDamage register the weapon's enhancement as "Enhancement" before
-     * any keyword stat), sharing maxima with matching stats.
+     * Built-in typed bonuses the row already holds (native CalcBAB
+     * registers the attack's ability modifier, half level, proficiency and
+     * enhancement, and CalcDamage the weapon's enhancement, before any
+     * keyword stat), sharing maxima with matching stats.
      */
     typedExtras?: readonly {
       readonly bonusType: string;
@@ -1957,7 +1966,8 @@ function combatStatEntries(
       seen.add(contribution.id);
       return [
         {
-          ...(contribution.bonusType
+          // `type=""` is a real (empty) type natively (StatAddRule.bonusType).
+          ...(contribution.bonusType !== undefined
             ? { bonusType: key(contribution.bonusType) }
             : {}),
           component: {
@@ -1997,7 +2007,7 @@ function stackTypedComponents(
   });
   const maxima = new Map<string, TypedPowerComponent>();
   for (const entry of components) {
-    if (!entry.bonusType) continue;
+    if (entry.bonusType === undefined) continue;
     const old = maxima.get(entry.bonusType);
     const value = entry.component.value;
     if (
@@ -2010,7 +2020,9 @@ function stackTypedComponents(
   }
   return components
     .filter(
-      (entry) => !entry.bonusType || maxima.get(entry.bonusType) === entry,
+      (entry) =>
+        entry.bonusType === undefined ||
+        maxima.get(entry.bonusType) === entry,
     )
     .map(({ component }) => component);
 }
@@ -2816,7 +2828,7 @@ function powerAdditionalEffects(input: {
           ? contribution.value
           : `${value > 0 ? "+" : ""}${value}`;
       const bonus =
-        contribution.bonusType === undefined
+        (contribution.bonusType ?? "").trim() === ""
           ? ""
           : ` ${contribution.bonusType} bonus`;
       const text = `${amount}${bonus} to ${kind === "attack" ? "attack rolls" : "damage rolls"} ${contribution.condition} - ${contribution.providerName}.`;
@@ -2880,9 +2892,12 @@ function powerHealing(
         source: contribution.providerName,
         provenanceId: contribution.id,
       };
-      const type = key(contribution.bonusType ?? "");
-      if (type === "") untyped.push(component);
-      else if ((typed.get(type)?.value ?? -Infinity) < component.value)
+      if (contribution.bonusType === undefined) {
+        untyped.push(component);
+        continue;
+      }
+      const type = key(contribution.bonusType);
+      if ((typed.get(type)?.value ?? -Infinity) < component.value)
         typed.set(type, component);
     }
   }
@@ -3674,28 +3689,52 @@ export function evaluatePowers(input: {
         }
         keyAbilityDamage.set(definition.ordinal, damageOverride);
         const defense = attack?.[2] ?? "Unknown";
-        const attackComponents: PowerComponent[] = [
+        // Native CalcBAB (`-Module-.cs` ~23982) registers each built-in
+        // part in the row's att_type_max as it adds it: the ability
+        // modifier as "abilmod", half level as "HALF-LEVEL", the proficiency
+        // bonus as "Proficiency Bonus" and the enhancement as "Enhancement".
+        // A stat bonus of one of those types then adds only its excess.
+        const builtInAttack: {
+          readonly bonusType: string;
+          readonly component: PowerComponent;
+        }[] = [
           {
-            label: `${attackStat} modifier`,
-            value: numericStat(input.stats, `${attackStat} modifier`),
+            bonusType: NATIVE_ATTACK_TYPES.abilityModifier,
+            component: {
+              label: `${attackStat} modifier`,
+              value: numericStat(input.stats, `${attackStat} modifier`),
+            },
           },
-          { label: "half your level", value: halfLevel(input.level) },
+          {
+            bonusType: NATIVE_ATTACK_TYPES.halfLevel,
+            component: {
+              label: "half your level",
+              value: halfLevel(input.level),
+            },
+          },
         ];
         if (weaponPower && arenaImprovised(equipment))
-          attackComponents.push({
-            label: "proficiency bonus",
-            value: 2,
-            source: "Arena Training",
+          builtInAttack.push({
+            bonusType: NATIVE_ATTACK_TYPES.proficiency,
+            component: {
+              label: "proficiency bonus",
+              value: 2,
+              source: "Arena Training",
+            },
           });
         else if (
           weaponPower &&
           equipment.proficiency !== 0 &&
           proficientWithWeapon(equipment)
         )
-          attackComponents.push({
-            label: "proficiency bonus",
-            value: equipment.proficiency,
+          builtInAttack.push({
+            bonusType: NATIVE_ATTACK_TYPES.proficiency,
+            component: {
+              label: "proficiency bonus",
+              value: equipment.proficiency,
+            },
           });
+        const attackComponents: PowerComponent[] = [];
         // One typed maximum per row (native att_type_max) across both paths.
         attackComponents.push(
           ...stackTypedComponents([
@@ -3712,7 +3751,7 @@ export function evaluatePowers(input: {
                 byId,
                 basicAttackKind,
                 attackStat,
-                typedExtras: enhancementExtra,
+                typedExtras: [...builtInAttack, ...enhancementExtra],
                 globalStats: { weaponRolls },
                 nativeKeywords,
               },
