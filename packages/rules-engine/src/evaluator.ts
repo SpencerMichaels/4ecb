@@ -75,7 +75,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v78-2026-10-28-native-psionics";
+  "evaluated-character-v79-2026-10-28-power-field-bonuses";
 
 export interface CharacterOccurrence {
   readonly id: string;
