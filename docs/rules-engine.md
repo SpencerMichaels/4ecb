@@ -543,6 +543,24 @@ one maximum per row (native `att_type_max`/`dmg_type_max`), so an implement
 power used through a pact blade applies one maximum across its implement- and weapon-path
 bonuses: the blade's transferred off-hand enhancement and Dual
 Implement Spellcaster's do not stack.
+A row's keyword set also takes native `AdditionalKeywords`: the
+`_PowerstatKeywords` of the power, its weapon base and its enchantment, read
+from the overlaid records, so a conditional `modify name="this"` list-addition
+(Staff of Divinity's "holy symbol implement" for a Divine character) feeds
+Implement Expertise (Holy Symbol). An entry "<keyword>?<class ID>" (Eladrin
+Sword Wizardry's "wand implement?ID_FMP_CLASS_9") joins only for that class's
+powers, a paragon path power counting as its path's prerequisite class
+(native `BaseClass`). A paragon path power's keywords hold the path's ID (its
+Class field; Pact Reward's `ID_FMP_PARAGON_PATH_<n>:damage`) and, per native
+`InsertParagonPath`, the ID of the "<class name> Paragon Path" record
+(Sorcerous Power's `ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage`).
+`EvaluatedPower.encounterUses` (set when above one) is native
+`RulesElementEncounterUses`, the legacy tracker's use boxes: 2 (3 from 16th
+level) for the recovered "twice per encounter" Special texts, plus the
+overlaid `_ADDITIONAL_USES` field and the "<power ID>\_ADDITIONAL_USES" stat.
+Two D091 divergences, both from the records' own text: Special texts compare
+with whitespace collapsed (Ardent Surge), and additional uses add to the
+twice-per-encounter count (Fight On on Inspiring Word).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and

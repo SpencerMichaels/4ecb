@@ -4422,6 +4422,167 @@ describe("native BuildKeywordSet channels", () => {
       .map(({ label }) => label);
   };
 
+  it("adds the overlaid enchantment's _PowerstatKeywords (AdditionalKeywords)", () => {
+    const staff = (id: string, name: string) =>
+      entity(id, name, "Magic Item", {
+        "Magic Item Type": "Staff",
+        Enhancement: "+1 attack rolls and damage rolls",
+      });
+    const [power] = rows(
+      [
+        implementPower,
+        entity("QUICKBEAM", "Quickbeam staff", "Superior Implement", {
+          Group: "Staff",
+        }),
+        staff("ID_FMP_MAGIC_ITEM_6476", "Staff of Divinity +1"),
+        staff("AVERSION", "Aversion Staff +1"),
+      ],
+      [
+        owned("divinity", ["QUICKBEAM", "ID_FMP_MAGIC_ITEM_6476"]),
+        owned("aversion", ["QUICKBEAM", "AVERSION"]),
+      ],
+      ["holy symbol implement,implement:attack"],
+      {
+        // Staff of Divinity's `modify name="this" Field="_PowerstatKeywords"
+        // list-addition="holy symbol implement" requires="Divine"`, active.
+        overlays: [
+          {
+            providerOccurrenceId: "divinity:definition:1",
+            targetDefinitionIds: ["ID_FMP_MAGIC_ITEM_6476"],
+            targetName: "this",
+            field: "_PowerstatKeywords",
+            listAddition: "holy symbol implement",
+          },
+        ],
+      },
+    );
+
+    expect(sources(power, "Quickbeam staff of Divinity +1")).toEqual([
+      "holy symbol implement,implement:attack",
+    ]);
+    expect(sources(power, "Aversion Quickbeam staff +1")).toEqual([]);
+  });
+
+  it("adds a '?<class ID>' _PowerstatKeywords entry only to that class's powers", () => {
+    const strike = (id: string, classId: string) =>
+      entity(id, `Synthetic ${id}`, "Power", {
+        Keywords: "Arcane, Weapon",
+        Class: classId,
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      });
+    const path = {
+      ...entity("ID_FMP_PARAGON_PATH_29", "Battle Mage", "Paragon Path", {}),
+      prerequisites: "Wizard class",
+    };
+    const powers = rows(
+      [
+        entity("ID_FMP_CLASS_9", "Wizard", "Class", {}),
+        entity("ID_FMP_CLASS_1", "Fighter", "Class", {}),
+        path,
+        strike("WIZARD_POWER", "ID_FMP_CLASS_9"),
+        strike("PATH_POWER", "ID_FMP_PARAGON_PATH_29"),
+        strike("FIGHTER_POWER", "ID_FMP_CLASS_1"),
+        entity("ID_FMP_WEAPON_LONGSWORD", "Longsword", "Weapon", {
+          Damage: "1d8",
+          Group: "Heavy Blade",
+          "Weapon Category": "Military Melee",
+        }),
+      ],
+      [owned("sword", ["ID_FMP_WEAPON_LONGSWORD"])],
+      ["wand implement:damage"],
+      {
+        // Eladrin Sword Wizardry: `modify name="Longsword" type="Weapon"
+        // Field="_PowerstatKeywords" list-addition="wand implement?ID_FMP_CLASS_9"`.
+        overlays: [
+          {
+            providerOccurrenceId: "feat",
+            targetDefinitionIds: [],
+            targetName: "Longsword",
+            targetType: "Weapon",
+            field: "_PowerstatKeywords",
+            listAddition: "wand implement?ID_FMP_CLASS_9",
+          },
+        ],
+      },
+    );
+    const bonus = (id: string) =>
+      sources(
+        powers.find((power) => power.definitionId === id),
+        "Longsword",
+      );
+
+    expect(bonus("WIZARD_POWER")).toEqual(["wand implement:damage"]);
+    // BaseClass: a paragon path power counts as its path's class.
+    expect(bonus("PATH_POWER")).toEqual(["wand implement:damage"]);
+    expect(bonus("FIGHTER_POWER")).toEqual([]);
+  });
+
+  it("adds a paragon path power's ID and its '<class> Paragon Path' category (InsertParagonPath)", () => {
+    const bolt = (id: string, classId: string) =>
+      entity(id, `Synthetic ${id}`, "Power", {
+        Keywords: "Arcane, Implement",
+        Class: classId,
+        "Attack Type": "Ranged 10",
+        Attack: "Charisma vs. Reflex",
+        Hit: "1d10 + Charisma modifier damage.",
+      });
+    const powers = rows(
+      [
+        entity("ID_FMP_CLASS_128", "Sorcerer", "Class", {}),
+        entity("ID_FMP_CLASS_7", "Warlock", "Class", {}),
+        entity(
+          "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH",
+          "Sorcerer Paragon Path",
+          "Category",
+          {},
+        ),
+        {
+          ...entity(
+            "ID_FMP_PARAGON_PATH_100",
+            "Synthetic Path",
+            "Paragon Path",
+            {},
+          ),
+          prerequisites: "Sorcerer",
+        },
+        {
+          ...entity(
+            "ID_FMP_PARAGON_PATH_234",
+            "Dragonbane Pactmaker",
+            "Paragon Path",
+            {},
+          ),
+          prerequisites: "Warlock",
+        },
+        bolt("SORCERER_POWER", "ID_FMP_CLASS_128"),
+        bolt("SORCERER_PATH_POWER", "ID_FMP_PARAGON_PATH_100"),
+        bolt("WARLOCK_PATH_POWER", "ID_FMP_PARAGON_PATH_234"),
+      ],
+      [],
+      [
+        // Sorcerous Power and Gloom Pact Reward.
+        "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage",
+        "ID_FMP_PARAGON_PATH_234:damage",
+      ],
+    );
+    const bonus = (id: string) =>
+      sources(
+        powers.find((power) => power.definitionId === id),
+        "Unarmed",
+      );
+
+    expect(bonus("SORCERER_POWER")).toEqual([]);
+    expect(bonus("SORCERER_PATH_POWER")).toEqual([
+      "ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage",
+    ]);
+    // No "Warlock Paragon Path" record: only the path's own ID matches.
+    expect(bonus("WARLOCK_PATH_POWER")).toEqual([
+      "ID_FMP_PARAGON_PATH_234:damage",
+    ]);
+  });
+
   it("names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type", () => {
     const [power] = rows(
       [
@@ -4634,5 +4795,93 @@ describe("native BuildKeywordSet channels", () => {
     expect(evaluateFrom("ID_FMP_RACIAL_TRAIT_643")).toEqual([
       "multiclass:damage",
     ]);
+  });
+});
+
+describe("encounter uses (native RulesElementEncounterUses)", () => {
+  const healingWordSpecial =
+    "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter.";
+  const uses = (
+    power: ContentEntity,
+    level: number,
+    overlays: Parameters<typeof evaluatePowers>[0]["overlays"] = [],
+    stats: Record<string, EvaluatedStat> = {},
+  ) =>
+    evaluatePowers({
+      level,
+      activeDefinitionIds: [power.id],
+      inventory: [],
+      stats,
+      overlays,
+      entities: [power],
+    })[0]?.encounterUses;
+
+  it("gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level", () => {
+    const word = entity("ID_FMP_POWER_1455", "Healing Word", "Power", {
+      "Power Usage": "Encounter",
+      Keywords: "Divine, Healing",
+      Special: healingWordSpecial,
+    });
+    expect(uses(word, 15)).toBe(2);
+    expect(uses(word, 16)).toBe(3);
+    // Ardent Surge's Special breaks its line before "but only once" (D091).
+    const surge = entity("ID_FMP_POWER_10273", "Ardent Surge", "Power", {
+      "Power Usage": "Encounter",
+      Special:
+        "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter,\n but only once per round.",
+    });
+    expect(uses(surge, 1)).toBe(2);
+  });
+
+  it("adds the overlaid _ADDITIONAL_USES field and the '<ID>_ADDITIONAL_USES' stat", () => {
+    const rage = entity("ID_FMP_POWER_4807", "Rage Strike", "Power", {
+      "Power Usage": "Daily",
+      _ADDITIONAL_USES: "1",
+    });
+    expect(uses(rage, 5)).toBe(2);
+    const reaping = entity("DARK_REAPING", "Dark Reaping", "Power", {
+      "Power Usage": "Encounter",
+    });
+    expect(uses(reaping, 1)).toBeUndefined();
+    // Reaping Renewal: `modify name="Dark Reaping" type="Power"
+    // Field="_ADDITIONAL_USES" value="1"`.
+    const renewal = [
+      {
+        providerOccurrenceId: "feat",
+        targetDefinitionIds: ["DARK_REAPING"],
+        targetName: "Dark Reaping",
+        targetType: "Power",
+        field: "_ADDITIONAL_USES",
+        value: "1",
+      },
+    ];
+    expect(uses(reaping, 1, renewal)).toBe(2);
+    expect(
+      uses(reaping, 1, renewal, {
+        DARK_REAPING_ADDITIONAL_USES: stat("DARK_REAPING_ADDITIONAL_USES", 1),
+      }),
+    ).toBe(3);
+  });
+
+  it("counts Fight On's additional use on top of Inspiring Word's two (D091)", () => {
+    const word = entity("ID_FMP_POWER_1590", "Inspiring Word", "Power", {
+      "Power Usage": "Encounter",
+      Special:
+        "You can use this power twice per encounter, but only once per round. At 16th level, you can use inspiring word three times per encounter.",
+    });
+    // Fight On: `modify name="Inspiring Word" type="Power"
+    // Field="_ADDITIONAL_USES" value="1"`.
+    const fightOn = [
+      {
+        providerOccurrenceId: "feat",
+        targetDefinitionIds: ["ID_FMP_POWER_1590"],
+        targetName: "Inspiring Word",
+        targetType: "Power",
+        field: "_ADDITIONAL_USES",
+        value: "1",
+      },
+    ];
+    expect(uses(word, 1)).toBe(2);
+    expect(uses(word, 1, fightOn)).toBe(3);
   });
 });

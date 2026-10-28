@@ -143,6 +143,18 @@ export const EXCEPTION_NAMES = {
   dragonsWrath: "Dragon's Wrath",
 } as const;
 
+/**
+ * RulesElementEncounterUses (D20Workspace.cs ~1880): a power whose Special
+ * field is exactly one of these (case-insensitive) has 2 uses per encounter,
+ * 3 from 16th level (Healing Word, Inspiring Word, healing infusions...).
+ */
+export const TWICE_PER_ENCOUNTER_SPECIALS: readonly string[] = [
+  "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter.",
+  "You can use this power twice per encounter, but only once per round. At 16th level, you can use inspiring word three times per encounter.",
+  "You can use a healing infusion power twice per encounter, but only once per round. At 16th level, you can use a healing infusion power three times per encounter, but only once per round.",
+  "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter, but only once per round.",
+];
+
 /** Exact class name excluded by the recovered native deity-choice predicate. */
 export const DEITY_CHOICE_EXCLUDED_CLASS_NAME = EXCEPTION_NAMES.warpriest;
 

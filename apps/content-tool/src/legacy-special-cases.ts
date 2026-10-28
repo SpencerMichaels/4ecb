@@ -1376,7 +1376,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x03aa98b1.ProcessModify": code(
       "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes; a modify with neither name nor select targets the provider's most recent child. A 'this' modify runs here only with conditions (requires/wearing/not-wearing; ParseOneRule applied the others at load) and modifies the providing record. CalcModifiedValue applies a list-addition (skipped when ListContains), else a die-increase, else the value.",
-      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; a conditional 'this' targets the provider's own definition (Unforgettable Cudgel and 48 other implements' _PowerstatKeywords for a Divine/Arcane/Primal character, Beast Mastery's _CS_ShortDescription), an unconditional one nothing (legacy-wotc applied it at import). item-fields.ts modifiedFieldValue keeps the native one-of precedence, and overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A modify with neither name nor select (precedingChildTarget) walks the provider's child list (me[13]) up to the rule cursor: one child per grant and replace, number per select, in rule order regardless of level or conditions, so it targets the preceding grant's record or what the preceding replace or select's last slot chose, and nothing before any child or for an empty slot",
+      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; a conditional 'this' targets the provider's own definition (Unforgettable Cudgel and 48 other implements' _PowerstatKeywords for a Divine/Arcane/Primal character, read by powers.ts nativeRowKeywords; Beast Mastery's _CS_ShortDescription), an unconditional one nothing (legacy-wotc applied it at import). item-fields.ts modifiedFieldValue keeps the native one-of precedence, and overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A modify with neither name nor select (precedingChildTarget) walks the provider's child list (me[13]) up to the rule cursor: one child per grant and replace, number per select, in rule order regardless of level or conditions, so it targets the preceding grant's record or what the preceding replace or select's last slot chose, and nothing before any child or for an empty slot",
       test(
         EVALUATOR,
         "resolves weapon and armor fields through modify overlays, including BaseItem",
@@ -1854,8 +1854,8 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.BuildKeywordSet": partial(
-      "Keyword set for channel matching: weapon keywords, Arena weapons, implement names ('<name> implement', 'Ki Focuses Implement', '<group> implement group'), 'two-weapon', 'two-melee-weapon(-close)', 'two-blade', 'two-melee-offhand(-close)', attack types, Keywords, _ExtraKeywords, '<feat> association', name, ID, _AugmentParent, Class and paragon path, Power Usage, 'multiclass'/'multiclass feat', 'melee basic'/'ranged basic'.",
-      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass). Still missing: the paragon path ID (InsertParagonPath) and Arena weapons (AddArenaWeapons)",
+      "Keyword set for channel matching: weapon keywords, Arena weapons, implement names ('<name> implement', 'Ki Focuses Implement', '<group> implement group'), 'two-weapon', 'two-melee-weapon(-close)', 'two-blade', 'two-melee-offhand(-close)', attack types, Keywords, _ExtraKeywords, '<feat> association', name, ID, _AugmentParent, Class and paragon path, Power Usage, 'multiclass'/'multiclass feat', 'melee basic'/'ranged basic', and AdditionalKeywords: the power's, WeaponBase's and WeaponEnchant's _PowerstatKeywords, a '<keyword>?<class ID>' entry only for that class's powers (PossibleInsert, IsClassPower through BaseClass).",
+      "powers.ts loadout tags + legacyPowerKeywordTags + nativeRowKeywords (LootImplement names, ki focuses, implement groups, the base's WeaponEquiv record, the DetermineOffhand two-weapon channels, Melee/Ranged Weapon, group(weapon), one-hand, multiclass, and legacyPowerstatKeywords over the overlaid records: the 49 conditional implement overlays such as Staff of Divinity's 'holy symbol implement' and Eladrin Sword Wizardry's 'wand implement?ID_FMP_CLASS_9'; legacyPowerClassChannels gives BaseClass a paragon path's class prerequisite and InsertParagonPath's '<class> Paragon Path' category ID for Sorcerous Power; a path power's own ID was already a Class keyword, so Pact Reward's and Stalker Bloodline's ID_FMP_PARAGON_PATH_<n>:damage stats applied before). Still missing: Arena weapons (AddArenaWeapons)",
       test(
         POWERS,
         "matches bonuses keyed by the power's class ID and the weapon's ID",
@@ -1881,6 +1881,18 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "adds 'melee weapon' or 'ranged weapon' to weapon power rows",
       ),
       test(POWERS, "adds an augment version's _AugmentParent as a keyword"),
+      test(
+        POWERS,
+        "adds the overlaid enchantment's _PowerstatKeywords (AdditionalKeywords)",
+      ),
+      test(
+        POWERS,
+        "adds a '?<class ID>' _PowerstatKeywords entry only to that class's powers",
+      ),
+      test(
+        POWERS,
+        "adds a paragon path power's ID and its '<class> Paragon Path' category (InsertParagonPath)",
+      ),
     ),
     "?A0x7555d940.IsBlade": code(
       "Light or heavy blade group, for the 'two-blade' channel.",
@@ -1946,9 +1958,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Component explanation text.",
       "explanation text only; feeds no total",
     ),
-    "D20Workspace.RulesElementEncounterUses": notHandled(
+    "D20Workspace.RulesElementEncounterUses": code(
       "Six healing-word style powers by exact Special text get 2 uses per encounter (3 from level 16); _ADDITIONAL_USES field and stat add uses.",
-      "use tracking belongs to the deferred M6 play tracker; add `_ADDITIONAL_USES` support and corrections then",
+      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D091 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). No sheet surface shows the count yet: the use boxes belong to the deferred M6 play tracker",
+      test(
+        POWERS,
+        "gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level",
+      ),
+      test(
+        POWERS,
+        "adds the overlaid _ADDITIONAL_USES field and the '<ID>_ADDITIONAL_USES' stat",
+      ),
+      test(
+        POWERS,
+        "counts Fight On's additional use on top of Inspiring Word's two (D091)",
+      ),
     ),
 
     // --- D20RulesEngine: companions ----------------------------------

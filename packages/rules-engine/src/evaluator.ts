@@ -74,7 +74,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v71-2026-10-28-overnight-parity-batch";
+  "evaluated-character-v74-2026-10-28-encounter-uses";
 
 export interface CharacterOccurrence {
   readonly id: string;
