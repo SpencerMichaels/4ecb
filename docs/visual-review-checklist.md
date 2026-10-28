@@ -1066,3 +1066,61 @@ groups.
   - **Where:** import `sample-chars/Sylestine.dnd4e`, level 4 → Feats, open
     "Feat: Hybrid Talent, Bard Armor Proficiency".
   - **Expect:** step 2 shows Bard Armor Proficiency selected and changeable.
+
+## Loadout slots, uses, augments, starting gold (2026-10-27/28)
+
+- [ ] **Wrist razors on the arms (D101).**
+  - **Where:** a swordmage with a longsword in Main hand and Wrist Razors in
+    Off hand, Equipment tab → Loadout; pick the razors in the Arms slot.
+  - **Expect:** they leave Off hand and show under Arms; AC rises by 2
+    (Swordmage Warding +1 → +3). Razors alone in Main hand give +3, in Off
+    hand +1. Double-clicking razors in Inventory equips them in a hand,
+    never Arms. Opening DV shows its razors in Arms and longsword in Main
+    hand.
+  - **Wrong if:** AC doesn't change, or double-click puts razors in Arms.
+- [ ] **Wield two-handed (D101/D102).**
+  - **Where:** right-click a Longsword (inventory row or loadout slot) on a
+    medium character, then on a halfling or gnome.
+  - **Expect:** medium: a checkable "Wield two-handed"; choosing it fills
+    both hands, removes a shield, and weapon damage rises by 1. Small: the
+    item shows checked, muted, with the tooltip "Small characters wield this
+    weapon in both hands", and clicking does nothing. Right-clicking a
+    non-versatile, non-augment item opens the browser's own menu.
+  - **Wrong if:** the item is missing, toggles for a Small character, or the
+    menu is clipped at 140% zoom or unreadable in dark mode.
+- [ ] **Unwieldable weapon issue (D102).**
+  - **Where:** a halfling or gnome, Shop → buy a Greatsword, equip it.
+  - **Expect:** it fills both hands; the House rules badge shows 1 and
+    Diagnostics names the Greatsword with the Small-characters message;
+    clicking it opens Equipment; its attacks still show on power cards;
+    unequipping clears the issue.
+- [ ] **Starting gold.**
+  - **Where:** create a new character → Equipment.
+  - **Expect:** Carried Money 100 gp, Stored 0. An imported `.dnd4e` keeps
+    its saved money.
+- [ ] **Uses per encounter on power cards.**
+  - **Where:** Beldin Hammertongue 11 → `?preview=1` (Ardent Surge); then
+    the same power on the Build tab.
+  - **Expect:** the footer reads "ENCOUNTER (2×) … POWER" on one line with
+    "LEVEL N" still at the right; ordinary encounter powers unchanged; the
+    builder pane card shows the same; fits its print slot in the browser's
+    print preview; readable at 140% zoom and in dark mode.
+  - **Wrong if:** the footer wraps, the level is pushed off, or "(SPECIAL)"
+    still shows next to the count.
+- [ ] **Augments attach/detach.**
+  - **Where:** Flint → Equipment.
+  - **Expect:** the Staff of Sleep and Charm +1 row shows a muted "Augment:
+    Siberys Shard of Merciless Cold (heroic tier)"; the shard row shows
+    "Attached to Staff of Sleep and Charm +1". Right-click the shard: the
+    staff is ticked, then "Detach"; Detach removes both notes. With two
+    magic weapons, attaching to the second moves the note. A character with
+    no magic weapon or staff gets a greyed "Attach to…" with a tooltip.
+    Export and re-import keeps the binding on the new host.
+  - **Wrong if:** no note, a warning-coloured note, misaligned row columns,
+    or the menu doesn't open; check 140% zoom and dark mode.
+- [ ] **Theme-power reason.**
+  - **Where:** a character with a theme, a class encounter or daily slot
+    where a theme power would be its only class power of that type.
+  - **Expect:** the reason reads "You cannot choose a theme attack power in
+    place of a class attack power if you have no other class power of that
+    type".
