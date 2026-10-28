@@ -40,6 +40,8 @@ export const EXCEPTION_IDS = {
   kiFocusUser: "ID_INTERNAL_INTERNAL_KI_FOCUS_USER",
   /** IsKiFocus: the mundane Ki Focus gear. */
   kiFocusGear: "ID_FMP_GEAR_115",
+  /** PsionicConventionalist: power points lost by the swapped at-will. */
+  psionicConventionalist: "ID_FMP_FEAT_2732",
 } as const;
 
 /**

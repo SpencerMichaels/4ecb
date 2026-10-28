@@ -71,10 +71,11 @@ import {
   type LegacyLoadoutState,
   type LoadoutSlotContext,
 } from "./loadout-slots";
+import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v77-2026-10-28-blank-ability-modifier";
+  "evaluated-character-v78-2026-10-28-native-psionics";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2787,6 +2788,25 @@ function evaluateCharacterInternal(
       });
     }
   }
+  // Native `Psionics`/`PsionicConventionalist` run once every element's
+  // rules have executed (D20Workspace.UpdateInternal ~249).
+  const psionics = nativePsionics({ occurrences, saved, index, overlays });
+  overlays.push(...psionics.keywordOverlays);
+  stats.add({
+    id: "native:hybrid-power-points",
+    stat: "Hybrid Power Points",
+    value: String(psionics.hybridPowerPoints),
+    providerId: "native:psionics",
+    providerName: "Augmentable at-will attack powers",
+  });
+  if (psionics.conventionalist !== undefined)
+    stats.add({
+      id: `${psionics.conventionalist.occurrenceId}:native-power-points`,
+      stat: "Power Points",
+      value: String(psionics.conventionalist.value),
+      providerId: psionics.conventionalist.occurrenceId,
+      providerName: psionics.conventionalist.name,
+    });
   const evaluatedStats = Object.fromEntries(
     stats.allNames().map((name) => [name, stats.evaluate(name)]),
   );

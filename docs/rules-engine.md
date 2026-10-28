@@ -84,6 +84,15 @@ character's select named Name chose, or "no selection" (native
 `BracketSubstitute`): Signature Spell (Archspell)'s
 `[Signature Spell]:attack` becomes the chosen daily's `<name>:attack`.
 
+After every element's rules, `psionics.ts` runs native `Psionics`: each
+owned unlocked augmentable power (`_AugmentVersions`, no
+`_SuppressAugments`, not picked by a Racial Trait such as Dilettante) of a
+Class whose Power Usage is At-Will and Power Type attack adds 2/4/6 (by its
+Level) to the untyped "Hybrid Power Points" literal, which the hybrid
+power-point records and Psionic Dabbler link into Power Points; locked
+records lose "Augmentable, " from their Keywords. Psionic Conventionalist
+then takes 2/4/6 Power Points by the Level of the at-will it swapped out.
+
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/
 `not-wearing` operand, `requires` expression, zero/non-zero/`statmin`
