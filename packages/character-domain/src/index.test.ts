@@ -530,7 +530,7 @@ describe("character records", () => {
     expect(consolidateCurrency(ZERO_CURRENCY)).toEqual(ZERO_CURRENCY);
   });
 
-  it("reads one current wallet: the latest legacy wallet text at any level", () => {
+  it("reads one current wallet: the latest legacy wallet text at or below the character's level", () => {
     const leveled: CharacterBuild = {
       ...build,
       effectiveLevel: 4,
@@ -541,10 +541,11 @@ describe("character records", () => {
         "_PER_LEVEL_5_Carried Money": "99 gp",
       },
     };
-    // A value left above a lowered level is still the current wallet.
+    // A value left above a lowered level is stale: legacy saves the
+    // CharacterSheet money from the character's own level.
     expect(resolveCharacterWallet(leveled, "carried")).toEqual({
-      amount: { ad: 0, pp: 0, gp: 99, sp: 0, cp: 0 },
-      sourceLevel: 5,
+      amount: { ad: 0, pp: 0, gp: 2, sp: 5, cp: 0 },
+      sourceLevel: 3,
     });
     expect(resolveCharacterWallet(leveled, "stored")).toEqual({
       amount: { ad: 0, pp: 0, gp: 20, sp: 0, cp: 0 },
@@ -553,9 +554,9 @@ describe("character records", () => {
     // Export still asks for a legacy level's value explicitly.
     expect(resolveCharacterWallet(leveled, "carried", 4).sourceLevel).toBe(3);
     expect(resolveCharacterWallet(leveled, "carried", 2).sourceLevel).toBe(1);
-    // Edits write the key that is read back, never one a later key shadows.
+    // Edits write the character's level, which is read back first.
     expect(currentWalletTextKey(leveled, "carried")).toBe(
-      "_PER_LEVEL_5_Carried Money",
+      "_PER_LEVEL_4_Carried Money",
     );
     expect(currentWalletTextKey(leveled, "stored")).toBe(
       "_PER_LEVEL_4_Stored Money",
@@ -573,9 +574,31 @@ describe("character records", () => {
       },
       priceCopper: 100,
     });
-    expect(resolveCharacterWallet(spent, "carried").amount.gp).toBe(98);
-    expect(spent.textStrings["_PER_LEVEL_5_Carried Money"]).toBe("98 gp");
+    expect(resolveCharacterWallet(spent, "carried").amount).toEqual({
+      ...ZERO_CURRENCY,
+      gp: 1,
+      sp: 5,
+    });
+    expect(spent.textStrings["_PER_LEVEL_4_Carried Money"]).toBe("1 gp; 5 sp");
     expect(spent.textStrings["_PER_LEVEL_3_Carried Money"]).toBe("2 gp; 5 sp");
+    expect(spent.textStrings["_PER_LEVEL_5_Carried Money"]).toBe("99 gp");
+    // Raising the level carries the current wallet up through every new
+    // level (native LevelUp), overwriting the stale level-5 key.
+    const raised = applyCharacterCommand(spent, {
+      kind: "set-effective-level",
+      level: 6,
+    });
+    expect(raised.textStrings["_PER_LEVEL_5_Carried Money"]).toBe("1 gp; 5 sp");
+    expect(raised.textStrings["_PER_LEVEL_6_Carried Money"]).toBe("1 gp; 5 sp");
+    expect(raised.textStrings["_PER_LEVEL_6_Stored Money"]).toBe("20 gp");
+    expect(resolveCharacterWallet(raised, "carried").sourceLevel).toBe(6);
+    // Lowering keeps the higher keys, as native does; they stay unread.
+    const lowered = applyCharacterCommand(raised, {
+      kind: "set-effective-level",
+      level: 2,
+    });
+    expect(lowered.textStrings).toEqual(raised.textStrings);
+    expect(resolveCharacterWallet(lowered, "carried").amount.gp).toBe(5);
   });
 
   it("recognizes wallet text keys and nothing else", () => {

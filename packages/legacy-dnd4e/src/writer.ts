@@ -1,6 +1,5 @@
 import {
   boundAugmentHolding,
-  characterWalletTextKey,
   currentInventoryHoldings,
   detailsWithLegacyTextStrings,
   inventoryHoldingKey,
@@ -9,7 +8,6 @@ import {
   parseLegacyLootId,
   serializeLegacyLootId,
   LEGACY_AUGMENT_OVERRIDE,
-  walletTextLevel,
   type BuildElementIdentity,
   type BuildInventoryEntry,
   type BuildKnownEntry,
@@ -899,30 +897,10 @@ export function projectBuildForLegacyExport(
         ? [{ ...alternate, choice: activeOccurrence(alternate.choice) }]
         : [],
     ),
-    textStrings: withCurrentWalletAtLevel(build.textStrings, activeLevel),
+    // Wallet text is written verbatim: the current wallet is already the
+    // latest key at or below this level, as legacy reads it, and keys above
+    // a lowered level stay as the stale values legacy itself keeps (D097).
   };
-}
-
-/**
- * Legacy reads money at its own level. The current wallet can sit at a
- * higher level's key after the level was lowered; copy it down so the old
- * builder sees the same coins.
- */
-function withCurrentWalletAtLevel(
-  textStrings: Readonly<Record<string, string>>,
-  level: number,
-): Readonly<Record<string, string>> {
-  let result = textStrings;
-  for (const wallet of ["carried", "stored"] as const) {
-    const source = walletTextLevel(textStrings, wallet);
-    if (source === undefined || source <= level) continue;
-    result = {
-      ...result,
-      [characterWalletTextKey(level, wallet)]:
-        textStrings[characterWalletTextKey(source, wallet)] ?? "",
-    };
-  }
-  return result;
 }
 
 /**

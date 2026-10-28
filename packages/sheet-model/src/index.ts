@@ -400,8 +400,8 @@ export interface CharacterSheetModel {
 }
 
 /**
- * The wallet text, verbatim: the character's one current wallet (D097), or a
- * legacy cache sheet's wallet at its saved level.
+ * The wallet text, verbatim, at `legacyLevel`: the character's one current
+ * wallet at its level (D097), or a legacy cache sheet's at its saved level.
  */
 function sheetCurrency(
   details: Readonly<Record<string, string>>,
@@ -2220,9 +2220,17 @@ export function buildEvaluatedSheetModel(
       ),
       loadAdjustment: Number(evaluatedStat(evaluation, "StrLoadAdjust") ?? 0),
       weightDiscount: Number(evaluatedStat(evaluation, "Weight Discount") ?? 0),
-      currency: sheetCurrency(identityDetails, build.textStrings),
+      currency: sheetCurrency(
+        identityDetails,
+        build.textStrings,
+        build.effectiveLevel,
+      ),
     }),
-    currency: sheetCurrency(identityDetails, build.textStrings),
+    currency: sheetCurrency(
+      identityDetails,
+      build.textStrings,
+      build.effectiveLevel,
+    ),
     identity: [
       "name",
       "Level",
