@@ -224,3 +224,5 @@ export function isUserFacingSpecific(field: SpecificField): boolean {
   const tokens = value.split(/\s*[,;]\s*/);
   return !tokens.every((token) => /^[A-Z0-9]+(?:_[A-Z0-9-]+)+$/.test(token));
 }
+
+export * from "./associate-stat-block";

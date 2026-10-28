@@ -14,6 +14,7 @@ import {
 } from "@4ecb/content-domain";
 import { SaxesParser } from "saxes";
 
+import { associateStatBlockField } from "./associate-stat-block";
 import { applyLoadTimeSelfModifies } from "./self-modify";
 
 interface MutableElementNode {
@@ -312,6 +313,23 @@ export class D20RulesParser {
       rules,
     );
     const printPrerequisites = optionalText(node, "print-prereqs");
+    const description = buildDescription(node);
+    // An associate's prose stat block, parsed once here into a typed field
+    // the rules engine reads (D107); lines it cannot place are diagnostics.
+    if (type.toLocaleLowerCase() === "associate") {
+      const parsed = associateStatBlockField(description, specifics.length);
+      if (parsed.field !== undefined) specifics.push(parsed.field);
+      for (const issue of parsed.issues)
+        this.#diagnostics.push(
+          makeDiagnostic(
+            "warning",
+            "associate.stat-block-unparsed",
+            `Associate stat block: ${issue}`,
+            ordinal,
+            id,
+          ),
+        );
+    }
 
     const base = {
       id,
@@ -328,7 +346,7 @@ export class D20RulesParser {
       categories,
       specifics,
       rules,
-      description: buildDescription(node),
+      description,
       extensions: buildExtensions(node),
       content: node.children,
       provenance: { sourceKey: this.#sourceKey, sourceOrdinal: ordinal },
