@@ -2916,8 +2916,15 @@ Context: a swordmage wielding a longsword and wrist razors got Swordmage
 Warding twice (+6 AC). The current WotC record adds the warding to AC in
 two untyped statadds, one for a light blade and one for a heavy blade, so
 both fire when both are wielded; older WotC data typed both lines
-"Swordmage Warding" (SampleHeroes `GeranHulmaster.dnd4e`). Legacy also gives
-+6 there. Separately, the modern `SLOT:` selector compared the raw
+"Swordmage Warding" (SampleHeroes `GeranHulmaster.dnd4e`). Legacy counts it
+once even with the untyped lines: native `CalculateStatAddValue` evaluates a
+linked stat against the parent stat's `type_max`, so the second
+"Swordmage Warding"-typed link adds 0 (`sample-chars/DV.dnd4e`: AC 26 with a
+longsword and arms-worn wrist razors; the 2 above modern's 24 is an old
+CBLoader Wrist Razors `DUAL-WIELDING:` +2 line the current part removed).
+The modern stat table applies type caps within one stat only, so the
+correction below reproduces the native result for this feature.
+Separately, the modern `SLOT:` selector compared the raw
 `Item Slot` ("Off-hand") with "off hand", so `SLOT:off hand` (Swordmage
 Warding's +3, Brawler Style, Brawler Guard, Guarded Flourish, Improved
 Swordmage Armor) never matched.
@@ -2925,8 +2932,8 @@ Swordmage Armor) never matched.
 Decision:
 
 - A content correction (`content/corrections/90-4ecb-corrections.part`)
-  types both AC lines "Swordmage Warding", so the bonus counts once (D091:
-  the class feature grants one field, +1 or +3).
+  types both AC lines "Swordmage Warding", so the bonus counts once,
+  as native does (D091: the class feature grants one field, +1 or +3).
 - `SLOT:` compares native `CharLootSlot` (`legacyLootSlots` in
   `rules-engine/src/item-fields.ts`), so a shield, an off-hand weapon, two
   of one weapon or a two-handed weapon fills the off hand, as native does.
