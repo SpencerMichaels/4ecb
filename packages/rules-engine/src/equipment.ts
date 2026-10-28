@@ -1,4 +1,5 @@
 import { legacySlotMatches } from "./item-fields";
+import type { LegacyLoadoutState } from "./loadout-slots";
 
 /**
  * One equipped record as the wearing/not-wearing selectors see it (native
@@ -31,6 +32,8 @@ export interface EquippedItem {
 
 export interface EquipmentState {
   readonly items: readonly EquippedItem[];
+  /** The resolved loadout the hand slots and powers read (D101). */
+  readonly loadout?: LegacyLoadoutState;
 }
 
 function normalized(values: readonly string[]): Set<string> {

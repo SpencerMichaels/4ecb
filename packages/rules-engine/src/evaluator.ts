@@ -1,3 +1,4 @@
+import type { EquipmentSlotAssignment } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
@@ -57,10 +58,15 @@ import {
   type LootSlotContext,
 } from "./item-fields";
 import { legacyKeywordList } from "./weapon-groups";
+import {
+  legacyLoadoutHints,
+  legacyLoadoutState,
+  type LegacyLoadoutState,
+} from "./loadout-slots";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v62-2026-10-26-loot-slot";
+  "evaluated-character-v63-2026-10-27-loadout-slots";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -82,6 +88,11 @@ export interface CharacterInventoryEntry {
   readonly equippedQuantity: number;
   readonly acquiredLevel: number;
   readonly overrides?: Readonly<Record<string, string>>;
+  /** The holding's exact loadout slots (missing on an imported legacy
+   * equip count, which the shared loadout resolver places). */
+  readonly equippedSlots?: readonly EquipmentSlotAssignment[];
+  /** A versatile weapon wielded two-handed (D101). */
+  readonly wieldedTwoHanded?: boolean;
 }
 
 export interface EvaluationInput {
@@ -520,15 +531,74 @@ function equippedState(
 ): EquipmentState {
   let builtFor = -1;
   let items: readonly EquippedItem[] = [];
+  let loadout: LegacyLoadoutState | undefined;
+  const build = () => {
+    if (builtFor === overlays.length && loadout !== undefined) return;
+    loadout = evaluatedLoadout(input, index, overlays);
+    items = equippedItems(
+      input,
+      index,
+      overlays,
+      {
+        ...slotContext,
+        ...(loadout.mainHandWeapon === undefined
+          ? {}
+          : { mainHandWeapon: loadout.mainHandWeapon }),
+      },
+      loadout,
+    );
+    builtFor = overlays.length;
+  };
   return {
     get items() {
-      if (builtFor !== overlays.length) {
-        items = equippedItems(input, index, overlays, slotContext);
-        builtFor = overlays.length;
-      }
+      build();
       return items;
     },
+    get loadout() {
+      build();
+      return loadout!;
+    },
   };
+}
+
+/**
+ * The character's resolved loadout (D101): the same resolver the builder's
+ * Loadout and the sheet use, over the overlaid records of the holdings
+ * current at this level.
+ */
+function evaluatedLoadout(
+  input: EvaluationInput,
+  index: RulesIndex,
+  overlays: readonly FieldOverlay[],
+): LegacyLoadoutState {
+  const holdings = input.inventory.filter(
+    (item) => item.acquiredLevel <= input.level,
+  );
+  const byId = new Map<string, ContentEntity>();
+  for (const entry of holdings)
+    for (const id of entry.definitionIds) {
+      const record = index.get(id);
+      if (record !== undefined)
+        byId.set(key(id), overlaidEntity(record, overlays));
+    }
+  return legacyLoadoutState(
+    holdings.map((entry) => ({
+      id: entry.id,
+      quantity: entry.quantity,
+      equippedQuantity: entry.equippedQuantity,
+      elements: entry.definitionIds.map((definitionId) => ({ definitionId })),
+      ...(entry.name === undefined ? {} : { name: entry.name }),
+      ...(entry.overrides === undefined ? {} : { overrides: entry.overrides }),
+      ...(entry.equippedSlots === undefined
+        ? {}
+        : { equippedSlots: entry.equippedSlots }),
+      ...(entry.wieldedTwoHanded === undefined
+        ? {}
+        : { wieldedTwoHanded: entry.wieldedTwoHanded }),
+    })),
+    byId,
+    legacyLoadoutHints(input.textStrings),
+  );
 }
 
 function equippedItems(
@@ -536,6 +606,7 @@ function equippedItems(
   index: RulesIndex,
   overlays: readonly FieldOverlay[],
   slotContext: LootSlotContext,
+  loadout: LegacyLoadoutState,
 ): EquippedItem[] {
   const items: EquippedItem[] = [];
   const equipped = input.inventory.filter(
@@ -555,7 +626,8 @@ function equippedItems(
           base: overlaidEntity(record, overlays),
           name: entry.name ?? equipmentName(parts),
           equippedQuantity: entry.equippedQuantity,
-          alternate: legacyLootFlag(entry, "_AlternateSlot"),
+          alternate: loadout.alternateEntryIds.has(entry.id),
+          twoHanded: loadout.twoHandedEntryIds.has(entry.id),
         },
       },
     ];
@@ -648,39 +720,17 @@ function equippedItems(
   return items;
 }
 
-/** A boolean loot attribute the importer keeps among a holding's legacy
- * overrides (native lootAttrs, e.g. `_AlternateSlot="1"`). */
-function legacyLootFlag(entry: CharacterInventoryEntry, name: string): boolean {
-  const value = Object.entries(entry.overrides ?? {}).find(
-    ([attribute]) => key(attribute) === key(name),
-  )?.[1];
-  return value !== undefined && /^(1|true)$/iu.test(value.trim());
-}
-
 /** The character facts native ItemSlot/CharLootSlot read. */
-function lootSlotContext(
-  owned: readonly ContentEntity[],
-  textStrings: Readonly<Record<string, string>>,
-): LootSlotContext {
+function lootSlotContext(owned: readonly ContentEntity[]): LootSlotContext {
   const owns = (type: string, name: string) =>
     owned.some(
       (entity) => key(entity.type) === type && key(entity.name) === key(name),
     );
-  const text = (name: string) =>
-    Object.entries(textStrings).find(
-      ([textName]) => key(textName) === key(name),
-    )?.[1];
-  const mainHandWeapon = text("_INTERNAL_MainHandWeapon");
   return {
     small: owns("size", EXCEPTION_NAMES.smallSize),
     oversized: owns("internal", EXCEPTION_NAMES.oversized),
     oneSizeLarger: owns("internal", EXCEPTION_NAMES.oneSizeLarger),
     ambidextrous: owns("internal", EXCEPTION_NAMES.ambidextrous),
-    // Native _wtoi(text) != 0.
-    versatileUsedTwoHanded:
-      (Number.parseInt(text("_INTERNAL_VersatileUsedTwoHanded") ?? "", 10) ||
-        0) !== 0,
-    ...(mainHandWeapon === undefined ? {} : { mainHandWeapon }),
   };
 }
 
@@ -698,17 +748,19 @@ export function aggregateInventory(
   for (const entry of entries.filter((item) => item.acquiredLevel <= level)) {
     const identity = `${entry.name ?? ""}\0${entry.definitionIds.join("\0")}`;
     const current = aggregated.get(identity);
-    aggregated.set(
-      identity,
-      current === undefined
-        ? entry
-        : {
-            ...current,
-            quantity: current.quantity + entry.quantity,
-            equippedQuantity: current.equippedQuantity + entry.equippedQuantity,
-            overrides: { ...current.overrides, ...entry.overrides },
-          },
-    );
+    if (current === undefined) {
+      aggregated.set(identity, entry);
+      continue;
+    }
+    // Summed rows no longer name exact slots.
+    const { equippedSlots: _slots, ...rest } = current;
+    void _slots;
+    aggregated.set(identity, {
+      ...rest,
+      quantity: current.quantity + entry.quantity,
+      equippedQuantity: current.equippedQuantity + entry.equippedQuantity,
+      overrides: { ...current.overrides, ...entry.overrides },
+    });
   }
   return [...aggregated.values()].filter(
     (entry) => entry.quantity > 0 || entry.equippedQuantity > 0,
@@ -1560,7 +1612,7 @@ function evaluateCharacterInternal(
     currentInput,
     index,
     overlays,
-    lootSlotContext(ownedDefinitions, currentInput.textStrings ?? {}),
+    lootSlotContext(ownedDefinitions),
   );
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))

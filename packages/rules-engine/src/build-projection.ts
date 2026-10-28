@@ -317,6 +317,12 @@ export function evaluationInventory(
     equippedQuantity: entry.equippedQuantity,
     acquiredLevel: HOLDING_LEVEL,
     overrides: entry.overrides,
+    ...(entry.equippedSlots === undefined
+      ? {}
+      : { equippedSlots: entry.equippedSlots }),
+    ...(entry.wieldedTwoHanded === undefined
+      ? {}
+      : { wieldedTwoHanded: entry.wieldedTwoHanded }),
   }));
 }
 

@@ -15,26 +15,37 @@ import {
   type ItemChoiceSlot,
 } from "@4ecb/rules-engine";
 import {
+  inventoryAlternateSlot,
   inventoryDefinitionIds,
+  inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryWieldsTwoHanded,
   isAuthoredShield,
+  legacyLoadoutHints,
   resolveLoadoutAssignments,
+  type LegacyLoadoutHints,
 } from "@4ecb/sheet-model";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import type { IconName } from "./Icon";
 import { LOADOUT_SLOT_ICONS } from "./item-icons";
 
-// The loadout-slot resolver lives in sheet-model so the builder and the sheet
-// share it; re-exported for builder callers.
+// The loadout-slot resolver lives in the rules engine so the evaluator, the
+// builder and the sheet share it (D101); re-exported for builder callers.
 export {
   inventoryDefinitionIds,
+  inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryWieldsTwoHanded,
+  legacyLoadoutHints,
   resolveLoadoutAssignments,
 };
-export type { ResolvedLoadoutAssignments } from "@4ecb/sheet-model";
+export type {
+  LegacyLoadoutHints,
+  ResolvedLoadoutAssignments,
+} from "@4ecb/sheet-model";
 
 export const SHOP_ITEM_TYPES = [
   "Armor",
@@ -905,8 +916,9 @@ export function loadoutChangeCommand(
   slots: readonly EquipmentSlotId[],
   currentEntryId?: string,
   currentSlots: readonly EquipmentSlotId[] = slots,
+  hints: LegacyLoadoutHints = {},
 ): CharacterCommand | undefined {
-  const loadout = resolveLoadoutAssignments(inventory, byId);
+  const loadout = resolveLoadoutAssignments(inventory, byId, hints);
   const assignmentsFor = (
     candidateEntryId: string,
   ): readonly EquipmentSlotAssignment[] =>
@@ -936,16 +948,25 @@ export function loadoutChangeCommand(
   }
   const entry = inventory.find(({ id }) => id === entryId);
   if (entry === undefined) return undefined;
-  const retained = assignmentsFor(entry.id).filter(
+  let retained = assignmentsFor(entry.id).filter(
     (assignment) => !slots.includes(assignment.slot),
   );
   const used = new Set(retained.map(({ quantityIndex }) => quantityIndex));
   const pairedHands = slots.includes("main-hand") && slots.includes("off-hand");
-  const quantityIndex = pairedHands
+  let quantityIndex = pairedHands
     ? 0
     : Array.from({ length: entry.quantity }, (_, index) => index).find(
         (index) => !used.has(index),
       );
+  // Every copy is placed: move the last one (Wrist Razors from the off hand
+  // to the arms) rather than refuse.
+  if (quantityIndex === undefined && used.size > 0) {
+    const moved = Math.max(...used);
+    quantityIndex = moved;
+    retained = retained.filter(
+      (assignment) => assignment.quantityIndex !== moved,
+    );
+  }
   if (quantityIndex === undefined) return undefined;
   const assignments = [
     ...retained,
@@ -981,10 +1002,11 @@ export function inventoryLoadoutToggle(
   byId: ReadonlyMap<string, ContentEntity>,
   entryId: string,
   visibleSlots: readonly EquipmentSlotId[],
+  hints: LegacyLoadoutHints = {},
 ): InventoryLoadoutToggle {
   const entry = inventory.find(({ id }) => id === entryId);
   if (entry === undefined) return { kind: "unavailable" };
-  const loadout = resolveLoadoutAssignments(inventory, byId);
+  const loadout = resolveLoadoutAssignments(inventory, byId, hints);
   const assignments = loadout.assignmentsByEntry.get(entryId);
   if (assignments !== undefined && assignments.length > 0)
     return {
@@ -1003,7 +1025,7 @@ export function inventoryLoadoutToggle(
         candidateAssignments.map(({ slot }) => slot),
       ),
   );
-  if (inventoryRequiresBothHands(entry, byId)) {
+  if (inventoryRequiresBothHands(entry, byId, hints)) {
     const slots = ["main-hand", "off-hand"] as const;
     if (
       !slots.every(
@@ -1018,7 +1040,12 @@ export function inventoryLoadoutToggle(
     };
   }
 
-  const suitable = visibleSlots.filter((slot) => candidates.has(slot));
+  // An item's alternate slot (Wrist Razors' arms) is a choice made in
+  // Loadout, never the double-click default.
+  const alternate = inventoryAlternateSlot(entry, byId);
+  const suitable = visibleSlots.filter(
+    (slot) => candidates.has(slot) && slot !== alternate,
+  );
   const slot = suitable.find((candidate) => !occupied.has(candidate));
   const chosen = slot ?? suitable[0];
   return chosen === undefined

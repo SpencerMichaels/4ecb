@@ -23,7 +23,9 @@ import {
   applyFieldOverlays,
   halfLevel,
   knownRecords,
+  legacyLoadoutHints,
   overlaidEntity,
+  resolveLoadoutAssignments,
   type EvaluatedCharacter,
   type EvaluatedPower,
   type FieldOverlay,
@@ -61,17 +63,23 @@ import {
 import { godFragmentPowerCards } from "./god-fragment-card";
 import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
 import { characterClassName } from "./class-identity";
-import { resolveLoadoutAssignments } from "./loadout-slots";
 export { characterClassName, hybridClassName } from "./class-identity";
+// The loadout resolver lives in the rules engine, which evaluates the same
+// placements (D101).
 export {
+  inventoryAlternateSlot,
   inventoryDefinitionIds,
+  inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryWieldsTwoHanded,
   isAuthoredShield,
+  legacyLoadoutHints,
   resolveLoadoutAssignments,
+  type LegacyLoadoutHints,
   type LoadoutHolding,
   type ResolvedLoadoutAssignments,
-} from "./loadout-slots";
+} from "@4ecb/rules-engine";
 export {
   deityDomains,
   deityDomainsText,
@@ -1630,6 +1638,7 @@ export function buildSheetModel(
   const lootLoadout = resolveLoadoutAssignments(
     lootPresentations.map(({ loot }, index) => ({
       id: String(index),
+      name: loot.name,
       quantity: loot.count,
       equippedQuantity: loot.equippedCount,
       elements: loot.elements.map(({ id, name, type }) => ({
@@ -1639,6 +1648,7 @@ export function buildSheetModel(
       })),
     })),
     entities,
+    legacyLoadoutHints(snapshot.textStrings),
   );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: Number(detail.Level) || snapshot.levelCount || 1,
@@ -2126,6 +2136,11 @@ export function buildEvaluatedSheetModel(
       ...(original?.equippedSlots === undefined
         ? {}
         : { equippedSlots: original.equippedSlots }),
+      ...(original?.name === undefined ? {} : { name: original.name }),
+      ...(original?.wieldedTwoHanded === undefined
+        ? {}
+        : { wieldedTwoHanded: original.wieldedTwoHanded }),
+      overrides: original?.overrides ?? entry.overrides ?? {},
       elements:
         original?.elements ??
         entry.definitionIds.map((definitionId) => ({
@@ -2135,6 +2150,7 @@ export function buildEvaluatedSheetModel(
         })),
     })),
     entities,
+    legacyLoadoutHints(build.textStrings),
   );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: evaluation.level,

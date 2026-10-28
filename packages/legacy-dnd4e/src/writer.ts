@@ -20,6 +20,8 @@ import {
   applyFieldOverlays,
   grantedKnownRecords,
   halfLevel,
+  legacyLoadoutHints,
+  legacyLoadoutState,
   parseRules,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
@@ -953,6 +955,106 @@ export function legacyLootRows(
 }
 
 /**
+ * Writes the modern loadout back as the legacy state it replaces (D101):
+ * the loot `_AlternateSlot` flag of each holding worn in its alternate slot,
+ * `_INTERNAL_MainHandWeapon` (the holding alone in the main hand) and
+ * `_INTERNAL_VersatileUsedTwoHanded`. A loadout nobody has placed by hand
+ * (every holding an imported equip count, no wielding choice) is still the
+ * imported state, so its text strings and flags are written back unchanged.
+ */
+export function withLegacyLoadoutState(
+  build: CharacterBuild,
+  content: readonly ContentEntity[],
+): CharacterBuild {
+  const placed = build.inventory.filter(
+    (entry) =>
+      entry.equippedSlots !== undefined || entry.wieldedTwoHanded !== undefined,
+  );
+  if (placed.length === 0) return build;
+  const byId = new Map(
+    content.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  const state = legacyLoadoutState(
+    build.inventory,
+    byId,
+    legacyLoadoutHints(build.textStrings),
+  );
+  const inventory = build.inventory.map((entry) => {
+    if (entry.equippedSlots === undefined) return entry;
+    const overrides = Object.fromEntries(
+      Object.entries(entry.overrides).filter(
+        ([name]) => key(name) !== "_alternateslot",
+      ),
+    );
+    // "0" rather than nothing, so a re-import that merges the holding's
+    // earlier loot rows does not keep an earlier "1".
+    if (state.alternateEntryIds.has(entry.id)) overrides._AlternateSlot = "1";
+    else if (
+      Object.keys(entry.overrides).some(
+        (name) => key(name) === "_alternateslot",
+      )
+    )
+      overrides._AlternateSlot = "0";
+    return JSON.stringify(sortedRecord(overrides)) ===
+      JSON.stringify(sortedRecord(entry.overrides))
+      ? entry
+      : { ...entry, overrides };
+  });
+  const handHeld = [...state.assignmentsByEntry.values()].some((assignments) =>
+    assignments.some(({ slot }) => slot === "main-hand" || slot === "off-hand"),
+  );
+  const textStrings = withTextString(
+    withTextString(
+      build.textStrings,
+      "_INTERNAL_MainHandWeapon",
+      state.mainHandWeapon,
+    ),
+    "_INTERNAL_VersatileUsedTwoHanded",
+    state.twoHandedEntryIds.size > 0
+      ? "1"
+      : handHeld ||
+          Object.keys(build.textStrings).some(
+            (name) => key(name) === "_internal_versatileusedtwohanded",
+          )
+        ? "0"
+        : undefined,
+  );
+  return { ...build, inventory, textStrings };
+}
+
+/** The text strings with `name` set in place (undefined removes it). */
+function withTextString(
+  textStrings: Readonly<Record<string, string>>,
+  name: string,
+  value: string | undefined,
+): Readonly<Record<string, string>> {
+  let found = false;
+  const entries = Object.entries(textStrings).flatMap(([textName, text]) => {
+    if (key(textName) !== key(name)) return [[textName, text] as const];
+    found = true;
+    return value === undefined ? [] : [[textName, value] as const];
+  });
+  if (!found && value !== undefined) entries.push([name, value]);
+  return Object.fromEntries(entries);
+}
+
+/**
+ * The build as the old builder stores it: FREEBEE rituals as known loot and
+ * the loadout as its legacy flags and text strings. Export writes it, and a
+ * re-import is compared with it.
+ */
+export function legacyExportedBuild(
+  build: CharacterBuild,
+  evaluation: EvaluatedCharacter,
+  content: readonly ContentEntity[],
+): CharacterBuild {
+  return withLegacyLoadoutState(
+    withLegacyFreebeeRituals(build, evaluation, content),
+    content,
+  );
+}
+
+/**
  * Legacy gives each `FREEBEE:<ritual id>` once, as loot, and marks textstring
  * `<id>` = `Given` (MainWindow.GiveFreebees). This app derives those rituals
  * from the grant instead (D091), so export writes what the old builder would
@@ -1259,7 +1361,7 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
   if (input.evaluation.level !== input.build.effectiveLevel)
     throw new Error("Edited export evaluation does not match the build level");
   const projected = projectBuildForLegacyExport(
-    withLegacyFreebeeRituals(input.build, input.evaluation, input.content),
+    legacyExportedBuild(input.build, input.evaluation, input.content),
   );
   const build = withKnownAsLoot({
     ...projected,

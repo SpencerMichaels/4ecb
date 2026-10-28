@@ -187,7 +187,6 @@ describe("legacy loot slots (native ItemSlot/CharLootSlot)", () => {
     oversized: false,
     oneSizeLarger: false,
     ambidextrous: false,
-    versatileUsedTwoHanded: false,
   };
   const sword = entity("SWORD", "Sword", "Weapon", {
     "Hands Required": "One-Handed",
@@ -228,10 +227,7 @@ describe("legacy loot slots (native ItemSlot/CharLootSlot)", () => {
       "Main hand, off hand",
     ]);
     expect(
-      legacyLootSlots([holding(sword)], {
-        ...plain,
-        versatileUsedTwoHanded: true,
-      }),
+      legacyLootSlots([{ ...holding(sword), twoHanded: true }], plain),
     ).toEqual(["Two-hands"]);
     // With no one-handed item, the named main-hand weapon is the main hand.
     expect(

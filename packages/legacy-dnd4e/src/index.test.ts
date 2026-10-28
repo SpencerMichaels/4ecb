@@ -11,6 +11,8 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   evaluateCharacter,
+  legacyLoadoutHints,
+  legacyLoadoutState,
   projectBuildForEvaluation,
 } from "@4ecb/rules-engine";
 
@@ -25,6 +27,7 @@ import {
   legacyPowerValueMatches,
   projectBuildForLegacyExport,
   withLegacyFreebeeRituals,
+  withLegacyLoadoutState,
 } from ".";
 
 function entity(id: string, name: string, type: string): ContentEntity {
@@ -376,6 +379,94 @@ describe("legacy .dnd4e import", () => {
     ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
   });
 
+  it("writes the loadout as legacy _AlternateSlot and hand text strings, and reads them back (D101)", () => {
+    const withSpecifics = (
+      value: ContentEntity,
+      specifics: Record<string, string>,
+    ): ContentEntity => ({
+      ...value,
+      specifics: Object.entries(specifics).map(([name, text], ordinal) => ({
+        name,
+        value: text,
+        extraAttributes: [],
+        ordinal,
+      })),
+    });
+    const content = [
+      entity("L1", "1", "Level"),
+      withSpecifics(entity("SWORD", "Bastard blade", "Weapon"), {
+        "Item Slot": "One-hand",
+        Properties: "Versatile",
+      }),
+      withSpecifics(entity("RAZOR", "Arm blade", "Weapon"), {
+        "Item Slot": "Off-hand",
+        Properties: "Off-hand",
+        _AlternateSlot: "Arms",
+      }),
+    ];
+    const loot = (id: string, name: string) =>
+      `<loot count="1" equip-count="1"><RulesElement name="${name}" type="Weapon" internal-id="${id}"/></loot>`;
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/>${loot("SWORD", "Bastard blade")}${loot("RAZOR", "Arm blade")}</Level><textstring name="_INTERNAL_MainHandWeapon">Arm blade</textstring><textstring name="_INTERNAL_VersatileUsedTwoHanded">0</textstring></D20Character>`,
+    );
+    const [sword, razor] = imported.build.inventory;
+    // Wield the sword two-handed and wear the razors on the arms.
+    let edited = applyCharacterCommand(imported.build, {
+      kind: "equip-inventory",
+      entryId: sword!.id,
+      assignments: [{ slot: "main-hand", quantityIndex: 0 }],
+    });
+    edited = applyCharacterCommand(edited, {
+      kind: "set-inventory-wielding",
+      entryId: sword!.id,
+      twoHanded: true,
+    });
+    edited = applyCharacterCommand(edited, {
+      kind: "equip-inventory",
+      entryId: razor!.id,
+      assignments: [{ slot: "arms", quantityIndex: 0 }],
+    });
+    const exported = withLegacyLoadoutState(edited, content);
+    expect(exported.textStrings).toMatchObject({
+      _INTERNAL_VersatileUsedTwoHanded: "1",
+    });
+    // No weapon is alone in the main hand.
+    expect(exported.textStrings._INTERNAL_MainHandWeapon).toBeUndefined();
+    expect(exported.inventory[1]?.overrides._AlternateSlot).toBe("1");
+
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build: edited,
+      evaluation: evaluateCharacter(
+        projectBuildForEvaluation(edited, content),
+        content,
+      ),
+      content,
+    });
+    expect(xml).toContain(`_AlternateSlot="1"`);
+    const reimported = importDnd4e(xml);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(exported),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+    // Re-imported, the legacy state places the same loadout.
+    const byId = new Map(
+      content.map((value) => [value.id.toLowerCase(), value]),
+    );
+    const state = legacyLoadoutState(
+      reimported.build.inventory,
+      byId,
+      legacyLoadoutHints(reimported.build.textStrings),
+    );
+    expect([...state.twoHandedEntryIds]).toHaveLength(1);
+    expect([...state.alternateEntryIds]).toHaveLength(1);
+    expect(state.mainHandWeapon).toBeUndefined();
+  });
+
   it("exports edits to current holdings as deltas after the original loot (D097)", () => {
     const loot = (
       count: number,
@@ -494,7 +585,8 @@ describe("legacy .dnd4e import", () => {
     ]);
     expect(
       compareEditedDnd4eRoundTrip(
-        projectBuildForLegacyExport(edited),
+        // The explicit loadout leaves as its legacy text strings (D101).
+        projectBuildForLegacyExport(withLegacyLoadoutState(edited, content)),
         reimported.build,
       ),
     ).toEqual({ equivalent: true, differences: [] });
@@ -799,7 +891,12 @@ describe("legacy .dnd4e import", () => {
       count: 2,
       equippedCount: 1,
     });
-    expect(compareEditedDnd4eRoundTrip(build, reimported.build)).toEqual({
+    expect(
+      compareEditedDnd4eRoundTrip(
+        withLegacyLoadoutState(build, content),
+        reimported.build,
+      ),
+    ).toEqual({
       equivalent: true,
       differences: [],
     });

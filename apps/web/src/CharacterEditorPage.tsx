@@ -122,7 +122,7 @@ import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
-import { loadoutChangeCommand } from "./equipment-ui";
+import { legacyLoadoutHints, loadoutChangeCommand } from "./equipment-ui";
 import { useArmedAction } from "./useArmedAction";
 import { freebeeGiftCommand } from "./freebee-gifts";
 import { type InspectedOption } from "./CandidateSelectionTable";
@@ -2859,9 +2859,17 @@ export function CharacterEditorPage({
                         slotIds,
                         currentEntryId,
                         displacedSlotIds,
+                        legacyLoadoutHints(build.textStrings),
                       );
                       if (command !== undefined) dispatch(command);
                     }}
+                    onSetWielding={(entryId, twoHanded) =>
+                      dispatch({
+                        kind: "set-inventory-wielding",
+                        entryId,
+                        twoHanded,
+                      })
+                    }
                     onSetText={(name, value) =>
                       dispatch({ kind: "set-text", name, value })
                     }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { EquipmentSlotId } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import {
@@ -2424,6 +2425,7 @@ describe("character evaluator", () => {
       options: {
         equippedQuantity?: number;
         overrides?: Record<string, string>;
+        slots?: EquipmentSlotId[];
       } = {},
     ): CharacterInventoryEntry => ({
       id,
@@ -2434,6 +2436,14 @@ describe("character evaluator", () => {
       ...(options.overrides === undefined
         ? {}
         : { overrides: options.overrides }),
+      ...(options.slots === undefined
+        ? {}
+        : {
+            equippedSlots: options.slots.map((slot) => ({
+              slot,
+              quantityIndex: 0,
+            })),
+          }),
     });
     // A warding shaped like the corrected Swordmage Warding: +1, or +3 with
     // the off hand free, added to AC once per blade group but typed.
@@ -2528,6 +2538,26 @@ describe("character evaluator", () => {
     expect(ac([held("razor", ["RAZOR"], { equippedQuantity: 2 })])).toBe(1);
     expect(ac([held("great", ["GREAT"])])).toBe(1);
     expect(ac([held("sword", ["SWORD"]), held("shield", ["SHIELD"])])).toBe(1);
+    // The modern loadout decides (D101): Wrist Razors placed on the arms
+    // leave the off hand free; alone in the main hand they are the main-hand
+    // weapon (native _INTERNAL_MainHandWeapon); placed in the off hand they
+    // fill it whatever stale legacy flag the loot carries.
+    expect(
+      ac([
+        held("sword", ["SWORD"], { slots: ["main-hand"] }),
+        held("razor", ["RAZOR"], { slots: ["arms"] }),
+      ]),
+    ).toBe(3);
+    expect(ac([held("razor", ["RAZOR"], { slots: ["main-hand"] })])).toBe(3);
+    expect(
+      ac([
+        held("sword", ["SWORD"], { slots: ["main-hand"] }),
+        held("razor", ["RAZOR"], {
+          slots: ["off-hand"],
+          overrides: { _AlternateSlot: "1" },
+        }),
+      ]),
+    ).toBe(1);
   });
 
   it("resolves weapon and armor fields through modify overlays, including BaseItem", () => {

@@ -232,9 +232,8 @@ export interface LootSlotContext {
   readonly oneSizeLarger: boolean;
   /** "Ambidextrous" (Internal). */
   readonly ambidextrous: boolean;
-  /** _wtoi(_INTERNAL_VersatileUsedTwoHanded) != 0. */
-  readonly versatileUsedTwoHanded: boolean;
-  /** The _INTERNAL_MainHandWeapon text: the main-hand item's name. */
+  /** Native _INTERNAL_MainHandWeapon: the name of the item alone in the
+   * main hand, from the resolved loadout (`legacyLoadoutState`, D101). */
   readonly mainHandWeapon?: string;
 }
 
@@ -284,8 +283,12 @@ export interface LootSlotHolding {
   /** CharLootName: the holding's custom or composed name. */
   readonly name: string;
   readonly equippedQuantity: number;
-  /** The loot's `_AlternateSlot` flag: worn in the base's alternate slot. */
+  /** Native loot `_AlternateSlot`: worn in the base's alternate slot (the
+   * loadout places it there, D101). */
   readonly alternate: boolean;
+  /** Native _INTERNAL_VersatileUsedTwoHanded for this holding: a versatile
+   * weapon the loadout holds in both hands (D101). */
+  readonly twoHanded?: boolean;
 }
 
 /**
@@ -324,7 +327,7 @@ export function legacyLootSlots(
       return "Main hand, off hand";
     if (
       /versatile/iu.test(rawField(holding.base, "Properties") ?? "") &&
-      context.versatileUsedTwoHanded &&
+      holding.twoHanded === true &&
       !legacySmallWithNonSmallWeapon(holding.base, context)
     )
       return "Two-hands";

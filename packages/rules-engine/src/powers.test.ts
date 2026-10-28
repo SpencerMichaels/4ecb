@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
+import type { CharacterInventoryEntry } from "./evaluator";
 import { evaluatePowers, powerAttackProfile } from "./powers";
 import { EXCEPTION_IDS } from "./exceptions";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
@@ -806,6 +807,69 @@ describe("power evaluation", () => {
     expect(evaluate("TOTEM", "0")?.damage).toBe("1d8+4");
     expect(evaluate("DAGGER", "1")?.damage).toBe("1d8+5");
     expect(evaluate("SHIELD", "1")?.damage).toBe("1d8+5");
+  });
+
+  it("adds versatile damage for the holding the loadout wields two-handed (D101)", () => {
+    const entities = [
+      entity("POWER", "Synthetic Strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("SWORD", "Synthetic Sword", "Weapon", {
+        Damage: "1d8",
+        Properties: "Versatile",
+      }),
+    ];
+    const evaluate = (
+      sword: Partial<CharacterInventoryEntry>,
+      textStrings: Record<string, string> = {},
+    ) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+            ...sword,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+        overlays: [],
+        textStrings,
+        entities,
+      })[0]?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Sword",
+      );
+    const bothHands = [
+      { slot: "main-hand", quantityIndex: 0 },
+      { slot: "off-hand", quantityIndex: 0 },
+    ] as const;
+    expect(
+      evaluate({ wieldedTwoHanded: true, equippedSlots: bothHands })?.damage,
+    ).toBe("1d8+5");
+    // Wielded two-handed but unplaced: the projection holds it in both hands.
+    expect(evaluate({ wieldedTwoHanded: true })?.damage).toBe("1d8+5");
+    // Placed in one hand, a stale legacy text string no longer applies.
+    expect(
+      evaluate(
+        { equippedSlots: [{ slot: "main-hand", quantityIndex: 0 }] },
+        { _INTERNAL_VersatileUsedTwoHanded: "1" },
+      )?.damage,
+    ).toBe("1d8+4");
+    expect(
+      evaluate(
+        { wieldedTwoHanded: false },
+        {
+          _INTERNAL_VersatileUsedTwoHanded: "1",
+        },
+      )?.damage,
+    ).toBe("1d8+4");
   });
 
   it("applies two-weapon channels only with a weapon in the off hand (native DetermineOffhand)", () => {

@@ -16,6 +16,7 @@ import { contentSpecificValue } from "./builder-ui";
 import {
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  legacyLoadoutHints,
   resolveLoadoutAssignments,
 } from "./equipment-ui";
 
@@ -74,7 +75,13 @@ export function freebeeGiftCommand(
   );
   if (pending.length === 0) return undefined;
   const occupied = new Set<EquipmentSlotId>(
-    [...resolveLoadoutAssignments(build.inventory, byId).assignmentsByEntry]
+    [
+      ...resolveLoadoutAssignments(
+        build.inventory,
+        byId,
+        legacyLoadoutHints(build.textStrings),
+      ).assignmentsByEntry,
+    ]
       .flatMap(([, assignments]) => assignments)
       .map(({ slot }) => slot),
   );

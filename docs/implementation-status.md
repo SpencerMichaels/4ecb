@@ -1,5 +1,34 @@
 # Implementation status
 
+## Loadout drives the main hand, arms slot and two-handed use (2026-10-27)
+
+D101 (part 1 of the Equipment-tab slot work). The loadout resolver moved to
+`rules-engine/src/loadout-slots.ts` and is now what the evaluator reads:
+`legacyLoadoutState` gives native `CharLootSlot` and the power rows the
+holding alone in the main hand (was the raw `_INTERNAL_MainHandWeapon`), the
+holdings worn in their `_AlternateSlot` (was the raw loot flag) and the
+versatile weapons held in both hands (was the character-wide
+`_INTERNAL_VersatileUsedTwoHanded`). Wrist Razors, a spiked gauntlet and
+Dantrag's Bracers can be placed in their alternate slot in the Loadout
+(never the double-click default; choosing it moves a placed copy). A new
+per-holding `wieldedTwoHanded` field and `set-inventory-wielding` command,
+offered as a right-click "Wield two-handed" item on a versatile weapon's
+inventory row or loadout slot (`ItemContextMenu.tsx`), puts the weapon in
+both hands and feeds the +1 versatile damage and two-handed requirements.
+Imported holdings without exact slots are placed from the legacy
+encodings as native shows them; export writes them back
+(`withLegacyLoadoutState`/`legacyExportedBuild`). Cache version v63.
+
+Verification: synthetic tests in `loadout-slots.test.ts`, `evaluator.test.ts`,
+`powers.test.ts`, `item-fields.test.ts`, `inventory-holdings.test.ts`,
+`legacy-dnd4e/index.test.ts` (export round trip), `equipment-ui.test.ts`
+and `EquipmentWorkspace.contextmenu.test.tsx`; `pnpm vitest run packages
+apps`, typecheck, lint. `pnpm parity:baseline` (not accepted): no stat or
+power count changed; main hand 59/59 (Skye's two longswords keep the
+named one first; DV's stale `_INTERNAL_MainHandWeapon` no longer puts the
+arms-worn Wrist Razors ahead of the longsword). DV's AC 24 vs legacy 26 is
+the D100 typed-warding divergence, unchanged by this work.
+
 ## Player report: Swordmage Warding counted twice (2026-10-26)
 
 D100. A swordmage with a longsword and wrist razors got Swordmage Warding

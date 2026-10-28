@@ -1192,3 +1192,70 @@ describe("missing inventory content", () => {
     ).toEqual(["Armor of Brewing +1"]);
   });
 });
+
+describe("alternate slots and two-handed wielding in the Loadout (D101)", () => {
+  const razor = entity("RAZOR", "Arm blade", "Weapon", {
+    "Item Slot": "Off-hand",
+    Properties: "Off-hand",
+    _AlternateSlot: "Arms",
+  });
+  const sword = entity("SWORD", "Bastard blade", "Weapon", {
+    "Item Slot": "One-hand",
+    Properties: "Versatile",
+  });
+  const index = entityIndex(razor, sword);
+  const build = (inventory: BuildInventoryEntry[]): CharacterBuild => ({
+    formatVersion: 3,
+    known: [],
+    effectiveLevel: 1,
+    levels: [],
+    grabbag: [],
+    inventory,
+    alternates: [],
+    baseAbilities: {},
+    textStrings: {},
+  });
+
+  it("moves a placed item to its alternate slot instead of refusing", () => {
+    const razorHolding: BuildInventoryEntry = {
+      ...holding(razor),
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "off-hand", quantityIndex: 0 }],
+    };
+    const command = loadoutChangeCommand([razorHolding], index, razor.id, [
+      "arms",
+    ]);
+    expect(command).toBeDefined();
+    expect(
+      applyCharacterCommand(build([razorHolding]), command!).inventory[0]
+        ?.equippedSlots,
+    ).toEqual([{ slot: "arms", quantityIndex: 0 }]);
+  });
+
+  it("never double-click equips into the alternate slot", () => {
+    expect(
+      inventoryLoadoutToggle([holding(razor)], index, razor.id, [
+        "main-hand",
+        "off-hand",
+        "arms",
+      ]),
+    ).toEqual({ kind: "equip", slots: ["main-hand"], displaces: false });
+  });
+
+  it("equips a versatile weapon wielded two-handed in both hands", () => {
+    const swordHolding: BuildInventoryEntry = {
+      ...holding(sword),
+      wieldedTwoHanded: true,
+    };
+    expect(
+      inventoryLoadoutToggle([swordHolding], index, sword.id, [
+        "main-hand",
+        "off-hand",
+      ]),
+    ).toEqual({
+      kind: "equip",
+      slots: ["main-hand", "off-hand"],
+      displaces: false,
+    });
+  });
+});

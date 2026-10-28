@@ -36,6 +36,11 @@ import {
   legacyListContainsOneOf,
 } from "./weapon-groups";
 import {
+  legacyLoadoutHints,
+  legacyLoadoutState,
+  type LegacyLoadoutState,
+} from "./loadout-slots";
+import {
   IMPLEMENT_CLASS_FIELDS,
   equipmentName,
   increaseDamageDie,
@@ -192,6 +197,9 @@ interface Loadout {
   readonly implementDefinition: boolean;
   readonly equipped: boolean;
   readonly hand?: "main" | "off";
+  /** A versatile weapon the loadout holds in both hands (native
+   * _INTERNAL_VersatileUsedTwoHanded, per holding: D101). */
+  readonly twoHanded: boolean;
   readonly pairedEquipmentName?: string;
   readonly tags: readonly string[];
   /** What implement proficiency this item answers to: its implement kinds
@@ -526,6 +534,7 @@ function loadouts(
   byId: ReadonlyMap<string, ContentEntity>,
   byName: ReadonlyMap<string, readonly ContentEntity[]>,
   textStrings: Readonly<Record<string, string>>,
+  loadout: LegacyLoadoutState,
 ): readonly Loadout[] {
   const implementResolver = legacyImplementResolver(byId, byName);
   const result: Loadout[] = [];
@@ -596,6 +605,7 @@ function loadouts(
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
+      twoHanded: loadout.twoHandedEntryIds.has(entry.id),
       definitionIds: entry.definitionIds,
       ...(weapon === undefined && !staffWeapon
         ? {}
@@ -733,6 +743,7 @@ function loadouts(
     weaponDefinition: false,
     implementDefinition: false,
     equipped: false,
+    twoHanded: false,
     tags: ["unarmed"],
     implementKinds: [],
     implementScopes: [],
@@ -744,9 +755,8 @@ function loadouts(
     offhandCandidate: false,
     staff: false,
   });
-  const mainHandName = Object.entries(textStrings).find(
-    ([name]) => key(name) === "_internal_mainhandweapon",
-  )?.[1];
+  // The holding alone in the loadout's main hand (D101).
+  const mainHandName = loadout.mainHandWeapon;
   const mainIndex =
     mainHandName === undefined
       ? -1
@@ -2472,7 +2482,6 @@ function legacyRequirementContext(input: {
   readonly textContributions:
     readonly { readonly name: string; readonly value: string }[] | undefined;
   readonly equipment: EquipmentState | undefined;
-  readonly versatileUsedTwoHanded: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly byName: ReadonlyMap<string, readonly ContentEntity[]>;
 }): (item: Loadout, meleePower: boolean) => PowerRequirementContext {
@@ -2512,10 +2521,10 @@ function legacyRequirementContext(input: {
       ? undefined
       : resolveWeapon(unarmedText)) ??
     resolveWeapon(EXCEPTION_NAMES.unarmedAttack);
+  const smallWithNonSmall = (weapon: ContentEntity) =>
+    small && !/small/iu.test(field(weapon, "Properties") ?? "");
   const shared = {
-    versatileUsedTwoHanded: (weapon: ContentEntity) =>
-      (small && !/small/iu.test(field(weapon, "Properties") ?? "")) ||
-      input.versatileUsedTwoHanded,
+    versatileUsedTwoHanded: smallWithNonSmall,
     statText,
     resolveWeapon,
   };
@@ -2529,6 +2538,8 @@ function legacyRequirementContext(input: {
       };
     return {
       ...shared,
+      versatileUsedTwoHanded: (weapon: ContentEntity) =>
+        smallWithNonSmall(weapon) || item.twoHanded,
       mainBase: item.requirementBase,
       monkWeapon: isLegacyMonkWeapon(
         item.requirementBase,
@@ -2571,11 +2582,25 @@ export function evaluatePowers(input: {
     if (named === undefined) byName.set(key(entity.name), [entity]);
     else named.push(entity);
   }
+  // The evaluator's resolved loadout; a direct call resolves its own.
+  const loadoutState =
+    input.equipment?.loadout ??
+    legacyLoadoutState(
+      input.inventory.map((entry) => ({
+        ...entry,
+        elements: entry.definitionIds.map((definitionId) => ({
+          definitionId,
+        })),
+      })),
+      byId,
+      legacyLoadoutHints(input.textStrings),
+    );
   const equipped = loadouts(
     input.inventory,
     byId,
     byName,
     input.textStrings ?? {},
+    loadoutState,
   );
   const implementResolver = legacyImplementResolver(byId, byName);
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
@@ -2620,12 +2645,6 @@ export function evaluatePowers(input: {
   for (const entity of byId.values())
     if (!entitiesByName.has(key(entity.name)))
       entitiesByName.set(key(entity.name), entity);
-  // Legacy VersatileUsedInTwoHands: _wtoi of the text, false when absent.
-  const versatileUsedTwoHanded =
-    Number(
-      textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded") ??
-        0,
-    ) !== 0;
   const origins = powerOrigins(input.occurrences ?? [], byId);
   const requirementContext = legacyRequirementContext({
     equipped,
@@ -2633,7 +2652,6 @@ export function evaluatePowers(input: {
     textStrings: input.textStrings ?? {},
     textContributions: input.textContributions,
     equipment: input.equipment,
-    versatileUsedTwoHanded,
     byId,
     byName,
   });
@@ -3363,7 +3381,7 @@ export function evaluatePowers(input: {
           !fixedCreature &&
           weaponPower &&
           equipment.properties.includes("versatile") &&
-          versatileUsedTwoHanded
+          equipment.twoHanded
         )
           damageComponents.push({
             label: "versatile weapon used two-handed",

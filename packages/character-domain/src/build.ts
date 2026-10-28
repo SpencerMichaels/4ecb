@@ -99,6 +99,14 @@ export interface BuildInventoryEntry {
   readonly elements: readonly BuildInventoryElement[];
   readonly name?: string;
   readonly showPowerCard?: boolean;
+  /**
+   * A versatile weapon wielded in two hands (it then fills both hand
+   * slots); false wields it one-handed. Undefined means no modern choice:
+   * an imported holding without exact slots follows the legacy
+   * `_INTERNAL_VersatileUsedTwoHanded` text string (D101). Set with the
+   * `set-inventory-wielding` command.
+   */
+  readonly wieldedTwoHanded?: boolean;
   readonly overrides: Readonly<Record<string, string>>;
   readonly legality: BuildLegality;
 }
@@ -1196,6 +1204,17 @@ export type CharacterCommand =
       readonly assignments: readonly EquipmentSlotAssignment[];
     }
   | {
+      /**
+       * Wields a versatile weapon in two hands or one. An equipped holding
+       * with exact slots follows at once: two-handed, its first hand-held
+       * copy takes both hand slots (displacing what held them); one-handed,
+       * it lets go of the off hand.
+       */
+      readonly kind: "set-inventory-wielding";
+      readonly entryId: string;
+      readonly twoHanded: boolean;
+    }
+  | {
       readonly kind: "purchase-inventory";
       /** A new exact holding whose quantity is the purchase count. */
       readonly entry: BuildInventoryEntry;
@@ -1276,6 +1295,70 @@ function assertInventoryQuantities(entry: BuildInventoryEntry): void {
     )
       throw new Error("Equipped quantity does not match equipment slots");
   }
+}
+
+function withInventoryWielding(
+  build: CharacterBuild,
+  entryId: string,
+  twoHanded: boolean,
+): CharacterBuild {
+  const target = exactInventoryEntry(build.inventory, entryId);
+  const hands = new Set<EquipmentSlotId>(["main-hand", "off-hand"]);
+  let slots = target.equippedSlots;
+  if (slots !== undefined) {
+    const handCopies = slots
+      .filter(({ slot }) => hands.has(slot))
+      .map(({ quantityIndex }) => quantityIndex);
+    if (twoHanded && handCopies.length > 0) {
+      const copy = Math.min(...handCopies);
+      slots = [
+        ...slots.filter(({ slot }) => !hands.has(slot)),
+        { slot: "main-hand", quantityIndex: copy },
+        { slot: "off-hand", quantityIndex: copy },
+      ];
+    } else if (!twoHanded) {
+      const mainCopies = new Set(
+        slots
+          .filter(({ slot }) => slot === "main-hand")
+          .map(({ quantityIndex }) => quantityIndex),
+      );
+      slots = slots.filter(
+        ({ slot, quantityIndex }) =>
+          slot !== "off-hand" || !mainCopies.has(quantityIndex),
+      );
+    }
+  }
+  const occupied = new Set(
+    twoHanded ? (slots ?? []).map(({ slot }) => slot) : [],
+  );
+  return {
+    ...build,
+    inventory: build.inventory.map((entry) => {
+      if (entry.id === entryId)
+        return {
+          ...entry,
+          wieldedTwoHanded: twoHanded,
+          ...(slots === undefined
+            ? {}
+            : {
+                equippedSlots: slots,
+                equippedQuantity: equippedQuantityFromSlots(slots),
+              }),
+        };
+      if (entry.equippedSlots === undefined || occupied.size === 0)
+        return entry;
+      const equippedSlots = entry.equippedSlots.filter(
+        ({ slot }) => !occupied.has(slot),
+      );
+      return equippedSlots.length === entry.equippedSlots.length
+        ? entry
+        : {
+            ...entry,
+            equippedQuantity: equippedQuantityFromSlots(equippedSlots),
+            equippedSlots,
+          };
+    }),
+  };
 }
 
 function assertCopperPrice(priceCopper: number): void {
@@ -1520,6 +1603,8 @@ export function applyCharacterCommand(
         }),
       };
     }
+    case "set-inventory-wielding":
+      return withInventoryWielding(build, command.entryId, command.twoHanded);
     case "purchase-inventory": {
       assertCopperPrice(command.priceCopper);
       assertInventoryQuantities(command.entry);

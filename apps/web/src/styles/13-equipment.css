@@ -955,3 +955,40 @@ button.inventory-icon-action:disabled {
   font-size: 0.85em;
   gap: 0.25rem;
 }
+
+/* A per-item right-click menu (ItemContextMenu): legacy-style item actions
+ * without a visible menu button. */
+.item-context-menu {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: 0 0.35rem 0.8rem rgb(0 0 0 / 20%);
+  display: grid;
+  min-width: 11rem;
+  padding: 0.25rem;
+  position: fixed;
+  z-index: 20;
+}
+
+.item-context-menu button {
+  background: transparent;
+  border: 0;
+  column-gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1rem auto;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+}
+
+.item-context-menu button::before {
+  content: "";
+}
+
+.item-context-menu button[aria-checked="true"]::before {
+  content: "\2713";
+}
+
+.item-context-menu button:hover,
+.item-context-menu button:focus-visible {
+  background: var(--surface-subtle);
+}

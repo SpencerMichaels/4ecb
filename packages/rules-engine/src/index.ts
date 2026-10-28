@@ -10,6 +10,7 @@ export * from "./ir";
 export * from "./item-fields";
 export * from "./item-sets";
 export * from "./known-records";
+export * from "./loadout-slots";
 export * from "./prerequisites";
 export * from "./powers";
 export * from "./profile-migration";

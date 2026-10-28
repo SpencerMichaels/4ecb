@@ -8,7 +8,7 @@ import {
   compareEditedDnd4eRoundTrip,
   exportEditedDnd4e,
   importDnd4e,
-  withLegacyFreebeeRituals,
+  legacyExportedBuild,
 } from "@4ecb/legacy-dnd4e";
 import {
   evaluateCharacter,
@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   });
   const reimported = importDnd4e(xml);
   const comparison = compareEditedDnd4eRoundTrip(
-    withLegacyFreebeeRituals(imported.build, evaluation, pack.entities),
+    legacyExportedBuild(imported.build, evaluation, pack.entities),
     reimported.build,
   );
   if (!comparison.equivalent)

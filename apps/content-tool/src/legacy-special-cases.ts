@@ -175,6 +175,7 @@ const FREEBEES = "packages/rules-engine/src/freebees.test.ts";
 const ITEM_SETS = "packages/rules-engine/src/item-sets.test.ts";
 const WEAPON_GROUPS = "packages/rules-engine/src/weapon-groups.test.ts";
 const ITEM_FIELDS = "packages/rules-engine/src/item-fields.test.ts";
+const LOADOUT_SLOTS = "packages/rules-engine/src/loadout-slots.test.ts";
 const SHEET = "packages/sheet-model/src/index.test.ts";
 const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
@@ -674,7 +675,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.IsShield": code(
       "Shield detection by Armor Type or _IsEnchant.",
-      "sheet-model loadout-slots.ts isAuthoredShield",
+      "rules-engine loadout-slots.ts isAuthoredShield",
       test(
         EQUIPMENT_UI,
         "pairs armor and weapon enchantments only with compatible bases",
@@ -1055,7 +1056,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     IsUsedTwoHanded: code(
       "Two-handed use: versatile used in two hands, Hands Required, or stout.",
-      "power-requirements.ts / powers.ts versatileUsedTwoHanded",
+      "power-requirements.ts / powers.ts versatileUsedTwoHanded (per holding: the loadout's twoHandedEntryIds, D101)",
       test(
         REQUIREMENTS,
         "uses a versatile weapon two-handed for a Small character",
@@ -1063,10 +1064,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     VersatileUsedTwoHanded: code(
       "Versatile weapon damage +1 when _INTERNAL_VersatileUsedTwoHanded is set, except for a Small character with a non-small weapon.",
-      "powers.ts versatile damage",
+      "powers.ts versatile damage, per holding from loadout-slots.ts legacyLoadoutState (a versatile weapon in both hands; BuildInventoryEntry.wieldedTwoHanded, D101)",
       test(
         POWERS,
         "adds versatile damage only when the legacy two-handed choice is set",
+      ),
+      test(
+        POWERS,
+        "adds versatile damage for the holding the loadout wields two-handed (D101)",
       ),
     ),
     VersatileUsedInTwoHands: code(
@@ -1099,17 +1104,25 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.CharLootSlot": code(
       "A holding's slot for HasLoot SLOT: — Two-hands (double weapon, versatile used two-handed), the _AlternateSlot when the loot is worn there, 'Main hand, off hand' for two equipped, Main hand (one-hand, or the _INTERNAL_MainHandWeapon item), Off hand, else ItemSlot.",
-      "item-fields.ts legacyLootSlots; the loot _AlternateSlot flag is read from the imported loot overrides",
+      "item-fields.ts legacyLootSlots; the main hand, alternate slot and two-handed use come from the resolved loadout (loadout-slots.ts legacyLoadoutState, D101), imported legacy encodings placing holdings without exact slots",
       test(ITEM_FIELDS, "names each equipped holding's hand slot"),
+      test(
+        LOADOUT_SLOTS,
+        "derives the main hand, alternate slot and two-handed use from the loadout",
+      ),
       test(
         EVALUATOR,
         "matches SLOT:off hand through each holding's CharLootSlot and keeps typed blade bonuses from stacking",
       ),
     ),
-    "D20Workspace.CharLootItemSlot": partial(
+    "D20Workspace.CharLootItemSlot": code(
       "Item slots offered for equipping: ItemSlot plus the item's _AlternateSlot.",
-      "equipment-ui loadout reads Item Slot only; _AlternateSlot (Spiked gauntlet, Wrist Razors, Dantrag's Bracers) is not offered",
+      "loadout-slots.ts inventorySlotCandidates adds inventoryAlternateSlot (Spiked gauntlet, Wrist Razors, Dantrag's Bracers); never the double-click default (D101)",
       test(EQUIPMENT_UI, "limits explicit loadout choices to authored slots"),
+      test(
+        LOADOUT_SLOTS,
+        "offers an item's _AlternateSlot beside its Item Slot",
+      ),
     ),
     "?A0x0bed2cbe.SlotManip": partial(
       "Ring Slots stat, Additional Slot and _AlternateSlot handling when equipping.",
@@ -1127,12 +1140,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "shows legacy equipped counts in deterministic modern slots",
       ),
     ),
-    "EquipDescription.Equip": partial(
+    "EquipDescription.Equip": code(
       "Equipping a hand slot sets _INTERNAL_VersatileUsedTwoHanded for the two-hand versatile choice and places an item in its _AlternateSlot.",
-      "the loadout's versatile two-hand choice writes the text string; _AlternateSlot is not offered (CharLootItemSlot)",
+      "per holding: set-inventory-wielding (right-click Wield two-handed) and loadout placement in the alternate slot; legacy-dnd4e withLegacyLoadoutState writes the text strings and _AlternateSlot back (D101)",
       test(
         POWERS,
         "adds versatile damage only when the legacy two-handed choice is set",
+      ),
+      test(
+        LOADOUT_SLOTS,
+        "places imported holdings where native CharLootSlot puts them",
       ),
     ),
     ShouldExecute: code(

@@ -1,11 +1,13 @@
 import {
   type CSSProperties,
   Fragment,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 
 import {
@@ -32,9 +34,13 @@ import {
   inventoryDefinitionIds,
   inventoryDisplayName,
   inventoryEntryForEntity,
+  inventoryIsVersatile,
   inventoryLoadoutToggle,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryWieldsTwoHanded,
+  legacyLoadoutHints,
+  type LegacyLoadoutHints,
   missingInventoryElements,
   resolveLoadoutAssignments,
   resolvedItemChoices,
@@ -43,6 +49,12 @@ import {
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 import { Icon } from "./Icon";
+import {
+  ItemContextMenu,
+  itemContextMenuAt,
+  type ItemContextMenuItem,
+  type ItemContextMenuState,
+} from "./ItemContextMenu";
 import { canonicalItemIcon } from "./item-icons";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
@@ -360,14 +372,21 @@ export function ItemDetail({
 function LoadoutGrid({
   inventory,
   byId,
+  hints,
   activeDefinitionIds,
   onInspect,
+  onItemContextMenu,
   onEquipSlot,
 }: {
   readonly inventory: readonly BuildInventoryEntry[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly hints: LegacyLoadoutHints;
   readonly activeDefinitionIds: readonly string[];
   readonly onInspect: (entry: BuildInventoryEntry) => void;
+  readonly onItemContextMenu: (
+    event: ReactMouseEvent<HTMLElement>,
+    entry: BuildInventoryEntry,
+  ) => void;
   readonly onEquipSlot: (
     entryId: string | undefined,
     slots: readonly string[],
@@ -380,7 +399,7 @@ function LoadoutGrid({
     inventory,
     byId,
   );
-  const assignments = resolveLoadoutAssignments(inventory, byId);
+  const assignments = resolveLoadoutAssignments(inventory, byId, hints);
   return (
     <div className="loadout-grid">
       {slotColumns.map((column) => (
@@ -401,7 +420,14 @@ function LoadoutGrid({
             );
             const selectId = `loadout-slot-${slotId}`;
             return (
-              <div className="loadout-slot" key={slotId}>
+              <div
+                className="loadout-slot"
+                key={slotId}
+                onContextMenu={(event) => {
+                  if (assigned !== undefined)
+                    onItemContextMenu(event, assigned);
+                }}
+              >
                 <span className="loadout-slot-label">
                   <Icon name={icon} />
                   <label htmlFor={selectId}>{label}</label>
@@ -421,10 +447,16 @@ function LoadoutGrid({
                     const pairedHandSlots = ["main-hand", "off-hand"] as const;
                     const entryUsesBothHands =
                       entry !== undefined &&
-                      inventoryRequiresBothHands(entry, byId);
+                      inventoryRequiresBothHands(entry, byId, hints) &&
+                      pairedHandSlots.includes(
+                        slotId as (typeof pairedHandSlots)[number],
+                      );
                     const assignedUsesBothHands =
                       assigned !== undefined &&
-                      inventoryRequiresBothHands(assigned, byId);
+                      inventoryRequiresBothHands(assigned, byId, hints) &&
+                      pairedHandSlots.includes(
+                        slotId as (typeof pairedHandSlots)[number],
+                      );
                     if (assignedUsesBothHands && !entryUsesBothHands) {
                       onEquipSlot(
                         entry?.id,
@@ -905,6 +937,7 @@ export function EquipmentWorkspace({
   onPurchase,
   onSell,
   onEquipSlot,
+  onSetWielding,
   onSetText,
 }: {
   readonly build: CharacterBuild;
@@ -932,10 +965,14 @@ export function EquipmentWorkspace({
     currentEntryId?: string,
     currentSlots?: readonly string[],
   ) => void;
+  /** Wields a versatile weapon in two hands or one (D101). */
+  readonly onSetWielding: (entryId: string, twoHanded: boolean) => void;
   /** Saves a textstring (a group item set's party count); "" clears it. */
   readonly onSetText: (name: string, value: string) => void;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
+  const [contextMenu, setContextMenu] = useState<ItemContextMenuState>();
+  const closeContextMenu = useCallback(() => setContextMenu(undefined), []);
   const [openSaleId, setOpenSaleId] = useState<string>();
   // A "Remove" click arms the button (a second click confirms) instead of a
   // native confirm() dialog.
@@ -960,6 +997,32 @@ export function EquipmentWorkspace({
     [activeDefinitionIds, byId],
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
+  const loadoutHints = legacyLoadoutHints(build.textStrings);
+  // Per-item right-click actions, as in the legacy builder (no menu button).
+  const itemActions = (
+    entry: BuildInventoryEntry,
+  ): readonly ItemContextMenuItem[] => {
+    if (!inventoryIsVersatile(entry, byId)) return [];
+    const twoHanded = inventoryWieldsTwoHanded(entry, byId, loadoutHints);
+    return [
+      {
+        label: "Wield two-handed",
+        checked: twoHanded,
+        onSelect: () => onSetWielding(entry.id, !twoHanded),
+      },
+    ];
+  };
+  const openItemContextMenu = (
+    event: ReactMouseEvent<HTMLElement>,
+    entry: BuildInventoryEntry,
+  ) => {
+    const menu = itemContextMenuAt(
+      event,
+      `${inventoryDisplayName(entry, byId)} actions`,
+      itemActions(entry),
+    );
+    if (menu !== undefined) setContextMenu(menu);
+  };
   const inventoryGroups = useMemo(
     () => groupInventoryByCategory(inventory, byId),
     [inventory, byId],
@@ -1036,8 +1099,10 @@ export function EquipmentWorkspace({
                   <LoadoutGrid
                     inventory={inventory}
                     byId={byId}
+                    hints={loadoutHints}
                     activeDefinitionIds={activeDefinitionIds}
                     onInspect={inspectInventory}
+                    onItemContextMenu={openItemContextMenu}
                     onEquipSlot={onEquipSlot}
                   />
                 ) : (
@@ -1127,6 +1192,7 @@ export function EquipmentWorkspace({
                                             byId,
                                             entry.id,
                                             visibleLoadoutSlots,
+                                            loadoutHints,
                                           );
                                         const loadoutToggleDescription =
                                           loadoutToggle.kind === "unequip"
@@ -1164,6 +1230,9 @@ export function EquipmentWorkspace({
                                             title={loadoutToggleDescription}
                                             onClick={() =>
                                               inspectInventory(entry)
+                                            }
+                                            onContextMenu={(event) =>
+                                              openItemContextMenu(event, entry)
                                             }
                                             onDoubleClick={() => {
                                               if (
@@ -1499,6 +1568,9 @@ export function EquipmentWorkspace({
           />
         </div>
       </div>
+      {contextMenu === undefined ? null : (
+        <ItemContextMenu menu={contextMenu} onClose={closeContextMenu} />
+      )}
     </section>
   );
 }

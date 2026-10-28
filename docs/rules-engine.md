@@ -380,7 +380,9 @@ definition plus legacy cache remain available for inspection. Item-set and
 inherent-bonus definitions use ordinary evaluation only when a build or import
 explicitly activates them; no implicit campaign flag is synthesized.
 
-Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
+Power loadouts take the main hand from the resolved loadout (the holding alone
+in the main-hand slot, D101; an imported loadout places it from
+`_INTERNAL_MainHandWeapon`) and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native
 `Dual Implement Spellcaster` exception is evaluated by exact feat identity/name
@@ -414,12 +416,23 @@ holding's native `CharLootSlot` (`legacyLootSlots` in `item-fields.ts`), not
 the raw `Item Slot`, ignoring case. A one-handed item is "Main hand", an
 off-hand item "Off hand", two equipped of one item "Main hand, off hand", a
 double weapon or a versatile weapon used two-handed "Two-hands", and a
-holding whose loot carries the legacy `_AlternateSlot` flag (read from the
-imported loot overrides; wrist razors worn on the arms) the base's
-`_AlternateSlot` field. `SLOT:off hand` is also met by "Main hand, off hand"
-and "Two-hands". The Item Slot itself goes through native `ItemSlot` (a staff
-is off-hand; Small, Oversized, One Size Larger and Ambidextrous adjust it).
-There is no builder control for the arms slot yet.
+holding placed in its alternate slot (wrist razors worn on the arms) the
+base's `_AlternateSlot` field. `SLOT:off hand` is also met by "Main hand,
+off hand" and "Two-hands". The Item Slot itself goes through native
+`ItemSlot` (a staff is off-hand; Small, Oversized, One Size Larger and
+Ambidextrous adjust it).
+
+The three character facts `CharLootSlot` reads besides the Item Slot come
+from the loadout (D101): `legacyLoadoutState` in `loadout-slots.ts` runs the
+one loadout resolver the Equipment tab and sheet use, and reports the
+holding alone in the main hand (native `_INTERNAL_MainHandWeapon`), the
+holdings in their alternate slot (native loot `_AlternateSlot`) and the
+versatile weapons in both hands (native `_INTERNAL_VersatileUsedTwoHanded`,
+per holding: `BuildInventoryEntry.wieldedTwoHanded`, set by the
+`set-inventory-wielding` command). Imported holdings without exact slots
+are placed from those legacy encodings; export writes them back
+(`withLegacyLoadoutState` in `legacy-dnd4e`). The versatile +1 damage and
+the power requirements' two-handed use read the same per-holding state.
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

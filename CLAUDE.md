@@ -252,6 +252,12 @@ separate header or level rail.
 - **Evaluation cache.** Evaluations persist in IndexedDB keyed by
   `RULES_EVALUATION_CACHE_VERSION` (`rules-engine/src/evaluator.ts`); bump it
   whenever `EvaluatedCharacter`'s shape or semantics change.
+- **Loadout slots.** `rules-engine/src/loadout-slots.ts` is the one loadout
+  resolver (evaluator, Equipment tab, sheet; sheet-model and `equipment-ui.ts`
+  re-export it). The evaluator takes the main hand, alternate-slot wear and
+  versatile two-handed use from the resolved loadout (`legacyLoadoutState`,
+  D101), never from raw legacy text strings. Equipment-tab per-item actions
+  are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield two-handed".
 - **Stylesheets.** `apps/web/src/styles/index.css` imports every app
   stylesheet in cascade order: `primitives.css`, then `01-base.css` …
   `16-actions-notices.css`, split by surface without reordering rules. Put a

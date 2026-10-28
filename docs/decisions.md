@@ -2934,7 +2934,64 @@ Decision:
   where the importer already keeps it, in the holding's loot overrides; the
   evaluator reads it there, as it reads `augment`. Export is unchanged and
   loss-free. There is no builder control to move an item to its alternate
-  slot yet; that UI waits for an owner decision.
+  slot yet; that UI waits for an owner decision. (Superseded by D101: the
+  loadout is now the source of all three hand facts.)
+
+### D101 — The loadout is the source of the main hand, alternate slot and two-handed use
+
+Status: accepted (2026-10-27), owner-approved (part 1 of the Equipment-tab
+slot work; size rules and unwieldable weapons follow separately).
+
+Context: D100's `CharLootSlot` read three facts only from imported legacy
+data: the loot `_AlternateSlot` flag, `_INTERNAL_MainHandWeapon` and
+`_INTERNAL_VersatileUsedTwoHanded`. Placement in our own Equipment tab never
+fed them, so Wrist Razors placed in the main hand still counted as off-hand,
+natively built characters could never wear them on the arms, and nothing
+could wield a versatile weapon two-handed. Native sets all three while
+equipping: `EquipDescription.Equip` (RulesEngineCommon) sets
+`_INTERNAL_VersatileUsedTwoHanded` to 1 or 0 on any hand-slot equip (the
+"two-handed" versatile candidate) and passes `in_alt_slot` when the slot
+name contains the item's `_AlternateSlot`; `D20Workspace.AddLoot` /
+`AddEquippedLoot` (D20Workspace.cs ~3290–3390) set
+`_INTERNAL_MainHandWeapon` to the item whenever an `ItemSlot` "off-hand"
+item is equipped; `CharLootItemSlot` offers the Item Slot plus
+`_AlternateSlot` (only Wrist Razors → Arms, Spiked gauntlet → Hands and
+Dantrag's Bracers → Feet carry one).
+
+Decision:
+
+- The loadout resolver moves to `rules-engine/src/loadout-slots.ts` (sheet-model
+  and the web app re-export it), so the evaluator, the Equipment tab and the
+  sheet place holdings with one function. An item's `_AlternateSlot` is a
+  slot candidate; a double-click never defaults to it.
+- `legacyLoadoutState` derives the native facts from the resolved loadout:
+  the holding alone in the main hand (not a weapon in both hands, as native
+  sets the text only for off-hand items) is `_INTERNAL_MainHandWeapon`, a
+  holding placed in its alternate slot is worn there, and a versatile
+  weapon in both hands is used two-handed. `CharLootSlot` and the power
+  rows (hand order and the versatile +1 damage/requirements) read them from
+  there, never from the raw text strings or loot overrides.
+- Two-handed use is per holding (native keeps one character-wide text
+  string): `BuildInventoryEntry.wieldedTwoHanded`, set by the
+  `set-inventory-wielding` command, which also moves an exactly placed
+  holding into both hands (displacing what held them) or out of the off hand.
+  The Equipment tab offers it as a right-click "Wield two-handed" menu item
+  on a versatile weapon's inventory row or loadout slot.
+- Imported holdings without exact slots (legacy equip counts) are placed by
+  the resolver from the imported state, as native `CharLootSlot` would show
+  them: a loot flagged `_AlternateSlot` in its alternate slot, a versatile
+  weapon in both hands when `_INTERNAL_VersatileUsedTwoHanded` is set and the
+  holding has no modern choice, a one-handed item in the main hand, else the
+  `_INTERNAL_MainHandWeapon` item, other off-hand items in the off hand. An
+  imported holding that cannot be placed keeps its legacy state so it stays
+  rules-active. Once a holding has exact slots or a wielding choice, the
+  legacy encodings no longer apply to it; nothing needs migrating.
+- Export (`withLegacyLoadoutState`, via `legacyExportedBuild`) writes the
+  loadout back as `_AlternateSlot` ("1", or "0" over an earlier imported
+  "1"), `_INTERNAL_MainHandWeapon` and `_INTERNAL_VersatileUsedTwoHanded`.
+  A loadout nobody placed by hand is written back as imported. Per-holding
+  two-handed use exports as the one native flag, so a re-import applies it
+  to every versatile weapon, as native does.
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.

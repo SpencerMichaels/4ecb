@@ -280,3 +280,77 @@ describe("current inventory holdings (D097)", () => {
     expect(isCharacterRecordWithBuildV2({ ...record, build: v2 })).toBe(true);
   });
 });
+
+describe("wielding a versatile weapon (D101)", () => {
+  const sword = row("sword", 1, "sword", 1, 1, {
+    equippedSlots: [{ slot: "main-hand", quantityIndex: 0 }],
+  });
+  const shield = row("shield", 1, "shield", 1, 1, {
+    equippedSlots: [{ slot: "off-hand", quantityIndex: 0 }],
+  });
+  const build: CharacterBuild = { ...base, inventory: [sword, shield] };
+
+  it("takes both hand slots two-handed and lets go of the off hand one-handed", () => {
+    const twoHanded = applyCharacterCommand(build, {
+      kind: "set-inventory-wielding",
+      entryId: "sword",
+      twoHanded: true,
+    });
+    expect(twoHanded.inventory[0]).toMatchObject({
+      wieldedTwoHanded: true,
+      equippedQuantity: 1,
+      equippedSlots: [
+        { slot: "main-hand", quantityIndex: 0 },
+        { slot: "off-hand", quantityIndex: 0 },
+      ],
+    });
+    // The shield is displaced from the off hand.
+    expect(twoHanded.inventory[1]).toMatchObject({
+      equippedQuantity: 0,
+      equippedSlots: [],
+    });
+
+    const oneHanded = applyCharacterCommand(twoHanded, {
+      kind: "set-inventory-wielding",
+      entryId: "sword",
+      twoHanded: false,
+    });
+    expect(oneHanded.inventory[0]).toMatchObject({
+      wieldedTwoHanded: false,
+      equippedSlots: [{ slot: "main-hand", quantityIndex: 0 }],
+    });
+    expect(
+      isCharacterRecord(
+        newCharacterRecord(
+          { format: "dnd4e", sourceXml: "<D20Character/>" },
+          {
+            details: {},
+            abilities: {},
+            stats: {},
+            selectedRules: [],
+            powers: [],
+            loot: [],
+            textStrings: {},
+            levelCount: 1,
+            source: "legacy-cache",
+          },
+          oneHanded,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("only records the choice for an imported holding without exact slots", () => {
+    const imported: CharacterBuild = {
+      ...base,
+      inventory: [row("sword", 1, "sword", 1, 1)],
+    };
+    const result = applyCharacterCommand(imported, {
+      kind: "set-inventory-wielding",
+      entryId: "sword",
+      twoHanded: true,
+    });
+    expect(result.inventory[0]?.wieldedTwoHanded).toBe(true);
+    expect(result.inventory[0]?.equippedSlots).toBeUndefined();
+  });
+});
