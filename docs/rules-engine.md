@@ -219,9 +219,11 @@ character arguments it uses the bundled sample heroes. This matrix is diagnostic
 it records incomplete/illegal imports and every stat/power mismatch rather than
 relaxing assertions to make a percentage pass.
 
-The standing check is `pnpm parity:baseline [--pack PACK.4ecp] [--accept]`.
-It evaluates the player characters in `sample-chars/` and the SampleHeroes
-in one process, writes `tmp/parity/latest.json`, and diffs per-character
+The standing check is
+`pnpm parity:baseline [--pack PACK.4ecp] [--accept] [--jobs N]`. It
+evaluates the player characters in `sample-chars/` and the SampleHeroes on a
+pool of worker threads (cores, capped by available memory; output is the
+same for any job count), writes `tmp/parity/latest.json`, and diffs per-character
 match counts and mismatch keys against the accepted
 `tmp/parity/baseline.json`. It exits 1 on any new key. Run it after an
 engine or content change, then `--accept` once each new difference is

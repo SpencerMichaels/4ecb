@@ -37,6 +37,7 @@ import { StatAccumulator, type EvaluatedStat } from "./stats";
 import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
+  evaluatePrerequisiteStatus,
   withoutOwnedDefinitions,
   type PrerequisiteContext,
 } from "./prerequisites";
@@ -1155,6 +1156,18 @@ function evaluateCharacterInternal(
         deferredHybridGrant(occurrence, occurrences, context)
       )
         dropped.add(occurrence.id);
+    // What a grant checks it would not duplicate, indexed once per pass.
+    const passIds = new Set(occurrences.map(({ id }) => id));
+    const passDefinitionKeys = new Set(
+      occurrences.map(({ definitionId }) => key(definitionId)),
+    );
+    const passGrantSlots = new Set(
+      occurrences.flatMap((candidate) =>
+        candidate.kind === "grant" && candidate.parentId !== undefined
+          ? [`${candidate.parentId}\0${candidate.ruleOrdinal}`]
+          : [],
+      ),
+    );
     for (const occurrence of occurrences) {
       const entity = index.get(occurrence.definitionId);
       if (entity === undefined) continue;
@@ -1180,14 +1193,9 @@ function evaluateCharacterInternal(
             continue;
           const id = `${occurrence.id}:grant:${rule.source.ordinal}`;
           if (
-            !occurrences.some(
-              (candidate) =>
-                candidate.id === id ||
-                key(candidate.definitionId) === key(target.id) ||
-                (candidate.parentId === occurrence.id &&
-                  candidate.ruleOrdinal === rule.source.ordinal &&
-                  candidate.kind === "grant"),
-            )
+            !passIds.has(id) &&
+            !passDefinitionKeys.has(key(target.id)) &&
+            !passGrantSlots.has(`${occurrence.id}\0${rule.source.ordinal}`)
           )
             additions.push({
               id,
@@ -1315,18 +1323,20 @@ function evaluateCharacterInternal(
               occurrence.acquiredLevel,
               rule.source.level.minimum,
             );
+            const selectedKey = key(selectedDefinition.id);
+            const equivalentKey =
+              equivalent === selectedDefinition
+                ? undefined
+                : key(equivalent.id);
             const duplicate = occurrences.some((candidate) => {
-              if (
-                candidate.id === selected.id ||
-                isDescendantOf(candidate, selected.id) ||
-                candidate.acquiredLevel > choiceLevel
-              )
-                return false;
+              // The cheap definition match first; the ancestry walk last.
               const candidateKey = key(candidate.definitionId);
               return (
-                candidateKey === key(selectedDefinition.id) ||
-                (equivalent !== selectedDefinition &&
-                  candidateKey === key(equivalent.id))
+                (candidateKey === selectedKey ||
+                  candidateKey === equivalentKey) &&
+                candidate.id !== selected.id &&
+                candidate.acquiredLevel <= choiceLevel &&
+                !isDescendantOf(candidate, selected.id)
               );
             });
             if (duplicate) dropped.add(selected.id);
@@ -2531,6 +2541,9 @@ function evaluateCharacterInternal(
       },
     ],
   ]);
+  /** Scopes by the (level, excluded IDs) a caller asked for, before
+   *  `withDescendants` widens the exclusion: one lookup per candidate. */
+  const prerequisiteScopeRequests: typeof prerequisiteScopes = new Map();
   /** Occurrences and everything they granted (their descendants). */
   const withDescendants = (ids: readonly string[]): ReadonlySet<string> => {
     const excluded = new Set(ids);
@@ -2556,10 +2569,16 @@ function evaluateCharacterInternal(
     excludedIds: readonly string[] = [],
   ) => {
     const level = Math.min(input.level, requestedLevel);
+    const requestKey = [level, ...excludedIds].join("\0");
+    const requested = prerequisiteScopeRequests.get(requestKey);
+    if (requested !== undefined) return requested;
     const excluded = withDescendants(excludedIds);
     const scopeKey = [level, ...[...excluded].sort()].join("\0");
     const cached = prerequisiteScopes.get(scopeKey);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) {
+      prerequisiteScopeRequests.set(requestKey, cached);
+      return cached;
+    }
     const scopedInput =
       excluded.size === 0
         ? input
@@ -2620,6 +2639,7 @@ function evaluateCharacterInternal(
       },
     };
     prerequisiteScopes.set(scopeKey, scope);
+    prerequisiteScopeRequests.set(requestKey, scope);
     reportProgress(progressCompleted + 1);
     return scope;
   };
@@ -2639,10 +2659,6 @@ function evaluateCharacterInternal(
       candidateEntity.prerequisites.trim().length === 0
     )
       return candidate;
-    const prerequisiteContext = withoutOwnedDefinitions(
-      prerequisiteScopeAt(level, excludedIds).context,
-      setAside,
-    );
     const candidateKey = [
       level,
       key(candidate.definitionId),
@@ -2652,7 +2668,11 @@ function evaluateCharacterInternal(
     ].join("\0");
     let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
     if (prerequisiteStatus === undefined) {
-      prerequisiteStatus = evaluatePrerequisite(
+      const prerequisiteContext = withoutOwnedDefinitions(
+        prerequisiteScopeAt(level, excludedIds).context,
+        setAside,
+      );
+      prerequisiteStatus = evaluatePrerequisiteStatus(
         candidateEntity?.prerequisites,
         {
           ...prerequisiteContext,
@@ -2660,7 +2680,7 @@ function evaluateCharacterInternal(
             ? {}
             : { subject: candidateEntity }),
         },
-      ).status;
+      );
       candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
     }
     if (

@@ -10,17 +10,31 @@
  *   pnpm parity:baseline --pack P.4ecp   # another pack
  *   pnpm parity:baseline FILE.dnd4e ...  # only these characters (no accept)
  *   pnpm parity:baseline --no-name-matching  # keep saved IDs the pack lacks
+ *   pnpm parity:baseline --jobs 4        # worker threads (default: CPUs,
+ *                                        # capped at one per 1.5 GB free)
  *
  * Characters import as the app imports them by default, matching saved IDs
- * the pack lacks to same-named records (D096).
+ * the pack lacks to same-named records (D096). They are evaluated on a pool
+ * of worker threads, each loading the pack once; the output (file order,
+ * latest.json, the console diff, the exit code) is the same for any job
+ * count. A full run of 43 characters takes about 1.5 minutes with 8 jobs
+ * (`--jobs 1` evaluates in this process: about 5 minutes, 1-20 s per
+ * character).
  *
  * Exits 1 when a mismatch key appears that the baseline did not have, or a
  * baseline character is missing from a full run.
  */
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { availableParallelism } from "node:os";
 import { join, relative, resolve } from "node:path";
+import {
+  Worker,
+  isMainThread,
+  parentPort,
+  workerData,
+} from "node:worker_threads";
 
 import { compareCharacterParity, loadPackEntities } from "./legacy-parity";
 
@@ -139,6 +153,138 @@ function delta(
   return `${ratio(now)}${change === 0 ? "" : ` (${change > 0 ? "+" : ""}${change})`}${comparable}`;
 }
 
+interface WorkerSetup {
+  readonly packPath: string;
+  readonly matchMissingByName: boolean;
+}
+
+type WorkerReply =
+  | { readonly kind: "ready" }
+  | {
+      readonly kind: "done";
+      readonly index: number;
+      readonly character: CharacterBaseline;
+    }
+  | {
+      readonly kind: "failed";
+      readonly index: number;
+      readonly message: string;
+      readonly stack?: string;
+    };
+
+async function evaluateFile(
+  file: string,
+  entities: Awaited<ReturnType<typeof loadPackEntities>>,
+  matchMissingByName: boolean,
+): Promise<CharacterBaseline> {
+  const xml = await readFile(resolve(file), "utf8");
+  return summarize(
+    file,
+    compareCharacterParity(xml, entities, { matchMissingByName }),
+  );
+}
+
+/** A pool worker: loads the pack once, then evaluates files on request. */
+async function workerMain(): Promise<void> {
+  const port = parentPort!;
+  const { packPath, matchMissingByName } = workerData as WorkerSetup;
+  const entities = await loadPackEntities(packPath);
+  port.on("message", (request: { index: number; file: string }) => {
+    evaluateFile(request.file, entities, matchMissingByName).then(
+      (character) =>
+        port.postMessage({
+          kind: "done",
+          index: request.index,
+          character,
+        } satisfies WorkerReply),
+      (error: unknown) =>
+        port.postMessage({
+          kind: "failed",
+          index: request.index,
+          message: error instanceof Error ? error.message : String(error),
+          ...(error instanceof Error && error.stack !== undefined
+            ? { stack: error.stack }
+            : {}),
+        } satisfies WorkerReply),
+    );
+  });
+  port.postMessage({ kind: "ready" } satisfies WorkerReply);
+}
+
+/** About what one worker holds: the decoded pack plus evaluation caches. */
+const WORKER_MEMORY_BYTES = 1.5 * 1024 ** 3;
+
+function defaultJobs(files: number): number {
+  const memoryJobs = Math.floor(
+    process.availableMemory() / WORKER_MEMORY_BYTES,
+  );
+  return Math.max(1, Math.min(availableParallelism(), files, memoryJobs));
+}
+
+/**
+ * Evaluates the files on `jobs` worker threads, handing each worker the next
+ * file as it finishes one, largest file first (a rough cost estimate, so the
+ * slowest characters don't start last), and returns the results in file
+ * order. A failed character fails the run, as the sequential run would at
+ * that file.
+ */
+async function evaluateInWorkers(
+  files: readonly string[],
+  setup: WorkerSetup,
+  jobs: number,
+): Promise<CharacterBaseline[]> {
+  const results: (CharacterBaseline | undefined)[] = files.map(() => undefined);
+  const failures = new Map<number, Error>();
+  const sizes = await Promise.all(
+    files.map(async (file) => (await stat(resolve(file))).size),
+  );
+  const queue = files
+    .map((_, index) => index)
+    .sort((a, b) => sizes[b]! - sizes[a]! || a - b);
+  let next = 0;
+  const run = (worker: Worker) =>
+    new Promise<void>((resolveWorker, rejectWorker) => {
+      const send = () => {
+        if (next >= files.length) {
+          resolveWorker();
+          return;
+        }
+        const index = queue[next]!;
+        next += 1;
+        worker.postMessage({ index, file: files[index] });
+      };
+      worker.on("message", (reply: WorkerReply) => {
+        if (reply.kind === "done") results[reply.index] = reply.character;
+        else if (reply.kind === "failed") {
+          const error = new Error(`${files[reply.index]}: ${reply.message}`);
+          if (reply.stack !== undefined) error.stack = reply.stack;
+          failures.set(reply.index, error);
+        }
+        send();
+      });
+      worker.on("error", rejectWorker);
+      worker.on("exit", (code) => {
+        if (code !== 0) rejectWorker(new Error(`worker exited with ${code}`));
+      });
+    });
+  const workers = Array.from(
+    { length: Math.min(jobs, files.length) },
+    () => new Worker(new URL(import.meta.url), { workerData: setup }),
+  );
+  try {
+    await Promise.all(workers.map(run));
+  } finally {
+    await Promise.all(workers.map((worker) => worker.terminate()));
+  }
+  const firstFailure = [...failures].sort(([a], [b]) => a - b)[0];
+  if (firstFailure !== undefined) throw firstFailure[1];
+  return results.map((character, index) => {
+    if (character === undefined)
+      throw new Error(`No result for ${files[index]}`);
+    return character;
+  });
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const accept = args.includes("--accept");
@@ -148,9 +294,18 @@ async function main(): Promise<void> {
     packIndex >= 0
       ? (args[packIndex + 1] ?? "")
       : "tmp/content/full-local.4ecp";
+  const jobsIndex = args.indexOf("--jobs");
+  const jobsArgument = jobsIndex >= 0 ? Number(args[jobsIndex + 1]) : undefined;
+  if (
+    jobsArgument !== undefined &&
+    (!Number.isInteger(jobsArgument) || jobsArgument < 1)
+  )
+    throw new Error("--jobs needs a positive whole number");
   const explicit = args.filter(
     (arg, index) =>
-      !arg.startsWith("--") && (packIndex < 0 || index !== packIndex + 1),
+      !arg.startsWith("--") &&
+      (packIndex < 0 || index !== packIndex + 1) &&
+      (jobsIndex < 0 || index !== jobsIndex + 1),
   );
   if (accept && explicit.length > 0)
     throw new Error("--accept needs a full run (no character arguments)");
@@ -164,15 +319,19 @@ async function main(): Promise<void> {
   if (files.length === 0) throw new Error("No legacy characters found");
 
   const packBytes = await readFile(resolve(packPath));
-  const entities = await loadPackEntities(packPath);
+  const jobs = jobsArgument ?? defaultJobs(files.length);
   const characters: CharacterBaseline[] = [];
-  for (const file of files) {
-    const xml = await readFile(resolve(file), "utf8");
+  if (jobs === 1) {
+    const entities = await loadPackEntities(packPath);
+    for (const file of files)
+      characters.push(await evaluateFile(file, entities, matchMissingByName));
+  } else {
     characters.push(
-      summarize(
-        file,
-        compareCharacterParity(xml, entities, { matchMissingByName }),
-      ),
+      ...(await evaluateInWorkers(
+        files,
+        { packPath, matchMissingByName },
+        jobs,
+      )),
     );
   }
   const sum = (
@@ -262,4 +421,5 @@ async function main(): Promise<void> {
   }
 }
 
-await main();
+if (isMainThread) await main();
+else await workerMain();

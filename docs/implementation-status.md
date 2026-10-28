@@ -267,12 +267,15 @@ the visual checks in `docs/visual-review-checklist.md`, and
 Every difference between our engine and the legacy builder's cached sheets
 on the 18 comparison characters (9 in the ignored `sample-chars/`, 9
 SampleHeroes) is triaged. `pnpm parity:baseline` (`scripts/parity-baseline.ts`,
-private corpus) now checks them: it evaluates all of them in one process,
-writes per-character counts and mismatch keys to `tmp/parity/latest.json`, and
-diffs them against the accepted `tmp/parity/baseline.json`. A new key exits 1.
-`--accept` records a new baseline. `pnpm evaluate:character` shares its
-comparison code (`scripts/legacy-parity.ts`). A full run takes about 15
-minutes, about 50 s per character.
+private corpus) now checks them: it evaluates all of them on a pool of
+worker threads (`--jobs N`), writes per-character counts and mismatch keys to
+`tmp/parity/latest.json`, and diffs them against the accepted
+`tmp/parity/baseline.json`. A new key exits 1. `--accept` records a new
+baseline. `pnpm evaluate:character` shares its comparison code
+(`scripts/legacy-parity.ts`). A full run of 43 characters takes about 1.5
+minutes with 8 jobs (it took 19 minutes sequentially before the evaluator's
+prerequisite-check memoization: the exhaustive candidate lists re-check up to
+4.7 million candidates per character across every replacement option).
 
 Totals on `tmp/content/full-local.4ecp`: stats 1109/1130 → 1125/1146, power
 fields 882/965 → 882/953.

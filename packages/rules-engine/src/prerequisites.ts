@@ -75,12 +75,23 @@ export interface PrerequisiteResult {
   }[];
 }
 
+const normalizedCache = new Map<string, string>();
+
+/**
+ * The comparison form of a name, type or ID. Memoized: prerequisite checks
+ * normalize the same few thousand strings for every candidate.
+ */
 function normalized(value: string): string {
-  return value
+  const cached = normalizedCache.get(value);
+  if (cached !== undefined) return cached;
+  const result = value
     .trim()
     .toLocaleLowerCase()
     .replaceAll("_", " ")
     .replace(/[\u2018\u2019]/g, "'");
+  if (normalizedCache.size >= 200_000) normalizedCache.clear();
+  normalizedCache.set(value, result);
+  return result;
 }
 
 interface DefinitionIndex {
@@ -399,13 +410,31 @@ function rawField(entity: ContentEntity, name: string): string {
   );
 }
 
+const definitionsByTypeCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlyMap<string, readonly ContentEntity[]>
+>();
+
+/** The definitions of a type, in content order (indexed once per profile). */
 function definitionsOfType(
   context: PrerequisiteContext,
   type: string,
 ): readonly ContentEntity[] {
-  return (context.definitions ?? []).filter(
-    (definition) => normalized(definition.type) === normalized(type),
-  );
+  const definitions = context.definitions;
+  if (definitions === undefined) return [];
+  let byType = definitionsByTypeCache.get(definitions);
+  if (byType === undefined) {
+    const mutable = new Map<string, ContentEntity[]>();
+    for (const definition of definitions) {
+      const definitionType = normalized(definition.type);
+      const matches = mutable.get(definitionType);
+      if (matches === undefined) mutable.set(definitionType, [definition]);
+      else matches.push(definition);
+    }
+    byType = mutable;
+    definitionsByTypeCache.set(definitions, byType);
+  }
+  return byType.get(normalized(type)) ?? [];
 }
 
 function elementOf(
@@ -1075,11 +1104,10 @@ function internalizeLeaf(
     if (context.subject === undefined || context.definitions === undefined)
       return { kind: "unverified", text };
     const subject = context.subject;
-    const definitionIds = context.definitions
+    const definitionIds = definitionsOfType(context, subject.type)
       .filter(
         (definition) =>
           definition.id !== subject.id &&
-          normalized(definition.type) === normalized(subject.type) &&
           definition.prerequisites !== undefined &&
           markerAppears(definition.prerequisites, canonical),
       )
@@ -1705,24 +1733,45 @@ export function choiceSelectionSetAside(
   ];
 }
 
-/** The context without some owned definitions (by ID). */
+const withoutOwnedCache = new WeakMap<
+  PrerequisiteContext,
+  Map<string, PrerequisiteContext>
+>();
+
+/**
+ * The context without some owned definitions (by ID). Memoized per context
+ * and excluded set: the evaluator asks for the same narrowed context for
+ * every candidate of a choice.
+ */
 export function withoutOwnedDefinitions(
   context: PrerequisiteContext,
   definitionIds: readonly string[],
 ): PrerequisiteContext {
   if (definitionIds.length === 0) return context;
   const excluded = new Set(definitionIds.map(normalized));
+  const cacheKey = [...excluded].sort().join("\0");
+  let cache = withoutOwnedCache.get(context);
+  if (cache === undefined) {
+    cache = new Map();
+    withoutOwnedCache.set(context, cache);
+  }
+  const cached = cache.get(cacheKey);
+  if (cached !== undefined) return cached;
   const owned = context.owned.filter(
     (entity) => !excluded.has(normalized(entity.id)),
   );
-  if (owned.length === context.owned.length) return context;
-  return {
-    ...context,
-    owned,
-    ...(context.ownedTokens === undefined
-      ? {}
-      : { ownedTokens: ownedPrerequisiteTokens(owned) }),
-  };
+  const result =
+    owned.length === context.owned.length
+      ? context
+      : {
+          ...context,
+          owned,
+          ...(context.ownedTokens === undefined
+            ? {}
+            : { ownedTokens: ownedPrerequisiteTokens(owned) }),
+        };
+  cache.set(cacheKey, result);
+  return result;
 }
 
 function aggregate(
@@ -1873,6 +1922,15 @@ function leafResults(
   if (ir.kind === "all" || ir.kind === "any")
     return ir.children.flatMap((child) => leafResults(child, context));
   return [{ text: ir.text, status: evaluatePrerequisiteIr(ir, context) }];
+}
+
+/** `evaluatePrerequisite(...).status`, without the per-clause results. */
+export function evaluatePrerequisiteStatus(
+  prerequisite: string | undefined,
+  context: PrerequisiteContext,
+): PrerequisiteStatus {
+  const ir = internalizePrerequisite(prerequisite, context);
+  return ir === undefined ? "satisfied" : evaluatePrerequisiteIr(ir, context);
 }
 
 export function evaluatePrerequisite(

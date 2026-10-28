@@ -125,6 +125,51 @@ function same(left: string, right: string): boolean {
   );
 }
 
+const PRINTABLE_ASCII = /^[\x20-\x7e]*$/;
+
+interface NamedValue {
+  readonly value: string;
+  readonly lower: string;
+  readonly ascii: boolean;
+}
+
+function namedValue(value: string): NamedValue {
+  return {
+    value,
+    lower: value.toLocaleLowerCase(),
+    ascii: PRINTABLE_ASCII.test(value),
+  };
+}
+
+const namedValuesCache = new WeakMap<ContentEntity, readonly NamedValue[]>();
+
+/** What a named requirement ("X", "!X") matches on an owned element. */
+function namedValues(entity: ContentEntity): readonly NamedValue[] {
+  let values = namedValuesCache.get(entity);
+  if (values === undefined) {
+    values = [
+      entity.id,
+      entity.name,
+      `${entity.name} ${entity.type}`,
+      `${entity.type} ${entity.name}`,
+    ].map(namedValue);
+    namedValuesCache.set(entity, values);
+  }
+  return values;
+}
+
+/**
+ * `same` for a precomputed pair. Between printable ASCII strings the
+ * accent-sensitive collator agrees with a case-insensitive comparison, so
+ * it is skipped there: named requirements compare every owned element on
+ * every grant pass, and the collator dominated evaluation time.
+ */
+function sameNamed(left: NamedValue, right: NamedValue): boolean {
+  if (left.lower === right.lower) return true;
+  if (left.ascii && right.ascii) return false;
+  return accentCollator.compare(left.value, right.value) === 0;
+}
+
 function categoryValues(
   entity: ContentEntity,
   context: ExpressionContext,
@@ -213,14 +258,12 @@ export function evaluateRequires(
   context: ExpressionContext,
 ): boolean {
   switch (expression.kind) {
-    case "owned":
-      return (context.namedOwned ?? context.owned).some(
-        (entity) =>
-          same(entity.id, expression.token) ||
-          same(entity.name, expression.token) ||
-          same(`${entity.name} ${entity.type}`, expression.token) ||
-          same(`${entity.type} ${entity.name}`, expression.token),
+    case "owned": {
+      const token = namedValue(expression.token);
+      return (context.namedOwned ?? context.owned).some((entity) =>
+        namedValues(entity).some((value) => sameNamed(value, token)),
       );
+    }
     case "category":
       return context.owned.some(
         (entity) =>

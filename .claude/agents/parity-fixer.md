@@ -74,7 +74,7 @@ working between messages.
   only (public tests must never need the private corpus).
 - Before committing: `pnpm vitest run packages apps`, `pnpm typecheck`,
   `pnpm lint`, `pnpm format:check`.
-- `pnpm parity:baseline` (about 15+ minutes): report every new key and every
+- `pnpm parity:baseline` (about a minute; parallel workers): report every new key and every
   count change and explain it. Run `--accept` only if the orchestrator's
   instructions allow it for this task and every change is a justified
   improvement or a classified non-bug.
