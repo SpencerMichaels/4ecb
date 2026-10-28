@@ -3214,7 +3214,8 @@ Kept modern, where native contradicts the text or nullifies the feature:
   any melee weapon as a warlock implement") did nothing.
 - **"+N bonus and XdY" increase lines** (Sun Flare, Improved Razor Storm):
   the dice after the bonus are read; native parses from the first digit.
-- **Parenthetical weapon terms in damage** (added 2026-10-28, cache v88):
+- **Parenthetical weapon terms in damage** (added 2026-10-28, cache v88;
+  owner-confirmed):
   native CalcDamage (~24760) stops at the first term that is not followed by
   "+", so Eruption of Steel's "2[W] (main weapon) + 2[W] (off-hand weapon) +
   Strength modifier + Dexterity modifier" (Martial Power 2) deals 2[W] alone,
@@ -3235,13 +3236,18 @@ Kept modern, where native contradicts the text or nullifies the feature:
   shown number changes (`StatAccumulator.#raw` in `stats.ts`).
 - **A holy symbol worn in the holy symbol slot runs its rules** (PHB p62,
   "a cleric wearing or holding a magic holy symbol"; added 2026-10-28 with
-  queue item 4, pending owner review). Native keeps that slot as the
+  queue item 4; owner-confirmed 2026-10-28). Native keeps that slot as the
   `_INTERNAL_EquippedSymbol` text string outside the equip count
   (`D20Workspace.AddEquippedLoot`, `EquipHolySymbol`), so `ShouldExecute`
   skipped a worn-only standalone symbol's own statadds (Symbol of Courage's
   save bonus). The modern loadout follows native otherwise: the slot is not
   a hand for `SLOT:` selectors, exports as equip-count 0 plus the text
   string, and native `comes_before` lists its rows as equipped.
+- **A WeaponEquiv row keeps its item's own Critical** (owner-confirmed
+  2026-10-28): loot that attacks as its WeaponEquiv weapon (e.g. a Rod of
+  Smiting as a mace) shows the item's Critical (+1d10 force per plus), not
+  the equivalent weapon's. Native power stats never read Critical; the item
+  text grants its critical to attacks made with it.
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093
