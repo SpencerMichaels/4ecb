@@ -21,8 +21,10 @@
  * (`--jobs 1` evaluates in this process: about 5 minutes, 1-20 s per
  * character).
  *
- * Exits 1 when a mismatch key appears that the baseline did not have, or a
- * baseline character is missing from a full run.
+ * Exits 1 when a mismatch key appears that the baseline did not have on a
+ * `sample-chars/` save (current-builder saves, the canonical baseline), or a
+ * baseline character is missing from a full run. SampleHeroes were saved by
+ * older builders, so their new keys are reported as informational only.
  */
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -397,7 +399,8 @@ async function main(): Promise<void> {
     const current = new Set(character.mismatches);
     const added = character.mismatches.filter((key) => !known.has(key));
     const fixed = [...known].filter((key) => !current.has(key));
-    if (previous !== undefined) regressions += added.length;
+    const canonical = !character.file.startsWith(SAMPLE_HEROES);
+    if (previous !== undefined && canonical) regressions += added.length;
     const state = character.complete ? "" : " incomplete";
     console.log(
       `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}, main hand ${delta(character.mainHand, previous?.mainHand)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
@@ -406,7 +409,10 @@ async function main(): Promise<void> {
       if (baseline !== undefined) console.log("  (not in the baseline)");
       continue;
     }
-    for (const key of added) console.log(`  + ${key}`);
+    for (const key of added)
+      console.log(
+        `  + ${key}${canonical ? "" : " (older-builder save; informational)"}`,
+      );
     for (const key of fixed) console.log(`  - ${key}`);
   }
   if (explicit.length === 0 && baseline !== undefined) {

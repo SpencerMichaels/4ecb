@@ -57,7 +57,8 @@ working between messages.
 4. **Implement generically.** No per-feat special cases; IDs or names keyed in
    code go through `EXCEPTION_IDS`/`EXCEPTION_NAMES` in
    `packages/rules-engine/src/exceptions.ts`. Content-specific errata go in
-   `content/corrections/*.part` (structure only, no official text) per D089,
+   `content/corrections/*.part` per D089 (a small amount of official text is
+   fine where a fix needs it, e.g. a modify value),
    but only for wrong or missing content: native behavior the engine lacks is
    fixed in the engine, never papered over in content (D100 → D103).
    Synthetic tests spell field values and selector operands exactly as the
