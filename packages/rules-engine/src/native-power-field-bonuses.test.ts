@@ -219,26 +219,53 @@ describe("native CalcMisc WeaponBonuses", () => {
     expect(row("Handaxe")?.attackBonus).toBe(-3 + 1 + 2 - 1);
   });
 
-  it("takes the weapons of a Constitution rider outside the table from its sentence (D091)", () => {
-    const press = rows({
-      power: weaponPower("PRESS", "Press Forward", {
-        " Weapon":
-          "If you're wielding an axe, a hammer, or a pick, the attack deals extra damage equal to your Constitution modifier.",
-      }),
-      inventory: [holding("PICK"), holding("SWORD", 0)],
+  it("adds nothing for a Constitution rider outside the table; content statadds carry it (D105)", () => {
+    const press = weaponPower("PRESS", "Press Forward", {
+      " Weapon":
+        "If you're wielding an axe, a hammer, or a pick, the attack deals extra damage equal to your Constitution modifier.",
     });
-    expect(press("War pick")?.damage).toBe("1d8+7");
-    expect(press("Longsword")?.damage).toBe("1d8+4");
+    expect(
+      rows({ power: press, inventory: [holding("PICK")] })("War pick")?.damage,
+    ).toBe("1d8+4");
+    // The correction's `<ID>,<group> group:damage` statadd, as evaluated.
+    const corrected = rows({
+      power: press,
+      inventory: [holding("PICK"), holding("SWORD", 0)],
+      stats: { "PRESS,pick group:damage": 3 },
+    });
+    expect(corrected("War pick")?.damage).toBe("1d8+7");
+    expect(corrected("Longsword")?.damage).toBe("1d8+4");
 
+    // Barreling Swing's "two-handed mace or two-handed hammer":
+    // `<ID>,two-handed,hammer group:damage` needs both keywords.
     const barreling = rows({
       power: weaponPower("BARREL", "Barreling Swing", {
         "  Weapon":
           "If you're wielding a two-handed mace or a twohanded hammer, the attack deals extra damage equal to your Constitution modifier.",
       }),
       inventory: [holding("MAUL"), holding("HAMMER", 0)],
+      stats: { "BARREL,two-handed,hammer group:damage": 3 },
     });
     expect(barreling("Maul")?.damage).toBe("2d6+7");
     expect(barreling("Warhammer")?.damage).toBe("1d10+4");
+  });
+
+  it("counts a rider repeated under the secondary attack once per attack (D105, Giant's Wake)", () => {
+    const row = rows({
+      power: weaponPower("WAKE", "Giant's Wake", {
+        "Primary Attack": "Strength vs. AC",
+        Hit: "2[W] + Strength modifier damage. Make the secondary attack.",
+        " Weapon":
+          "If you're wielding an axe, you gain a bonus to the damage roll equal to your Constitution modifier.",
+        "  Secondary Attack": ".",
+        "     Attack": "Strength vs. AC",
+        "     Hit": "1[W] + Strength modifier damage.",
+        "  Weapon":
+          "If you're wielding an axe, you gain a bonus to the damage roll equal to your Constitution modifier.",
+      }),
+      inventory: [holding("AXE")],
+    });
+    expect(row("Handaxe")?.damage).toBe("2d6+7");
   });
 });
 

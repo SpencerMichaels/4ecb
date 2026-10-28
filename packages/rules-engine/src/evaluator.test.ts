@@ -608,7 +608,7 @@ describe("character evaluator", () => {
     "reads an _ImplementAsClass list-addition as _ImplementForClass (granted: %s)",
     (granted) => {
       // Avernian Knight's Melee Implement: an Internal list-adds the Warlock
-      // class to melee weapons' `_ImplementAsClass` (a D091 alias; legacy
+      // class to melee weapons' `_ImplementAsClass` (a D105 alias; legacy
       // ignores the field).
       const entities = [
         entity("WARLOCK", "Warlock", "Class"),

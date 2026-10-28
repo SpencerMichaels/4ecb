@@ -2286,7 +2286,7 @@ describe("power evaluation", () => {
             Attack: "Dexterity +2 vs. Reflex",
             Hit: "1d6 + Strength, Constitution, or Dexterity modifier fire damage.\nIncrease to 2d6 + Strength, Constitution, or Dexterity modifier fire damage at 11th level, and to 3d6 + Strength, Constitution, or Dexterity modifier fier damage at 21st level.",
           }),
-          // D091: the leading "+N bonus and" is skipped, not read as damage.
+          // D105: the leading "+N bonus and" is skipped, not read as damage.
           entity("STORM", "Synthetic Storm", "Power", {
             "Attack Type": "Close burst 2",
             Attack: "Dexterity + 2 vs. Reflex",
@@ -4917,7 +4917,7 @@ describe("encounter uses (native RulesElementEncounterUses)", () => {
     });
     expect(uses(word, 15)).toBe(2);
     expect(uses(word, 16)).toBe(3);
-    // Ardent Surge's Special breaks its line before "but only once" (D091).
+    // Ardent Surge's Special breaks its line before "but only once" (D105).
     const surge = entity("ID_FMP_POWER_10273", "Ardent Surge", "Power", {
       "Power Usage": "Encounter",
       Special:
@@ -4956,7 +4956,7 @@ describe("encounter uses (native RulesElementEncounterUses)", () => {
     ).toBe(3);
   });
 
-  it("counts Fight On's additional use on top of Inspiring Word's two (D091)", () => {
+  it("counts Fight On's additional use on top of Inspiring Word's two (D105)", () => {
     const word = entity("ID_FMP_POWER_1590", "Inspiring Word", "Power", {
       "Power Usage": "Encounter",
       Special:

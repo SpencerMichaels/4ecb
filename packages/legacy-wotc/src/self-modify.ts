@@ -39,7 +39,7 @@ export interface SelfModifiedRecord {
  * replaces the first same-named field or appends a new one. Only `value` is
  * written (a list-addition or die-increase "this" modify does nothing here).
  *
- * Deliberate D091 difference: native replaces the field with each value in
+ * Deliberate D105 difference: native replaces the field with each value in
  * turn, so a record whose authored field already lists several values and
  * then repeats each in its own modify (Faervian's `_ImplementForPower`, five
  * power sources) keeps only the last. The item text ("used as an implement

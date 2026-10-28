@@ -185,6 +185,8 @@ const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
 const ENCUMBRANCE = "packages/sheet-model/src/encumbrance.test.ts";
 const PSIONICS = "packages/rules-engine/src/psionics.test.ts";
+const THROWN_ALTERNATIVE =
+  "packages/rules-engine/src/thrown-weapon-alternative.test.ts";
 const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
@@ -250,10 +252,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0xca3c2cf6.Psionics": code(
       "Power points: strips 'Augmentable' from locked powers' Keywords and adds 2/4/6 'Hybrid Power Points' per owned class at-will attack by its Level, then applies Psionic Conventionalist.",
-      "psionics.ts nativePsionics, appended after every element's rules: the Hybrid Power Points literal (which ID_INTERNAL_INTERNAL_HYBRID_POWER_POINTS and Psionic Dabbler link into Power Points) and Keywords overlays for locked records. Unlocked = _AugmentVersions, no _SuppressAugments, not chosen by a Racial Trait (the original of its replacement chain). Psionic Dabbler's own 'modify Power Usage Encounter' makes its power fail the At-Will test, as the overlaid native field read does",
+      "psionics.ts nativePsionics, appended after every element's rules: the Hybrid Power Points literal (which ID_INTERNAL_INTERNAL_HYBRID_POWER_POINTS and Psionic Dabbler link into Power Points) and Keywords overlays for locked records. Unlocked = _AugmentVersions, no _SuppressAugments, not chosen by a Racial Trait (the original of its replacement chain). Psionic Dabbler's own 'modify Power Usage Encounter' makes its power fail native's overlaid At-Will test; D105 (PHB3 p195): the power Psionic Dabbler swapped in counts by its record's own Power Usage (EXCEPTION_IDS.psionicDabbler), so the feat grants 2/4/6",
       test(
         PSIONICS,
         "adds 2/4/6 per owned unlocked augmentable at-will attack and strips locked keywords",
+      ),
+      test(
+        PSIONICS,
+        "gives Psionic Dabbler 2/4/6 power points by the swapped at-will's Level despite its Encounter modify (D105)",
       ),
       "private: sample-chars/Beldin Hammertongue 11.dnd4e: Hybrid Power Points 6 (full Ardent) matches the cached stat",
     ),
@@ -341,7 +347,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     ParseOneRule: code(
       "Rules XML statement parser: statement attributes (Usage, spellbook, type, ...). An unconditional `modify name=\"this\"` (no type, no requires/wearing/not-wearing) writes its value into the record itself at database load: 'Prereqs' replaces the prerequisites, any other field goes through UpdateSpecificField (replace the field or append it).",
-      "content-pack import parses the same rule attributes; legacy-wotc self-modify.ts applyLoadTimeSelfModifies applies the load-time 'this' modify in the parser, so every consumer (compendium included) sees Hyrsam Fiddle's _ImplementForClass, Spiked Shield's WeaponEquiv, Deck of Many Things' Item Slot, Clarifying Impact's _BasicAttack and 36 paladin powers' Divine Sanction. Deliberate D091 difference: a value the authored field already lists (ListContains) leaves it alone, so Faervian +5/+6 keep all five _ImplementForPower power sources (native keeps only the last; the item text names every Implement class)",
+      "content-pack import parses the same rule attributes; legacy-wotc self-modify.ts applyLoadTimeSelfModifies applies the load-time 'this' modify in the parser, so every consumer (compendium included) sees Hyrsam Fiddle's _ImplementForClass, Spiked Shield's WeaponEquiv, Deck of Many Things' Item Slot, Clarifying Impact's _BasicAttack and 36 paladin powers' Divine Sanction. Deliberate D105 difference: a value the authored field already lists (ListContains) leaves it alone, so Faervian +5/+6 keep all five _ImplementForPower power sources (native keeps only the last; the item text names every Implement class)",
       test(
         WOTC_PARSER,
         "writes an unconditional value into the record's own field at load",
@@ -349,7 +355,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(WOTC_PARSER, "replaces a field and the Prereqs, last value winning"),
       test(
         WOTC_PARSER,
-        "keeps an authored list that already contains each value (D091, Faervian)",
+        "keeps an authored list that already contains each value (D105, Faervian)",
       ),
       test(
         WOTC_PARSER,
@@ -897,7 +903,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsSpecialImplement": code(
       "An item whose (or whose enchantment's) _ImplementForClass names a record is a special implement for that class.",
-      "powers.ts implementScopes; item-fields.ts legacyLootImplement (the base's field only, as the RulesElement overload). Deliberately different (D091): IMPLEMENT_CLASS_FIELDS reads _ImplementAsClass as an alias of _ImplementForClass (both honored). Native code never reads _ImplementAsClass, whose only official writer is ID_INTERNAL_INTERNAL_MELEE_WEAPONS_AS_WARLOCK_IMPLEMENTS (Avernian Knight's Melee Implement, ID_FMP_CLASS_FEATURE_2185: 'You can use any melee weapon as a warlock implement', list-adding ID_FMP_CLASS_7 to 74 melee weapons), so the feature did nothing in legacy",
+      "powers.ts implementScopes; item-fields.ts legacyLootImplement (the base's field only, as the RulesElement overload). Deliberately different (D105): IMPLEMENT_CLASS_FIELDS reads _ImplementAsClass as an alias of _ImplementForClass (both honored). Native code never reads _ImplementAsClass, whose only official writer is ID_INTERNAL_INTERNAL_MELEE_WEAPONS_AS_WARLOCK_IMPLEMENTS (Avernian Knight's Melee Implement, ID_FMP_CLASS_FEATURE_2185: 'You can use any melee weapon as a warlock implement', list-adding ID_FMP_CLASS_7 to 74 melee weapons), so the feature did nothing in legacy",
       test(POWERS, "uses a pact blade only for its class's powers"),
       test(
         ITEM_FIELDS,
@@ -906,7 +912,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.ForClass": code(
       "_ImplementForClass on the base or enchantment matches an owned class by name or ID.",
-      "powers.ts implementScopeMatcher; _ImplementAsClass is read as an alias (D091, see IsSpecialImplement)",
+      "powers.ts implementScopeMatcher; _ImplementAsClass is read as an alias (D105, see IsSpecialImplement)",
       test(POWERS, "uses a pact blade only for its class's powers"),
       test(POWERS, "reads _ImplementAsClass as an alias of _ImplementForClass"),
       test(
@@ -1559,8 +1565,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WhichAttack": code(
       "Melee-or-ranged attack line selection by weapon, and the best of 'A, B, or C' abilities.",
-      "powers.ts dualAttackAlternatives (first ') or ', else ' with a melee weapon or two '; a ranged weapon takes the second) / attackLineAbility. D091: only lines naming a melee and a ranged alternative split, so Reactive Shot's 'Strength (thrown weapon) or Dexterity' keeps the better of the two for attack and damage (native: Dexterity attack with a ranged weapon but Strength damage, via MultipleAbilityChoices)",
+      "powers.ts dualAttackAlternatives (first ') or ', else ' with a melee weapon or two '; a ranged weapon takes the second) / attackLineAbility. Only lines naming a melee and a ranged alternative split. D105 (Martial Power 2 p41): Reactive Shot's '<Ability> (thrown weapon) or <Ability>' is thrownWeaponAlternative: Strength for attack and damage with a thrown weapon, Dexterity for both with any other (native: Dexterity attack with a ranged weapon but Strength damage, via MultipleAbilityChoices)",
       test(POWERS, "selects the current level line and highest listed ability"),
+      test(
+        THROWN_ALTERNATIVE,
+        "uses Dexterity for attack and damage with a bow, even when Strength is higher",
+      ),
+      test(
+        THROWN_ALTERNATIVE,
+        "uses Strength for attack and damage with a thrown weapon, even when Dexterity is higher",
+      ),
       test(
         POWERS,
         "splits 'with a melee weapon or two' attacks by the wielded weapon (native WhichAttack)",
@@ -1568,7 +1582,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsDualPower": code(
       "Dual-attack power detection from ') or ' / 'with a melee weapon or two'.",
-      "powers.ts dualAttackAlternatives (see WhichAttack for the D091 Reactive Shot exception)",
+      "powers.ts dualAttackAlternatives (see WhichAttack for the D105 Reactive Shot exception)",
       test(
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
@@ -1666,7 +1680,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.HighestAbility": code(
       "Highest of the six ability scores (Strength first; ties keep the first), for 'your highest ability' and 'Primary ability' attack stats and 'highest'/'ability' damage terms.",
-      "powers.ts highestScoreAbility: 'your highest ability' attack lines (36), 'Primary ability' attack lines (126), '+ [your] highest ability [score] modifier' damage terms (39 Hit lines) and bare '+ ability modifier' damage terms (67). D091: bare 'Highest ability ...' attack lines (native parses the non-ability 'ability') resolve the same way",
+      "powers.ts highestScoreAbility: 'your highest ability' attack lines (36), 'Primary ability' attack lines (126), '+ [your] highest ability [score] modifier' damage terms (39 Hit lines) and bare '+ ability modifier' damage terms (67). D105: bare 'Highest ability ...' attack lines (native parses the non-ability 'ability') resolve the same way",
       test(
         POWERS,
         "uses the highest ability score for 'your highest ability' attack and damage (native HighestAbility)",
@@ -1761,7 +1775,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.ParseIncreaseLine": code(
       "From the hit's first 'Increase damage to ' (else 'Increase to '), each clause from its first digit to ' at N' is the damage at level N, stepping on at the next ' level'; four exact lines (Kelemvor's Judgment, the breath lines) are rewritten first.",
-      "powers.ts increasedDamageAtLevel / NATIVE_INCREASE_REWRITES; D091: a leading '+N bonus and' is skipped (Sun Flare, Improved Razor Storm), native reads it as damage",
+      "powers.ts increasedDamageAtLevel / NATIVE_INCREASE_REWRITES; D105: a leading '+N bonus and' is skipped (Sun Flare, Improved Razor Storm), native reads it as damage",
       test(
         POWERS,
         "reads every threshold of a native-rewritten increase sentence at level %i",
@@ -1773,7 +1787,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.HigherLevelDamage": partial(
       "Higher-level damage lines; Chilling Cloud by name at 21; one exact Constitution line; a riposte damage line trimmed.",
-      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
+      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage), keeping its cold type (D105; native's rewrite drops it); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
       test(
         POWERS,
         "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",
@@ -1790,7 +1804,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcDamage": partial(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon. A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D091: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon. A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
       test(
         POWERS,
@@ -1902,7 +1916,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcMisc": partial(
       "Power 'beast' fields (CalcBeast) and 'weapon' fields matched against the WeaponBonuses table by exact text, group and off-hand flag.",
-      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES) and, by D091, applies Constitution weapon riders outside the table for the weapons their sentence lists; the CalcBeast part is not ported",
+      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES); D105: a rider text repeated in a second Weapon field counts once per attack (Giant's Wake, PHB p81), and the 13 riders the table misses (Smashing Hammer, Earthfast Assault, Stonechannel Strike, Press Forward, Keystone Collapse, Brutal Rebuke, Titan's Hammer, Barreling Swing, Skullcrusher, Storm of Blows, Fangs of Steel, Elegant Strike, Reaping Lunge) are '<ID>,<group> group:damage' statadds in content/corrections/9E-rules-divergences.part, not code; the CalcBeast part is not ported",
       test(
         POWERS,
         "applies recovered weapon-field ability bonuses only to eligible families",
@@ -1918,7 +1932,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(NATIVE_FIELD_BONUSES, "halves Strength with C# truncation"),
       test(
         NATIVE_FIELD_BONUSES,
-        "takes the weapons of a Constitution rider outside the table from its sentence (D091)",
+        "adds nothing for a Constitution rider outside the table; content statadds carry it (D105)",
+      ),
+      test(
+        NATIVE_FIELD_BONUSES,
+        "counts a rider repeated under the secondary attack once per attack (D105, Giant's Wake)",
       ),
     ),
     "?A0x7555d940.CalcBeast": partial(
@@ -2065,7 +2083,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.RulesElementEncounterUses": code(
       "Six healing-word style powers by exact Special text get 2 uses per encounter (3 from level 16); _ADDITIONAL_USES field and stat add uses.",
-      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D091 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). No sheet surface shows the count yet: the use boxes belong to the deferred M6 play tracker",
+      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D105 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). No sheet surface shows the count yet: the use boxes belong to the deferred M6 play tracker",
       test(
         POWERS,
         "gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level",
@@ -2076,7 +2094,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
       test(
         POWERS,
-        "counts Fight On's additional use on top of Inspiring Word's two (D091)",
+        "counts Fight On's additional use on top of Inspiring Word's two (D105)",
       ),
     ),
 

@@ -769,7 +769,7 @@ function loadouts(
         .map(implementKind),
       implementScopes: [
         // `_ImplementForClass` and its alias `_ImplementAsClass` (a deliberate
-        // D091 difference: legacy reads only the former), from the
+        // D105 difference: legacy reads only the former), from the
         // overlay-resolved parts, so list-additions arrive comma-joined.
         ...IMPLEMENT_CLASS_FIELDS.flatMap((name) => listField(parts, name)),
         ...listField(parts, "_ImplementForPower"),
@@ -1370,7 +1370,7 @@ function whitespaceKey(value: string): string {
  * else 1 + the overlaid `_ADDITIONAL_USES` field (Fight On, Rage Strike,
  * Blurred Strike Ki Focus) + the "<power ID>_ADDITIONAL_USES" stat.
  *
- * Divergences (D091, from the records' own rules text):
+ * Divergences (D105, from the records' own rules text):
  * - native compares the Special text exactly, so Ardent Surge, whose
  *   Special carries a line break, gets 1 use although its text grants two;
  *   whitespace runs compare as one space here.
@@ -2009,7 +2009,7 @@ function chosenAbility(
  * - a "Chosen Ability" prefix → the "Chosen Ability" text string (Abiding
  *   Reaper's choice); "Unknown" without one, as there is nothing to add.
  *
- * Divergence (D091): native matches only "your highest ability", so the
+ * Divergence (D105): native matches only "your highest ability", so the
  * bare "Highest ability vs. AC" / "Highest ability modifier + 2 vs. Will"
  * lines (Avandra's Curse, Diverting Taunt, the Dragon-magazine and
  * elemental-companion powers) parse to the non-ability "ability" and add no
@@ -2061,13 +2061,34 @@ function withoutExtractedPowerBonus(line: string): string {
 }
 
 /**
+ * "<Ability> (thrown weapon) or <Ability>" (Reactive Shot's attack and hit
+ * lines): a thrown weapon takes the first ability, any other weapon the
+ * second, for attack and damage alike. Divergence (D105, Martial Power 2
+ * p41): native WhichAttack splits this at ") or " by ranged-ness, so a bow
+ * attacks with Dexterity but its damage reads the first ability, Strength,
+ * which the text contradicts.
+ */
+function thrownWeaponAlternative(line: string, thrownWeapon: boolean): string {
+  const isAbility = (name: string) =>
+    abilityNames.some((ability) => key(ability) === key(name));
+  return line.replace(
+    /\b([A-Za-z]+) \(thrown weapon\) or ([A-Za-z]+)\b/giu,
+    (whole, thrown: string, other: string) =>
+      isAbility(thrown) && isAbility(other)
+        ? thrownWeapon
+          ? thrown
+          : other
+        : whole,
+  );
+}
+
+/**
  * Native WhichAttack/IsDualPower (`-Module-.cs` ~23628): a dual power's
  * attack line splits at its first ") or " (else " with a melee weapon or
  * two "); a ranged weapon takes the second alternative, anything else the
- * first. Reactive Shot's "Strength (thrown weapon) or Dexterity" is not
- * split (D091: native would give a bow Dexterity attacks but Strength
- * damage, which its text contradicts), so only lines naming both a melee
- * and a ranged alternative are.
+ * first. Only lines naming both a melee and a ranged alternative split
+ * here; "<Ability> (thrown weapon) or <Ability>" is
+ * `thrownWeaponAlternative`.
  */
 function dualAttackAlternatives(
   line: string,
@@ -2398,7 +2419,7 @@ function increasedDamageAtLevel(
     const digit = rest.search(/\d/);
     if (digit < 0) break;
     let clause = rest.slice(digit);
-    // Divergence (D091): native takes the clause from its first digit, so
+    // Divergence (D105): native takes the clause from its first digit, so
     // a "+4 bonus and 2d8 + ... damage" clause it does not rewrite (Sun
     // Flare, Improved Razor Storm) reads as "4 bonus and 2d8 ..."; the
     // power text and native's own breath rewrites mean the damage after it.
@@ -3368,6 +3389,10 @@ export function evaluatePowers(input: {
       // Native CalcKeywords reads `weapon attack/damage rolls` only for a
       // weapon power with a wielded (non-unarmed) weapon.
       const weaponRolls = weaponPower && !equipment.unarmed;
+      const thrownWeapon = equipment.properties.some(
+        (property) =>
+          property === "heavy thrown" || property === "light thrown",
+      );
       const explicitAbilityChoice = abilityNames.find((ability) =>
         input.activeDefinitionIds.some((definitionId) => {
           const choice = byId.get(key(definitionId));
@@ -3388,7 +3413,10 @@ export function evaluatePowers(input: {
           definition.line,
           input.stats,
         );
-        const parsedLine = withoutExtractedPowerBonus(definition.line);
+        const parsedLine = thrownWeaponAlternative(
+          withoutExtractedPowerBonus(definition.line),
+          thrownWeapon,
+        );
         const phaseAlternatives = dualAttackAlternatives(parsedLine);
         const authoredLine =
           phaseAlternatives === undefined
@@ -3635,12 +3663,14 @@ export function evaluatePowers(input: {
       > => {
         // Native HigherLevelDamage (`-Module-.cs` ~24587): from 21st level
         // Chilling Cloud deals "twice intelligence modifier damage." by name
-        // (its increase is in the Effect). We keep its cold type.
+        // (its increase is in the Effect). We keep its cold type (D105).
         const hitLine =
           key(power.name) === key(EXCEPTION_NAMES.chillingCloud) &&
           input.level >= 21
             ? "twice Intelligence modifier cold damage."
-            : authoredHit;
+            : authoredHit === undefined
+              ? undefined
+              : thrownWeaponAlternative(authoredHit, thrownWeapon);
         const hitClauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine ?? "")
           ? (hitLine ?? "").split(/\s+or\s+/i)
           : [hitLine ?? ""];
@@ -3746,7 +3776,7 @@ export function evaluatePowers(input: {
         // follow the attack ability. "+ chosen ability modifier" translates
         // to the "Chosen Ability" text string (AbilityTranslation), adding
         // nothing without one.
-        // D091: "+ primary ability modifier" (Elemental Eruption, Soul
+        // D105: "+ primary ability modifier" (Elemental Eruption, Soul
         // Scourge) is native's unknown "primary" stat; it resolves like the
         // bare form, as "Primary ability" does on the attack line.
         if (damageAbilities.length === 0) {

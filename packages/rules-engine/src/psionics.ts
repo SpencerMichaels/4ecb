@@ -52,6 +52,12 @@ export interface NativePsionics {
  * Conventionalist then takes 2/4/6 Power Points by the Level of the power
  * its current multiclass swap replaced.
  *
+ * Divergence (D105, PHB3 p195): Psionic Dabbler's own modify makes its
+ * swapped at-will an Encounter power, so native counts nothing for it and
+ * the feat's `Power Points +Hybrid Power Points` adds 0. The feat grants
+ * 2/4/6 power points by that power's level, so a power the feat swapped in
+ * is counted by its record's own Power Usage.
+ *
  * `IsUnlockedAugmentablePower` (D20Workspace.cs ~1625): the power has
  * `_AugmentVersions`, no `_SuppressAugments`, and was not chosen by a
  * Racial Trait (Dilettante) — read from the first occurrence of its
@@ -91,6 +97,27 @@ export function nativePsionics(input: {
     fieldOf(entity, "_SuppressAugments").length === 0 &&
     !chosenByRacialTrait(occurrence);
 
+  const dabblerSwap = (occurrence: CharacterOccurrence): boolean => {
+    const parent =
+      occurrence.parentId === undefined
+        ? undefined
+        : byId.get(occurrence.parentId);
+    return (
+      occurrence.replacesId !== undefined &&
+      parent !== undefined &&
+      key(parent.definitionId) === key(EXCEPTION_IDS.psionicDabbler)
+    );
+  };
+  const powerUsage = (
+    occurrence: CharacterOccurrence,
+    entity: ContentEntity,
+  ) =>
+    dabblerSwap(occurrence)
+      ? (entity.specifics.find(
+          (specific) => key(specific.name) === "power usage",
+        )?.value ?? "")
+      : fieldOf(entity, "Power Usage");
+
   let hybridPowerPoints = 0;
   const keywordOverlays: FieldOverlay[] = [];
   const stripped = new Set<string>();
@@ -113,7 +140,7 @@ export function nativePsionics(input: {
     }
     if (
       index.find(fieldOf(entity, "Class"), "Class") !== undefined &&
-      key(fieldOf(entity, "Power Usage")) === "at-will" &&
+      key(powerUsage(occurrence, entity)) === "at-will" &&
       key(fieldOf(entity, "Power Type")) === "attack"
     )
       hybridPowerPoints += powerPointsForLevel(

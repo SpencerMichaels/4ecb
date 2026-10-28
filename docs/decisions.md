@@ -3143,6 +3143,82 @@ the power text ("two light blades, two heavy blades, or a heavy blade and a
 light blade") say; his cached rows omit it. The cause in that older save is
 not established.
 
+### D105 — Departures from native behavior that the rules require
+
+Status: accepted (2026-10-28), owner-approved review of every D091-cited
+departure (AGENTS.md: follow legacy unless it is inconsistent with the
+rules). Page numbers are PDF page indexes of the 4eBooks rulebooks.
+
+Context: the engine diverged from recovered native behavior in a dozen
+places, citing D091 ("the new builder wins"). D091 is about which way export
+compatibility must hold, not about overriding the oracle. Each departure was
+re-checked against the printed rules: those where native contradicts the text
+change or stay modern, the rest revert to native.
+
+Decision — the builder departs from native here (cache v83):
+
+- **Reactive Shot** (Martial Power 2 p41, "Strength (thrown weapon) or
+  Dexterity"): a thrown weapon uses Strength for attack and damage, any
+  other weapon Dexterity for both. Native WhichAttack (`-Module-.cs`
+  ~23628) gives a bow a Dexterity attack but Strength damage; modern took
+  the higher of the two. `thrownWeaponAlternative` in `powers.ts`.
+- **A `Weapon` rider counts once per attack** (PHB p81 Giant's Wake, p84
+  Fangs of Steel): native CalcMisc (~25992) adds a matching rider once per
+  `Weapon` field, so a power repeating it under its secondary Hit adds it
+  twice to every attack. `native-power-field-bonuses.ts`.
+- **Psionic Dabbler** (PHB3 p195): grants 2/4/6 power points by the swapped
+  at-will's level. Its own `modify` makes the power Encounter, so native
+  `Psionics` (~16312) counts nothing wherever that modify reaches the power
+  (it targets the last `replace` slot's child; no save shows which slot a
+  swap lands in). `psionics.ts` counts the power the feat swapped in by its
+  record's own Power Usage either way.
+- **Armor Specialization (Chainmail)** (PHB p202) and **Battle Agility**
+  (Martial Power 2 p24) remove only the chain/scale check penalty: their
+  untyped literal `Armor Penalty 0` also zeroed a heavy shield's -2 (D104).
+  Content correction typed `Chain`/`Scale`, as Armor Supremacy and Eladrin
+  Armor are (`content/corrections/9E-rules-divergences.part`).
+- **Weapon damage riders native's table misses**: Smashing Hammer (Martial
+  Power p20), Earthfast Assault and Stonechannel Strike (p124), Press Forward
+  and Keystone Collapse (p28), Brutal Rebuke (p15), Titan's Hammer (p24),
+  Barreling Swing (Martial Power 2 p28), Skullcrusher (PHB p85; its record
+  says "the target is blinded" where native's table line reads "your
+  enemy"), plus Storm of Blows (PHB p82), Fangs of Steel (p84), Elegant
+  Strike (Divine Power p96) and Reaping Lunge (Martial Power p27). Native
+  WeaponBonuses (~25976) matches exact texts, so these add nothing although
+  each power grants the modifier. They get CBLoader's own `<power
+ID>,<group> group:damage` statadds in `9E-rules-divergences.part`; the
+  former code superset in `native-power-field-bonuses.ts` is gone. The eight
+  siblings CBLoader parts already cover (Driving Flurry, Gale of Steel,
+  Agonizing Assault, Assured Strike, Protective Sweep, Meticulous Stab,
+  Cross-Body Parry, Blade Dance) are unchanged.
+
+Kept modern, where native contradicts the text or nullifies the feature:
+
+- **Fight On** (Martial Power 2 p143): Inspiring Word gets its extra use;
+  native's twice-per-encounter match returns before `_ADDITIONAL_USES`.
+- **Ardent Surge** (PHB3 p24): 2 uses (3 from 16th). Native's exact Special
+  compare fails only on CBLoader's line-broken text; on stock data it gives 2.
+- **Faervian**: keeps all five `_ImplementForPower` sources; native's
+  load-time self-`modify` keeps only the last, while the item says any
+  implement class may use it.
+- **Chilling Cloud** at 21+: keeps the cold damage type that native's by-name
+  rewrite drops (its Hit names cold; display only).
+- **Bare "Highest ability" attack lines**: resolve to the highest score.
+  Trey Spectre 12's saved Sohei Flurry row (Wisdom, +18) shows legacy does
+  the same, so this may not be a departure.
+- **"+ primary ability modifier" damage** (Elemental Eruption, Soul
+  Scourge): resolves like "Primary ability"; native's unknown "primary"
+  stat adds 0.
+- **`_ImplementAsClass`** is read as an alias of `_ImplementForClass`:
+  native reads only the latter, so Avernian Knight's Melee Implement ("use
+  any melee weapon as a warlock implement") did nothing.
+- **"+N bonus and XdY" increase lines** (Sun Flare, Improved Razor Storm):
+  the dice after the bonus are read; native parses from the first digit.
+
+Consequence: no sample character owns a changed power or feature, so parity
+is unchanged. Code comments that cite these departures cite D105; D093
+(power requirements) and D095 (summoned creatures) stay as decided.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 

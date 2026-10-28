@@ -102,6 +102,25 @@ const content = [
       ),
     ],
   }),
+  entity("ID_FMP_FEAT_2698", "Psionic Dabbler", "Feat", {
+    rules: [
+      rule(
+        "replace",
+        {
+          Level: "11",
+          multiclass: "encounter|Augmentable At-Will",
+          optional: "true",
+        },
+        0,
+      ),
+      rule("modify", { Field: "Power Usage", value: "Encounter" }, 1),
+      rule(
+        "statadd",
+        { name: "Power Points", value: "+Hybrid Power Points" },
+        2,
+      ),
+    ],
+  }),
   augmentable("MIND_THRUST", "Mind Thrust", "1"),
   augmentable("FORCEFUL_PUSH", "Forceful Push", "1"),
   augmentable("DISHEARTEN", "Dishearten", "11"),
@@ -219,5 +238,38 @@ describe("native Psionics (Hybrid Power Points)", () => {
     );
     expect(evaluated.stats["Power Points"]?.value).toBe(-2);
     expect(evaluated.stats["Hybrid Power Points"]?.value).toBe(2);
+  });
+
+  it("gives Psionic Dabbler 2/4/6 power points by the swapped at-will's Level despite its Encounter modify (D105)", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 11,
+        baseAbilities: {},
+        occurrences: [
+          root,
+          choice("lost", "SWORD_BURST", "root", 0),
+          {
+            id: "feat",
+            definitionId: "ID_FMP_FEAT_2698",
+            acquiredLevel: 11,
+            kind: "grabbag",
+          },
+          choice("swap", "DISHEARTEN", "feat", 0, {
+            acquiredLevel: 11,
+            replacesId: "lost",
+          }),
+        ],
+        inventory: [],
+      },
+      content,
+    );
+    expect(evaluated.stats["Hybrid Power Points"]?.value).toBe(4);
+    expect(evaluated.stats["Power Points"]?.value).toBe(4);
+    expect(
+      evaluated.overlays.find(
+        ({ field, targetDefinitionIds }) =>
+          field === "Power Usage" && targetDefinitionIds.includes("DISHEARTEN"),
+      )?.value,
+    ).toBe("Encounter");
   });
 });

@@ -42,6 +42,8 @@ export const EXCEPTION_IDS = {
   kiFocusGear: "ID_FMP_GEAR_115",
   /** PsionicConventionalist: power points lost by the swapped at-will. */
   psionicConventionalist: "ID_FMP_FEAT_2732",
+  /** Psionic Dabbler: its swapped at-will grants power points (D105). */
+  psionicDabbler: "ID_FMP_FEAT_2698",
 } as const;
 
 /**

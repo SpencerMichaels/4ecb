@@ -1,0 +1,154 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Departures from native behavior that the rulebooks require (D105), fixed
+  in data where native's gap is in the data it reads. Merged after the
+  CBLoader parts by scripts/build-private-content.sh. Structure only; no
+  official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <!-- Weapon damage riders native CalcMisc misses. Its WeaponBonuses table
+       matches a power's `Weapon` text exactly; these texts are not in it, so
+       native adds nothing although each power grants the bonus. CBLoader
+       already gives eight siblings (Assured Strike, Gale of Steel, Driving
+       Flurry, ...) the same `<power ID>,<group> group:damage` statadds in
+       11-fighter.part and 01-bug-fixes.part; these follow that shape. A
+       comma list is conjunctive, so "two-handed,mace group" needs both.
+       No weapon is in two of a rider's groups, so none adds twice. -->
+
+  <!-- Skullcrusher (PHB p85): hammer or mace, Constitution. Native's table
+       line reads "your enemy is blinded"; the record says "the target". -->
+  <AppendNodes internal-id="ID_FMP_POWER_1059">
+    <rules>
+      <statadd name="ID_FMP_POWER_1059,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_1059,mace group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Brutal Rebuke (Martial Power p15): mace or pick, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4337">
+    <rules>
+      <statadd name="ID_FMP_POWER_4337,mace group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_4337,pick group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Smashing Hammer (Martial Power p20): axe or hammer, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4355">
+    <rules>
+      <statadd name="ID_FMP_POWER_4355,axe group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_4355,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Titan's Hammer (Martial Power p24): hammer, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4367">
+    <rules>
+      <statadd name="ID_FMP_POWER_4367,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Press Forward (Martial Power p28): axe, hammer or pick, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_2546">
+    <rules>
+      <statadd name="ID_FMP_POWER_2546,axe group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_2546,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_2546,pick group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Keystone Collapse (Martial Power p28): axe, hammer or pick, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_2548">
+    <rules>
+      <statadd name="ID_FMP_POWER_2548,axe group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_2548,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_2548,pick group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Earthfast Assault (Martial Power p124): axe or hammer, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4753">
+    <rules>
+      <statadd name="ID_FMP_POWER_4753,axe group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_4753,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Stonechannel Strike (Martial Power p124): axe or hammer, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4756">
+    <rules>
+      <statadd name="ID_FMP_POWER_4756,axe group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_4756,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Barreling Swing (Martial Power 2 p28): two-handed mace or two-handed
+       hammer, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_10581">
+    <rules>
+      <statadd name="ID_FMP_POWER_10581,two-handed,mace group:damage" value="+ABILITYMOD(Constitution)" />
+      <statadd name="ID_FMP_POWER_10581,two-handed,hammer group:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Reaping Lunge (Martial Power p27): any two-handed weapon, Constitution. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4657">
+    <rules>
+      <statadd name="ID_FMP_POWER_4657,two-handed:damage" value="+ABILITYMOD(Constitution)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Storm of Blows (PHB p82): heavy blade or light blade, Dexterity. -->
+  <AppendNodes internal-id="ID_FMP_POWER_1027">
+    <rules>
+      <statadd name="ID_FMP_POWER_1027,light blade group:damage" value="+ABILITYMOD(Dexterity)" />
+      <statadd name="ID_FMP_POWER_1027,heavy blade group:damage" value="+ABILITYMOD(Dexterity)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Fangs of Steel (PHB p84): light blade or heavy blade, Dexterity, on
+       each of its two attacks (a keyword damage stat reaches both). -->
+  <AppendNodes internal-id="ID_FMP_POWER_1069">
+    <rules>
+      <statadd name="ID_FMP_POWER_1069,light blade group:damage" value="+ABILITYMOD(Dexterity)" />
+      <statadd name="ID_FMP_POWER_1069,heavy blade group:damage" value="+ABILITYMOD(Dexterity)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Elegant Strike (Divine Power p96): light blade or heavy blade, Dexterity. -->
+  <AppendNodes internal-id="ID_FMP_POWER_8101">
+    <rules>
+      <statadd name="ID_FMP_POWER_8101,light blade group:damage" value="+ABILITYMOD(Dexterity)" />
+      <statadd name="ID_FMP_POWER_8101,heavy blade group:damage" value="+ABILITYMOD(Dexterity)" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Armor check penalties. An untyped literal `Armor Penalty 0` sets the
+       whole stat to 0 (native CalculateStatValue, D104), so a heavy
+       shield's -2 (its own `type="Heavy Shields"`) vanished too. Typed
+       `Chain`/`Scale` zeroes remove only that armor's penalty, as Armor
+       Supremacy and Eladrin Armor already do. The records' other
+       statements are copied unchanged, since the merge replaces a whole
+       rules block. -->
+
+  <!-- Armor Specialization (Chainmail) (PHB p202): chainmail's check
+       penalty is 1, so "reduce by 1" removes it. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_180"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_180">
+    <rules>
+      <statadd name="AC" value="+1" type="Feat" wearing="armor:chain" />
+      <statadd name="Armor Penalty" value="0" type="Chain" wearing="armor:chain" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Battle Agility (Martial Power 2 p24): chainmail and scale armor. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_2188"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_2188">
+    <rules>
+      <statadd name="Speed" value="0" type="Armor" wearing="Armor:Scale" />
+      <statadd name="Speed" value="0" type="Armor" wearing="armor:chain" />
+      <statadd name="Armor Penalty" value="0" type="Scale" wearing="Armor:Scale" />
+      <statadd name="Armor Penalty" value="0" type="Chain" wearing="armor:chain" />
+    </rules>
+  </AppendNodes>
+</D20Rules>

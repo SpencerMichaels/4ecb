@@ -54,7 +54,7 @@ A `modify` changes one field of a record as native `ProcessModify` does: a
 without conditions or `type` is native `ParseOneRule`'s load-time rewrite of
 the record itself, so the content-pack import applies it
 (legacy-wotc `self-modify.ts`; a value the authored list already contains
-keeps the list, a D091 difference for Faervian); with `requires`/`wearing` it
+keeps the list, a D105 difference for Faervian); with `requires`/`wearing` it
 modifies the providing record at evaluation time.
 
 Typed stacking follows native `CalculateStatValue`/`AddStatValue`
@@ -92,6 +92,9 @@ Level) to the untyped "Hybrid Power Points" literal, which the hybrid
 power-point records and Psionic Dabbler link into Power Points; locked
 records lose "Augmentable, " from their Keywords. Psionic Conventionalist
 then takes 2/4/6 Power Points by the Level of the at-will it swapped out.
+Psionic Dabbler's swapped-in at-will counts by its record's own At-Will
+usage, although the feat's `modify` makes it Encounter (D105, PHB3 p195:
+the feat grants the points; native counts 0).
 
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/
@@ -425,7 +428,7 @@ damage, a `Level N:` hit line wins; otherwise the hit's first "Increase damage
 to" (else "Increase to") sentence is parsed as native `ParseIncreaseLine` does:
 each clause from its first digit up to " at N" is the damage from level N on,
 after native's four exact rewrites (Kelemvor's Judgment's thresholds, the
-breath lines). Deliberate divergence (D091): a clause leading with "+N bonus
+breath lines). Deliberate divergence (D105): a clause leading with "+N bonus
 and" (Sun Flare, Improved Razor Storm) skips that lead, where native reads it
 as damage; their attack bonus stays native (no increase).
 
@@ -581,9 +584,16 @@ Class field; Pact Reward's `ID_FMP_PARAGON_PATH_<n>:damage`) and, per native
 `RulesElementEncounterUses`, the legacy tracker's use boxes: 2 (3 from 16th
 level) for the recovered "twice per encounter" Special texts, plus the
 overlaid `_ADDITIONAL_USES` field and the "<power ID>\_ADDITIONAL_USES" stat.
-Two D091 divergences, both from the records' own text: Special texts compare
+Two D105 divergences, both from the records' own text: Special texts compare
 with whitespace collapsed (Ardent Surge), and additional uses add to the
 twice-per-encounter count (Fight On on Inspiring Word).
+Native CalcMisc `Weapon` riders (the decoded 16-line WeaponBonuses table)
+count once per attack: a text repeated under a secondary Hit (Giant's Wake)
+adds once, not once per field (D105). Riders the table misses are content
+statadds (`<power ID>,<group> group:damage`), not code. An attack or hit
+line's "<Ability> (thrown weapon) or <Ability>" (Reactive Shot) takes the
+first ability with a thrown weapon and the second otherwise, for attack and
+damage alike (D105).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and

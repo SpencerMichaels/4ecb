@@ -131,7 +131,7 @@ describe('native ParseOneRule\'s modify name="this"', () => {
     expect(power?.prerequisites).toBe("Paladin");
   });
 
-  it("keeps an authored list that already contains each value (D091, Faervian)", () => {
+  it("keeps an authored list that already contains each value (D105, Faervian)", () => {
     const [faervian] = parse(`
       <RulesElement internal-id="ID_FAERVIAN" name="Faervian +5" type="Magic Item" source="Synthetic">
         <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_2, ID_FMP_POWER_SOURCE_3</specific>

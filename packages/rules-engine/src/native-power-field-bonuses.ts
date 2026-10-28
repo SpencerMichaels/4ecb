@@ -206,49 +206,6 @@ function trimmedField(name: string): { name: string; indent: number } {
   return { name: trimmed, indent: name.length - trimmed.length };
 }
 
-/**
- * D091 superset: `Weapon` texts outside the native table whose rule is the
- * same Constitution damage rider (Smashing Hammer's "an axe or a hammer",
- * Press Forward's "an axe, a hammer, or a pick", Brutal Rebuke's "a mace or a
- * pick", Titan's Hammer's "a hammer", Barreling Swing's "a two-handed mace or
- * a twohanded hammer", and Skullcrusher, whose text says "the target is
- * blinded" where the table reads "your enemy is blinded"). Native CalcMisc
- * ignores them; the power text grants the bonus, so the builder applies it,
- * for the weapons the sentence itself lists.
- */
-function rulesWeaponBonus(text: string): WeaponBonus | undefined {
-  const match =
-    /^If you(?:'re| are) wielding (.+?), (?:the attack deals extra damage|you gain a bonus to the damage roll) equal to your Constitution modifier\b/iu.exec(
-      text,
-    );
-  if (match?.[1] === undefined) return undefined;
-  const weapons = match[1]
-    .split(/\s*,\s*(?:or\s+)?|\s+or\s+/iu)
-    .map((entry) => entry.replace(/^(?:a|an)\s+/iu, "").trim())
-    .filter(Boolean);
-  return {
-    text,
-    label: ` for using ${match[1]}`,
-    groups: weapons.join(","),
-    ability: "Constitution",
-  };
-}
-
-/** Whether the weapon base answers a sentence's weapon list: a group, or a
- *  "two-handed <group>" that also needs a two-handed weapon. */
-function sentenceWeaponMatches(
-  weapons: string,
-  group: string,
-  twoHanded: boolean,
-): boolean {
-  return weapons.split(",").some((entry) => {
-    const handed = /^two-?handed\s+(.+)$/iu.exec(entry);
-    return handed?.[1] !== undefined
-      ? twoHanded && legacyListContainsOneOf(handed[1], group)
-      : legacyListContainsOneOf(entry, group);
-  });
-}
-
 function signedLabel(ability: Ability, half: boolean, suffix: string): string {
   return `${half ? "half " : ""}${ability} modifier${suffix}`;
 }
@@ -290,33 +247,29 @@ export function nativePowerFieldBonuses(input: {
       (specific) => lower(specific.name.trim()) === lower(name),
     )?.value ?? "";
   const group = baseField("Group");
-  const twoHanded = lower(baseField("Hands Required").trim()) === "two-handed";
   const fields = input.power.specifics.map((specific) => ({
     ...trimmedField(specific.name),
     value: specific.value.trim(),
   }));
 
+  // Divergence (D105, PHB p81 Giant's Wake, p84 Fangs of Steel): native
+  // adds a rider once per matching `Weapon` field, so a power repeating it
+  // under its secondary Hit adds it twice to every attack. The riders apply
+  // to each attack's damage already, so a repeated text counts once.
+  const appliedRiders = new Set<string>();
   if (input.weaponPower && input.mainhandWeapon)
     for (const { name, indent, value } of fields) {
       if (indent > 2 || lower(name) !== "weapon") continue;
-      const native = NATIVE_WEAPON_BONUSES.find(
-        (bonus) =>
-          lower(bonus.text) === lower(value) &&
-          (bonus.groups === undefined ||
-            legacyListContainsOneOf(bonus.groups, group)) &&
-          (!bonus.needsOffhand || input.hasOffhand),
+      if (appliedRiders.has(lower(value))) continue;
+      const bonus = NATIVE_WEAPON_BONUSES.find(
+        (candidate) =>
+          lower(candidate.text) === lower(value) &&
+          (candidate.groups === undefined ||
+            legacyListContainsOneOf(candidate.groups, group)) &&
+          (!candidate.needsOffhand || input.hasOffhand),
       );
-      const isNativeText = NATIVE_WEAPON_BONUSES.some(
-        (bonus) => lower(bonus.text) === lower(value),
-      );
-      const rules = isNativeText ? undefined : rulesWeaponBonus(value);
-      const bonus =
-        native ??
-        (rules?.groups !== undefined &&
-        sentenceWeaponMatches(rules.groups, group, twoHanded)
-          ? rules
-          : undefined);
       if (bonus === undefined) continue;
+      appliedRiders.add(lower(value));
       const modifier = input.abilityModifier(bonus.ability);
       const value_ = bonus.half ? Math.trunc(modifier / 2) : modifier;
       (bonus.attack ? attack : damage).push({

@@ -493,7 +493,7 @@ export function legacyImplementType(
  * `_ImplementForClass` and its alias `_ImplementAsClass`, read identically
  * (same value grammar, both honored when both are present).
  *
- * Deliberate D091 difference from legacy: native LootImplement,
+ * Deliberate D105 difference from legacy: native LootImplement,
  * IsSpecialImplement and the implement-proficiency check read only
  * `_ImplementForClass`. The official content's only `_ImplementAsClass`
  * writer is the Avernian Knight's Melee Implement ("You can use any melee
