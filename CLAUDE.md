@@ -201,6 +201,10 @@ character record + content profile + play state --> rules engine --> EvaluatedCh
   ordered set of packs + resolution policy, materialized as another verified
   local pack so workers see one immutable input. Characters pin a resolved
   profile revision; installing a newer pack never silently changes them.
+  Heavy text parsing of content (stat blocks, prose fields, rule strings)
+  happens once, at pack generation (`legacy-wotc` import / `content-tool
+build`), and is stored as normalized fields or IR in the pack; the app and
+  rules engine only read those, computing just what depends on the character.
 - **Rules engine** (`rules-engine`) implements the recovered rule language as
   explicit phases (resolve profile -> level/history context -> grants/removals
   -> choices -> prerequisites/legality -> stat/text/power statements ->

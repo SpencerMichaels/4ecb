@@ -99,6 +99,10 @@ These instructions apply to the entire repository.
   them separate from the public suite.
 - Make coherent checkpoint commits after verification. Do not declare a
   milestone complete from a dirty or unverified worktree.
+- Do heavy text parsing of content once, at content-pack generation, and store
+  the result in the pack (normalized fields, rule IR); never re-parse content
+  prose or stat blocks each time the app loads content or evaluates a
+  character. Only character-dependent values are computed at evaluation.
 - Never duplicate a value calculation. Every number shown on more than one
   surface (builder, sheet pages, cards, scratchpad) must come from one shared
   source: evaluated stats or a function in
