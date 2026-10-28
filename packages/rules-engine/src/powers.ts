@@ -1,4 +1,5 @@
 import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
+import { boundAugmentHolding } from "@4ecb/character-domain";
 
 import type {
   CharacterInventoryEntry,
@@ -453,45 +454,23 @@ function legacyWeaponEquiv(
   );
 }
 
-function decodeXmlText(value: string): string {
-  return value
-    .replace(/&lt;/gu, "<")
-    .replace(/&gt;/gu, ">")
-    .replace(/&quot;/gu, '"')
-    .replace(/&apos;/gu, "'")
-    .replace(/&amp;/gu, "&");
-}
-
 /**
- * Legacy CharLootAugment: a loot entry's `augment` attribute is a serialized
- * CharLootID (`baseID`, optional `enchantID`), and FindLoot resolves it to
- * another owned loot entry, e.g. a dragonshard bound to a weapon. Returns that
- * augment's base record, or undefined when nothing owned matches.
+ * Legacy CharLootAugment: the base record of the owned augment (a
+ * dragonshard) bound to this loot, as the character-domain binding resolves
+ * it (the modern choice, else the imported CharLootID), or undefined.
  */
 function boundAugment(
   entry: CharacterInventoryEntry,
   inventory: readonly CharacterInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
 ): ContentEntity | undefined {
-  const serialized = Object.entries(entry.overrides ?? {}).find(
-    ([name]) => key(name) === "augment",
-  )?.[1];
-  if (serialized === undefined) return undefined;
-  const xml = decodeXmlText(serialized);
-  const element = (name: string) =>
-    new RegExp(`<${name}>([^<]*)</${name}>`, "u").exec(xml)?.[1]?.trim();
-  const baseId = element("baseID");
-  if (baseId === undefined || baseId === "") return undefined;
-  const enchantId = element("enchantID");
-  const owned = inventory.some(
-    (candidate) =>
-      candidate !== entry &&
-      candidate.quantity > 0 &&
-      key(candidate.definitionIds[0] ?? "") === key(baseId) &&
-      (enchantId === undefined ||
-        key(candidate.definitionIds[1] ?? "") === key(enchantId)),
+  const augment = boundAugmentHolding(
+    entry,
+    inventory,
+    (holding) => holding.definitionIds,
   );
-  return owned ? byId.get(key(baseId)) : undefined;
+  const baseId = augment?.definitionIds[0];
+  return baseId === undefined ? undefined : byId.get(key(baseId));
 }
 
 /**

@@ -484,9 +484,17 @@ bonus to follow the hand selection exactly; the private `oleander_9` sample
 matches legacy on every arcane implement row.
 
 A parenthesized stat limiter (`implement:damage(<name>)`) matches the row's
-base, its enchantment, or the augment bound to the row's item through the
-loot `augment` override (native `CalcKeywords` + `FindLoot`). Binding only
-arrives through import; there is no builder control for it yet.
+base, its enchantment, or the augment bound to the row's item (native
+`CalcKeywords` + `CharLootAugment`). The binding is the host holding's
+`augmentEntryId` (the augment holding's ID; null for none), set by the
+`set-inventory-augment` command from the Equipment tab's right-click menu on
+an augment (native `CharLootIsAugment`: Magic Item Type "Dragonshard
+Augment"; hosts per native `IsMagicWeapon`: an enchanted weapon, a Staff
+magic item, or an enchanted Staff/Light Blade superior implement). A holding
+without the field follows the imported loot `augment` CharLootID, resolved
+like `FindLoot` to an owned holding with that base. Export writes the modern
+binding back as that attribute (`withLegacyAugmentState`; empty when
+detached). `boundAugmentHolding` in `character-domain` is the one resolver.
 
 Owned loot executes like native `EquipLoot`/`ShouldExecute`: a holding runs
 its rules when equipped, or when owned and its base has an empty `Item Slot`

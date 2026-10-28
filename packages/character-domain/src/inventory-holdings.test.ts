@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   applyCharacterCommand,
+  boundAugmentHolding,
   currentInventoryHoldings,
+  parseLegacyLootId,
+  serializeLegacyLootId,
   isCharacterRecord,
   isCharacterRecordWithBuildV2,
   newCharacterRecord,
@@ -352,5 +355,132 @@ describe("wielding a versatile weapon (D101)", () => {
     });
     expect(result.inventory[0]?.wieldedTwoHanded).toBe(true);
     expect(result.inventory[0]?.equippedSlots).toBeUndefined();
+  });
+});
+
+describe("binding a dragonshard augment (CharLootAugment)", () => {
+  const staff = row("staff", 1, "staff", 1, 1);
+  const wand = row("wand", 1, "wand", 1, 0);
+  const shard = row("shard", 1, "shard", 1, 0);
+  const build: CharacterBuild = { ...base, inventory: [staff, wand, shard] };
+  const ids = (entry: BuildInventoryEntry) =>
+    entry.elements.flatMap(({ definitionId }) =>
+      definitionId === undefined ? [] : [definitionId],
+    );
+  const carried = (result: CharacterBuild, host: string) => {
+    const entry = result.inventory.find(({ id }) => id === host)!;
+    return boundAugmentHolding(entry, result.inventory, ids)?.id;
+  };
+
+  it("attaches, moves and detaches an augment as a semantic choice", () => {
+    const attached = applyCharacterCommand(build, {
+      kind: "set-inventory-augment",
+      hostEntryId: "staff",
+      augmentEntryId: "shard",
+    });
+    expect(attached.inventory[0]?.augmentEntryId).toBe("shard");
+    expect(carried(attached, "staff")).toBe("shard");
+    // Attaching the only copy elsewhere moves it.
+    const moved = applyCharacterCommand(attached, {
+      kind: "set-inventory-augment",
+      hostEntryId: "wand",
+      augmentEntryId: "shard",
+    });
+    expect(carried(moved, "staff")).toBeUndefined();
+    expect(moved.inventory[0]?.augmentEntryId).toBeNull();
+    expect(carried(moved, "wand")).toBe("shard");
+    const detached = applyCharacterCommand(moved, {
+      kind: "set-inventory-augment",
+      hostEntryId: "wand",
+      augmentEntryId: null,
+    });
+    expect(carried(detached, "wand")).toBeUndefined();
+    // The original build is untouched and the result is a valid record.
+    expect(build.inventory[0]?.augmentEntryId).toBeUndefined();
+    expect(
+      isCharacterRecord(
+        newCharacterRecord(
+          { format: "dnd4e", sourceXml: "<D20Character/>" },
+          {
+            details: {},
+            abilities: {},
+            stats: {},
+            selectedRules: [],
+            powers: [],
+            loot: [],
+            textStrings: {},
+            levelCount: 1,
+            source: "legacy-cache",
+          },
+          detached,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps one binding per owned copy", () => {
+    const twoShards: CharacterBuild = {
+      ...base,
+      inventory: [staff, wand, { ...shard, quantity: 2 }],
+    };
+    const both = applyCharacterCommand(
+      applyCharacterCommand(twoShards, {
+        kind: "set-inventory-augment",
+        hostEntryId: "staff",
+        augmentEntryId: "shard",
+      }),
+      {
+        kind: "set-inventory-augment",
+        hostEntryId: "wand",
+        augmentEntryId: "shard",
+      },
+    );
+    expect(carried(both, "staff")).toBe("shard");
+    expect(carried(both, "wand")).toBe("shard");
+  });
+
+  it("follows an imported CharLootID until a modern choice is made", () => {
+    const serialized = serializeLegacyLootId({ baseId: "ID_SHARD" });
+    const imported: CharacterBuild = {
+      ...base,
+      inventory: [
+        { ...staff, overrides: { augment: serialized } },
+        wand,
+        shard,
+      ],
+    };
+    expect(parseLegacyLootId(serialized)).toEqual({ baseId: "ID_SHARD" });
+    expect(carried(imported, "staff")).toBe("shard");
+    // Only an owned augment resolves, as FindLoot searches owned loot.
+    expect(
+      carried(
+        { ...imported, inventory: imported.inventory.slice(0, 2) },
+        "staff",
+      ),
+    ).toBeUndefined();
+    const moved = applyCharacterCommand(imported, {
+      kind: "set-inventory-augment",
+      hostEntryId: "wand",
+      augmentEntryId: "shard",
+    });
+    expect(carried(moved, "staff")).toBeUndefined();
+    expect(carried(moved, "wand")).toBe("shard");
+  });
+
+  it("rejects binding a holding to itself or an unknown augment", () => {
+    expect(() =>
+      applyCharacterCommand(build, {
+        kind: "set-inventory-augment",
+        hostEntryId: "shard",
+        augmentEntryId: "shard",
+      }),
+    ).toThrow(/itself/);
+    expect(() =>
+      applyCharacterCommand(build, {
+        kind: "set-inventory-augment",
+        hostEntryId: "staff",
+        augmentEntryId: "missing",
+      }),
+    ).toThrow(/not found/);
   });
 });

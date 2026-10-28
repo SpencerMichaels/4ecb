@@ -323,6 +323,9 @@ export function evaluationInventory(
     ...(entry.wieldedTwoHanded === undefined
       ? {}
       : { wieldedTwoHanded: entry.wieldedTwoHanded }),
+    ...(entry.augmentEntryId === undefined
+      ? {}
+      : { augmentEntryId: entry.augmentEntryId }),
   }));
 }
 

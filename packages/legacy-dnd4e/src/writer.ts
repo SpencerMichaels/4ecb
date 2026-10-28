@@ -1,9 +1,14 @@
 import {
+  boundAugmentHolding,
   characterWalletTextKey,
   currentInventoryHoldings,
   detailsWithLegacyTextStrings,
   inventoryHoldingKey,
   isKnownElementStored,
+  legacyAugmentOverride,
+  parseLegacyLootId,
+  serializeLegacyLootId,
+  LEGACY_AUGMENT_OVERRIDE,
   walletTextLevel,
   type BuildElementIdentity,
   type BuildInventoryEntry,
@@ -1057,10 +1062,68 @@ export function legacyExportedBuild(
   evaluation: EvaluatedCharacter,
   content: readonly ContentEntity[],
 ): CharacterBuild {
-  return withLegacyLoadoutState(
-    withLegacyFreebeeRituals(build, evaluation, content),
-    content,
+  return withLegacyAugmentState(
+    withLegacyLoadoutState(
+      withLegacyFreebeeRituals(build, evaluation, content),
+      content,
+    ),
   );
+}
+
+function holdingDefinitionIds(entry: BuildInventoryEntry): readonly string[] {
+  return entry.elements.flatMap(({ definitionId }) =>
+    definitionId === undefined ? [] : [definitionId],
+  );
+}
+
+/**
+ * Writes each modern augment binding (`augmentEntryId`) back as the loot
+ * `augment` attribute the old builder stores (a serialized CharLootID of the
+ * augment's base and enchantment). A detached host writes an empty one, so a
+ * re-import that merges the holding's earlier loot rows does not keep an
+ * earlier binding. A holding without a modern choice keeps its imported
+ * attribute verbatim, as does one whose choice names the same augment.
+ */
+export function withLegacyAugmentState(build: CharacterBuild): CharacterBuild {
+  let changed = false;
+  const inventory = build.inventory.map((entry) => {
+    if (entry.augmentEntryId === undefined) return entry;
+    const augment = boundAugmentHolding(
+      entry,
+      build.inventory,
+      holdingDefinitionIds,
+    );
+    const ids = augment === undefined ? [] : holdingDefinitionIds(augment);
+    const baseId = ids[0];
+    const enchantId = ids[1];
+    const saved = legacyAugmentOverride(entry);
+    const savedId = saved === undefined ? undefined : parseLegacyLootId(saved);
+    const same =
+      baseId === undefined
+        ? savedId === undefined && (saved === undefined || saved === "")
+        : savedId !== undefined &&
+          key(savedId.baseId) === key(baseId) &&
+          key(savedId.enchantId ?? "") === key(enchantId ?? "");
+    if (same) return entry;
+    const name =
+      Object.keys(entry.overrides).find(
+        (overrideName) => key(overrideName) === LEGACY_AUGMENT_OVERRIDE,
+      ) ?? LEGACY_AUGMENT_OVERRIDE;
+    changed = true;
+    return {
+      ...entry,
+      overrides: {
+        ...entry.overrides,
+        [name]:
+          baseId === undefined
+            ? ""
+            : serializeLegacyLootId(
+                enchantId === undefined ? { baseId } : { baseId, enchantId },
+              ),
+      },
+    };
+  });
+  return changed ? { ...build, inventory } : build;
 }
 
 /**

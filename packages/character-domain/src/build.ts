@@ -1,3 +1,5 @@
+import { augmentHosts } from "./inventory-augments";
+
 export type BuildLegality = "rules-legal" | "houserule";
 
 export interface BuildElementIdentity {
@@ -107,6 +109,13 @@ export interface BuildInventoryEntry {
    * `set-inventory-wielding` command.
    */
   readonly wieldedTwoHanded?: boolean;
+  /**
+   * The dragonshard augment holding this item carries (legacy
+   * CharLootAugment); null carries none. Undefined means no modern choice:
+   * the imported `augment` loot attribute decides (see
+   * `boundAugmentHolding`). Set with the `set-inventory-augment` command.
+   */
+  readonly augmentEntryId?: string | null;
   readonly overrides: Readonly<Record<string, string>>;
   readonly legality: BuildLegality;
 }
@@ -1215,6 +1224,18 @@ export type CharacterCommand =
       readonly twoHanded: boolean;
     }
   | {
+      /**
+       * Binds an owned augment holding to a host holding, or (null) leaves
+       * the host without one. A holding carries one augment, and an augment
+       * is in as many hosts as copies are owned: binding it to one more
+       * host frees it from the earliest other hosts first, so attaching a
+       * single augment elsewhere moves it.
+       */
+      readonly kind: "set-inventory-augment";
+      readonly hostEntryId: string;
+      readonly augmentEntryId: string | null;
+    }
+  | {
       readonly kind: "purchase-inventory";
       /** A new exact holding whose quantity is the purchase count. */
       readonly entry: BuildInventoryEntry;
@@ -1358,6 +1379,51 @@ function withInventoryWielding(
             equippedSlots,
           };
     }),
+  };
+}
+
+function holdingDefinitionIds(entry: BuildInventoryEntry): readonly string[] {
+  return entry.elements.flatMap(({ definitionId }) =>
+    definitionId === undefined ? [] : [definitionId],
+  );
+}
+
+function withInventoryAugment(
+  build: CharacterBuild,
+  hostEntryId: string,
+  augmentEntryId: string | null,
+): CharacterBuild {
+  const host = exactInventoryEntry(build.inventory, hostEntryId);
+  if (augmentEntryId === null)
+    return {
+      ...build,
+      inventory: build.inventory.map((entry) =>
+        entry === host ? { ...entry, augmentEntryId: null } : entry,
+      ),
+    };
+  const augment = exactInventoryEntry(build.inventory, augmentEntryId);
+  if (augment === host)
+    throw new Error("An inventory holding cannot carry itself as an augment");
+  if (augment.quantity <= 0)
+    throw new Error(`Augment holding is not owned: ${augmentEntryId}`);
+  // Every other host keeps it while copies remain, earliest first freed.
+  const others = augmentHosts(
+    augment,
+    build.inventory,
+    holdingDefinitionIds,
+  ).filter((entry) => entry !== host);
+  const freed = new Set(
+    others.slice(0, Math.max(0, others.length + 1 - augment.quantity)),
+  );
+  return {
+    ...build,
+    inventory: build.inventory.map((entry) =>
+      entry === host
+        ? { ...entry, augmentEntryId }
+        : freed.has(entry)
+          ? { ...entry, augmentEntryId: null }
+          : entry,
+    ),
   };
 }
 
@@ -1605,6 +1671,12 @@ export function applyCharacterCommand(
     }
     case "set-inventory-wielding":
       return withInventoryWielding(build, command.entryId, command.twoHanded);
+    case "set-inventory-augment":
+      return withInventoryAugment(
+        build,
+        command.hostEntryId,
+        command.augmentEntryId,
+      );
     case "purchase-inventory": {
       assertCopperPrice(command.priceCopper);
       assertInventoryQuantities(command.entry);
