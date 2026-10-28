@@ -65,6 +65,21 @@ These instructions apply to the entire repository.
 - Implement parity corrections from recovered behavior and exact fixtures, not
   by fitting formulas to cached totals. Keep genuinely unresolved differences
   visible and explainable.
+- A claim about what the legacy builder computes ("legacy gives +6") must be
+  checked against a save's cached values (the `<Stat>` statadd breakdown, power
+  rows) or labeled as inferred from decompiled code. Code reading alone has
+  been wrong (D100).
+- Fix a behavior gap in the engine before reaching for a content correction.
+  A `content/corrections/*.part` fix is for wrong or missing content, not for
+  native behavior the engine lacks: a correction that papers over an engine
+  gap hides it from every other record (D100 → D103).
+- Synthetic tests must spell content field values and selector operands
+  exactly as the real content does (e.g. Item Slot "Off-hand" against
+  `SLOT:off hand`); a test written in the code's own vocabulary can pass while
+  the real data never matches.
+- A `generic` entry in `legacy-special-cases.ts` must be one whose output feeds
+  no rule, stat or selector; anything that does is `code`/`partial`/
+  `not-handled`, with a note naming the content and stats it affects.
 
 ## Engineering workflow
 

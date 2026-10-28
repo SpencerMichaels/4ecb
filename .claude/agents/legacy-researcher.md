@@ -54,6 +54,11 @@ evidence. Distinguish what legacy does, what the rules say, and what the
 modern engine does (cite `packages/...` code). Check the character's own
 selections and content definitions before concluding.
 
+A claim about what legacy computes must be checked against a save's cached
+values (the `<Stat>` statadd breakdown, power rows), with the arithmetic
+shown, or explicitly labeled "inferred from decompiled code, not confirmed
+by a save". Code reading alone has been wrong (D100).
+
 ## Report
 
 Concise: the answer first, then evidence with file:line or book:page

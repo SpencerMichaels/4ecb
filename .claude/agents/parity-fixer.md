@@ -57,8 +57,11 @@ working between messages.
 4. **Implement generically.** No per-feat special cases; IDs or names keyed in
    code go through `EXCEPTION_IDS`/`EXCEPTION_NAMES` in
    `packages/rules-engine/src/exceptions.ts`. Content-specific errata go in
-   `content/corrections/*.part` (structure only, no official text) per D089.
-   Reuse shared helpers (`item-fields.ts`, `key-ability-overrides.ts`,
+   `content/corrections/*.part` (structure only, no official text) per D089,
+   but only for wrong or missing content: native behavior the engine lacks is
+   fixed in the engine, never papered over in content (D100 → D103).
+   Synthetic tests spell field values and selector operands exactly as the
+   real content does. Reuse shared helpers (`item-fields.ts`, `key-ability-overrides.ts`,
    `nativeRowKeywords` in `powers.ts`, `derived-values.ts`) — never duplicate
    a value calculation.
 5. **D091:** the new builder may fix a legacy mistake, but only with rules
