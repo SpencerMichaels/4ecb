@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedPower } from "@4ecb/rules-engine";
 
-import { createSheetPowerCardFinder } from ".";
+import { classifyPowerCard, createSheetPowerCardFinder } from ".";
 
 const strike: ContentEntity = {
   id: "STRIKE",
@@ -103,5 +103,27 @@ describe("extra damage dice on power cards", () => {
       evaluated,
     );
     expect(card.additionalEffects).toBeUndefined();
+  });
+});
+
+describe("encounter uses on power cards", () => {
+  it("carries the evaluated use count into the card's usage label", () => {
+    const evaluated: EvaluatedPower = { ...power(), encounterUses: 2 };
+    const card = createSheetPowerCardFinder(evaluation([evaluated]), [strike])(
+      strike,
+      evaluated,
+    );
+    expect(card.encounterUses).toBe(2);
+    expect(classifyPowerCard(card).typeLabel).toBe("Encounter (2×) power");
+  });
+
+  it("adds no count to a once-per-encounter power", () => {
+    const evaluated = power();
+    const card = createSheetPowerCardFinder(evaluation([evaluated]), [strike])(
+      strike,
+      evaluated,
+    );
+    expect(card.encounterUses).toBeUndefined();
+    expect(classifyPowerCard(card).typeLabel).toBe("Encounter power");
   });
 });

@@ -228,6 +228,9 @@ export interface SheetCard {
   readonly itemType?: string;
   readonly baseItemType?: string;
   readonly usage?: string;
+  /** Evaluated uses per encounter, present only above 1 (legacy
+   *  twice-per-encounter powers and _ADDITIONAL_USES). */
+  readonly encounterUses?: number;
   readonly actionType?: string;
   readonly keywords?: string;
   readonly attack?: string;
@@ -1109,6 +1112,9 @@ function evaluatedPowerCards(
         ? {}
         : { basicAttackKind: power.basicAttackKind }),
       ...(power.usage === undefined ? {} : { usage: power.usage }),
+      ...(power.encounterUses === undefined
+        ? {}
+        : { encounterUses: power.encounterUses }),
       ...(power.actionType === undefined
         ? {}
         : { actionType: power.actionType }),

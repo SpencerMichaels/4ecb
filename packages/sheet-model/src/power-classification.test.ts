@@ -66,6 +66,31 @@ describe("classifyPower", () => {
     expect(power.usage).toBe("daily");
   });
 
+  it("counts encounter uses above one in the usage label", () => {
+    const twice = classifyPower({
+      usage: "Encounter (Special)",
+      powerType: "Utility",
+      actionType: "Minor Action",
+      level: "2",
+      encounterUses: 2,
+    });
+    expect(twice.usageLabel).toBe("Encounter (2×)");
+    // The count explains the special limit, so "(Special)" is dropped.
+    expect(twice.typeLabel).toBe("Encounter (2×) Utility power");
+    expect(twice.special).toBe(true);
+    expect(twice.tone).toBe("utility");
+    expect(
+      classifyPower({ usage: "Encounter", encounterUses: 3 }).typeLabel,
+    ).toBe("Encounter (3×) power");
+    expect(
+      classifyPower({ usage: "Encounter", encounterUses: 1 }).usageLabel,
+    ).toBe("Encounter");
+    // A use count never applies to other usages.
+    expect(classifyPower({ usage: "Daily", encounterUses: 2 }).typeLabel).toBe(
+      "Daily power",
+    );
+  });
+
   it("falls back to a neutral power without an authored usage", () => {
     expect(classifyPower({ level: "3" })).toMatchObject({
       tone: "neutral",

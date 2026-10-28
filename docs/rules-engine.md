@@ -583,7 +583,8 @@ level) for the recovered "twice per encounter" Special texts, plus the
 overlaid `_ADDITIONAL_USES` field and the "<power ID>\_ADDITIONAL_USES" stat.
 Two D091 divergences, both from the records' own text: Special texts compare
 with whitespace collapsed (Ardent Surge), and additional uses add to the
-twice-per-encounter count (Fight On on Inspiring Word).
+twice-per-encounter count (Fight On on Inspiring Word). Power cards show the
+count on their usage line ("Encounter (2×) power", `classifyPower`).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and

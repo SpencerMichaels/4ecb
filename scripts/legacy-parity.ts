@@ -411,7 +411,11 @@ export function comparePowerTypes(
               candidate.id !== undefined && key(candidate.id) === key(lookupId),
           )) ??
       cards.find((candidate) => key(candidate.name) === key(cachedPower.name));
-    const shown = card === undefined ? undefined : classifyPowerCard(card);
+    // Legacy caches write the bare category, never the "(2×)" use count.
+    const shown =
+      card === undefined
+        ? undefined
+        : classifyPowerCard({ ...card, encounterUses: undefined });
     const cachedUsage = cachedPower.usage?.trim() ?? "";
     const rows: ["usage" | "action", string | undefined, string | undefined][] =
       [

@@ -21,13 +21,18 @@ export interface PowerClassificationInput {
   readonly actionType?: string | undefined;
   readonly level?: string | undefined;
   readonly rulesItem?: string | undefined;
+  /** Evaluated uses per encounter; only a count above 1 shows. */
+  readonly encounterUses?: number | undefined;
 }
 
 export interface PowerClassification {
   /** A rules reference rather than a usable power. */
   readonly feature: boolean;
   readonly usage: PowerUsageCategory | undefined;
-  /** "At-Will", "Encounter", or "Daily"; absent when the usage is unknown. */
+  /**
+   * "At-Will", "Encounter", or "Daily"; an encounter power usable more than
+   * once per encounter reads "Encounter (2×)". Absent when the usage is unknown.
+   */
   readonly usageLabel: string | undefined;
   readonly utility: boolean;
   /** The authored usage is a nonstandard limit, e.g. "Encounter (Special)". */
@@ -64,7 +69,19 @@ export function classifyPower(
   const feature =
     Boolean(input.rulesItem?.trim()) || (powerType === "feature" && !hasAction);
   const usage = feature ? undefined : powerUsageCategory(input.usage);
-  const usageLabel = usage === undefined ? undefined : USAGE_LABELS[usage];
+  const encounterUses =
+    usage === "encounter" &&
+    input.encounterUses !== undefined &&
+    Number.isInteger(input.encounterUses) &&
+    input.encounterUses > 1
+      ? input.encounterUses
+      : undefined;
+  const usageLabel =
+    usage === undefined
+      ? undefined
+      : encounterUses === undefined
+        ? USAGE_LABELS[usage]
+        : `${USAGE_LABELS[usage]} (${encounterUses}×)`;
   const utility = !feature && powerType === "utility";
   const special = !feature && /\(special\)/i.test(input.usage ?? "");
   const level = input.level?.trim() || undefined;
@@ -78,7 +95,8 @@ export function classifyPower(
     .join(" ");
   const typeLabel = feature
     ? "Feature"
-    : `${kind ? `${kind} power` : "Power"}${special ? " (Special)" : ""}`;
+    : // A known use count explains a "(Special)" encounter limit.
+      `${kind ? `${kind} power` : "Power"}${special && encounterUses === undefined ? " (Special)" : ""}`;
   const compactLabel = feature
     ? "Feature"
     : [kind || "Power", level].filter(Boolean).join(" ");
@@ -127,6 +145,7 @@ export function classifyPowerEntity(
  * of the authored fields, the rest stay in `fields`/`referenceFields`. */
 export function classifyPowerCard(card: {
   readonly usage?: string | undefined;
+  readonly encounterUses?: number | undefined;
   readonly actionType?: string | undefined;
   readonly fields: readonly {
     readonly label: string;
@@ -139,6 +158,7 @@ export function classifyPowerCard(card: {
   const reference = lookup(card.referenceFields ?? [], (entry) => entry.label);
   return classifyPower({
     usage: card.usage,
+    encounterUses: card.encounterUses,
     powerType: field("Power Type"),
     actionType: card.actionType,
     level: field("Level") ?? reference("Level"),
