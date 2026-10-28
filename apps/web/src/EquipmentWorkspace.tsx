@@ -45,6 +45,7 @@ import {
   inventorySlotCandidates,
   inventoryWieldsTwoHanded,
   loadoutContext,
+  loadoutSlotContextWithRings,
   type LoadoutContext,
   type LoadoutSlotContext,
   missingInventoryElements,
@@ -404,7 +405,9 @@ function LoadoutGrid({
     activeDefinitionIds,
     inventory,
     byId,
+    hints.slotContext,
   );
+  const slotContext = loadoutSlotContextWithRings(hints.slotContext, inventory);
   const assignments = resolveLoadoutAssignments(inventory, byId, hints);
   return (
     <div className="loadout-grid">
@@ -417,7 +420,9 @@ function LoadoutGrid({
         >
           {column.slots.map(({ id: slotId, label, icon }) => {
             const compatible = inventory.filter((entry) =>
-              inventorySlotCandidates(entry, byId).includes(slotId),
+              inventorySlotCandidates(entry, byId, slotContext).includes(
+                slotId,
+              ),
             );
             const assigned = compatible.find((entry) =>
               assignments.assignmentsByEntry
@@ -1106,6 +1111,7 @@ export function EquipmentWorkspace({
     activeDefinitionIds,
     inventory,
     byId,
+    loadoutSlotContext,
   );
   const visibleLoadoutSlots = loadoutSlotColumns.flatMap(({ slots }) =>
     slots.map(({ id }) => id),

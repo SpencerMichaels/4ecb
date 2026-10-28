@@ -613,6 +613,13 @@ thrown basic-attack key ability), even with a magic item's Proficient As.
 With Oversized or One Size Larger, a Large weapon is proficient by its
 normalized name (`legacyNormalizedWeaponName`: the primary end, without
 " (large)"), so "Weapon Proficiency (Longsword)" covers "Longsword (Large)".
+
+The loadout offers as many ring slots as the evaluated "Ring Slots" stat
+(`loadoutSlotContext.ringSlots`; native `SlotManip` lets a new ring displace
+only the rings past the first `Ring Slots - 1`): Level 1 gives two, Many-
+Fingered Gloves and the Mummified Hand one more each, up to the model's four
+(`ring-1`…`ring-4`). A ring slot a holding already occupies stays offered
+after the stat drops, as native leaves such a ring equipped.
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

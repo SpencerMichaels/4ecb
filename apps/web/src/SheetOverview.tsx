@@ -2203,7 +2203,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
   const occupiedParts = equipped.parts;
   const ordinarySlots = LOADOUT_SLOT_COLUMNS.flatMap(
     (column) => column.slots,
-  ).filter((slot) => !slot.requiredActiveDefinitionId);
+  ).filter((slot) => !slot.requiredActiveDefinitionId && !slot.extraRingSlot);
   const allSlots = [
     ...ordinarySlots,
     ...ORDERED_LOADOUT_SLOTS.filter(

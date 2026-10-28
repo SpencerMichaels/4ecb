@@ -30,8 +30,11 @@ import {
   isAuthoredShield,
   legacyLoadoutHints,
   loadoutContext,
+  loadoutRingSlotCount,
   resolveLoadoutAssignments,
+  RING_SLOT_IDS,
   type LoadoutContext,
+  type LoadoutSlotContext,
 } from "@4ecb/sheet-model";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
@@ -76,6 +79,9 @@ export interface LoadoutSlotPresentation {
   readonly label: string;
   readonly icon: IconName;
   readonly requiredActiveDefinitionId?: string;
+  /** A third or fourth ring slot, offered only to a character with that
+   * many ring slots (the native "Ring Slots" stat). */
+  readonly extraRingSlot?: true;
 }
 
 export interface LoadoutSlotColumn {
@@ -127,6 +133,18 @@ export const LOADOUT_SLOT_COLUMNS: readonly LoadoutSlotColumn[] = [
       },
       { id: "ring-1", label: "Ring 1", icon: LOADOUT_SLOT_ICONS["ring-1"] },
       { id: "ring-2", label: "Ring 2", icon: LOADOUT_SLOT_ICONS["ring-2"] },
+      {
+        id: "ring-3",
+        label: "Ring 3",
+        icon: LOADOUT_SLOT_ICONS["ring-3"],
+        extraRingSlot: true,
+      },
+      {
+        id: "ring-4",
+        label: "Ring 4",
+        icon: LOADOUT_SLOT_ICONS["ring-4"],
+        extraRingSlot: true,
+      },
       { id: "tattoo", label: "Tattoo", icon: LOADOUT_SLOT_ICONS.tattoo },
     ],
   },
@@ -144,17 +162,39 @@ export const ORDERED_LOADOUT_SLOTS = [
   ...CONDITIONAL_LOADOUT_SLOTS,
 ];
 
+/**
+ * The loadout's slot context with the character's ring slots settled: the
+ * evaluated "Ring Slots" stat, widened to any ring slot a holding already
+ * occupies, so the Equipment tab offers and lists exactly those slots.
+ * Undefined before the character is evaluated (two ring slots).
+ */
+export function loadoutSlotContextWithRings(
+  slotContext: LoadoutSlotContext | undefined,
+  inventory: readonly BuildInventoryEntry[],
+): LoadoutSlotContext | undefined {
+  return slotContext === undefined
+    ? undefined
+    : {
+        ...slotContext,
+        ringSlots: loadoutRingSlotCount(slotContext, inventory),
+      };
+}
+
 export function visibleLoadoutSlotColumns(
   activeDefinitionIds: readonly string[],
   inventory: readonly BuildInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
+  slotContext?: LoadoutSlotContext,
 ): readonly LoadoutSlotColumn[] {
   const activeDefinitions = new Set(activeDefinitionIds);
+  const ringSlots = loadoutRingSlotCount(slotContext, inventory);
   return LOADOUT_SLOT_COLUMNS.map((column) => {
     const slots: LoadoutSlotPresentation[] = column.slots.filter(
-      ({ requiredActiveDefinitionId }) =>
-        requiredActiveDefinitionId === undefined ||
-        activeDefinitions.has(requiredActiveDefinitionId),
+      ({ id, requiredActiveDefinitionId, extraRingSlot }) =>
+        (requiredActiveDefinitionId === undefined ||
+          activeDefinitions.has(requiredActiveDefinitionId)) &&
+        (extraRingSlot !== true ||
+          (RING_SLOT_IDS as readonly string[]).indexOf(id) < ringSlots),
     );
     if (column.id === "held") {
       slots.push(
@@ -1028,7 +1068,11 @@ export function inventoryLoadoutToggle(
   if (entry.equippedQuantity > 0) return { kind: "ambiguous" };
 
   const candidates = new Set(
-    inventorySlotCandidates(entry, byId) as readonly EquipmentSlotId[],
+    inventorySlotCandidates(
+      entry,
+      byId,
+      loadoutSlotContextWithRings(hints.slotContext, inventory),
+    ) as readonly EquipmentSlotId[],
   );
   const occupied = new Set(
     [...loadout.assignmentsByEntry.entries()]

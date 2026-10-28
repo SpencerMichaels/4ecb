@@ -18,6 +18,8 @@ export const LOADOUT_SLOT_ICONS: Readonly<Record<EquipmentSlotId, IconName>> = {
   "ki-focus": "focus",
   "ring-1": "gem",
   "ring-2": "gem",
+  "ring-3": "gem",
+  "ring-4": "gem",
   tattoo: "stamp",
   companion: "paw-print",
   familiar: "paw-print",

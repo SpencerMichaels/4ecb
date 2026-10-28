@@ -69,6 +69,8 @@ export const EQUIPMENT_SLOT_IDS = [
   "hands",
   "ring-1",
   "ring-2",
+  "ring-3",
+  "ring-4",
   "waist",
   "feet",
   "symbol",

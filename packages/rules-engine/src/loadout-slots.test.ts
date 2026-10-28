@@ -12,6 +12,7 @@ import {
   legacyLoadoutHints,
   legacyLoadoutState,
   loadoutContext,
+  loadoutRingSlotCount,
   resolveLoadoutAssignments,
   type LoadoutHolding,
   type LoadoutSlotContext,
@@ -350,5 +351,59 @@ describe("loadout size rules (D102)", () => {
     expect(
       inventoryUnwieldableReason(holding("s", "SWORD"), sizedById, facts()),
     ).toBeUndefined();
+  });
+});
+
+describe("loadout ring slots (native SlotManip)", () => {
+  const rings = ["RING_A", "RING_B", "RING_C", "RING_D"].map((id) =>
+    entity(id, `Ring of ${id}`, "Magic Item", {
+      "Magic Item Type": "Ring",
+      "Item Slot": "Ring",
+    }),
+  );
+  const ringsById = new Map(
+    rings.map((value) => [value.id.toLowerCase(), value]),
+  );
+  const facts = (ringSlots?: number): LoadoutSlotContext => ({
+    small: false,
+    oversized: false,
+    oneSizeLarger: false,
+    ambidextrous: false,
+    ...(ringSlots === undefined ? {} : { ringSlots }),
+  });
+  const worn = rings.map((ring, index) => holding(`r${index}`, ring.id));
+
+  it("offers as many ring slots as the Ring Slots stat, two without it", () => {
+    expect(inventorySlotCandidates(worn[0]!, ringsById)).toEqual([
+      "ring-1",
+      "ring-2",
+    ]);
+    expect(inventorySlotCandidates(worn[0]!, ringsById, facts(3))).toEqual([
+      "ring-1",
+      "ring-2",
+      "ring-3",
+    ]);
+    expect(loadoutRingSlotCount(facts(9))).toBe(4);
+    // A ring already worn in the third slot keeps it offered.
+    expect(
+      loadoutRingSlotCount(facts(2), [
+        { equippedSlots: [{ slot: "ring-3", quantityIndex: 0 }] },
+      ]),
+    ).toBe(3);
+  });
+
+  it("places imported equipped rings up to the character's ring slots", () => {
+    expect(
+      slots(
+        resolveLoadoutAssignments(worn, ringsById, loadoutContext({}, facts()))
+          .assignmentsByEntry,
+      ),
+    ).toEqual({ r0: "ring-1", r1: "ring-2" });
+    expect(
+      slots(
+        resolveLoadoutAssignments(worn, ringsById, loadoutContext({}, facts(3)))
+          .assignmentsByEntry,
+      ),
+    ).toEqual({ r0: "ring-1", r1: "ring-2", r2: "ring-3" });
   });
 });

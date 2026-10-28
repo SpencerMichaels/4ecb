@@ -3143,6 +3143,33 @@ describe("character evaluator", () => {
       oneSizeLarger: false,
       ambidextrous: false,
     });
+    // Native SlotManip's ring count: Level 1's +2 and Many-Fingered Gloves'
+    // +1, both authored as `statadd name="Ring Slots"`.
+    const ringed = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [
+            rule("statadd", { name: "Ring Slots", value: "+2" }, 0),
+            rule(
+              "statadd",
+              {
+                name: "Ring Slots",
+                value: "+1",
+                type: "Many-Fingered Gloves (paragon tier)",
+              },
+              1,
+            ),
+          ],
+        }),
+      ],
+    );
+    expect(ringed.loadoutSlotContext?.ringSlots).toBe(3);
     // Native ItemSlot makes the versatile sword "two-hands" for a Small
     // character, which fills the off hand.
     expect(small.stats.Free?.value ?? 0).toBe(0);

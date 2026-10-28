@@ -1306,10 +1306,22 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.SlotManip": partial(
       "Ring Slots stat, Additional Slot and _AlternateSlot handling when equipping.",
-      "equipment-ui loadout; the 'Ring Slots' stat (Level 1 rules and two items, e.g. Many-Fingered Gloves) and Additional Slot are not read",
+      "loadout-slots.ts: the evaluated 'Ring Slots' stat (Level 1's +2, Many-Fingered Gloves and the Mummified Hand +1 each; EvaluatedCharacter.loadoutSlotContext.ringSlots) gives the loadout that many ring slots (ring-1…ring-4) for placement, candidates and the Equipment tab; 'Additional Slot' (only the internal Spiked gauntlet (Large), Hands, conflicting only when both items are magic) is not read",
+      test(
+        LOADOUT_SLOTS,
+        "offers as many ring slots as the Ring Slots stat, two without it",
+      ),
+      test(
+        LOADOUT_SLOTS,
+        "places imported equipped rings up to the character's ring slots",
+      ),
       test(
         EQUIPMENT_UI,
-        "shows legacy equipped counts in deterministic modern slots",
+        "offers a third and fourth ring slot only with the Ring Slots stat",
+      ),
+      test(
+        EVALUATOR,
+        "exposes the size facts and holds a Small character's versatile weapon in both hands (D102)",
       ),
     ),
     "?A0x0bed2cbe.ValidateEquip": code(

@@ -77,7 +77,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v89-2026-10-28-stat-engine-caps-empty-type-calcbeast";
+  "evaluated-character-v90-2026-10-28-ring-slots";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -265,8 +265,9 @@ export interface EvaluatedCharacter {
   readonly textContributions?: readonly EvaluatedTextContribution[];
   readonly overlays: readonly FieldOverlay[];
   readonly powers: readonly EvaluatedPower[];
-  /** The size facts native ItemSlot reads, for the builder's loadout
-   *  (`loadout-slots.ts`, D102); always set by the evaluator. */
+  /** The size facts native ItemSlot reads and the "Ring Slots" stat native
+   *  SlotManip reads, for the builder's loadout (`loadout-slots.ts`, D102);
+   *  always set by the evaluator. */
   readonly loadoutSlotContext?: LoadoutSlotContext;
   /** The beast companion's statistics, when the character has one. */
   readonly beastCompanion?: EvaluatedBeastCompanion;
@@ -2898,6 +2899,9 @@ function evaluateCharacterInternal(
   const evaluatedStats = Object.fromEntries(
     stats.allNames().map((name) => [name, stats.evaluate(name)]),
   );
+  const ringSlots = Object.values(evaluatedStats).find(
+    (stat) => key(stat.name) === "ring slots",
+  );
   if (prerequisiteContextOnly) choices = [];
   const abilityNames = [
     "Strength",
@@ -3502,7 +3506,13 @@ function evaluateCharacterInternal(
     textContributions,
     overlays,
     powers,
-    loadoutSlotContext: slotContext,
+    loadoutSlotContext: {
+      ...slotContext,
+      // Native SlotManip reads the "Ring Slots" stat (Level 1's +2).
+      ...(ringSlots === undefined
+        ? {}
+        : { ringSlots: Number(ringSlots.value) || 0 }),
+    },
     ...(beastCompanion === undefined ? {} : { beastCompanion }),
     ...(associates.length === 0 ? {} : { associates }),
     ...(itemSets.itemSets.length === 0 ? {} : { itemSets: itemSets.itemSets }),

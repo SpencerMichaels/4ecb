@@ -52,9 +52,56 @@ export interface LegacyLoadoutHints {
 /**
  * The character facts native ItemSlot reads (Small size, Oversized, One
  * Size Larger, Ambidextrous), as the evaluator found them
- * (`EvaluatedCharacter.loadoutSlotContext`, D102).
+ * (`EvaluatedCharacter.loadoutSlotContext`, D102), and the evaluated
+ * "Ring Slots" stat native SlotManip reads.
  */
-export type LoadoutSlotContext = Omit<LootSlotContext, "mainHandWeapon">;
+export type LoadoutSlotContext = Omit<LootSlotContext, "mainHandWeapon"> & {
+  /** Native SlotManip's `GetCharStat("Ring Slots")`: Level 1 gives 2,
+   * Many-Fingered Gloves and the Mummified Hand one more each. */
+  readonly ringSlots?: number;
+};
+
+/** The ring slots, in order; the loadout offers as many as the character has. */
+export const RING_SLOT_IDS = ["ring-1", "ring-2", "ring-3", "ring-4"] as const;
+
+/** Rings a character wears without the evaluated stat (Level 1's two). */
+const DEFAULT_RING_SLOTS = 2;
+
+function ringSlotIndex(slot: EquipmentSlotId): number {
+  return (RING_SLOT_IDS as readonly EquipmentSlotId[]).indexOf(slot);
+}
+
+/**
+ * How many ring slots the loadout offers. Native SlotManip
+ * (`-Module-.cs` ~20254) lets a character wear as many rings as its "Ring
+ * Slots" stat: equipping a ring conflicts only with the equipped rings past
+ * the first `Ring Slots - 1`. The model has four ring slots (no content
+ * grants more than 2 + 1 + 1). Given the holdings, a ring slot a holding is
+ * already placed in stays offered after the stat drops, as native leaves
+ * such a ring equipped until it is moved.
+ */
+export function loadoutRingSlotCount(
+  context: LoadoutSlotContext | undefined,
+  inventory: readonly Pick<LoadoutHolding, "equippedSlots">[] = [],
+): number {
+  const stat = context?.ringSlots ?? DEFAULT_RING_SLOTS;
+  const placed = inventory.flatMap((entry) =>
+    (entry.equippedSlots ?? []).map(({ slot }) => ringSlotIndex(slot) + 1),
+  );
+  return Math.min(
+    RING_SLOT_IDS.length,
+    Math.max(0, Math.trunc(stat), ...placed),
+  );
+}
+
+/** The slots without the ring slots past the character's ring count. */
+function withinRingSlots(
+  slots: readonly EquipmentSlotId[],
+  context: LoadoutSlotContext | undefined,
+): readonly EquipmentSlotId[] {
+  const count = loadoutRingSlotCount(context);
+  return slots.filter((slot) => ringSlotIndex(slot) < count);
+}
 
 /**
  * Everything the resolver reads beyond the holdings: the imported legacy
@@ -158,6 +205,8 @@ const SLOT_WORDS = [
   ["hands", "hands"],
   ["ring", "ring-1"],
   ["ring", "ring-2"],
+  ["ring", "ring-3"],
+  ["ring", "ring-4"],
   ["waist", "waist"],
   ["feet", "feet"],
   ["holy symbol", "symbol"],
@@ -186,19 +235,32 @@ export function inventoryAlternateSlot<Item extends ItemElements>(
   return SLOT_WORDS.find(([word]) => alternate === word)?.[1];
 }
 
-/** The modern slots a holding may occupy, from its authored content. */
+/**
+ * The modern slots a holding may occupy, from its authored content and, for
+ * a ring, the character's ring slots (`slotContext.ringSlots`; two without
+ * it).
+ */
 export function inventorySlotCandidates<Item extends ItemElements>(
   entry: Item,
   byId: ReadonlyMap<string, ContentEntity>,
+  slotContext?: LoadoutSlotContext,
 ): readonly EquipmentSlotId[] {
   const alternate = inventoryAlternateSlot(entry, byId);
-  const authored = authoredSlotCandidates(entry, byId);
+  const authored = authoredSlotCandidates(entry, byId, slotContext);
   return alternate === undefined || authored.includes(alternate)
     ? authored
     : [...authored, alternate];
 }
 
 function authoredSlotCandidates(
+  entry: ItemElements,
+  byId: ReadonlyMap<string, ContentEntity>,
+  slotContext: LoadoutSlotContext | undefined,
+): readonly EquipmentSlotId[] {
+  return withinRingSlots(authoredSlots(entry, byId), slotContext);
+}
+
+function authoredSlots(
   entry: ItemElements,
   byId: ReadonlyMap<string, ContentEntity>,
 ): readonly EquipmentSlotId[] {
@@ -406,8 +468,7 @@ const inferredSlotPriority: readonly EquipmentSlotId[] = [
   "companion",
   "familiar",
   "mount",
-  "ring-1",
-  "ring-2",
+  ...RING_SLOT_IDS,
   "main-hand",
   "off-hand",
 ];
@@ -499,7 +560,7 @@ export function resolveLoadoutAssignments(
       : undefined;
     const candidates = new Set(
       alternate === undefined
-        ? authoredSlotCandidates(entry, byId)
+        ? authoredSlotCandidates(entry, byId, hints.slotContext)
         : [alternate],
     );
     // Native CharLootSlot: an off-hand item is in the off hand unless it is

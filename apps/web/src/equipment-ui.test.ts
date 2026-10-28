@@ -939,6 +939,8 @@ describe("equipment catalog presentation", () => {
           ["ki-focus", "focus"],
           ["ring-1", "gem"],
           ["ring-2", "gem"],
+          ["ring-3", "gem"],
+          ["ring-4", "gem"],
           ["tattoo", "stamp"],
         ],
       },
@@ -1122,6 +1124,31 @@ describe("equipment catalog presentation", () => {
     expect(
       visibleIds([IMPLEMENT_LOADOUT_PROFICIENCY_IDS["ki-focus"]]),
     ).toContain("ki-focus");
+  });
+
+  it("offers a third and fourth ring slot only with the Ring Slots stat", () => {
+    const ringIds = (ringSlots?: number) =>
+      visibleLoadoutSlotColumns(
+        [],
+        [],
+        new Map(),
+        ringSlots === undefined
+          ? undefined
+          : {
+              small: false,
+              oversized: false,
+              oneSizeLarger: false,
+              ambidextrous: false,
+              ringSlots,
+            },
+      )
+        .flatMap(({ slots }) => slots)
+        .map(({ id }) => id)
+        .filter((id) => id.startsWith("ring-"));
+    expect(ringIds()).toEqual(["ring-1", "ring-2"]);
+    expect(ringIds(2)).toEqual(["ring-1", "ring-2"]);
+    expect(ringIds(3)).toEqual(["ring-1", "ring-2", "ring-3"]);
+    expect(ringIds(4)).toEqual(["ring-1", "ring-2", "ring-3", "ring-4"]);
   });
 
   it("keeps companion, familiar, and mount slots inventory-conditional", () => {
