@@ -31,8 +31,8 @@ you one bug or queue item; everything below applies to every such task.
 
 Send short progress messages to the orchestrator with `SendMessage` to
 `"main"`: first your planned steps, then at each milestone and at least every
-~15 minutes of work — "step x of y", a rough % complete, an ETA if you can
-estimate one, and one line on what you just finished or are blocked on. Keep
+~15 minutes of work — "step x of y", a rough % complete (no time
+estimates), and one line on what you just finished or are blocked on. Keep
 working between messages.
 
 ## Method (AGENTS.md "Legacy parity investigation")
@@ -74,10 +74,12 @@ working between messages.
   only (public tests must never need the private corpus).
 - Before committing: `pnpm vitest run packages apps`, `pnpm typecheck`,
   `pnpm lint`, `pnpm format:check`.
-- `pnpm parity:baseline` (about 15+ minutes): report every new key and every
-  count change and explain it. Run `--accept` only if the orchestrator's
-  instructions allow it for this task and every change is a justified
-  improvement or a classified non-bug.
+- Parity: run `pnpm parity:baseline FILE.dnd4e ...` on the characters your
+  change can affect (grep `sample-chars/` and
+  `CharacterBuilder/SampleChars/SampleHeroes/` for the records involved), and
+  report every new key and count change with an explanation. Don't run the
+  full baseline or `--accept`: the orchestrator runs it once per batch of
+  fixes and asks you about any diff it can't attribute.
 - Update evidence/status for the entries you complete in
   `apps/content-tool/src/legacy-special-cases.ts`, and re-run affected
   `pnpm audit:modifiers --match '<re>' --merge` shapes.

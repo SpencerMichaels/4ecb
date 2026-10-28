@@ -39,8 +39,8 @@ decided scope.
 
 Send short progress messages to the orchestrator with `SendMessage` to
 `"main"`: first your planned steps, then at each milestone and at least every
-~15 minutes — "step x of y", a rough % complete, an ETA if you can estimate
-one, and one line on what you just finished or are blocked on.
+~15 minutes — "step x of y", a rough % complete (no time estimates),
+and one line on what you just finished or are blocked on.
 
 ## How to build
 
@@ -62,8 +62,10 @@ one, and one line on what you just finished or are blocked on.
 
 Focused `pnpm vitest run <files>` while iterating; then
 `pnpm vitest run packages apps`, `pnpm typecheck`, `pnpm lint`,
-`pnpm format:check`, and `pnpm parity:baseline` if you touched sheet-model
-(report new keys; don't `--accept` unless told). If you changed print output,
+`pnpm format:check`, and, if you touched sheet-model,
+`pnpm parity:baseline FILE.dnd4e ...` on characters that exercise the change
+(report new keys; the orchestrator runs the full baseline and `--accept` once
+per batch). If you changed print output,
 try `pnpm check:print` once — it may fail because Chromium can't start in the
 Nix shell (GLIBC_2.43 libasound); report that rather than fight it.
 

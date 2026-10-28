@@ -20,8 +20,8 @@ ignored `tmp/<topic>/`.
 
 Send short progress messages to the orchestrator with `SendMessage` to
 `"main"`: first your planned steps, then at each milestone and at least every
-~15 minutes — "step x of y", a rough % complete, an ETA if you can estimate
-one, and one line on what you found or are blocked on.
+~15 minutes — "step x of y", a rough % complete (no time estimates),
+and one line on what you found or are blocked on.
 
 ## Sources
 
