@@ -994,6 +994,17 @@ character before it is fixed, one slice per item.
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
   (`1b92954`).
+- **Postmortem parity batch (2026-10-28, see implementation status):**
+  done — `audit:selectors`, native gates/statmin/dual wielding/DEFENSIVE,
+  prerequisite exclusions, theme-power restriction, power level scaling,
+  load-time self-modifies. In progress — stat-engine gaps (bracket
+  substitution, half-point pairing, Hybrid Power Points, content typos),
+  power keywords/encounter uses, the calculation-logic audit
+  (`reverse-engineering/docs/12-calculation-logic-audit.md`). Awaiting owner:
+  Drizzt's dual-scimitar rows, starting gold (legacy/PHB 100 gp), augment
+  binding UI (11 samples own Siberys Shard of the Mage), companion stats on
+  the sheet, `.dndcamp` support or out-of-scope, Sun Flare's "+N bonus" hit
+  line, the Shifter CountsAsRace correction, the theme-power reason label.
 - ~~**From the Swordmage Warding report (2026-10-27)**~~: both done.
   1. Statlinks share the parent stat's type caps (native
      `CalculateStatAddValue`; D103, `9abfdb4`); the Warding content

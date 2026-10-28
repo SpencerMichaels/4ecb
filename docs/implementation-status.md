@@ -1,5 +1,50 @@
 # Implementation status
 
+## Overnight parity batch from the Swordmage Warding postmortem (2026-10-28)
+
+Process: AGENTS.md and the agent definitions now require legacy claims to be
+checked against a save's numbers (or labelled inferred), engine gaps to be
+fixed in the engine rather than content corrections, synthetic tests to use
+real content spellings, and `generic` registry entries to feed no rule.
+
+- **`pnpm audit:selectors`** (D104, `c7ef50e`): private-corpus audit that
+  traces every condition (equipment selectors, `requires`, zero/non-zero
+  gates, `statmin`, statlinks, select categories) across the 43 samples and
+  ~2,100 generated equipment probes and flags any never decided both ways.
+  52/52 selector operands now seen true and false (was 43/52). Gated
+  statadds and `statmin` are reached by no sample (unit-tested only).
+- **Native stat/selector fixes** (D104, `6a2056c`): `statmin` evaluated;
+  zero/non-zero gates follow native (kept out of the sum, chosen by the
+  finished sum, dropped inside links); untyped literal `0` zeroes the stat
+  and stops (Armor Specialization (Chainmail), Battle Agility);
+  `MINONEMOD()`/`HALFMOD()` values; `DUAL-WIELDING:` follows native
+  `IsDualWielding` (off-hand + one-hand by native ItemSlot, lone double
+  weapon; two longswords no longer count) with group lists and the
+  rapier-blade case; `DEFENSIVE:` needs dual wielding and proficiency;
+  group item-set counts.
+- **Prerequisites** (`35e794e`): native `InternalizeElement` name-walk
+  exclusions (the Assassin background no longer meets 33 "Assassin"
+  prerequisites); `ThemePowerRestriction` (a theme power can't be the only
+  class power of its kind in an exact `$$CLASS` encounter/daily slot).
+- **Power level scaling** (`65aa0c7`): native `AttackPowerModRepl` named
+  cases and `ParseIncreaseLine` — Dragon Breath +4/2d6 at 11th, +6/3d6 at
+  21st; Kelemvor's Judgment 2d12→6d12; Firepulse, Goring Charge, Warrior's
+  Surge, Probing Strike, Hunter's Teamwork scale.
+- **Self-modifies** (`672824d`): native load-time `modify name="this"`
+  applied at content import (46 fields WotC never pre-filled: Divine
+  Sanction ×36, Hyrsam Fiddle bard implement, Spiked Shield, Deck of Many
+  Things/Whistle of the Wind slot, Clarifying Impact); conditional `this`
+  targets the providing record; duplicate list-additions skipped (Hunzu's
+  Divine Bolts "Lightning, Lightning"). Faervian keeps all five power
+  sources (D091). Needs a content republish.
+
+Verification: 1568 tests pass, typecheck clean; pack rebuilt; full
+`parity:baseline`: unchanged except 4 Drizzt rows (Cross-Body Parry / Blade
+Dance with Twinkle and Icingdeath, 1d8+7 → 1d8+14, 2d8+13 → 2d8+20): two
+scimitars now count as dual wielding for the `DUAL-WIELDING:heavy
+blade,light blade` Dexterity bonus, as the power text says; the older
+save's rows omit it. Not accepted pending the owner's decision. Cache v71.
+
 ## Builder drops superseded rules evaluations (2026-10-28)
 
 Picking Light of Truth in Hu's level-9 daily slot took minutes to apply on a
