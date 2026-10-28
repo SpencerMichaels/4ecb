@@ -1386,6 +1386,7 @@ export function candidateReason(reasons: readonly string[]): string {
     duplicate: "Already selected in another slot",
     owned: "Already owned",
     "already-class-skill": "Already a class skill",
+    "theme-power": "A theme power cannot be your only class power of this kind",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }

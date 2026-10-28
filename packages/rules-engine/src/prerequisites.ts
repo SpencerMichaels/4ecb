@@ -451,6 +451,55 @@ function elementOf(
       };
 }
 
+/**
+ * Legacy InternalizeElement (-Module-.cs ~29875) skips three kinds of
+ * same-named record while it walks a prerequisite token's name chain:
+ * `Grants` records, `CountsAsRace` records unless the prerequisite's owner is
+ * a Feat, and a `Background` named "assassin". The string table's other two
+ * links bypass that walk: a record the token names by its internal ID, and
+ * one it names as "<name> <type>" (`compositeElement`). CreateElementPrereq's
+ * CountsAs alternates (`withCountsAsAlternates`) are a separate lookup too.
+ */
+function internalizedDefinitions(
+  token: string,
+  context: PrerequisiteContext,
+  requiredType?: string,
+): readonly ContentEntity[] {
+  const wanted = normalized(token);
+  const ownerIsFeat =
+    context.subject !== undefined &&
+    normalized(context.subject.type) === "feat";
+  return resolveDefinitions(token, context, requiredType).filter(
+    (definition) => {
+      if (normalized(definition.id) === wanted) return true;
+      const type = normalized(definition.type);
+      if (type === "grants") return false;
+      if (type === "countsasrace" && !ownerIsFeat) return false;
+      return !(
+        type === "background" &&
+        wanted === normalized(EXCEPTION_NAMES.assassinBackground)
+      );
+    },
+  );
+}
+
+/**
+ * Legacy InternalizeElement's "<name> <type>" string-table link: the record
+ * of that name and type, which the name walk's exclusions don't touch (so
+ * "!Dwarf CountsAsRace" reads the CountsAsRace for any owner).
+ */
+function compositeElement(
+  text: string,
+  name: string,
+  context: PrerequisiteContext,
+  type: string,
+): PrerequisiteIr | undefined {
+  return elementOf(
+    text,
+    withCountsAsAlternates(resolveDefinitions(name, context, type), context),
+  );
+}
+
 /** Legacy InternalizeElement: every same-named record plus its CountsAs alternate. */
 function namedElement(
   text: string,
@@ -460,7 +509,10 @@ function namedElement(
 ): PrerequisiteIr | undefined {
   return elementOf(
     text,
-    withCountsAsAlternates(resolveDefinitions(name, context, type), context),
+    withCountsAsAlternates(
+      internalizedDefinitions(name, context, type),
+      context,
+    ),
   );
 }
 
@@ -884,7 +936,7 @@ function legacyClause(
   for (const type of definitionIndex(context.definitions).typesByLength) {
     const ending = ` ${normalized(type)}`;
     if (lower.length <= ending.length || !lower.endsWith(ending)) continue;
-    const typed = namedElement(
+    const typed = compositeElement(
       text,
       canonical.trim().slice(0, -ending.length),
       context,
@@ -1214,7 +1266,7 @@ function internalizeLeaf(
     if (typed !== undefined) return typed;
   }
   const bareReference = negated ? canonical.slice(1).trim() : canonical;
-  const exactResolved = resolveDefinitions(bareReference, context);
+  const exactResolved = internalizedDefinitions(bareReference, context);
   const exactMatches = negated
     ? exactResolved
     : withCountsAsAlternates(exactResolved, context);
@@ -1226,7 +1278,11 @@ function internalizeLeaf(
       negated,
     };
   const reference = typedReference(bareReference, context);
-  const resolved = resolveDefinitions(reference.name, context, reference.type);
+  // A typed reference is the "<name> <type>" link, outside the name walk.
+  const resolved =
+    reference.type === undefined
+      ? internalizedDefinitions(reference.name, context)
+      : resolveDefinitions(reference.name, context, reference.type);
   const matches = negated
     ? resolved
     : withCountsAsAlternates(resolved, context);

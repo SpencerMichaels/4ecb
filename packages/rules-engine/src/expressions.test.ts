@@ -112,6 +112,34 @@ describe("compatibility expressions", () => {
     ).toBe(true);
   });
 
+  it("reads an N-N level as exact, except for a theme power up to N", () => {
+    // Native AddSingleEntry/CategoryMatch::Matches: "N-M" is the exact level
+    // N, and a `_ThemePower` power of any level up to N still matches.
+    const classPower = entity("C", "Class power", "Power", ["Encounter"], 3);
+    const themePower = {
+      ...entity("T", "Theme power", "Power", ["Encounter"], 3),
+      specifics: [
+        ...entity("T", "Theme power", "Power", [], 3).specifics,
+        {
+          name: "_ThemePower",
+          value: "ID_FMP_THEME_768",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const matches = (candidate: ContentEntity, category: string) =>
+      matchesCategory(candidate, parseCategoryExpression(category), {
+        owned,
+        level: 7,
+      });
+    expect(matches(classPower, "7-7")).toBe(false);
+    expect(matches(classPower, "3-7")).toBe(true);
+    expect(matches(themePower, "7-7")).toBe(true);
+    expect(matches(themePower, "2-2")).toBe(false);
+    expect(matches(classPower, "7")).toBe(true);
+  });
+
   it("resolves category IDs and display names through the content index", () => {
     const power = entity("POWER", "Power", "Power", ["CATEGORY_ENCOUNTER"]);
     const aliases = new Set(["category_encounter", "encounter"]);
