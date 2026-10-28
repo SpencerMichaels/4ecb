@@ -1004,10 +1004,10 @@ character before it is fixed, one slice per item.
   2. ~~Prerequisite IR cache order-dependence; `regenerate:edited-dnd4e`
      duplicate tokens~~ — done: the cache is keyed on profile, owner and text
      and no longer depends on the caller's tokens (`23f9b88`); export writes
-     flat per-level loot rows like native (`242c4a8`). In progress,
-     owner-approved (D097 amendment): the current wallet becomes the highest money key
-     at or below the character's level — levelled-down saves (Beatrix,
-     "copy of character") show and export a stale higher-level wallet.
+     flat per-level loot rows like native (`242c4a8`); the wallet is read at
+     the character's level (`e052393`, D097 amended): the highest money key
+     at or below the level, carried up on level raises, so levelled-down saves
+     (Beatrix, "copy of character") show and export their real wallet.
   3. ~~Sheet display: power short descriptions in notes; monk movement
      technique cards; `PowerCardPower.UpdatePowerCardPower`~~ — done
      (`2ad4731`): `_CS_ShortDescription` notes with "@" hiding, a card class

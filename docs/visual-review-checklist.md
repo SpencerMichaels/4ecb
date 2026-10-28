@@ -1221,3 +1221,14 @@ groups.
     weapon power → card pages.
   - **Expect:** a row for the rod/helm (e.g. Rod of Smiting +12, 1d8+6).
   - **Wrong if:** no row, or the row lacks the enhancement bonus.
+
+## Wallet at the character's level (2026-10-28, `e052393`, D097 amended)
+
+- [ ] **Wallet at a lowered level.**
+  - **Where:** import `sample-chars/Beatrix.dnd4e` → Equipment wallet and
+    print preview page 1; then raise her to level 9 with the Level picker.
+    Also import `sample-chars/copy of character.dnd4e`.
+  - **Expect:** Beatrix carries 1 pp; 48 gp at level 8, and still 1 pp; 48 gp
+    after raising to 9; copy of character shows 786 gp.
+  - **Wrong if:** Beatrix shows 100 gp or 37 pp; 48 gp (at 8 or after
+    raising to 9), or copy of character shows 15 gp.
