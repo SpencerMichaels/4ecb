@@ -1975,11 +1975,31 @@ const NATIVE_INCREASE_LINES: readonly {
   },
 ];
 
-function powerBonusAtLevel(line: string, level: number): number {
+/**
+ * Native AttackPowerModRepl's by-name branches: these powers' `+N` becomes
+ * the tier bonus whatever their attack line says (Dragon Breath's increase
+ * is only in its Hit line). Below the tier the authored `+N` stands.
+ */
+const NATIVE_NAMED_INCREASES: readonly {
+  readonly name: string;
+  readonly paragon?: number;
+  readonly epic: number;
+}[] = [
+  { name: EXCEPTION_NAMES.bloodDrain, paragon: 4, epic: 6 },
+  { name: EXCEPTION_NAMES.razorStorm, paragon: 4, epic: 6 },
+  { name: EXCEPTION_NAMES.dragonBreath, paragon: 4, epic: 6 },
+  { name: EXCEPTION_NAMES.dragonsWrath, epic: 6 },
+];
+
+function powerBonusAtLevel(
+  line: string,
+  level: number,
+  powerName: string,
+): number {
   const normalized = key(line.replace(/\s+/g, " "));
-  const native = NATIVE_INCREASE_LINES.find(({ text }) =>
-    normalized.includes(key(text)),
-  );
+  const native =
+    NATIVE_INCREASE_LINES.find(({ text }) => normalized.includes(key(text))) ??
+    NATIVE_NAMED_INCREASES.find(({ name }) => key(name) === key(powerName));
   const firstLine = line.split("\n")[0] ?? line;
   let bonus = Number(
     firstLine.match(
@@ -1987,7 +2007,10 @@ function powerBonusAtLevel(line: string, level: number): number {
     )?.[1] ?? 0,
   );
   if (native !== undefined && bonus !== 0)
-    return level >= 21 ? native.epic : level >= 11 ? native.paragon : bonus;
+    return (
+      (level >= 21 ? native.epic : level >= 11 ? native.paragon : undefined) ??
+      bonus
+    );
   for (const match of line.matchAll(
     /(?:Level\s+)?(\d+)(?:st|nd|rd|th)?(?:\s+level)?\s*:\s*[^\n]*?\+\s*(\d+)|Increase\s+to\s+\+(\d+)\s+bonus\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi,
   )) {
@@ -2003,7 +2026,10 @@ function lineAtLevel(
   level: number,
 ): string | undefined {
   if (value === undefined) return undefined;
-  let selected = value.split("\n")[0];
+  const first = value.split("\n")[0];
+  // Native HigherLevelDamage: a "Level N:" line (LevelIncrease) wins over
+  // an increase sentence.
+  let selected: string | undefined;
   let selectedLevel = 0;
   for (const line of value.split("\n").slice(1)) {
     const match = line.match(/^Level\s+(\d+):\s*(.*)$/i);
@@ -2016,20 +2042,83 @@ function lineAtLevel(
       selectedLevel = Number(match[1]);
       selected = match[2];
     }
-    const increase = line.match(
-      /^Increase damage to\s+(.*?)\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/i,
-    );
-    if (
-      increase?.[1] !== undefined &&
-      increase[2] !== undefined &&
-      Number(increase[2]) <= level &&
-      Number(increase[2]) >= selectedLevel
-    ) {
-      selectedLevel = Number(increase[2]);
-      selected = increase[1];
-    }
   }
-  return selected;
+  return selected ?? increasedDamageAtLevel(value, level) ?? first;
+}
+
+/**
+ * Native ParseIncreaseLine (D20RulesEngine `-Module-.cs`, around 24512):
+ * exact increase sentences it rewrites before parsing. Kelemvor's Judgment
+ * omits "level" after later thresholds, which the parse needs to step on;
+ * the dragonborn and genasi breath lines lead with an attack bonus.
+ */
+const NATIVE_INCREASE_REWRITES: readonly {
+  readonly text: string;
+  readonly rewrite: string;
+}[] = [
+  {
+    text: "Increase damage to 2d12 at 5th level, 3d12 at 11th, 4d12 at 15th, 5d12 at 21st, and 6d12 at 25th.",
+    rewrite:
+      "Increase damage to 2d12 + wisdom modifier damage at 5th level, 3d12 + wisdom modifier damage at 11th level, 4d12 + wisdom modifier damage at 15th level, 5d12 + wisdom modifier damage at 21st level, and 6d12 + wisdom modifier damage at 25th level.",
+  },
+  {
+    text: "Increase damage to 2d12 + Wisdom modifier at 5th level, 3d12 + Wisdom modifier at 11th, 4d12 + Wisdom modifier at 15th, 5d12 + Wisdom modifier at 21st, and 6d12 + Wisdom modifier at 25th.",
+    rewrite:
+      "Increase damage to 2d12 + Wisdom modifier at 5th level, 3d12 + Wisdom modifier at 11th level, 4d12 + Wisdom modifier at 15th level, 5d12 + Wisdom modifier at 21st level, and 6d12 + Wisdom modifier at 25th level.",
+  },
+  {
+    text: "Increase to +4 bonus and 2d6 + Constitution modifier damage at 11th level, and to +6 bonus and 3d6 + Constitution modifier damage at 21st level.",
+    rewrite:
+      "Increase damage to 2d6 + Constitution modifier damage at 11th level, and 3d6 + Constitution modifier damage at 21st level.",
+  },
+  {
+    text: "Increase to +4 bonus and 2d6 + Dexterity modifier damage at 11th level, and to +6 bonus and 3d6 + Dexterity modifier damage at 21st level.",
+    rewrite:
+      "Increase damage to 2d6 + Dexterity modifier damage at 11th level, and 3d6 + Dexterity modifier damage at 21st level.",
+  },
+];
+
+/**
+ * Native HigherLevelDamage → ParseIncreaseLine: from the first "Increase
+ * damage to " (else "Increase to "), anywhere in the hit text and in any
+ * case, each clause from its first digit up to " at N" replaces the damage
+ * once the character reaches level N; the next clause starts at the
+ * following " level". Undefined when no clause applies.
+ */
+function increasedDamageAtLevel(
+  hit: string,
+  level: number,
+): string | undefined {
+  const lower = hit.toLowerCase();
+  let start = lower.indexOf("increase damage to ");
+  if (start < 0) start = lower.indexOf("increase to ");
+  if (start < 0) return undefined;
+  const sentence = hit.slice(start).replace(/\r\n/g, "\n");
+  let rest =
+    NATIVE_INCREASE_REWRITES.find(({ text }) => key(text) === key(sentence))
+      ?.rewrite ?? sentence;
+  let damage: string | undefined;
+  for (;;) {
+    const digit = rest.search(/\d/);
+    if (digit < 0) break;
+    let clause = rest.slice(digit);
+    // Divergence (D091): native takes the clause from its first digit, so
+    // a "+4 bonus and 2d8 + ... damage" clause it does not rewrite (Sun
+    // Flare, Improved Razor Storm) reads as "4 bonus and 2d8 ..."; the
+    // power text and native's own breath rewrites mean the damage after it.
+    const bonusLead =
+      rest[digit - 1] === "+" ? /^\d+\s+bonus,?\s+and\s+/i.exec(clause) : null;
+    if (bonusLead !== null) clause = clause.slice(bonusLead[0].length);
+    const at = clause.toLowerCase().indexOf(" at ");
+    if (at < 0) break;
+    const threshold = /^\d+/.exec(clause.slice(at + 4))?.[0];
+    if (threshold !== undefined && level >= Number(threshold))
+      damage = clause.slice(0, at);
+    const next = clause.toLowerCase().indexOf(" level", at);
+    if (next < 0) break;
+    rest = clause.slice(next);
+  }
+  return damage;
 }
 
 /**
@@ -2976,7 +3065,7 @@ export function evaluatePowers(input: {
           const powerBonus =
             Number(
               /attack\s+bonus\s*\+\s*(\d+)/i.exec(authoredLine)?.[1] ?? 0,
-            ) || powerBonusAtLevel(authoredLine, input.level);
+            ) || powerBonusAtLevel(authoredLine, input.level, power.name);
           const attackComponents: PowerComponent[] = [
             { label: "beast's attack bonus", value: beast.attackBonus },
             ...(powerBonus === 0
@@ -3138,7 +3227,11 @@ export function evaluatePowers(input: {
               : []),
           ]),
         );
-        const powerBonus = powerBonusAtLevel(authoredLine, input.level);
+        const powerBonus = powerBonusAtLevel(
+          authoredLine,
+          input.level,
+          power.name,
+        );
         if (powerBonus !== 0)
           attackComponents.push({
             label: "power attack bonus",
