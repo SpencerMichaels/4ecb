@@ -1004,8 +1004,8 @@ character before it is fixed, one slice per item.
   2. ~~Prerequisite IR cache order-dependence; `regenerate:edited-dnd4e`
      duplicate tokens~~ — done: the cache is keyed on profile, owner and text
      and no longer depends on the caller's tokens (`23f9b88`); export writes
-     flat per-level loot rows like native (`242c4a8`). Open, awaiting the
-     owner (D097 amendment): the current wallet must be the highest money key
+     flat per-level loot rows like native (`242c4a8`). In progress,
+     owner-approved (D097 amendment): the current wallet becomes the highest money key
      at or below the character's level — levelled-down saves (Beatrix,
      "copy of character") show and export a stale higher-level wallet.
   3. ~~Sheet display: power short descriptions in notes; monk movement
@@ -1021,8 +1021,8 @@ character before it is fixed, one slice per item.
      type, CalcBeast in the engine) and equipment (`8192120`…`ad50818`: Ring
      Slots, holy symbol slot and `_INTERNAL_EquippedSymbol`, augment-parent
      field overlays). Left: Additional Slot (one Large-only record); damage
-     `abilmod` cap sharing (no content). Awaiting the owner: Critical on
-     WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets.
+     `abilmod` cap sharing (no content). Owner-confirmed: Critical on
+     WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets (D105).
   5. Move content text parsing out of evaluation into pack generation (the
      standing rule in CLAUDE.md/AGENTS.md): power attack/hit lines, increase
      sentences, the WeaponBonuses table and CalcBonuses riders in `powers.ts`
