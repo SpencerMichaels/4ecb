@@ -999,8 +999,8 @@ character before it is fixed, one slice per item.
   partial/not-handled entries in `apps/content-tool/src/legacy-special-cases.ts`
   (run `pnpm audit:legacy-special-cases`). No `sample-chars/` save exercises
   the number-changing ones. Work top to bottom; strike items as they land.
-  1. Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
-     model, engine numbers, companion-style card — in progress.
+  1. ~~Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
+     model, engine numbers, companion-style card~~ — done (D107, `ac5f3ea`).
   2. Prerequisite IR cache keyed on subject and text only, not on owned or
      known tokens: a cached result can outlive a change of choices (bug).
   3. Sheet display: power short descriptions in notes

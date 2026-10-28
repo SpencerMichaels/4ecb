@@ -1124,3 +1124,20 @@ groups.
   - **Expect:** the reason reads "You cannot choose a theme attack power in
     place of a class attack power if you have no other class power of that
     type".
+- [ ] **Associate card (D107).** Needs the republished (or locally rebuilt)
+      content pack.
+  - **Where:** Sylestine → `?preview=1`, the card pages after Skills and her
+    Arcane Wisp familiar.
+  - **Expect:** a "Trained Blink Dog" card: "Medium fey beast", a "Fey Beast
+    Companion" bar; tiles AC 27, Fort/Ref/Will 25, HP 41 (hover "Your bloodied
+    value"), Bloodied 20, Init +6, Perc +15; abilities; "Speed 7 · Low-light
+    vision"; a "Blinking Pack (teleportation) · Aura 1" section; "Blinking
+    Bite (teleportation) Standard · At-Will", "Attack: Melee 1 (one creature);
+    +17 vs. AC", "Hit: 1d8 + 6 damage, and the blink dog teleports up to 2
+    squares." Page 1's Remember in play no longer lists "Fey Beast Tamer
+    Companion (Blink Dog)" or its Starting Feature row, but keeps "Fey Beast
+    Tamer Level 5 Features". In Edit mode the card hides/shows by right-click
+    and reorders by drag. Fits at 140% zoom; light in print; the "Standard ·
+    At-Will" meta text readable in dark mode.
+  - **Wrong if:** a "Trained Blink Dog" power card still prints, the card
+    clips or overflows, or AC reads 28.

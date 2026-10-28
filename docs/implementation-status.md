@@ -1261,13 +1261,19 @@ Visual review pending. 1116 workspace tests pass.
 Verification: pack rebuilt (41 warnings); 1111 workspace tests pass; no sample
 character's legality changed.
 
-## Deferred: associates and summoned creatures (2026-10-21)
+## Associates (D107, 2026-10-28)
 
-Possible future improvement, owner-acknowledged: associates (54 records),
-hexblade summons (e.g. Lesser Planar Ally), Animal Master minions, the Veiled
-Horde Shadow and their community card sets have no sheet presentation beyond
-community power cards. Their stats exist only as prose, so they need their own
-data model; see `docs/companion-card-proposal.md`, "Scope".
+Associates (54 records) print as associate cards in the companion card frame
+(`59ed876..ac5f3ea`). The stat block is parsed once at pack build into the
+versioned `_Associate Stat Block` field (no unparsed diagnostics on the full
+pack); ownership is a `FREEBEE:<associate>` stat; every number comes from
+`associateStatistics` in `derived-values.ts`; the duplicating community cards
+are inert (`content/corrections/9F-associates.part`). Sylestine's blink dog at
+level 12: HP 41, AC 27, F/R/W 25, Blinking Bite +17 for 1d8 + 6 (the
+community card's hand-typed defenses were one level ahead). Still deferred:
+hexblade summons (e.g. Lesser Planar Ally), Animal Master minions and the
+Veiled Horde Shadow, which have no Associate record; an associate card in the
+builder's detail panes. Players need a content republish.
 
 ## Prerequisite qualifiers scope over the whole list (2026-10-21)
 
