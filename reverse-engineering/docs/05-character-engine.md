@@ -130,8 +130,10 @@ The workspace exposes six score names, base and derived values, modifiers, point
 cost, legality, blank detection, and automatic assignment. Base scores are
 authoritative character input; racial/level/item effects are stat contributions.
 The standard modifier is floor((score − 10) / 2), including correct floor behavior
-for values below 10. Point-buy validation and automatic arrays are engine behavior,
-not mere form validation.
+for values below 10; native `GetAbilityMod` returns 0 for a blank (0) score, whose
+untyped literal-0 base also zeroes the ability (see
+[12-calculation-logic-audit.md](12-calculation-logic-audit.md)). Point-buy
+validation and automatic arrays are engine behavior, not mere form validation.
 
 The exact native `AbilityCost` table for scores 8 through 18 is
 `0, 1, 2, 3, 4, 5, 7, 9, 11, 14, 18`. `TotalCost` sums those values and subtracts
@@ -156,8 +158,11 @@ explanation containing applied and suppressed contributions; the legacy
 `CharacterSheet/StatBlock` demonstrates this model.
 
 Typed stacking, conditional buckets, ability-modifier links, and string stats are
-specified in `04-rule-language.md`. Field `modify` overlays must be active before
-power/item calculations consume record fields.
+specified in `04-rule-language.md`. The native evaluation order, injected stats
+(ability bases, Weight, Hybrid Power Points, item-set counts, user edits) and the
+current modern status of each stat rule are audited in
+[12-calculation-logic-audit.md](12-calculation-logic-audit.md). Field `modify`
+overlays must be active before power/item calculations consume record fields.
 
 ## Loot and equipment
 
@@ -189,6 +194,11 @@ psionic classes unlock them specially.
 
 Do not persist one attack/damage number as primary state. Recompute each legal
 combination and serialize it under `PowerStats` as an export cache.
+
+The native `PowerStats` pipeline (row list and order, attack-line ability
+selection, damage assembly, `WeaponBonuses`, `CalcBonuses`, versatile, uses per
+encounter) is traced step by step, with modern status, in
+[12-calculation-logic-audit.md](12-calculation-logic-audit.md).
 
 ## User edits and house rules
 

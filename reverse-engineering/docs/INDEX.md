@@ -33,6 +33,9 @@ UI clone.
     choice, grant/drop, update, level, replacement, ownership, and save behavior
     from the original UI through the native engine and records implementation
     follow-ups.
+13. [Calculation-logic audit](12-calculation-logic-audit.md) traces the native
+    stat engine, injected stats, derived sheet values and power-row pipeline,
+    with the current modern status of each behavior and open owner questions.
 
 The modern product architecture, release scope, and implementation milestones
 are maintained separately in [`../../docs/README.md`](../../docs/README.md).

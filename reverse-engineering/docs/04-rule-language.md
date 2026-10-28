@@ -181,13 +181,14 @@ A signed/unsigned numeric value is a constant. A nonnumeric signed value is a
 link to another named stat with multiplier `+1` or `-1`; examples in the corpus
 include `+Constitution modifier`. `ABILITYMOD(X)` requests the ability modifier of
 the linked score. Recovered flags also support half-modifier/half-point behavior
-and a minimum-one behavior. A `half-point="true"` numeric contribution carries
-one signed half within its target stat; paired hybrid halves therefore make a
-whole point, while the evaluated stat truncates a lone half before another stat
-links to it. This matches native cached hybrid HP/surge components, which
-serialize integer contribution values while retaining the combined half in the
-stat total. Stat names can contain `[Choice Name]`; the bracketed named selection
-is replaced with its chosen record ID before lookup.
+and a minimum-one behavior. A `half-point="true"` contribution adds its own
+value; within one stat evaluation a toggle adds +1 under its type on every second
+applying half-point contribution, so paired hybrid halves make a whole point and
+a linked stat keeps its own toggle. Native cached hybrid HP/surge components
+serialize the integer values with the pair's point in the stat total. Stat names
+(of `statadd` and `textstring`) can contain `[Select Name]`; native
+`BracketSubstitute` replaces it with the named select's chosen element name, or
+"no selection", before lookup.
 
 Keep ordinary numeric values exact in the compatibility evaluator and preserve
 the half-point flag separately from their serialized integer value. Strings are
@@ -201,16 +202,29 @@ valid stat values and use a separate last-value/stacked concatenation path.
   `only-weapon:`, `DUAL-WIELDING:`, `VERSATILE:`, property names, and `*`.
 - `condition` is descriptive conditional context, retained in the contribution
   rather than automatically proving natural-language combat state.
-- `zero` contributes only when the running base is zero; `non-zero` only when it
-  is nonzero.
-- `statmin` associates the contribution with a minimum-stat prerequisite used by
-  the original legality/display logic.
+- `zero`/`non-zero` gated contributions stay out of the running sum. After every
+  ungated contribution is summed, the `non-zero` group is added (untyped) when
+  that total is nonzero, otherwise the `zero` group. Inside a linked stat the
+  gated sums are local to that evaluation and discarded (D104).
+- `statmin="Stat N"` is evaluated at calculation time: the contribution applies
+  unless the named stat exists (any statadd or link has named it) and its
+  stand-alone value is below N (D104).
 
 Untyped contributions stack. For each positive typed-bonus group, only the largest
 applies. For each typed penalty group, only the most negative applies. A
 nonnegative contribution can cancel the same typed penalty; the internal sentinel
-type value `10000` cancels/zeroes its typed group. Preserve every contribution for
-explanation even when it loses stacking.
+type value `10000` cancels/zeroes its typed group. A typed literal `0` removes its
+type's value and blocks that type for the rest of the stat. An untyped, unlinked
+literal `0` that applies sets the whole stat to 0 and skips every later
+contribution (D104). Preserve every contribution for explanation even when it
+loses stacking or is zeroed.
+
+Stacking is per evaluation, not per stat name: a linked stat (`+Stat`,
+`ABILITYMOD(Stat)`) is evaluated with its parent's typed-maximum table, so a type
+already held by the parent caps the same type inside the link and vice versa
+(D103). See the [calculation-logic audit](12-calculation-logic-audit.md) for the
+native line references, half-point pairing, injected stats, and the current
+modern status of each rule.
 
 ## `textstring` and `statalias`
 
