@@ -111,6 +111,55 @@ export function modifiedFieldValue(
   return overlay.value ?? current;
 }
 
+/**
+ * The overlays an augment version (a power record with `_AugmentParent`)
+ * inherits from its parent power: native C_RulesElementField
+ * (`D20Workspace.cs` ~1468) reads a field's own `modify` first, then the
+ * `_AugmentParent` power's modified field, then the record's own field. So
+ * the feats that add a field to Battlemind's Demand (Resilient Demand,
+ * Invigorating Demand, Nature's Sentinel) reach its augment versions. Native
+ * returns the parent's modified value whole; applying the parent's overlays
+ * to the version's own field gives the same result, as versions copy their
+ * parent's fields.
+ */
+function inheritedAugmentOverlays(
+  entity: ContentEntity,
+  overlays: readonly FieldOverlay[],
+  own: readonly FieldOverlay[],
+): readonly FieldOverlay[] {
+  const parent = key(rawField(entity, "_AugmentParent") ?? "");
+  if (parent === "") return [];
+  const ownFields = new Set(own.map((overlay) => key(overlay.field)));
+  return overlays.filter(
+    (overlay) =>
+      !ownFields.has(key(overlay.field)) &&
+      (overlay.targetDefinitionIds.some((id) => key(id) === parent) ||
+        (overlay.targetName !== undefined &&
+          key(overlay.targetName) === parent)),
+  );
+}
+
+/**
+ * The `modify` overlays native C_RulesElementField applies to a record, in
+ * order: those that target it, and for an augment version its parent
+ * power's for the fields it has none of its own for. `matches` decides
+ * which overlays target the record (by default `overlayTargets`).
+ */
+export function recordFieldOverlays(
+  entity: ContentEntity,
+  overlays: readonly FieldOverlay[],
+  matches: (overlay: FieldOverlay) => boolean = (overlay) =>
+    overlayTargets(overlay, entity),
+): readonly FieldOverlay[] {
+  const own = overlays.filter(matches);
+  const inherited = inheritedAugmentOverlays(entity, overlays, own);
+  return inherited.length === 0
+    ? own
+    : overlays.filter(
+        (overlay) => own.includes(overlay) || inherited.includes(overlay),
+      );
+}
+
 /** A record's field after every `modify` overlay that targets it. */
 export function overlaidField(
   entity: ContentEntity,
@@ -118,8 +167,8 @@ export function overlaidField(
   overlays: readonly FieldOverlay[],
 ): string | undefined {
   let value = rawField(entity, name);
-  for (const overlay of overlays)
-    if (key(overlay.field) === key(name) && overlayTargets(overlay, entity))
+  for (const overlay of recordFieldOverlays(entity, overlays))
+    if (key(overlay.field) === key(name))
       value = modifiedFieldValue(value, overlay);
   return value;
 }
@@ -132,8 +181,7 @@ export function overlaidFields(
   const fields: Record<string, string> = Object.fromEntries(
     entity.specifics.map((specific) => [specific.name, specific.value]),
   );
-  for (const overlay of overlays) {
-    if (!overlayTargets(overlay, entity)) continue;
+  for (const overlay of recordFieldOverlays(entity, overlays)) {
     const existingName =
       Object.keys(fields).find((name) => key(name) === key(overlay.field)) ??
       overlay.field;
@@ -157,8 +205,7 @@ export function overlaidEntity(
   entity: ContentEntity,
   overlays: readonly FieldOverlay[],
 ): ContentEntity {
-  if (!overlays.some((overlay) => overlayTargets(overlay, entity)))
-    return entity;
+  if (recordFieldOverlays(entity, overlays).length === 0) return entity;
   let cache = overlaidEntityCache.get(overlays);
   if (cache === undefined) {
     cache = new Map();

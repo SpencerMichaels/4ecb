@@ -61,6 +61,7 @@ import {
   legacyLootSlotContext,
   legacySmallWithNonSmallWeapon,
   modifiedFieldValue,
+  recordFieldOverlays,
   withOverlaidItems,
 } from "./item-fields";
 
@@ -1001,13 +1002,13 @@ function effectiveField(
   overlays: readonly FieldOverlay[],
 ): string | undefined {
   let value = field(power, name);
-  for (const overlay of overlays) {
-    if (
-      overlay.targetDefinitionIds.includes(power.id) &&
-      key(overlay.field) === key(name)
-    )
+  // Native C_RulesElementField: an augment version also reads its
+  // _AugmentParent power's overlays.
+  for (const overlay of recordFieldOverlays(power, overlays, (candidate) =>
+    candidate.targetDefinitionIds.includes(power.id),
+  ))
+    if (key(overlay.field) === key(name))
       value = modifiedFieldValue(value, overlay);
-  }
   return value;
 }
 

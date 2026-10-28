@@ -3326,6 +3326,53 @@ describe("power evaluation", () => {
     expect(powers.flatMap((power) => power.unsupported)).toEqual([]);
   });
 
+  it("reads an augment version's fields through its parent power's overlays (native C_RulesElementField)", () => {
+    const version = (id: string, hit: string) =>
+      entity(id, `Mind Thrust (${id})`, "Power", {
+        Keywords: "Augmentable, Implement, Psionic",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Will",
+        Hit: hit,
+        _AugmentParent: "PARENT",
+      });
+    const entities = [
+      entity("PARENT", "Mind Thrust", "Power", {
+        Keywords: "Augmentable, Implement, Psionic",
+        _AugmentVersions: "AUGMENT0,AUGMENT2",
+      }),
+      version("AUGMENT0", "1d10 + Intelligence modifier psychic damage."),
+      version("AUGMENT2", "2d10 + Intelligence modifier psychic damage."),
+    ];
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["PARENT"],
+      inventory: [],
+      stats: { "Intelligence modifier": stat("Intelligence modifier", 4) },
+      overlays: [
+        {
+          providerOccurrenceId: "feat",
+          targetDefinitionIds: ["PARENT"],
+          targetName: "Mind Thrust",
+          targetType: "Power",
+          field: "Attack Type",
+          value: "Ranged 20",
+        },
+        {
+          providerOccurrenceId: "feat",
+          targetDefinitionIds: ["AUGMENT2"],
+          field: "Attack Type",
+          value: "Ranged 5",
+        },
+      ],
+      entities,
+    });
+    // The version's own overlay wins; otherwise the parent's applies.
+    expect(powers.map((power) => power.attackType)).toEqual([
+      "Ranged 20",
+      "Ranged 5",
+    ]);
+  });
+
   it("binds main/off-hand weapon variants to the saved loadout selection", () => {
     const entities = [
       entity("POWER", "Off-Hand Diversion", "Power", {

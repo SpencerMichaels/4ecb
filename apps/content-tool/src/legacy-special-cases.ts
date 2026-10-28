@@ -399,9 +399,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "separates source entitlement, rules legality, active membership, and provider ownership",
       ),
     ),
-    "D20Workspace.C_RulesElementField": partial(
+    "D20Workspace.C_RulesElementField": code(
       "Field lookup: name/Element Type/Flavor/Description/ID pseudo-fields, then 'modify' overlays, then the _AugmentParent power's overlays for an augment version, then the record's own field.",
-      "item-fields.ts overlaidField/overlaidEntity resolve overlays by target ID, or by name/ID and type for any record (owned or not); loot records are read overlaid by power rows (withOverlaidItems), the wearing selectors and the item cards. An augment version (689 records with _AugmentParent) does not inherit overlays aimed at its parent power",
+      "item-fields.ts overlaidField/overlaidEntity resolve overlays by target ID, or by name/ID and type for any record (owned or not); loot records are read overlaid by power rows (withOverlaidItems), the wearing selectors and the item cards. An augment version (689 records with _AugmentParent) takes its parent power's overlays for the fields it has none of its own for (item-fields.ts recordFieldOverlays, also read by powers.ts effectiveField and the sheet's power-card fields): Resilient Demand, Invigorating Demand and Nature's Sentinel add their field to Battlemind's Demand's augment versions. Native returns the parent's modified value whole; the parent's overlays apply to the version's own field, the same as versions copy their parent's fields",
+      test(
+        ITEM_FIELDS,
+        "gives an augment version its parent power's overlays for fields it has none of its own for",
+      ),
+      test(
+        POWERS,
+        "reads an augment version's fields through its parent power's overlays (native C_RulesElementField)",
+      ),
       test(POWERS, "materializes and deduplicates psionic augment versions"),
       test(
         ITEM_FIELDS,

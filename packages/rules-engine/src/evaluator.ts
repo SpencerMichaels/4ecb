@@ -77,7 +77,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v91-2026-10-28-holy-symbol-slot";
+  "evaluated-character-v92-2026-10-28-augment-parent-overlays";
 
 export interface CharacterOccurrence {
   readonly id: string;

@@ -120,6 +120,41 @@ describe("item field overlays (native C_RulesElementField)", () => {
     expect(overlaidEntity(sling, [])).toBe(sling);
   });
 
+  it("gives an augment version its parent power's overlays for fields it has none of its own for", () => {
+    const version = entity(
+      "ID_INTERNAL_POWER_BATTLEMIND'S_DEMAND_(AUGMENT_1)",
+      "Battlemind's Demand (Augment 1)",
+      "Power",
+      {
+        _AugmentParent: "ID_FMP_POWER_10438",
+        "Power Usage": "At-Will",
+      },
+    );
+    const resilient = overlay({
+      targetName: "Battlemind's Demand",
+      targetType: "Power",
+      targetDefinitionIds: ["ID_FMP_POWER_10438"],
+      field: "Resilient Demand",
+      value:
+        "When you augment your battlemind's demand, you gain a +2 power bonus to all defenses until the start of your next turn.",
+    });
+    expect(overlaidField(version, "Resilient Demand", [resilient])).toBe(
+      resilient.value,
+    );
+    expect(
+      overlaidEntity(version, [resilient]).specifics.map(({ name }) => name),
+    ).toContain("Resilient Demand");
+    // The version's own overlay on a field wins over the parent's.
+    const own = overlay({
+      targetDefinitionIds: [version.id],
+      field: "Resilient Demand",
+      value: "Own",
+    });
+    expect(overlaidField(version, "Resilient Demand", [resilient, own])).toBe(
+      "Own",
+    );
+  });
+
   it("skips a list-addition the field already contains, as native ListContains", () => {
     const crossbow = entity("HAND_CROSSBOW", "Hand Crossbow", "Weapon", {
       Properties: "Load Free",

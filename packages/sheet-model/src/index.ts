@@ -26,6 +26,7 @@ import {
   legacyLoadoutHints,
   loadoutContext,
   overlaidEntity,
+  recordFieldOverlays,
   resolveLoadoutAssignments,
   type EvaluatedCharacter,
   type EvaluatedPower,
@@ -617,7 +618,9 @@ function evaluatedEntityFields(
       { name, value },
     ]),
   );
-  const matchingOverlays = overlays.filter((overlay) =>
+  // An augment version also takes its parent power's overlays (native
+  // C_RulesElementField).
+  const matchingOverlays = recordFieldOverlays(entity, overlays, (overlay) =>
     overlay.targetDefinitionIds.some(
       (id) => id.toLocaleLowerCase() === entity.id.toLocaleLowerCase(),
     ),
