@@ -1185,6 +1185,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         POWERS,
         "adds versatile damage for the holding the loadout wields two-handed (D101)",
       ),
+      test(
+        POWERS,
+        "withholds the versatile +1 from a Small character's non-small weapon",
+      ),
     ),
     VersatileUsedInTwoHands: code(
       "A versatile weapon is in two hands when the text string is set or a Small character wields a non-small weapon.",
@@ -1210,7 +1214,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.SmallWithNonSmallWeapon": code(
       "Small characters wield non-small weapons two-handed unless One Size Larger.",
-      "power-requirements.ts versatile two-handed use for requirements and powers.ts versatile damage (EXCEPTION_NAMES.smallSize/oneSizeLarger); the loadout holds the weapon in both hands and the Wield two-handed menu item is checked and inert (loadout-slots.ts inventoryForcedTwoHanded, D102)",
+      "item-fields.ts legacySmallWithNonSmallWeapon, shared by power-requirements.ts versatile two-handed use and powers.ts versatile damage, which withholds the +1 (VersatileUsedTwoHanded; EXCEPTION_NAMES.smallSize/oneSizeLarger); the loadout holds the weapon in both hands and the Wield two-handed menu item is checked and inert (loadout-slots.ts inventoryForcedTwoHanded, D102)",
       test(
         REQUIREMENTS,
         "uses a versatile weapon two-handed for a Small character",
@@ -1218,6 +1222,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         LOADOUT_SLOTS,
         "holds a non-small versatile weapon in both hands for a Small character",
+      ),
+      test(
+        POWERS,
+        "withholds the versatile +1 from a Small character's non-small weapon",
       ),
     ),
     "?A0x0bed2cbe.ItemSlot": code(

@@ -5229,4 +5229,43 @@ describe("native WeaponBase without a weapon and SmallWithNonSmallWeapon", () =>
       )?.damage,
     ).toBe("1d6+4");
   });
+
+  it("withholds the versatile +1 from a Small character's non-small weapon", () => {
+    const longsword = entity("ID_FMP_WEAPON_19", "Longsword", "Weapon", {
+      Damage: "1d8",
+      "Proficiency Bonus": "3",
+      "Weapon Category": "Military Melee",
+      "Hands Required": "One-Handed",
+      "Item Slot": "One-hand",
+      Group: "Heavy Blade",
+      Properties: "Versatile",
+    });
+    const small = entity("ID_INTERNAL_SIZE_SMALL", "Small", "Size", {});
+    const evaluate = (owned: readonly ContentEntity[]) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: [melee.id, ...owned.map(({ id }) => id)],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: [longsword.id],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+            wieldedTwoHanded: true,
+            equippedSlots: [
+              { slot: "main-hand", quantityIndex: 0 },
+              { slot: "off-hand", quantityIndex: 0 },
+            ],
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+        overlays: [],
+        entities: [melee, longsword, ...owned],
+      })[0]?.variants.find(
+        ({ equipmentName }) => equipmentName === "Longsword",
+      );
+    expect(evaluate([])?.damage).toBe("1d8+5");
+    expect(evaluate([small])?.damage).toBe("1d8+4");
+  });
 });

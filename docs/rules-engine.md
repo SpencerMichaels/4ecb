@@ -523,7 +523,9 @@ The loadout applies the same native `ItemSlot` size rules to the hands a
 weapon fills (D102), from the evaluated size facts
 (`EvaluatedCharacter.loadoutSlotContext`: Small, Oversized, One Size Larger,
 Ambidextrous): a Small character holds a non-small versatile weapon in both
-hands (`inventoryForcedTwoHanded`), and One Size Larger holds a two-handed
+hands (`inventoryForcedTwoHanded`) but, as native `VersatileUsedTwoHanded`
+and the PHB say, without the versatile +1 damage (`SmallWithNonSmallWeapon`);
+One Size Larger holds a two-handed
 weapon in one. A weapon placed in one hand that needs both also fills the
 other hand when it is free. Staff-as-off-hand and Ambidextrous only rename
 the slot `SLOT:` compares, so placement ignores them. A weapon native

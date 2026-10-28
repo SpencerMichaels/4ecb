@@ -3903,7 +3903,16 @@ export function evaluatePowers(input: {
           !fixedCreature &&
           weaponPower &&
           equipment.properties.includes("versatile") &&
-          equipment.twoHanded
+          equipment.twoHanded &&
+          // Native VersatileUsedTwoHanded: a Small character's non-small
+          // versatile weapon fills both hands (D102) but earns no +1.
+          !(
+            equipment.requirementBase !== undefined &&
+            legacySmallWithNonSmallWeapon(
+              equipment.requirementBase,
+              lootSlotContext,
+            )
+          )
         )
           damageComponents.push({
             label: "versatile weapon used two-handed",
