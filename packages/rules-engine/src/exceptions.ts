@@ -27,6 +27,10 @@ export const EXCEPTION_IDS = {
   dualImplementSpellcaster: "ID_FMP_FEAT_1127",
   /** IsValidPowerCombo: this power (an ally's attack) gets no variants. */
   coordinatedAssaultAttack: "ID_FMP_POWER_11615",
+  /** NonDamagePower: Whispers of Defeat and Extermination Urge deal no
+   * damage (with Exacting Utterance and Forced Opportunity by name). */
+  whispersOfDefeat: "ID_FMP_POWER_7157",
+  exterminationUrge: "ID_FMP_POWER_11126",
   /** WeaponBase/IsStaff: a staff used as a weapon is this Quarterstaff. */
   quarterstaff: "ID_FMP_WEAPON_10",
   /** DualWieldingConditional `DUAL-WIELDING:rapier-blade`: the rapier,
@@ -92,6 +96,9 @@ export const EXCEPTION_NAMES = {
   bondOfCensure: "Bond of Censure",
   /** PowerStats: this power (an ally's basic attack) gets no rows by name. */
   commandersStrike: "Commander's Strike",
+  /** NonDamagePower: this exact name, and names starting with the next. */
+  exactingUtterance: "Exacting Utterance",
+  forcedOpportunityPrefix: "Forced Opportunity",
   /** Strength-modifier-only damage (power SpecialCase hit-line prefix). */
   knockdownAssault: "Knockdown Assault",
   /** IsRangedPower: also a ranged power. */

@@ -1485,12 +1485,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
 
     // --- D20RulesEngine: power math -------------------------------------
-    "?A0x7555d940.SpecialCase": partial(
+    "?A0x7555d940.SpecialCase": code(
       "Fixed outputs: Bond of Censure dice by name, and exact hit lines (ongoing 10 family, Strength-only damage, damage-taken, rage strike, 3d10 + Constitution + half level, a 4[W] rewrite, 15 force).",
-      "powers.ts nativeSpecialDamage ports Bond of Censure, the ongoing 10 lines and rage strike; the Strength-only, damage-taken, 3d10 + half level, 4[W] and 15 force lines are only flagged unsupported (unresolvedNativeSpecialCase)",
+      "powers.ts nativeSpecialDamage ports every line: Bond of Censure, the ongoing 10 lines, rage strike, the Strength-only prefix (no current record; Knockdown Assault is keyed by name), Deathly Retort's 'The damage you took', Warlock's Bargain's 3d10 + Constitution + half level (a damage roll, so enhancement and roll bonuses apply), Final Reproach's flat 15 (not a damage roll). Summons to Doom's 4[W] rewrite matches what CalcDamage already parses from its first 'damage'",
       test(
         POWERS,
         "projects recovered fixed-output native power special cases",
+      ),
+      test(
+        POWERS,
+        "deals Warlock's Bargain's and Final Reproach's native SpecialCase damage",
       ),
     ),
     EffectPower: declarative(
@@ -1501,9 +1505,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "calculates a correction-supplied hit line for a prose-only damage power",
       ),
     ),
-    "?A0x7555d940.NonDamagePower": notHandled(
-      "Four powers (two by name prefix, ID_FMP_POWER_7157, ID_FMP_POWER_11126) never get a damage line.",
-      "modern parses their Hit prose; a correction could mark them non-damaging once a field exists",
+    "?A0x7555d940.NonDamagePower": code(
+      "Four powers never get a damage line: Exacting Utterance (exact name), Forced Opportunity (name prefix, its augment versions too), ID_FMP_POWER_7157 (Whispers of Defeat) and ID_FMP_POWER_11126 (Extermination Urge).",
+      "powers.ts nonDamage (EXCEPTION_NAMES.exactingUtterance/forcedOpportunityPrefix, EXCEPTION_IDS.whispersOfDefeat/exterminationUrge): calculateDamage returns no damage and no 'unparsed-hit' diagnostic. Their damage was already empty (the prose did not parse); only the diagnostic changes",
+      test(POWERS, "deals no damage with native NonDamagePower's powers"),
     ),
     "D20Workspace.IsValidPowerCombo": code(
       "Coordinated Assault Attack (ID_FMP_POWER_11615) gets no weapon variants; otherwise implement/weapon/range checks, and IsRestricted for weapon powers and (AllowUnarmed) Unarmed.",

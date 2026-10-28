@@ -2554,6 +2554,112 @@ describe("power evaluation", () => {
     expect(power?.unsupported).toEqual([]);
   });
 
+  it("deals Warlock's Bargain's and Final Reproach's native SpecialCase damage", () => {
+    const symbol = entity("SYMBOL", "Rod +1", "Magic Item", {
+      "Magic Item Type": "Rod",
+      Enhancement: "+1 attack rolls and damage rolls",
+    });
+    const powers = evaluatePowers({
+      level: 9,
+      activeDefinitionIds: ["BARGAIN", "REPROACH", "DOOM", "STRENGTH"],
+      inventory: [
+        {
+          id: "rod",
+          definitionIds: ["SYMBOL"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Constitution modifier": stat("Constitution modifier", 4),
+        "Charisma modifier": stat("Charisma modifier", 3),
+        "Strength modifier": stat("Strength modifier", 2),
+      },
+      overlays: [],
+      entities: [
+        symbol,
+        entity("BARGAIN", "Warlock's Bargain", "Power", {
+          Keywords: "Arcane, Implement",
+          "Attack Type": "Ranged 10",
+          Attack: "Constitution vs. Fortitude",
+          Hit: "You take damage equal to your level, and the target takes 3d10 + Constitution modifier damage plus extra damage equal to one-half your level.",
+        }),
+        entity("REPROACH", "Final Reproach", "Power", {
+          Keywords: "Divine, Force, Implement",
+          "Attack Type": "Ranged 10",
+          Attack: "Wisdom vs. Will",
+          Hit: "Whenever the target deals damage with an attack before the end of your next turn, it takes 15 force damage and is dazed until the end of your next turn.",
+        }),
+        entity("DOOM", "Summons to Doom", "Power", {
+          Keywords: "Charm, Psionic, Psychic, Weapon",
+          "Attack Type": "Ranged 10",
+          Attack: "Charisma vs. Will",
+          Hit: "You pull the target 4 squares, and it takes 4[W] + your Charisma modifier psychic damage. The enemy then chooses either to be pushed 3 squares or to take a -2 penalty to attack rolls (save ends).",
+        }),
+        entity("STRENGTH", "Synthetic Strength Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "Deal damage equal to your strength modifier, and the target is dazed.",
+        }),
+      ],
+    });
+    const row = (id: string, equipment: string) =>
+      powers
+        .find(({ definitionId }) => definitionId === id)
+        ?.variants.find(({ equipmentName }) => equipmentName === equipment);
+    // 3d10 + 4 half level + 4 Constitution + 1 enhancement.
+    expect(row("BARGAIN", "Rod +1")?.damage).toBe("3d10+9");
+    // Flat damage: no enhancement (not a damage roll).
+    expect(row("REPROACH", "Rod +1")?.damage).toBe("15");
+    expect(row("DOOM", "Unarmed")).toMatchObject({
+      damage: "4d4+3",
+      damageType: "psychic",
+    });
+    expect(row("STRENGTH", "Unarmed")?.damage).toBe("2");
+    for (const power of powers) expect(power.unsupported).toEqual([]);
+  });
+
+  it("deals no damage with native NonDamagePower's powers", () => {
+    const powers = evaluatePowers({
+      level: 5,
+      activeDefinitionIds: ["ID_FMP_POWER_7157", "EXACTING", "FORCED"],
+      inventory: [],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 4) },
+      overlays: [],
+      entities: [
+        entity("ID_FMP_POWER_7157", "Whispers of Defeat", "Power", {
+          Keywords: "Divine, Fear, Implement, Psychic",
+          "Attack Type": "Close burst 5",
+          Attack: "Wisdom vs. Will",
+          Hit: "Until the end of your next turn, the target takes a -2 penalty to attack rolls, and whenever the target misses with an attack, it takes 5 psychic damage.",
+        }),
+        entity("EXACTING", "Exacting Utterance", "Power", {
+          Keywords: "Divine, Implement",
+          "Attack Type": "Ranged 5",
+          Attack: "Wisdom vs. Will",
+          Hit: "Until the end of your next turn, the target gains vulnerability to all damage equal to your Wisdom modifier, and any ally who attacks the target gains temporary hit points equal to your Wisdom modifier.",
+        }),
+        entity("FORCED", "Forced Opportunity (Augment 1)", "Power", {
+          Keywords: "Augmentable, Implement, Psionic",
+          "Attack Type": "Ranged 10",
+          Attack: "Intelligence vs. Will",
+          Hit: "One ally adjacent to the target can make an opportunity attack against it as a free action, with a bonus to the attack roll and the damage roll equal to your Charisma modifier, and the ally gains combat advantage for the opportunity attack.",
+        }),
+      ],
+    });
+    expect(powers).toHaveLength(3);
+    for (const power of powers) {
+      expect(power.variants.length).toBeGreaterThan(0);
+      for (const variant of power.variants) {
+        expect(variant.damage).toBeUndefined();
+        expect(variant.damageComponents).toEqual([]);
+      }
+      expect(power.unsupported).toEqual([]);
+    }
+  });
+
   it("projects recovered fixed-output native power special cases", () => {
     const powers = evaluatePowers({
       level: 21,
@@ -2614,10 +2720,10 @@ describe("power evaluation", () => {
           "Magic Item Type": "Holy Symbol",
           Enhancement: "+1",
         }),
-        entity("UNRESOLVED", "Unresolved Native Exception", "Power", {
-          Keywords: "Arcane, Implement, Necrotic",
-          "Attack Type": "Ranged 10",
-          Attack: "Wisdom vs. Fortitude",
+        entity("UNRESOLVED", "Deathly Retort", "Power", {
+          Keywords: "Necrotic",
+          "Attack Type": "Melee 1",
+          Attack: "Your highest ability modifier + 4 vs. Fortitude",
           Hit: "The target takes necrotic damage equal to the damage you took from the attack.",
         }),
       ],
@@ -2638,10 +2744,11 @@ describe("power evaluation", () => {
       powers.find(({ definitionId }) => definitionId === "SUBTLE")?.variants[0]
         ?.damage,
     ).toBe("ongoing 10+4");
-    expect(
-      powers.find(({ definitionId }) => definitionId === "UNRESOLVED")
-        ?.unsupported,
-    ).toContain("native-special-case:UNRESOLVED");
+    const retort = powers.find(
+      ({ definitionId }) => definitionId === "UNRESOLVED",
+    );
+    expect(retort?.variants[0]?.damage).toBe("The damage you took");
+    expect(retort?.unsupported).toEqual([]);
 
     const [heroicBond] = evaluatePowers({
       level: 20,

@@ -363,8 +363,8 @@ backups remain accepted with an explicit no-checksum warning.
 
 ## Current release limitations
 
-- Exact implemented rules are authoritative. Unsupported native special powers
-  report `native-special-case`, absent beast scores report `companion-ability`,
+- Exact implemented rules are authoritative. Absent beast scores report
+  `companion-ability`,
   and unknown prerequisite prose reports `prerequisite.unverified`; original
   content and cached sheets stay recoverable. Item-set/inherent behavior requires
   an explicit imported or serialized activation and is not inferred from an

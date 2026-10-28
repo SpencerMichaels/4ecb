@@ -433,13 +433,18 @@ cannot support parser changes. These are deterministic private-profile
 workflows, not a claim that every class or named native power exception is
 closed.
 
-The recovered fixed-output power branch is partially ported. Bond of Censure
-uses native `1d10`/epic `2d10` output, suppresses the conditional prose's
-Intelligence modifier, and still receives ordinary implement enhancement.
-Exact Brilliant Beacon, Baleful Gaze of the Basilisk, and Contagion hit forms
-produce `ongoing 10`. Public same-profile tests cover these forms; other decoded
-`SpecialCase` strings report `native-special-case:<power-id>` until their full
-components are modeled.
+The recovered fixed-output power branch (native `SpecialCase`) is ported in
+`nativeSpecialDamage`. Bond of Censure uses native `1d10`/epic `2d10` output,
+suppresses the conditional prose's Intelligence modifier, and still receives
+ordinary implement enhancement. Exact Brilliant Beacon, Baleful Gaze of the
+Basilisk, and Contagion hit forms produce `ongoing 10`. Warlock's Bargain deals
+`3d10` + Constitution + half the level (a damage roll); Final Reproach deals a
+flat 15 (not a damage roll, so no enhancement); Deathly Retort shows "The
+damage you took"; a hit line starting "Deal damage equal to your strength
+modifier," is Strength-only. Summons to Doom's native rewrite to "4[W] +
+charisma modifier psychic damage" is what ordinary parsing already reads.
+Native `NonDamagePower` (Exacting Utterance, Forced Opportunity, two powers by
+ID) gives those powers no damage at all.
 
 The exact slowed/ongoing hit form that adds Dexterity is also ported as
 `ongoing 10+<Dexterity modifier>`. The full private profile can select that
@@ -513,7 +518,7 @@ currently selects a qualifying power but no companion occurrence, so it proves
 the blocker rather than the substitution result.
 
 For the M5 automated boundary, unimplemented recovered branches remain visible
-as `native-special-case:*`, `companion-ability:*`, `unparsed-hit`, or
+as `companion-ability:*`, `unparsed-hit`, or
 `prerequisite.unverified`. These diagnostics are supported outcomes: they do
 not authorize a guessed calculation or illegal selection, and the imported
 definition plus legacy cache remain available for inspection. Item-set and

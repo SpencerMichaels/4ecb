@@ -1036,6 +1036,16 @@ function formatDamage(dice: string, bonus: number): string {
   return `${dice}${bonus > 0 ? "+" : ""}${bonus}`;
 }
 
+/**
+ * Native SpecialCase (-Module-.cs ~24430): Bond of Censure by name and the
+ * exact hit lines whose damage CalcDamage cannot parse. `dice` replaces the
+ * rolled dice ("" for an ability-only line), `flat` is dice-less flat
+ * damage (not a damage roll, so no enhancement or roll-only bonuses),
+ * `expression` a fixed display text, and `components` extra fixed terms.
+ * Summons to Doom's line, which native rewrites to "4[W] + charisma
+ * modifier psychic damage", already parses that way up to its first
+ * "damage".
+ */
 function nativeSpecialDamage(
   power: ContentEntity,
   hitLine: string | undefined,
@@ -1043,10 +1053,12 @@ function nativeSpecialDamage(
 ):
   | {
       readonly dice?: string;
+      readonly flat?: number;
       readonly expression?: string;
       readonly ability?: string;
       readonly suppressAbility?: boolean;
       readonly abilityOnly?: boolean;
+      readonly components?: readonly PowerComponent[];
     }
   | undefined {
   // The legacy engine checks this exact power name before parsing its
@@ -1057,8 +1069,16 @@ function nativeSpecialDamage(
     return { dice: "", ability: "Strength", abilityOnly: true };
 
   const hit = key(hitLine ?? "");
+  if (hit.startsWith("deal damage equal to your strength modifier,"))
+    return { dice: "", ability: "Strength", abilityOnly: true };
   if (hit.startsWith("you deal damage based on the level of the rage power"))
     return { expression: "As Above" };
+  // Deathly Retort.
+  if (
+    hit ===
+    "the target takes necrotic damage equal to the damage you took from the attack."
+  )
+    return { expression: "The damage you took" };
   if (
     hit === "the target takes ongoing 10 radiant damage (save ends)." ||
     hit ===
@@ -1071,22 +1091,26 @@ function nativeSpecialDamage(
     "the target is slowed and takes ongoing damage equal to 10 + your dexterity modifier (save ends both)."
   )
     return { dice: "ongoing 10", ability: "Dexterity" };
+  // Warlock's Bargain: 3d10, half the level (unsigned division) and the
+  // Constitution modifier.
+  if (
+    hit ===
+    "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level."
+  )
+    return {
+      dice: "3d10",
+      ability: "Constitution",
+      components: [
+        { label: "half your level", value: Math.floor(Math.max(0, level) / 2) },
+      ],
+    };
+  // Final Reproach.
+  if (
+    hit ===
+    "whenever the target deals damage with an attack before the end of your next turn, it takes 15 force damage and is dazed until the end of your next turn."
+  )
+    return { flat: 15 };
   return undefined;
-}
-
-function unresolvedNativeSpecialCase(hitLine: string | undefined): boolean {
-  const hit = key(hitLine ?? "");
-  return (
-    hit.startsWith("deal damage equal to your strength modifier,") ||
-    hit ===
-      "the target takes necrotic damage equal to the damage you took from the attack." ||
-    hit ===
-      "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level." ||
-    hit ===
-      "you pull the target 4 squares, and it takes 4[w] + your charisma modifier psychic damage. the enemy then chooses either to be pushed 3 squares or to take a -2 penalty to attack rolls (save ends)." ||
-    hit ===
-      "whenever the target deals damage with an attack before the end of your next turn, it takes 15 force damage and is dazed until the end of your next turn."
-  );
 }
 
 function hasCompanionAbilityDamage(hitLine: string | undefined): boolean {
@@ -3292,6 +3316,15 @@ export function evaluatePowers(input: {
     const hasAttack = /\bvs\.?\s+[A-Za-z]+/i.test(attackLine ?? "");
     const recoveries = recoveryExpressions(hitLine, effectLine);
     const weaponPower = keywords.some((value) => key(value) === "weapon");
+    // Native NonDamagePower (-Module-.cs ~24736): CalcDamage returns at once
+    // for these, whose Hit prose names damage they do not deal.
+    const nonDamage =
+      key(power.name) === key(EXCEPTION_NAMES.exactingUtterance) ||
+      key(power.name).startsWith(
+        key(EXCEPTION_NAMES.forcedOpportunityPrefix),
+      ) ||
+      key(power.id) === key(EXCEPTION_IDS.whispersOfDefeat) ||
+      key(power.id) === key(EXCEPTION_IDS.exterminationUrge);
     const implementPower = keywords.some((value) => key(value) === "implement");
     const arcanePower = keywords.some((value) => key(value) === "arcane");
     const powerImplementScope = implementScopeMatcher(
@@ -3807,6 +3840,7 @@ export function evaluatePowers(input: {
         PowerVariant,
         "damage" | "damageType" | "damageComponents" | "conditionalDamage"
       > => {
+        if (nonDamage) return { damageComponents: [], conditionalDamage: [] };
         // Native HigherLevelDamage (`-Module-.cs` ~24587): from 21st level
         // Chilling Cloud deals "twice intelligence modifier damage." by name
         // (its increase is in the Effect). We keep its cold type (D105).
@@ -3901,9 +3935,10 @@ export function evaluatePowers(input: {
         // Native CalcDamage: dice-less flat damage; IsDamageRoll is false, so
         // the weapon's enhancement and roll-only bonuses do not apply.
         const flatBase =
-          dice === undefined && specialDamage === undefined
+          specialDamage?.flat ??
+          (dice === undefined && specialDamage === undefined
             ? nativeFlatDamageBase(selectedHitClause ?? "")
-            : undefined;
+            : undefined);
         const flat = flatBase !== undefined;
         const hasDamage = dice !== undefined || flat;
         const primaryDamageClause = withoutCompanionAbilityDamage(
@@ -3989,6 +4024,8 @@ export function evaluatePowers(input: {
                 : { label, value: modifier };
             }),
           );
+        if (hasDamage)
+          damageComponents.push(...(specialDamage?.components ?? []));
         // Native AddToDamage: CalcMisc/CalcBonuses riders add to any row's
         // damage; a power with no damage expression (Bell Ringer) deals the
         // rider alone.
@@ -4346,13 +4383,12 @@ export function evaluatePowers(input: {
     )
       unsupported.push("augment");
     if (
+      !nonDamage &&
       /\bdamage\b/i.test(hitLine ?? "") &&
       variants.some((variant) => variant.damage === undefined) &&
       key(power.name) !== "call of the beast"
     )
       unsupported.push("unparsed-hit");
-    if (unresolvedNativeSpecialCase(hitLine))
-      unsupported.push(`native-special-case:${power.id}`);
     if (
       beast === undefined &&
       (hasCompanionAbilityDamage(hitLine) ||
