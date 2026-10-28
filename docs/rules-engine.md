@@ -340,8 +340,8 @@ regenerated-export semantic re-imports. The eighth record also converges, matche
 all 67 numeric aliases and 71 power fields, and passes regenerated semantic
 re-import while retaining one incomplete and one legality diagnostic. Those
 cache totals remain cross-profile
-diagnostics. Hybrid `half-point` rules now combine signed halves within a stat
-and truncate before linked-stat consumption, closing the prior surge mismatch.
+diagnostics. Hybrid `half-point` rules add +1 on every second half-point statadd
+of a stat evaluation (native `CalculateStatValue` ~36246), closing the prior surge mismatch.
 Native magic-armor composition also adjusts a non-masterwork base through the
 recovered light/heavy enhancement table before typed stacking, closing both AC
 alias pairs. The one residual numeric difference is retained because its own

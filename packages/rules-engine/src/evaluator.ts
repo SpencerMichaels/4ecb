@@ -74,7 +74,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v75-2026-10-28-bracket-substitute";
+  "evaluated-character-v76-2026-10-28-native-half-point";
 
 export interface CharacterOccurrence {
   readonly id: string;
