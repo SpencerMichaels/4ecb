@@ -55,6 +55,62 @@ function entity(
 }
 
 describe("build projection", () => {
+  it("projects the holy symbol slot as worn, outside the native equip count", () => {
+    const symbol = entity("BEACON", "Beacon of Erathis +1", "Magic Item");
+    const holding = (
+      extra: Partial<CharacterBuild["inventory"][number]>,
+    ): CharacterBuild["inventory"][number] => ({
+      id: "beacon",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        {
+          definitionId: "BEACON",
+          name: "Beacon of Erathis +1",
+          type: "Magic Item",
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+      ...extra,
+    });
+    const project = (
+      entry: CharacterBuild["inventory"][number],
+      textStrings: Record<string, string> = {},
+    ) =>
+      projectBuildForEvaluation(
+        {
+          formatVersion: 3,
+          known: [],
+          effectiveLevel: 1,
+          levels: [],
+          grabbag: [],
+          inventory: [entry],
+          alternates: [],
+          baseAbilities: {},
+          textStrings,
+        },
+        [symbol],
+      ).inventory[0];
+    // Placed in the slot by the loadout.
+    expect(
+      project(
+        holding({
+          equippedQuantity: 1,
+          equippedSlots: [{ slot: "symbol", quantityIndex: 0 }],
+        }),
+      ),
+    ).toMatchObject({ equippedQuantity: 0, wornSymbol: true });
+    // Imported: named by `_INTERNAL_EquippedSymbol`.
+    expect(
+      project(holding({}), {
+        _INTERNAL_EquippedSymbol: "Beacon of Erathis +1",
+      }),
+    ).toMatchObject({ equippedQuantity: 0, wornSymbol: true });
+    expect(project(holding({}))?.wornSymbol).toBeUndefined();
+  });
+
   it("recovers a uniquely categorized race ability choice nested under grants", () => {
     const content = [
       entity("RACE", "Synthetic ancestry", "Race", [

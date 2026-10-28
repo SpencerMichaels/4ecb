@@ -265,7 +265,10 @@ separate header or level rail.
   `loadoutContext(textStrings, slotContext)`; D102): a Small character's
   versatile weapon fills both hands, One Size Larger holds a two-handed
   weapon in one, and an equipped weapon the character can't wield is a
-  house-rule character issue (`unwieldableWeaponIssues`). Equipment-tab
+  house-rule character issue (`unwieldableWeaponIssues`). The slot context
+  also carries the "Ring Slots" stat (`ring-1`…`ring-4`), and the holy
+  symbol slot is native `_INTERNAL_EquippedSymbol`, outside the equip count
+  (`legacyEquipCount`, `wornSymbol`). Equipment-tab
   per-item actions are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield
   two-handed" (checked and inert when size forces it) and, on a dragonshard
   augment, "Attach to <item>"/"Detach" (`set-inventory-augment`; the host's

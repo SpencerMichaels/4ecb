@@ -12,6 +12,7 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import {
   buildEvaluatedSheetModel,
   buildSheetModel,
+  legacyLoadoutHints,
   resolveLoadoutAssignments,
 } from ".";
 
@@ -130,7 +131,11 @@ function sheetSlots(characterBuild: CharacterBuild) {
 }
 
 function builderSlots(characterBuild: CharacterBuild) {
-  const resolved = resolveLoadoutAssignments(characterBuild.inventory, byId);
+  const resolved = resolveLoadoutAssignments(
+    characterBuild.inventory,
+    byId,
+    legacyLoadoutHints(characterBuild.textStrings),
+  );
   return Object.fromEntries(
     characterBuild.inventory.map((entry) => [
       entry.elements[0]!.name,
@@ -141,10 +146,15 @@ function builderSlots(characterBuild: CharacterBuild) {
 
 describe("shared loadout slot resolution", () => {
   it("places an imported holy symbol and two-handed weapon without overlap", () => {
-    const imported = build([
-      holding("symbol", symbol),
-      holding("greatblade", greatblade),
-    ]);
+    // Native keeps the holy symbol slot out of the equip count: the symbol
+    // is unequipped and named by `_INTERNAL_EquippedSymbol`.
+    const imported = {
+      ...build([
+        { ...holding("symbol", symbol), equippedQuantity: 0 },
+        holding("greatblade", greatblade),
+      ]),
+      textStrings: { _INTERNAL_EquippedSymbol: "Synthetic Symbol +1" },
+    };
     const expected = {
       "Synthetic Symbol +1": ["symbol"],
       "Synthetic Greatblade": ["main-hand", "off-hand"],
@@ -208,10 +218,11 @@ describe("shared loadout slot resolution", () => {
     const model = buildSheetModel(
       {
         ...snapshot,
+        textStrings: { _INTERNAL_EquippedSymbol: "Synthetic Symbol +1" },
         loot: [symbol, greatblade].map((item) => ({
           name: item.name,
           count: 1,
-          equippedCount: 1,
+          equippedCount: item === symbol ? 0 : 1,
           showPowerCard: false,
           elements: [{ id: item.id, name: item.name, type: item.type }],
         })),

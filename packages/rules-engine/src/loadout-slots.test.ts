@@ -9,6 +9,8 @@ import {
   inventorySlotCandidates,
   inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
+  inventoryWornSymbolEntryId,
+  legacyEquipCount,
   legacyLoadoutHints,
   legacyLoadoutState,
   loadoutContext,
@@ -405,5 +407,129 @@ describe("loadout ring slots (native SlotManip)", () => {
           .assignmentsByEntry,
       ),
     ).toEqual({ r0: "ring-1", r1: "ring-2", r2: "ring-3" });
+  });
+});
+
+describe("holy symbol slot (native HolySymbolLootSlot)", () => {
+  const records = [
+    entity("GEAR_SYMBOL", "Holy Symbol", "Gear", {
+      Category: "Gear",
+      "Item Slot": "Off-hand",
+    }),
+    entity("BEACON", "Beacon of Erathis +1", "Magic Item", {
+      "Magic Item Type": "Holy Symbol",
+      "Item Slot": "Off-hand",
+    }),
+    entity("ORB", "Orb of Light", "Magic Item", {
+      "Magic Item Type": "Artifact",
+      "Item Slot": "Off-hand",
+      _ImplementEquiv: "Holy Symbol",
+    }),
+    entity("MACE", "Mace", "Weapon", {
+      "Item Slot": "One-hand",
+      "Hands Required": "One-Handed",
+    }),
+    entity("DISRUPTING", "Disrupting Weapon +2", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Weapon: "Flail, Hammer, Mace",
+      "Item Slot": "",
+      _ImplementEquiv: "Holy Symbol",
+    }),
+  ];
+  const symbolsById = new Map(
+    records.map((value) => [value.id.toLowerCase(), value]),
+  );
+  const symbolHolding = (
+    id: string,
+    definitionIds: readonly string[],
+    extra: Partial<LoadoutHolding> = {},
+  ): LoadoutHolding => ({
+    id,
+    quantity: 1,
+    equippedQuantity: 0,
+    elements: definitionIds.map((definitionId) => ({ definitionId })),
+    ...extra,
+  });
+
+  it("offers holy symbols and _ImplementEquiv Holy Symbol bases, not weapon enchantments", () => {
+    const offers = (definitionIds: readonly string[]) =>
+      inventorySlotCandidates(
+        symbolHolding("x", definitionIds),
+        symbolsById,
+      ).includes("symbol");
+    expect(offers(["GEAR_SYMBOL"])).toBe(true);
+    expect(offers(["BEACON"])).toBe(true);
+    expect(offers(["ORB"])).toBe(true);
+    // IsItemCandidate reads the loot base: a Disrupting mace's base is the
+    // mace, whose own _ImplementEquiv is empty.
+    expect(offers(["MACE", "DISRUPTING"])).toBe(false);
+  });
+
+  it("wears the _INTERNAL_EquippedSymbol holding there, beside any hand it is equipped in", () => {
+    const hints = legacyLoadoutHints({
+      _INTERNAL_EquippedSymbol: "\n  Beacon of Erathis +1\n",
+    });
+    expect(hints.equippedSymbol).toBe("Beacon of Erathis +1");
+    // Unequipped (native equip-count 0): only the symbol slot.
+    const beacon = symbolHolding("beacon", ["BEACON"]);
+    expect(
+      slots(
+        resolveLoadoutAssignments([beacon], symbolsById, hints)
+          .assignmentsByEntry,
+      ),
+    ).toEqual({ beacon: "symbol" });
+    // An equip count stays in a hand, as native CharLootSlot shows it.
+    expect(
+      slots(
+        resolveLoadoutAssignments(
+          [{ ...beacon, equippedQuantity: 1 }],
+          symbolsById,
+          hints,
+        ).assignmentsByEntry,
+      ),
+    ).toEqual({ beacon: "off-hand+symbol" });
+    expect(
+      slots(
+        resolveLoadoutAssignments(
+          [{ ...beacon, equippedQuantity: 1 }],
+          symbolsById,
+          {},
+        ).assignmentsByEntry,
+      ),
+    ).toEqual({ beacon: "off-hand" });
+    const state = legacyLoadoutState([beacon], symbolsById, hints);
+    expect(state.symbolEntryId).toBe("beacon");
+    expect(state.equippedSymbol).toBe("Beacon of Erathis +1");
+    expect(inventoryWornSymbolEntryId([beacon], symbolsById, hints)).toBe(
+      "beacon",
+    );
+  });
+
+  it("keeps the holy symbol slot out of the native equip count", () => {
+    const placed = symbolHolding("orb", ["ORB"], {
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "symbol", quantityIndex: 0 }],
+    });
+    expect(legacyEquipCount(placed)).toBe(0);
+    expect(
+      legacyEquipCount({
+        ...placed,
+        equippedSlots: [
+          { slot: "symbol", quantityIndex: 0 },
+          { slot: "off-hand", quantityIndex: 0 },
+        ],
+      }),
+    ).toBe(1);
+    // An exact placement wins over the imported text string.
+    const other = symbolHolding("beacon", ["BEACON"]);
+    expect(
+      inventoryWornSymbolEntryId(
+        [placed, other],
+        symbolsById,
+        legacyLoadoutHints({
+          _INTERNAL_EquippedSymbol: "Beacon of Erathis +1",
+        }),
+      ),
+    ).toBe("orb");
   });
 });

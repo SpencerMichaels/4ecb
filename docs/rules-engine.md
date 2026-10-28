@@ -620,6 +620,18 @@ only the rings past the first `Ring Slots - 1`): Level 1 gives two, Many-
 Fingered Gloves and the Mummified Hand one more each, up to the model's four
 (`ring-1`…`ring-4`). A ring slot a holding already occupies stays offered
 after the stat drops, as native leaves such a ring equipped.
+
+The holy symbol slot is native's `_INTERNAL_EquippedSymbol` text string, not
+an equip count. It accepts a loot whose base is a holy symbol or has
+`_ImplementEquiv` "Holy Symbol" (`HolySymbolLootSlot.IsItemCandidate`; a Holy
+Avenger carries that field on its enchantment, so it is not offered). An
+imported holding named by the text string is placed there (beside any hand
+its equip count puts it in, as native `CharLootSlot` does; an equip count is
+never inferred into the symbol slot); export writes the text string and
+leaves the slot out of `equip-count`. `evaluationInventory` projects the
+slot as `wornSymbol` outside `equippedQuantity`: the symbol is no hand for
+`SLOT:` selectors, its rows count as equipped (native `comes_before`), and
+its rules run (a D105 departure: PHB p62 "wearing or holding").
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

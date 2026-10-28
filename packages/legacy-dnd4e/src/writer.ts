@@ -25,6 +25,7 @@ import {
   applyFieldOverlays,
   grantedKnownRecords,
   halfLevel,
+  legacyEquipCount,
   legacyLoadoutHints,
   legacyLoadoutState,
   parseRules,
@@ -981,8 +982,10 @@ export function legacyLootRows(
 /**
  * Writes the modern loadout back as the legacy state it replaces (D101):
  * the loot `_AlternateSlot` flag of each holding worn in its alternate slot,
- * `_INTERNAL_MainHandWeapon` (the holding alone in the main hand) and
- * `_INTERNAL_VersatileUsedTwoHanded`. A loadout nobody has placed by hand
+ * `_INTERNAL_MainHandWeapon` (the holding alone in the main hand),
+ * `_INTERNAL_VersatileUsedTwoHanded` and `_INTERNAL_EquippedSymbol` (the
+ * holding in the holy symbol slot, which native leaves out of its equip
+ * count). A loadout nobody has placed by hand
  * (every holding an imported equip count, no wielding choice) is still the
  * imported state, so its text strings and flags are written back unchanged.
  */
@@ -1003,8 +1006,21 @@ export function withLegacyLoadoutState(
     byId,
     legacyLoadoutHints(build.textStrings),
   );
-  const inventory = build.inventory.map((entry) => {
-    if (entry.equippedSlots === undefined) return entry;
+  const inventory = build.inventory.map((placedEntry) => {
+    if (placedEntry.equippedSlots === undefined) return placedEntry;
+    // Native keeps the holy symbol slot as `_INTERNAL_EquippedSymbol`, not
+    // an equip count: a symbol only worn there exports unequipped.
+    const entry = placedEntry.equippedSlots.some(
+      ({ slot }) => slot === "symbol",
+    )
+      ? {
+          ...placedEntry,
+          equippedQuantity: legacyEquipCount(placedEntry),
+          equippedSlots: placedEntry.equippedSlots.filter(
+            ({ slot }) => slot !== "symbol",
+          ),
+        }
+      : placedEntry;
     const overrides = Object.fromEntries(
       Object.entries(entry.overrides).filter(
         ([name]) => key(name) !== "_alternateslot",
@@ -1029,9 +1045,19 @@ export function withLegacyLoadoutState(
   );
   const textStrings = withTextString(
     withTextString(
-      build.textStrings,
-      "_INTERNAL_MainHandWeapon",
-      state.mainHandWeapon,
+      withTextString(
+        build.textStrings,
+        "_INTERNAL_MainHandWeapon",
+        state.mainHandWeapon,
+      ),
+      // Native EquipHolySymbol.Unequip writes "".
+      "_INTERNAL_EquippedSymbol",
+      state.equippedSymbol ??
+        (Object.keys(build.textStrings).some(
+          (name) => key(name) === "_internal_equippedsymbol",
+        )
+          ? ""
+          : undefined),
     ),
     "_INTERNAL_VersatileUsedTwoHanded",
     state.twoHandedEntryIds.size > 0

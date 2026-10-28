@@ -19,6 +19,11 @@ import type {
   EvaluationInput,
 } from "./evaluator";
 import { parseRules } from "./ir";
+import {
+  inventoryWornSymbolEntryId,
+  legacyEquipCount,
+  legacyLoadoutHints,
+} from "./loadout-slots";
 
 interface ChildSlot {
   readonly ruleOrdinal: number;
@@ -306,6 +311,7 @@ function atHoldingLevel(occurrence: BuildOccurrence): BuildOccurrence {
  */
 export function evaluationInventory(
   inventory: CharacterBuild["inventory"],
+  wornSymbolEntryId?: string,
 ): CharacterInventoryEntry[] {
   return inventory.map((entry) => ({
     id: entry.id,
@@ -314,7 +320,9 @@ export function evaluationInventory(
       element.definitionId === undefined ? [] : [element.definitionId],
     ),
     quantity: entry.quantity,
-    equippedQuantity: entry.equippedQuantity,
+    // Native keeps the holy symbol slot out of the equip count.
+    equippedQuantity: legacyEquipCount(entry),
+    ...(entry.id === wornSymbolEntryId ? { wornSymbol: true } : {}),
     acquiredLevel: HOLDING_LEVEL,
     overrides: entry.overrides,
     ...(entry.equippedSlots === undefined
@@ -1029,8 +1037,26 @@ export function projectBuildForEvaluation(
     }
   }
 
+  const holdingRecords = new Map(
+    build.inventory.flatMap((entry) =>
+      entry.elements.flatMap(({ definitionId }) => {
+        const entity =
+          definitionId === undefined ? undefined : entityById(definitionId);
+        return entity === undefined
+          ? []
+          : [[entity.id.toLocaleLowerCase(), entity] as const];
+      }),
+    ),
+  );
   const inventory: CharacterInventoryEntry[] = [
-    ...evaluationInventory(build.inventory),
+    ...evaluationInventory(
+      build.inventory,
+      inventoryWornSymbolEntryId(
+        build.inventory,
+        holdingRecords,
+        legacyLoadoutHints(build.textStrings),
+      ),
+    ),
     // Known rituals are owned elements whose own rules (a community ritual's
     // granted power) still apply. They enter evaluation exactly as an
     // unequipped ritual holding did before they left the inventory.

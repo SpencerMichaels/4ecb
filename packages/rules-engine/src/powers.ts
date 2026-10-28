@@ -214,6 +214,8 @@ interface Loadout {
   readonly weaponDefinition: boolean;
   readonly implementDefinition: boolean;
   readonly equipped: boolean;
+  /** Worn in the holy symbol slot (not an equip count). */
+  readonly wornSymbol?: boolean;
   readonly hand?: "main" | "off";
   /** A versatile weapon the loadout holds in both hands (native
    * _INTERNAL_VersatileUsedTwoHanded, per holding: D101). */
@@ -843,6 +845,7 @@ function loadouts(
       weaponDefinition: weapon !== undefined,
       implementDefinition: implement !== undefined,
       equipped: entry.equippedQuantity > 0,
+      ...(entry.id === loadout.symbolEntryId ? { wornSymbol: true } : {}),
       tags: [
         ...parts.map((entity) => entity.name),
         ...(keywordWeapon === undefined
@@ -4400,7 +4403,9 @@ export function evaluatePowers(input: {
               ? { basicAttackTypes: ["ranged" as const] }
               : {}),
         definitionIds: equipment.definitionIds,
-        equipped: equipment.equipped,
+        // Native comes_before counts the `_INTERNAL_EquippedSymbol` item as
+        // equipped.
+        equipped: equipment.equipped || equipment.wornSymbol === true,
         ...(equipment.weaponDamage === undefined || mainWeaponDie === undefined
           ? {}
           : { weaponDamage: mainWeaponDie }),

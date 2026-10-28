@@ -528,6 +528,25 @@ export function legacyImplementType(
 }
 
 /**
+ * Native HolySymbolLootSlot.IsItemCandidate (RulesEngineCommon): the loot
+ * base (CharLootBase, never the enchantment) is a holy symbol
+ * (IsHolySymbol: ImplementType "Holy Symbol") or its `_ImplementEquiv` is
+ * exactly "Holy Symbol" (Orb of Light, Talisman of Al'Akbar, Staff of
+ * Mishakal). A Holy Avenger's `_ImplementEquiv` is on its enchantment, so
+ * the enchanted weapon is not offered there; it serves as a holy symbol in
+ * hand, through its implement rows.
+ */
+export function legacyHolySymbolSlotCandidate(
+  base: ContentEntity,
+  weaponEquiv: (entity: ContentEntity) => ContentEntity | undefined,
+): boolean {
+  return (
+    key(legacyImplementType(base, weaponEquiv) ?? "") === "holy symbol" ||
+    key(rawField(base, "_ImplementEquiv") ?? "") === "holy symbol"
+  );
+}
+
+/**
  * The item fields naming the classes an item is an implement for:
  * `_ImplementForClass` and its alias `_ImplementAsClass`, read identically
  * (same value grammar, both honored when both are present).

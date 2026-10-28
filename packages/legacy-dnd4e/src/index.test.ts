@@ -15,6 +15,7 @@ import {
   legacyLoadoutHints,
   legacyLoadoutState,
   projectBuildForEvaluation,
+  resolveLoadoutAssignments,
 } from "@4ecb/rules-engine";
 
 import {
@@ -472,6 +473,84 @@ describe("legacy .dnd4e import", () => {
     expect([...state.twoHandedEntryIds]).toHaveLength(1);
     expect([...state.alternateEntryIds]).toHaveLength(1);
     expect(state.mainHandWeapon).toBeUndefined();
+  });
+
+  it("reads and writes the holy symbol slot as _INTERNAL_EquippedSymbol, outside the equip count", () => {
+    const content = [
+      entity("L1", "1", "Level"),
+      {
+        ...entity("BEACON", "Beacon of Erathis +1", "Magic Item"),
+        specifics: [
+          ["Magic Item Type", "Holy Symbol"],
+          ["Item Slot", "Off-hand"],
+        ].map(([name, value], ordinal) => ({
+          name: name!,
+          value: value!,
+          extraAttributes: [],
+          ordinal,
+        })),
+      },
+    ];
+    const byId = new Map(
+      content.map((value) => [value.id.toLowerCase(), value]),
+    );
+    // Trey Spectre 12's shape: the symbol unequipped, named by the text.
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/><loot count="1" equip-count="0"><RulesElement name="Beacon of Erathis +1" type="Magic Item" internal-id="BEACON"/></loot></Level><textstring name="_INTERNAL_EquippedSymbol">\n      Beacon of Erathis +1\n   </textstring></D20Character>`,
+    );
+    const [beacon] = imported.build.inventory;
+    const placed = (build: typeof imported.build) =>
+      resolveLoadoutAssignments(
+        build.inventory,
+        byId,
+        legacyLoadoutHints(build.textStrings),
+      ).assignmentsByEntry.get(build.inventory[0]!.id);
+    expect(placed(imported.build)).toEqual([
+      { slot: "symbol", quantityIndex: 0 },
+    ]);
+
+    // Moved into the off hand: equipped, and no longer the worn symbol.
+    const held = applyCharacterCommand(imported.build, {
+      kind: "equip-inventory",
+      entryId: beacon!.id,
+      assignments: [{ slot: "off-hand", quantityIndex: 0 }],
+    });
+    const heldExport = withLegacyLoadoutState(held, content);
+    expect(heldExport.textStrings._INTERNAL_EquippedSymbol).toBe("");
+    expect(heldExport.inventory[0]?.equippedQuantity).toBe(1);
+
+    // Worn again: exported unequipped and named by the text string.
+    const worn = applyCharacterCommand(held, {
+      kind: "equip-inventory",
+      entryId: beacon!.id,
+      assignments: [{ slot: "symbol", quantityIndex: 0 }],
+    });
+    const exported = withLegacyLoadoutState(worn, content);
+    expect(exported.textStrings._INTERNAL_EquippedSymbol).toBe(
+      "Beacon of Erathis +1",
+    );
+    expect(exported.inventory[0]?.equippedQuantity).toBe(0);
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build: worn,
+      evaluation: evaluateCharacter(
+        projectBuildForEvaluation(worn, content),
+        content,
+      ),
+      content,
+    });
+    const reimported = importDnd4e(xml);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(exported),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+    expect(placed(reimported.build)).toEqual([
+      { slot: "symbol", quantityIndex: 0 },
+    ]);
   });
 
   it("exports edits to current holdings as deltas after the original loot (D097)", () => {

@@ -3233,6 +3233,15 @@ Kept modern, where native contradicts the text or nullifies the feature:
   them, which would state a different bonus than the one the rule grants.
   No content conditional has a negative or HALF/MINONE link today, so no
   shown number changes (`StatAccumulator.#raw` in `stats.ts`).
+- **A holy symbol worn in the holy symbol slot runs its rules** (PHB p62,
+  "a cleric wearing or holding a magic holy symbol"; added 2026-10-28 with
+  queue item 4, pending owner review). Native keeps that slot as the
+  `_INTERNAL_EquippedSymbol` text string outside the equip count
+  (`D20Workspace.AddEquippedLoot`, `EquipHolySymbol`), so `ShouldExecute`
+  skipped a worn-only standalone symbol's own statadds (Symbol of Courage's
+  save bonus). The modern loadout follows native otherwise: the slot is not
+  a hand for `SLOT:` selectors, exports as equip-count 0 plus the text
+  string, and native `comes_before` lists its rows as equipped.
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093

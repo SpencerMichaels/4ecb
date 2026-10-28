@@ -180,6 +180,8 @@ const WEAPON_GROUPS = "packages/rules-engine/src/weapon-groups.test.ts";
 const ITEM_FIELDS = "packages/rules-engine/src/item-fields.test.ts";
 const WOTC_PARSER = "packages/legacy-wotc/src/parser.test.ts";
 const LOADOUT_SLOTS = "packages/rules-engine/src/loadout-slots.test.ts";
+const BUILD_PROJECTION = "packages/rules-engine/src/build-projection.test.ts";
+const DND4E = "packages/legacy-dnd4e/src/index.test.ts";
 const SHEET = "packages/sheet-model/src/index.test.ts";
 const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
@@ -818,10 +820,38 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.CharLootName": partial(
       "Composes '<enchantment> <base>' item names, replacing implement/weapon words.",
-      "the name is an identity for _INTERNAL_MainHandWeapon/_INTERNAL_EquippedSymbol; modern matches the hint against formatInventoryItemName's D091 name (case-sensitive in loadout-slots named()), and never reads _INTERNAL_EquippedSymbol (symbol-slot holdings import unequipped)",
+      "the name is an identity for _INTERNAL_MainHandWeapon and _INTERNAL_EquippedSymbol; modern matches both hints against formatInventoryItemName's D091 name (case-sensitive, loadout-slots named() and importedEquippedSymbol), so a holding whose D091 name differs from native CharLootName misses its hint",
       test(
         LOADOUT_SLOTS,
         "places imported holdings where native CharLootSlot puts them",
+      ),
+      test(
+        LOADOUT_SLOTS,
+        "wears the _INTERNAL_EquippedSymbol holding there, beside any hand it is equipped in",
+      ),
+    ),
+    "D20Workspace.AddEquippedLoot": code(
+      "Equipping a holy symbol with no _INTERNAL_EquippedSymbol set puts it in the symbol slot (the text string) instead of an equip count; equipping an off-hand item names it _INTERNAL_MainHandWeapon.",
+      "loadout-slots.ts: the holy symbol slot is the _INTERNAL_EquippedSymbol holding (imported by name, placed by the resolver, written back by legacy-dnd4e withLegacyLoadoutState) and stays out of the native equip count (legacyEquipCount: evaluationInventory projects it as wornSymbol, export writes equip-count without it). Deliberate D105 difference: a worn symbol runs its rules (evaluator lootExecutes; PHB p. 62 'wearing or holding'), still not a hand for SLOT: selectors",
+      test(
+        BUILD_PROJECTION,
+        "projects the holy symbol slot as worn, outside the native equip count",
+      ),
+      test(
+        EVALUATOR,
+        "runs a worn holy symbol's rules without counting it as held (D105)",
+      ),
+      test(
+        DND4E,
+        "reads and writes the holy symbol slot as _INTERNAL_EquippedSymbol, outside the equip count",
+      ),
+    ),
+    "?A0x7555d940.comes_before": code(
+      "Power-row order: equipped loot (equip count, or the _INTERNAL_EquippedSymbol item) first, then the main-hand loot, then by item level, enchanted first.",
+      "powers.ts: a row's equipped flag includes the holding in the holy symbol slot (legacyLoadoutState.symbolEntryId), without giving it a hand; the main-hand order is checked by parity (compareLegacyMainHandOrder)",
+      test(
+        POWERS,
+        "counts the _INTERNAL_EquippedSymbol holding as equipped for its rows (native comes_before)",
       ),
     ),
     "?A0x0bed2cbe.TransformLoot": notHandled(
@@ -2471,9 +2501,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "BasicUtils.AbbrAbilScoreName": generic("Ability abbreviations."),
     "LootItem.InitializeInternal": generic("Item rarity 'Common' default."),
-    "HolySymbolLootSlot.IsItemCandidate": partial(
-      "Holy symbol slot candidates: holy symbols and _ImplementEquiv 'Holy Symbol' items.",
-      "equipment-ui loadout offers the symbol slot to items whose Item Slot names it; the 38 weapons whose _ImplementEquiv is Holy Symbol (Holy Avenger, Disrupting Weapon, ...) are not offered there",
+    "HolySymbolLootSlot.IsItemCandidate": code(
+      "Holy symbol slot candidates: the loot BASE (CharLootBase) is a holy symbol (IsHolySymbol) or its _ImplementEquiv is exactly 'Holy Symbol'; IsItemEquippedInThisSlot matches _INTERNAL_EquippedSymbol by name.",
+      "loadout-slots.ts authoredSlots via item-fields.ts legacyHolySymbolSlotCandidate (Holy Symbol gear, Holy Symbol magic items, Orb of Light, Talisman of Al'Akbar, Staff of Mishakal, Symbol of Arne). The 38 weapon enchantments with _ImplementEquiv Holy Symbol (Holy Avenger, Disrupting Weapon, ...) carry it on the enchantment, which native never reads here, so they are not offered (the registry's earlier gap was a false positive); they serve as holy symbols in hand through their implement rows",
+      test(
+        LOADOUT_SLOTS,
+        "offers holy symbols and _ImplementEquiv Holy Symbol bases, not weapon enchantments",
+      ),
       test(
         EQUIPMENT_UI,
         "shows implement slots only for their exact active proficiency IDs",

@@ -77,7 +77,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v90-2026-10-28-ring-slots";
+  "evaluated-character-v91-2026-10-28-holy-symbol-slot";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -104,6 +104,9 @@ export interface CharacterInventoryEntry {
   readonly equippedSlots?: readonly EquipmentSlotAssignment[];
   /** A versatile weapon wielded two-handed (D101). */
   readonly wieldedTwoHanded?: boolean;
+  /** Worn in the holy symbol slot (native `_INTERNAL_EquippedSymbol`),
+   * which is not part of `equippedQuantity`. */
+  readonly wornSymbol?: boolean;
   /** The augment holding this loot carries; see `boundAugmentHolding`. */
   readonly augmentEntryId?: string | null;
 }
@@ -910,12 +913,18 @@ function itemSlot(entity: ContentEntity | undefined): string {
  * Slot (wondrous items, augments, rituals, most gear) or sets
  * `_AlwaysExecute`. Only the base element (the holding's first definition)
  * decides; an owned, unequipped slotted item stays inert.
+ *
+ * Deliberate D105 difference: a holy symbol worn in the holy symbol slot
+ * runs its rules too. Native keeps that slot as a text string outside the
+ * equip count, so a worn (not held) magic symbol's own properties did
+ * nothing; the PHB (p. 62, "a cleric wearing or holding a magic holy
+ * symbol") treats a worn symbol as in use.
  */
 function lootExecutes(
   entry: CharacterInventoryEntry,
   index: RulesIndex,
 ): boolean {
-  if (entry.equippedQuantity > 0) return true;
+  if (entry.equippedQuantity > 0 || entry.wornSymbol === true) return true;
   if (entry.quantity <= 0) return false;
   const baseId = entry.definitionIds[0];
   const base = baseId === undefined ? undefined : index.get(baseId);

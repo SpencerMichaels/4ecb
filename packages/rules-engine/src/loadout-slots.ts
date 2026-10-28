@@ -7,6 +7,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
   equipmentName,
+  legacyHolySymbolSlotCandidate,
   legacyIsStaff,
   legacyItemSlot,
   legacyUnwieldableReason,
@@ -42,11 +43,15 @@ export interface LoadoutHolding extends ItemElements {
 /**
  * The legacy character text strings that place imported holdings without
  * exact slots: `_INTERNAL_MainHandWeapon` (the item native last equipped in
- * a hand as the main-hand weapon) and `_INTERNAL_VersatileUsedTwoHanded`.
+ * a hand as the main-hand weapon), `_INTERNAL_VersatileUsedTwoHanded` and
+ * `_INTERNAL_EquippedSymbol`.
  */
 export interface LegacyLoadoutHints {
   readonly mainHandWeapon?: string;
   readonly versatileUsedTwoHanded?: boolean;
+  /** `_INTERNAL_EquippedSymbol`: the name of the holding in the holy symbol
+   * slot (native HolySymbolLootSlot; not an equip count). */
+  readonly equippedSymbol?: string;
 }
 
 /**
@@ -158,10 +163,17 @@ export function legacyLoadoutHints(
   if (textStrings === undefined) return {};
   const mainHandWeapon = textValue(textStrings, "_INTERNAL_MainHandWeapon");
   const versatile = textValue(textStrings, "_INTERNAL_VersatileUsedTwoHanded");
+  const equippedSymbol = textValue(
+    textStrings,
+    "_INTERNAL_EquippedSymbol",
+  )?.trim();
   return {
     ...(mainHandWeapon === undefined || mainHandWeapon.trim() === ""
       ? {}
       : { mainHandWeapon }),
+    ...(equippedSymbol === undefined || equippedSymbol === ""
+      ? {}
+      : { equippedSymbol }),
     // Native _wtoi(text) != 0.
     ...((Number.parseInt(versatile ?? "", 10) || 0) !== 0
       ? { versatileUsedTwoHanded: true }
@@ -288,9 +300,18 @@ function authoredSlots(
     candidates.push("main-hand", "off-hand");
   }
   if (slots.includes("head and neck")) candidates.push("head", "neck");
+  const symbol =
+    item !== undefined &&
+    legacyHolySymbolSlotCandidate(item, (entity) => {
+      const equivalent = specific(entity, "WeaponEquiv");
+      return equivalent === undefined ? undefined : byId.get(key(equivalent));
+    });
   if (key(item?.type ?? "") === "weapon") {
-    return ["main-hand", "off-hand"];
+    return symbol
+      ? ["main-hand", "off-hand", "symbol"]
+      : ["main-hand", "off-hand"];
   }
+  if (symbol) candidates.push("symbol");
   if (armor !== undefined) return ["body"];
   return [
     ...new Set(
@@ -462,7 +483,8 @@ const inferredSlotPriority: readonly EquipmentSlotId[] = [
   "hands",
   "waist",
   "feet",
-  "symbol",
+  // No "symbol": native CharLootSlot puts an equip count in a hand, and
+  // the holy symbol slot holds only the `_INTERNAL_EquippedSymbol` item.
   "ki-focus",
   "tattoo",
   "companion",
@@ -483,7 +505,9 @@ const inferredSlotPriority: readonly EquipmentSlotId[] = [
  * native CharLootSlot puts them: one flagged `_AlternateSlot` in its
  * alternate slot, a versatile weapon used two-handed in both hands, a
  * one-handed item in the main hand, else the `_INTERNAL_MainHandWeapon`
- * item, and any other off-hand item in the off hand.
+ * item, and any other off-hand item in the off hand. The holy symbol slot is
+ * not an equip count: it holds the `_INTERNAL_EquippedSymbol` holding
+ * (native HolySymbolLootSlot matches it by name), equipped in a hand or not.
  */
 export function resolveLoadoutAssignments(
   inventory: readonly LoadoutHolding[],
@@ -617,7 +641,78 @@ export function resolveLoadoutAssignments(
     tentative.forEach(({ slot }) => occupied.add(slot));
   }
 
+  // The imported `_INTERNAL_EquippedSymbol` holding wears its first copy in
+  // the holy symbol slot, beside any hand it is equipped in.
+  const symbolId = occupied.has("symbol")
+    ? undefined
+    : importedEquippedSymbol(inventory, byId, hints)?.id;
+  if (symbolId !== undefined)
+    assignmentsByEntry.set(symbolId, [
+      ...(assignmentsByEntry.get(symbolId) ?? []),
+      { slot: "symbol", quantityIndex: 0 },
+    ]);
+
   return { assignmentsByEntry };
+}
+
+/**
+ * The imported holding native's `_INTERNAL_EquippedSymbol` names (by
+ * CharLootName, as HolySymbolLootSlot and comes_before compare), when no
+ * holding has exact slots in the holy symbol slot.
+ */
+function importedEquippedSymbol(
+  inventory: readonly LoadoutHolding[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  hints: LoadoutContext,
+): LoadoutHolding | undefined {
+  if (hints.equippedSymbol === undefined) return undefined;
+  if (
+    inventory.some((entry) =>
+      entry.equippedSlots?.some(({ slot }) => slot === "symbol"),
+    )
+  )
+    return undefined;
+  return inventory.find(
+    (entry) =>
+      entry.equippedSlots === undefined &&
+      entry.quantity > 0 &&
+      inventoryHoldingName(entry, byId) === hints.equippedSymbol,
+  );
+}
+
+/**
+ * The holding worn in the holy symbol slot: one placed there, else the
+ * imported `_INTERNAL_EquippedSymbol` holding. Native keeps it out of the
+ * equip count (HolySymbolLootSlot only sets the text string).
+ */
+export function inventoryWornSymbolEntryId(
+  inventory: readonly LoadoutHolding[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  hints: LoadoutContext = {},
+): string | undefined {
+  return (
+    inventory.find(
+      (entry) =>
+        entry.quantity > 0 &&
+        entry.equippedSlots?.some(({ slot }) => slot === "symbol"),
+    )?.id ?? importedEquippedSymbol(inventory, byId, hints)?.id
+  );
+}
+
+/**
+ * Native equip count of a holding: its copies in a slot other than the holy
+ * symbol slot (which native keeps as a text string, not an equip count).
+ * An imported holding without exact slots keeps its equip count.
+ */
+export function legacyEquipCount(
+  entry: Pick<LoadoutHolding, "equippedQuantity" | "equippedSlots">,
+): number {
+  if (entry.equippedSlots === undefined) return entry.equippedQuantity;
+  return new Set(
+    entry.equippedSlots
+      .filter(({ slot }) => slot !== "symbol")
+      .map(({ quantityIndex }) => quantityIndex),
+  ).size;
 }
 
 /**
@@ -633,6 +728,10 @@ export interface LegacyLoadoutState {
   readonly mainHandWeapon?: string;
   readonly alternateEntryIds: ReadonlySet<string>;
   readonly twoHandedEntryIds: ReadonlySet<string>;
+  /** The holding in the holy symbol slot and its CharLootName (native
+   * `_INTERNAL_EquippedSymbol`, which comes_before counts as equipped). */
+  readonly symbolEntryId?: string;
+  readonly equippedSymbol?: string;
 }
 
 export function legacyLoadoutState(
@@ -693,10 +792,22 @@ export function legacyLoadoutState(
     );
     if (unplaced) mainHandWeapon = hints.mainHandWeapon;
   }
+  const symbolEntryId = [...assignmentsByEntry].find(([, assignments]) =>
+    assignments.some(({ slot }) => slot === "symbol"),
+  )?.[0];
   return {
     assignmentsByEntry,
     ...(mainHandWeapon === undefined ? {} : { mainHandWeapon }),
     alternateEntryIds,
     twoHandedEntryIds,
+    ...(symbolEntryId === undefined
+      ? {}
+      : {
+          symbolEntryId,
+          equippedSymbol: inventoryHoldingName(
+            inventory.find(({ id }) => id === symbolEntryId)!,
+            byId,
+          ),
+        }),
   };
 }

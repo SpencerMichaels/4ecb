@@ -3176,6 +3176,66 @@ describe("character evaluator", () => {
     expect(evaluate(false).stats.Free?.value ?? 0).toBe(1);
   });
 
+  it("runs a worn holy symbol's rules without counting it as held (D105)", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Free hand", value: "+1", "not-wearing": "SLOT:off hand" },
+            0,
+          ),
+        ],
+      }),
+      entity("COURAGE", "Symbol of Courage +2", "Magic Item", {
+        specifics: {
+          "Magic Item Type": "Holy Symbol",
+          "Item Slot": "Off-hand",
+        },
+        rules: [
+          rule(
+            "statadd",
+            {
+              name: "Saving Throws",
+              value: "+2",
+              type: "item",
+              condition: "against fear effects",
+            },
+            0,
+          ),
+        ],
+      }),
+    ];
+    const evaluate = (entry: Partial<CharacterInventoryEntry>) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [rootOccurrence],
+          inventory: [
+            {
+              id: "courage",
+              definitionIds: ["COURAGE"],
+              quantity: 1,
+              equippedQuantity: 0,
+              acquiredLevel: 1,
+              ...entry,
+            },
+          ],
+        },
+        content,
+      );
+    const carried = evaluate({});
+    expect(carried.stats["Saving Throws"]).toBeUndefined();
+    const worn = evaluate({ wornSymbol: true });
+    expect(worn.stats["Saving Throws"]?.contributions).toHaveLength(1);
+    // The holy symbol slot is not a hand.
+    expect(worn.stats["Free hand"]?.value).toBe(1);
+    expect(
+      evaluate({ equippedQuantity: 1 }).stats["Free hand"]?.value ?? 0,
+    ).toBe(0);
+  });
+
   it("resolves weapon and armor fields through modify overlays, including BaseItem", () => {
     const result = evaluateCharacter(
       {

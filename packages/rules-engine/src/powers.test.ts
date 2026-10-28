@@ -3134,6 +3134,44 @@ describe("power evaluation", () => {
     });
   });
 
+  it("counts the _INTERNAL_EquippedSymbol holding as equipped for its rows (native comes_before)", () => {
+    const entities = [
+      entity("POWER", "Sacred Flame", "Power", {
+        Keywords: "Divine, Implement",
+        "Attack Type": "Ranged 5",
+        Attack: "Wisdom vs. Reflex",
+        Hit: "1d6 + Wisdom modifier radiant damage.",
+      }),
+      entity("BEACON", "Beacon of Erathis +1", "Magic Item", {
+        "Magic Item Type": "Holy Symbol",
+        "Item Slot": "Off-hand",
+      }),
+    ];
+    const rows = (textStrings: Record<string, string>) =>
+      evaluatePowers({
+        level: 2,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "beacon",
+            definitionIds: ["BEACON"],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+          },
+        ],
+        textStrings,
+        stats: { "Wisdom modifier": stat("Wisdom modifier", 2) },
+        overlays: [],
+        entities,
+      })[0]?.variants[0];
+    expect(rows({})?.equipped).toBe(false);
+    const worn = rows({ _INTERNAL_EquippedSymbol: "Beacon of Erathis +1" });
+    expect(worn?.equipped).toBe(true);
+    // Worn, not held: no hand.
+    expect(worn?.hand).toBeUndefined();
+  });
+
   it("uses Strength for ranged attacks with Heavy Thrown weapons", () => {
     const entities = [
       entity("BASIC", "Ranged Basic Attack", "Power", {
