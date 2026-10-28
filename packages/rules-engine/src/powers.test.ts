@@ -4422,6 +4422,103 @@ describe("native BuildKeywordSet channels", () => {
       .map(({ label }) => label);
   };
 
+  it("adds the overlaid enchantment's _PowerstatKeywords (AdditionalKeywords)", () => {
+    const staff = (id: string, name: string) =>
+      entity(id, name, "Magic Item", {
+        "Magic Item Type": "Staff",
+        Enhancement: "+1 attack rolls and damage rolls",
+      });
+    const [power] = rows(
+      [
+        implementPower,
+        entity("QUICKBEAM", "Quickbeam staff", "Superior Implement", {
+          Group: "Staff",
+        }),
+        staff("ID_FMP_MAGIC_ITEM_6476", "Staff of Divinity +1"),
+        staff("AVERSION", "Aversion Staff +1"),
+      ],
+      [
+        owned("divinity", ["QUICKBEAM", "ID_FMP_MAGIC_ITEM_6476"]),
+        owned("aversion", ["QUICKBEAM", "AVERSION"]),
+      ],
+      ["holy symbol implement,implement:attack"],
+      {
+        // Staff of Divinity's `modify name="this" Field="_PowerstatKeywords"
+        // list-addition="holy symbol implement" requires="Divine"`, active.
+        overlays: [
+          {
+            providerOccurrenceId: "divinity:definition:1",
+            targetDefinitionIds: ["ID_FMP_MAGIC_ITEM_6476"],
+            targetName: "this",
+            field: "_PowerstatKeywords",
+            listAddition: "holy symbol implement",
+          },
+        ],
+      },
+    );
+
+    expect(sources(power, "Quickbeam staff of Divinity +1")).toEqual([
+      "holy symbol implement,implement:attack",
+    ]);
+    expect(sources(power, "Aversion Quickbeam staff +1")).toEqual([]);
+  });
+
+  it("adds a '?<class ID>' _PowerstatKeywords entry only to that class's powers", () => {
+    const strike = (id: string, classId: string) =>
+      entity(id, `Synthetic ${id}`, "Power", {
+        Keywords: "Arcane, Weapon",
+        Class: classId,
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      });
+    const path = {
+      ...entity("ID_FMP_PARAGON_PATH_29", "Battle Mage", "Paragon Path", {}),
+      prerequisites: "Wizard class",
+    };
+    const powers = rows(
+      [
+        entity("ID_FMP_CLASS_9", "Wizard", "Class", {}),
+        entity("ID_FMP_CLASS_1", "Fighter", "Class", {}),
+        path,
+        strike("WIZARD_POWER", "ID_FMP_CLASS_9"),
+        strike("PATH_POWER", "ID_FMP_PARAGON_PATH_29"),
+        strike("FIGHTER_POWER", "ID_FMP_CLASS_1"),
+        entity("ID_FMP_WEAPON_LONGSWORD", "Longsword", "Weapon", {
+          Damage: "1d8",
+          Group: "Heavy Blade",
+          "Weapon Category": "Military Melee",
+        }),
+      ],
+      [owned("sword", ["ID_FMP_WEAPON_LONGSWORD"])],
+      ["wand implement:damage"],
+      {
+        // Eladrin Sword Wizardry: `modify name="Longsword" type="Weapon"
+        // Field="_PowerstatKeywords" list-addition="wand implement?ID_FMP_CLASS_9"`.
+        overlays: [
+          {
+            providerOccurrenceId: "feat",
+            targetDefinitionIds: [],
+            targetName: "Longsword",
+            targetType: "Weapon",
+            field: "_PowerstatKeywords",
+            listAddition: "wand implement?ID_FMP_CLASS_9",
+          },
+        ],
+      },
+    );
+    const bonus = (id: string) =>
+      sources(
+        powers.find((power) => power.definitionId === id),
+        "Longsword",
+      );
+
+    expect(bonus("WIZARD_POWER")).toEqual(["wand implement:damage"]);
+    // BaseClass: a paragon path power counts as its path's class.
+    expect(bonus("PATH_POWER")).toEqual(["wand implement:damage"]);
+    expect(bonus("FIGHTER_POWER")).toEqual([]);
+  });
+
   it("names a ki focus 'Ki Focuses Implement' (LootImplement), not its item type", () => {
     const [power] = rows(
       [

@@ -12,6 +12,7 @@ import {
   type BeastCompanionStatistics,
 } from "./derived-values";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
+import { internalizePrerequisite, type PrerequisiteIr } from "./prerequisites";
 import {
   keyAbilityOverride,
   powerOrigins,
@@ -1265,6 +1266,96 @@ function legacyWeaponType(entity: ContentEntity | undefined): {
   };
 }
 
+/** The row-independent class channels of one power's keyword set. */
+interface PowerClassChannels {
+  /** Native BaseClass of the power's Class field (no character class): a
+   * paragon path's class prerequisite, else the field itself. */
+  readonly baseClass: string;
+  /** The power's own `_PowerstatKeywords` (AdditionalKeywords). */
+  readonly keywords: readonly string[];
+}
+
+/**
+ * Native FindPrereq(<paragon path>, Class): the first Class record its
+ * prerequisite names ("Sorcerer", "Warlock class, star pact").
+ */
+function legacyParagonPathClass(
+  path: ContentEntity,
+  definitions: readonly ContentEntity[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
+): ContentEntity | undefined {
+  const ir = internalizePrerequisite(path.prerequisites, {
+    owned: [],
+    level: 1,
+    abilities: {},
+    definitions,
+    subject: path,
+  });
+  const isClass = (entity: ContentEntity | undefined) =>
+    entity !== undefined && key(entity.type) === "class";
+  const find = (
+    node: PrerequisiteIr | undefined,
+  ): ContentEntity | undefined => {
+    if (node === undefined) return undefined;
+    if (node.kind === "all" || node.kind === "any")
+      return node.children.map(find).find(isClass);
+    if (node.kind === "element" && !node.negated)
+      return node.definitionIds.map((id) => byId.get(key(id))).find(isClass);
+    if (node.kind === "class")
+      return [
+        byId.get(key(node.value)),
+        ...(byName.get(key(node.value)) ?? []),
+      ].find(isClass);
+    return undefined;
+  };
+  return find(ir);
+}
+
+/**
+ * Native BuildKeywordSet's power-level class channels. BaseClass maps a
+ * paragon path power to its path's class (IsClassPower, for qualified
+ * `_PowerstatKeywords`); AdditionalKeywords adds the power's own
+ * `_PowerstatKeywords`.
+ */
+function legacyPowerClassChannels(
+  power: ContentEntity,
+  powerstatKeywords: string | undefined,
+  definitions: readonly ContentEntity[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
+): PowerClassChannels {
+  const classField = field(power, "Class") ?? "";
+  const owner = byId.get(key(classField)) ?? byName.get(key(classField))?.[0];
+  const pathClass =
+    owner !== undefined && key(owner.type) === "paragon path"
+      ? legacyParagonPathClass(owner, definitions, byId, byName)
+      : undefined;
+  const baseClass = pathClass?.id ?? classField;
+  return {
+    baseClass,
+    keywords: legacyPowerstatKeywords(powerstatKeywords, baseClass),
+  };
+}
+
+/**
+ * Native AdditionalList/PossibleInsert: a `_PowerstatKeywords` value's
+ * comma-separated keywords. A "<keyword>?<class ID>" entry (Eladrin Sword
+ * Wizardry's "wand implement?ID_FMP_CLASS_9") joins only when the power's
+ * BaseClass is that class (IsClassPower).
+ */
+function legacyPowerstatKeywords(
+  value: string | undefined,
+  baseClass: string,
+): string[] {
+  return (value ?? "").split(",").flatMap((entry) => {
+    const [keyword = "", classId] = entry.split("?", 2);
+    if (classId !== undefined && key(classId) !== key(baseClass)) return [];
+    const trimmed = keyword.trim();
+    return trimmed === "" ? [] : [trimmed];
+  });
+}
+
 /**
  * The equipment- and origin-dependent channels of native BuildKeywordSet
  * for one row: `ptr4` is WeaponBase (the WeaponEquiv or Quarterstaff a
@@ -1283,6 +1374,10 @@ function legacyWeaponType(entity: ContentEntity | undefined): {
  *   melee weapons, "two-melee-weapon(-close)", "two-blade" for two blades,
  *   and "two-melee-offhand(-close)" when the main weapon is an off-hand one.
  * - FromMulticlassing: "multiclass" and "multiclass feat".
+ * - AdditionalKeywords: the power-level channels of
+ *   `legacyPowerClassChannels`, then WeaponBase's and WeaponEnchant's
+ *   `_PowerstatKeywords` (Staff of Divinity's conditional "holy symbol
+ *   implement" for a Divine character).
  */
 function nativeRowKeywords(
   equipment: Loadout,
@@ -1294,28 +1389,39 @@ function nativeRowKeywords(
     readonly attackType: string | undefined;
     readonly origin: PowerOrigin | undefined;
     readonly resolve: Parameters<typeof legacyLootImplement>[2];
+    readonly classChannels: PowerClassChannels;
   },
 ): readonly string[] {
   const tags: string[] = [
     ...(input.origin?.multiclass === true ? ["multiclass"] : []),
     ...(input.origin?.multiclassFeat === true ? ["multiclass feat"] : []),
+    ...input.classChannels.keywords,
   ];
   // Without a weapon, a melee power's WeaponBase is the Unarmed weapon.
   if (equipment.unarmed) {
     if (input.weaponPower && /melee/iu.test(input.attackType ?? ""))
       tags.push("melee weapon");
-    return tags;
+    return tags.map(key).filter(Boolean);
   }
   const base = input.weaponPower
     ? equipment.requirementBase
     : equipment.lootBase;
-  if (base === undefined) return tags;
+  if (base === undefined) return tags.map(key).filter(Boolean);
   // Native WeaponEnchant: the enchantment, else a magic item base itself.
   const enchant =
     equipment.lootEnchant ??
     (key(equipment.lootBase?.type ?? "") === "magic item"
       ? equipment.lootBase
       : undefined);
+  // The loot records are already overlaid (withOverlaidItems), so a
+  // conditional `modify name="this"` list-addition is read here.
+  for (const record of enchant === undefined ? [base] : [base, enchant])
+    tags.push(
+      ...legacyPowerstatKeywords(
+        field(record, "_PowerstatKeywords"),
+        input.classChannels.baseClass,
+      ),
+    );
   const isWeapon = (entity: ContentEntity | undefined) =>
     key(entity?.type ?? "") === "weapon";
   if (input.weaponPower) {
@@ -2993,6 +3099,13 @@ export function evaluatePowers(input: {
         statText: context.statText,
       };
     };
+    const classChannels = legacyPowerClassChannels(
+      power,
+      effectiveField(power, "_PowerstatKeywords", input.overlays),
+      entities,
+      byId,
+      byName,
+    );
     const variants = handCandidates.map((equipment): PowerVariant => {
       const nativeKeywords = nativeRowKeywords(equipment, {
         weaponPower,
@@ -3001,6 +3114,7 @@ export function evaluatePowers(input: {
         attackType,
         origin: channelOrigin,
         resolve: implementResolver,
+        classChannels,
       });
       const weaponSpecific = powerWeaponSpecificBonuses(
         power,

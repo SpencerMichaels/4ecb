@@ -543,6 +543,14 @@ one maximum per row (native `att_type_max`/`dmg_type_max`), so an implement
 power used through a pact blade applies one maximum across its implement- and weapon-path
 bonuses: the blade's transferred off-hand enhancement and Dual
 Implement Spellcaster's do not stack.
+A row's keyword set also takes native `AdditionalKeywords`: the
+`_PowerstatKeywords` of the power, its weapon base and its enchantment, read
+from the overlaid records, so a conditional `modify name="this"` list-addition
+(Staff of Divinity's "holy symbol implement" for a Divine character) feeds
+Implement Expertise (Holy Symbol). An entry "<keyword>?<class ID>" (Eladrin
+Sword Wizardry's "wand implement?ID_FMP_CLASS_9") joins only for that class's
+powers, a paragon path power counting as its path's prerequisite class
+(native `BaseClass`).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
