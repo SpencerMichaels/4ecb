@@ -458,9 +458,17 @@ function serializeOccurrence(
   );
 }
 
+/**
+ * One `loot` row. Only the `LootTally` cache nests an item's chosen and
+ * granted elements beneath it; native per-level rows are flat (none of the
+ * 959 per-level rows in the sample saves has a child), and the importer
+ * recovers item choices from the cache (`inventoryFrom`). Writing them in
+ * both places would also repeat their `charelem` tokens.
+ */
 function serializeInventory(
   entry: BuildInventoryEntry,
   tokens: ReadonlyMap<string, string>,
+  { children }: { readonly children: boolean },
 ): string {
   const reserved = new Set([
     "count",
@@ -495,9 +503,11 @@ function serializeInventory(
         element(
           "RulesElement",
           identityAttributes(identity),
-          (identity.children ?? [])
-            .map((child) => serializeOccurrence(child, tokens))
-            .join(""),
+          children
+            ? (identity.children ?? [])
+                .map((child) => serializeOccurrence(child, tokens))
+                .join("")
+            : "",
         ),
       )
       .join(""),
@@ -545,7 +555,7 @@ function levelXml(build: CharacterBuild, tokens: ReadonlyMap<string, string>) {
       {},
       `${serializeOccurrence(frame.root, tokens)}${build.inventory
         .filter((entry) => entry.acquiredLevel === frame.level)
-        .map((entry) => serializeInventory(entry, tokens))
+        .map((entry) => serializeInventory(entry, tokens, { children: false }))
         .join("")}${userEditXml(frame, tokens)}`,
     ),
   );
@@ -1209,7 +1219,7 @@ function lootTallyXml(
     "LootTally",
     {},
     activeInventory(build)
-      .map((entry) => serializeInventory(entry, tokens))
+      .map((entry) => serializeInventory(entry, tokens, { children: true }))
       .join(""),
   );
 }

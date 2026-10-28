@@ -243,6 +243,11 @@ describe("legacy .dnd4e import", () => {
       content,
     });
     expect(exported).toContain('internal-id="POISON"');
+    // As native saves: the choice sits only in the CharacterSheet caches and
+    // the per-level row stays flat, so the build repeats no charelem.
+    const levels = exported.slice(exported.indexOf("</CharacterSheet>"));
+    expect(levels).toContain('internal-id="RESIST"');
+    expect(levels).not.toContain('internal-id="POISON"');
     expect(
       importDnd4e(exported).build.inventory[0]?.elements[1]?.children?.[0]
         ?.identity.definitionId,

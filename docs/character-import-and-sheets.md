@@ -276,7 +276,11 @@ The remaining data is classified as follows:
   build state and are regenerated.
 - `StatBlock`, `RulesElementTally`, `LootTally`, and `PowerStats` are disposable
   generated caches. The normalized legacy snapshot remains useful for fallback
-  display and parity diagnostics, but is not editable authority.
+  display and parity diagnostics, but is not editable authority. One
+  exception: native saves keep an item's choices and grants only beneath its
+  `LootTally` row (per-level `loot` rows are always flat), so import recovers
+  them from there and edited export writes them there and not in the
+  per-level rows, keeping the build's `charelem` tokens unique.
 - Campaign policy, structured journal entries, meaningful companion
   presentation, historical wrapper forms, and extra attributes or children in
   recognized authoritative containers are meaningful data not yet completely
