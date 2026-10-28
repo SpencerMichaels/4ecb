@@ -1537,7 +1537,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     // --- D20RulesEngine: power math -------------------------------------
     "?A0x7555d940.SpecialCase": code(
       "Fixed outputs: Bond of Censure dice by name, and exact hit lines (ongoing 10 family, Strength-only damage, damage-taken, rage strike, 3d10 + Constitution + half level, a 4[W] rewrite, 15 force).",
-      "powers.ts nativeSpecialDamage ports every line: Bond of Censure, the ongoing 10 lines, rage strike, the Strength-only prefix (no current record; Knockdown Assault is keyed by name), Deathly Retort's 'The damage you took', Warlock's Bargain's 3d10 + Constitution + half level (a damage roll, so enhancement and roll bonuses apply), Final Reproach's flat 15 (not a damage roll). Summons to Doom's 4[W] rewrite matches what CalcDamage already parses from its first 'damage'",
+      "content-domain power-text.ts specialHit (matched at pack build) and powers.ts nativeSpecialDamage port every line: Bond of Censure, the ongoing 10 lines, rage strike, the Strength-only prefix (no current record; Knockdown Assault is keyed by name), Deathly Retort's 'The damage you took', Warlock's Bargain's 3d10 + Constitution + half level (a damage roll, so enhancement and roll bonuses apply), Final Reproach's flat 15 (not a damage roll). Summons to Doom's 4[W] rewrite matches what CalcDamage already parses from its first 'damage'",
       test(
         POWERS,
         "projects recovered fixed-output native power special cases",
@@ -1658,7 +1658,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WhichAttack": code(
       "Melee-or-ranged attack line selection by weapon, and the best of 'A, B, or C' abilities.",
-      "powers.ts dualAttackAlternatives (first ') or ', else ' with a melee weapon or two '; a ranged weapon takes the second) / attackLineAbility. Only lines naming a melee and a ranged alternative split. D105 (Martial Power 2 p41): Reactive Shot's '<Ability> (thrown weapon) or <Ability>' is thrownWeaponAlternative: Strength for attack and damage with a thrown weapon, Dexterity for both with any other (native: Dexterity attack with a ranged weapon but Strength damage, via MultipleAbilityChoices)",
+      "content-domain power-text.ts dualAttackAlternatives (pack build; powers.ts rowAttackLine picks; first ') or ', else ' with a melee weapon or two '; a ranged weapon takes the second) / attackLineAbility. Only lines naming a melee and a ranged alternative split. D105 (Martial Power 2 p41): Reactive Shot's '<Ability> (thrown weapon) or <Ability>' is thrownWeaponAlternative: Strength for attack and damage with a thrown weapon, Dexterity for both with any other (native: Dexterity attack with a ranged weapon but Strength damage, via MultipleAbilityChoices)",
       test(POWERS, "selects the current level line and highest listed ability"),
       test(
         THROWN_ALTERNATIVE,
@@ -1675,7 +1675,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsDualPower": code(
       "Dual-attack power detection from ') or ' / 'with a melee weapon or two'.",
-      "powers.ts dualAttackAlternatives (see WhichAttack for the D105 Reactive Shot exception)",
+      "content-domain power-text.ts dualAttackAlternatives (see WhichAttack for the D105 Reactive Shot exception)",
       test(
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
@@ -1860,7 +1860,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AttackPowerModRepl": code(
       "Exact 'Increase to +N at 11th/21st level' attack lines, and Blood Drain / Razor Storm / Dragon Breath / Dragon's Wrath by name, replace the power bonus by level.",
-      "powers.ts powerBonusAtLevel: NATIVE_INCREASE_LINES and NATIVE_NAMED_INCREASES (EXCEPTION_NAMES), then the generic 'Level N:' lines",
+      "content-domain power-text.ts attackBonus (NATIVE_INCREASE_LINES, pack build) and powers.ts powerBonusAtLevel (NATIVE_NAMED_INCREASES, EXCEPTION_NAMES), then the generic 'Level N:' lines",
       test(
         POWERS,
         "raises Dragon Breath's bonus by name and its damage by its increase sentence at level %i (native AttackPowerModRepl/ParseIncreaseLine)",
@@ -1876,7 +1876,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.ParseIncreaseLine": code(
       "From the hit's first 'Increase damage to ' (else 'Increase to '), each clause from its first digit to ' at N' is the damage at level N, stepping on at the next ' level'; four exact lines (Kelemvor's Judgment, the breath lines) are rewritten first.",
-      "powers.ts increasedDamageAtLevel / NATIVE_INCREASE_REWRITES; D105: a leading '+N bonus and' is skipped (Sun Flare, Improved Razor Storm), native reads it as damage",
+      "content-domain power-text.ts increaseClauses / NATIVE_INCREASE_REWRITES (pack build); D105: a leading '+N bonus and' is skipped (Sun Flare, Improved Razor Storm), native reads it as damage",
       test(
         POWERS,
         "reads every threshold of a native-rewritten increase sentence at level %i",
@@ -1888,7 +1888,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.HigherLevelDamage": partial(
       "Higher-level damage lines; Chilling Cloud by name at 21; one exact Constitution line; a riposte damage line trimmed.",
-      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage), keeping its cold type (D105; native's rewrite drops it); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
+      "content-domain power-text.ts hitLineAtLevel/parseHitField (pack build; powers.ts hitLineAtLevel reads the step): 'Level N:' lines (native LevelIncrease) before the increase sentence (increaseClauses); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage), keeping its cold type (D105; native's rewrite drops it); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
       test(
         POWERS,
         "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",
@@ -1900,7 +1900,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     FindLine: code(
       "Theme power level lines ('Level N' specifics) and 'As above, but ' stripping.",
-      "powers.ts lineAtLevel",
+      "content-domain power-text.ts parseHitField / powers.ts hitLineAtLevel",
       test(POWERS, "handles primary attacks and prose level scaling"),
     ),
     "?A0x7555d940.CalcDamage": code(
@@ -2008,7 +2008,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcBonuses": code(
       "A power field (indent <= 2, not a standard power field) named 'Special', an owned element (Brutal Scoundrel, Rageblood Vigor, a pact, an aegis...) or 'axe' with an axe-group WeaponBase, whose text is one of the exact rider sentences, adds Int/Wis/Con/Str to damage or Str to the attack; the dwarf line also needs Dwarf.",
-      "native-power-field-bonuses.ts nativePowerFieldBonuses (NATIVE_BUILD_OPTION_BONUSES, STANDARD_POWER_FIELDS, EXCEPTION_NAMES.dwarf)",
+      "content-domain power-field-bonuses.ts (NATIVE_BUILD_OPTION_BONUSES, STANDARD_POWER_FIELDS; matched at pack build) / native-power-field-bonuses.ts nativePowerFieldBonuses (EXCEPTION_NAMES.dwarf)",
       test(
         NATIVE_FIELD_BONUSES,
         "adds the rider named by an owned element, on every row",
@@ -2022,7 +2022,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcMisc": code(
       "Power 'beast' fields (CalcBeast) and 'weapon' fields matched against the WeaponBonuses table by exact text, group and off-hand flag.",
-      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES) and the CalcBeast line; D105: a rider text repeated in a second Weapon field counts once per attack (Giant's Wake, PHB p81), and the 13 riders the table misses (Smashing Hammer, Earthfast Assault, Stonechannel Strike, Press Forward, Keystone Collapse, Brutal Rebuke, Titan's Hammer, Barreling Swing, Skullcrusher, Storm of Blows, Fangs of Steel, Elegant Strike, Reaping Lunge) are '<ID>,<group> group:damage' statadds in content/corrections/9E-rules-divergences.part, not code",
+      "content-domain power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES, matched at pack build; native-power-field-bonuses.ts checks the group and off hand) and the CalcBeast line; D105: a rider text repeated in a second Weapon field counts once per attack (Giant's Wake, PHB p81), and the 13 riders the table misses (Smashing Hammer, Earthfast Assault, Stonechannel Strike, Press Forward, Keystone Collapse, Brutal Rebuke, Titan's Hammer, Barreling Swing, Skullcrusher, Storm of Blows, Fangs of Steel, Elegant Strike, Reaping Lunge) are '<ID>,<group> group:damage' statadds in content/corrections/9E-rules-divergences.part, not code",
       test(
         POWERS,
         "applies recovered weapon-field ability bonuses only to eligible families",
@@ -2047,7 +2047,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcBeast": code(
       "One exact companion line adds Wisdom damage for a cat, spider or wolf companion.",
-      "native-power-field-bonuses.ts NATIVE_BEAST_WISDOM_LINE: inside CalcMisc (a weapon power wielding a main-hand weapon), a 'Beast' field (indent <= 2) with that exact text adds the Wisdom modifier to damage once per owned Companion named Cat, Spider or Wolf (EXCEPTION_NAMES). Replaces the former 'ID_FMP_POWER_4370:damage' statadds on those records in content/corrections/99-companions.part, which also reached the Unarmed row",
+      "content-domain power-field-bonuses.ts NATIVE_BEAST_WISDOM_LINE (pack build) / native-power-field-bonuses.ts: inside CalcMisc (a weapon power wielding a main-hand weapon), a 'Beast' field (indent <= 2) with that exact text adds the Wisdom modifier to damage once per owned Companion named Cat, Spider or Wolf (EXCEPTION_NAMES). Replaces the former 'ID_FMP_POWER_4370:damage' statadds on those records in content/corrections/99-companions.part, which also reached the Unarmed row",
       test(
         NATIVE_FIELD_BONUSES,
         "adds Wisdom to damage with a cat, spider or wolf Companion",

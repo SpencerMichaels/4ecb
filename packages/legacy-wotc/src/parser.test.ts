@@ -1,3 +1,4 @@
+import { POWER_TEXT_FIELD } from "@4ecb/content-domain";
 import { describe, expect, it } from "vitest";
 
 import { D20RulesParser, parseD20Rules } from "./parser";
@@ -35,7 +36,9 @@ describe("D20RulesParser", () => {
       flavor: "Brief flavor.",
       description: "Main description.",
     });
-    expect(parsed.entities[0]?.specifics).toHaveLength(2);
+    // Its two authored fields and the parsed power text.
+    expect(parsed.entities[0]?.specifics).toHaveLength(3);
+    expect(parsed.entities[0]?.specifics[2]?.name).toBe(POWER_TEXT_FIELD);
     expect(parsed.entities[0]?.rules[0]).toMatchObject({
       name: "grant",
       ordinal: 0,
@@ -75,10 +78,10 @@ describe('native ParseOneRule\'s modify name="this"', () => {
       { specifics: readonly { name: string; value: string }[] } | undefined,
   ) =>
     Object.fromEntries(
-      (entity?.specifics ?? []).map((specific) => [
-        specific.name,
-        specific.value,
-      ]),
+      (entity?.specifics ?? [])
+        // The parsed power text is power-text.test.ts's subject.
+        .filter((specific) => specific.name !== POWER_TEXT_FIELD)
+        .map((specific) => [specific.name, specific.value]),
     );
 
   it("writes an unconditional value into the record's own field at load", () => {

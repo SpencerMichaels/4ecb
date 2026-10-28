@@ -205,6 +205,10 @@ character record + content profile + play state --> rules engine --> EvaluatedCh
   happens once, at pack generation (`legacy-wotc` import / `content-tool
 build`), and is stored as normalized fields or IR in the pack; the app and
   rules engine only read those, computing just what depends on the character.
+  Precedents: `_Associate Stat Block` and `_Power Text IR` (a power's
+  attack/hit/effect texts and field riders, content-domain `power-text.ts`,
+  looked up by text in `rules-engine/src/power-text-index.ts`); bump the
+  field's version when its parse changes.
 - **Rules engine** (`rules-engine`) implements the recovered rule language as
   explicit phases (resolve profile -> level/history context -> grants/removals
   -> choices -> prerequisites/legality -> stat/text/power statements ->

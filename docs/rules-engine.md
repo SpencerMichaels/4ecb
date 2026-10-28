@@ -514,6 +514,35 @@ ability modifier and flat terms, at the highest "Level N:" step reached. A summo
 bonuses to defenses, attack rolls and damage, as D095 fixed-bonus creatures
 do. Rider prose inside a line stays text.
 
+Power text is parsed once, at pack build, too. The legacy-wotc import stores
+on every Power record the versioned internal field `_Power Text IR`
+(`PowerTextStore` in content-domain `power-text.ts`): its attack slots
+(each Attack/Hit/Target/Attack Type field with its attack ordinal), whether
+a field names a summoned creature, its native field riders
+(`power-field-bonuses.ts`: CalcMisc's WeaponBonuses lines, CalcBeast's
+companion line and CalcBonuses' build-option sentences, by table entry), and
+the parsed facets of each attack, hit and effect text, keyed by the exact
+text. An attack text holds its defense, named abilities, special phrase
+(highest / highest mental / chosen / primary), beast or "your level + N"
+line, first-line "+N" with its level steps and native AttackPowerModRepl
+tier, and its thrown-weapon and dual (melee/ranged) alternatives; a hit text
+holds the line each level reads (native HigherLevelDamage: "Level N:"
+lines, ParseIncreaseLine clauses and rewrites) and, per line and weapon
+alternative, its native SpecialCase kind, ongoing flag and damage clauses
+(N[W] terms with "(off-hand …)" flags, dice, flat base, ability modifier
+terms, "twice", "+N … damage", damage type, and the beast-damage reading).
+Any record's `modify` value that replaces an attack, hit or effect field is
+parsed into that record's own field, so a feat's overlay text is found
+through its provider. The engine (`power-text-index.ts`) looks each
+effective field text up there and only resolves what depends on the
+character: the level step, the thrown/ranged weapon, ability modifiers and
+bonuses, owned elements and weapon groups. Text the pack does not carry (a
+pack built before the field, a house rule's `modify`, the constructed
+Defender's Gambit and Chilling Cloud lines) is parsed by the same
+content-domain functions, memoized by text. Attack and hit texts that parse
+to no ability or no damage are `power.text-unparsed` info diagnostics of the
+pack build (101 on the full corpus, mostly prose-only hits).
+
 Power prose naming a `beast's <ability> modifier` is not a character-ability
 reference. Such a clause is excluded from ordinary ability math and emits
 `companion-ability:<power-id>` until the selected companion occurrence and its

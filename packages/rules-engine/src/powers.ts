@@ -1,4 +1,17 @@
-import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
+import {
+  authoredAttackLine,
+  hitLineAt,
+  parseHitLine,
+  weaponPropertyText,
+  type AttackBonusIr,
+  type AttackFieldIr,
+  type AttackLineIr,
+  type ContentEntity,
+  type DamageClauseIr,
+  type HitLineIr,
+  type PowerRecoveryIr,
+  type SpecialHitIr,
+} from "@4ecb/content-domain";
 import { boundAugmentHolding } from "@4ecb/character-domain";
 
 import type {
@@ -43,6 +56,7 @@ import {
   legacyListContainsOneOf,
 } from "./weapon-groups";
 import { nativePowerFieldBonuses } from "./native-power-field-bonuses";
+import { powerTexts, type PowerTexts } from "./power-text-index";
 import {
   legacyLoadoutHints,
   legacyLoadoutState,
@@ -1052,7 +1066,7 @@ function formatDamage(dice: string, bonus: number): string {
  */
 function nativeSpecialDamage(
   power: ContentEntity,
-  hitLine: string | undefined,
+  hit: SpecialHitIr | undefined,
   level: number,
 ):
   | {
@@ -1072,78 +1086,43 @@ function nativeSpecialDamage(
   if (key(power.name) === key(EXCEPTION_NAMES.knockdownAssault))
     return { dice: "", ability: "Strength", abilityOnly: true };
 
-  const hit = key(hitLine ?? "");
-  if (hit.startsWith("deal damage equal to your strength modifier,"))
-    return { dice: "", ability: "Strength", abilityOnly: true };
-  if (hit.startsWith("you deal damage based on the level of the rage power"))
-    return { expression: "As Above" };
-  // Deathly Retort.
-  if (
-    hit ===
-    "the target takes necrotic damage equal to the damage you took from the attack."
-  )
-    return { expression: "The damage you took" };
-  if (
-    hit === "the target takes ongoing 10 radiant damage (save ends)." ||
-    hit ===
-      "the target is stunned and takes ongoing 10 poison damage (save ends both)." ||
-    hit.startsWith("ongoing 10 poison damage (save ends).")
-  )
-    return { expression: "ongoing 10" };
-  if (
-    hit ===
-    "the target is slowed and takes ongoing damage equal to 10 + your dexterity modifier (save ends both)."
-  )
-    return { dice: "ongoing 10", ability: "Dexterity" };
-  // Warlock's Bargain: 3d10, half the level (unsigned division) and the
-  // Constitution modifier.
-  if (
-    hit ===
-    "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level."
-  )
-    return {
-      dice: "3d10",
-      ability: "Constitution",
-      components: [
-        { label: "half your level", value: Math.floor(Math.max(0, level) / 2) },
-      ],
-    };
-  // Final Reproach.
-  if (
-    hit ===
-    "whenever the target deals damage with an attack before the end of your next turn, it takes 15 force damage and is dazed until the end of your next turn."
-  )
-    return { flat: 15 };
-  return undefined;
+  // The exact hit lines, matched at pack build (content-domain power-text).
+  switch (hit) {
+    case "strength-modifier":
+      return { dice: "", ability: "Strength", abilityOnly: true };
+    case "as-above":
+      return { expression: "As Above" };
+    case "damage-you-took":
+      return { expression: "The damage you took" };
+    case "ongoing-10":
+      return { expression: "ongoing 10" };
+    case "ongoing-10-dexterity":
+      return { dice: "ongoing 10", ability: "Dexterity" };
+    // Warlock's Bargain: 3d10, half the level (unsigned division) and the
+    // Constitution modifier.
+    case "warlocks-bargain":
+      return {
+        dice: "3d10",
+        ability: "Constitution",
+        components: [
+          {
+            label: "half your level",
+            value: Math.floor(Math.max(0, level) / 2),
+          },
+        ],
+      };
+    case "final-reproach":
+      return { flat: 15 };
+    case undefined:
+      return undefined;
+  }
 }
 
-function hasCompanionAbilityDamage(hitLine: string | undefined): boolean {
-  return /\b(?:your\s+)?beast(?:'s)?\s+(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\s+modifier\b/i.test(
-    hitLine ?? "",
-  );
-}
-
-function withoutCompanionAbilityDamage(value: string): string {
-  return value.replace(
-    /\b(?:your\s+)?beast(?:'s)?\s+(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\s+modifier\b/gi,
-    "",
-  );
-}
-
-/** Legacy CalcBAB: an attack line made with "Beast's attack bonus". */
-const BEAST_ATTACK_LINE = /^\s*(?:your\s+)?beast(?:'s)?\s+attack\s+bonus\b/i;
-/** The attack stat of a beast companion's attack. */
+/** The attack stat of a beast companion's attack ("Beast's attack bonus"). */
 export const BEAST_ATTACK_STAT = "Beast";
-/** "beast's Strength modifier", "your beast's ability modifier", and the
- *  content's "beast Strength's modifier" typo. */
-const BEAST_ABILITY_DAMAGE =
-  /\b(?:your\s+)?beast(?:'s)?\s+(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|ability)(?:'s)?\s+modifier\b/gi;
 
-/** A summoned creature's fixed attack line: "your level + 5 vs. Will". The
+/** The attack stat of a summoned creature's "your level + N" attack: the
  *  summoner attacks through the creature with this bonus alone. */
-const LEVEL_ATTACK_LINE =
-  /^\s*(?:your\s+)?level\s*\+\s*(\d+)\s+vs\.?\s+([A-Za-z]+)/i;
-/** The attack stat of a "your level + N" attack. */
 export const LEVEL_ATTACK_STAT = "Level";
 
 /**
@@ -1156,14 +1135,12 @@ export const LEVEL_ATTACK_STAT = "Level";
  * adds them; their description "specifies otherwise" (D091).
  */
 function summonedCreaturePower(
-  power: ContentEntity,
+  texts: PowerTexts,
   keywords: readonly string[],
 ): boolean {
   return (
     keywords.some((keyword) => key(keyword) === "summoning") ||
-    power.specifics.some((specific) =>
-      /\bsummoned creature\b/i.test(specific.value),
-    )
+    texts.summonedCreature
   );
 }
 
@@ -1178,14 +1155,6 @@ function creatureStatComponents(
     0,
   );
   return value === 0 ? [] : [{ label, value }];
-}
-
-function isBeastAttackLine(line: string | undefined): boolean {
-  return BEAST_ATTACK_LINE.test(line ?? "");
-}
-
-function isBeastHit(hit: string | undefined): boolean {
-  return /\d+\s*\[B\]/i.test(hit ?? "") || hasCompanionAbilityDamage(hit);
 }
 
 /** Bonuses keyed to this one power: "<power ID>:attack", "<name>:damage". */
@@ -1224,29 +1193,25 @@ function powerSpecificComponents(
  * beast's own bonuses apply, never the character's weapon or implement.
  */
 function beastDamage(input: {
-  readonly hitClause: string;
+  readonly clause: DamageClauseIr;
   readonly beast: BeastCompanionStatistics;
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly power: ContentEntity;
 }): Pick<PowerVariant, "damage" | "damageType" | "damageComponents"> {
-  const clause = input.hitClause.split(/\bdamage\b/i)[0] ?? "";
-  const beastDice = clause.match(/(\d+)\s*\[B\]/i);
+  const parsed = input.clause.beast;
   const dice =
-    beastDice === null
-      ? clause.match(/(\d+d\d+)/i)?.[1]
-      : diceTimes(input.beast.damage.die, Number(beastDice[1]));
+    parsed.beastDice === undefined
+      ? parsed.fixedDice
+      : diceTimes(input.beast.damage.die, parsed.beastDice);
   if (dice === undefined || dice === "") return { damageComponents: [] };
   const components: PowerComponent[] = [];
-  if (beastDice !== null && input.beast.damage.bonus !== 0)
+  if (parsed.beastDice !== undefined && input.beast.damage.bonus !== 0)
     components.push({
       label: "beast's damage bonus",
       value: input.beast.damage.bonus,
     });
-  for (const match of clause.matchAll(BEAST_ABILITY_DAMAGE)) {
-    const named = abilityNames.find(
-      (ability) => key(ability) === key(match[1] ?? ""),
-    );
-    if (named === undefined)
+  for (const named of parsed.beastAbilities ?? []) {
+    if (named === "ability")
       components.push(
         ...input.beast.damage.abilities.map((ability) => ({
           label: `${ability.owner === "beast" ? "beast's" : "your"} ${ability.ability} modifier`,
@@ -1259,17 +1224,13 @@ function beastDamage(input: {
         value: input.beast.abilities[named].modifier,
       });
   }
-  const ownClause = clause.replace(BEAST_ABILITY_DAMAGE, "");
-  for (const ability of abilityNames)
-    if (new RegExp(`\\b${ability} modifier\\b`, "i").test(ownClause))
-      components.push({
-        label: `${ability} modifier`,
-        value: numericStat(input.stats, `${ability} modifier`),
-      });
+  for (const ability of parsed.ownAbilities ?? [])
+    components.push({
+      label: `${ability} modifier`,
+      value: numericStat(input.stats, `${ability} modifier`),
+    });
   // Flat additions: "1d8 + 2 + your Wisdom modifier", "2d8 + 4".
-  const powerBonus = [...clause.matchAll(/\+\s*(\d+)\b(?!\s*(?:\[|d\d))/gi)]
-    .map((match) => Number(match[1]))
-    .reduce((sum, value) => sum + value, 0);
+  const powerBonus = parsed.flatBonus ?? 0;
   if (powerBonus !== 0)
     components.push({ label: "power damage bonus", value: powerBonus });
   const companionBonus = companionStatBonus(
@@ -1285,15 +1246,13 @@ function beastDamage(input: {
   components.push(
     ...powerSpecificComponents(input.stats, input.power, "damage"),
   );
-  const damageType = clause.match(
-    /\b(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder)(?:\s*(?:,|and|or)\s*(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder))*\b/i,
-  )?.[0];
+  const damageType = input.clause.damageType;
   return {
     damage: formatDamage(
       dice,
       components.reduce((sum, component) => sum + component.value, 0),
     ),
-    ...(damageType === undefined ? {} : { damageType: key(damageType) }),
+    ...(damageType === undefined ? {} : { damageType }),
     damageComponents: components,
   };
 }
@@ -1399,30 +1358,18 @@ function criticalExpression(
   return parts.length === 0 ? undefined : parts.join("; ");
 }
 
+/** The hit and effect texts' recovery sentences, each once. */
 function recoveryExpressions(
-  ...values: Array<string | undefined>
+  ...values: ReadonlyArray<readonly PowerRecoveryIr[] | undefined>
 ): PowerRecovery[] {
   const seen = new Set<string>();
   return values.flatMap((value) =>
-    (value ?? "")
-      .split(/(?<=[.!?])\s+|\n+/)
-      .map((expression) => expression.trim())
-      .filter(Boolean)
-      .flatMap((expression) => {
-        const kind = /temporary hit points/i.test(expression)
-          ? "temporary-hit-points"
-          : /healing surge/i.test(expression)
-            ? "healing-surge"
-            : /regain(?:s)?\s+(?:all of (?:your|his|her|their)\s+)?hit points/i.test(
-                  expression,
-                )
-              ? "healing"
-              : undefined;
-        const identity = `${kind}\0${expression}`;
-        if (kind === undefined || seen.has(identity)) return [];
-        seen.add(identity);
-        return [{ kind, expression }];
-      }),
+    (value ?? []).flatMap(({ kind, expression }) => {
+      const identity = `${kind}\0${expression}`;
+      if (seen.has(identity)) return [];
+      seen.add(identity);
+      return [{ kind, expression }];
+    }),
   );
 }
 
@@ -2075,37 +2022,6 @@ const abilityNames = [
   "Charisma",
 ] as const;
 
-/**
- * Native CalcDamage for a damage expression without dice: the hit text up to
- * its first " damage" (none when a sentence ends before it) whose first word
- * is an ability followed by " modifier" (ParseAbilityMod on "+0") or a number
- * (ParseDamage, then AddToDamage sums the "+ <ability> modifier" terms) deals
- * flat damage: Staggering Note's "Charisma modifier thunder damage" is 6, Well
- * of Shadows' secondary "5 + Charisma modifier necrotic damage" 11, even
- * though an "ongoing 10" rider follows; Sudden Slime's "Ability modifier acid
- * damage" is the highest ability modifier (ParseAbilityMod). Returns the
- * expression's own constant, or undefined when the expression is not flat
- * damage.
- */
-function nativeFlatDamageBase(hitClause: string): number | undefined {
-  const end = hitClause.toLocaleLowerCase().indexOf(" damage");
-  if (end < 0) return undefined;
-  const sentence = hitClause.indexOf(".");
-  if (sentence >= 0 && sentence < end) return undefined;
-  const expression = hitClause.slice(0, end).trim();
-  if (/\d+d\d+|\[[WB]\]/iu.test(expression)) return undefined;
-  const leading = /^(\d+)(?:\s|$)/u.exec(expression)?.[1];
-  if (leading !== undefined) return Number(leading);
-  if (
-    new RegExp(
-      `^(?:twice\\s+)?(?:${abilityNames.join("|")}|ability|highest) modifier\\b`,
-      "iu",
-    ).test(expression)
-  )
-    return 0;
-  return undefined;
-}
-
 function highestAbility(
   stats: Readonly<Record<string, EvaluatedStat>>,
   preferred: readonly string[] = abilityNames,
@@ -2152,7 +2068,7 @@ function chosenAbility(
 
 /**
  * The ability native CalcStatVsDefense (`-Module-.cs` ~23753) reads from a
- * special attack-stat phrase, left of " vs":
+ * special attack-stat phrase, left of " vs" (parsed at pack build):
  * - "Highest Mental Ability" (exact, AttackSpecialCase) → the best of
  *   Intelligence, Wisdom and Charisma;
  * - a "your highest ability" prefix → HighestAbility over all six scores;
@@ -2167,151 +2083,79 @@ function chosenAbility(
  * the same way.
  */
 function specialAttackAbility(
-  attackLeft: string,
+  special: AttackLineIr["special"],
   stats: Readonly<Record<string, EvaluatedStat>>,
   chosen: string | undefined,
 ): string | undefined {
-  const left = attackLeft.trim();
-  if (/^highest mental ability$/i.test(left))
+  if (special === "highest-mental")
     return highestScoreAbility(stats, MENTAL_ABILITIES);
-  if (/^(?:your\s+)?highest ability\b/i.test(left))
-    return highestScoreAbility(stats);
-  if (/^chosen ability\b/i.test(left)) return chosen ?? "Unknown";
+  if (special === "highest") return highestScoreAbility(stats);
+  if (special === "chosen") return chosen ?? "Unknown";
   return undefined;
 }
 
 /**
- * Native ExtractPowerMods (`-Module-.cs` ~23703): this exact attack-line
- * sentence (Hawk's Talon) adds a power bonus equal to the Wisdom modifier.
- * It is read from the whole Attack field, before the melee/ranged choice.
+ * The line a row attacks with (parsed at pack build): "<Ability> (thrown
+ * weapon) or <Ability>" takes the first ability with a thrown weapon, the
+ * second with any other (Reactive Shot; D105, Martial Power 2 p41: native
+ * WhichAttack splits it by ranged-ness instead), and a dual power's line
+ * (native WhichAttack/IsDualPower, `-Module-.cs` ~23628) takes its second
+ * alternative with a ranged weapon, else its first.
  */
-const WISDOM_POWER_BONUS_SENTENCE =
-  ". Gain a power bonus to this attack equal to your Wisdom modifier.";
-
-function extractedPowerBonus(
-  line: string,
-  stats: Readonly<Record<string, EvaluatedStat>>,
-): number {
-  return line
-    .toLocaleLowerCase()
-    .includes(WISDOM_POWER_BONUS_SENTENCE.toLocaleLowerCase())
-    ? numericStat(stats, "Wisdom modifier")
-    : 0;
-}
-
-/** The attack line without that sentence, so "Wisdom" is not read as one
- * of its attack abilities. */
-function withoutExtractedPowerBonus(line: string): string {
-  const start = line
-    .toLocaleLowerCase()
-    .indexOf(WISDOM_POWER_BONUS_SENTENCE.toLocaleLowerCase());
-  return start < 0
-    ? line
-    : `${line.slice(0, start)}.${line.slice(start + WISDOM_POWER_BONUS_SENTENCE.length)}`;
-}
-
-/**
- * "<Ability> (thrown weapon) or <Ability>" (Reactive Shot's attack and hit
- * lines): a thrown weapon takes the first ability, any other weapon the
- * second, for attack and damage alike. Divergence (D105, Martial Power 2
- * p41): native WhichAttack splits this at ") or " by ranged-ness, so a bow
- * attacks with Dexterity but its damage reads the first ability, Strength,
- * which the text contradicts.
- */
-function thrownWeaponAlternative(line: string, thrownWeapon: boolean): string {
-  const isAbility = (name: string) =>
-    abilityNames.some((ability) => key(ability) === key(name));
-  return line.replace(
-    /\b([A-Za-z]+) \(thrown weapon\) or ([A-Za-z]+)\b/giu,
-    (whole, thrown: string, other: string) =>
-      isAbility(thrown) && isAbility(other)
-        ? thrownWeapon
-          ? thrown
-          : other
-        : whole,
-  );
-}
-
-/**
- * Native WhichAttack/IsDualPower (`-Module-.cs` ~23628): a dual power's
- * attack line splits at its first ") or " (else " with a melee weapon or
- * two "); a ranged weapon takes the second alternative, anything else the
- * first. Only lines naming both a melee and a ranged alternative split
- * here; "<Ability> (thrown weapon) or <Ability>" is
- * `thrownWeaponAlternative`.
- */
-function dualAttackAlternatives(
-  line: string,
-): readonly [string, string] | undefined {
-  const twoWeapons = / with a melee weapon or two /i.exec(line);
-  if (twoWeapons !== null)
-    return [
-      line.slice(0, twoWeapons.index),
-      line.slice(twoWeapons.index + twoWeapons[0].length),
-    ];
-  if (!/\(melee[^]*\sor\s[^]*\(ranged/i.test(line)) return undefined;
-  const split = line.toLowerCase().indexOf(") or ");
-  return split < 0
-    ? undefined
-    : [line.slice(0, split + 1), line.slice(split + ") or ".length)];
+function rowAttackLine(
+  field: AttackFieldIr,
+  thrownWeapon: boolean,
+  rangedWeapon: boolean,
+): AttackLineIr {
+  const choice = thrownWeapon ? (field.thrown ?? field.other) : field.other;
+  return "alternatives" in choice
+    ? choice.alternatives[rangedWeapon ? 1 : 0]
+    : choice.line;
 }
 
 interface AuthoredAttack {
   readonly ordinal: number;
   readonly line: string;
+  readonly field: AttackFieldIr;
   readonly target?: string;
   readonly hit?: string;
   readonly attackType?: string;
 }
 
-const attackOrdinals = new Map([
-  ["primary", 1],
-  ["secondary", 2],
-  ["tertiary", 3],
-  ["quaternary", 4],
-]);
-
-function attackOrdinal(name: string): number | undefined {
-  const match = name
-    .trim()
-    .match(/^(primary|secondary|tertiary|quaternary)\s+/i);
-  return match?.[1] === undefined
-    ? undefined
-    : attackOrdinals.get(key(match[1]));
-}
-
+/**
+ * The power's attacks: each attack slot's field (with the character's
+ * `modify` overlays) by attack ordinal, the last field of a role winning;
+ * an attack only when its line names a defense.
+ */
 function authoredAttacks(
   power: ContentEntity,
   overlays: readonly FieldOverlay[],
+  texts: PowerTexts,
 ): readonly AuthoredAttack[] {
   const attacks = new Map<number, string>();
   const targets = new Map<number, string>();
   const hits = new Map<number, string>();
   const attackTypes = new Map<number, string>();
-  let activeOrdinal = 1;
-  for (const specific of [...power.specifics].sort(
-    (left, right) => left.ordinal - right.ordinal,
-  )) {
-    const name = specific.name.trim();
+  for (const [specificOrdinal, role, ordinal] of texts.slots) {
+    const specific = power.specifics.find(
+      (candidate) => candidate.ordinal === specificOrdinal,
+    );
+    if (specific === undefined) continue;
     let value = specific.value;
     for (const overlay of overlays) {
       if (
         overlay.targetDefinitionIds.includes(power.id) &&
-        key(overlay.field) === key(name)
+        key(overlay.field) === key(specific.name)
       ) {
         value = modifiedFieldValue(value, overlay) ?? "";
       }
     }
-    const namedOrdinal = attackOrdinal(name);
-    if (namedOrdinal !== undefined) activeOrdinal = namedOrdinal;
-    if (/targets?$/i.test(name) && value.trim().length > 0)
-      targets.set(namedOrdinal ?? activeOrdinal, value.trim());
-    if (/attack$/i.test(name) && /\bvs\.?\s+[A-Za-z]+/i.test(value))
-      attacks.set(namedOrdinal ?? activeOrdinal, value.trim());
-    if (/^(?:(?:primary|secondary|tertiary|quaternary)\s+)?hit$/i.test(name))
-      hits.set(namedOrdinal ?? activeOrdinal, value.trim());
-    if (/attack type$/i.test(name))
-      attackTypes.set(namedOrdinal ?? activeOrdinal, value.trim());
+    const text = value.trim();
+    if (role === "target" && text.length > 0) targets.set(ordinal, text);
+    if (role === "attack" && texts.attack(text).isAttack)
+      attacks.set(ordinal, text);
+    if (role === "hit") hits.set(ordinal, text);
+    if (role === "attack-type") attackTypes.set(ordinal, text);
   }
   return [...attacks.entries()]
     .sort(([left], [right]) => left - right)
@@ -2322,14 +2166,13 @@ function authoredAttacks(
       return {
         ordinal,
         line,
+        field: texts.attack(line),
         ...(target === undefined ? {} : { target }),
         ...(hit === undefined ? {} : { hit }),
         ...(attackType === undefined ? {} : { attackType }),
       };
     });
 }
-
-const ATTACK_LINE_PATTERN = /^(.*?)\s+vs\.?\s+([A-Za-z]+)/i;
 
 /**
  * The ability an authored attack line uses for this character: an explicit
@@ -2341,28 +2184,24 @@ const ATTACK_LINE_PATTERN = /^(.*?)\s+vs\.?\s+([A-Za-z]+)/i;
  * (~23335) whatever the class's key abilities are.
  */
 function attackLineAbility(
-  line: string,
+  line: AttackLineIr,
   stats: Readonly<Record<string, EvaluatedStat>>,
   explicitAbilityChoice: string | undefined,
   chosen?: string,
 ): string {
-  const attackLeft = line.match(ATTACK_LINE_PATTERN)?.[1] ?? "";
-  const special = specialAttackAbility(attackLeft, stats, chosen);
+  const special = specialAttackAbility(line.special, stats, chosen);
   if (special !== undefined) return special;
-  const availableAbilities = abilityNames.filter((ability) =>
-    new RegExp(`\\b${ability}\\b`, "i").test(line),
-  );
   if (
     explicitAbilityChoice !== undefined &&
-    (new RegExp(`\\b${explicitAbilityChoice}\\b`, "i").test(line) ||
-      /primary ability/i.test(attackLeft))
+    ((line.abilities ?? []).some(
+      (ability) => ability === explicitAbilityChoice,
+    ) ||
+      line.primaryAbility === true)
   )
     return explicitAbilityChoice;
-  if (availableAbilities.length > 0)
-    return highestAbility(stats, availableAbilities);
-  return /primary ability/i.test(attackLeft)
-    ? highestScoreAbility(stats)
-    : "Unknown";
+  if (line.abilities !== undefined && line.abilities.length > 0)
+    return highestAbility(stats, line.abilities);
+  return line.primaryAbility === true ? highestScoreAbility(stats) : "Unknown";
 }
 
 export interface PowerAttackProfile {
@@ -2371,8 +2210,6 @@ export interface PowerAttackProfile {
   /** The defenses its attacks target (AC, Fortitude, Reflex, Will). */
   readonly defenses: readonly string[];
 }
-
-const defenseNames = ["AC", "Fortitude", "Reflex", "Will"] as const;
 
 /**
  * What a power attacks with and against, from its authored attack lines,
@@ -2389,60 +2226,23 @@ export function powerAttackProfile(
 ): PowerAttackProfile {
   const abilities = new Set<string>();
   const defenses = new Set<string>();
-  for (const { line } of authoredAttacks(power, [])) {
-    const ability = attackLineAbility(line, input.stats, undefined);
+  for (const { field } of authoredAttacks(power, [], powerTexts(power))) {
+    const ability = attackLineAbility(
+      authoredAttackLine(field),
+      input.stats,
+      undefined,
+    );
     if (ability !== "Unknown") abilities.add(ability);
-    for (const match of line.matchAll(/\bvs\.?\s+([A-Za-z]+)/gi)) {
-      const defense = defenseNames.find((name) =>
-        key(name).startsWith(key(match[1]!).slice(0, 3)),
-      );
-      if (defense !== undefined) defenses.add(defense);
-    }
+    for (const defense of field.defenses ?? []) defenses.add(defense);
   }
   return { abilities: [...abilities], defenses: [...defenses] };
 }
 
 /**
- * Native AttackPowerModRepl (D20RulesEngine `-Module-.cs`, around 23530):
- * exact increase lines whose 11th- and 21st-level bonuses the generic parse
- * below would only half read. The value replaces the line's `+N`.
- */
-const NATIVE_INCREASE_LINES: readonly {
-  readonly text: string;
-  readonly paragon: number;
-  readonly epic: number;
-}[] = [
-  {
-    text: "Increase to +6 at 11th level, +8 at 21st level.",
-    paragon: 6,
-    epic: 8,
-  },
-  {
-    text: "Increase to +6 bonus at 11th level and +8 bonus at 21st level.",
-    paragon: 6,
-    epic: 8,
-  },
-  {
-    text: "Increase the bonus to attack rolls to +4 at 11th level and +6 at 21st level",
-    paragon: 4,
-    epic: 6,
-  },
-  {
-    text: "Increase to +4 bonus at 11th level, and to +6 at 21st level",
-    paragon: 4,
-    epic: 6,
-  },
-  {
-    text: "Increase to +4 bonus at 11th level, and to +6 bonus at 21st level",
-    paragon: 4,
-    epic: 6,
-  },
-];
-
-/**
  * Native AttackPowerModRepl's by-name branches: these powers' `+N` becomes
  * the tier bonus whatever their attack line says (Dragon Breath's increase
- * is only in its Hit line). Below the tier the authored `+N` stands.
+ * is only in its Hit line). Below the tier the authored `+N` stands. Its
+ * exact increase lines are matched at pack build (`AttackBonusIr.tier`).
  */
 const NATIVE_NAMED_INCREASES: readonly {
   readonly name: string;
@@ -2460,143 +2260,43 @@ const NATIVE_NAMED_INCREASES: readonly {
  * "+ 1 per enemy adjacent to you" (Valiant Strike) adds no number; the row
  * gets this reminder instead.
  */
-const PER_ADJACENT_ENEMY_ATTACK =
-  /\+\s*1 per enemy adjacent to you\s+vs\.?\s/iu;
 const PER_ADJACENT_ENEMY_REMINDER =
   "+1 attack bonus per enemy adjacent to you.";
 
+/** A row without a hit text reads an empty damage expression. */
+const emptyHitLine = parseHitLine("").other;
+
+/** The attack line's "+N" at this level (native CalcStatVsDefense and
+ *  AttackPowerModRepl). */
 function powerBonusAtLevel(
-  line: string,
+  bonus: AttackBonusIr,
   level: number,
   powerName: string,
 ): number {
-  const normalized = key(line.replace(/\s+/g, " "));
+  if (bonus.perAdjacentEnemy === true) return 0;
   const native =
-    NATIVE_INCREASE_LINES.find(({ text }) => normalized.includes(key(text))) ??
+    bonus.tier ??
     NATIVE_NAMED_INCREASES.find(({ name }) => key(name) === key(powerName));
-  const firstLine = line.split("\n")[0] ?? line;
-  if (PER_ADJACENT_ENEMY_ATTACK.test(firstLine)) return 0;
-  // Native CalcStatVsDefense reads a "+N" after any word of the attack
-  // stat: "Strength + 2", "Your highest ability modifier + 6", "Your
-  // highest ability score +9".
-  let bonus = Number(
-    firstLine.match(
-      /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)(?:\s+score)?(?:\s+modifier)?\s*\+\s*(\d+)/i,
-    )?.[1] ?? 0,
-  );
-  if (native !== undefined && bonus !== 0)
+  if (native !== undefined && (bonus.base ?? 0) !== 0)
     return (
       (level >= 21 ? native.epic : level >= 11 ? native.paragon : undefined) ??
-      bonus
+      bonus.base ??
+      0
     );
-  for (const match of line.matchAll(
-    /(?:Level\s+)?(\d+)(?:st|nd|rd|th)?(?:\s+level)?\s*:\s*[^\n]*?\+\s*(\d+)|Increase\s+to\s+\+(\d+)\s+bonus\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi,
-  )) {
-    const threshold = Number(match[1] ?? match[4]);
-    const candidate = Number(match[2] ?? match[3]);
-    if (threshold <= level && Number.isFinite(candidate)) bonus = candidate;
-  }
-  return bonus;
+  let value = bonus.base ?? 0;
+  for (const step of bonus.steps ?? [])
+    if (step.level <= level) value = step.bonus;
+  return value;
 }
 
-function lineAtLevel(
+/** The hit line this level reads (native HigherLevelDamage, parsed at pack
+ *  build), or undefined without a hit text. */
+function hitLineAtLevel(
+  texts: PowerTexts,
   value: string | undefined,
   level: number,
-): string | undefined {
-  if (value === undefined) return undefined;
-  const first = value.split("\n")[0];
-  // Native HigherLevelDamage: a "Level N:" line (LevelIncrease) wins over
-  // an increase sentence.
-  let selected: string | undefined;
-  let selectedLevel = 0;
-  for (const line of value.split("\n").slice(1)) {
-    const match = line.match(/^Level\s+(\d+):\s*(.*)$/i);
-    if (
-      match?.[1] !== undefined &&
-      match[2] !== undefined &&
-      Number(match[1]) <= level &&
-      Number(match[1]) >= selectedLevel
-    ) {
-      selectedLevel = Number(match[1]);
-      selected = match[2];
-    }
-  }
-  return selected ?? increasedDamageAtLevel(value, level) ?? first;
-}
-
-/**
- * Native ParseIncreaseLine (D20RulesEngine `-Module-.cs`, around 24512):
- * exact increase sentences it rewrites before parsing. Kelemvor's Judgment
- * omits "level" after later thresholds, which the parse needs to step on;
- * the dragonborn and genasi breath lines lead with an attack bonus.
- */
-const NATIVE_INCREASE_REWRITES: readonly {
-  readonly text: string;
-  readonly rewrite: string;
-}[] = [
-  {
-    text: "Increase damage to 2d12 at 5th level, 3d12 at 11th, 4d12 at 15th, 5d12 at 21st, and 6d12 at 25th.",
-    rewrite:
-      "Increase damage to 2d12 + wisdom modifier damage at 5th level, 3d12 + wisdom modifier damage at 11th level, 4d12 + wisdom modifier damage at 15th level, 5d12 + wisdom modifier damage at 21st level, and 6d12 + wisdom modifier damage at 25th level.",
-  },
-  {
-    text: "Increase damage to 2d12 + Wisdom modifier at 5th level, 3d12 + Wisdom modifier at 11th, 4d12 + Wisdom modifier at 15th, 5d12 + Wisdom modifier at 21st, and 6d12 + Wisdom modifier at 25th.",
-    rewrite:
-      "Increase damage to 2d12 + Wisdom modifier at 5th level, 3d12 + Wisdom modifier at 11th level, 4d12 + Wisdom modifier at 15th level, 5d12 + Wisdom modifier at 21st level, and 6d12 + Wisdom modifier at 25th level.",
-  },
-  {
-    text: "Increase to +4 bonus and 2d6 + Constitution modifier damage at 11th level, and to +6 bonus and 3d6 + Constitution modifier damage at 21st level.",
-    rewrite:
-      "Increase damage to 2d6 + Constitution modifier damage at 11th level, and 3d6 + Constitution modifier damage at 21st level.",
-  },
-  {
-    text: "Increase to +4 bonus and 2d6 + Dexterity modifier damage at 11th level, and to +6 bonus and 3d6 + Dexterity modifier damage at 21st level.",
-    rewrite:
-      "Increase damage to 2d6 + Dexterity modifier damage at 11th level, and 3d6 + Dexterity modifier damage at 21st level.",
-  },
-];
-
-/**
- * Native HigherLevelDamage → ParseIncreaseLine: from the first "Increase
- * damage to " (else "Increase to "), anywhere in the hit text and in any
- * case, each clause from its first digit up to " at N" replaces the damage
- * once the character reaches level N; the next clause starts at the
- * following " level". Undefined when no clause applies.
- */
-function increasedDamageAtLevel(
-  hit: string,
-  level: number,
-): string | undefined {
-  const lower = hit.toLowerCase();
-  let start = lower.indexOf("increase damage to ");
-  if (start < 0) start = lower.indexOf("increase to ");
-  if (start < 0) return undefined;
-  const sentence = hit.slice(start).replace(/\r\n/g, "\n");
-  let rest =
-    NATIVE_INCREASE_REWRITES.find(({ text }) => key(text) === key(sentence))
-      ?.rewrite ?? sentence;
-  let damage: string | undefined;
-  for (;;) {
-    const digit = rest.search(/\d/);
-    if (digit < 0) break;
-    let clause = rest.slice(digit);
-    // Divergence (D105): native takes the clause from its first digit, so
-    // a "+4 bonus and 2d8 + ... damage" clause it does not rewrite (Sun
-    // Flare, Improved Razor Storm) reads as "4 bonus and 2d8 ..."; the
-    // power text and native's own breath rewrites mean the damage after it.
-    const bonusLead =
-      rest[digit - 1] === "+" ? /^\d+\s+bonus,?\s+and\s+/i.exec(clause) : null;
-    if (bonusLead !== null) clause = clause.slice(bonusLead[0].length);
-    const at = clause.toLowerCase().indexOf(" at ");
-    if (at < 0) break;
-    const threshold = /^\d+/.exec(clause.slice(at + 4))?.[0];
-    if (threshold !== undefined && level >= Number(threshold))
-      damage = clause.slice(0, at);
-    const next = clause.toLowerCase().indexOf(" level", at);
-    if (next < 0) break;
-    rest = clause.slice(next);
-  }
-  return damage;
+): HitLineIr | undefined {
+  return value === undefined ? undefined : hitLineAt(texts.hit(value), level);
 }
 
 /**
@@ -3169,6 +2869,26 @@ export function evaluatePowers(input: {
       byId,
       legacyLoadoutHints(input.textStrings),
     );
+  // The records whose `modify` overlays may replace a power's text: the
+  // pack parsed their values with theirs (`_Power Text IR`).
+  const occurrenceDefinitions = new Map(
+    (input.occurrences ?? []).map((occurrence) => [
+      occurrence.id,
+      occurrence.definitionId,
+    ]),
+  );
+  const overlayProviders = [
+    ...new Set(
+      input.overlays.flatMap((overlay) => {
+        const definitionId = occurrenceDefinitions.get(
+          overlay.providerOccurrenceId,
+        );
+        const provider =
+          definitionId === undefined ? undefined : byId.get(key(definitionId));
+        return provider === undefined ? [] : [provider];
+      }),
+    ),
+  ];
   // Native FindCharElement: an owned element by name or ID.
   const ownedElementKeys = new Set(
     input.activeDefinitionIds.flatMap((id) => {
@@ -3324,7 +3044,8 @@ export function evaluatePowers(input: {
       .split(",")
       .map((value) => value.trim())
       .filter(Boolean);
-    const summonedCreature = summonedCreaturePower(power, keywords);
+    const texts = powerTexts(power, overlayProviders);
+    const summonedCreature = summonedCreaturePower(texts, keywords);
     const attackType = effectiveField(power, "Attack Type", input.overlays);
     const rawBasic = effectiveField(power, "_BasicAttack", input.overlays)
       ?.trim()
@@ -3337,11 +3058,11 @@ export function evaluatePowers(input: {
           : /^ranged basic attack$/i.test(power.name)
             ? "ranged"
             : undefined;
-    const attackDefinitions = authoredAttacks(power, input.overlays);
-    const attackLine = attackDefinitions[0]?.line;
+    const attackDefinitions = authoredAttacks(power, input.overlays, texts);
     // `_CalculatedHit` (content corrections) supplies a damage line for a
     // power whose damage is only in prose, as legacy hardcodes Storm Pillar.
-    const hitLine = lineAtLevel(
+    const hitLine = hitLineAtLevel(
+      texts,
       attackDefinitions[0]?.hit ??
         effectiveField(power, "Hit", input.overlays) ??
         effectiveField(power, "_CalculatedHit", input.overlays),
@@ -3360,7 +3081,8 @@ export function evaluatePowers(input: {
     const damageHitLine =
       indentedHit === undefined
         ? hitLine
-        : lineAtLevel(
+        : hitLineAtLevel(
+            texts,
             `${indentedHit.trim().slice(0, -1)} damage.`,
             input.level,
           );
@@ -3368,8 +3090,12 @@ export function evaluatePowers(input: {
     // Native ParseDamage: `_DamageDie` (set by a feat's `modify`, e.g.
     // Empowered Dragon Breath's d10) replaces the size of the dice.
     const damageDie = effectiveField(power, "_DamageDie", input.overlays);
-    const hasAttack = /\bvs\.?\s+[A-Za-z]+/i.test(attackLine ?? "");
-    const recoveries = recoveryExpressions(hitLine, effectLine);
+    // Every authored attack names a defense.
+    const hasAttack = attackDefinitions.length > 0;
+    const recoveries = recoveryExpressions(
+      hitLine?.recoveries,
+      effectLine === undefined ? undefined : texts.recoveries(effectLine),
+    );
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     // Native NonDamagePower (-Module-.cs ~24736): CalcDamage returns at once
     // for these, whose Hit prose names damage they do not deal.
@@ -3466,10 +3192,11 @@ export function evaluatePowers(input: {
       beast !== undefined &&
       calculated &&
       (attackDefinitions.length > 0
-        ? attackDefinitions.every((definition) =>
-            isBeastAttackLine(definition.line),
+        ? attackDefinitions.every(
+            (definition) =>
+              authoredAttackLine(definition.field).beastBonus !== undefined,
           )
-        : isBeastHit(hitLine));
+        : hitLine?.beastHit === true);
     if (beastOnly && candidates.length > 1) {
       const single = candidates.find((item) => item.unarmed) ?? candidates[0]!;
       candidates.splice(0, candidates.length, single);
@@ -3595,6 +3322,7 @@ export function evaluatePowers(input: {
       const fieldBonusBase = strikerWeapon(equipment).base;
       const weaponSpecific = nativePowerFieldBonuses({
         power,
+        fieldBonuses: texts.fieldBonuses,
         weaponPower,
         mainhandWeapon: !equipment.unarmed,
         weaponBase:
@@ -3640,31 +3368,34 @@ export function evaluatePowers(input: {
       const chosen = chosenAbility(input.textStrings ?? {});
       const calculatedAttacks = (
         attackDefinitions.length === 0
-          ? [{ ordinal: 1, line: "" } as AuthoredAttack]
+          ? [
+              {
+                ordinal: 1,
+                line: "",
+                field: texts.attack(""),
+              } as AuthoredAttack,
+            ]
           : attackDefinitions
       ).map((definition): PowerAttack => {
         const phaseAttackType = definition.attackType ?? attackType;
-        const extractedBonus = extractedPowerBonus(
-          definition.line,
-          input.stats,
-        );
-        const parsedLine = thrownWeaponAlternative(
-          withoutExtractedPowerBonus(definition.line),
+        // Native ExtractPowerMods (`-Module-.cs` ~23703): Hawk's Talon's
+        // sentence adds a power bonus equal to the Wisdom modifier.
+        const extractedBonus =
+          definition.field.wisdomPowerBonus === true
+            ? numericStat(input.stats, "Wisdom modifier")
+            : 0;
+        const authoredLine = rowAttackLine(
+          definition.field,
           thrownWeapon,
+          equipment.rangedWeapon,
         );
-        const phaseAlternatives = dualAttackAlternatives(parsedLine);
-        const authoredLine =
-          phaseAlternatives === undefined
-            ? parsedLine
-            : phaseAlternatives[equipment.rangedWeapon ? 1 : 0];
-        const attack = authoredLine.match(ATTACK_LINE_PATTERN);
+        const defense = authoredLine.defense ?? "Unknown";
         // Legacy CalcBAB: the beast's attack bonus replaces the whole
         // calculation; only bonuses keyed to this power add to it.
-        if (beast !== undefined && isBeastAttackLine(authoredLine)) {
+        if (beast !== undefined && authoredLine.beastBonus !== undefined) {
           const powerBonus =
-            Number(
-              /attack\s+bonus\s*\+\s*(\d+)/i.exec(authoredLine)?.[1] ?? 0,
-            ) || powerBonusAtLevel(authoredLine, input.level, power.name);
+            authoredLine.beastBonus ||
+            powerBonusAtLevel(authoredLine.bonus, input.level, power.name);
           const attackComponents: PowerComponent[] = [
             { label: "beast's attack bonus", value: beast.attackBonus },
             ...(powerBonus === 0
@@ -3677,7 +3408,7 @@ export function evaluatePowers(input: {
             ordinal: definition.ordinal,
             attackStat: BEAST_ATTACK_STAT,
             powerBonus,
-            defense: attack?.[2] ?? "Unknown",
+            defense,
             attackBonus: attackComponents.reduce(
               (sum, component) => sum + component.value,
               0,
@@ -3695,9 +3426,9 @@ export function evaluatePowers(input: {
         // A summoned creature attacks with your level plus a fixed bonus;
         // no ability, weapon or implement applies, only the creature's own
         // bonuses and bonuses keyed to this power.
-        const levelAttack = LEVEL_ATTACK_LINE.exec(authoredLine);
-        if (levelAttack !== null) {
-          const powerBonus = Number(levelAttack[1]);
+        const levelAttack = authoredLine.levelAttack;
+        if (levelAttack !== undefined) {
+          const powerBonus = levelAttack.bonus;
           const attackComponents: PowerComponent[] = [
             { label: "your level", value: input.level },
             { label: "power attack bonus", value: powerBonus },
@@ -3715,7 +3446,7 @@ export function evaluatePowers(input: {
             ordinal: definition.ordinal,
             attackStat: LEVEL_ATTACK_STAT,
             powerBonus,
-            defense: levelAttack[2] ?? "Unknown",
+            defense: levelAttack.defense,
             attackBonus: attackComponents.reduce(
               (sum, component) => sum + component.value,
               0,
@@ -3762,7 +3493,6 @@ export function evaluatePowers(input: {
           };
         }
         keyAbilityDamage.set(definition.ordinal, damageOverride);
-        const defense = attack?.[2] ?? "Unknown";
         // Native CalcBAB (`-Module-.cs` ~23982) registers each built-in
         // part in the row's att_type_max as it adds it: the ability
         // modifier as "abilmod", half level as "HALF-LEVEL", the proficiency
@@ -3846,7 +3576,7 @@ export function evaluatePowers(input: {
           ]),
         );
         const authoredBonus = powerBonusAtLevel(
-          authoredLine,
+          authoredLine.bonus,
           input.level,
           power.name,
         );
@@ -3912,7 +3642,7 @@ export function evaluatePowers(input: {
       const mainWeaponDie = weaponDie(attackType, attackStat, false);
 
       const calculateDamage = (
-        authoredHit: string | undefined,
+        authoredHit: HitLineIr | undefined,
         attackStat: string,
         attackType: string | undefined,
         keyAbility: KeyAbilityOverride | undefined,
@@ -3924,29 +3654,35 @@ export function evaluatePowers(input: {
         // Native HigherLevelDamage (`-Module-.cs` ~24587): from 21st level
         // Chilling Cloud deals "twice intelligence modifier damage." by name
         // (its increase is in the Effect). We keep its cold type (D105).
-        const hitLine =
+        const hitText =
           key(power.name) === key(EXCEPTION_NAMES.chillingCloud) &&
           input.level >= 21
-            ? "twice Intelligence modifier cold damage."
-            : authoredHit === undefined
-              ? undefined
-              : thrownWeaponAlternative(authoredHit, thrownWeapon);
-        const hitClauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine ?? "")
-          ? (hitLine ?? "").split(/\s+or\s+/i)
-          : [hitLine ?? ""];
-        const selectedHitClause =
-          hitClauses.length > 1
-            ? equipment.rangedWeapon
-              ? hitClauses.at(-1)
-              : hitClauses[0]
-            : hitLine;
+            ? hitLineAtLevel(
+                texts,
+                "twice Intelligence modifier cold damage.",
+                input.level,
+              )
+            : authoredHit;
+        // The line as this weapon reads it: "<A> (thrown weapon) or <B>"
+        // by thrown-ness, a "(melee …) or … (ranged …)" line's clause by
+        // ranged-ness (parsed at pack build).
+        const hitLine =
+          hitText === undefined
+            ? emptyHitLine
+            : thrownWeapon
+              ? (hitText.thrown ?? hitText.other)
+              : hitText.other;
+        const clause =
+          hitLine.clauses.length > 1 && equipment.rangedWeapon
+            ? hitLine.clauses[1]!
+            : hitLine.clauses[0];
         if (
           beast !== undefined &&
-          (attackStat === BEAST_ATTACK_STAT || isBeastHit(selectedHitClause))
+          (attackStat === BEAST_ATTACK_STAT || clause.beastHit === true)
         )
           return {
             ...beastDamage({
-              hitClause: selectedHitClause ?? "",
+              clause,
               beast,
               stats: input.stats,
               power,
@@ -3960,7 +3696,11 @@ export function evaluatePowers(input: {
         const fixedCreature =
           summonedCreature && attackStat === LEVEL_ATTACK_STAT;
         const damageComponents: PowerComponent[] = [];
-        const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
+        const specialDamage = nativeSpecialDamage(
+          power,
+          hitLine.special,
+          input.level,
+        );
         // Native ParseWeaponDmg: every N[W] term of the damage expression
         // (the text before "damage"; level lines and riders are not part of
         // it), each "(off-hand weapon)" one with the off-hand die.
@@ -3969,32 +3709,19 @@ export function evaluatePowers(input: {
         // also stops parsing at any such parenthetical, dropping the ability
         // modifiers after it (Eruption of Steel's "(main weapon)"), which
         // this keeps.
-        const weaponTermPattern =
-          /(\d*)\[W\]( \(off-hand(?: weapon| end)?\))?/giu;
-        const expressionTerms = [
-          ...(
-            (selectedHitClause ?? "").split(/\bdamage\b/iu)[0] ?? ""
-          ).matchAll(weaponTermPattern),
-        ];
-        const firstTerm = [
-          ...(selectedHitClause ?? "").matchAll(weaponTermPattern),
-        ].slice(0, 1);
-        const weaponTerms =
-          expressionTerms.length > 0 ? expressionTerms : firstTerm;
+        const weaponTerms = clause.weaponTerms ?? [];
         const weaponMatch = weaponTerms[0];
         // Legacy: an implement with no weapon die (a rod) on a [W] power
         // deals only the ability modifier.
         const dieless =
-          weaponMatch !== null &&
           weaponMatch !== undefined &&
           equipment.implementDefinition &&
           !equipment.weaponDefinition &&
           equipment.weaponDamage === undefined;
         const abilityOnly = specialDamage?.abilityOnly === true || dieless;
-        const fixedMatch = selectedHitClause?.match(/(\d+d\d+)/i);
         const dice =
           specialDamage?.dice ??
-          (weaponMatch !== null && weaponMatch !== undefined
+          (weaponMatch !== undefined
             ? [
                 dieless
                   ? undefined
@@ -4004,38 +3731,30 @@ export function evaluatePowers(input: {
                           weaponDie(
                             attackType,
                             attackStat,
-                            term[2] !== undefined,
+                            term.offhand === true,
                           ) ?? "1d4",
-                          Number(term[1] || 1),
+                          term.count,
                         ),
                       )
                       .join("+"),
                 key(power.name) === "howling strike"
-                  ? fixedMatch?.[1]
+                  ? clause.fixedDice
                   : undefined,
               ]
                 .filter(Boolean)
                 .join("+")
-            : withDamageDie(fixedMatch?.[1], damageDie));
-        const ongoing = /\bongoing\b/i.test(hitLine ?? "");
+            : withDamageDie(clause.fixedDice, damageDie));
+        const ongoing = hitLine.ongoing === true;
         // Native CalcDamage: dice-less flat damage; IsDamageRoll is false, so
         // the weapon's enhancement and roll-only bonuses do not apply.
         const flatBase =
           specialDamage?.flat ??
           (dice === undefined && specialDamage === undefined
-            ? nativeFlatDamageBase(selectedHitClause ?? "")
+            ? clause.flatBase
             : undefined);
         const flat = flatBase !== undefined;
         const hasDamage = dice !== undefined || flat;
-        const primaryDamageClause = withoutCompanionAbilityDamage(
-          (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "",
-        );
-        let damageAbilities: readonly string[] = abilityNames.filter(
-          (ability) =>
-            new RegExp(`\\b${ability} modifier\\b`, "i").test(
-              primaryDamageClause,
-            ),
-        );
+        let damageAbilities: readonly string[] = clause.modifierAbilities ?? [];
         // Native ParseAbilityMod (`-Module-.cs` ~24333): "+ your highest
         // ability modifier" (and "+ highest ...") and the bare "+ [your]
         // ability modifier" are HighestAbility whatever the attack used;
@@ -4047,23 +3766,14 @@ export function evaluatePowers(input: {
         // Scourge) is native's unknown "primary" stat; it resolves like the
         // bare form, as "Primary ability" does on the attack line.
         if (damageAbilities.length === 0) {
-          const chosenTerm = /\bchosen ability modifier\b/i.test(
-            primaryDamageClause,
-          );
-          if (
-            /\bhighest ability(?:\s+score)?\s+modifier\b/i.test(
-              primaryDamageClause,
-            )
-          )
+          if (clause.abilityPhrase === "highest")
             damageAbilities = [highestScoreAbility(input.stats)];
-          else if (chosenTerm)
+          else if (clause.abilityPhrase === "chosen")
             damageAbilities = chosen === undefined ? [] : [chosen];
-          else if (/\bability modifier\b/i.test(primaryDamageClause))
+          else if (clause.abilityPhrase === "ability")
             damageAbilities = [highestScoreAbility(input.stats)];
         }
-        const listedAbilities = abilityNames.filter((ability) =>
-          new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),
-        );
+        const listedAbilities: readonly string[] = clause.listedAbilities ?? [];
         if (damageAbilities.length === 0 && listedAbilities.length > 1)
           damageAbilities = [attackStat];
         if (
@@ -4077,10 +3787,8 @@ export function evaluatePowers(input: {
           ? [specialDamage.ability]
           : specialDamage?.suppressAbility
             ? []
-            : /\bor\b/i.test(primaryDamageClause)
-              ? listedAbilities.includes(
-                  attackStat as (typeof abilityNames)[number],
-                )
+            : clause.hasOr === true
+              ? listedAbilities.includes(attackStat)
                 ? [attackStat]
                 : damageAbilities.slice(0, 1)
               : damageAbilities;
@@ -4097,10 +3805,9 @@ export function evaluatePowers(input: {
               const ability = followsAttack ? attackStat : term;
               // Native CalcDamage: "twice [your] X modifier" doubles that
               // term (before half_damage halves it).
-              const twice = new RegExp(
-                `\\btwice\\s+(?:your\\s+)?${term} modifier\\b`,
-                "i",
-              ).test(primaryDamageClause);
+              const twice = (clause.twice ?? []).some(
+                (ability) => ability === term,
+              );
               const label = `${twice ? "twice " : ""}${ability} modifier`;
               const modifier =
                 numericStat(input.stats, `${ability} modifier`) *
@@ -4250,11 +3957,7 @@ export function evaluatePowers(input: {
         // Native CalcDamage parses only the damage expression: the hit line
         // up to its first "damage". A "+N bonus to damage rolls" rider after
         // it (Villain's Menace, Warlord's Strike) is a follow-up effect.
-        const damageExpression = `${(selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? ""} damage`;
-        const powerDamageBonus = Number(
-          damageExpression.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ??
-            0,
-        );
+        const powerDamageBonus = clause.powerDamageBonus ?? 0;
         if (hasDamage && !abilityOnly && powerDamageBonus !== 0)
           damageComponents.push({
             label: "power damage bonus",
@@ -4293,11 +3996,7 @@ export function evaluatePowers(input: {
                 overlays: input.overlays,
               })),
         ];
-        const primaryDamageText =
-          (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "";
-        const damageType = primaryDamageText.match(
-          /\b(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder)(?:\s*(?:,|and|or)\s*(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder))*\b/i,
-        )?.[0];
+        const damageType = clause.damageType;
         return {
           ...(specialDamage?.expression !== undefined
             ? { damage: specialDamage.expression }
@@ -4312,7 +4011,7 @@ export function evaluatePowers(input: {
                       ? String(damageBonus)
                       : formatDamage(dice, damageBonus),
                   }),
-          ...(damageType === undefined ? {} : { damageType: key(damageType) }),
+          ...(damageType === undefined ? {} : { damageType }),
           damageComponents: uniqueDamageComponents,
           conditionalDamage,
         };
@@ -4330,7 +4029,11 @@ export function evaluatePowers(input: {
               const definition = attackDefinitions.find(
                 (candidate) => candidate.ordinal === attack.ordinal,
               );
-              const phaseHit = lineAtLevel(definition?.hit, input.level);
+              const phaseHit = hitLineAtLevel(
+                texts,
+                definition?.hit,
+                input.level,
+              );
               const phaseDamage =
                 attack.ordinal === 1 &&
                 phaseHit === hitLine &&
@@ -4342,20 +4045,23 @@ export function evaluatePowers(input: {
                       attack.attackType,
                       keyAbilityDamage.get(attack.ordinal),
                     );
-              const roleText = `${definition?.line ?? ""} ${phaseHit ?? ""}`;
-              const usesOff = /\boff[- ]hand(?: weapon)?\b/i.test(roleText);
-              const usesMain = /\bmain(?:[- ]hand)? weapon\b/i.test(roleText);
+              const usesOff =
+                definition?.field.offHand === true ||
+                phaseHit?.offHand === true;
+              const usesMain =
+                definition?.field.mainWeapon === true ||
+                phaseHit?.mainWeapon === true;
               const weaponRole =
                 usesOff === usesMain ? undefined : usesOff ? "off" : "main";
               // Without a beast companion (none chosen), a beast phase has
               // no numbers to show.
               const companion =
                 beast === undefined &&
-                (/\bbeast(?:'s)?\b/i.test(definition?.line ?? "") ||
-                  hasCompanionAbilityDamage(phaseHit));
+                (definition?.field.beast === true ||
+                  phaseHit?.companionAbility === true);
               const beastPhase =
                 beast !== undefined &&
-                (attack.attacker === "beast" || isBeastHit(phaseHit));
+                (attack.attacker === "beast" || phaseHit?.beastHit === true);
               const eligible =
                 !companion &&
                 (beastPhase ||
@@ -4424,7 +4130,7 @@ export function evaluatePowers(input: {
           beastOnly && beast !== undefined
             ? beastAdditionalEffects(beast)
             : [
-                ...(PER_ADJACENT_ENEMY_ATTACK.test(attackLine ?? "")
+                ...(attackDefinitions[0]?.field.perAdjacentEnemy === true
                   ? [{ text: PER_ADJACENT_ENEMY_REMINDER, source: power.name }]
                   : []),
                 ...powerAdditionalEffects({
@@ -4477,18 +4183,19 @@ export function evaluatePowers(input: {
       unsupported.push("augment");
     if (
       !nonDamage &&
-      /\bdamage\b/i.test(hitLine ?? "") &&
+      hitLine?.damage === true &&
       variants.some((variant) => variant.damage === undefined) &&
       key(power.name) !== "call of the beast"
     )
       unsupported.push("unparsed-hit");
     if (
       beast === undefined &&
-      (hasCompanionAbilityDamage(hitLine) ||
+      (hitLine?.companionAbility === true ||
         attackDefinitions.some(
           (attack) =>
-            hasCompanionAbilityDamage(attack.hit) ||
-            /\bbeast(?:'s)?\b/i.test(attack.line),
+            (attack.hit !== undefined &&
+              texts.hit(attack.hit).companionAbility === true) ||
+            attack.field.beast === true,
         ))
     )
       unsupported.push(`companion-ability:${power.id}`);

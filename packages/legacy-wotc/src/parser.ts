@@ -15,6 +15,7 @@ import {
 import { SaxesParser } from "saxes";
 
 import { associateStatBlockField } from "./associate-stat-block";
+import { powerTextField } from "./power-text";
 import { applyLoadTimeSelfModifies } from "./self-modify";
 
 interface MutableElementNode {
@@ -330,6 +331,20 @@ export class D20RulesParser {
           ),
         );
     }
+    // A power's attack, hit and effect prose (and any `modify` value that
+    // replaces one), parsed once here into the field the engine reads.
+    const powerText = powerTextField(type, specifics, rules, specifics.length);
+    if (powerText.field !== undefined) specifics.push(powerText.field);
+    for (const issue of powerText.issues)
+      this.#diagnostics.push(
+        makeDiagnostic(
+          "info",
+          "power.text-unparsed",
+          `Power text: ${issue}`,
+          ordinal,
+          id,
+        ),
+      );
 
     const base = {
       id,

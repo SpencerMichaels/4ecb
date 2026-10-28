@@ -3,3 +3,4 @@ export {
   parseAssociateStatBlock,
   parseAssociateDamage,
 } from "./associate-stat-block";
+export { powerTextField } from "./power-text";

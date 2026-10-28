@@ -3176,7 +3176,8 @@ Decision — the builder departs from native here (cache v83):
   Dexterity"): a thrown weapon uses Strength for attack and damage, any
   other weapon Dexterity for both. Native WhichAttack (`-Module-.cs`
   ~23628) gives a bow a Dexterity attack but Strength damage; modern took
-  the higher of the two. `thrownWeaponAlternative` in `powers.ts`.
+  the higher of the two. `thrownWeaponAlternative` in content-domain
+  `power-text.ts` (parsed at pack build).
 - **A `Weapon` rider counts once per attack** (PHB p81 Giant's Wake, p84
   Fangs of Steel): native CalcMisc (~25992) adds a matching rider once per
   `Weapon` field, so a power repeating it under its secondary Hit adds it
