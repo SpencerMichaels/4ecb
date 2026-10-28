@@ -1003,6 +1003,8 @@ character before it is fixed, one slice per item.
      model, engine numbers, companion-style card~~ — done (D107, `ac5f3ea`).
   2. Prerequisite IR cache keyed on subject and text only, not on owned or
      known tokens: a cached result can outlive a change of choices (bug).
+     Also: `pnpm regenerate:edited-dnd4e sample-chars/Sylestine.dnd4e` fails
+     with "duplicate charelem tokens" (pre-existing, found 2026-10-28).
   3. Sheet display: power short descriptions in notes
      (`NoteHolder.GetShortDescription`, ~820 records, 20 samples); monk
      movement technique cards (`PowerCard.MonkMovementTechnique`,
