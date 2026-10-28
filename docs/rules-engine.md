@@ -47,6 +47,16 @@ Evaluation proceeds as follows:
    recoverable legality diagnostics.
 6. Return values with provenance, completeness, legality, and diagnostics.
 
+A `modify` changes one field of a record as native `ProcessModify` does: a
+`list-addition` (skipped when the field already contains it, native
+`ListContains`), else a `die-increase`, else the `value` (item-fields.ts
+`modifiedFieldValue`, used for item and power fields alike). `name="this"`
+without conditions or `type` is native `ParseOneRule`'s load-time rewrite of
+the record itself, so the content-pack import applies it
+(legacy-wotc `self-modify.ts`; a value the authored list already contains
+keeps the list, a D091 difference for Faervian); with `requires`/`wearing` it
+modifies the providing record at evaluation time.
+
 Typed stacking follows native `CalculateStatValue`/`AddStatValue`
 (D103): a stat's statadds apply in order against one cap per bonus type (a
 higher bonus replaces a lower one, a lower penalty a higher one, a bonus

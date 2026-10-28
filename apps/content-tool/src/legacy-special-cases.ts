@@ -176,6 +176,7 @@ const FREEBEES = "packages/rules-engine/src/freebees.test.ts";
 const ITEM_SETS = "packages/rules-engine/src/item-sets.test.ts";
 const WEAPON_GROUPS = "packages/rules-engine/src/weapon-groups.test.ts";
 const ITEM_FIELDS = "packages/rules-engine/src/item-fields.test.ts";
+const WOTC_PARSER = "packages/legacy-wotc/src/parser.test.ts";
 const LOADOUT_SLOTS = "packages/rules-engine/src/loadout-slots.test.ts";
 const SHEET = "packages/sheet-model/src/index.test.ts";
 const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
@@ -325,9 +326,22 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "D20RulesEngine/RULE.cs": generic(
       "Rule-statement static strings (field names, slots, money).",
     ),
-    ParseOneRule: generic(
-      "Rules XML statement parser: statement attributes (Usage, spellbook, type, ...) and the 'modify this Prereqs' shortcut.",
-      "content-pack import parses the same rule attributes",
+    ParseOneRule: code(
+      "Rules XML statement parser: statement attributes (Usage, spellbook, type, ...). An unconditional `modify name=\"this\"` (no type, no requires/wearing/not-wearing) writes its value into the record itself at database load: 'Prereqs' replaces the prerequisites, any other field goes through UpdateSpecificField (replace the field or append it).",
+      "content-pack import parses the same rule attributes; legacy-wotc self-modify.ts applyLoadTimeSelfModifies applies the load-time 'this' modify in the parser, so every consumer (compendium included) sees Hyrsam Fiddle's _ImplementForClass, Spiked Shield's WeaponEquiv, Deck of Many Things' Item Slot, Clarifying Impact's _BasicAttack and 36 paladin powers' Divine Sanction. Deliberate D091 difference: a value the authored field already lists (ListContains) leaves it alone, so Faervian +5/+6 keep all five _ImplementForPower power sources (native keeps only the last; the item text names every Implement class)",
+      test(
+        WOTC_PARSER,
+        "writes an unconditional value into the record's own field at load",
+      ),
+      test(WOTC_PARSER, "replaces a field and the Prereqs, last value winning"),
+      test(
+        WOTC_PARSER,
+        "keeps an authored list that already contains each value (D091, Faervian)",
+      ),
+      test(
+        WOTC_PARSER,
+        "leaves conditional, typed and list-addition this-modifies to run time",
+      ),
     ),
     "?A0x1e9d9cdc.ParseRulesElement": generic(
       "Rules XML element parser (name, type, internal-id, source, revision-date).",
@@ -629,7 +643,26 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Failure-reason text for exclusive (~) clauses.",
     ),
     InitializeAbilityScores: generic("Ability score records except 'any'."),
-    ListContains: generic("'any' matches every list entry."),
+    ListContains: code(
+      "'any' matches every list entry. CalcModifiedValue uses it to skip a list-addition the field already contains.",
+      "content-domain legacyListContains; item-fields.ts modifiedFieldValue (shared by item fields and powers.ts power fields) leaves the field unchanged, so AllAsThrown's Heavy Thrown, Two-Fisted Shooter's and Crossbow Savant's Load Free and Power of Skill's Lightning no longer repeat",
+      test(
+        WEAPON_GROUPS,
+        "matches whole comma entries like native ListContains",
+      ),
+      test(
+        ITEM_FIELDS,
+        "skips a list-addition the field already contains, as native ListContains",
+      ),
+      test(
+        POWERS,
+        "adds a keyword only when the power does not already have it",
+      ),
+      fixture(
+        "sample-chars/Hunzu 10.dnd4e",
+        "Power of Skill list-adds Lightning to Divine Bolts (Divine, Implement, Lightning): keywords stay three, not 'Lightning, Lightning'",
+      ),
+    ),
 
     // --- D20RulesEngine: items and equipment --------------------------
     "D20Workspace.RulesElementIsBoon": code(
@@ -1300,9 +1333,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Stores a loot damage override.",
       "character-domain inventory overrides",
     ),
-    "?A0x03aa98b1.ProcessModify": partial(
-      "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes; a modify with neither name nor select targets the provider's most recent child.",
-      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; item-fields.ts overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A 'this' modify with conditions (Unforgettable Cudgel's _PowerstatKeywords, Warsoul Weapon's prereqs) is not applied. A modify with neither name nor select (precedingChildTarget) walks the provider's child list (me[13]) up to the rule cursor: one child per grant and replace, number per select, in rule order regardless of level or conditions, so it targets the preceding grant's record or what the preceding replace or select's last slot chose, and nothing before any child or for an empty slot",
+    "?A0x03aa98b1.ProcessModify": code(
+      "modify rules targeting 'this'/'BaseItem'; 'large ' name prefixes; a modify with neither name nor select targets the provider's most recent child. A 'this' modify runs here only with conditions (requires/wearing/not-wearing; ParseOneRule applied the others at load) and modifies the providing record. CalcModifiedValue applies a list-addition (skipped when ListContains), else a die-increase, else the value.",
+      "evaluator.ts overlay: 'BaseItem' is the executing enchantment's holding base; a conditional 'this' targets the provider's own definition (Unforgettable Cudgel and 48 other implements' _PowerstatKeywords for a Divine/Arcane/Primal character, Beast Mastery's _CS_ShortDescription), an unconditional one nothing (legacy-wotc applied it at import). item-fields.ts modifiedFieldValue keeps the native one-of precedence, and overlayTargets also modifies a weapon's 'Large <name>' record and steps dice with the native IncreaseDamageDie table. A modify with neither name nor select (precedingChildTarget) walks the provider's child list (me[13]) up to the rule cursor: one child per grant and replace, number per select, in rule order regardless of level or conditions, so it targets the preceding grant's record or what the preceding replace or select's last slot chose, and nothing before any child or for an empty slot",
       test(
         EVALUATOR,
         "resolves weapon and armor fields through modify overlays, including BaseItem",
@@ -1312,6 +1345,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "targets records by name, ID, type and Large size, never by context name",
       ),
       test(ITEM_FIELDS, "steps dice through the native one-handed table"),
+      test(
+        EVALUATOR,
+        "modifies the providing record for a conditional this-modify only",
+      ),
+      test(
+        ITEM_FIELDS,
+        "applies only the list-addition, else die-increase, else value of one modify",
+      ),
       test(EVALUATOR, "targets only the record the preceding grant made"),
       test(EVALUATOR, "does nothing before the provider has made a child"),
       test(EVALUATOR, "targets the most recent of several children"),

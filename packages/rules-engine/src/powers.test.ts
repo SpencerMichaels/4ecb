@@ -4137,6 +4137,46 @@ describe("extra damage dice", () => {
   });
 });
 
+describe("power field overlays (native CalcModifiedValue)", () => {
+  it("adds a keyword only when the power does not already have it", () => {
+    // Power of Skill list-adds Lightning to Divine Bolts and Thunder to
+    // another power; native ListContains skips the one it already has.
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["DIVINE_BOLTS"],
+      inventory: [],
+      stats: {},
+      overlays: [
+        {
+          providerOccurrenceId: "power-of-skill",
+          targetDefinitionIds: ["DIVINE_BOLTS"],
+          targetName: "Divine Bolts",
+          field: "Keywords",
+          listAddition: "Lightning",
+        },
+        {
+          providerOccurrenceId: "power-of-skill",
+          targetDefinitionIds: ["DIVINE_BOLTS"],
+          targetName: "Divine Bolts",
+          field: "Keywords",
+          listAddition: "Radiant",
+        },
+      ],
+      entities: [
+        entity("DIVINE_BOLTS", "Divine Bolts", "Power", {
+          Keywords: "Divine, Implement, Lightning",
+        }),
+      ],
+    });
+    expect(power?.keywords).toEqual([
+      "Divine",
+      "Implement",
+      "Lightning",
+      "Radiant",
+    ]);
+  });
+});
+
 describe("weapon fields and dice (native C_RulesElementField, FigureWeaponDice)", () => {
   const held = (id: string, definitionIds: string[], equippedQuantity = 1) => ({
     id,

@@ -2727,6 +2727,67 @@ describe("character evaluator", () => {
     );
   });
 
+  it("modifies the providing record for a conditional this-modify only", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "cudgel",
+            definitionId: "CUDGEL",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test"),
+        entity("CUDGEL", "Unforgettable Cudgel +2", "Feat", {
+          rules: [
+            rule(
+              "modify",
+              {
+                name: "this",
+                Field: "_PowerstatKeywords",
+                "list-addition": "holy symbol implement",
+                requires: "Root",
+              },
+              0,
+            ),
+            rule(
+              "modify",
+              {
+                name: "this",
+                Field: "_PowerstatKeywords",
+                "list-addition": "totem implement",
+                requires: "Missing",
+              },
+              1,
+            ),
+            // Unconditional: content-pack import already applied it.
+            rule(
+              "modify",
+              { name: "this", Field: "_BasicAttack", value: "Melee" },
+              2,
+            ),
+          ],
+        }),
+      ],
+    );
+    const self = result.overlays.filter(
+      (overlay) => overlay.targetName === "this",
+    );
+    expect(
+      self.map((overlay) => [overlay.field, overlay.targetDefinitionIds]),
+    ).toEqual([
+      ["_PowerstatKeywords", ["CUDGEL"]],
+      ["_BasicAttack", []],
+    ]);
+  });
+
   it("promotes CountsAsClass power categories for paragon multiclassing", () => {
     const result = evaluateCharacter(
       {
