@@ -1,5 +1,5 @@
 import { formatInventoryItemName } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { legacyListContains, type ContentEntity } from "@4ecb/content-domain";
 
 import type { FieldOverlay } from "./evaluator";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
@@ -92,18 +92,23 @@ function increaseOnce(die: string): string {
   return normalized === "2d4" ? "1d10" : die;
 }
 
-/** One overlay applied to a field's current value (native CalcModifiedValue). */
-function modifiedValue(
+/**
+ * One overlay applied to a field's current value (native CalcModifiedValue):
+ * a list-addition, else a die-increase, else the value. A list-addition the
+ * field already contains (ListContains, so also any field that is "any")
+ * leaves it unchanged, as native ProcessModify skips the Modify.
+ */
+export function modifiedFieldValue(
   current: string | undefined,
   overlay: FieldOverlay,
 ): string | undefined {
-  let value = current;
-  if (overlay.value !== undefined) value = overlay.value;
   if (overlay.listAddition !== undefined)
-    value = [value, overlay.listAddition].filter(Boolean).join(", ");
+    return legacyListContains(current ?? "", overlay.listAddition)
+      ? current
+      : [current, overlay.listAddition].filter(Boolean).join(", ");
   if (overlay.dieIncrease !== undefined)
-    value = increaseDamageDie(value ?? "", Number(overlay.dieIncrease) || 1);
-  return value;
+    return increaseDamageDie(current ?? "", Number(overlay.dieIncrease) || 1);
+  return overlay.value ?? current;
 }
 
 /** A record's field after every `modify` overlay that targets it. */
@@ -115,7 +120,7 @@ export function overlaidField(
   let value = rawField(entity, name);
   for (const overlay of overlays)
     if (key(overlay.field) === key(name) && overlayTargets(overlay, entity))
-      value = modifiedValue(value, overlay);
+      value = modifiedFieldValue(value, overlay);
   return value;
 }
 
@@ -132,7 +137,7 @@ export function overlaidFields(
     const existingName =
       Object.keys(fields).find((name) => key(name) === key(overlay.field)) ??
       overlay.field;
-    const value = modifiedValue(fields[existingName], overlay);
+    const value = modifiedFieldValue(fields[existingName], overlay);
     if (value !== undefined) fields[existingName] = value;
   }
   return fields;

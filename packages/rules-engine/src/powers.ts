@@ -51,6 +51,7 @@ import {
   legacyIsStaff,
   legacyLootImplement,
   legacyLootSlotContext,
+  modifiedFieldValue,
   withOverlaidItems,
 } from "./item-fields";
 
@@ -822,11 +823,8 @@ function effectiveField(
     if (
       overlay.targetDefinitionIds.includes(power.id) &&
       key(overlay.field) === key(name)
-    ) {
-      if (overlay.value !== undefined) value = overlay.value;
-      if (overlay.listAddition !== undefined)
-        value = [value, overlay.listAddition].filter(Boolean).join(", ");
-    }
+    )
+      value = modifiedFieldValue(value, overlay);
   }
   return value;
 }
@@ -1809,9 +1807,7 @@ function authoredAttacks(
         overlay.targetDefinitionIds.includes(power.id) &&
         key(overlay.field) === key(name)
       ) {
-        if (overlay.value !== undefined) value = overlay.value;
-        if (overlay.listAddition !== undefined)
-          value = [value, overlay.listAddition].filter(Boolean).join(", ");
+        value = modifiedFieldValue(value, overlay) ?? "";
       }
     }
     const namedOrdinal = attackOrdinal(name);

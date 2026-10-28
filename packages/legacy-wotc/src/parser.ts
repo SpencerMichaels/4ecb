@@ -14,6 +14,8 @@ import {
 } from "@4ecb/content-domain";
 import { SaxesParser } from "saxes";
 
+import { applyLoadTimeSelfModifies } from "./self-modify";
+
 interface MutableElementNode {
   kind: "element";
   name: string;
@@ -301,7 +303,14 @@ export class D20RulesParser {
     );
     const revisionDate = getAttribute(node.attributes, "revision-date");
     const flavor = optionalText(node, "Flavor");
-    const prerequisites = optionalText(node, "Prereqs");
+    const rules = buildRules(node);
+    // Native ParseOneRule applies unconditional `modify name="this"` rules
+    // to the record while loading it (see self-modify.ts).
+    const { specifics, prerequisites } = applyLoadTimeSelfModifies(
+      buildSpecifics(node),
+      optionalText(node, "Prereqs"),
+      rules,
+    );
     const printPrerequisites = optionalText(node, "print-prereqs");
 
     const base = {
@@ -317,8 +326,8 @@ export class D20RulesParser {
           ),
       ),
       categories,
-      specifics: buildSpecifics(node),
-      rules: buildRules(node),
+      specifics,
+      rules,
       description: buildDescription(node),
       extensions: buildExtensions(node),
       content: node.children,
