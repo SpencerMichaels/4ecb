@@ -37,6 +37,19 @@ describe("panel power card", () => {
     expect(markup.indexOf("print-card-body")).toBeGreaterThan(flavor);
   });
 
+  it("shows evaluated encounter uses on the usage line of every layout", () => {
+    for (const layout of ["print", "panel"] as const) {
+      const markup = renderToStaticMarkup(
+        createElement(PowerCard, {
+          card: { ...card, usage: "Encounter", encounterUses: 2 },
+          characterLevel: 1,
+          layout,
+        }),
+      );
+      expect(markup).toContain("<span>Encounter (2×) power</span>");
+    }
+  });
+
   it("never shows flavor on printed cards", () => {
     const markup = renderToStaticMarkup(
       createElement(PowerCard, {

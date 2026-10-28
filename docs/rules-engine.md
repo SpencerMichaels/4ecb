@@ -586,7 +586,8 @@ level) for the recovered "twice per encounter" Special texts, plus the
 overlaid `_ADDITIONAL_USES` field and the "<power ID>\_ADDITIONAL_USES" stat.
 Two D105 divergences, both from the records' own text: Special texts compare
 with whitespace collapsed (Ardent Surge), and additional uses add to the
-twice-per-encounter count (Fight On on Inspiring Word).
+twice-per-encounter count (Fight On on Inspiring Word). Power cards show the
+count on their usage line ("Encounter (2×) power", `classifyPower`).
 Native CalcMisc `Weapon` riders (the decoded 16-line WeaponBonuses table)
 count once per attack: a text repeated under a secondary Hit (Giant's Wake)
 adds once, not once per field (D105). Riders the table misses are content

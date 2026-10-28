@@ -4,7 +4,10 @@ export * from "./sheet-layout";
 import {
   CHARACTER_BUILD_FORMAT_VERSION,
   EQUIPMENT_SLOT_IDS,
+  ZERO_CURRENCY,
+  characterWalletTextKey,
   equippedQuantityFromSlots,
+  formatLegacyCurrency,
 } from "./build";
 import type { SheetLayout } from "./sheet-layout";
 import type {
@@ -763,6 +766,13 @@ const NATIVE_BASE_ABILITIES = {
   Charisma: 10,
 } as const;
 
+/**
+ * A new character's Carried Money: legacy D20Workspace.LevelUp writes 100 gp
+ * at level 1 (PHB: "you start with basic clothing and 100 gold pieces").
+ * Imported characters keep their saved wallets.
+ */
+export const NATIVE_STARTING_CARRIED_MONEY = { ...ZERO_CURRENCY, gp: 100 };
+
 export function newNativeCharacterRecord(
   name: string,
   levelOne: BuildElementIdentity,
@@ -828,7 +838,12 @@ export function newNativeCharacterRecord(
     known: [],
     alternates: [],
     baseAbilities: NATIVE_BASE_ABILITIES,
-    textStrings: { Name: name },
+    textStrings: {
+      Name: name,
+      [characterWalletTextKey(1, "carried")]: formatLegacyCurrency(
+        NATIVE_STARTING_CARRIED_MONEY,
+      ),
+    },
   };
   return newCharacterRecord(
     {

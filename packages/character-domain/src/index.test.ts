@@ -190,7 +190,7 @@ describe("character records", () => {
     ).toBe(false);
   });
 
-  it("creates an exact-profile native level-1 record without legacy cache claims", () => {
+  it("creates an exact-profile native level-1 record carrying 100 gp without legacy cache claims", () => {
     const record = newNativeCharacterRecord(
       "New Hero",
       {
@@ -233,6 +233,14 @@ describe("character records", () => {
     });
     expect(record.snapshot.stats).toEqual({});
     expect(record.build.textStrings.Name).toBe("New Hero");
+    // Legacy D20Workspace.LevelUp / PHB: a new character carries 100 gp.
+    expect(resolveCharacterWallet(record.build, "carried")).toEqual({
+      amount: { ...ZERO_CURRENCY, gp: 100 },
+      sourceLevel: 1,
+    });
+    expect(resolveCharacterWallet(record.build, "stored").amount).toEqual(
+      ZERO_CURRENCY,
+    );
     expect(isCharacterRecord(record)).toBe(true);
   });
 

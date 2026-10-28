@@ -2083,7 +2083,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.RulesElementEncounterUses": code(
       "Six healing-word style powers by exact Special text get 2 uses per encounter (3 from level 16); _ADDITIONAL_USES field and stat add uses.",
-      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D105 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). No sheet surface shows the count yet: the use boxes belong to the deferred M6 play tracker",
+      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D105 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). Power cards show it on the usage line (sheet-model classifyPower usageLabel, 'Encounter (2×)'); the use boxes belong to the deferred M6 play tracker",
       test(
         POWERS,
         "gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level",
@@ -2226,9 +2226,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Auto ability scores from suggestions or the class Key Abilities.",
       AUTO_BUILD,
     ),
-    "D20Workspace.LevelUp": notHandled(
+    "D20Workspace.LevelUp": code(
       "New-level text strings: starting money 100 gp, stored money, residuum.",
-      "new native characters get no starting Carried Money (legacy and PHB: 100 gp); owner decision pending",
+      "character-domain newNativeCharacterRecord writes _PER_LEVEL_1_Carried Money = 100 gp (NATIVE_STARTING_CARRIED_MONEY; PHB: 'basic clothing and 100 gold pieces'); imported characters keep their saved wallets. An absent Stored Money resolves to 0 gp, and the app has no residuum field, so neither is written",
+      test(
+        "packages/character-domain/src/index.test.ts",
+        "creates an exact-profile native level-1 record carrying 100 gp without legacy cache claims",
+      ),
     ),
     "D20Workspace.LoadInternal": outOfScope(
       "Legacy file load and portrait paths.",
