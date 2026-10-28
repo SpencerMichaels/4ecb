@@ -1774,9 +1774,10 @@ ability, intrinsic power bonus, defense, target, final attack bonus, and the
 components that produced that bonus. Multiattack powers therefore calculate
 each phase independently; an explicit power ability choice applies only to a
 phase that actually offers that ability or names `Primary ability`. Generic
-`Primary ability` resolves from the selected class's authored key-ability order,
-using modifier, raw score, and authored-order tie breaks already established by
-D065.
+`Primary ability` resolves like native `CalcStatVsDefense`: `HighestAbility`,
+the highest of all six scores with earlier scores winning ties, whatever the
+class's key abilities are (amended 2026-10-28 by owner decision; it first
+used the selected class's authored key-ability order).
 
 Each phase also retains its own ordered Hit clause, level-relevant damage
 expression and type (including compound types), damage component provenance,

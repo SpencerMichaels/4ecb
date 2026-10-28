@@ -1665,11 +1665,19 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.HighestAbility": code(
-      "Highest of the six ability scores (Strength first; ties keep the first), for 'your highest ability' attack stats and 'highest'/'ability' damage terms.",
-      "powers.ts highestScoreAbility: 'your highest ability' attack lines (36) and '+ [your] highest ability [score] modifier' damage terms (39 Hit lines). D091: bare 'Highest ability ...' attack lines (native parses the non-ability 'ability') resolve the same way",
+      "Highest of the six ability scores (Strength first; ties keep the first), for 'your highest ability' and 'Primary ability' attack stats and 'highest'/'ability' damage terms.",
+      "powers.ts highestScoreAbility: 'your highest ability' attack lines (36), 'Primary ability' attack lines (126), '+ [your] highest ability [score] modifier' damage terms (39 Hit lines) and bare '+ ability modifier' damage terms (67). D091: bare 'Highest ability ...' attack lines (native parses the non-ability 'ability') resolve the same way",
       test(
         POWERS,
         "uses the highest ability score for 'your highest ability' attack and damage (native HighestAbility)",
+      ),
+      test(
+        POWERS,
+        "resolves Primary ability to the highest of all six scores, not the class key abilities (native HighestAbility)",
+      ),
+      test(
+        POWERS,
+        "adds the highest ability for bare ability-modifier damage even when a key-ability override changes the attack (native ParseAbilityMod)",
       ),
     ),
     ChosenAbility: code(
@@ -1698,7 +1706,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcStatVsDefense": partial(
       "Attack stat parsing: beast's attack bonus, power-bonus suffixes, 'your highest ability', 'Primary ability', 'Chosen Ability', the '+1 per enemy adjacent to you' condition, then OverrideStat.",
-      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' uses the class key abilities where native takes HighestAbility (owner decision pending), and the per-adjacent-enemy condition is not modeled; OverrideStat is key-ability-overrides.ts",
+      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' is HighestAbility over all six scores like native (owner decision, 126 powers); the per-adjacent-enemy condition is not modeled; OverrideStat is key-ability-overrides.ts",
       test(
         POWERS,
         "chooses the best attack ability and retains explicit power bonuses",
@@ -1706,7 +1714,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(POWERS, "keeps the power bonus of %j at level %i"),
       test(
         POWERS,
-        "resolves a primary-ability attack from the class's key abilities",
+        "resolves Primary ability to the highest of all six scores, not the class key abilities (native HighestAbility)",
       ),
       test(
         BEAST,
@@ -1782,7 +1790,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcDamage": partial(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon, and a bare 'ability modifier' term follows the attack stat where native takes HighestAbility",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon. A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D091: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
       test(
         POWERS,

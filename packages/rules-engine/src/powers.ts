@@ -1932,8 +1932,10 @@ const abilityNames = [
  * (ParseDamage, then AddToDamage sums the "+ <ability> modifier" terms) deals
  * flat damage: Staggering Note's "Charisma modifier thunder damage" is 6, Well
  * of Shadows' secondary "5 + Charisma modifier necrotic damage" 11, even
- * though an "ongoing 10" rider follows. Returns the expression's own constant,
- * or undefined when the expression is not flat damage.
+ * though an "ongoing 10" rider follows; Sudden Slime's "Ability modifier acid
+ * damage" is the highest ability modifier (ParseAbilityMod). Returns the
+ * expression's own constant, or undefined when the expression is not flat
+ * damage.
  */
 function nativeFlatDamageBase(hitClause: string): number | undefined {
   const end = hitClause.toLocaleLowerCase().indexOf(" damage");
@@ -1946,7 +1948,7 @@ function nativeFlatDamageBase(hitClause: string): number | undefined {
   if (leading !== undefined) return Number(leading);
   if (
     new RegExp(
-      `^(?:twice\\s+)?(?:${abilityNames.join("|")}) modifier\\b`,
+      `^(?:twice\\s+)?(?:${abilityNames.join("|")}|ability|highest) modifier\\b`,
       "iu",
     ).test(expression)
   )
@@ -2162,13 +2164,15 @@ const ATTACK_LINE_PATTERN = /^(.*?)\s+vs\.?\s+([A-Za-z]+)/i;
  * The ability an authored attack line uses for this character: an explicit
  * ability choice when the line allows it, else the best of the abilities it
  * names, else a native special phrase (highest / highest mental / chosen
- * ability), else (for "primary ability") the best class key ability.
+ * ability), else (for "primary ability") native HighestAbility: the highest
+ * of all six scores, earlier ones winning ties. Native CalcStatVsDefense
+ * (`-Module-.cs` ~23753) maps the "Primary ability" prefix to HighestAbility
+ * (~23335) whatever the class's key abilities are.
  */
 function attackLineAbility(
   line: string,
   stats: Readonly<Record<string, EvaluatedStat>>,
   explicitAbilityChoice: string | undefined,
-  preferredAbilities: readonly string[],
   chosen?: string,
 ): string {
   const attackLeft = line.match(ATTACK_LINE_PATTERN)?.[1] ?? "";
@@ -2186,7 +2190,7 @@ function attackLineAbility(
   if (availableAbilities.length > 0)
     return highestAbility(stats, availableAbilities);
   return /primary ability/i.test(attackLeft)
-    ? highestAbility(stats, preferredAbilities)
+    ? highestScoreAbility(stats)
     : "Unknown";
 }
 
@@ -2212,19 +2216,10 @@ export function powerAttackProfile(
     readonly byId: ReadonlyMap<string, ContentEntity>;
   },
 ): PowerAttackProfile {
-  const preferredAbilities = classKeyAbilities(
-    input.activeDefinitionIds,
-    input.byId,
-  );
   const abilities = new Set<string>();
   const defenses = new Set<string>();
   for (const { line } of authoredAttacks(power, [])) {
-    const ability = attackLineAbility(
-      line,
-      input.stats,
-      undefined,
-      preferredAbilities,
-    );
+    const ability = attackLineAbility(line, input.stats, undefined);
     if (ability !== "Unknown") abilities.add(ability);
     for (const match of line.matchAll(/\bvs\.?\s+([A-Za-z]+)/gi)) {
       const defense = defenseNames.find((name) =>
@@ -2234,27 +2229,6 @@ export function powerAttackProfile(
     }
   }
   return { abilities: [...abilities], defenses: [...defenses] };
-}
-
-function classKeyAbilities(
-  activeDefinitionIds: readonly string[],
-  byId: ReadonlyMap<string, ContentEntity>,
-): readonly string[] {
-  const selectedClass = activeDefinitionIds
-    .map((id) => byId.get(key(id)))
-    .find((entity) => /^(?:hybrid )?class$/i.test(entity?.type ?? ""));
-  const authored = field(selectedClass ?? emptyEntity, "Key Abilities") ?? "";
-  const seen = new Set<string>();
-  return [
-    ...authored.matchAll(new RegExp(`\\b(${abilityNames.join("|")})\\b`, "gi")),
-  ].flatMap((match) => {
-    const ability = abilityNames.find(
-      (candidate) => key(candidate) === key(match[1] ?? ""),
-    );
-    if (ability === undefined || seen.has(ability)) return [];
-    seen.add(ability);
-    return [ability];
-  });
 }
 
 /**
@@ -3265,10 +3239,6 @@ export function evaluatePowers(input: {
           key(EXCEPTION_NAMES.dualImplementSpellcaster)
       );
     });
-    const preferredAbilities = classKeyAbilities(
-      input.activeDefinitionIds,
-      byId,
-    );
     // Native OverrideStatPower: _KeyAbilityAs reads the overrides of the
     // power it names (Dragon's Wrath as Dragon Breath).
     const keyAbilityAs = field(power, "_KeyAbilityAs")?.trim();
@@ -3501,13 +3471,7 @@ export function evaluatePowers(input: {
         // text-string and Key Ability overrides.
         const keyContext = keyAbilityContext(equipment);
         const override = keyAbilityOverride(
-          attackLineAbility(
-            authoredLine,
-            input.stats,
-            undefined,
-            preferredAbilities,
-            chosen,
-          ),
+          attackLineAbility(authoredLine, input.stats, undefined, chosen),
           keyContext,
         );
         let attackStat =
@@ -3516,7 +3480,6 @@ export function evaluatePowers(input: {
             authoredLine,
             input.stats,
             explicitAbilityChoice,
-            preferredAbilities,
             chosen,
           );
         let damageOverride: KeyAbilityOverride = override;
@@ -3776,10 +3739,16 @@ export function evaluatePowers(input: {
               primaryDamageClause,
             ),
         );
-        // Native ParseAbilityMod: "+ your highest ability modifier" (and
-        // "+ highest ...") is HighestAbility whatever the attack used;
-        // "+ chosen ability modifier" translates to the "Chosen Ability"
-        // text string (AbilityTranslation), adding nothing without one.
+        // Native ParseAbilityMod (`-Module-.cs` ~24333): "+ your highest
+        // ability modifier" (and "+ highest ...") and the bare "+ [your]
+        // ability modifier" are HighestAbility whatever the attack used;
+        // only a key-ability damage_stat (followsAttack below) makes them
+        // follow the attack ability. "+ chosen ability modifier" translates
+        // to the "Chosen Ability" text string (AbilityTranslation), adding
+        // nothing without one.
+        // D091: "+ primary ability modifier" (Elemental Eruption, Soul
+        // Scourge) is native's unknown "primary" stat; it resolves like the
+        // bare form, as "Primary ability" does on the attack line.
         if (damageAbilities.length === 0) {
           const chosenTerm = /\bchosen ability modifier\b/i.test(
             primaryDamageClause,
@@ -3793,7 +3762,7 @@ export function evaluatePowers(input: {
           else if (chosenTerm)
             damageAbilities = chosen === undefined ? [] : [chosen];
           else if (/\bability modifier\b/i.test(primaryDamageClause))
-            damageAbilities = [attackStat];
+            damageAbilities = [highestScoreAbility(input.stats)];
         }
         const listedAbilities = abilityNames.filter((ability) =>
           new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),

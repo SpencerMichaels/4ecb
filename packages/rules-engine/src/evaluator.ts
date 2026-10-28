@@ -75,7 +75,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v81-2026-10-28-unarmed-base-small-versatile";
+  "evaluated-character-v82-2026-10-28-primary-ability-highest";
 
 export interface CharacterOccurrence {
   readonly id: string;

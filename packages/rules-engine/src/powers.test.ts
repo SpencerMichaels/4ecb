@@ -1639,6 +1639,8 @@ describe("power evaluation", () => {
         },
       ],
       stats: {
+        Strength: stat("Strength", 12),
+        Wisdom: stat("Wisdom", 20),
         "Strength modifier": stat("Strength modifier", 1),
         "Wisdom modifier": stat("Wisdom modifier", 5),
       },
@@ -1667,6 +1669,7 @@ describe("power evaluation", () => {
         },
       ],
       stats: {
+        Dexterity: stat("Dexterity", 20),
         "Dexterity modifier": stat("Dexterity modifier", 5),
       },
       overlays: [],
@@ -1687,6 +1690,91 @@ describe("power evaluation", () => {
 
     expect(power?.variants[0]?.attackStat).toBe("Dexterity");
     expect(power?.variants[0]?.damage).toBe("1d12+5");
+  });
+
+  it("resolves Primary ability to the highest of all six scores, not the class key abilities (native HighestAbility)", () => {
+    const evaluate = (scores: Record<string, number>) =>
+      evaluatePowers({
+        level: 6,
+        activeDefinitionIds: ["CLASS", "POWER"],
+        inventory: [],
+        stats: Object.fromEntries(
+          Object.entries(scores).flatMap(([ability, score]) => [
+            [ability, stat(ability, score)],
+            [
+              `${ability} modifier`,
+              stat(`${ability} modifier`, Math.floor((score - 10) / 2)),
+            ],
+          ]),
+        ),
+        overlays: [],
+        entities: [
+          entity("CLASS", "Synthetic Wizard", "Class", {
+            "Key Abilities": "Intelligence, Wisdom, Dexterity",
+          }),
+          entity("POWER", "Synthetic Theme Spell", "Power", {
+            Keywords: "Arcane, Implement, Psychic",
+            "Attack Type": "Ranged 10",
+            Attack: "Primary ability +2 vs. Will",
+            Hit: "1d10 + ability modifier psychic damage.",
+          }),
+        ],
+      })[0]?.variants[0];
+
+    // Constitution is not a wizard key ability, but it is the highest score.
+    expect(
+      evaluate({
+        Strength: 10,
+        Constitution: 18,
+        Dexterity: 12,
+        Intelligence: 16,
+        Wisdom: 14,
+        Charisma: 8,
+      }),
+    ).toMatchObject({
+      attackStat: "Constitution",
+      attackBonus: 4 + 3 + 2,
+      damage: "1d10+4",
+    });
+    // Ties go to the earlier score (strict >): Strength before Intelligence.
+    expect(
+      evaluate({
+        Strength: 16,
+        Constitution: 10,
+        Dexterity: 12,
+        Intelligence: 16,
+        Wisdom: 14,
+        Charisma: 8,
+      }),
+    ).toMatchObject({ attackStat: "Strength", damage: "1d10+3" });
+  });
+
+  it("adds the highest ability for bare ability-modifier damage even when a key-ability override changes the attack (native ParseAbilityMod)", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {
+        Strength: stat("Strength", 10),
+        "Strength modifier": stat("Strength modifier", 0),
+        Charisma: stat("Charisma", 18),
+        "Charisma modifier": stat("Charisma modifier", 4),
+      },
+      textStrings: { "Chosen Ability": "Strength" },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Slime", "Power", {
+          "Attack Type": "Ranged 5",
+          Attack: "Chosen Ability vs. Reflex",
+          Hit: "Ability modifier acid damage, and the target is slowed until the end of your next turn.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackStat: "Strength",
+      damage: "4",
+    });
   });
 
   it("honors a serialized named ability choice for a multi-ability power", () => {
@@ -4028,9 +4116,14 @@ describe("item implement metadata", () => {
 
 describe("power attack profile", () => {
   const stats = {
+    Strength: stat("Strength", 14),
+    Constitution: stat("Constitution", 20),
+    Dexterity: stat("Dexterity", 18),
+    Wisdom: stat("Wisdom", 16),
     "Strength modifier": stat("Strength modifier", 2),
     "Dexterity modifier": stat("Dexterity modifier", 4),
     "Wisdom modifier": stat("Wisdom modifier", 3),
+    "Constitution modifier": stat("Constitution modifier", 5),
   };
   const fighter = entity("CLASS", "Ranger", "Class", {
     "Key Abilities": "Dexterity, Strength, Wisdom",
@@ -4062,9 +4155,9 @@ describe("power attack profile", () => {
     });
   });
 
-  it("resolves a primary-ability attack from the class's key abilities", () => {
+  it("resolves a primary-ability attack to the highest score, key ability or not", () => {
     expect(profile({ Attack: "Primary ability vs. Will" }).abilities).toEqual([
-      "Dexterity",
+      "Constitution",
     ]);
   });
 
