@@ -1583,21 +1583,33 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "powers.ts authoredAttacks / effectiveField Hit",
       test(POWERS, "handles primary attacks and prose level scaling"),
     ),
-    "?A0x7555d940.AttackPowerModRepl": notHandled(
-      "Exact 'Increase to +N at 11th/21st level' attack lines, and Dragon Breath / Dragon's Wrath by name, replace the power bonus by level.",
-      "powers.ts powerBonusAtLevel handles generic 'Level 11/21:' lines only",
+    "?A0x7555d940.AttackPowerModRepl": code(
+      "Exact 'Increase to +N at 11th/21st level' attack lines, and Blood Drain / Razor Storm / Dragon Breath / Dragon's Wrath by name, replace the power bonus by level.",
+      "powers.ts powerBonusAtLevel: NATIVE_INCREASE_LINES and NATIVE_NAMED_INCREASES (EXCEPTION_NAMES), then the generic 'Level N:' lines",
+      test(
+        POWERS,
+        "raises Dragon Breath's bonus by name and its damage by its increase sentence at level %i (native AttackPowerModRepl/ParseIncreaseLine)",
+      ),
     ),
     "?A0x7555d940.ExtractPowerMods": notHandled(
       "One exact attack-line suffix adds a Wisdom power bonus.",
       "not modeled",
     ),
-    "?A0x7555d940.ParseIncreaseLine": notHandled(
-      "Four exact 'Increase damage ...' lines are rewritten before level parsing.",
-      "powers.ts lineAtLevel parses generic increase lines",
+    "?A0x7555d940.ParseIncreaseLine": code(
+      "From the hit's first 'Increase damage to ' (else 'Increase to '), each clause from its first digit to ' at N' is the damage at level N, stepping on at the next ' level'; four exact lines (Kelemvor's Judgment, the breath lines) are rewritten first.",
+      "powers.ts increasedDamageAtLevel / NATIVE_INCREASE_REWRITES; D091: a leading '+N bonus and' is skipped (Sun Flare, Improved Razor Storm), native reads it as damage",
+      test(
+        POWERS,
+        "reads every threshold of a native-rewritten increase sentence at level %i",
+      ),
+      test(
+        POWERS,
+        "parses 'Increase to' damage sentences anywhere in the hit at level %i",
+      ),
     ),
     "?A0x7555d940.HigherLevelDamage": partial(
       "Higher-level damage lines; Chilling Cloud by name at 21; one exact Constitution line; a riposte damage line trimmed.",
-      "powers.ts lineAtLevel handles the generic lines; Chilling Cloud (ID_FMP_POWER_7406) at 21st level keeps its base damage; the exact Constitution and riposte lines match no current record",
+      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud (ID_FMP_POWER_7406) at 21st level keeps its base damage; the exact Constitution and riposte lines match no current record",
       test(
         POWERS,
         "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",

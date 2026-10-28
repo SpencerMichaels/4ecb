@@ -68,7 +68,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v67-2026-10-28-theme-power-restriction";
+  "evaluated-character-v68-2026-10-28-power-increase-lines";
 
 export interface CharacterOccurrence {
   readonly id: string;

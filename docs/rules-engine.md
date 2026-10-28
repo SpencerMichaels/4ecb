@@ -375,6 +375,18 @@ damage as a next-turn conditional expression rather than an immediate hit.
 Exact synthetic fixtures pin all three forms. Unknown prose still takes the
 explicit unsupported path.
 
+Level scaling follows native `AttackPowerModRepl` and `HigherLevelDamage`. The
+attack line's `+N` becomes the tier bonus for a few exact increase lines and,
+by name, for Blood Drain, Razor Storm, Dragon Breath (+4 at 11th, +6 at 21st)
+and Dragon's Wrath (+6 at 21st); otherwise `Level N:` attack lines apply. For
+damage, a `Level N:` hit line wins; otherwise the hit's first "Increase damage
+to" (else "Increase to") sentence is parsed as native `ParseIncreaseLine` does:
+each clause from its first digit up to " at N" is the damage from level N on,
+after native's four exact rewrites (Kelemvor's Judgment's thresholds, the
+breath lines). Deliberate divergence (D091): a clause leading with "+N bonus
+and" (Sun Flare, Improved Razor Storm) skips that lead, where native reads it
+as damage; their attack bonus stays native (no increase).
+
 A dice-less damage expression (the hit text up to its first " damage", with no
 sentence ending before it) that starts with an ability modifier or a number is
 flat damage, as native `CalcDamage` computes it: Staggering Note's "Charisma
