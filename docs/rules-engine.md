@@ -79,6 +79,10 @@ sum is non-zero, else all its zero-gated ones (native `CalculateStatValue`
 literal `value="0"` sets the stat to 0 and ends it (Armor Specialization
 (Chainmail)'s Armor Penalty). `MINONEMOD(X)` and `HALFMOD(X)` link X's
 ability modifier at least 1 or halved, as `ABILITYMOD(X)` links it whole.
+A `[Name]` in a statadd or textstring name is replaced by the element the
+character's select named Name chose, or "no selection" (native
+`BracketSubstitute`): Signature Spell (Archspell)'s
+`[Signature Spell]:attack` becomes the chosen daily's `<name>:attack`.
 
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/

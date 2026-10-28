@@ -74,6 +74,81 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("substitutes a [Select] name in statadd and textstring names (native BracketSubstitute)", () => {
+    const evaluate = (chosen: boolean) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "arch",
+              definitionId: "ARCH",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "sleep",
+              definitionId: "SLEEP",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            ...(chosen
+              ? [
+                  {
+                    id: "pick",
+                    definitionId: "SLEEP",
+                    acquiredLevel: 1,
+                    parentId: "arch",
+                    ruleOrdinal: 0,
+                    choiceIndex: 0,
+                    kind: "choice" as const,
+                  },
+                ]
+              : []),
+          ],
+          inventory: [],
+        },
+        [
+          entity("ROOT", "1", "Level"),
+          entity("ARCH", "Signature Spell (Archspell)", "Class Feature", {
+            rules: [
+              rule(
+                "select",
+                {
+                  type: "Power",
+                  name: "Signature Spell",
+                  number: "1",
+                  Category: "daily,arcane",
+                  existing: "true",
+                },
+                0,
+              ),
+              rule(
+                "statadd",
+                { name: "[Signature Spell]:attack", value: "+2" },
+                1,
+              ),
+              rule(
+                "textstring",
+                { name: "[Signature Spell]:note", value: "x" },
+                2,
+              ),
+            ],
+          }),
+          entity("SLEEP", "Sleep", "Power", {
+            specifics: { "Power Usage": "Daily" },
+          }),
+        ],
+      );
+    const evaluated = evaluate(true);
+    expect(evaluated.stats["Sleep:attack"]?.value).toBe(2);
+    expect(evaluated.textStrings["Sleep:note"]).toBe("x");
+    expect(evaluated.stats["[Signature Spell]:attack"]).toBeUndefined();
+    expect(evaluate(false).stats["no selection:attack"]?.value).toBe(2);
+  });
+
   it("keeps a modify rule's target name when no owned definition matches", () => {
     const evaluated = evaluateCharacter(
       {
