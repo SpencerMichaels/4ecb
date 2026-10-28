@@ -74,7 +74,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v67-2026-10-28-statmin-zero-gates";
+  "evaluated-character-v71-2026-10-28-overnight-parity-batch";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2027,6 +2027,54 @@ function evaluateCharacterInternal(
     candidateCache.set(cacheKey, decisions);
     return decisions;
   };
+  /**
+   * Native ThemePowerRestriction (-Module-.cs ~17410), applied by
+   * D20Choice::UpdateArrays to every candidate LoadRulesDatabase flagged
+   * `_ThemePower`: in a Power select whose category carries the `$$CLASS`
+   * flag (exactly `$$CLASS`, not `$$CLASS_OR_MULTICLASS`) and whose category
+   * text names neither "utility" nor "at-will", a theme power is illegal
+   * unless the character already holds, at the choice's level, another
+   * element matching that category whose `Class` field names one of its
+   * classes. A theme power may replace a class encounter or daily power, but
+   * never the only one of that category.
+   */
+  const themePowerRestricted = (
+    rule: SelectRule,
+    provider: CharacterOccurrence,
+    choiceLevel: number,
+    selected: CharacterOccurrence | undefined,
+  ): boolean => {
+    const category = rule.category;
+    if (key(rule.type) !== "power" || category === undefined) return false;
+    const lower = category.toLocaleLowerCase();
+    if (lower.includes("utility") || lower.includes("at-will")) return false;
+    if (
+      parseCategoryExpression(category).dynamicPrefix?.toLocaleUpperCase() !==
+      "$$CLASS"
+    )
+      return false;
+    const classes = expressionContext.dynamicCategories?.$$CLASS;
+    return !occurrences.some((owned) => {
+      if (
+        owned.acquiredLevel > choiceLevel ||
+        (selected !== undefined &&
+          key(owned.definitionId) === key(selected.definitionId))
+      )
+        return false;
+      const entity = index.get(owned.definitionId);
+      const classField =
+        entity === undefined ? undefined : field(entity, "Class");
+      if (entity === undefined || classField === undefined) return false;
+      const ownerClass = index.find(classField, "Class");
+      return (
+        ownerClass !== undefined &&
+        key(ownerClass.type) === "class" &&
+        (classes?.has(key(ownerClass.name)) === true ||
+          classes?.has(key(ownerClass.id)) === true) &&
+        !candidateFor(rule, provider, entity).reasons.includes("category")
+      );
+    });
+  };
   /** A Power select matching `category`, for category checks only. */
   const powerCategoryRule = (
     source: ReplaceRule["source"],
@@ -2304,9 +2352,26 @@ function evaluateCharacterInternal(
                         candidateFor(rule, occurrence, candidate),
                       )
                   : [];
+            let themeRestricted: boolean | undefined;
             const candidates = baseCandidates
               .map((candidate) => {
                 const definition = index.get(candidate.definitionId);
+                if (
+                  definition !== undefined &&
+                  field(definition, "_ThemePower") !== undefined &&
+                  (themeRestricted ??= themePowerRestricted(
+                    rule,
+                    occurrence,
+                    choiceLevel,
+                    selected,
+                  ))
+                )
+                  candidate = {
+                    ...candidate,
+                    eligible: false,
+                    rulesLegal: false,
+                    reasons: [...candidate.reasons, "theme-power"],
+                  };
                 if (
                   rule.existing ||
                   definition === undefined ||
@@ -3326,14 +3391,24 @@ function overlay(
 ): FieldOverlay {
   // Native ProcessModify: `BaseItem` is the holding's base record while
   // EquipLoot executes its enchantment (Heartwood Spear's spear), and
-  // nothing otherwise.
-  if (rule.name !== undefined && key(rule.name) === "baseitem") {
-    const baseId =
-      baseItemIds.get(provider.id) ??
-      baseItemIds.get(key(provider.definitionId));
+  // nothing otherwise. `this` with conditions (`requires`, `wearing`; met,
+  // or the rule would not run) modifies the providing record itself
+  // (Unforgettable Cudgel's `_PowerstatKeywords` for a Divine character).
+  // Without conditions it does nothing here: content-pack import already
+  // wrote it into the record, as native ParseOneRule does at load
+  // (legacy-wotc self-modify.ts).
+  const self = rule.name !== undefined && key(rule.name) === "this";
+  if (self || (rule.name !== undefined && key(rule.name) === "baseitem")) {
+    const conditional = Boolean(rule.requires || rule.wearing);
+    const targetId = self
+      ? conditional
+        ? provider.definitionId
+        : undefined
+      : (baseItemIds.get(provider.id) ??
+        baseItemIds.get(key(provider.definitionId)));
     return {
       providerOccurrenceId: provider.id,
-      targetDefinitionIds: baseId === undefined ? [] : [baseId],
+      targetDefinitionIds: targetId === undefined ? [] : [targetId],
       targetName: rule.name,
       field: rule.field,
       ...(rule.value === undefined ? {} : { value: rule.value }),

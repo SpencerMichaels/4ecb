@@ -118,6 +118,64 @@ describe("item field overlays (native C_RulesElementField)", () => {
     expect(overlaidEntity(sling, [])).toBe(sling);
   });
 
+  it("skips a list-addition the field already contains, as native ListContains", () => {
+    const crossbow = entity("HAND_CROSSBOW", "Hand Crossbow", "Weapon", {
+      Properties: "Load Free",
+    });
+    const handaxe = entity("HANDAXE", "Handaxe", "Weapon", {
+      Properties: "Off-hand, Heavy Thrown",
+    });
+    const any = entity("ANY", "Anything", "Weapon", { Properties: "any" });
+    expect(
+      overlaidField(crossbow, "Properties", [
+        overlay({ targetName: "Hand Crossbow", listAddition: "Load Free" }),
+        overlay({ targetName: "Hand Crossbow", listAddition: "load free" }),
+      ]),
+    ).toBe("Load Free");
+    expect(
+      overlaidField(handaxe, "Properties", [
+        overlay({ targetName: "Handaxe", listAddition: "Heavy Thrown" }),
+      ]),
+    ).toBe("Off-hand, Heavy Thrown");
+    // A partial word is no list entry.
+    expect(
+      overlaidField(handaxe, "Properties", [
+        overlay({ targetName: "Handaxe", listAddition: "Thrown" }),
+      ]),
+    ).toBe("Off-hand, Heavy Thrown, Thrown");
+    expect(
+      overlaidField(any, "Properties", [
+        overlay({ targetName: "Anything", listAddition: "Brutal 1" }),
+      ]),
+    ).toBe("any");
+  });
+
+  it("applies only the list-addition, else die-increase, else value of one modify", () => {
+    const sling = entity("SLING", "Sling", "Weapon", {
+      Damage: "1d6",
+      Properties: "Load Free",
+    });
+    expect(
+      overlaidField(sling, "Properties", [
+        overlay({
+          targetName: "Sling",
+          value: "Small",
+          listAddition: "High Crit",
+        }),
+      ]),
+    ).toBe("Load Free, High Crit");
+    expect(
+      overlaidField(sling, "Damage", [
+        overlay({
+          targetName: "Sling",
+          field: "Damage",
+          value: "1d4",
+          dieIncrease: "1",
+        }),
+      ]),
+    ).toBe("1d8");
+  });
+
   it("overlays only loot records in an entity list", () => {
     const entities = [
       entity("SLING", "Sling", "Weapon", { Properties: "" }),

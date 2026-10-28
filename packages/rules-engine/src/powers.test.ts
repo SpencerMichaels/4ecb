@@ -2109,6 +2109,111 @@ describe("power evaluation", () => {
     });
   });
 
+  it.each([
+    [1, 2, "1d6+3"],
+    [11, 4, "2d6+3"],
+    [21, 6, "3d6+3"],
+  ])(
+    "raises Dragon Breath's bonus by name and its damage by its increase sentence at level %i (native AttackPowerModRepl/ParseIncreaseLine)",
+    (level, powerBonus, damage) => {
+      const breath = {
+        "Attack Type": "Close blast 3",
+        Attack:
+          "Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2 vs. Reflex",
+        Hit: "1d6 + Constitution modifier damage.\nIncrease to +4 bonus and 2d6 + Constitution modifier damage at 11th level, and to +6 bonus and 3d6 + Constitution modifier damage at 21st level.",
+      };
+      const powers = evaluatePowers({
+        level,
+        activeDefinitionIds: ["BREATH", "COPY"],
+        inventory: [],
+        stats: {
+          Constitution: stat("Constitution", 16),
+          "Constitution modifier": stat("Constitution modifier", 3),
+        },
+        overlays: [],
+        entities: [
+          entity("BREATH", "Dragon Breath", "Power", breath),
+          entity("COPY", "Synthetic Breath", "Power", breath),
+        ],
+      });
+      const byName = (name: string) =>
+        powers.find((power) => power.name === name)?.variants[0]?.attacks?.[0];
+      expect(byName("Dragon Breath")).toMatchObject({ powerBonus, damage });
+      // The bonus is keyed by name; the same text under another name keeps
+      // its +2 but its damage still scales.
+      expect(byName("Synthetic Breath")).toMatchObject({
+        powerBonus: 2,
+        damage,
+      });
+    },
+  );
+
+  it.each([
+    [1, "1d12+4"],
+    [5, "2d12+4"],
+    [11, "3d12+4"],
+    [15, "4d12+4"],
+    [21, "5d12+4"],
+    [25, "6d12+4"],
+  ])(
+    "reads every threshold of a native-rewritten increase sentence at level %i",
+    (level, damage) => {
+      const [power] = evaluatePowers({
+        level,
+        activeDefinitionIds: ["POWER"],
+        inventory: [],
+        stats: { "Wisdom modifier": stat("Wisdom modifier", 4) },
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Judgment", "Power", {
+            "Attack Type": "Close blast 5",
+            Attack: "Wisdom vs. Will",
+            Hit: "1d12 + Wisdom modifier radiant damage.\nIncrease damage to 2d12 + Wisdom modifier at 5th level, 3d12 + Wisdom modifier at 11th, 4d12 + Wisdom modifier at 15th, 5d12 + Wisdom modifier at 21st, and 6d12 + Wisdom modifier at 25th.",
+          }),
+        ],
+      });
+      expect(power?.variants[0]?.attacks?.[0]?.damage).toBe(damage);
+    },
+  );
+
+  it.each([
+    [10, "1d6+3", "1d8+3"],
+    [11, "2d6+3", "2d8+3"],
+    [21, "3d6+3", "3d8+3"],
+  ])(
+    "parses 'Increase to' damage sentences anywhere in the hit at level %i",
+    (level, pulse, storm) => {
+      const powers = evaluatePowers({
+        level,
+        activeDefinitionIds: ["PULSE", "STORM"],
+        inventory: [],
+        stats: {
+          Dexterity: stat("Dexterity", 16),
+          "Dexterity modifier": stat("Dexterity modifier", 3),
+        },
+        overlays: [],
+        entities: [
+          entity("PULSE", "Synthetic Pulse", "Power", {
+            "Attack Type": "Melee 1",
+            Attack: "Dexterity +2 vs. Reflex",
+            Hit: "1d6 + Strength, Constitution, or Dexterity modifier fire damage.\nIncrease to 2d6 + Strength, Constitution, or Dexterity modifier fire damage at 11th level, and to 3d6 + Strength, Constitution, or Dexterity modifier fier damage at 21st level.",
+          }),
+          // D091: the leading "+N bonus and" is skipped, not read as damage.
+          entity("STORM", "Synthetic Storm", "Power", {
+            "Attack Type": "Close burst 2",
+            Attack: "Dexterity + 2 vs. Reflex",
+            Hit: "1d8 + Dexterity modifier damage, and ongoing 5 damage (save ends).\nIncrease to +4 bonus and 2d8 + Dexterity modifier damage, and ongoing 10 damage at 11th level, and to +6 bonus and 3d8 + Dexterity modifier damage, and ongoing 15 damage at 21st level.",
+          }),
+        ],
+      });
+      const damage = (name: string) =>
+        powers.find((power) => power.name === name)?.variants[0]?.attacks?.[0]
+          ?.damage;
+      expect(damage("Synthetic Pulse")).toBe(pulse);
+      expect(damage("Synthetic Storm")).toBe(storm);
+    },
+  );
+
   it("calculates each authored attack independently", () => {
     const [power] = evaluatePowers({
       level: 8,
@@ -4029,6 +4134,46 @@ describe("extra damage dice", () => {
       entities: [entity("POWER", "Synthetic strike", "Power", {})],
     });
     expect(power?.extraDamage).toBeUndefined();
+  });
+});
+
+describe("power field overlays (native CalcModifiedValue)", () => {
+  it("adds a keyword only when the power does not already have it", () => {
+    // Power of Skill list-adds Lightning to Divine Bolts and Thunder to
+    // another power; native ListContains skips the one it already has.
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["DIVINE_BOLTS"],
+      inventory: [],
+      stats: {},
+      overlays: [
+        {
+          providerOccurrenceId: "power-of-skill",
+          targetDefinitionIds: ["DIVINE_BOLTS"],
+          targetName: "Divine Bolts",
+          field: "Keywords",
+          listAddition: "Lightning",
+        },
+        {
+          providerOccurrenceId: "power-of-skill",
+          targetDefinitionIds: ["DIVINE_BOLTS"],
+          targetName: "Divine Bolts",
+          field: "Keywords",
+          listAddition: "Radiant",
+        },
+      ],
+      entities: [
+        entity("DIVINE_BOLTS", "Divine Bolts", "Power", {
+          Keywords: "Divine, Implement, Lightning",
+        }),
+      ],
+    });
+    expect(power?.keywords).toEqual([
+      "Divine",
+      "Implement",
+      "Lightning",
+      "Radiant",
+    ]);
   });
 });
 

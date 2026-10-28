@@ -132,6 +132,15 @@ export const EXCEPTION_NAMES = {
   ambidextrous: "Ambidextrous",
   /** Prerequisite MoreThanOneClass: this Class (or any CountsAsClass). */
   hybridClass: "Hybrid",
+  /** InternalizeElement: a prerequisite token "assassin" never matches a
+   * Background of that name (only the class and its features). */
+  assassinBackground: "assassin",
+  /** AttackPowerModRepl: powers whose `+N` attack bonus becomes +4 at 11th
+   * level and +6 at 21st (Dragon's Wrath: +6 at 21st only) by name. */
+  bloodDrain: "Blood Drain",
+  razorStorm: "Razor Storm",
+  dragonBreath: "Dragon Breath",
+  dragonsWrath: "Dragon's Wrath",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */

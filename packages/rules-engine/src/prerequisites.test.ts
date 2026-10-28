@@ -127,10 +127,12 @@ describe("legacy prerequisites", () => {
       type: "Race",
     } as ContentEntity;
     const shifterDefinitions = [...definitions, shifter, razorclaw];
+    const feat = { id: "SHIFTER_FEAT", name: "Shifter Feat", type: "Feat" };
     const shifterContext = {
       ...context,
       owned: [razorclaw, shifter],
       definitions: shifterDefinitions,
+      subject: feat as ContentEntity,
     };
     expect(evaluatePrerequisite("Shifter, Wis 13", shifterContext).status).toBe(
       "satisfied",
@@ -139,8 +141,117 @@ describe("legacy prerequisites", () => {
       evaluatePrerequisite("Shifter", {
         ...context,
         definitions: shifterDefinitions,
+        subject: feat as ContentEntity,
       }).status,
     ).toBe("failed");
+    // InternalizeElement reads a CountsAsRace by name only for a Feat's
+    // prerequisite (native SpecialCase then maps "shifter" to either shifter
+    // race). The evaluator's owned-token lookup meets a background's
+    // "Shifter" through the same granted record.
+    const background = {
+      id: "SHIFTER_BACKGROUND",
+      name: "Shifter - Luskan",
+      type: "Background",
+    } as ContentEntity;
+    const tokens = (entities: readonly ContentEntity[]) =>
+      new Set(
+        entities.flatMap((entity) =>
+          [entity.id, entity.name].map((value) => value.toLocaleLowerCase()),
+        ),
+      );
+    expect(
+      internalizePrerequisite("Shifter", {
+        ...shifterContext,
+        subject: background,
+      }),
+    ).toEqual({ kind: "unverified", text: "Shifter" });
+    expect(
+      evaluatePrerequisite("Shifter", {
+        ...shifterContext,
+        // A separate subject: the IR cache keys on subject and text only.
+        subject: { ...background, id: "SHIFTER_BACKGROUND_2" },
+        ownedTokens: tokens([razorclaw, shifter]),
+        knownTokens: tokens(shifterDefinitions),
+      }).status,
+    ).toBe("satisfied");
+  });
+
+  it("skips what legacy InternalizeElement drops from a name lookup", () => {
+    // -Module-.cs ~29875: Grants records, CountsAsRace records outside a
+    // Feat's prerequisite, and a Background named "assassin" never answer a
+    // prerequisite name; a record named by its ID still does.
+    const assassinClass = {
+      id: "ID_FMP_CLASS_466",
+      name: "Assassin",
+      type: "Class",
+    } as ContentEntity;
+    const assassinBackground = {
+      id: "ID_FMP_BACKGROUND_66",
+      name: "Assassin",
+      type: "Background",
+    } as ContentEntity;
+    const grants = {
+      id: "ID_INTERNAL_GRANTS_ASSASSIN",
+      name: "Assassin",
+      type: "Grants",
+    } as ContentEntity;
+    const human = { id: "HUMAN", name: "Human", type: "Race" } as ContentEntity;
+    const pathOwner = {
+      id: "SHADOWBLADE",
+      name: "Shadowblade",
+      type: "Paragon Path",
+    } as ContentEntity;
+    const assassinDefinitions = [
+      ...definitions,
+      assassinClass,
+      assassinBackground,
+      grants,
+      human,
+    ];
+    const withBackground = {
+      ...context,
+      owned: [human, assassinBackground, grants],
+      definitions: assassinDefinitions,
+      subject: pathOwner,
+    };
+    expect(internalizePrerequisite("Assassin", withBackground)).toEqual({
+      kind: "element",
+      text: "Assassin",
+      definitionIds: ["ID_FMP_CLASS_466"],
+      negated: false,
+    });
+    expect(evaluatePrerequisite("Assassin", withBackground).status).toBe(
+      "failed",
+    );
+    expect(
+      evaluatePrerequisite("Assassin", {
+        ...withBackground,
+        owned: [human, assassinClass],
+      }).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("ID_FMP_BACKGROUND_66", withBackground).status,
+    ).toBe("satisfied");
+    // Another background name still resolves.
+    expect(
+      evaluatePrerequisite("Human", {
+        ...withBackground,
+        subject: { ...pathOwner, type: "Feat" } as ContentEntity,
+      }).status,
+    ).toBe("satisfied");
+    // A name only a Grants record carries resolves to nothing.
+    const grantsOnly = {
+      id: "ID_INTERNAL_GRANTS_RANGER_IMPLEMENTS",
+      name: "Ranger Implements",
+      type: "Grants",
+    } as ContentEntity;
+    expect(
+      internalizePrerequisite("Ranger Implements", {
+        ...withBackground,
+        owned: [grantsOnly],
+        definitions: [...assassinDefinitions, grantsOnly],
+      }),
+    ).toEqual({ kind: "unverified", text: "Ranger Implements" });
   });
 
   it("meets a story membership by a representing option, else leaves it unverified", () => {

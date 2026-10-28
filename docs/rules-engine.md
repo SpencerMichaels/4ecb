@@ -47,6 +47,16 @@ Evaluation proceeds as follows:
    recoverable legality diagnostics.
 6. Return values with provenance, completeness, legality, and diagnostics.
 
+A `modify` changes one field of a record as native `ProcessModify` does: a
+`list-addition` (skipped when the field already contains it, native
+`ListContains`), else a `die-increase`, else the `value` (item-fields.ts
+`modifiedFieldValue`, used for item and power fields alike). `name="this"`
+without conditions or `type` is native `ParseOneRule`'s load-time rewrite of
+the record itself, so the content-pack import applies it
+(legacy-wotc `self-modify.ts`; a value the authored list already contains
+keeps the list, a D091 difference for Faervian); with `requires`/`wearing` it
+modifies the providing record at evaluation time.
+
 Typed stacking follows native `CalculateStatValue`/`AddStatValue`
 (D103): a stat's statadds apply in order against one cap per bonus type (a
 higher bonus replaces a lower one, a lower penalty a higher one, a bonus
@@ -172,7 +182,25 @@ records have only the category number: Power Strike and Backstab. They become
 choosable in a regular class encounter slot once their prerequisite feat is
 owned (Powerful Strike, Thief's Backstab). This is how the legacy builder
 offers them. Where the two values disagree (four records), the Level field
-wins.
+wins. A category level `N-N` is the exact level N (native reads only the first
+number). A power carrying a `_ThemePower` field also matches it at any level up
+to N. No shipped category uses that form.
+
+Theme powers (`_ThemePower`) follow native ThemePowerRestriction. Some Power
+selects carry exactly the `$$CLASS` prefix (not `$$CLASS_OR_MULTICLASS`) and a
+category naming neither utility nor at-will: the Level records' encounter and
+daily slots and similar class features. In such a select, a theme power is
+offered only when the character already holds, at that choice's level, another
+power matching the select's category whose `Class` field names one of its
+classes. The candidate reason is `theme-power`. So a theme power can replace a
+class encounter or daily power, but never the only one of its kind.
+
+Prerequisite name lookup follows native InternalizeElement. Its walk of
+same-named records skips three kinds of record: `Grants` records,
+`CountsAsRace` records unless the prerequisite belongs to a Feat, and a
+`Background` named "assassin". So the Assassin background never meets a bare
+`Assassin` clause. Two lookups bypass that walk: a record named by its internal
+ID, and one named as `<name> <type>` (for example `!Dwarf CountsAsRace`).
 
 ## Verified parity and performance
 
@@ -375,6 +403,18 @@ weapon/enhancement damage additions, and records Call of the Beast's psychic
 damage as a next-turn conditional expression rather than an immediate hit.
 Exact synthetic fixtures pin all three forms. Unknown prose still takes the
 explicit unsupported path.
+
+Level scaling follows native `AttackPowerModRepl` and `HigherLevelDamage`. The
+attack line's `+N` becomes the tier bonus for a few exact increase lines and,
+by name, for Blood Drain, Razor Storm, Dragon Breath (+4 at 11th, +6 at 21st)
+and Dragon's Wrath (+6 at 21st); otherwise `Level N:` attack lines apply. For
+damage, a `Level N:` hit line wins; otherwise the hit's first "Increase damage
+to" (else "Increase to") sentence is parsed as native `ParseIncreaseLine` does:
+each clause from its first digit up to " at N" is the damage from level N on,
+after native's four exact rewrites (Kelemvor's Judgment's thresholds, the
+breath lines). Deliberate divergence (D091): a clause leading with "+N bonus
+and" (Sun Flare, Improved Razor Storm) skips that lead, where native reads it
+as damage; their attack bonus stays native (no increase).
 
 A dice-less damage expression (the hit text up to its first " damage", with no
 sentence ending before it) that starts with an ability modifier or a number is

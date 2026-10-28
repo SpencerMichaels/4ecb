@@ -2880,6 +2880,67 @@ describe("character evaluator", () => {
     );
   });
 
+  it("modifies the providing record for a conditional this-modify only", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "cudgel",
+            definitionId: "CUDGEL",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test"),
+        entity("CUDGEL", "Unforgettable Cudgel +2", "Feat", {
+          rules: [
+            rule(
+              "modify",
+              {
+                name: "this",
+                Field: "_PowerstatKeywords",
+                "list-addition": "holy symbol implement",
+                requires: "Root",
+              },
+              0,
+            ),
+            rule(
+              "modify",
+              {
+                name: "this",
+                Field: "_PowerstatKeywords",
+                "list-addition": "totem implement",
+                requires: "Missing",
+              },
+              1,
+            ),
+            // Unconditional: content-pack import already applied it.
+            rule(
+              "modify",
+              { name: "this", Field: "_BasicAttack", value: "Melee" },
+              2,
+            ),
+          ],
+        }),
+      ],
+    );
+    const self = result.overlays.filter(
+      (overlay) => overlay.targetName === "this",
+    );
+    expect(
+      self.map((overlay) => [overlay.field, overlay.targetDefinitionIds]),
+    ).toEqual([
+      ["_PowerstatKeywords", ["CUDGEL"]],
+      ["_BasicAttack", []],
+    ]);
+  });
+
   it("promotes CountsAsClass power categories for paragon multiclassing", () => {
     const result = evaluateCharacter(
       {
@@ -3067,6 +3128,180 @@ describe("character evaluator", () => {
         reasons: ["category"],
       }),
     );
+  });
+
+  it("keeps a theme power out of a $$CLASS encounter or daily slot until a class power of that kind is held", () => {
+    // Native ThemePowerRestriction (D20Choice::UpdateArrays): only exact
+    // `$$CLASS` selects whose category names neither utility nor at-will.
+    const evaluate = (selections: readonly CharacterOccurrence[], level = 3) =>
+      evaluateCharacter(
+        {
+          level,
+          baseAbilities: {},
+          occurrences: [
+            {
+              id: "ranger",
+              definitionId: "ID_FMP_CLASS_5",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "theme",
+              definitionId: "ID_FMP_THEME_768",
+              acquiredLevel: 1,
+              kind: "grabbag",
+            },
+            {
+              id: "level-1",
+              definitionId: "LEVEL_1",
+              acquiredLevel: 1,
+              kind: "grabbag",
+            },
+            {
+              id: "level-3",
+              definitionId: "LEVEL_3",
+              acquiredLevel: 3,
+              kind: "grabbag",
+            },
+            ...selections,
+          ],
+          inventory: [],
+        },
+        [
+          entity("ID_FMP_CLASS_5", "Ranger", "Class"),
+          entity("ID_FMP_THEME_768", "Order Adept", "Theme"),
+          entity("LEVEL_1", "Level 1", "Level", {
+            rules: [
+              rule(
+                "select",
+                { type: "Power", number: "1", Category: "$$CLASS,encounter,1" },
+                0,
+              ),
+              rule(
+                "select",
+                { type: "Power", number: "1", Category: "$$CLASS,at-will,1" },
+                1,
+              ),
+            ],
+          }),
+          entity("LEVEL_3", "Level 3", "Level", {
+            rules: [
+              rule(
+                "select",
+                { type: "Power", number: "1", Category: "$$CLASS,encounter,3" },
+                0,
+              ),
+              rule(
+                "select",
+                {
+                  type: "Power",
+                  number: "1",
+                  Category: "$$CLASS_OR_MULTICLASS,encounter,3",
+                },
+                1,
+              ),
+            ],
+          }),
+          entity("CLASS_ENCOUNTER", "Class encounter", "Power", {
+            categories: ["ID_FMP_CLASS_5", "encounter", "1"],
+            specifics: { Class: "ID_FMP_CLASS_5", Level: "1" },
+          }),
+          entity("CLASS_AT_WILL", "Class at-will", "Power", {
+            categories: ["ID_FMP_CLASS_5", "at-will", "1"],
+            specifics: { Class: "ID_FMP_CLASS_5", Level: "1" },
+          }),
+          entity("THEME_ENCOUNTER", "Theme encounter", "Power", {
+            categories: ["ID_FMP_CLASS_0", "encounter", "1"],
+            specifics: {
+              _ThemePower: "ID_FMP_THEME_768",
+              Class: "ID_FMP_THEME_768",
+              Level: "1",
+            },
+          }),
+          entity("THEME_AT_WILL", "Theme at-will", "Power", {
+            categories: ["ID_FMP_CLASS_0", "at-will", "1"],
+            specifics: {
+              _ThemePower: "ID_FMP_THEME_768",
+              Class: "ID_FMP_THEME_768",
+              Level: "1",
+            },
+          }),
+        ],
+      );
+    const pick = (
+      id: string,
+      parentId: string,
+      ruleOrdinal: number,
+      definitionId: string,
+      acquiredLevel: number,
+    ): CharacterOccurrence => ({
+      id,
+      definitionId,
+      acquiredLevel,
+      parentId,
+      ruleOrdinal,
+      choiceIndex: 0,
+      kind: "choice",
+    });
+    const candidate = (
+      result: ReturnType<typeof evaluate>,
+      provider: string,
+      ruleOrdinal: number,
+      definitionId: string,
+    ) =>
+      result.choices
+        .find(
+          (choice) =>
+            choice.providerOccurrenceId === provider &&
+            choice.ruleOrdinal === ruleOrdinal,
+        )
+        ?.candidates.find((entry) => entry.definitionId === definitionId);
+
+    const empty = evaluate([]);
+    // The only class encounter slot takes no theme power; at-will slots and
+    // `$$CLASS_OR_MULTICLASS` selects are never restricted.
+    expect(candidate(empty, "level-1", 0, "THEME_ENCOUNTER")).toMatchObject({
+      eligible: false,
+      reasons: ["theme-power"],
+    });
+    expect(candidate(empty, "level-1", 0, "CLASS_ENCOUNTER")?.eligible).toBe(
+      true,
+    );
+    expect(candidate(empty, "level-1", 1, "THEME_AT_WILL")?.eligible).toBe(
+      true,
+    );
+    expect(candidate(empty, "level-3", 1, "THEME_ENCOUNTER")?.eligible).toBe(
+      true,
+    );
+    expect(candidate(empty, "level-3", 0, "THEME_ENCOUNTER")?.eligible).toBe(
+      false,
+    );
+
+    // Holding a class encounter power from level 1 frees the level-3 slot,
+    // but not the level-1 slot that holds it.
+    const held = evaluate([pick("enc-1", "level-1", 0, "CLASS_ENCOUNTER", 1)]);
+    expect(candidate(held, "level-3", 0, "THEME_ENCOUNTER")?.eligible).toBe(
+      true,
+    );
+    expect(candidate(held, "level-1", 0, "THEME_ENCOUNTER")?.eligible).toBe(
+      false,
+    );
+    // A class power picked later doesn't count at an earlier slot's level.
+    const later = evaluate([pick("enc-3", "level-3", 0, "CLASS_ENCOUNTER", 3)]);
+    expect(candidate(later, "level-1", 0, "THEME_ENCOUNTER")?.eligible).toBe(
+      false,
+    );
+    // A theme power already in the only class slot is flagged.
+    const themed = evaluate([
+      pick("enc-1", "level-1", 0, "THEME_ENCOUNTER", 1),
+    ]);
+    expect(
+      themed.diagnostics.some(
+        (diagnostic) =>
+          diagnostic.code === "choice.ineligible" &&
+          diagnostic.message.includes("theme-power"),
+      ),
+    ).toBe(true);
   });
 
   it("includes Any Class racial and authored skill powers in class utility slots", () => {

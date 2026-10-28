@@ -223,8 +223,21 @@ function numericMatch(
   if (!Number.isFinite(entityLevel)) return false;
   const minimum = Number(match[1]);
   if (match[2] === "+") return entityLevel >= minimum;
-  if (match[3] !== undefined)
-    return entityLevel >= minimum && entityLevel <= Number(match[3]);
+  // Native AddSingleEntry reads "N-M" as the exact level N (it only warns
+  // when M differs), and CategoryMatch::Matches lets a power LoadRulesDatabase
+  // flagged `_ThemePower` (or a magic item so flagged) of any level up to N
+  // through. No shipped category uses the form.
+  if (match[3] !== undefined) {
+    const kind = entity.type.toLocaleLowerCase();
+    const themePower =
+      (kind === "power" || kind === "magic item") &&
+      entity.specifics.some(
+        (field) => field.name.toLocaleLowerCase() === "_themepower",
+      );
+    return themePower
+      ? entityLevel !== 0 && entityLevel <= minimum
+      : entityLevel === minimum;
+  }
   if (entity.type.toLocaleLowerCase() === "power")
     return entityLevel <= minimum;
   return entityLevel === minimum;
