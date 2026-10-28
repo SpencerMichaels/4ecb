@@ -633,13 +633,22 @@ function statAddValue(value: string) {
   const trimmed = value.trim();
   if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed))
     return { value: String(Number(trimmed)) };
-  const ability = /^([+-]?)ABILITYMOD\((.+)\)$/i.exec(trimmed);
-  if (ability?.[2] !== undefined)
+  // Native ParseStatAdd (`-Module-.cs` ~31955) reads MINONEMOD(X) and
+  // HALFMOD(X) as an ability-modifier link plus a flag, and the StatBlock
+  // writer (~11709) saves them as abilmod="true" with minone/halfmod.
+  const ability = /^([+-]?)(ABILITYMOD|MINONEMOD|HALFMOD)\((.+)\)$/i.exec(
+    trimmed,
+  );
+  if (ability?.[2] !== undefined && ability[3] !== undefined) {
+    const form = ability[2].toUpperCase();
     return {
       value: ability[1] === "-" ? "-1" : "1",
-      statlink: ability[2],
+      statlink: ability[3],
       abilmod: "true",
+      ...(form === "MINONEMOD" ? { minone: "true" } : {}),
+      ...(form === "HALFMOD" ? { halfmod: "true" } : {}),
     };
+  }
   const link = /^([+-])(.+)$/.exec(trimmed);
   if (link?.[1] !== undefined && link[2] !== undefined)
     return { value: link[1] === "-" ? "-1" : "1", statlink: link[2] };

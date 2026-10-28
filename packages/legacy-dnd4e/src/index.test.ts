@@ -859,10 +859,43 @@ describe("legacy .dnd4e import", () => {
               },
             ],
           },
+          // Storm Adept / Shared Prescience spellings.
+          "Initiative Misc": {
+            name: "Initiative Misc",
+            value: 3,
+            contributions: [
+              {
+                id: "storm",
+                stat: "Initiative Misc",
+                value: "+MINONEMOD(Wisdom)",
+                numericValue: 2,
+                providerId: "storm",
+                providerName: "Storm Adept",
+                applied: true,
+              },
+              {
+                id: "prescience",
+                stat: "Initiative Misc",
+                value: "+HALFMOD(Intelligence)",
+                numericValue: 1,
+                providerId: "prescience",
+                providerName: "Shared Prescience",
+                applied: true,
+              },
+            ],
+          },
         },
       },
       content,
     });
+    // Native StatBlock writer (-Module-.cs ~11709): abilmod plus minone or
+    // halfmod, never a link to a stat named "MINONEMOD(Wisdom)".
+    expect(conditionalStatXml).toContain(
+      '<statadd value="1" statlink="Wisdom" abilmod="true" minone="true"/>',
+    );
+    expect(conditionalStatXml).toContain(
+      '<statadd value="1" statlink="Intelligence" abilmod="true" halfmod="true"/>',
+    );
     expect(conditionalStatXml).toContain(
       '<Stat value="0"><alias name="melee basic:damage"/><statadd String="+1d6" value="0" conditional="when charging"/></Stat>',
     );
