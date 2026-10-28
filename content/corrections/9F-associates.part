@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Associates (D107). The 54 Associate records describe their creature only
+  as a prose stat block; the content import parses it into a typed field and
+  4ecb prints one associate card per creature the character has, with the
+  master-relative numbers worked out (rules-engine associates.ts).
+
+  1. Which associates a character has is the native signal the content
+     already uses: a FREEBEE:<associate id> stat (Elemental Companion, Summon
+     Warlock's Ally (Elemental), Demonic Companion, Summon Sidhe Ally, …).
+     Four sources lack it and give the creature only through a community
+     card (CBLoader/Custom/36-companion.part and Tivaan's companion cards):
+     the Fey Beast Tamer companion choice, Summon Natural Ally (whose cards
+     carry the Primal Guardian/Predator and 15th/29th-level gates), Unleash
+     Monolith and Summon Flame Zephyr. Those cards now carry the FREEBEE
+     instead (a structure fix, D089).
+  2. Every community card that restates an associate's stat block becomes an
+     inert Internal record under the same ID, so imported characters still
+     resolve and no duplicate power card prints (as 91-familiar-cards.part
+     and 99-companions.part do). The Fey Beast Tamer and Demon Companion
+     choices keep granting their per-level helpers (Tivaan's "Fey Beast
+     Companion: Blink Dog N", "Demon Companion: Quasit N"): legacy saves
+     store all 29 of them, so removing the grants would orphan the saved
+     occurrences. They only rewrite the inert card's fields, so they have no
+     effect.
+  3. Two stat blocks lost text in the content, restored from the D&D Insider
+     compendium entries (iws.mx associate64 and associate57):
+     - Living Zephyr (Heroes of the Elemental Chaos p. 62): the 13th- and
+       23rd-level steps of Animal Attack dropped their dice and flat bonus.
+     - Sidhe House Guard (Heroes of the Feywild p. 109): "highest ability
+       modifier", not "Primary ability".
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- 1 and 2. The community cards. -->
+
+  <!-- Fey Beast Tamer (Heroes of the Feywild): the companion choice gives the creature only through the card. -->
+  <RulesElement name="Trained Blink Dog" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FEY_BEAST_COMPANION-1-2"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_53" value="+1" /></rules></RulesElement>
+  <RulesElement name="Trained Displacer Beast" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FEY_BEAST_COMPANION-1"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_54" value="+1" /></rules></RulesElement>
+  <RulesElement name="Trained Fey Panther" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FEY_BEAST_COMPANION-1-3"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_55" value="+1" /></rules></RulesElement>
+  <RulesElement name="Trained Young Owlbear" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FEY_BEAST_COMPANION-1-4"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_56" value="+1" /></rules></RulesElement>
+
+  <!-- Summon Natural Ally (Heroes of the Feywild): the cards carry the aspect and level gates of the summons. -->
+  <RulesElement name="Primal Guardian Ally: Giant Cobra" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-1"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_40" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Guardian Ally: Desert Hawk" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-2"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_42" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Guardian Ally: Bulette" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-3"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_43" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Guardian Ally: Venomous Scorpion" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-4"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_44" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Guardian Ally: Blue Dragon Wyrmling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-5"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_45" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Guardian Ally: Desert Roc" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-6"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_46" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Grizzly Bear" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-7"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_47" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Pack Wolf" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-8"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_48" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Dire Bear" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-9"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_49" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Hunting Tiger" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-10"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_50" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Dire Lion" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-11"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_51" value="+1" /></rules></RulesElement>
+  <RulesElement name="Primal Predator Ally: Raptor Behemoth" type="Internal" source="4ecb corrections" internal-id="ID_TIV_NATURAL_ALLY-12"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_52" value="+1" /></rules></RulesElement>
+
+  <!-- Unleash Monolith and Summon Flame Zephyr (Heroes of the Elemental Chaos): the powers grant only the cards. -->
+  <RulesElement name="Air Monolith" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_AIR_MONOLITH"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_75" value="+1" /></rules></RulesElement>
+  <RulesElement name="Earth Monolith" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_EARTH_MONOLITH"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_76" value="+1" /></rules></RulesElement>
+  <RulesElement name="Fire Monolith" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FIRE_MONOLITH"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_77" value="+1" /></rules></RulesElement>
+  <RulesElement name="Water Monolith" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_WATER_MONOLITH"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_78" value="+1" /></rules></RulesElement>
+  <RulesElement name="Flame Zephyr" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FLAME_ZEPHYR"><rules><statadd name="FREEBEE:ID_FMP_ASSOCIATE_62" value="+1" /></rules></RulesElement>
+
+  <!-- Cards whose granting element already has the FREEBEE. -->
+  <RulesElement name="Arctine" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_ARCTINE" />
+  <RulesElement name="Automaton" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_AUTOMATON" />
+  <RulesElement name="Chaos Phage" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_CHAOS_PHAGE" />
+  <RulesElement name="Crysmalite" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_CRYSMALITE" />
+  <RulesElement name="Flame Serpent" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FLAME_SERPENT" />
+  <RulesElement name="Hordeling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_HORDELING" />
+  <RulesElement name="Mud Wretch" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_MUD_WRETCH" />
+  <RulesElement name="Magmin" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_MAGMIN" />
+  <RulesElement name="Nereid" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_NEREID" />
+  <RulesElement name="Pech" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_PECH" />
+  <RulesElement name="Storm Talon" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_STORM_TALON" />
+  <RulesElement name="Sylph" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_SYLPH" />
+  <RulesElement name="Chariot of Sustarre" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_CHARIOT_OF_SUSTARRE" />
+  <RulesElement name="Elemental Warrior (Air)" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_ELEMENTAL_WARRIOR_AIR" />
+  <RulesElement name="Elemental Warrior (Earth)" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_ELEMENTAL_WARRIOR_EARTH" />
+  <RulesElement name="Elemental Warrior (Fire)" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_ELEMENTAL_WARRIOR_FIRE" />
+  <RulesElement name="Elemental Warrior (Water)" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_ELEMENTAL_WARRIOR_WATER" />
+  <RulesElement name="Air Archon Grunt" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_AIR_ARCHON_GRUNT" />
+  <RulesElement name="Earth Archon Grunt" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_EARTH_ARCHON_GRUNT" />
+  <RulesElement name="Fire Archon Grunt" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FIRE_ARCHON_GRUNT" />
+  <RulesElement name="Water Archon Grunt" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_WATER_ARCHON_GRUNT" />
+  <RulesElement name="Earth Titan Warrior" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_EARTH_TITAN_WARRIOR" />
+  <RulesElement name="Fire Titan Warrior" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FIRE_TITAN_WARRIOR" />
+  <RulesElement name="Frost Titan Warrior" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_FROST_TITAN_WARRIOR" />
+  <RulesElement name="Storm Titan Warrior" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_STORM_TITAN_WARRIOR" />
+  <RulesElement name="Living Zephyr" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION_LIVING_ZEPHYR" />
+  <RulesElement name="Quasit Companion" type="Internal" source="4ecb corrections" internal-id="ID_TIV_BOVD_DEMONIC_COMPANION-1" />
+  <RulesElement name="Unicorn Destrier (Companion)" type="Internal" source="4ecb corrections" internal-id="ID_TIV_UNICORN_DESTRIER_COMPANION-1" />
+  <RulesElement name="Summoned Sarifal Advisor" type="Internal" source="4ecb corrections" internal-id="ID_TIV_POWER_DRAGON_MAGAZINE_405_1_2-1" />
+  <RulesElement name="Summoned Ancestral Defender" type="Internal" source="4ecb corrections" internal-id="ID_TIV_POWER_DRAGON_MAGAZINE_405_2_4" />
+  <RulesElement name="Summoned Duodrone Balancer" type="Internal" source="4ecb corrections" internal-id="ID_TIV_SUMMONED_DUODRONE_BALANCER" />
+  <RulesElement name="Skeletal Warrior (Summon)" type="Internal" source="4ecb corrections" internal-id="ID_HF_SKELETAL_WARRIOR" />
+  <RulesElement name="Summoned Sidhe Ally" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FEY_SUMMONED_SIDHE_HOUSE_GUARD" />
+
+  <!-- 3. Stat-block text restored from the compendium. -->
+  <RulesElement internal-id="ID_FMP_ASSOCIATE_64" name="Living Zephyr" type="Associate" source="Heroes of the Elemental Chaos">
+LIVING ZEPHYR		
+Medium elemental magical beast
+
+HP your bloodied value				Initiative equal to yours
+Defenses (add your level to each defense)
+AC 14, Fortitude 13, Reflex 14, Will 13		Perception equal to yours + 2
+Speed land 0 , fly 6 (hover; altitude limit 2)
+
+TRAITS
+O Debris Cloud Aura 2
+The aura is lightly obscured to enemies.
+
+STANDARD
+m Animal Attack F At-Will
+Attack: Melee 1 (one creature); your level + 5 vs. AC
+Hit: 1d10 + your Wisdom modifier damage, and the zephyr can slide the target 1 square.
+Level 13: 1d10 + 3 + your Wisdom modifier damage.
+Level 23: 2d10 + 5 + your Wisdom modifier damage.
+
+Str: 12	Dex: 20	Wis: 14
+Con: 17	Int: 3	Cha: 7
+  </RulesElement>
+  <RulesElement internal-id="ID_FMP_ASSOCIATE_57" name="Sidhe House Guard" type="Associate" source="Heroes of the Feywild">
+    <specific name="_Associated Power"> ID_FMP_POWER_15885 </specific>
+SIDHE HOUSE GUARD		Summoned Creature
+Medium fey humanoid
+HP your healing surge value; Healing Surges none, but you can lose a healing surge for the guard if an effect allows it to spend one
+Defenses your defenses, not including any temporary bonuses or penalties
+Speed  6
+STANDARD
+Standard Action (weapon)  At-Will
+Attack: Melee 1 (one creature); your level + 7 vs. AC
+Hit: 1d8 + highest ability modifier damage.
+Level 21: 2d8 + highest ability modifier damage.
+MOVE
+Move Action (teleportation)  F Encounter
+Effect: The guard teleports up to 6 squares.
+TRIGGERED
+Immediate Interrupt At-Will
+Trigger: You are hit by a melee attack or a ranged attack while the guard is adjacent to you.
+Effect: The attack hits the guard instead of you.
+  </RulesElement>
+</D20Rules>
