@@ -5283,6 +5283,21 @@ describe("native special attack and damage abilities", () => {
       ],
     })[0]!;
 
+  it("reminds of Valiant Strike's per-adjacent-enemy bonus instead of adding it (native CalcStatVsDefense)", () => {
+    const valiant = evaluate("Valiant Strike", {
+      Keywords: "Divine, Weapon",
+      "Attack Type": "Melee weapon",
+      Attack: "Strength + 1 per enemy adjacent to you vs. AC",
+      Hit: "2[W] + Strength modifier damage.",
+    }).variants[0];
+    // Strength 12 (+1) and half level 4; no +1.
+    expect(valiant?.attackBonus).toBe(5);
+    expect(valiant?.additionalEffects).toContainEqual({
+      text: "+1 attack bonus per enemy adjacent to you.",
+      source: "Valiant Strike",
+    });
+  });
+
   it("uses the highest ability score for 'your highest ability' attack and damage (native HighestAbility)", () => {
     expect(
       evaluate("Hand of Justice", {

@@ -2440,6 +2440,16 @@ const NATIVE_NAMED_INCREASES: readonly {
   { name: EXCEPTION_NAMES.dragonsWrath, epic: 6 },
 ];
 
+/**
+ * Native CalcStatVsDefense (-Module-.cs ~23818): an attack stat ending
+ * "+ 1 per enemy adjacent to you" (Valiant Strike) adds no number; the row
+ * gets this reminder instead.
+ */
+const PER_ADJACENT_ENEMY_ATTACK =
+  /\+\s*1 per enemy adjacent to you\s+vs\.?\s/iu;
+const PER_ADJACENT_ENEMY_REMINDER =
+  "+1 attack bonus per enemy adjacent to you.";
+
 function powerBonusAtLevel(
   line: string,
   level: number,
@@ -2450,6 +2460,7 @@ function powerBonusAtLevel(
     NATIVE_INCREASE_LINES.find(({ text }) => normalized.includes(key(text))) ??
     NATIVE_NAMED_INCREASES.find(({ name }) => key(name) === key(powerName));
   const firstLine = line.split("\n")[0] ?? line;
+  if (PER_ADJACENT_ENEMY_ATTACK.test(firstLine)) return 0;
   // Native CalcStatVsDefense reads a "+N" after any word of the attack
   // stat: "Strength + 2", "Your highest ability modifier + 6", "Your
   // highest ability score +9".
@@ -4358,22 +4369,27 @@ export function evaluatePowers(input: {
         additionalEffects:
           beastOnly && beast !== undefined
             ? beastAdditionalEffects(beast)
-            : powerAdditionalEffects({
-                stats: input.stats,
-                power,
-                equipment,
-                keywords,
-                ...(attackType === undefined ? {} : { attackType }),
-                attackStat,
-                defense,
-                hasAttack,
-                ...(damage.damage === undefined
-                  ? {}
-                  : { damage: damage.damage }),
-                byId,
-                basicAttackKind,
-                nativeKeywords,
-              }),
+            : [
+                ...(PER_ADJACENT_ENEMY_ATTACK.test(attackLine ?? "")
+                  ? [{ text: PER_ADJACENT_ENEMY_REMINDER, source: power.name }]
+                  : []),
+                ...powerAdditionalEffects({
+                  stats: input.stats,
+                  power,
+                  equipment,
+                  keywords,
+                  ...(attackType === undefined ? {} : { attackType }),
+                  attackStat,
+                  defense,
+                  hasAttack,
+                  ...(damage.damage === undefined
+                    ? {}
+                    : { damage: damage.damage }),
+                  byId,
+                  basicAttackKind,
+                  nativeKeywords,
+                }),
+              ],
         ...(critical === undefined || beastOnly ? {} : { critical }),
         ...(brutal === undefined || beastOnly
           ? {}

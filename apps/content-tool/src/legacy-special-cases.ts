@@ -1734,6 +1734,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
       test(
         POWERS,
+        "reminds of Valiant Strike's per-adjacent-enemy bonus instead of adding it (native CalcStatVsDefense)",
+      ),
+      test(
+        POWERS,
         "adds the highest ability for bare ability-modifier damage even when a key-ability override changes the attack (native ParseAbilityMod)",
       ),
     ),
@@ -1761,9 +1765,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "replaces the dice size with a modified _DamageDie after the level's damage line (native ParseDamage)",
       ),
     ),
-    "?A0x7555d940.CalcStatVsDefense": partial(
+    "?A0x7555d940.CalcStatVsDefense": code(
       "Attack stat parsing: beast's attack bonus, power-bonus suffixes, 'your highest ability', 'Primary ability', 'Chosen Ability', the '+1 per enemy adjacent to you' condition, then OverrideStat.",
-      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' is HighestAbility over all six scores like native (owner decision, 126 powers); the per-adjacent-enemy condition is not modeled; OverrideStat is key-ability-overrides.ts",
+      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' is HighestAbility over all six scores like native (owner decision, 126 powers); the exact '+ 1 per enemy adjacent to you' suffix (Valiant Strike) adds no number and gives the row the native condition text '+1 attack bonus per enemy adjacent to you.' as an additional effect (modern added +1 before; not yet written to an exported row's Conditions); OverrideStat is key-ability-overrides.ts",
       test(
         POWERS,
         "chooses the best attack ability and retains explicit power bonuses",
