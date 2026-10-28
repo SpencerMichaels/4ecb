@@ -282,14 +282,18 @@ separate header or level rail.
   hidden "probe" copies (`ov-pane-probe`, `ov-reminder-probe`). Power and
   item cards are `PowerCard.tsx`/`ItemCard.tsx` (fit hook in
   `use-print-card-fit.ts`) plus `PrintPlayCards.tsx`. The deck and its
-  default order (Play data → Skills → Action Point → Second Wind → `sortedPowerCards`
-  → items) come from `sheetCardDeck` in `sheet-model/src/card-deck.ts`, with
+  default order (Play data → Skills → companion cards → Action Point → Second Wind →
+  `sortedPowerCards` → items) come from `sheetCardDeck` in `sheet-model/src/card-deck.ts`, with
   stable provenance card keys; `applySheetLayout`
   (`sheet-model/src/sheet-layout.ts`) applies the character's `sheetLayout` (including its `cardOrder`
   and page-1 `reminders` choices over the overview's `reminderCandidates`)
   and item `showPowerCard` flags (D099). `print-item-presentation.ts` and
   `reference-power-index.ts` shape card/index text. `StatTiles.tsx` is shared
-  by page 1, play cards and the builder header.
+  by page 1, play cards and the builder header. Companion cards (key
+  `companion:<id>`) are the beast (`BeastCompanionCard.tsx`), familiars
+  (`FamiliarCard.tsx`) and associates (`AssociateCard.tsx`, D107: the stat
+  block is parsed at pack build, the numbers come from `associateStatistics`
+  in `derived-values.ts`).
 - **One card format (D079).** Every power/item card on every surface (print,
   screen sheet, builder detail panes) is `PowerCard`/`ItemCard` rendering a
   `SheetCard`: `layout="print"` is fixed-size and fitted, `layout="panel"` is

@@ -478,6 +478,25 @@ named ability modifiers and flat terms. Other "your level + N" powers made by
 the character (Wyrm Form Basic Bite, Breath Weapon, boons) keep ordinary
 damage.
 
+Associates (D107) are creatures the content describes only as a prose stat
+block on an `Associate` record. The legacy-wotc import parses that block once,
+at pack build, into the typed `_Associate Stat Block` field
+(`AssociateStatBlock` in content-domain; unplaced lines are
+`associate.stat-block-unparsed` pack diagnostics). The character has every
+associate a positive `FREEBEE:<associate id>` stat names
+(`evaluateAssociates`, `EvaluatedCharacter.associates`), in the order of
+the first providing occurrence. `associateStatistics` in `derived-values.ts`
+works out the master-relative values at the character's level: HP from the
+bloodied value, the healing surge value or a fixed number; defenses as the
+master's plus the block's bonuses, base + level, or fixed; initiative and
+Perception as the master's plus N; attacks as level + N or a fixed bonus; and
+damage as the dice plus one-half level, level, the named ability modifiers
+("your Strength or Charisma modifier" prints a total for each), the highest
+ability modifier and flat terms, at the highest "Level N:" step reached. A summoned creature (role
+"Summoned Creature") also adds its `SUMMON.`/`ALLY.`/`COMPANION.` creature
+bonuses to defenses, attack rolls and damage, as D095 fixed-bonus creatures
+do. Rider prose inside a line stays text.
+
 Power prose naming a `beast's <ability> modifier` is not a character-ability
 reference. Such a clause is excluded from ordinary ability math and emits
 `companion-ability:<power-id>` until the selected companion occurrence and its

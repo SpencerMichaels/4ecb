@@ -3259,6 +3259,69 @@ Consequences: equipment and text edits reuse every earlier snapshot (Hu
 Sheng-Ming at level 9, Node: warm re-evaluation after an unequip ~430 ms →
 ~170 ms). Parity baseline unchanged. Cache v85.
 
+### D107 — Associates: a stat block parsed at pack build, numbers from the master
+
+Status: accepted (2026-10-28), owner-approved feature.
+
+Context: the pack has 54 `Associate` records (Heroes of the Feywild, Heroes
+of the Elemental Chaos, The Book of Vile Darkness, Dragon 405/406/414): fey
+beast companions, summoned creatures, elemental companions, a quasit, a
+mount. They have no rules, only a prose stat block relative to the master
+("HP your bloodied value", "Defenses your defenses + 2", "your level + 5 vs.
+AC", "1d8 + one-half your level damage", "Level 21: 2d8 + …"). Legacy shows
+nothing for them; the community card sets restate them as fake power cards
+whose numbers are typed per level (the Fey Beast Tamer's blink dog is one
+point too high from 3rd level on).
+
+Decision:
+
+- **Parsed once, at pack build.** The legacy-wotc import parses each
+  Associate record's description into a typed `AssociateStatBlock`
+  (content-domain) and stores it on the record as the internal field
+  `_Associate Stat Block` (versioned JSON); lines it cannot place become
+  `associate.stat-block-unparsed` pack diagnostics. All 54 parse with none.
+  The engine never reads the prose. A pack built before D107 has no field and
+  so no associates.
+- **Which associates a character has** is the content's own signal, a
+  positive `FREEBEE:<associate id>` stat (Elemental Companion, Summon
+  Warlock's Ally (Elemental), Demonic Companion, …). Sources that gave the
+  creature only through a community card (Fey Beast Tamer, Summon Natural
+  Ally with its aspect and level gates, Unleash Monolith, Summon Flame
+  Zephyr) carry the FREEBEE on that card (`9F-associates.part`, D089).
+- **Numbers** come from one place, `associateStatistics` in
+  `derived-values.ts`, over the master's evaluated stats at the master's
+  level: HP (bloodied value, healing surge value or fixed), defenses (your
+  defenses plus the block's bonuses; base + level; or fixed), initiative and
+  Perception (yours + N), attack (level + N, or fixed) and damage (dice plus
+  ½ level, level, named, "or" and highest ability modifiers and flat terms,
+  at the highest damage step reached). A summoned creature (role "Summoned
+  Creature") also takes the `SUMMON.` creature bonuses (Alien Summoning), as
+  D095's fixed-bonus creatures do. `EvaluatedCharacter.associates`; cache
+  v86.
+- **Sheet**: one associate card per associate in the companion frame
+  (`kind: "associate"`, deck key `companion:<id>`, after the beast and
+  familiars), hideable and reorderable like the other cards. Its traits and
+  powers are sections of the card, not separate power cards, as the
+  companion cards' stat blocks are. Page-1 reminders whose source is a
+  feature that only gives the creature, and that name no game term, are
+  dropped as shown on the card.
+- **Community cards**: the 54 Tivaan/community power cards restating an
+  associate become inert Internal records under the same ID (imports
+  resolve, exports keep the ID). Their per-level helpers stay granted:
+  legacy saves store all 29, and orphaning them would raise unslotted
+  occurrences.
+- **Content errors** fixed with compendium text (iws.mx): Living Zephyr's
+  13th/23rd-level damage steps, the Sidhe House Guard's "highest ability
+  modifier".
+
+Consequences: Sylestine (level 12) prints a Trained Blink Dog card with HP
+41, AC 27, Fort/Ref/Will 25, initiative +6, Perception +15, Blinking Bite
++17 vs. AC for 1d8 + 6; the community card printed AC 28 / 26. Her
+legacy power-usage comparison loses the community card's row (26 → 25
+comparable). Rider prose inside a hit line ("damage equal to 10 + your
+Wisdom modifier") stays text. Players need a content republish
+(`scripts/publish-content.sh`) for the cards to appear.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 

@@ -1,8 +1,9 @@
 # Beast companion card proposal
 
 Status: accepted by the product owner (2026-10-21); see "Product-owner
-answers". Step 2 of `familiar-card-proposal.md`. Associates and summoned creatures are left to a
-later step 3 (see "Scope").
+answers". Step 2 of `familiar-card-proposal.md`. Associates are step 3, done as D107
+(`docs/decisions.md`); hexblade summons, Animal Master minions and the
+Veiled Horde Shadow remain out of scope (see "Scope").
 
 ## Problem
 
