@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyCharacterCommand,
+  boundAugmentHolding,
   isCharacterRecord,
   newCharacterRecord,
   newNativeCharacterRecord,
@@ -27,6 +28,7 @@ import {
   legacyPowerValueMatches,
   projectBuildForLegacyExport,
   withLegacyFreebeeRituals,
+  withLegacyAugmentState,
   withLegacyLoadoutState,
 } from ".";
 
@@ -590,6 +592,85 @@ describe("legacy .dnd4e import", () => {
         reimported.build,
       ),
     ).toEqual({ equivalent: true, differences: [] });
+  });
+
+  it("round-trips augment bindings through the loot augment attribute", () => {
+    const charLootId = (id: string) =>
+      `&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;
+&lt;CharLootID xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+  &lt;baseID&gt;${id}&lt;/baseID&gt;
+&lt;/CharLootID&gt;`;
+    const loot = (id: string, name: string, type: string, extra = "") =>
+      `<loot count="1" equip-count="0"${extra}><RulesElement name="${name}" type="${type}" internal-id="${id}"/></loot>`;
+    const source = `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/>${loot(
+      "STAFF",
+      "Staff of Ruin +1",
+      "Magic Item",
+      ` augment="${charLootId("SHARD")}"`,
+    )}${loot("WAND_STAFF", "Staff of Fire +1", "Magic Item")}${loot(
+      "SHARD",
+      "Synthetic Shard",
+      "Magic Item",
+    )}</Level></D20Character>`;
+    const content = [
+      entity("L1", "1", "Level"),
+      entity("STAFF", "Staff of Ruin +1", "Magic Item"),
+      entity("WAND_STAFF", "Staff of Fire +1", "Magic Item"),
+      entity("SHARD", "Synthetic Shard", "Magic Item"),
+    ];
+    const imported = importDnd4e(source);
+    const [staff, otherStaff, shard] = imported.build.inventory;
+    const holder = (build: typeof imported.build) =>
+      build.inventory
+        .filter(
+          (entry) =>
+            boundAugmentHolding(entry, build.inventory, (holding) =>
+              holding.elements.flatMap(({ definitionId }) =>
+                definitionId === undefined ? [] : [definitionId],
+              ),
+            ) !== undefined,
+        )
+        .map(({ elements }) => elements[0]?.definitionId);
+    expect(holder(imported.build)).toEqual(["STAFF"]);
+    const exportBuild = (build: typeof imported.build) =>
+      exportEditedDnd4e({
+        target: "legacy-builder-0.07a",
+        envelope: imported.envelope,
+        snapshot: imported.snapshot,
+        build,
+        evaluation: evaluateCharacter(
+          projectBuildForEvaluation(build, content),
+          content,
+        ),
+        content,
+      });
+    // Unedited, the imported attribute is written back unchanged.
+    const unedited = importDnd4e(exportBuild(imported.build)).build;
+    expect(unedited.inventory[0]?.overrides).toEqual(staff!.overrides);
+    expect(holder(unedited)).toEqual(["STAFF"]);
+
+    const moved = applyCharacterCommand(imported.build, {
+      kind: "set-inventory-augment",
+      hostEntryId: otherStaff!.id,
+      augmentEntryId: shard!.id,
+    });
+    const movedXml = exportBuild(moved);
+    const reimported = importDnd4e(movedXml);
+    expect(holder(reimported.build)).toEqual(["WAND_STAFF"]);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(withLegacyAugmentState(moved)),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+
+    const detached = applyCharacterCommand(moved, {
+      kind: "set-inventory-augment",
+      hostEntryId: otherStaff!.id,
+      augmentEntryId: null,
+    });
+    expect(holder(importDnd4e(exportBuild(detached)).build)).toEqual([]);
+    expect(staff).toBeDefined();
   });
 
   it("imports per-level loot removals as records the domain decoder accepts", () => {

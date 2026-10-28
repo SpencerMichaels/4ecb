@@ -102,6 +102,8 @@ export interface CharacterInventoryEntry {
   readonly equippedSlots?: readonly EquipmentSlotAssignment[];
   /** A versatile weapon wielded two-handed (D101). */
   readonly wieldedTwoHanded?: boolean;
+  /** The augment holding this loot carries; see `boundAugmentHolding`. */
+  readonly augmentEntryId?: string | null;
 }
 
 export interface EvaluationInput {

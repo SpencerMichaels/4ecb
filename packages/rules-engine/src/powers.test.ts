@@ -3519,7 +3519,11 @@ describe("power evaluation", () => {
     );
     const augment =
       '<?xml version="1.0" encoding="utf-16"?><CharLootID><baseID>SHARD</baseID></CharLootID>';
-    const evaluate = (shardOwned: boolean) =>
+    const evaluate = (
+      shardOwned: boolean,
+      dagger: Partial<CharacterInventoryEntry> = {},
+      other: Partial<CharacterInventoryEntry> = {},
+    ) =>
       evaluatePowers({
         level: 1,
         activeDefinitionIds: ["POWER"],
@@ -3532,6 +3536,7 @@ describe("power evaluation", () => {
             equippedQuantity: 1,
             acquiredLevel: 1,
             overrides: { augment },
+            ...dagger,
           },
           {
             id: "other",
@@ -3540,6 +3545,7 @@ describe("power evaluation", () => {
             quantity: 1,
             equippedQuantity: 0,
             acquiredLevel: 1,
+            ...other,
           },
           ...(shardOwned
             ? [
@@ -3578,6 +3584,17 @@ describe("power evaluation", () => {
     expect(damage(owned, "Plain Dagger")).toBe("1d6+3");
     // CharLootAugment resolves only an augment the character owns.
     expect(damage(evaluate(false), "Shard Dagger")).toBe("1d6+3");
+    // A modern binding (set-inventory-augment) wins over the imported one:
+    // moved to the other dagger, or detached (null).
+    const moved = evaluate(
+      true,
+      { augmentEntryId: null },
+      { augmentEntryId: "shard" },
+    );
+    expect(damage(moved, "Shard Dagger")).toBe("1d6+3");
+    expect(damage(moved, "Plain Dagger")).toBe("1d6+4");
+    const detached = evaluate(true, { augmentEntryId: null });
+    expect(damage(detached, "Shard Dagger")).toBe("1d6+3");
   });
 
   it("limits hybrid striker damage to its class powers", () => {

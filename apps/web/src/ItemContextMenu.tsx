@@ -1,9 +1,12 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 
-/** One checkable action in an item's right-click menu. */
+/** One action in an item's right-click menu. */
 export interface ItemContextMenuItem {
   readonly label: string;
-  readonly checked: boolean;
+  /** Unique within the menu; defaults to the label. */
+  readonly key?: string;
+  /** A checkable action's state; undefined for a plain command. */
+  readonly checked?: boolean;
   /**
    * Why the action can't be changed (a Small character's versatile weapon
    * is always two-handed): the item stays in the menu, shown but inert.
@@ -92,8 +95,8 @@ export function ItemContextMenu({
         <button
           aria-checked={item.checked}
           aria-disabled={item.disabledReason === undefined ? undefined : true}
-          key={item.label}
-          role="menuitemcheckbox"
+          key={item.key ?? item.label}
+          role={item.checked === undefined ? "menuitem" : "menuitemcheckbox"}
           title={item.disabledReason}
           type="button"
           onClick={() => {

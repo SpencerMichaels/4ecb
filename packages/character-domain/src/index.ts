@@ -1,4 +1,5 @@
 export * from "./build";
+export * from "./inventory-augments";
 export * from "./sheet-layout";
 
 import {
@@ -471,6 +472,9 @@ function characterBuild(value: unknown, formatVersion: 1 | 2 | 3): boolean {
       typeof entry.showPowerCard === "boolean") &&
     (entry.wieldedTwoHanded === undefined ||
       typeof entry.wieldedTwoHanded === "boolean") &&
+    (entry.augmentEntryId === undefined ||
+      entry.augmentEntryId === null ||
+      typeof entry.augmentEntryId === "string") &&
     stringRecord(entry.overrides) &&
     (entry.legality === "rules-legal" || entry.legality === "houserule");
   const levelledEntry = (

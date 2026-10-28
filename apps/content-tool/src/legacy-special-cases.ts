@@ -725,12 +725,28 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(EQUIPMENT_UI, "mirrors RulesElementIsBoon's words and exact types"),
       test(EQUIPMENT_UI, "files every boon with the special items"),
     ),
-    "D20Workspace.CharLootIsAugment": partial(
-      "Dragonshard Augment magic items are augments of another item (CharacterLootItem.IsAugment; CharLootAugment binds one to a magic weapon).",
-      "powers.ts boundAugment reads a saved loot 'augment' binding so an augment-named limiter matches (2575583); there is no slot or command to bind an augment in the modern inventory, and the augment's own rules (Siberys Shard damage) are not applied to the bound item",
+    "D20Workspace.CharLootIsAugment": code(
+      "Loot whose base Magic Item Type starts with 'Dragonshard Augment' is an augment (CharacterLootItem.IsAugment); CharLootAugment/SetCharLootAugment bind one to an IsMagicWeapon loot as a serialized CharLootID, resolved by FindLoot.",
+      "item-fields.ts legacyIsAugment; character-domain set-inventory-augment stores the binding as the host's augmentEntryId (attaching a single augment elsewhere moves it) and boundAugmentHolding resolves it, falling back to an imported loot 'augment' CharLootID; powers.ts matches the owned augment's limiter (its statadd, e.g. Siberys Shard damage) on the bound item; legacy-dnd4e withLegacyAugmentState writes the CharLootID back; the Equipment tab's right-click menu on an augment attaches and detaches it",
       test(
         POWERS,
         "matches an augment limiter on the item the augment is bound to",
+      ),
+      test(
+        "packages/character-domain/src/inventory-holdings.test.ts",
+        "attaches, moves and detaches an augment as a semantic choice",
+      ),
+      test(
+        "packages/legacy-dnd4e/src/index.test.ts",
+        "round-trips augment bindings through the loot augment attribute",
+      ),
+      test(
+        "apps/web/src/EquipmentWorkspace.contextmenu.test.tsx",
+        "attaches an augment to an eligible item and shows it on both rows",
+      ),
+      fixture(
+        "sample-chars/Flint.dnd4e",
+        "Siberys Shard of Merciless Cold bound to the Staff of Sleep and Charm +1",
       ),
     ),
     MeetsItemRequirement: code(
@@ -872,8 +888,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(REQUIREMENTS, "attacks with a staff as the Quarterstaff record"),
     ),
     "D20Workspace.IsMagicWeapon": code(
-      "Staff and light-blade magic items used as weapons.",
-      "powers.ts loadouts",
+      "Whether a loot can carry an augment (CharacterLootItem.ShowAugment): a Weapon base with an enchantment, a Magic Item whose Magic Item Type is Staff, or a Superior Implement in the Staff or Light Blade group with an enchantment.",
+      "item-fields.ts legacyAcceptsAugment, which picks the Equipment tab's 'Attach to' hosts; staves also attack as weapons in powers.ts loadouts",
+      test(
+        ITEM_FIELDS,
+        "accepts magic weapons, staffs and enchanted superior staffs or blades",
+      ),
       test(
         POWERS,
         "treats magic staves as both implements and quarterstaff weapons",

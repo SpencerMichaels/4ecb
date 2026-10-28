@@ -32,7 +32,11 @@ import {
   INVENTORY_CATEGORIES,
   type InventoryCategoryId,
   inventoryDefinitionIds,
+  inventoryAttachedAugment,
+  inventoryAugmentAttachedTo,
+  inventoryAugmentHosts,
   inventoryDisplayName,
+  inventoryIsAugment,
   inventoryEntryForEntity,
   inventoryForcedTwoHanded,
   inventoryIsVersatile,
@@ -941,6 +945,7 @@ export function EquipmentWorkspace({
   onSell,
   onEquipSlot,
   onSetWielding,
+  onSetAugment,
   onSetText,
 }: {
   readonly build: CharacterBuild;
@@ -973,6 +978,13 @@ export function EquipmentWorkspace({
   ) => void;
   /** Wields a versatile weapon in two hands or one (D101). */
   readonly onSetWielding: (entryId: string, twoHanded: boolean) => void;
+  /** Binds augments to host holdings (null detaches), as one edit. */
+  readonly onSetAugment: (
+    bindings: readonly {
+      readonly hostEntryId: string;
+      readonly augmentEntryId: string | null;
+    }[],
+  ) => void;
   /** Saves a textstring (a group item set's party count); "" clears it. */
   readonly onSetText: (name: string, value: string) => void;
 }) {
@@ -1005,9 +1017,57 @@ export function EquipmentWorkspace({
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
   const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
   // Per-item right-click actions, as in the legacy builder (no menu button).
+  const augmentActions = (
+    augment: BuildInventoryEntry,
+  ): readonly ItemContextMenuItem[] => {
+    const hosts = inventoryAugmentHosts(inventory, byId);
+    const attachedTo = inventoryAugmentAttachedTo(augment, inventory);
+    const attach: readonly ItemContextMenuItem[] =
+      hosts.length === 0
+        ? [
+            {
+              label: "Attach to…",
+              disabledReason:
+                "No magic weapon or staff in the inventory can take an augment.",
+              onSelect: () => undefined,
+            },
+          ]
+        : hosts.map((host) => {
+            const attached = attachedTo.includes(host);
+            return {
+              key: `attach:${host.id}`,
+              label: `Attach to ${inventoryDisplayName(host, byId)}`,
+              checked: attached,
+              onSelect: () =>
+                onSetAugment([
+                  {
+                    hostEntryId: host.id,
+                    augmentEntryId: attached ? null : augment.id,
+                  },
+                ]),
+            };
+          });
+    return [
+      ...attach,
+      {
+        label: "Detach",
+        ...(attachedTo.length === 0
+          ? { disabledReason: "This augment isn't attached to an item." }
+          : {}),
+        onSelect: () =>
+          onSetAugment(
+            attachedTo.map((host) => ({
+              hostEntryId: host.id,
+              augmentEntryId: null,
+            })),
+          ),
+      },
+    ];
+  };
   const itemActions = (
     entry: BuildInventoryEntry,
   ): readonly ItemContextMenuItem[] => {
+    if (inventoryIsAugment(entry, byId)) return augmentActions(entry);
     if (!inventoryIsVersatile(entry, byId)) return [];
     const twoHanded = inventoryWieldsTwoHanded(entry, byId, loadoutHints);
     // A Small character holds a non-small versatile weapon in both hands:
@@ -1238,6 +1298,32 @@ export function EquipmentWorkspace({
                                           byId.size > 0 &&
                                           missingInventoryElements(entry, byId)
                                             .length > 0;
+                                        // Dragonshard augments: the host
+                                        // names its augment, the augment its
+                                        // host(s).
+                                        const attachedAugment =
+                                          inventoryAttachedAugment(
+                                            entry,
+                                            inventory,
+                                          );
+                                        const augmentHosts =
+                                          inventoryAugmentAttachedTo(
+                                            entry,
+                                            inventory,
+                                          );
+                                        const augmentNote =
+                                          attachedAugment !== undefined
+                                            ? `Augment: ${inventoryDisplayName(attachedAugment, byId)}`
+                                            : augmentHosts.length > 0
+                                              ? `Attached to ${augmentHosts
+                                                  .map((host) =>
+                                                    inventoryDisplayName(
+                                                      host,
+                                                      byId,
+                                                    ),
+                                                  )
+                                                  .join(", ")}`
+                                              : undefined;
                                         return (
                                           <tr
                                             className="table-clickable-row"
@@ -1278,7 +1364,7 @@ export function EquipmentWorkspace({
                                               <button
                                                 type="button"
                                                 className="table-inspect-button inventory-item-button"
-                                                aria-label={`${displayName}. ${contentMissing ? "Content not installed. " : ""}${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
+                                                aria-label={`${displayName}. ${contentMissing ? "Content not installed. " : ""}${augmentNote === undefined ? "" : `${augmentNote}. `}${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
                                                 onClick={(event) => {
                                                   event.stopPropagation();
                                                   inspectInventory(entry);
@@ -1326,6 +1412,12 @@ export function EquipmentWorkspace({
                                                       Content not installed
                                                     </span>
                                                   ) : null}
+                                                  {augmentNote ===
+                                                  undefined ? null : (
+                                                    <span className="inventory-item-augment">
+                                                      {augmentNote}
+                                                    </span>
+                                                  )}
                                                   {equippedStatus ===
                                                   undefined ? null : (
                                                     <span className="visually-hidden">

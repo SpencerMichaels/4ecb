@@ -5,6 +5,8 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { FieldOverlay } from "./evaluator";
 import {
   increaseDamageDie,
+  legacyAcceptsAugment,
+  legacyIsAugment,
   legacyItemSlot,
   legacyLootSlots,
   legacySlotMatches,
@@ -313,5 +315,54 @@ describe("legacy loot slots (native ItemSlot/CharLootSlot)", () => {
     for (const slot of ["Main hand", "Arms", "Ring"])
       expect(legacySlotMatches(slot, "off hand")).toBe(false);
     expect(legacySlotMatches("Body", "body")).toBe(true);
+  });
+});
+
+describe("dragonshard augments (CharLootIsAugment, IsMagicWeapon)", () => {
+  const shard = entity("SHARD", "Synthetic Shard", "Magic Item", {
+    "Magic Item Type": "Dragonshard Augment",
+  });
+  const weaponEnchant = entity("ENCHANT", "Vicious Weapon +1", "Magic Item", {
+    "Magic Item Type": "Weapon",
+  });
+  const sword = entity("SWORD", "Longsword", "Weapon");
+  const staff = entity("STAFF", "Staff of Ruin +1", "Magic Item", {
+    "Magic Item Type": "Staff",
+  });
+  const orb = entity("ORB", "Orb of Light +1", "Magic Item", {
+    "Magic Item Type": "Orb",
+  });
+  const armor = entity("ARMOR", "Leather Armor", "Armor");
+  const superiorStaff = entity(
+    "SSTAFF",
+    "Accurate Staff",
+    "Superior Implement",
+    {
+      Group: "Staff",
+    },
+  );
+  const superiorBlade = entity("SBLADE", "Dagger", "Superior Implement", {
+    Group: "Light Blade",
+  });
+  const superiorOrb = entity("SORB", "Orb", "Superior Implement", {
+    Group: "Orb",
+  });
+
+  it("recognizes augments by Magic Item Type", () => {
+    expect(legacyIsAugment(shard)).toBe(true);
+    expect(legacyIsAugment(staff)).toBe(false);
+    expect(legacyIsAugment(undefined)).toBe(false);
+  });
+
+  it("accepts magic weapons, staffs and enchanted superior staffs or blades", () => {
+    expect(legacyAcceptsAugment(sword, weaponEnchant)).toBe(true);
+    expect(legacyAcceptsAugment(sword, undefined)).toBe(false);
+    expect(legacyAcceptsAugment(staff, undefined)).toBe(true);
+    expect(legacyAcceptsAugment(orb, undefined)).toBe(false);
+    expect(legacyAcceptsAugment(armor, weaponEnchant)).toBe(false);
+    expect(legacyAcceptsAugment(superiorStaff, weaponEnchant)).toBe(true);
+    expect(legacyAcceptsAugment(superiorStaff, undefined)).toBe(false);
+    expect(legacyAcceptsAugment(superiorBlade, weaponEnchant)).toBe(true);
+    expect(legacyAcceptsAugment(superiorOrb, weaponEnchant)).toBe(false);
   });
 });

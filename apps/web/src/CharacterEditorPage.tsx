@@ -2907,6 +2907,18 @@ export function CharacterEditorPage({
                         twoHanded,
                       })
                     }
+                    onSetAugment={(bindings) =>
+                      dispatch({
+                        kind: "batch",
+                        commands: bindings.map(
+                          ({ hostEntryId, augmentEntryId }) => ({
+                            kind: "set-inventory-augment",
+                            hostEntryId,
+                            augmentEntryId,
+                          }),
+                        ),
+                      })
+                    }
                     onSetText={(name, value) =>
                       dispatch({ kind: "set-text", name, value })
                     }

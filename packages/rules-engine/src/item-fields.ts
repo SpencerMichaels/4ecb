@@ -203,6 +203,45 @@ export function legacyIsStaff(entity: ContentEntity): boolean {
   }
 }
 
+/**
+ * Native CharLootIsAugment: a loot whose base has a Magic Item Type that
+ * starts with "Dragonshard Augment" (a Siberys/Eberron/Khyber shard).
+ */
+export function legacyIsAugment(base: ContentEntity | undefined): boolean {
+  return (
+    base !== undefined &&
+    key(rawField(base, "Magic Item Type") ?? "").startsWith(
+      "dragonshard augment",
+    )
+  );
+}
+
+/**
+ * Native IsMagicWeapon, which decides whether a loot shows the augment
+ * choice (CharacterLootItem.ShowAugment): an enchanted weapon, a magic item
+ * whose Magic Item Type is Staff, or an enchanted superior implement in the
+ * Staff or Light Blade group. Other implements and armor take no augment.
+ */
+export function legacyAcceptsAugment(
+  base: ContentEntity | undefined,
+  enchantment: ContentEntity | undefined,
+): boolean {
+  if (base === undefined) return false;
+  switch (key(base.type)) {
+    case "weapon":
+      return enchantment !== undefined;
+    case "magic item":
+      return key(rawField(base, "Magic Item Type") ?? "") === "staff";
+    case "superior implement":
+      return (
+        enchantment !== undefined &&
+        ["staff", "light blade"].includes(key(rawField(base, "Group") ?? ""))
+      );
+    default:
+      return false;
+  }
+}
+
 /** Legacy IsDoubleWeapon. */
 export function legacyIsDoubleWeapon(
   weapon: ContentEntity | undefined,
