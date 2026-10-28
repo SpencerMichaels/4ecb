@@ -1990,12 +1990,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
       test(POWERS, "counts a class power's power source for keyed healing"),
     ),
-    "D20Workspace.PowerStats": partial(
+    "D20Workspace.PowerStats": code(
       "Per-power stat block: DetermineWeapon/DeterminePower, IsValidPowerCombo, rows only with a Hit line, an EffectPower or the Healing keyword, no weapon for [B] hits, Commander's Strike by name gets no rows; then attack, damage, strikers, keywords, globals, versatile, misc, bonuses, healing, stacking.",
-      "powers.ts evaluatePowers; Commander's Strike still gets rows (legacy gives it none). D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats",
+      "powers.ts evaluatePowers; Commander's Strike gets no rows by name (EXCEPTION_NAMES.commandersStrike; its record has no Hit line anyway, so the earlier 'still gets rows' note was a false positive). D094 divergence: an attack without a Hit line keeps a row and a Healing power gets no placeholder row. D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats",
       test(
         POWERS,
         "calculates no rows for a power with neither an attack nor a Hit line",
+      ),
+      test(
+        POWERS,
+        "gives Commander's Strike no rows by name, even with a Hit line (native PowerStats)",
       ),
       test(
         POWERS,

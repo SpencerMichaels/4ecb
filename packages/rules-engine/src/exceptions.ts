@@ -90,6 +90,8 @@ export const EXCEPTION_NAMES = {
   warpriest: "Warpriest",
   /** Power SpecialCase: fixed 1d10/2d10 damage. */
   bondOfCensure: "Bond of Censure",
+  /** PowerStats: this power (an ally's basic attack) gets no rows by name. */
+  commandersStrike: "Commander's Strike",
   /** Strength-modifier-only damage (power SpecialCase hit-line prefix). */
   knockdownAssault: "Knockdown Assault",
   /** IsRangedPower: also a ranged power. */

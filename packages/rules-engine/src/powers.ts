@@ -3352,7 +3352,11 @@ export function evaluatePowers(input: {
       : powerEquipped;
     const candidates =
       !calculated ||
-      key(power.id) === key(EXCEPTION_IDS.coordinatedAssaultAttack)
+      key(power.id) === key(EXCEPTION_IDS.coordinatedAssaultAttack) ||
+      // Native PowerStats returns no stats for this name (the content
+      // record has no Hit line either; this keeps an overlay that adds one
+      // from giving it rows).
+      key(power.name) === key(EXCEPTION_NAMES.commandersStrike)
         ? []
         : (implementPower
             ? // Legacy offers every owned weapon and implement (its

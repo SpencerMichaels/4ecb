@@ -1899,6 +1899,27 @@ describe("power evaluation", () => {
     expect(power?.variants).toEqual([]);
   });
 
+  it("gives Commander's Strike no rows by name, even with a Hit line (native PowerStats)", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["ID_FMP_POWER_1061"],
+      inventory: [],
+      stats: {},
+      overlays: [],
+      entities: [
+        entity("ID_FMP_POWER_1061", "Commander's Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Hit: "1[W] + Intelligence modifier damage.",
+          Effect:
+            "One of your allies can take a free action to make a melee basic attack against the target.  The ally gains a bonus to the damage roll equal to your Intelligence modifier.",
+        }),
+      ],
+    });
+
+    expect(power?.variants).toEqual([]);
+  });
+
   it("totals legacy healing stats for Healing powers, sharing typed maxima", () => {
     const typed = (name: string, value: number, bonusType: string) => {
       const base = combatStat(name, value);
