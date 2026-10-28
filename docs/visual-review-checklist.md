@@ -1232,3 +1232,45 @@ groups.
     after raising to 9; copy of character shows 786 gp.
   - **Wrong if:** Beatrix shows 100 gp or 37 pp; 48 gp (at 8 or after
     raising to 9), or copy of character shows 15 gp.
+
+## Shop validity, pairing, packages, ritual cost (2026-10-28, item 7, D108)
+
+- [ ] **Masterwork armor needs an enchantment.**
+  - **Where:** a character without Inherent Bonuses → `edit?tab=shop`, Type
+    "Armor & shields", Feyleather Armor; then Max Unger 12 (has Inherent
+    Bonuses), same row.
+  - **Expect:** first character: Buy and Give greyed, hover says
+    "Masterwork armor comes with its enhancement: buy it as the base of a
+    magic armor, or use Inherent Bonuses."; Max Unger: both enabled.
+  - **Wrong if:** buttons missing, enabled for the first, or disabled for Max.
+- [ ] **Weapon enchantment pairing.**
+  - **Where:** Shop → Weapon enchantments → Buy "Warsoul" (+1), then
+    "Reckless" (+1).
+  - **Expect:** a weapon picker; Warsoul lists one-handed melee weapons
+    (Longsword, Accurate dagger…); Reckless lists no reach weapons.
+  - **Wrong if:** Buy disabled, or added without a base.
+- [ ] **Superior implements under implement enchantments.**
+  - **Where:** Shop → Implement enchantments, search "Lifedrinker", Buy.
+  - **Expect:** Lifedrinker Weapon listed; its picker includes Accurate staff
+    and Accurate dagger alongside weapons.
+- [ ] **No shields for "Any" armor.**
+  - **Where:** Shop → Armor & shield enchantments → Buy "Delver's" (+1).
+  - **Expect:** armors only — no shields, no barding.
+- [ ] **Artifacts come with their weapon.**
+  - **Where:** Shop → Special items → Give "Spear of the Skylord", then
+    Equipment.
+  - **Expect:** added at once, no picker, as one holding on a Longspear with
+    weapon damage.
+- [ ] **Arrows fold into a package.**
+  - **Where:** Shop → Ammunition → Give "Arrow" until 30 owned, then one more;
+    check Equipment.
+  - **Expect:** at 30: "Arrows" ×1 and no "Arrow" row; after one more:
+    "Arrows" ×1 and "Arrow" ×1.
+  - **Wrong if:** "Arrow" ×30, or a holding vanishes.
+  - **Decide:** keep two rows (current), or legacy's single combined row; and
+    whether selling one arrow should break a package.
+- [ ] **Secret Formularies halves ritual prices.**
+  - **Where:** a level-11+ wizard with Secret Formularies → `edit?tab=rituals`.
+  - **Expect:** each ritual at half price (50 gp → 25 gp); buying deducts that.
+  - **Decide:** weapon enchantments are listed under both Weapon and Implement
+    enchantments (as legacy); OK?
