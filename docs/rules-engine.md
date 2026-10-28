@@ -172,6 +172,25 @@ selection diagnostics use this boundary. The evaluator caches bounded
 context-only snapshots by immutable profile and exact build prefix, so edits at
 later levels reuse unaffected earlier prerequisite contexts.
 
+Items are the exception to that boundary (D106). Inventory is one current
+state (D097), and a lost prerequisite disables a feat, so what the character's
+items grant now counts toward every level's picks. An earlier level's snapshot
+(`earlierLevelPrerequisiteInput` in `evaluator.ts`) is evaluated without
+inventory, without item-owned choice occurrences, and with only the text
+strings the nested pass reads (the `select default="[KEY]"` keys, collected
+from the content, and `PowersAsClass`); its cache key is that reduced input.
+The scope then adds the current evaluation's item-derived occurrences
+(holdings, unlocked set benefits and everything beneath them, such as Born of
+Shadow from Liquid Shadow or a primordial shard's Elemental Origin) to its
+owned definitions and dynamic categories. Equipment, loadout, wallet and other
+text edits therefore never invalidate an earlier snapshot. Item ability-score
+bonuses no longer reach earlier-level ability prerequisites; no stock item
+adds an ability score. A current-level scope (a retrain's exclusions at the
+character's level) keeps the full input with inventory. An item's own choices
+(a Book of Undeniable Fire power, a Gem of Colloquy language) are checked
+against the current level, as legacy `ExecuteLoot` runs at `LatestLevel()`,
+not at the holding's projected level 1.
+
 Replacement gain candidates follow the replacement rule's mode. In particular,
 `powerswap` supplies the gain category used by the native
 `UpdateReplacement` path; it is not validated against the displaced power's

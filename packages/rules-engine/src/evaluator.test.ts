@@ -6,6 +6,7 @@ import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 import {
   applyFieldOverlays,
   evaluateCharacter,
+  prerequisiteSnapshotCount,
   type CharacterInventoryEntry,
   type CharacterOccurrence,
 } from "./evaluator";
@@ -1445,6 +1446,166 @@ describe("character evaluator", () => {
         occurrenceId: "selected-dex-feat",
       }),
     );
+  });
+
+  describe("earlier-level prerequisite snapshots without inventory (D106)", () => {
+    const itemDefinitions = () => [
+      entity("LEVEL_1", "1", "Level", {
+        rules: [rule("select", { type: "Feat" }, 0)],
+      }),
+      entity("LEVEL_4", "4", "Level"),
+      entity("SHADOW_ORIGIN", "Born of Shadow", "Feat"),
+      entity("SHADOW_FEAT", "Shadow Feat", "Feat", {
+        prerequisites: "Born of Shadow",
+      }),
+      entity("LIQUID_SHADOW", "Liquid Shadow", "Magic Item", {
+        rules: [rule("grant", { name: "SHADOW_ORIGIN", type: "Feat" }, 0)],
+      }),
+      entity("BOOK", "Book of Gifts", "Magic Item", {
+        rules: [rule("select", { type: "Item Gift" }, 0)],
+      }),
+      entity("LATE_GIFT", "Late Gift", "Item Gift", {
+        prerequisites: "4th level",
+      }),
+      entity("SWORD", "Sword", "Weapon", {
+        specifics: { "Item Slot": "Main Hand" },
+      }),
+    ];
+    const occurrences: CharacterOccurrence[] = [
+      {
+        id: "level-1",
+        definitionId: "LEVEL_1",
+        acquiredLevel: 1,
+        kind: "root",
+      },
+      {
+        id: "level-4",
+        definitionId: "LEVEL_4",
+        acquiredLevel: 4,
+        kind: "root",
+      },
+    ];
+    const shadow: CharacterInventoryEntry = {
+      id: "shadow",
+      definitionIds: ["LIQUID_SHADOW"],
+      quantity: 1,
+      equippedQuantity: 0,
+      acquiredLevel: 1,
+    };
+    const shadowFeat = (evaluated: ReturnType<typeof evaluateCharacter>) =>
+      evaluated.choices
+        .find(({ providerOccurrenceId }) => providerOccurrenceId === "level-1")
+        ?.candidates.find(({ definitionId }) => definitionId === "SHADOW_FEAT");
+
+    it("keeps earlier snapshots across inventory, loadout and usage edits", () => {
+      const definitions = itemDefinitions();
+      evaluateCharacter(
+        { level: 4, baseAbilities: {}, occurrences, inventory: [shadow] },
+        definitions,
+      );
+      const snapshots = prerequisiteSnapshotCount(definitions);
+      expect(snapshots).toBe(1);
+      evaluateCharacter(
+        {
+          level: 4,
+          baseAbilities: {},
+          occurrences,
+          inventory: [
+            { ...shadow, quantity: 2 },
+            {
+              id: "sword",
+              definitionIds: ["SWORD"],
+              quantity: 1,
+              equippedQuantity: 1,
+              acquiredLevel: 1,
+            },
+          ],
+          textStrings: {
+            _INTERNAL_MainHandWeapon: "Sword",
+            USAGE_SWORD: "1",
+          },
+        },
+        definitions,
+      );
+      expect(prerequisiteSnapshotCount(definitions)).toBe(snapshots);
+    });
+
+    it("counts what an item grants now toward an earlier pick's prerequisite", () => {
+      const definitions = itemDefinitions();
+      const withItem = evaluateCharacter(
+        { level: 4, baseAbilities: {}, occurrences, inventory: [shadow] },
+        definitions,
+      );
+      const withoutItem = evaluateCharacter(
+        { level: 4, baseAbilities: {}, occurrences, inventory: [] },
+        definitions,
+      );
+      expect(shadowFeat(withItem)).toMatchObject({
+        eligible: true,
+        reasons: [],
+      });
+      expect(shadowFeat(withoutItem)).toMatchObject({
+        eligible: false,
+        reasons: ["prerequisite"],
+      });
+
+      const selected = evaluateCharacter(
+        {
+          level: 4,
+          baseAbilities: {},
+          occurrences: [
+            ...occurrences,
+            {
+              id: "shadow-feat",
+              definitionId: "SHADOW_FEAT",
+              acquiredLevel: 1,
+              parentId: "level-1",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+          ],
+          inventory: [shadow],
+        },
+        definitions,
+      );
+      expect(selected.diagnostics).not.toContainEqual(
+        expect.objectContaining({ code: "prerequisite.failed" }),
+      );
+    });
+
+    it("checks an item's own choice at the current level", () => {
+      const definitions = itemDefinitions();
+      const book: CharacterInventoryEntry = {
+        id: "book",
+        definitionIds: ["BOOK"],
+        quantity: 1,
+        equippedQuantity: 0,
+        acquiredLevel: 1,
+      };
+      const lateGift = (level: number) =>
+        evaluateCharacter(
+          {
+            level,
+            baseAbilities: {},
+            occurrences: occurrences.filter(
+              ({ acquiredLevel }) => acquiredLevel <= level,
+            ),
+            inventory: [book],
+          },
+          definitions,
+        )
+          .choices.find(
+            ({ providerOccurrenceId }) =>
+              providerOccurrenceId === "book:definition:0",
+          )
+          ?.candidates.find(({ definitionId }) => definitionId === "LATE_GIFT");
+      expect(lateGift(4)).toMatchObject({ eligible: true, reasons: [] });
+      expect(lateGift(3)).toMatchObject({
+        eligible: false,
+        reasons: ["prerequisite"],
+      });
+    });
   });
 
   it("expands candidates only for requested detail levels", () => {

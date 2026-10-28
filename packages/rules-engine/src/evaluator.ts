@@ -75,7 +75,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v84-2026-10-28-locked-augment-rows";
+  "evaluated-character-v85-2026-10-28-itemless-earlier-prerequisites";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -429,6 +429,110 @@ const prerequisiteSnapshotCaches = new WeakMap<
   Map<string, EvaluatedCharacter>
 >();
 
+/** The text string `dynamicCategories` reads (native PowersAsClass). */
+const POWERS_AS_CLASS_TEXT = "PowersAsClass";
+
+const selectDefaultTextKeysCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlySet<string>
+>();
+
+/** Text keys a `select default="[KEY]"` resolves through (`defaultName`). */
+function selectDefaultTextKeys(
+  entities: readonly ContentEntity[],
+): ReadonlySet<string> {
+  const cached = selectDefaultTextKeysCache.get(entities);
+  if (cached !== undefined) return cached;
+  const keys = new Set<string>();
+  for (const entity of entities)
+    for (const statement of entity.rules) {
+      if (key(statement.name) !== "select") continue;
+      const value = statement.attributes.find(
+        (attribute) => key(attribute.name) === "default",
+      )?.value;
+      const textKey =
+        value === undefined ? undefined : /^\[([^\]]+)\]$/.exec(value)?.[1];
+      if (textKey !== undefined) keys.add(key(textKey));
+    }
+  selectDefaultTextKeysCache.set(entities, keys);
+  return keys;
+}
+
+/** Synthetic inventory provider IDs (`<entry>:definition:<index>`) and the
+ *  input occurrences stored beneath them (item choices, D097). */
+function inventoryOwnedOccurrenceIds(
+  input: EvaluationInput,
+): ReadonlySet<string> {
+  const owned = new Set(
+    input.inventory.flatMap((entry) =>
+      entry.definitionIds.map((_, index) => `${entry.id}:definition:${index}`),
+    ),
+  );
+  let grew = owned.size > 0;
+  while (grew) {
+    grew = false;
+    for (const occurrence of input.occurrences)
+      if (
+        occurrence.parentId !== undefined &&
+        owned.has(occurrence.parentId) &&
+        !owned.has(occurrence.id)
+      ) {
+        owned.add(occurrence.id);
+        grew = true;
+      }
+  }
+  return owned;
+}
+
+/**
+ * The input an earlier level's prerequisite snapshot evaluates (D106): the
+ * build through that level without inventory, item-owned choices or text
+ * strings other than those the nested pass reads (select defaults,
+ * PowersAsClass). What items grant enters the scope from the current
+ * evaluation instead, so equipment, loadout, wallet and other text edits
+ * leave every earlier snapshot cached.
+ */
+function earlierLevelPrerequisiteInput(
+  input: EvaluationInput,
+  level: number,
+  entities: readonly ContentEntity[],
+): EvaluationInput {
+  const itemOwned = inventoryOwnedOccurrenceIds(input);
+  const textKeys = new Set([
+    ...selectDefaultTextKeys(entities),
+    ...selectDefaultTextKeys(input.localEntities ?? []),
+    key(POWERS_AS_CLASS_TEXT),
+  ]);
+  return {
+    level,
+    baseAbilities: input.baseAbilities,
+    occurrences: input.occurrences.filter(
+      (occurrence) =>
+        occurrence.acquiredLevel <= level && !itemOwned.has(occurrence.id),
+    ),
+    inventory: [],
+    textStrings: Object.fromEntries(
+      Object.entries(input.textStrings ?? {}).filter(([name]) =>
+        textKeys.has(key(name)),
+      ),
+    ),
+    ...(input.localEntities === undefined
+      ? {}
+      : { localEntities: input.localEntities }),
+    ...(input.sourceEntitlements === undefined
+      ? {}
+      : { sourceEntitlements: input.sourceEntitlements }),
+  };
+}
+
+/** @internal How many nested prerequisite snapshots are cached for a
+ *  content set (tests count nested evaluations through it). */
+export function prerequisiteSnapshotCount(
+  entities: readonly ContentEntity[],
+): number {
+  return prerequisiteSnapshotCaches.get(entities)?.size ?? 0;
+}
+
 function prerequisiteSnapshotKey(
   input: EvaluationInput,
   level: number,
@@ -512,7 +616,7 @@ function dynamicCategories(
         .forEach((value) => target.add(key(value)));
   }
   const powersAsClass = Object.entries(text).find(
-    ([name]) => key(name) === "powersasclass",
+    ([name]) => key(name) === key(POWERS_AS_CLASS_TEXT),
   )?.[1];
   if (powersAsClass) classValues.add(key(powersAsClass));
   if (
@@ -2890,8 +2994,36 @@ function evaluateCharacterInternal(
     }
     return excluded;
   };
+  /** Active occurrences that are holdings (and unlocked set benefits) or
+   *  descend from one: what the character's items grant now. */
+  let itemDerivedIds: ReadonlySet<string> | undefined;
+  const itemDerived = (): ReadonlySet<string> => {
+    if (itemDerivedIds !== undefined) return itemDerivedIds;
+    const ids = new Set(inventoryOwnedOccurrenceIds(input));
+    for (const occurrence of occurrences)
+      if (occurrence.kind === "inventory") ids.add(occurrence.id);
+    let grew = ids.size > 0;
+    while (grew) {
+      grew = false;
+      for (const occurrence of occurrences)
+        if (
+          occurrence.parentId !== undefined &&
+          ids.has(occurrence.parentId) &&
+          !ids.has(occurrence.id)
+        ) {
+          ids.add(occurrence.id);
+          grew = true;
+        }
+    }
+    itemDerivedIds = ids;
+    return ids;
+  };
+  let itemDerivedList: readonly CharacterOccurrence[] | undefined;
+  const itemDerivedOccurrences = () =>
+    (itemDerivedList ??= occurrences.filter(({ id }) => itemDerived().has(id)));
   /** The character at a level, optionally without some occurrences (what a
-   *  retrain gives up can't count toward what it takes). */
+   *  retrain gives up can't count toward what it takes). Earlier levels
+   *  carry no inventory (D106). */
   const prerequisiteScopeAt = (
     requestedLevel: number,
     excludedIds: readonly string[] = [],
@@ -2907,7 +3039,7 @@ function evaluateCharacterInternal(
       prerequisiteScopeRequests.set(requestKey, cached);
       return cached;
     }
-    const scopedInput =
+    const excludedInput =
       excluded.size === 0
         ? input
         : {
@@ -2916,6 +3048,12 @@ function evaluateCharacterInternal(
               ({ id }) => !excluded.has(id),
             ),
           };
+    // Earlier levels evaluate without inventory (D106); the current level
+    // (a retrain's exclusions) keeps the full input with its items.
+    const earlier = level < input.level;
+    const scopedInput = earlier
+      ? earlierLevelPrerequisiteInput(excludedInput, level, entities)
+      : excludedInput;
     const snapshotCache =
       prerequisiteSnapshotCaches.get(entities) ??
       new Map<string, EvaluatedCharacter>();
@@ -2942,7 +3080,17 @@ function evaluateCharacterInternal(
       snapshotCache.delete(snapshotKey);
       snapshotCache.set(snapshotKey, scoped);
     }
-    const scopedOwned = scoped.occurrences.flatMap((occurrence) => {
+    // What items grant now counts at every earlier level, as it did when the
+    // snapshot carried today's holdings (a lost prerequisite disables a
+    // feat, so "has it now" is the test). Their ability bonuses don't: no
+    // stock item adds an ability score.
+    const scopedOccurrences = earlier
+      ? [
+          ...scoped.occurrences,
+          ...itemDerivedOccurrences().filter(({ id }) => !excluded.has(id)),
+        ]
+      : scoped.occurrences;
+    const scopedOwned = scopedOccurrences.flatMap((occurrence) => {
       const definition = index.get(occurrence.definitionId);
       return definition === undefined ? [] : [definition];
     });
@@ -2957,7 +3105,7 @@ function evaluateCharacterInternal(
         level,
         dynamicCategories: dynamicCategories(
           scopedOwned,
-          scoped.occurrences,
+          scopedOccurrences,
           index,
           input.textStrings ?? {},
         ),
@@ -3039,12 +3187,17 @@ function evaluateCharacterInternal(
       occurrences,
       (definitionId) => index.get(definitionId),
     );
+  // An item's own choices (an item power or language select) are made when
+  // its loot executes, at the latest level (legacy ExecuteLoot), not at the
+  // holding's projected level 1.
+  const prerequisiteLevel = (choice: (typeof choices)[number]) =>
+    itemDerived().has(choice.providerOccurrenceId) ? input.level : choice.level;
   choices = choices.map((choice) => {
     const setAside = selectionSetAside(choice);
     return {
       ...choice,
       candidates: choice.candidates.map((candidate) =>
-        withPrerequisites(choice.level, candidate, [], setAside),
+        withPrerequisites(prerequisiteLevel(choice), candidate, [], setAside),
       ),
       ...(choice.replacementOptions === undefined
         ? {}
@@ -3052,7 +3205,7 @@ function evaluateCharacterInternal(
             replacementOptions: choice.replacementOptions.map((option) => ({
               ...option,
               candidates: option.candidates.map((candidate) =>
-                withPrerequisites(choice.level, candidate, [
+                withPrerequisites(prerequisiteLevel(choice), candidate, [
                   option.replacesOccurrenceId,
                   ...(choice.selectedOccurrenceId === undefined
                     ? []
@@ -3131,7 +3284,7 @@ function evaluateCharacterInternal(
       selectedEntity?.prerequisites === undefined ||
       selectedEntity.prerequisites.trim().length === 0
         ? prerequisiteScopes.get(String(input.level))!
-        : prerequisiteScopeAt(choice.level);
+        : prerequisiteScopeAt(prerequisiteLevel(choice));
     const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
       ...withoutOwnedDefinitions(
         prerequisiteScope.context,

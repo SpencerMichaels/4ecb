@@ -3219,6 +3219,46 @@ Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093
 (power requirements) and D095 (summoned creatures) stay as decided.
 
+### D106 — Earlier-level prerequisite snapshots carry no inventory
+
+Status: accepted (2026-10-28), owner decision (follows D097; D091 divergence).
+
+Context: a pick made at level L is checked against a nested "character at
+level L" evaluation (`prerequisiteScopeAt` in `rules-engine/src/evaluator.ts`).
+Since D097 every holding enters at level 1, and the snapshot's input and
+cache key carried the whole inventory and every rules text string, so any
+equipment, loadout, item-set or `USAGE_` edit recomputed one nested
+evaluation per earlier level (about 5 s cold in the browser for a level-9
+character). Native `UpdateInternal` (D20Workspace.cs ~137-268) records each
+level's element bitmask before `TallyLoot`/`EquipLoot` and re-records only
+the latest level after loot; `CheckOnePrereq` (`-Module-.cs` ~30077) tests
+`HasRulesElement(char, elem, level)` against that per-level bitmask and a
+pre-loot ability cache, so native earlier levels see no item grants at all.
+
+Decision:
+
+- An earlier level's snapshot evaluates the build through that level with
+  `inventory: []`, without occurrences stored beneath an item, and with only
+  the text strings the nested pass reads (`select default="[KEY]"` keys from
+  the content, `PowersAsClass`). Its cache key is that reduced input.
+- The scope adds what the character's items grant now (inventory-kind
+  occurrences and their descendants from the current evaluation) to its owned
+  definitions and dynamic categories. Items therefore count toward
+  earlier-level picks exactly as before D106, deliberately unlike native: a
+  4e feat whose prerequisite is lost stops working, so "has it now" is the
+  test (D091, new builder wins).
+- Item ability-score bonuses no longer reach earlier-level ability
+  prerequisites. No stock item adds an ability score.
+- A current-level scope (a retrain's exclusions at the character's level)
+  keeps the full input with inventory.
+- An item's own choices (provider with inventory ancestry) are checked at the
+  current level, as native `ExecuteLoot` runs at `LatestLevel()`, not at the
+  holding's projected level 1.
+
+Consequences: equipment and text edits reuse every earlier snapshot (Hu
+Sheng-Ming at level 9, Node: warm re-evaluation after an unequip ~430 ms →
+~170 ms). Parity baseline unchanged. Cache v85.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 

@@ -1,5 +1,21 @@
 # Implementation status
 
+## Equipment edits keep earlier-level prerequisite snapshots (2026-10-28)
+
+Every equipment, loadout or rules-text edit invalidated each earlier level's
+nested prerequisite snapshot, because the snapshot input carried the whole
+inventory (D097) and every text string. D106: an earlier level now evaluates
+without inventory, item-owned choices or text other than select-default keys
+and `PowersAsClass` (`earlierLevelPrerequisiteInput` in `evaluator.ts`), and
+the scope adds what items grant now from the current evaluation, so items
+still count toward earlier picks. Item ability bonuses no longer reach
+earlier-level ability prerequisites (no stock item has one). An item's own
+choices are checked at the current level (legacy `ExecuteLoot` at
+`LatestLevel()`), not at level 1. Hu Sheng-Ming at level 9 (editor shape,
+Node): warm re-evaluation after an unequip or quantity edit ~425-475 ms →
+~155-200 ms (an unchanged re-evaluation is ~150 ms). `parity:baseline`
+unchanged. Covered by three `evaluator.test.ts` cases. Cache v85.
+
 ## Owner decisions applied (2026-10-28)
 
 - Parity: `sample-chars/` saves are the canonical baseline; SampleHeroes
