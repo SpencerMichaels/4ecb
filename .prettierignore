@@ -5,6 +5,7 @@ reverse-engineering/generated/
 reverse-engineering/reference/cbloader-source/
 reverse-engineering/tools/dotnet/
 tmp/
+.claude/worktrees/
 node_modules/
 dist/
 coverage/

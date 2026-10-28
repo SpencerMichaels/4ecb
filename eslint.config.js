@@ -11,6 +11,7 @@ export default tseslint.config(
       "CharacterBuilder/**",
       "CBLoader/**",
       "tmp/**",
+      ".claude/worktrees/**",
     ],
   },
   ...tseslint.configs.recommended,
