@@ -1,4 +1,6 @@
 import {
+  augmentHosts,
+  boundAugmentHolding,
   formatInventoryItemName,
   type BuildInventoryElement,
   type BuildInventoryEntry,
@@ -9,6 +11,8 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  legacyAcceptsAugment,
+  legacyIsAugment,
   matchesCategory,
   parseCategoryExpression,
   RulesIndex,
@@ -1292,4 +1296,58 @@ export function inventoryEntryForEntity(
     overrides: {},
     legality: "rules-legal",
   };
+}
+
+function holdingParts(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): { base?: ContentEntity; enchantment?: ContentEntity } {
+  const [baseId, enchantmentId] = inventoryDefinitionIds(entry);
+  const base = baseId === undefined ? undefined : byId.get(baseId);
+  const enchantment =
+    enchantmentId === undefined ? undefined : byId.get(enchantmentId);
+  return {
+    ...(base === undefined ? {} : { base }),
+    ...(enchantment === undefined ? {} : { enchantment }),
+  };
+}
+
+/** Whether a holding is a dragonshard augment (native CharLootIsAugment). */
+export function inventoryIsAugment(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): boolean {
+  return legacyIsAugment(holdingParts(entry, byId).base);
+}
+
+/**
+ * The owned holdings an augment can be attached to, in inventory order
+ * (native IsMagicWeapon: magic weapons, staffs and enchanted superior
+ * staffs or light blades).
+ */
+export function inventoryAugmentHosts(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly BuildInventoryEntry[] {
+  return inventory.filter((entry) => {
+    if (entry.quantity <= 0) return false;
+    const { base, enchantment } = holdingParts(entry, byId);
+    return legacyAcceptsAugment(base, enchantment);
+  });
+}
+
+/** The augment holding attached to `host`, if any. */
+export function inventoryAttachedAugment(
+  host: BuildInventoryEntry,
+  inventory: readonly BuildInventoryEntry[],
+): BuildInventoryEntry | undefined {
+  return boundAugmentHolding(host, inventory, inventoryDefinitionIds);
+}
+
+/** The holdings `augment` is attached to, in inventory order. */
+export function inventoryAugmentAttachedTo(
+  augment: BuildInventoryEntry,
+  inventory: readonly BuildInventoryEntry[],
+): readonly BuildInventoryEntry[] {
+  return augmentHosts(augment, inventory, inventoryDefinitionIds);
 }

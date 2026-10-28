@@ -956,6 +956,12 @@ button.inventory-icon-action:disabled {
   gap: 0.25rem;
 }
 
+/* A dragonshard augment's host, or the item an augment is attached to. */
+.inventory-item-augment {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
 /* A per-item right-click menu (ItemContextMenu): legacy-style item actions
  * without a visible menu button. */
 .item-context-menu {

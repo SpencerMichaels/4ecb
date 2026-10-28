@@ -111,6 +111,7 @@ describe("Equipment item right-click actions (D101)", () => {
           onSell={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={onSetWielding}
+          onSetAugment={() => undefined}
           onSetText={() => undefined}
         />,
       ),
@@ -179,6 +180,7 @@ describe("Equipment loadout size rules (D102)", () => {
           onSell={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={onSetWielding}
+          onSetAugment={() => undefined}
           onSetText={() => undefined}
         />,
       ),
@@ -207,5 +209,149 @@ describe("Equipment loadout size rules (D102)", () => {
     expect(onSetWielding).not.toHaveBeenCalled();
     // The menu stays open: the click changed nothing.
     expect(container.querySelector('[role="menu"]')).not.toBeNull();
+  });
+});
+
+describe("Equipment augment attachment (CharLootAugment)", () => {
+  const magicItem = (
+    id: string,
+    name: string,
+    magicItemType: string,
+  ): ContentEntity => ({
+    ...weapon(id, name, { "Magic Item Type": magicItemType }),
+    type: "Magic Item",
+  });
+  const shard = magicItem("SHARD", "Synthetic Shard", "Dragonshard Augment");
+  const staff = magicItem("STAFF", "Staff of Ruin +1", "Staff");
+  const enchant = magicItem("VICIOUS", "Vicious Weapon +1", "Weapon");
+  const orb = magicItem("ORB", "Orb of Light +1", "Orb");
+  const viciousDagger: BuildInventoryEntry = {
+    ...holding(dagger),
+    id: "vicious-dagger",
+    elements: [
+      { definitionId: "DAGGER", name: "Plain dagger", type: "Weapon" },
+      {
+        definitionId: "VICIOUS",
+        name: "Vicious Weapon +1",
+        type: "Magic Item",
+      },
+    ],
+  };
+  const byId = new Map(
+    [shard, staff, enchant, orb, dagger, sword].map(
+      (entity) => [entity.id.toLocaleLowerCase(), entity] as const,
+    ),
+  );
+  const render = (
+    inventory: readonly BuildInventoryEntry[],
+    onSetAugment: (
+      bindings: readonly {
+        hostEntryId: string;
+        augmentEntryId: string | null;
+      }[],
+    ) => void = () => undefined,
+  ) =>
+    act(() =>
+      root.render(
+        <EquipmentWorkspace
+          build={{ ...build, inventory }}
+          entities={[...byId.values()]}
+          byId={byId}
+          wallet={{ carried: noCoins, stored: noCoins }}
+          activeDefinitionIds={[]}
+          workspace="equipment"
+          loadoutView={false}
+          shopCategory="weapons"
+          onShopCategoryChange={() => undefined}
+          onPutInventory={() => undefined}
+          onPurchase={() => undefined}
+          onSell={() => undefined}
+          onEquipSlot={() => undefined}
+          onSetWielding={() => undefined}
+          onSetAugment={onSetAugment}
+          onSetText={() => undefined}
+        />,
+      ),
+    );
+  const openMenu = (name: string) => {
+    const row = [...container.querySelectorAll("tr")].find((candidate) =>
+      candidate
+        .querySelector(".inventory-item-name")
+        ?.textContent?.includes(name),
+    )!;
+    act(() => {
+      row.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 40,
+          clientY: 50,
+        }),
+      );
+    });
+    return [...container.querySelectorAll<HTMLElement>('[role="menu"] button')];
+  };
+  const rowNote = (name: string) =>
+    [...container.querySelectorAll("tr")]
+      .find((candidate) =>
+        candidate
+          .querySelector(".inventory-item-name")
+          ?.textContent?.includes(name),
+      )
+      ?.querySelector(".inventory-item-augment")?.textContent;
+
+  it("attaches an augment to an eligible item and shows it on both rows", () => {
+    const onSetAugment = vi.fn();
+    render(
+      [holding(staff), viciousDagger, holding(orb), holding(shard)],
+      onSetAugment,
+    );
+    const items = openMenu("Synthetic Shard");
+    // Magic weapons and staffs only; the orb takes no augment.
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Attach to Staff of Ruin +1",
+      "Attach to Vicious Plain dagger +1",
+      "Detach",
+    ]);
+    expect(items[0]?.getAttribute("role")).toBe("menuitemcheckbox");
+    expect(items[2]?.getAttribute("role")).toBe("menuitem");
+    expect(items[2]?.getAttribute("aria-disabled")).toBe("true");
+    act(() => items[0]!.click());
+    expect(onSetAugment).toHaveBeenCalledWith([
+      { hostEntryId: "STAFF", augmentEntryId: "SHARD" },
+    ]);
+
+    // Once attached: checked, Detach enabled, and both rows say so.
+    render([
+      { ...holding(staff), augmentEntryId: "SHARD" },
+      viciousDagger,
+      holding(shard),
+    ]);
+    expect(rowNote("Staff of Ruin +1")).toBe("Augment: Synthetic Shard");
+    expect(rowNote("Synthetic Shard")).toBe("Attached to Staff of Ruin +1");
+    expect(rowNote("Vicious")).toBeUndefined();
+  });
+
+  it("detaches, and keeps Attach present but disabled with nothing eligible", () => {
+    const onSetAugment = vi.fn();
+    render(
+      [{ ...holding(staff), augmentEntryId: "SHARD" }, holding(shard)],
+      onSetAugment,
+    );
+    const items = openMenu("Synthetic Shard");
+    expect(items[0]?.getAttribute("aria-checked")).toBe("true");
+    act(() => items[1]!.click());
+    expect(onSetAugment).toHaveBeenCalledWith([
+      { hostEntryId: "STAFF", augmentEntryId: null },
+    ]);
+
+    render([holding(orb), holding(shard)], onSetAugment);
+    const none = openMenu("Synthetic Shard");
+    expect(none.map((item) => item.textContent)).toEqual([
+      "Attach to…",
+      "Detach",
+    ]);
+    expect(none[0]?.getAttribute("aria-disabled")).toBe("true");
+    expect(none[0]?.getAttribute("title")).toMatch(/magic weapon or staff/);
   });
 });

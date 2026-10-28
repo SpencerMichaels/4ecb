@@ -263,7 +263,10 @@ separate header or level rail.
   weapon in one, and an equipped weapon the character can't wield is a
   house-rule character issue (`unwieldableWeaponIssues`). Equipment-tab
   per-item actions are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield
-  two-handed" (checked and inert when size forces it).
+  two-handed" (checked and inert when size forces it) and, on a dragonshard
+  augment, "Attach to <item>"/"Detach" (`set-inventory-augment`; the host's
+  `augmentEntryId`, resolved by `boundAugmentHolding`, else the imported loot
+  `augment` CharLootID).
 - **Stylesheets.** `apps/web/src/styles/index.css` imports every app
   stylesheet in cascade order: `primitives.css`, then `01-base.css` …
   `16-actions-notices.css`, split by surface without reordering rules. Put a
