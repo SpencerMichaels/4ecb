@@ -134,23 +134,23 @@ column names only the formatting or formula native code adds.
 | Unarmed melee base | For a melee power without a weapon, the WeaponBase is the record named by the `Unarmed Weapon` text (Belt of the Brawler → Club), else `Unarmed attack`; it feeds weapon keywords, proficiency bonus and weapon dice. | Reproduced (`f533156`): `withUnarmedWeaponBase` gives a melee power's Unarmed row the record's keywords, proficiency bonus and Damage with `:die` steps; one helper also feeds requirements, strikers and `CalcBonuses`. | Inferred (code); probes (a sample + Brawler Style: Unarmed rows +2 attack; + Belt of the Brawler: Club +2 proficiency, 1d6). RaidonKane's older save keeps Weapon Focus (Unarmed) off its Unarmed basic attack (1d4+3; modern 1d4+5): unresolved. | High | Brawler Style, Versatile Expertise (Unarmed), Weapon Expertise/Focus (Unarmed), Belt of the Brawler. |
 | Enchant equivalents | `WeaponEnchant` reads the base's `EnchantEquiv` record (10 items). | Open (partial, already in the special-case registry). | Inferred (code). | Medium | Rarely; their own Enhancement usually agrees. |
 | Attack line selection | First non-empty attack field; a level-11/21 attack text replaces the line; theme powers read level headers. | Reproduced (modern supports every authored attack). | Inferred (code), probe. | High | None. |
-| Highest/mental/chosen ability | `CalcStatVsDefense`: "your highest ability" and "primary ability" prefixes → `HighestAbility` over all six scores (strict >, first wins); "highest mental ability" → Int/Wis/Cha by score; "chosen ability" → the `Chosen Ability` string stat; a `±N` suffix is a power modifier. | Fix in progress for highest, highest mental and chosen (`main` yields Unknown and drops the modifier and any `+N` after "ability modifier"/"ability score"). "Primary ability" is divergent: `main` uses the best class key ability (owner question). | Inferred (code); probe shows the modern loss; parity agrees on DV and Fei Zhu, whose highest score is a class key ability. | High | 36 highest-ability attack lines, 1 highest-mental, 2 chosen, 126 primary-ability; the whole ability modifier plus +4/+6/+9. |
-| Wisdom rider | `ExtractPowerMods` adds Wisdom for one exact attack-line ending (Hawk's Talon). | Fix in progress (single-power items). | Inferred (code). | High | 1 power. |
-| Alternative selection | `WhichAttack`: a melee-or-ranged dual line takes the ranged alternative with a ranged (or thrown) weapon; an "A, B, or C" line takes the highest. | Fix in progress (single-power items): `main` uses a narrower regex. | Inferred (code). | Medium | Attacks on the Run, Reactive Shot. |
+| Highest/mental/chosen ability | `CalcStatVsDefense`: "your highest ability" and "primary ability" prefixes → `HighestAbility` over all six scores (strict >, first wins); "highest mental ability" → Int/Wis/Cha by score; "chosen ability" → the `Chosen Ability` string stat; a `±N` suffix is a power modifier. | Reproduced for highest, highest mental and chosen (`cc20870`; bare "Highest ability" lines without "your" also resolve, D091, owner to confirm). "Primary ability" is divergent: `main` uses the best class key ability (owner question). | Inferred (code); probe shows the modern loss; parity agrees on DV and Fei Zhu, whose highest score is a class key ability. | High | 36 highest-ability attack lines, 1 highest-mental, 2 chosen, 126 primary-ability; the whole ability modifier plus +4/+6/+9. |
+| Wisdom rider | `ExtractPowerMods` adds Wisdom for one exact attack-line ending (Hawk's Talon). | Reproduced (`cc20870`). | Inferred (code). | High | 1 power. |
+| Alternative selection | `WhichAttack`: a melee-or-ranged dual line takes the ranged alternative with a ranged (or thrown) weapon; an "A, B, or C" line takes the highest. | Reproduced (`cc20870`), except Reactive Shot, which keeps the higher of Str/Dex per its text (D091, owner to confirm). | Inferred (code). | Medium | Attacks on the Run, Reactive Shot. |
 | Key-ability overrides | `OverrideStat`/`OverrideStatList`/`OverrideByAssociation`/`OverrideStatPower`. | Reproduced (`key-ability-overrides.ts`, power-ability choices). | Confirmed (parity). | High | None. |
 | Fey Pact Charisma | Two Fey Pact warlock saves attack with Charisma on Constitution attack lines (test_test's Diabolic Grasp, oleander_9's Feast of Souls). | Not a native factor: the player's homebrew warlock-ability-options part rewrites 186 warlock attack lines to "Charisma or Constitution"; the pack lacks it. No modern change. | Confirmed (save). | Medium | 3 points attack and damage on two saves. |
 | Base attack | `CalcBAB`: ability through the attack's typed table, which also registers ability modifier, `HALF-LEVEL`, `Proficiency Bonus` and `Enhancement` caps; proficiency only for weapon powers; enhancement with any main-hand loot. | Reproduced for Enhancement; the other three caps are not shared. | Confirmed (parity) / inferred. | Medium | No content found that collides. |
 | Damage expression | `CalcDamage`: higher-level damage, "twice", "X modifier", added ability terms, multiple-ability choices, "highest"/"ability" → `HighestAbility`, damage stat → attack stat, then weapon dice, dice-only enhancement and Dual Implement Spellcaster. | Reproduced for common forms. "Your highest ability modifier" adds nothing on `main`: fix in progress with the attack-line fix. | Inferred (code), probe. | High | 39 Hit lines. |
-| `_DamageDie` | `ParseDamage` lets a power's `_DamageDie` field replace the size of the first die (set by `modify` from Empowered Dragon Breath and Greathorn). | Fix in progress (not read on `main`; missing from the special-case registry). | Inferred (code), probe. | High | Dragon Breath, Goring Charge dice size. |
-| Higher-level damage | `HigherLevelDamage`: increase lines, a by-name Chilling Cloud rule doubling Intelligence at 21+, one exact rewrite, `ParseIncreaseLine`, separate level fields. | Increase lines and named scaling reproduced (`65aa0c7`). Chilling Cloud: fix in progress. | Confirmed (parity/tests) / inferred. | High | Chilling Cloud at 21+. |
+| `_DamageDie` | `ParseDamage` lets a power's `_DamageDie` field replace the size of the first die (set by `modify` from Empowered Dragon Breath and Greathorn). | Reproduced (`cc20870`); registry entry added. | Inferred (code), probe. | High | Dragon Breath, Goring Charge dice size. |
+| Higher-level damage | `HigherLevelDamage`: increase lines, a by-name Chilling Cloud rule doubling Intelligence at 21+, one exact rewrite, `ParseIncreaseLine`, separate level fields. | Increase lines and named scaling reproduced (`65aa0c7`). Chilling Cloud and "twice X modifier" reproduced (`cc20870`). | Confirmed (parity/tests) / inferred. | High | Chilling Cloud at 21+. |
 | Special damage | `SpecialCase`, `NonDamagePower`, `EffectPower` (Storm Pillar). | Partial, already tracked in the special-case registry. | Inferred (code). | Medium | A few powers. |
 | Weapon dice | N[W] multiplies dice count; off-hand terms use the off-hand item; loot damage override; die increases; arena improvised dice. | Reproduced, the Unarmed base included (`f533156`). | Confirmed (parity). | High | None. |
 | Keywords | `AddWeaponKeywords`, `BuildKeywordSet`, `AttackTypeKeywords`, `AddLaterKeywords`, `AdditionalKeywords`, `InsertParagonPath`. | Reproduced; `_PowerstatKeywords` (`98a4ade`) and the `<class> Paragon Path` channel (`8565dc5`). Unarmed keywords reproduced (`f533156`); `AddArenaWeapons` open (registry). | Confirmed (parity, tests). | High | Channel bonuses. |
 | Keyword bonuses | `CalcKeywords`, `AttackKeyword`, `DamageKeyword`, `CalcGlobal` with one typed table per row. | Reproduced (`combatStatEntries`, `stackTypedComponents`). | Confirmed (parity). | High | None. |
 | Strikers | `CalcStrikers`/`DiceAdjustment`. | Reproduced as reminder text. | Confirmed (parity: Drizzt, Japheth). | High | Conditions only. |
 | Versatile | `CalcVersatile`: +1 only when the character-global two-handed flag is set and `SmallWithNonSmallWeapon` is false. | Per holding by D101 (decision). A Small character's non-small versatile weapon fills both hands (D102) without the +1, as native and the PHB say: reproduced (`3d7238b`). | Inferred (code); tests. | High | Small characters with a versatile weapon (none in the samples). |
-| WeaponBonuses | `CalcMisc`: a power's `weapon` field matching one of 16 exact table texts adds an ability modifier to attack or damage when wielding a listed group (flags: attack, half with C truncation, needs off-hand); `beast` fields → `CalcBeast`. | Fix in progress. `main` uses two regexes with fixed group lists: 6 table lines unported (12 powers), 6 texts native does not apply (9 powers), wrong groups on two lines. | Confirmed (save) for the two lines chopper farlund prints; rest inferred plus probe. | High (table decoded from the DLL) | Several build-option powers. |
-| CalcBonuses | Non-standard power fields named "Special", an owned element (Brutal Scoundrel, Rageblood Vigor, a pact, an aegis…) or "axe" with an axe-group base: seven exact sentences add Int/Wis/Con/Str to damage (typed by field name) or Str to attack, on every row including Unarmed. | Fix in progress (not modeled on `main`, though the registry marks it handled). | Inferred (code), probe. | High | 31 powers. |
+| WeaponBonuses | `CalcMisc`: a power's `weapon` field matching one of 16 exact table texts adds an ability modifier to attack or damage when wielding a listed group (flags: attack, half with C truncation, needs off-hand); `beast` fields → `CalcBeast`. | Reproduced (`de36186`): the exact 16-line table; 6 Constitution texts native ignores are kept with the weapons their sentence lists (D091, owner to confirm). | Confirmed (save) for the two lines chopper farlund prints; rest inferred plus probe. | High (table decoded from the DLL) | Several build-option powers. |
+| CalcBonuses | Non-standard power fields named "Special", an owned element (Brutal Scoundrel, Rageblood Vigor, a pact, an aegis…) or "axe" with an axe-group base: seven exact sentences add Int/Wis/Con/Str to damage (typed by field name) or Str to attack, on every row including Unarmed. | Reproduced (`de36186`). | Inferred (code), probe. | High | 31 powers. |
 | Healing | `CalcHealing`: "Healing", `<power>:healing`, `<class>:healing` with one typed table. | Reproduced (`powerHealing`). | Confirmed (parity). | High | None. |
 | Stacking text | `CalcStacking`, `NamedBonus`, `SameSource`, `MergeConditionals`: text only. | Presentation only. | Inferred (code). | High | None. |
 | Damage type | Set only for an "X modifier <type>" phrase with a single listed word. | Divergent: modern derives a richer type from the Hit text. | Confirmed (parity: 93 rows legacy leaves empty). | High | Display and exported `DamageType`. |
@@ -184,23 +184,23 @@ A power-row difference found on the way is likewise content revision: Hunzu
 ## Gaps that change numbers, by priority
 
 1. **Highest, highest-mental and chosen ability attack and damage lines.**
-   Fix in progress. Port `HighestAbility` (highest score of the six, first
+   Reproduced (`cc20870`). Ported `HighestAbility` (highest score of the six, first
    wins), the mental-ability and `Chosen Ability` branches, accept `+N` after
    "ability modifier"/"ability score", and treat the damage-side forms the same
-   way. Correct the special-case registry entries that claim these forms are
-   handled.
-2. **CalcBonuses build-option riders and the WeaponBonuses table.** Fix in
-   progress. Gate `CalcBonuses` on the field name (non-standard field naming
-   "Special", an owned element or "axe") and the exact sentences; replace the
-   two WeaponBonuses regexes with the decoded table, C# truncation for the half
-   flag, and an owner decision on the superset texts.
+   way; the special-case registry entries that claimed these forms were
+   handled are corrected.
+2. **CalcBonuses build-option riders and the WeaponBonuses table.** Reproduced (`de36186`);
+   `CalcBonuses` is gated on the field name (non-standard field naming
+   "Special", an owned element or "axe") and the exact sentences; the two
+   WeaponBonuses regexes are replaced by the decoded table with C# truncation for the half
+   flag; the superset texts await an owner decision.
 3. **Hybrid Power Points (`Psionics`), bracket substitution, half-point
    pairing, blank ability scores.** Reproduced (`8c2dd08`, `698a32d`,
    `a07a872`, `6d4b074`). Three content target typos corrected (`6cb492b`);
    five prose-bearing feat modify typos await an owner decision.
-4. **`_DamageDie` and Chilling Cloud.** Fix in progress with the single-power
-   items (Hawk's Talon, Attacks on the Run/Reactive Shot). Add a `ParseDamage`
-   entry to the registry.
+4. **`_DamageDie` and Chilling Cloud.** Reproduced (`cc20870`) with the single-power
+   items (Hawk's Talon, Attacks on the Run/Reactive Shot); `ParseDamage` now
+   has a registry entry.
 5. **Unarmed melee WeaponBase.** Reproduced (`f533156`). RaidonKane's
    Unarmed basic attack damage (+2 Weapon Focus) is an open conflict with his
    older save.

@@ -1,5 +1,38 @@
 # Implementation status
 
+## Overnight parity batch, part 2: calculation audit fixes (2026-10-28)
+
+`reverse-engineering/docs/12-calculation-logic-audit.md` (new) is the
+calculation counterpart of the construction audit: stat engine, derived
+values and power rows, function by function against native, with evidence
+labels. Fixed from it (cache v81):
+
+- **Stat engine** (`8c2dd08`, `698a32d`, `a07a872`, `6d4b074`): `[Select]`
+  bracket substitution in stat names (Signature Spell), native half-point
+  pairing, blank ability modifier 0, native Psionics / Hybrid Power Points /
+  Psionic Conventionalist (Hybrid Power Points now compared on 29 samples, all
+  matching). Three content target typos corrected (`6cb492b`); the `.dnd4e`
+  writer exports MINONEMOD/HALFMOD natively (`1009273`).
+- **Power keywords** (`98a4ade`, `8565dc5`, `893f5b9`): `_PowerstatKeywords`,
+  the `<Class> Paragon Path` category channel, and uses per encounter
+  (`EvaluatedPower.encounterUses`, not displayed yet).
+- **Power math** (`cc20870`, `de36186`, `f533156`, `3d7238b`): highest /
+  highest-mental / chosen ability attack and damage, `+N` power bonuses,
+  `_DamageDie`, Chilling Cloud and "twice X modifier", Hawk's Talon, Attacks
+  on the Run; CalcBonuses build-option riders (31 powers) and the exact
+  16-line WeaponBonuses table; the unarmed WeaponBase (keywords, proficiency,
+  die); no versatile +1 for a Small character's non-small weapon.
+- **Explained, no change:** the Fey Pact warlocks' Charisma attacks
+  (test_test, oleander_9) come from a player homebrew part; the 42 remaining
+  stat mismatches are content revisions, homebrew or rule-less stubs.
+
+Verification: 1606 tests pass; full `parity:baseline` differs from the
+accepted baseline only on SampleHeroes (older builder) rows awaiting the
+owner: Drizzt Cross-Body Parry/Blade Dance ×2 weapons (dual-wielding Dex),
+Binwin Shield Bash [Unarmed] (dwarf Wisdom rider), Geran Hesitation Slash
+(table Dex line), RaidonKane Melee Basic Attack [Unarmed] damage (Weapon
+Focus (Unarmed) via the unarmed base; open conflict).
+
 ## Overnight parity batch from the Swordmage Warding postmortem (2026-10-28)
 
 Process: AGENTS.md and the agent definitions now require legacy claims to be
