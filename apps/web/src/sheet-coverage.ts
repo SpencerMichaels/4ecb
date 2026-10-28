@@ -8,6 +8,7 @@ import type { CharacterOccurrence } from "@4ecb/rules-engine";
 import {
   SHEET_ALIAS_TYPES,
   SHEET_IDENTITY_TYPES,
+  featureNoteHidden,
   hybridClassName,
   type CharacterSheetModel,
 } from "@4ecb/sheet-model";
@@ -188,7 +189,8 @@ export function sheetSurfacesOf(
 export type PresenceStatus =
   /** Shown on at least one sheet surface. */
   | "presented"
-  /** Not shown, but the registry says it is internal or applied. */
+  /** Not shown, but the registry says it is internal or applied, or the
+   *  legacy sheet notes hide it (`featureNoteHidden`). */
   | "accounted"
   /** Not shown, and the registry expects it shown, or marks it a gap. */
   | "unpresented"
@@ -221,6 +223,14 @@ export function sheetPresence(
 ): OccurrencePresence[] {
   const index = sheetIndex(sheet);
   const byOccurrence = new Map(occurrences.map((value) => [value.id, value]));
+  const ownedClassFeatures = new Set(
+    occurrences.flatMap((occurrence) => {
+      const owned = entities.get(key(occurrence.definitionId));
+      return owned !== undefined && key(owned.type) === "class feature"
+        ? [key(owned.id), key(owned.name)]
+        : [];
+    }),
+  );
   const rows = new Map<string, OccurrencePresence>();
   for (const occurrence of occurrences) {
     const definitionKey = key(occurrence.definitionId);
@@ -283,7 +293,12 @@ export function sheetPresence(
     const status: PresenceStatus =
       surfaces.length > 0
         ? "presented"
-        : coverage?.kind === "internal" || coverage?.kind === "applied"
+        : coverage?.kind === "internal" ||
+            coverage?.kind === "applied" ||
+            // Legacy's sheet notes leave it out (_CS_ShortDescription "@").
+            featureNoteHidden(entity, (name) =>
+              ownedClassFeatures.has(key(name)),
+            )
           ? "accounted"
           : "unpresented";
     rows.set(definitionKey, {

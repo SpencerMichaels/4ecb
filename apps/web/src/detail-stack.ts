@@ -1,5 +1,5 @@
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
-import { isFamiliarEntity } from "@4ecb/sheet-model";
+import { isFamiliarEntity, movementTechniqueOf } from "@4ecb/sheet-model";
 
 import { contentSpecificValue, grantedDetailEntities } from "./builder-ui";
 import { isItemEntity } from "./EntityCard";
@@ -105,12 +105,16 @@ function partDetailEntities(
  * it names for display (`Powers`, `_DisplayPowers`, `_ChildPower`, an item's
  * `Granted Powers`, `_DisplayWeapons`) but grants later, conditionally or by
  * a choice, such as a paragon path's level 20 power, a domain's level 3 power
- * or a wizard's cantrip choices.
+ * or a wizard's cantrip choices. A monk full discipline's movement technique
+ * is part of the discipline's own card, not another card.
  */
 export function offeredDetailEntities(
   owner: ContentEntity,
   references: ReadonlyMap<string, ContentEntity>,
 ): readonly ContentEntity[] {
+  const technique = movementTechniqueOf(owner, (id) =>
+    references.get(normalized(id)),
+  );
   return [
     ...new Map(
       [
@@ -126,7 +130,13 @@ export function offeredDetailEntities(
           ],
           references,
         ),
-      ].map((entity) => [normalized(entity.id), entity]),
+      ]
+        .filter(
+          (entity) =>
+            technique === undefined ||
+            normalized(entity.id) !== normalized(technique.id),
+        )
+        .map((entity) => [normalized(entity.id), entity]),
     ).values(),
   ];
 }

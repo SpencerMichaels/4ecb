@@ -313,8 +313,8 @@ Moving it would split power choice across two tabs. Recommendation:
 - The Rituals tab doesn't mention it.
 - The physical Spellbook stays a Gear item.
 
-Separately, and out of scope here: modern cards don't mark spellbook spells
-the way legacy's "SPELLBOOK" subtitle does.
+Separately: spellbook spells now carry legacy's "SPELLBOOK" subtitle
+(`SheetCard.spellbook`, see `character-import-and-sheets.md`).
 
 ## Open questions (recommendations in bold)
 

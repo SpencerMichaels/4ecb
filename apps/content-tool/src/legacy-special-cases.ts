@@ -188,6 +188,8 @@ const PSIONICS = "packages/rules-engine/src/psionics.test.ts";
 const THROWN_ALTERNATIVE =
   "packages/rules-engine/src/thrown-weapon-alternative.test.ts";
 const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
+const CARD_PARTS = "packages/sheet-model/src/legacy-card-parts.test.ts";
+const POWER_CARD = "apps/web/src/PowerCard.test.tsx";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
 
@@ -2404,12 +2406,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Gear named 'Implement...' is a mundane implement.",
       "equipment-ui.ts MUNDANE_IMPLEMENT_IDS (see GearItem.InitializeCategoryMembership)",
     ),
-    "BasicUtils.IsMonkTechnique": partial(
+    "BasicUtils.IsMonkTechnique": code(
       "A power whose _ChildPower is a '[Movement Technique]' record is a monk full discipline.",
-      "apps/web detail-stack.ts follows _ChildPower to a sibling card in builder detail panes; sheet power cards do not fold the movement technique into the attack card",
+      "sheet-model power-card-header.ts movementTechniqueOf; builder detail panes (detail-stack.ts) show the technique on the discipline's card rather than as a sibling card",
+      test(CARD_PARTS, "finds only a '[Movement Technique]' child power"),
       test(
         "apps/web/src/detail-stack.test.ts",
-        "shows each card once, stops loops and bounds the depth",
+        "keeps a full discipline's movement technique on the discipline's card",
       ),
     ),
     "BasicUtils.AbbrAbilScoreName": generic("Ability abbreviations."),
@@ -2610,17 +2613,43 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "builds one Second Wind card with the legacy healing amount",
       ),
     ),
-    "NoteHolder.GetShortDescription": notHandled(
+    "NoteHolder.GetShortDescription": code(
       "Sheet notes use _CS_ShortDescription over Short Description, hidden when its '@<class feature>' is owned.",
-      "sheet-model uses Short Description only (822 records carry _CS_ShortDescription; Hystan, Oleander, Silaqui, Drizzt, Japheth and Omin Dran own some)",
+      "sheet-model feature-notes.ts: the features list and page-1 summaries take the override's text; a bare '@' (624 records: choice placeholders such as Flint's 'Level 1 Mage Encounter Powers') or an owned superseding class feature (Weapon Mastery under Paragon Weapon Mastery) leaves the feature off the sheet, as does InternalOnly",
+      test(
+        CARD_PARTS,
+        "hides a bare '@' always and 'text@Feature' once Feature is owned",
+      ),
+      test(
+        CARD_PARTS,
+        "lists features with their sheet notes and leaves out hidden ones",
+      ),
     ),
-    "PowerCard.MonkMovementTechnique": partial(
+    "PowerCard.MonkMovementTechnique": code(
       "Power cards append the _ChildPower movement technique (its Action Type, Attack Type and specifics).",
-      "see BasicUtils.IsMonkTechnique: the technique stays its own card on the sheet",
+      "SheetCard.movementTechnique, printed after the attack by PowerCard.tsx; as in legacy the technique also keeps its own card",
+      test(
+        CARD_PARTS,
+        "gives power cards their class block, technique and spellbook mark",
+      ),
+      test(
+        POWER_CARD,
+        "appends a full discipline's movement technique after its attack",
+      ),
     ),
-    "PowerCardPower.UpdatePowerCardPower": partial(
+    "PowerCardPower.UpdatePowerCardPower": code(
       "Power card header: Keywords, Action Type, SPELLBOOK marker, racial/_SkillPower class block, Level.",
-      "sheet-model power cards and power-classification.ts cover keywords, action, class and level; the 'SPELLBOOK' name subtext and the _SkillPower skill name as the class block are not shown (builder-ui reads _SkillPower for choices only)",
+      "keywords, action and level from power-classification.ts; SheetCard.classBlock (powerClassBlock: Class, else 'Racial' for a racial Display, else the _SkillPower skill) ends the type bar; SheetCard.spellbook (spellbookPowerIds) prints the 'Spellbook' subtitle. Legacy's '*' level placeholder is not copied: no level shows nothing",
+      test(
+        CARD_PARTS,
+        "names the class, a racial power, or a skill power's skill",
+      ),
+      test(CARD_PARTS, "marks powers known only through a spellbook slot"),
+      test(
+        POWER_CARD,
+        "ends the type bar with the class block before the level",
+      ),
+      test(POWER_CARD, "subtitles a spellbook power beside its name"),
     ),
     "PanelModelPowerList.UpdatePanel": generic("Power list grouping."),
     "PowerCard.UpdateLimitedSpaceField": generic("'See below' card field."),

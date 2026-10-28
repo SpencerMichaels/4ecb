@@ -80,6 +80,14 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+/* A spellbook power's "Spellbook" subtitle beside its name. */
+.print-card-name-subtext {
+  flex-shrink: 0;
+  font-size: max(4.7pt, 0.7em);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .print-power-card > header .action-type-icon {
   align-self: flex-start;
   flex-shrink: 0;
@@ -357,6 +365,23 @@
 .print-card-additional {
   border-top: 1px solid var(--card-color);
 }
+/* A monk full discipline's movement technique after its attack, as legacy
+   appends it (PowerCard.MonkMovementTechnique). */
+.print-card-technique {
+  border-top: 1px solid var(--card-color);
+  margin-top: var(--print-card-section-gap, 0.025in);
+  padding-top: 0.025in;
+}
+.print-card-technique-title {
+  display: block;
+  font-size: max(4.7pt, 0.7em);
+  text-transform: uppercase;
+}
+.print-card-technique > .print-card-action-band {
+  border-bottom: 0;
+  border-radius: 0.025in;
+  margin: 0.015in 0;
+}
 .print-card-additional.has-effects {
   font-size: inherit;
   height: auto;
@@ -403,7 +428,12 @@
 }
 .print-power-card .print-card-type {
   display: flex;
+  gap: 0.04in;
   justify-content: space-between;
+}
+/* The class block and level ("Monk · Level 1") may wrap under a long type. */
+.print-power-card .print-card-type > span:last-child {
+  text-align: right;
 }
 .print-power-card.usage-encounter {
   --card-color: #8b0000;

@@ -371,6 +371,37 @@ explicitly target-only. A bound installed pack enriches cards by stable element
 ID with full normalized specifics and descriptions. Without it, cached names,
 usage, attacks, and damage still render, but rules text can be incomplete.
 
+### Feature notes and legacy power-card parts
+
+Evaluated sheets follow the legacy CharTracker for three record-driven parts
+(`sheet-model/src/feature-notes.ts`, `power-card-header.ts`):
+
+- **Feature notes** (`NoteHolder.GetShortDescription`). A feature, feat or
+  racial trait's sheet line is its `_CS_ShortDescription` when that is
+  non-empty, else its `Short Description`. `text@Feature` shows `text` until
+  the character owns the class feature `Feature` (Weapon Mastery gives way to
+  Paragon Weapon Mastery); a bare `@` (624 records: choice placeholders such as
+  "Level 1 Mage Encounter Powers", subrace shells) and `InternalOnly` records
+  never show. A hidden feature is left out of `CharacterSheetModel.features`,
+  so it has no page-1 row, reference entry or reminder; its choices still
+  appear as their own features or cards. The coverage audit counts it as
+  accounted for.
+- **Class block** (`UpdatePowerCardPower`). `SheetCard.classBlock` is the
+  power's Class record name; for a classless power, "Racial" when its Display
+  names a racial power (legacy writes "Racial Power" in a CLASS box), else the
+  `_SkillPower` skill's name. The card's type bar ends with it before the level
+  ("Monk · Level 1"). Legacy's "*" level placeholder is not copied.
+- **Spellbook** (`UpdatePowerCardPower`, `IsSpellbook`). A power known only
+  through a spellbook select slot (a legacy `<alternate>`) has
+  `SheetCard.spellbook`, printed as a "Spellbook" subtitle beside its name.
+- **Movement technique** (`PowerCard.MonkMovementTechnique`). A power whose
+  `_ChildPower` record is named "[Movement Technique]" carries
+  `SheetCard.movementTechnique` (action, attack type and body fields minus the
+  legacy power-card excludes), printed after the attack and before the weapon
+  table. As in legacy, the technique keeps its own card too; builder detail
+  panes show it only inside the discipline's card. Other child powers are
+  unaffected.
+
 ## Sheet and print behavior
 
 The printed overview follows D078: one combat summary, a paper scratchpad with

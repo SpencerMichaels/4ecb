@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 
 import {
+  POWER_CARD_BODY_EXCLUDES,
   classifyPowerCard,
   powerActionLabel,
   type SheetCard,
+  type SheetMovementTechnique,
   type SheetPowerAttack,
   type SheetValue,
 } from "@4ecb/sheet-model";
@@ -27,20 +29,6 @@ import { usePrintCardFit } from "./use-print-card-fit";
  * fluid in builder detail panes ("panel"), from the same `SheetCard`.
  */
 export type CardLayout = "print" | "panel";
-
-const LEGACY_POWER_BODY_EXCLUDES = new Set([
-  "power type",
-  "power usage",
-  "class",
-  "level",
-  "keywords",
-  "action type",
-  "attack type",
-  "target",
-  "targets",
-  "display",
-  "primary target",
-]);
 
 export function cardField(
   card: SheetCard,
@@ -88,6 +76,49 @@ function PrintRuleLines({
 }
 
 const isPersonal = (value: string) => /^\s*personal\s*$/i.test(value);
+
+/** A monk full discipline's movement technique, after the attack part, as
+ *  legacy appends it (PowerCard.MonkMovementTechnique). */
+function MovementTechnique({
+  technique,
+  characterLevel,
+  textPresentation,
+}: {
+  readonly technique: SheetMovementTechnique;
+  readonly characterLevel: number;
+  readonly textPresentation?: CardTextPresentation | undefined;
+}) {
+  const action = powerActionLabel(technique.actionType);
+  const attackType = technique.attackType ?? "";
+  return (
+    <section className="print-card-technique">
+      <strong className="print-card-technique-title">Movement Technique</strong>
+      {action === undefined && !attackType ? null : (
+        <div className="print-card-action-band">
+          <span className="print-card-action-types">
+            <span className="print-card-action-line">
+              {action === undefined ? null : <Icon name="timer" />}
+              {action}
+            </span>
+          </span>
+          <span>
+            {attackType ? (
+              <Icon
+                name={isPersonal(attackType) ? "attack-personal" : "sword"}
+              />
+            ) : null}
+            {attackType}
+          </span>
+        </div>
+      )}
+      <PrintRuleLines
+        fields={technique.fields}
+        characterLevel={characterLevel}
+        textPresentation={textPresentation}
+      />
+    </section>
+  );
+}
 
 function PrintAttackBand({
   attack,
@@ -199,7 +230,7 @@ export function PowerCard({
   const attacks = defaultPrintAttacks(card);
   const rules = card.fields.filter(
     (field) =>
-      !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
+      !POWER_CARD_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
   const groupedRules = groupedPrintRules(rules, attacks);
   // Card frame color follows usage; an unknown usage keeps the at-will frame.
@@ -212,6 +243,13 @@ export function PowerCard({
     Boolean(attackType) ||
     sustainActions.length > 0;
   const typeLabel = classification.typeLabel;
+  // Legacy's CLASS and LEVEL boxes share the type bar's right end.
+  const classAndLevel = [
+    card.classBlock,
+    level === undefined ? undefined : `Level ${level}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <article
       ref={cardRef}
@@ -236,6 +274,10 @@ export function PowerCard({
             {card.name}
           </span>
         </h3>
+        {/* Legacy's "SPELLBOOK" name subtext (PowerCardPower). */}
+        {card.spellbook === true ? (
+          <span className="print-card-name-subtext">Spellbook</span>
+        ) : null}
         {isUtility ? (
           <span
             className={`print-utility-usage-badge usage-${usageTone}`}
@@ -343,6 +385,13 @@ export function PowerCard({
             </div>
           </section>
         ))}
+        {card.movementTechnique === undefined ? null : (
+          <MovementTechnique
+            technique={card.movementTechnique}
+            characterLevel={characterLevel}
+            textPresentation={textPresentation}
+          />
+        )}
         {rules.length === 0 && card.description !== undefined ? (
           <CardText
             value={card.description}
@@ -386,7 +435,7 @@ export function PowerCard({
       )}
       <div className="print-card-type">
         <span>{typeLabel}</span>
-        {level === undefined ? null : <span>Level {level}</span>}
+        {classAndLevel ? <span>{classAndLevel}</span> : null}
       </div>
     </article>
   );

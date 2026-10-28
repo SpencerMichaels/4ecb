@@ -148,6 +148,22 @@ describe("detail stack", () => {
     );
   });
 
+  it("keeps a full discipline's movement technique on the discipline's card", () => {
+    // Named "storms [movement technique]", like the content's records.
+    const technique = entity("STORMS_[MOVEMENT_TECHNIQUE]", "Power");
+    const discipline = entity(
+      "STORMS",
+      "Power",
+      { _ChildPower: "STORMS_[MOVEMENT_TECHNIQUE]" },
+      [["STORMS_[MOVEMENT_TECHNIQUE]"]],
+    );
+    const attack = entity("CLOUD_ATTACK", "Power");
+    const cloud = entity("CLOUD", "Power", { _ChildPower: "CLOUD_ATTACK" });
+    const references = index(discipline, technique, cloud, attack);
+    expect(offeredDetailEntities(discipline, references)).toEqual([]);
+    expect(offeredDetailEntities(cloud, references)).toEqual([attack]);
+  });
+
   it("leaves a class's and a race's features to their own card", () => {
     const feature = entity("FEATURE", "Class Feature");
     const trait = entity("TRAIT", "Racial Trait");

@@ -37,6 +37,7 @@ import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
+import { featureNoteText } from "./feature-notes";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -390,9 +391,7 @@ export function withSheetOverview(
       if (seen.has(id)) continue;
       seen.add(id);
       const summary =
-        entity?.specifics.find(
-          (field) => key(field.name) === "short description",
-        )?.value || entry.value;
+        (entity === undefined ? "" : featureNoteText(entity)) || entry.value;
       const description =
         entity?.description.trim() ||
         entity?.specifics

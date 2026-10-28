@@ -65,7 +65,21 @@ import {
 import { godFragmentPowerCards } from "./god-fragment-card";
 import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
 import { characterClassName } from "./class-identity";
+import { featureNoteHidden, featureNoteText } from "./feature-notes";
+import {
+  POWER_CARD_BODY_EXCLUDES,
+  movementTechniqueOf,
+  powerClassBlock,
+  spellbookPowerIds,
+} from "./power-card-header";
 export { characterClassName, hybridClassName } from "./class-identity";
+export { featureNoteHidden, featureNoteText } from "./feature-notes";
+export {
+  POWER_CARD_BODY_EXCLUDES,
+  movementTechniqueOf,
+  powerClassBlock,
+  spellbookPowerIds,
+} from "./power-card-header";
 // The loadout resolver lives in the rules engine, which evaluates the same
 // placements (D101).
 export {
@@ -257,6 +271,23 @@ export interface SheetCard {
   /** Calculation diagnostics, never authored rules or physical-card sections. */
   readonly calculationWarnings?: readonly string[];
   readonly additionalEffects?: readonly SheetAdditionalEffect[];
+  /** The legacy card's CLASS block: the power's class, "Racial", or a skill
+   *  power's skill (`powerClassBlock`). */
+  readonly classBlock?: string;
+  /** Known only through a spellbook slot (legacy "SPELLBOOK" subtitle). */
+  readonly spellbook?: boolean;
+  /** A monk full discipline's movement technique, printed on its card. */
+  readonly movementTechnique?: SheetMovementTechnique;
+}
+
+/** The movement technique part of a monk full discipline's card. */
+export interface SheetMovementTechnique {
+  readonly id: string;
+  readonly name: string;
+  readonly actionType?: string;
+  readonly attackType?: string;
+  /** Its card-body fields (the legacy power-card excludes removed). */
+  readonly fields: readonly SheetValue[];
 }
 
 export interface SheetAdditionalEffect {
@@ -643,6 +674,53 @@ function entityPresentation(
   };
 }
 
+/**
+ * The parts of a power card its record decides beyond its own fields: the
+ * class block and a full discipline's movement technique.
+ */
+function powerRecordParts(
+  entity: ContentEntity | undefined,
+  lookup: ((id: string) => ContentEntity | undefined) | undefined,
+  overlays: EvaluatedCharacter["overlays"],
+  personalize: (text: string) => string,
+): Pick<SheetCard, "classBlock" | "movementTechnique"> {
+  if (entity === undefined || lookup === undefined) return {};
+  const classBlock = powerClassBlock(entity, lookup);
+  const technique = movementTechniqueOf(entity, lookup);
+  const techniqueFields =
+    technique === undefined ? [] : evaluatedEntityFields(technique, overlays);
+  const techniqueField = (name: string) =>
+    techniqueFields
+      .find(({ label }) => label.trim().toLocaleLowerCase() === name)
+      ?.value.trim() || undefined;
+  const actionType = techniqueField("action type");
+  const attackType = techniqueField("attack type");
+  return {
+    ...(classBlock === undefined ? {} : { classBlock }),
+    ...(technique === undefined
+      ? {}
+      : {
+          movementTechnique: {
+            id: technique.id,
+            name: technique.name,
+            ...(actionType === undefined ? {} : { actionType }),
+            ...(attackType === undefined ? {} : { attackType }),
+            fields: techniqueFields
+              .filter(
+                ({ label }) =>
+                  !POWER_CARD_BODY_EXCLUDES.has(
+                    label.trim().toLocaleLowerCase(),
+                  ),
+              )
+              .map(({ label, value }) => ({
+                label,
+                value: personalize(value),
+              })),
+          },
+        }),
+  };
+}
+
 function learnedReferenceKind(
   entity: ContentEntity | undefined,
   elementTypes: readonly string[],
@@ -959,6 +1037,10 @@ function evaluatedPowerCards(
   irrelevantFeatureClauses: ReadonlySet<string>,
   inventoryNames: ReadonlyMap<string, string>,
   proficientEquipmentOnly: boolean,
+  records: {
+    readonly lookup: (id: string) => ContentEntity | undefined;
+    readonly spellbookPowerIds: ReadonlySet<string>;
+  },
 ): SheetCard[] {
   // Older in-memory evaluations lack equipmentId but retain the exact native
   // power:inventory variant identity. Never join equipment by its display name.
@@ -1136,6 +1218,15 @@ function evaluatedPowerCards(
         ? {}
         : { calculationWarnings: power.unsupported }),
       ...entityPresentation(entity),
+      ...powerRecordParts(
+        entity,
+        records.lookup,
+        evaluation.overlays,
+        personalize,
+      ),
+      ...(records.spellbookPowerIds.has(power.definitionId.toLocaleLowerCase())
+        ? { spellbook: true }
+        : {}),
     },
   ];
 }
@@ -1155,6 +1246,7 @@ const CARD_HEADER_POWER_FIELDS = new Set([
 export function authoredSheetPowerCard(
   entity: ContentEntity,
   personalize: (text: string) => string = (text) => text,
+  lookup?: (id: string) => ContentEntity | undefined,
 ): SheetCard {
   const field = (name: string) =>
     entity.specifics
@@ -1179,6 +1271,7 @@ export function authoredSheetPowerCard(
       )
       .map(({ label, value }) => ({ label, value: personalize(value) })),
     ...entityPresentation(entity),
+    ...powerRecordParts(entity, lookup, [], personalize),
   };
 }
 
@@ -1204,6 +1297,11 @@ export function createSheetPowerCardFinder(
     evaluation,
     content,
   );
+  const contentById = entityMap(content);
+  const records = {
+    lookup: (id: string) => contentById.get(id.trim().toLocaleLowerCase()),
+    spellbookPowerIds: spellbookPowerIds(evaluation),
+  };
   const cache = new Map<string, SheetCard>();
   return (entity, power) => {
     const key = `${entity.id}\u0000${power?.definitionId ?? ""}`;
@@ -1211,7 +1309,7 @@ export function createSheetPowerCardFinder(
     if (cached !== undefined) return cached;
     const card =
       power === undefined
-        ? authoredSheetPowerCard(entity, personalize)
+        ? authoredSheetPowerCard(entity, personalize, records.lookup)
         : evaluatedPowerCards(
             power,
             entity,
@@ -1220,6 +1318,7 @@ export function createSheetPowerCardFinder(
             irrelevantFeatureClauses,
             new Map(),
             options.proficientEquipmentOnly !== false,
+            records,
           )[0]!;
     cache.set(key, card);
     return card;
@@ -1376,6 +1475,12 @@ function powerCard(
             (variant) => variant.hand === "main",
           )!.additionalEffects,
         }),
+    ...powerRecordParts(
+      entity,
+      (id) => entities.get(id.trim().toLocaleLowerCase()),
+      [],
+      (text) => text,
+    ),
     referenceFields: [
       ["Level", power.level],
       ["Attack Type", power.attackType],
@@ -1868,10 +1973,23 @@ export function buildEvaluatedSheetModel(
       if (!choices.some(({ id }) => id === choice.id)) choices.push(choice);
       featureChoicesById.set(entity.id, choices);
     }
+  const ownedClassFeatures = new Set(
+    active.flatMap(({ entity }) =>
+      entity.type.trim().toLocaleLowerCase() === "class feature"
+        ? [
+            entity.id.toLocaleLowerCase(),
+            entity.name.trim().toLocaleLowerCase(),
+          ]
+        : [],
+    ),
+  );
+  const ownsClassFeature = (nameOrId: string) =>
+    ownedClassFeatures.has(nameOrId.trim().toLocaleLowerCase());
   for (const { occurrence, entity } of active) {
     if (
       !SHEET_FEATURE_TYPES.includes(entity.type) ||
-      seenFeatures.has(entity.id)
+      seenFeatures.has(entity.id) ||
+      featureNoteHidden(entity, ownsClassFeature)
     )
       continue;
     seenFeatures.add(entity.id);
@@ -1882,7 +2000,7 @@ export function buildEvaluatedSheetModel(
         label: entity.name,
         value: [
           occurrence.legality === "houserule" ? "House rule" : "",
-          field(entity, "Short Description") || entity.description,
+          featureNoteText(entity) || entity.description,
         ]
           .filter(Boolean)
           .join(" · "),
@@ -1903,7 +2021,7 @@ export function buildEvaluatedSheetModel(
             const chosen = entities.get(id.toLocaleLowerCase());
             return chosen === undefined
               ? ""
-              : field(chosen, "Short Description") || chosen.description;
+              : featureNoteText(chosen) || chosen.description;
           })
           .filter(Boolean)
           .join(" "),
@@ -2021,6 +2139,10 @@ export function buildEvaluatedSheetModel(
     evaluation,
     content,
   );
+  const powerRecords = {
+    lookup: (id: string) => entities.get(id.trim().toLocaleLowerCase()),
+    spellbookPowerIds: spellbookPowerIds(evaluation),
+  };
   const powerCards = withUniversalActionCards(
     [
       ...evaluation.powers.flatMap((power) =>
@@ -2032,6 +2154,7 @@ export function buildEvaluatedSheetModel(
           irrelevantFeatureClauses,
           inventoryNames,
           options.proficientEquipmentOnly !== false,
+          powerRecords,
         ),
       ),
       // A god fragment's ability is in its own fields, not a Power record.
