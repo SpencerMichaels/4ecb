@@ -139,23 +139,23 @@ a single `src/index.ts` entry point.
 apps/
   web/                 React + TypeScript + Vite PWA (the product)
   content-tool/        CLI: decrypt/import/merge/compile/inspect content packs
-  session-relay/       (post-MVP) opaque-envelope WebSocket relay
-  dm/                  (future, out of builder-1.0 scope)
+  session-relay/       (planned, post-MVP) opaque-envelope WebSocket relay
+  dm/                  (planned, out of builder-1.0 scope)
 
 packages/
   content-domain/      Normalized game entities and provenance
   content-pack/        Pack manifest, codecs, validation, migration
   character-domain/    Durable character aggregate + edit commands
-  play-domain/         Mutable table/play state and deterministic operations
+  play-domain/         (planned) Mutable table/play state and deterministic operations
   rules-engine/        Choice, prerequisite, stat, and legality evaluator
   query-engine/        Full-text/facet/filter/sort query AST for the compendium
   sheet-model/         Evaluated snapshot -> semantic SheetDocument/cards
   legacy-wotc/         WotC.index / encrypted-container compatibility
   legacy-dnd4e/        Loss-preserving .dnd4e character import/export
-  legacy-campaign/     .dndcamp compatibility
-  session-protocol/    Pairing, capabilities, encrypted message schemas
+  legacy-campaign/     (planned) .dndcamp compatibility
+  session-protocol/    (planned) Pairing, capabilities, encrypted message schemas
   browser-storage/     IndexedDB repositories, transactions, migrations
-  ui/                  Low-level accessible visual primitives (deliberately thin)
+  ui/                  (planned) Low-level accessible visual primitives (deliberately thin)
 
 docs/                  Product plan, architecture, roadmap, decisions (source of truth)
 reverse-engineering/   Legacy evidence, recovered spec, schemas, fixtures
@@ -189,7 +189,7 @@ character record + content profile + play state --> rules engine --> EvaluatedCh
   directly; all edits go through transactional commands
   (`chooseElement`, `replaceSelection`, `retrainSelection`, `advanceLevel`,
   `addInventoryHolding`, `equipHolding`, ...).
-- **PlayState** (`play-domain`) is a separate mutable overlay (HP, surges,
+- **PlayState** (planned `play-domain`; not built yet) is a separate mutable overlay (HP, surges,
   action points, effects, power uses) referencing a `baseRecordRevision`, with
   stable operation IDs — not folded into CharacterRecord.
 - **EvaluatedCharacterSnapshot** is the disposable, cacheable, deterministic
@@ -214,7 +214,7 @@ character record + content profile + play state --> rules engine --> EvaluatedCh
 - **Legacy compatibility** is isolated in `legacy-wotc` (encrypted
   container/index/CBLoader semantics), `legacy-dnd4e` (`.dnd4e` import/export,
   separating authoritative input from regenerated `CharacterSheet` caches),
-  and `legacy-campaign` (`.dndcamp`). Import produces a structured report
+  and the planned `legacy-campaign` (`.dndcamp`; not built yet). Import produces a structured report
   (mapped fields, preserved unknown data, missing refs, stale caches, lossy
   decisions); export is explicit about its target compatibility profile.
 - **Browser persistence** (`browser-storage`) uses IndexedDB with separate
