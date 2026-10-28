@@ -107,7 +107,7 @@ pnpm audit:rules
 pnpm audit:native-workflow
 pnpm evaluate:character
 pnpm evaluate:matrix
-pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept)
+pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N; ~1.5 min)
 pnpm regenerate:edited-dnd4e
 ```
 

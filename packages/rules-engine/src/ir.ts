@@ -402,9 +402,30 @@ export function parseRule(
   }
 }
 
+const parsedRulesCache = new WeakMap<
+  readonly RuleStatement[],
+  Map<string, readonly ExecutableRule[]>
+>();
+
+/**
+ * The provider's statements as executable rules, memoized per statement list
+ * (content records are immutable): evaluation re-reads the same rules on
+ * every pass and in every nested prerequisite evaluation.
+ */
 export function parseRules(
   providerId: string,
   statements: readonly RuleStatement[],
-): ExecutableRule[] {
-  return statements.map((statement) => parseRule(providerId, statement));
+): readonly ExecutableRule[] {
+  let byProvider = parsedRulesCache.get(statements);
+  if (byProvider === undefined) {
+    byProvider = new Map();
+    parsedRulesCache.set(statements, byProvider);
+  }
+  const cached = byProvider.get(providerId);
+  if (cached !== undefined) return cached;
+  const parsed = statements.map((statement) =>
+    parseRule(providerId, statement),
+  );
+  byProvider.set(providerId, parsed);
+  return parsed;
 }
