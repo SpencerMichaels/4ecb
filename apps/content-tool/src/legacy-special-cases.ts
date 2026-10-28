@@ -182,6 +182,7 @@ const SHEET = "packages/sheet-model/src/index.test.ts";
 const GOLDEN = "packages/rules-engine/src/golden-matrix.test.ts";
 const EQUIPMENT_UI = "apps/web/src/equipment-ui.test.ts";
 const ENCUMBRANCE = "packages/sheet-model/src/encumbrance.test.ts";
+const PSIONICS = "packages/rules-engine/src/psionics.test.ts";
 const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
@@ -237,13 +238,22 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "prerequisites.ts predicate kind (psionic-daily-attack)",
       test(PREREQUISITES, "reads %s [at least one psionic daily attack power]"),
     ),
-    "?A0xca3c2cf6.PsionicConventionalist": notHandled(
+    "?A0xca3c2cf6.PsionicConventionalist": code(
       "Psionic Conventionalist (ID_FMP_FEAT_2732) removes 2/4/6 power points by swapped power level.",
-      "no modern power-point stat",
+      "psionics.ts nativePsionics: an untyped Power Points statadd of -2/-4/-6 by the Level of the power its latest multiclass swap replaced (EXCEPTION_IDS.psionicConventionalist)",
+      test(
+        PSIONICS,
+        "takes Psionic Conventionalist's power points by the swapped power's Level",
+      ),
     ),
-    "?A0xca3c2cf6.Psionics": notHandled(
+    "?A0xca3c2cf6.Psionics": code(
       "Power points: strips 'Augmentable' from locked powers' Keywords and adds 2/4/6 'Hybrid Power Points' per owned class at-will attack by its Level, then applies Psionic Conventionalist.",
-      "no modern power-point model (RulesElement.IsPsionicClass); 'Hybrid Power Points' has no record in the current pack",
+      "psionics.ts nativePsionics, appended after every element's rules: the Hybrid Power Points literal (which ID_INTERNAL_INTERNAL_HYBRID_POWER_POINTS and Psionic Dabbler link into Power Points) and Keywords overlays for locked records. Unlocked = _AugmentVersions, no _SuppressAugments, not chosen by a Racial Trait (the original of its replacement chain). Psionic Dabbler's own 'modify Power Usage Encounter' makes its power fail the At-Will test, as the overlaid native field read does",
+      test(
+        PSIONICS,
+        "adds 2/4/6 per owned unlocked augmentable at-will attack and strips locked keywords",
+      ),
+      "private: sample-chars/Beldin Hammertongue 11.dnd4e: Hybrid Power Points 6 (full Ardent) matches the cached stat",
     ),
     "?A0xca3c2cf6.CheckHybridPower": notHandled(
       "Hybrid characters: a power of one hybrid class is offered only when the other class already has a power of the same Power Type and Power Usage at that level (alternating hybrid power picks).",

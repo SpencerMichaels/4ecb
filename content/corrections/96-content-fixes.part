@@ -267,4 +267,28 @@ Choose a Skill for +2 Bonus
       <select type="Language" number="1" Category="ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4" requires="!ID_FMP_LANGUAGE_2&amp;ID_FMP_LANGUAGE_3&amp;ID_FMP_LANGUAGE_4|ID_FMP_CLASS_FEATURE_3884" />
     </rules>
   </AppendNodes>
+
+  <!-- Misspelled rule targets (pnpm audit:selectors): native resolves
+       them to nothing too, so the feature did nothing (D091). Stalwart
+       Assault links "constition modifier", a stat nothing defines; two
+       Blade Magic weapons name "Catkcha" and "Drow long knife [Blade
+       Magic]" instead of the Chatkcha and Drow Long Knife weapons. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_2759"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_2759">
+    <rules>
+      <statadd name="melee:damage" value="+Constitution modifier" condition="on your first turn in an encounter" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_INTERNAL_CLASS_FEATURE_BS_CHATKCHA"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_BS_CHATKCHA">
+    <rules>
+      <modify name="Chatkcha" type="Weapon" Field="_ImplementEquiv" value="Wand" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_INTERNAL_CLASS_FEATURE_BS_DROWLONGKNIFE"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_BS_DROWLONGKNIFE">
+    <rules>
+      <modify name="Drow Long Knife" type="Weapon" Field="_ImplementEquiv" value="Wand" />
+    </rules>
+  </AppendNodes>
 </D20Rules>

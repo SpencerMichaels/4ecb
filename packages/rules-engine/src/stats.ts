@@ -222,6 +222,29 @@ export class StatAccumulator {
     };
     // Native: an untyped literal 0 sets the stat to 0 and ends it (~36222).
     let zeroedAt: number | undefined;
+    // Native half-point (~36246): each applying `half-point` statadd adds
+    // its own value and flips a per-call toggle; every second one also adds
+    // +1 under its own type (as a non-penalty `AddStatValue`). Two hybrid
+    // classes' `+3`/`+4` half-point surges give 3 + 4 + 1.
+    let halfPointPending = false;
+    const halfPointBonus = (
+      contribution: StatContribution,
+      cell: CreditCell,
+    ): number => {
+      if (contribution.halfPoint !== true) return 0;
+      halfPointPending = !halfPointPending;
+      if (halfPointPending) return 0;
+      const typeKey =
+        contribution.bonusType === undefined ||
+        contribution.bonusType.trim().length === 0
+          ? undefined
+          : key(contribution.bonusType);
+      if (typeKey === undefined) {
+        cell.value += 1;
+        return 1;
+      }
+      return addTyped(caps, typeKey, 1, false, cell);
+    };
     for (const [position, contribution] of candidates.entries()) {
       const equipmentMatches =
         (contribution.wearing === undefined ||
@@ -253,7 +276,16 @@ export class StatAccumulator {
         continue;
       }
       if (contribution.zeroOnly === true || contribution.nonZeroOnly === true) {
-        if (nested) continue;
+        // A gated half-point still flips the toggle; its +1 joins the sum.
+        const halfPoint = halfPointBonus(contribution, {
+          value: 0,
+          capped: false,
+        });
+        total += halfPoint;
+        if (nested) {
+          if (shared.credit !== undefined) shared.credit.value += halfPoint;
+          continue;
+        }
         // Native CalculateStatAddValue: a literal, or a link evaluated
         // against the parent's caps; added untyped and uncapped.
         const parsed = this.#parse(contribution.value);
@@ -269,6 +301,7 @@ export class StatAccumulator {
         (contribution.zeroOnly === true ? gates.zero : gates.nonZero).push({
           contribution,
           value,
+          halfPoint,
         });
         continue;
       }
@@ -327,8 +360,6 @@ export class StatAccumulator {
         }
         numeric = linkValue(parsed, linked.value);
       }
-      if (contribution.halfPoint === true && numeric !== 0)
-        numeric += numeric > 0 ? 0.5 : -0.5;
       const value = numeric;
       if (typeKey === undefined && parsed.kind === "number" && value === 0) {
         total = 0;
@@ -344,10 +375,12 @@ export class StatAccumulator {
       if (typeKey === undefined) {
         total += value;
         cell.value += value;
+        const halfPoint = halfPointBonus(contribution, cell);
+        total += halfPoint;
         if (!nested)
           reports.push(() => ({
             ...contribution,
-            numericValue: value,
+            numericValue: value + halfPoint,
             applied: true,
           }));
         continue;
@@ -358,12 +391,14 @@ export class StatAccumulator {
       // or a `-` link's multiplier.
       const penalty = parsed.kind === "number" ? value < 0 : parsed.sign < 0;
       total += addTyped(caps, typeKey, value, penalty, cell);
+      const halfPoint = halfPointBonus(contribution, cell);
+      total += halfPoint;
       if (!nested)
         reports.push(() => {
           const applied = caps.get(typeKey)?.holder?.cell === cell;
           return {
             ...contribution,
-            numericValue: value,
+            numericValue: value + halfPoint,
             applied,
             ...(applied ? {} : { reason: "typed-stacking" as const }),
           };
@@ -395,15 +430,16 @@ export class StatAccumulator {
       const chosen = nonZero ? gates.nonZero : gates.zero;
       for (const entry of chosen) total += entry.value;
       for (const entry of [...gates.zero, ...gates.nonZero]) {
-        const applied = chosen.includes(entry);
+        const gated = chosen.includes(entry);
+        const applied = gated || entry.halfPoint !== 0;
         traceCondition(
           entry.contribution.zeroOnly === true ? "zero" : "non-zero",
           `${entry.contribution.providerName}|${entry.contribution.stat}`,
-          applied,
+          gated,
         );
         reports.push(() => ({
           ...entry.contribution,
-          numericValue: entry.value,
+          numericValue: (gated ? entry.value : 0) + entry.halfPoint,
           applied,
           ...(applied ? {} : { reason: "zero-gate" as const }),
         }));
@@ -471,6 +507,8 @@ interface TypeCap {
 interface GatedValue {
   readonly contribution: StatContribution;
   readonly value: number;
+  /** The half-point +1 it added to the sum (native adds it ungated). */
+  readonly halfPoint: number;
 }
 
 interface SharedCaps {

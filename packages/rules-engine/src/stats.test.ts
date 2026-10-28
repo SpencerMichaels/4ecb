@@ -51,7 +51,7 @@ describe("stat evaluation", () => {
     expect(penalties.evaluate("Check").value).toBe(-3);
   });
 
-  it("preserves signed half-point contributions for hybrid totals", () => {
+  it("adds +1 on every second half-point statadd, as native", () => {
     const stats = new StatAccumulator();
     stats.add({
       id: "hybrid-warlord",
@@ -84,7 +84,30 @@ describe("stat evaluation", () => {
       stats
         .evaluate("Healing Surges")
         .contributions.map((entry) => entry.numericValue),
-    ).toEqual([3.5, 4.5]);
+    ).toEqual([3, 5]);
+
+    // Native CalculateStatValue (~36246): the +1 is a non-penalty add under
+    // the second statadd's type, whatever the signs.
+    const signs = new StatAccumulator();
+    const half = (id: string, stat: string, value: string, type?: string) =>
+      signs.add({
+        id,
+        stat,
+        value,
+        providerId: id,
+        providerName: id,
+        halfPoint: true,
+        ...(type === undefined ? {} : { bonusType: type }),
+      });
+    half("a", "Vampire Surge Adjustment", "-3");
+    half("b", "Vampire Surge Adjustment", "-3");
+    half("c", "Mixed", "+4");
+    half("d", "Mixed", "-3");
+    half("e", "Typed", "+2", "Feat");
+    half("f", "Typed", "+2", "Feat");
+    expect(signs.evaluate("Vampire Surge Adjustment").value).toBe(-5);
+    expect(signs.evaluate("Mixed").value).toBe(2);
+    expect(signs.evaluate("Typed").value).toBe(2);
   });
 
   it("retains but suppresses conditional and unmet equipment contributions", () => {
@@ -376,5 +399,18 @@ describe("stat evaluation", () => {
       ["specialization", true],
       ["later", false],
     ]);
+  });
+
+  it("gives a blank (0) ability base score 0 and modifier 0 (native GetAbilityMod)", () => {
+    // An imported incomplete save: the base is an untyped literal 0, so the
+    // racial +2 after it is skipped and ABILITYMOD reads 0, not -5.
+    const stats = new StatAccumulator();
+    add(stats, "base", "Strength", "0");
+    add(stats, "race", "Strength", "+2");
+    add(stats, "half", "Athletics", "+HALF-LEVEL");
+    add(stats, "mod", "Athletics", "+ABILITYMOD(Strength)", "Ability");
+    add(stats, "level", "HALF-LEVEL", "+1");
+    expect(stats.evaluate("Strength").value).toBe(0);
+    expect(stats.evaluate("Athletics").value).toBe(1);
   });
 });

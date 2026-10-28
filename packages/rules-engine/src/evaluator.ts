@@ -71,10 +71,11 @@ import {
   type LegacyLoadoutState,
   type LoadoutSlotContext,
 } from "./loadout-slots";
+import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v74-2026-10-28-encounter-uses";
+  "evaluated-character-v78-2026-10-28-native-psionics";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2193,6 +2194,43 @@ function evaluateCharacterInternal(
     });
   };
 
+  // Native `BracketSubstitute` (D20RulesEngine `-Module-.cs` ~34699, called
+  // by `ProcessStat` ~34775 and the textstring case of
+  // `ExecuteRulesStatement` ~35527) replaces each "[Name]" in a statadd or
+  // textstring name with the name of the element chosen by the character's
+  // first select named Name (`FindNamedSelect` ~34534), or "no selection":
+  // Signature Spell (Archspell)'s "[Signature Spell]:attack" becomes
+  // "<chosen daily>:attack", which the power rows read.
+  const chosenNameBySelect = new Map<string, string>();
+  for (const occurrence of occurrences) {
+    if (
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal === undefined
+    )
+      continue;
+    const parent = occurrences.find(({ id }) => id === occurrence.parentId);
+    const parentEntity =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    const chosen = index.get(occurrence.definitionId);
+    if (parentEntity === undefined || chosen === undefined) continue;
+    const select = parseRules(parentEntity.id, parentEntity.rules).find(
+      (candidate) =>
+        candidate.kind === "select" &&
+        candidate.source.ordinal === occurrence.ruleOrdinal,
+    );
+    if (select?.kind !== "select" || select.name === undefined) continue;
+    if (!chosenNameBySelect.has(key(select.name)))
+      chosenNameBySelect.set(key(select.name), chosen.name);
+  }
+  const bracketSubstitute = (name: string): string =>
+    name.includes("[")
+      ? name.replace(
+          /\[([^\]]*)\]/g,
+          (_, selectName: string) =>
+            chosenNameBySelect.get(key(selectName)) ?? "no selection",
+        )
+      : name;
+
   for (const occurrence of occurrences) {
     const entity = index.get(occurrence.definitionId);
     if (entity === undefined) continue;
@@ -2225,7 +2263,7 @@ function evaluateCharacterInternal(
           );
           stats.add({
             id: `${occurrence.id}:${rule.source.ordinal}`,
-            stat: rule.name,
+            stat: bracketSubstitute(rule.name),
             value:
               adjustedArmorBonus !== undefined &&
               key(rule.name) === "armor class" &&
@@ -2263,7 +2301,7 @@ function evaluateCharacterInternal(
           if (rule.condition !== undefined) {
             stats.add({
               id: `${occurrence.id}:${rule.source.ordinal}`,
-              stat: rule.name,
+              stat: bracketSubstitute(rule.name),
               value: rule.value,
               providerId: occurrence.id,
               providerName: entity.name,
@@ -2277,9 +2315,10 @@ function evaluateCharacterInternal(
             rule.wearing === undefined ||
             equipmentPredicate(equipment, rule.wearing)
           ) {
-            text[rule.name] = rule.value;
+            const textName = bracketSubstitute(rule.name);
+            text[textName] = rule.value;
             textContributions.push({
-              name: rule.name,
+              name: textName,
               value: rule.value,
               providerId: occurrence.id,
               providerName: entity.name,
@@ -2749,6 +2788,25 @@ function evaluateCharacterInternal(
       });
     }
   }
+  // Native `Psionics`/`PsionicConventionalist` run once every element's
+  // rules have executed (D20Workspace.UpdateInternal ~249).
+  const psionics = nativePsionics({ occurrences, saved, index, overlays });
+  overlays.push(...psionics.keywordOverlays);
+  stats.add({
+    id: "native:hybrid-power-points",
+    stat: "Hybrid Power Points",
+    value: String(psionics.hybridPowerPoints),
+    providerId: "native:psionics",
+    providerName: "Augmentable at-will attack powers",
+  });
+  if (psionics.conventionalist !== undefined)
+    stats.add({
+      id: `${psionics.conventionalist.occurrenceId}:native-power-points`,
+      stat: "Power Points",
+      value: String(psionics.conventionalist.value),
+      providerId: psionics.conventionalist.occurrenceId,
+      providerName: psionics.conventionalist.name,
+    });
   const evaluatedStats = Object.fromEntries(
     stats.allNames().map((name) => [name, stats.evaluate(name)]),
   );

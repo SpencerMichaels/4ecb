@@ -79,6 +79,19 @@ sum is non-zero, else all its zero-gated ones (native `CalculateStatValue`
 literal `value="0"` sets the stat to 0 and ends it (Armor Specialization
 (Chainmail)'s Armor Penalty). `MINONEMOD(X)` and `HALFMOD(X)` link X's
 ability modifier at least 1 or halved, as `ABILITYMOD(X)` links it whole.
+A `[Name]` in a statadd or textstring name is replaced by the element the
+character's select named Name chose, or "no selection" (native
+`BracketSubstitute`): Signature Spell (Archspell)'s
+`[Signature Spell]:attack` becomes the chosen daily's `<name>:attack`.
+
+After every element's rules, `psionics.ts` runs native `Psionics`: each
+owned unlocked augmentable power (`_AugmentVersions`, no
+`_SuppressAugments`, not picked by a Racial Trait such as Dilettante) of a
+Class whose Power Usage is At-Will and Power Type attack adds 2/4/6 (by its
+Level) to the untyped "Hybrid Power Points" literal, which the hybrid
+power-point records and Psionic Dabbler link into Power Points; locked
+records lose "Augmentable, " from their Keywords. Psionic Conventionalist
+then takes 2/4/6 Power Points by the Level of the at-will it swapped out.
 
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/
@@ -336,8 +349,8 @@ regenerated-export semantic re-imports. The eighth record also converges, matche
 all 67 numeric aliases and 71 power fields, and passes regenerated semantic
 re-import while retaining one incomplete and one legality diagnostic. Those
 cache totals remain cross-profile
-diagnostics. Hybrid `half-point` rules now combine signed halves within a stat
-and truncate before linked-stat consumption, closing the prior surge mismatch.
+diagnostics. Hybrid `half-point` rules add +1 on every second half-point statadd
+of a stat evaluation (native `CalculateStatValue` ~36246), closing the prior surge mismatch.
 Native magic-armor composition also adjusts a non-masterwork base through the
 recovered light/heavy enhancement table before typed stacking, closing both AC
 alias pairs. The one residual numeric difference is retained because its own
