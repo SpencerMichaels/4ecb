@@ -4885,3 +4885,251 @@ describe("encounter uses (native RulesElementEncounterUses)", () => {
     expect(uses(word, 1, fightOn)).toBe(3);
   });
 });
+
+describe("native special attack and damage abilities", () => {
+  // Scores Str 12, Con 20, Dex 14, Int 16, Wis 18, Cha 18.
+  const scores: Record<string, number> = {
+    Strength: 12,
+    Constitution: 20,
+    Dexterity: 14,
+    Intelligence: 16,
+    Wisdom: 18,
+    Charisma: 18,
+  };
+  const abilityStats = Object.fromEntries(
+    Object.entries(scores).flatMap(([ability, score]) => [
+      [ability, stat(ability, score)],
+      [
+        `${ability} modifier`,
+        stat(`${ability} modifier`, Math.floor((score - 10) / 2)),
+      ],
+    ]),
+  );
+  const implementPower = { Keywords: "Implement", "Attack Type": "Ranged 10" };
+  const evaluate = (
+    name: string,
+    specifics: Record<string, string>,
+    options: {
+      readonly level?: number;
+      readonly textStrings?: Record<string, string>;
+      readonly overlays?: Parameters<typeof evaluatePowers>[0]["overlays"];
+      readonly extra?: readonly ContentEntity[];
+      readonly inventory?: readonly CharacterInventoryEntry[];
+    } = {},
+  ) =>
+    evaluatePowers({
+      level: options.level ?? 8,
+      activeDefinitionIds: ["POWER"],
+      inventory: options.inventory ?? [],
+      stats: abilityStats,
+      overlays: options.overlays ?? [],
+      textStrings: options.textStrings ?? {},
+      entities: [
+        entity("POWER", name, "Power", specifics),
+        ...(options.extra ?? []),
+      ],
+    })[0]!;
+
+  it("uses the highest ability score for 'your highest ability' attack and damage (native HighestAbility)", () => {
+    expect(
+      evaluate("Hand of Justice", {
+        ...implementPower,
+        Attack: "Your highest ability vs. Fortitude",
+        Hit: "1d12 + your highest ability modifier damage, and the ally the triggering attack hit can spend a healing surge.",
+      }).variants[0],
+    ).toMatchObject({
+      attackStat: "Constitution",
+      attackBonus: 9,
+      damage: "1d12+5",
+    });
+  });
+
+  it.each([
+    [
+      "Your highest ability modifier + 4 vs. Will\nLevel 21: Your highest ability modifier + 6 vs. Will",
+      8,
+      13,
+    ],
+    [
+      "Your highest ability modifier + 4 vs. Will\nLevel 21: Your highest ability modifier + 6 vs. Will",
+      22,
+      22,
+    ],
+    ["Your highest ability score +9 vs. Reflex", 8, 18],
+    ["Your highest ability score modifier + 6 vs. Reflex", 8, 15],
+    ["Highest ability modifier + 2 vs. Will", 8, 11],
+  ])("keeps the power bonus of %j at level %i", (line, level, bonus) => {
+    expect(
+      evaluate(
+        "Probability Travel",
+        {
+          ...implementPower,
+          Attack: line,
+          Hit: "3d10 + your highest ability modifier psychic damage.",
+        },
+        { level },
+      ).variants[0],
+    ).toMatchObject({
+      attackStat: "Constitution",
+      attackBonus: bonus,
+      damage: "3d10+5",
+    });
+  });
+
+  it("resolves 'Highest mental ability' to Intelligence, Wisdom or Charisma, earlier ties first", () => {
+    expect(
+      evaluate("Kelemvor's Judgment", {
+        ...implementPower,
+        Attack: "Highest mental ability vs. Will",
+        Hit: "1d12 + Wisdom modifier damage.",
+      }).variants[0],
+    ).toMatchObject({ attackStat: "Wisdom", attackBonus: 8 });
+  });
+
+  it("reads 'Chosen ability' from the Chosen Ability text string", () => {
+    const specifics = {
+      Keywords: "Martial, Weapon",
+      "Attack Type": "Melee weapon",
+      Attack: "Chosen ability vs. Fortitude",
+      Hit: "4[W] + chosen ability modifier damage.",
+    };
+    expect(
+      evaluate("Reaper's Repast", specifics, {
+        textStrings: { "Chosen Ability": "Intelligence" },
+      }).variants[0],
+    ).toMatchObject({
+      attackStat: "Intelligence",
+      attackBonus: 7,
+      damage: "4d4+3",
+    });
+    expect(evaluate("Reaper's Repast", specifics).variants[0]).toMatchObject({
+      attackStat: "Unknown",
+      attackBonus: 4,
+      damage: "4d4",
+    });
+  });
+
+  it("replaces the dice size with a modified _DamageDie after the level's damage line (native ParseDamage)", () => {
+    const breath = evaluate(
+      "Dragon Breath",
+      {
+        Keywords: "",
+        "Attack Type": "Close blast 3",
+        Attack:
+          "Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2 vs. Reflex",
+        Hit: "1d6 + Constitution modifier damage.\nIncrease to +4 bonus and 2d6 + Constitution modifier damage at 11th level, and to +6 bonus and 3d6 + Constitution modifier damage at 21st level.",
+      },
+      {
+        level: 12,
+        overlays: [
+          {
+            providerOccurrenceId: "empowered-dragon-breath",
+            targetDefinitionIds: ["POWER"],
+            field: "_DamageDie",
+            value: "d10",
+          },
+        ],
+      },
+    );
+    expect(breath.variants[0]?.damage).toBe("2d10+5");
+  });
+
+  it("doubles Chilling Cloud's Intelligence damage from 21st level by name and reads 'twice' terms", () => {
+    const cloud = (level: number) =>
+      evaluate(
+        "Chilling Cloud",
+        {
+          Keywords: "Arcane, Cold, Evocation, Implement",
+          "Attack Type": "Area burst 1 within 10 squares",
+          Attack: "Intelligence vs. Fortitude",
+          Hit: "Intelligence modifier cold damage.",
+          Effect:
+            "Until the end of your next turn, any enemy in the power's area takes a -2 penalty to attack rolls. Increase damage to twice Intelligence modifier at 21st level.",
+        },
+        { level },
+      ).variants[0]?.damage;
+    expect(cloud(20)).toBe("3");
+    expect(cloud(21)).toBe("6");
+    expect(
+      evaluate("Image of Death", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "5[W] + Strength modifier + twice your Constitution modifier damage.",
+      }).variants[0]?.damage,
+    ).toBe("5d4+11");
+  });
+
+  const bow = entity("BOW", "Longbow", "Weapon", {
+    Damage: "1d10",
+    Group: "Bow",
+    "Weapon Category": "Military Ranged",
+    "Proficiency Bonus": "2",
+    Range: "20/40",
+  });
+  const sword = entity("SWORD", "Longsword", "Weapon", {
+    Damage: "1d8",
+    Group: "Heavy Blade",
+    "Weapon Category": "Military Melee",
+    "Proficiency Bonus": "3",
+  });
+  const weapons = {
+    extra: [bow, sword],
+    inventory: ["BOW", "SWORD"].map((id) => ({
+      id,
+      definitionIds: [id],
+      quantity: 1,
+      equippedQuantity: 1,
+      acquiredLevel: 1,
+    })),
+  };
+  const byWeapon = (power: ReturnType<typeof evaluate>) =>
+    Object.fromEntries(
+      power.variants.map((variant) => [
+        variant.equipmentName,
+        [variant.attackStat, variant.attackBonus],
+      ]),
+    );
+
+  it("adds Hawk's Talon's Wisdom power bonus to either alternative (native ExtractPowerMods)", () => {
+    expect(
+      byWeapon(
+        evaluate(
+          "Hawk's Talon",
+          {
+            Keywords: "Martial, Weapon",
+            "Attack Type": "Melee or Ranged weapon",
+            Attack:
+              "Strength vs. AC (melee) or Dexterity vs. AC (ranged). Gain a power bonus to this attack equal to your Wisdom modifier. Ignore any penalties from cover or concealment (but not superior cover or total concealment).",
+            Hit: "2[W] + Strength modifier damage (melee) or 2[W] + Dexterity modifier damage (ranged).",
+          },
+          weapons,
+        ),
+      ),
+    ).toMatchObject({
+      Longbow: ["Dexterity", 12],
+      Longsword: ["Strength", 12],
+    });
+  });
+
+  it("splits 'with a melee weapon or two' attacks by the wielded weapon (native WhichAttack)", () => {
+    expect(
+      byWeapon(
+        evaluate(
+          "Attacks on the Run",
+          {
+            Keywords: "Martial, Weapon",
+            "Attack Type": "Melee or Ranged weapon",
+            Attack:
+              "You can move your speed. At any point during your move, you can make two Strength vs. AC attacks with a melee weapon or two Dexterity vs. AC attacks with a ranged weapon.",
+            Hit: "3[W] + Strength modifier damage (melee) or 3[W] + Dexterity modifier damage (ranged) per attack.",
+          },
+          weapons,
+        ),
+      ),
+    ).toMatchObject({
+      Longbow: ["Dexterity", 8],
+      Longsword: ["Strength", 8],
+    });
+  });
+});

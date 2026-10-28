@@ -1542,12 +1542,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WhichAttack": code(
       "Melee-or-ranged attack line selection by weapon, and the best of 'A, B, or C' abilities.",
-      "powers.ts phaseAlternatives / attackLineAbility",
+      "powers.ts dualAttackAlternatives (first ') or ', else ' with a melee weapon or two '; a ranged weapon takes the second) / attackLineAbility. D091: only lines naming a melee and a ranged alternative split, so Reactive Shot's 'Strength (thrown weapon) or Dexterity' keeps the better of the two for attack and damage (native: Dexterity attack with a ranged weapon but Strength damage, via MultipleAbilityChoices)",
       test(POWERS, "selects the current level line and highest listed ability"),
+      test(
+        POWERS,
+        "splits 'with a melee weapon or two' attacks by the wielded weapon (native WhichAttack)",
+      ),
     ),
     "D20Workspace.IsDualPower": code(
       "Dual-attack power detection from ') or ' / 'with a melee weapon or two'.",
-      "powers.ts phaseAlternatives",
+      "powers.ts dualAttackAlternatives (see WhichAttack for the D091 Reactive Shot exception)",
       test(
         POWERS,
         "uses recovered implement aliases and variant-specific range channels",
@@ -1627,29 +1631,62 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "reads `<feat> association` text strings for the power's _Associated Feats",
       ),
     ),
-    "?A0x7555d940.AttackSpecialCase": notHandled(
-      "Attack stat 'Highest Mental Ability'.",
-      "powers.ts highestAbility covers 'your highest ability' forms only",
+    "?A0x7555d940.AttackSpecialCase": code(
+      "Attack stat 'Highest Mental Ability' (exact) becomes HighestMentalAbility (Kelemvor's Judgment).",
+      "powers.ts specialAttackAbility",
+      test(
+        POWERS,
+        "resolves 'Highest mental ability' to Intelligence, Wisdom or Charisma, earlier ties first",
+      ),
     ),
-    "?A0x7555d940.HighestMentalAbility": notHandled(
-      "Highest of Intelligence, Wisdom and Charisma (ties keep the first).",
-      "see AttackSpecialCase",
+    "?A0x7555d940.HighestMentalAbility": code(
+      "Highest of Intelligence, Wisdom and Charisma by score (ties keep the first).",
+      "powers.ts highestScoreAbility(stats, MENTAL_ABILITIES)",
+      test(
+        POWERS,
+        "resolves 'Highest mental ability' to Intelligence, Wisdom or Charisma, earlier ties first",
+      ),
     ),
-    ChosenAbility: notHandled(
-      "Attack/damage stat 'Chosen Ability' reads a chosen-ability text string.",
-      "not modeled",
+    "?A0x7555d940.HighestAbility": code(
+      "Highest of the six ability scores (Strength first; ties keep the first), for 'your highest ability' attack stats and 'highest'/'ability' damage terms.",
+      "powers.ts highestScoreAbility: 'your highest ability' attack lines (36) and '+ [your] highest ability [score] modifier' damage terms (39 Hit lines). D091: bare 'Highest ability ...' attack lines (native parses the non-ability 'ability') resolve the same way",
+      test(
+        POWERS,
+        "uses the highest ability score for 'your highest ability' attack and damage (native HighestAbility)",
+      ),
     ),
-    AbilityTranslation: notHandled(
+    ChosenAbility: code(
+      "Attack/damage stat 'Chosen Ability' reads the 'Chosen Ability' text string (Abiding Reaper's choice: Reaping Disruption, Reaper's Repast).",
+      "powers.ts chosenAbility / specialAttackAbility; without the text string the attack stat is Unknown and the damage term adds 0",
+      test(
+        POWERS,
+        "reads 'Chosen ability' from the Chosen Ability text string",
+      ),
+    ),
+    AbilityTranslation: code(
       "Ability names 'Chosen Ability'/'chosen' translate to the chosen ability.",
-      "not modeled",
+      "powers.ts: the 'chosen ability modifier' damage term and 'Chosen ability' attack stat read chosenAbility",
+      test(
+        POWERS,
+        "reads 'Chosen ability' from the Chosen Ability text string",
+      ),
+    ),
+    "?A0x7555d940.ParseDamage": code(
+      "A power's `_DamageDie` field (set by `modify`: Empowered Dragon Breath d10, Greathorn's Goring Charge d8) replaces the first 'dN' of the dice expression, after the level's damage line is chosen.",
+      "powers.ts withDamageDie (fixed dice only; a [W] expression has no 'dN' there)",
+      test(
+        POWERS,
+        "replaces the dice size with a modified _DamageDie after the level's damage line (native ParseDamage)",
+      ),
     ),
     "?A0x7555d940.CalcStatVsDefense": partial(
       "Attack stat parsing: beast's attack bonus, power-bonus suffixes, 'your highest ability', 'Primary ability', 'Chosen Ability', the '+1 per enemy adjacent to you' condition, then OverrideStat.",
-      "powers.ts attackLineAbility / highestAbility / powerBonusAtLevel; 'Chosen Ability' and the per-adjacent-enemy condition are not modeled; OverrideStat is key-ability-overrides.ts",
+      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' uses the class key abilities where native takes HighestAbility (owner decision pending), and the per-adjacent-enemy condition is not modeled; OverrideStat is key-ability-overrides.ts",
       test(
         POWERS,
         "chooses the best attack ability and retains explicit power bonuses",
       ),
+      test(POWERS, "keeps the power bonus of %j at level %i"),
       test(
         POWERS,
         "resolves a primary-ability attack from the class's key abilities",
@@ -1689,9 +1726,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "raises Dragon Breath's bonus by name and its damage by its increase sentence at level %i (native AttackPowerModRepl/ParseIncreaseLine)",
       ),
     ),
-    "?A0x7555d940.ExtractPowerMods": notHandled(
-      "One exact attack-line suffix adds a Wisdom power bonus.",
-      "not modeled",
+    "?A0x7555d940.ExtractPowerMods": code(
+      "One exact attack-line suffix adds a Wisdom power bonus (Hawk's Talon).",
+      "powers.ts extractedPowerBonus, read from the whole Attack field before the melee/ranged choice; the sentence is dropped before the ability parse",
+      test(
+        POWERS,
+        "adds Hawk's Talon's Wisdom power bonus to either alternative (native ExtractPowerMods)",
+      ),
     ),
     "?A0x7555d940.ParseIncreaseLine": code(
       "From the hit's first 'Increase damage to ' (else 'Increase to '), each clause from its first digit to ' at N' is the damage at level N, stepping on at the next ' level'; four exact lines (Kelemvor's Judgment, the breath lines) are rewritten first.",
@@ -1707,10 +1748,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.HigherLevelDamage": partial(
       "Higher-level damage lines; Chilling Cloud by name at 21; one exact Constitution line; a riposte damage line trimmed.",
-      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud (ID_FMP_POWER_7406) at 21st level keeps its base damage; the exact Constitution and riposte lines match no current record",
+      "powers.ts lineAtLevel: 'Level N:' lines (native LevelIncrease) before the increase sentence (increasedDamageAtLevel); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
       test(
         POWERS,
         "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",
+      ),
+      test(
+        POWERS,
+        "doubles Chilling Cloud's Intelligence damage from 21st level by name and reads 'twice' terms",
       ),
     ),
     FindLine: code(
@@ -1720,8 +1765,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcDamage": partial(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage; Defender's Gambit is not special-cased and '(off-hand weapon)' ability terms use the row's own weapon",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit is not special-cased, '(off-hand weapon)' ability terms use the row's own weapon, and a bare 'ability modifier' term follows the attack stat where native takes HighestAbility",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
+      test(
+        POWERS,
+        "doubles Chilling Cloud's Intelligence damage from 21st level by name and reads 'twice' terms",
+      ),
       test(
         POWERS,
         "deals flat damage from a dice-less expression, without roll-only bonuses (native CalcDamage)",
