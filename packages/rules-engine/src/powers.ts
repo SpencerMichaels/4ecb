@@ -45,9 +45,12 @@ import {
   equipmentName,
   increaseDamageDie,
   legacyIsDoubleWeapon,
+  legacyCanUseLargeWeapons,
   legacyIsKiFocus,
+  legacyIsLargeWeapon,
   legacyIsStaff,
   legacyLootImplement,
+  legacyLootSlotContext,
   withOverlaidItems,
 } from "./item-fields";
 
@@ -190,6 +193,8 @@ interface Loadout {
    * item's "Proficient As". Empty for anything that is not a weapon.
    */
   readonly proficiencyNames: readonly string[];
+  /** Native IsLargeWeapon: proficiency needs CanUseLargeWeapons. */
+  readonly largeWeapon?: boolean;
   readonly enhancement: number;
   readonly critical?: string;
   readonly unarmed: boolean;
@@ -537,6 +542,9 @@ function loadouts(
   loadout: LegacyLoadoutState,
 ): readonly Loadout[] {
   const implementResolver = legacyImplementResolver(byId, byName);
+  const resolveWeapon = (reference: string) =>
+    byId.get(key(reference)) ??
+    byName.get(key(reference))?.find((entity) => key(entity.type) === "weapon");
   const result: Loadout[] = [];
   for (const { entry, kiSource } of withKiFocusedWeapons(inventory, byId)) {
     const parts = entry.definitionIds.flatMap((id) => {
@@ -618,9 +626,15 @@ function loadouts(
       proficiency:
         Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) ||
         (staffWeapon ? 2 : 0),
+      // Native IsProficient(elem, enchant): a Large weapon by its
+      // NormalizedName (its primary end, without " (large)").
       proficiencyNames: [
         ...(weapon !== undefined
-          ? [weapon.name]
+          ? [
+              legacyIsLargeWeapon(weapon)
+                ? legacyNormalizedWeaponName(weapon, resolveWeapon)
+                : weapon.name,
+            ]
           : staffWeapon
             ? ["Quarterstaff"]
             : []),
@@ -629,6 +643,9 @@ function loadouts(
           return proficientAs === undefined ? [] : [proficientAs];
         }),
       ],
+      ...(weapon !== undefined && legacyIsLargeWeapon(weapon)
+        ? { largeWeapon: true }
+        : {}),
       enhancement: parseEnhancement(magic),
       ...(critical ? { critical } : {}),
       unarmed: false,
@@ -2496,14 +2513,9 @@ function legacyRequirementContext(input: {
     const entity = input.byId.get(key(id));
     return entity === undefined ? [] : [entity];
   });
-  const owns = (type: string, name: string) =>
-    active.some(
-      (entity) => key(entity.type) === type && key(entity.name) === key(name),
-    );
+  const sizeContext = legacyLootSlotContext(active);
   // Legacy SmallWithNonSmallWeapon.
-  const small =
-    owns("size", EXCEPTION_NAMES.smallSize) &&
-    !owns("internal", EXCEPTION_NAMES.oneSizeLarger);
+  const small = sizeContext.small && !sizeContext.oneSizeLarger;
   const statText = (name: string): string | undefined => {
     if (input.textContributions === undefined)
       return textValue(input.textStrings, name);
@@ -2613,12 +2625,24 @@ export function evaluatePowers(input: {
       return match?.[1] === undefined ? [] : [key(match[1])];
     }),
   );
+  // Native IsProficient: a Large weapon needs CanUseLargeWeapons (Oversized,
+  // or One Size Larger when not Small) before any proficiency counts, its
+  // Proficient As included.
+  const canUseLargeWeapons = legacyCanUseLargeWeapons(
+    legacyLootSlotContext(
+      input.activeDefinitionIds.flatMap((id) => {
+        const entity = byId.get(key(id));
+        return entity === undefined ? [] : [entity];
+      }),
+    ),
+  );
   // Without any recorded weapon proficiency (incomplete or custom content),
   // keep the bonus rather than strip it from every weapon, as for implements.
   const proficientWithWeapon = (item: Loadout) =>
-    weaponProficiencies.size === 0 ||
-    item.proficiencyNames.length === 0 ||
-    item.proficiencyNames.some((name) => weaponProficiencies.has(key(name)));
+    (item.largeWeapon !== true || canUseLargeWeapons) &&
+    (weaponProficiencies.size === 0 ||
+      item.proficiencyNames.length === 0 ||
+      item.proficiencyNames.some((name) => weaponProficiencies.has(key(name))));
   // Native ArenaTrainingImprovisedWeapon: with Arena Training, no weapon, a
   // weapon the character is not proficient with, or an improvised weapon
   // deals 1d8 (1d10 two-handed) with a +2 proficiency bonus.

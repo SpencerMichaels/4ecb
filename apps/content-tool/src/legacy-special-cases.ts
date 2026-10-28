@@ -1085,11 +1085,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     IsLargeWeapon: code("Size 'Large' weapon.", "equipment-ui inventory names"),
     CanUseLargeWeapons: partial(
       "Oversized / One Size Larger / Small character text strings change which weapon sizes fit.",
-      "item-fields.ts legacyItemSlot for SLOT: selectors and the loadout hands (loadout-slots.ts, D102); an equipped Large weapon without it is a house-rule character issue (unwieldableWeaponIssues); IsProficient's large-weapon check is not read",
+      "item-fields.ts legacyItemSlot for SLOT: selectors and the loadout hands (loadout-slots.ts, D102); an equipped Large weapon without it is a house-rule character issue (unwieldableWeaponIssues); powers.ts proficientWithWeapon denies a Large weapon's proficiency without it (IsProficient)",
       test(ITEM_FIELDS, "adjusts the Item Slot for size and Ambidextrous"),
       test(
         LOADOUT_SLOTS,
         "names weapons the character can't wield, and still places them as authored",
+      ),
+      test(
+        POWERS,
+        "gives a Large weapon its proficiency only with Oversized or One Size Larger",
       ),
     ),
     "?A0x0bed2cbe.SmallWithNonSmallWeapon": code(
@@ -1242,10 +1246,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsProficient": partial(
       "Weapon/armor/shield proficiency: 'Weapon Proficiency (<name>)' (large weapons only with CanUseLargeWeapons), the enchantment's Proficient As and Additional Proficiencies, 'Shield Proficiency (<x>)' and 'Armor Proficiency (<category>)'.",
-      "powers.ts proficiencyNames (Proficient As); large-weapon size and Additional Proficiencies (no record in the current pack) are not read",
+      "powers.ts proficiencyNames (Proficient As; a Large weapon by legacyNormalizedWeaponName) and proficientWithWeapon (a Large weapon only with legacyCanUseLargeWeapons); Additional Proficiencies (no record in the current pack) is not read",
       test(
         POWERS,
         "adds a weapon's proficiency bonus only with its weapon proficiency",
+      ),
+      test(
+        POWERS,
+        "gives a Large weapon its proficiency only with Oversized or One Size Larger",
       ),
     ),
     "?A0x7555d940.GetProficiencyBonus": code(

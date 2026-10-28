@@ -3039,9 +3039,10 @@ Decision:
   weapon (`unwieldableWeaponIssues`, via `withCharacterIssues`) naming the
   weapon and why. Its attack rows stay, as native lists every owned weapon.
 
-Not changed: native `IsProficient` also denies proficiency with a Large
-weapon without `CanUseLargeWeapons`; the modern proficiency check does not
-read weapon size yet.
+Follow-up (2026-10-27, cache v65): power rows now apply native
+`IsProficient`'s size rule too. A Large weapon has no proficiency without
+`CanUseLargeWeapons`, and with it the weapon is matched by its normalized
+name (no " (large)").
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.

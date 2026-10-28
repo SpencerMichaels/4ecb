@@ -267,15 +267,47 @@ export function legacyItemSlot(
     if (/versatile/iu.test(rawField(base, "Properties") ?? ""))
       slot = "two-hands";
   }
-  if (weapon && key(rawField(base, "Size") ?? "") === "large") {
+  if (legacyIsLargeWeapon(base)) {
     if (!legacyCanUseLargeWeapons(context)) return "";
   } else if (key(slot) === "two-hands" && oneSizeLarger) slot = "one-hand";
   if (key(slot) === "one-hand" && context.ambidextrous) slot = "off-hand";
   return slot;
 }
 
-/** Native CanUseLargeWeapons: Oversized, or One Size Larger when not Small. */
-function legacyCanUseLargeWeapons(context: LootSlotContext): boolean {
+/**
+ * The size facts native ItemSlot, CharLootSlot, CanUseLargeWeapons and
+ * SmallWithNonSmallWeapon read, from the character's owned records.
+ */
+export function legacyLootSlotContext(
+  owned: readonly ContentEntity[],
+): LootSlotContext {
+  const owns = (type: string, name: string) =>
+    owned.some(
+      (entity) => key(entity.type) === type && key(entity.name) === key(name),
+    );
+  return {
+    small: owns("size", EXCEPTION_NAMES.smallSize),
+    oversized: owns("internal", EXCEPTION_NAMES.oversized),
+    oneSizeLarger: owns("internal", EXCEPTION_NAMES.oneSizeLarger),
+    ambidextrous: owns("internal", EXCEPTION_NAMES.ambidextrous),
+  };
+}
+
+/** Native IsLargeWeapon (`-Module-.cs` ~19006): a weapon whose Size is Large. */
+export function legacyIsLargeWeapon(base: ContentEntity): boolean {
+  return (
+    key(base.type) === "weapon" && key(rawField(base, "Size") ?? "") === "large"
+  );
+}
+
+/**
+ * Native CanUseLargeWeapons (`-Module-.cs` ~18929): Oversized, or One Size
+ * Larger when not Small. Without it a Large weapon has no slot (ItemSlot)
+ * and no proficiency (IsProficient).
+ */
+export function legacyCanUseLargeWeapons(
+  context: Pick<LootSlotContext, "small" | "oversized" | "oneSizeLarger">,
+): boolean {
   return context.oversized || (context.oneSizeLarger && !context.small);
 }
 
@@ -292,8 +324,7 @@ export function legacyUnwieldableReason(
   if (key(base.type) !== "weapon" || legacyIsStaff(base)) return undefined;
   if ((rawField(base, "Item Slot") ?? "").trim() === "") return undefined;
   if (legacyItemSlot(base, context) !== "") return undefined;
-  return key(rawField(base, "Size") ?? "") === "large" &&
-    !legacyCanUseLargeWeapons(context)
+  return legacyIsLargeWeapon(base) && !legacyCanUseLargeWeapons(context)
     ? "large"
     : "small";
 }

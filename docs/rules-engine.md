@@ -449,7 +449,13 @@ character, a Large weapon without Oversized or One Size Larger) is one
 native `ValidateEquip` refuses to equip; the loadout still places it as
 authored and the builder raises a house-rule character issue. Its attack
 rows stay, as native `BuildWeaponsList` lists every owned weapon whatever
-its slot.
+its slot. Native `IsProficient` gives such a Large weapon no proficiency
+either: its rows lose the proficiency bonus (and anything else that reads
+proficiency: Arena Training's improvised +2, `*` key-ability entries, the
+thrown basic-attack key ability), even with a magic item's Proficient As.
+With Oversized or One Size Larger, a Large weapon is proficient by its
+normalized name (`legacyNormalizedWeaponName`: the primary end, without
+" (large)"), so "Weapon Proficiency (Longsword)" covers "Longsword (Large)".
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

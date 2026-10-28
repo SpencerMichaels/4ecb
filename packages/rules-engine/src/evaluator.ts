@@ -10,7 +10,6 @@ import {
   archeryMasteryPowerId,
   diverseStudyException,
   EXCEPTION_IDS,
-  EXCEPTION_NAMES,
   isLeveledRangerAtWillAttack,
   isCustomChoiceException,
   isUniversalSkill,
@@ -53,6 +52,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 import {
   equipmentName,
   legacyIsStaff,
+  legacyLootSlotContext,
   legacyLootSlots,
   overlaidEntity,
   overlaidFields,
@@ -68,7 +68,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v64-2026-10-27-loadout-size";
+  "evaluated-character-v65-2026-10-27-large-weapon-proficiency";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -724,20 +724,6 @@ function equippedItems(
     });
   }
   return items;
-}
-
-/** The character facts native ItemSlot/CharLootSlot read. */
-function lootSlotContext(owned: readonly ContentEntity[]): LootSlotContext {
-  const owns = (type: string, name: string) =>
-    owned.some(
-      (entity) => key(entity.type) === type && key(entity.name) === key(name),
-    );
-  return {
-    small: owns("size", EXCEPTION_NAMES.smallSize),
-    oversized: owns("internal", EXCEPTION_NAMES.oversized),
-    oneSizeLarger: owns("internal", EXCEPTION_NAMES.oneSizeLarger),
-    ambidextrous: owns("internal", EXCEPTION_NAMES.ambidextrous),
-  };
 }
 
 function activeAt(rule: ExecutableRule, level: number): boolean {
@@ -1623,7 +1609,7 @@ function evaluateCharacterInternal(
           key,
         );
   const overlays: FieldOverlay[] = [];
-  const slotContext = lootSlotContext(ownedDefinitions);
+  const slotContext = legacyLootSlotContext(ownedDefinitions);
   const equipment = equippedState(currentInput, index, overlays, slotContext);
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))

@@ -305,6 +305,67 @@ describe("power evaluation", () => {
     expect(attackWith(["CLUB_PROF"])).toBe(6);
   });
 
+  it("gives a Large weapon its proficiency only with Oversized or One Size Larger", () => {
+    // Native IsProficient: a Large weapon needs CanUseLargeWeapons, then
+    // matches its NormalizedName (no " (large)"); without it even Proficient
+    // As does not count.
+    const attackWith = (
+      activeDefinitionIds: readonly string[],
+      parts: readonly string[] = ["LARGE_SWORD"],
+    ) =>
+      evaluatePowers({
+        level: 2,
+        activeDefinitionIds: ["POWER", "LONG_PROF", ...activeDefinitionIds],
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic strike", "Power", {
+            Keywords: "Weapon",
+            "Attack Type": "Melee weapon",
+            Attack: "Strength vs. AC",
+            Hit: "1[W] + Strength modifier damage.",
+          }),
+          entity("LARGE_SWORD", "Longsword (Large)", "Weapon", {
+            Damage: "1d12",
+            Size: "Large",
+            "Proficiency Bonus": "3",
+            "Weapon Category": "Military Melee",
+          }),
+          entity("BLADE", "Synthetic Blade +1", "Magic Item", {
+            "Magic Item Type": "Weapon",
+            "Proficient As": "Longsword",
+            Enhancement: "+1 attack rolls and damage rolls",
+          }),
+          entity(
+            "LONG_PROF",
+            "Weapon Proficiency (Longsword)",
+            "Proficiency",
+            {},
+          ),
+          entity("OVERSIZED", "Oversized", "Internal", {}),
+          entity("ONE_SIZE_LARGER", "One Size Larger", "Internal", {}),
+          entity("SMALL", "Small", "Size", {}),
+        ],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: parts,
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+      })[0]?.variants.find((variant) => variant.equipmentId === "sword")
+        ?.attackBonus;
+    const enchanted = ["LARGE_SWORD", "BLADE"];
+    expect(attackWith([])).toBe(5);
+    expect(attackWith([], enchanted)).toBe(6);
+    expect(attackWith(["OVERSIZED"])).toBe(8);
+    expect(attackWith(["ONE_SIZE_LARGER"])).toBe(8);
+    expect(attackWith(["ONE_SIZE_LARGER"], enchanted)).toBe(9);
+    expect(attackWith(["ONE_SIZE_LARGER", "SMALL"], enchanted)).toBe(6);
+  });
+
   it("matches bonuses keyed by the power's class ID and the weapon's ID", () => {
     // Hexblade content keys Pact Reward as `<class ID>:damage` and its
     // pact-blade bonuses as `<weapon ID>,<class ID>:attack` (CalcKeywords).
