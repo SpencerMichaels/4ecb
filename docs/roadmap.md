@@ -1001,10 +1001,13 @@ character before it is fixed, one slice per item.
   the number-changing ones. Work top to bottom; strike items as they land.
   1. ~~Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
      model, engine numbers, companion-style card~~ — done (D107, `ac5f3ea`).
-  2. Prerequisite IR cache keyed on subject and text only, not on owned or
-     known tokens: a cached result can outlive a change of choices (bug).
-     Also: `pnpm regenerate:edited-dnd4e sample-chars/Sylestine.dnd4e` fails
-     with "duplicate charelem tokens" (pre-existing, found 2026-10-28).
+  2. ~~Prerequisite IR cache order-dependence; `regenerate:edited-dnd4e`
+     duplicate tokens~~ — done: the cache is keyed on profile, owner and text
+     and no longer depends on the caller's tokens (`23f9b88`); export writes
+     flat per-level loot rows like native (`242c4a8`). Open, awaiting the
+     owner (D097 amendment): the current wallet must be the highest money key
+     at or below the character's level — levelled-down saves (Beatrix,
+     "copy of character") show and export a stale higher-level wallet.
   3. Sheet display: power short descriptions in notes
      (`NoteHolder.GetShortDescription`, ~820 records, 20 samples); monk
      movement technique cards (`PowerCard.MonkMovementTechnique`,
