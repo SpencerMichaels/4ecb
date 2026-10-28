@@ -5,9 +5,12 @@ import { describe, expect, it } from "vitest";
 import {
   applyCharacterCommand,
   boundAugmentHolding,
+  currentWalletTextKey,
   isCharacterRecord,
   newCharacterRecord,
   newNativeCharacterRecord,
+  resolveCharacterWallet,
+  ZERO_CURRENCY,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
@@ -1098,6 +1101,95 @@ describe("legacy .dnd4e import", () => {
       equivalent: true,
       differences: [],
     });
+  });
+
+  it("reads, edits and exports the wallet at the character's level, never a stale higher key (D097)", () => {
+    const level = (n: number) =>
+      `<Level><RulesElement name="${n}" type="Level" internal-id="L${n}"/></Level>`;
+    const money = (n: number, kind: string, value: string) =>
+      `<textstring name="_PER_LEVEL_${n}_${kind} Money">${value}</textstring>`;
+    const content = [1, 2, 3].map((n) => entity(`L${n}`, `${n}`, "Level"));
+    const roundTrip = (
+      source: string,
+      edit: (build: CharacterBuildLike) => CharacterBuildLike,
+    ) => {
+      const imported = importDnd4e(source);
+      const build = edit(imported.build);
+      const xml = exportEditedDnd4e({
+        target: "legacy-builder-0.07a",
+        envelope: imported.envelope,
+        snapshot: imported.snapshot,
+        build,
+        evaluation: evaluateCharacter(
+          projectBuildForEvaluation(build, content),
+          content,
+        ),
+        content,
+      });
+      return { imported, build, xml, reimported: importDnd4e(xml) };
+    };
+    type CharacterBuildLike = ReturnType<typeof importDnd4e>["build"];
+
+    // Beatrix-shaped: a level-2 save that once reached level 4 keeps its
+    // stale level-3 and level-4 wallets; legacy shows the level-2 one.
+    const beatrix = `<D20Character game-system="D&amp;D4E">${level(1)}${level(2)}${money(1, "Carried", "100 gp")}${money(2, "Carried", "1 pp; 48 gp")}${money(3, "Carried", "37 pp; 48 gp")}${money(4, "Carried", "100 gp")}${money(4, "Stored", "5 gp")}</D20Character>`;
+    const unedited = roundTrip(beatrix, (build) => build);
+    expect(unedited.imported.build.effectiveLevel).toBe(2);
+    expect(resolveCharacterWallet(unedited.imported.build, "carried")).toEqual({
+      amount: { ...ZERO_CURRENCY, pp: 1, gp: 48 },
+      sourceLevel: 2,
+    });
+    expect(resolveCharacterWallet(unedited.imported.build, "stored")).toEqual({
+      amount: ZERO_CURRENCY,
+    });
+    // Export no longer copies a higher key down over the current wallet.
+    expect(unedited.xml).toContain(money(2, "Carried", "1 pp; 48 gp"));
+    expect(unedited.xml).not.toContain(money(2, "Stored", "5 gp"));
+    expect(
+      resolveCharacterWallet(unedited.reimported.build, "carried").amount,
+    ).toEqual({ ...ZERO_CURRENCY, pp: 1, gp: 48 });
+
+    // A wallet edit writes the character's level; stale keys stay verbatim
+    // (loss-free) and re-import still ignores them.
+    const edited = roundTrip(beatrix, (build) =>
+      applyCharacterCommand(build, {
+        kind: "set-text",
+        name: currentWalletTextKey(build, "carried"),
+        value: "2 pp",
+      }),
+    );
+    expect(edited.build.textStrings["_PER_LEVEL_2_Carried Money"]).toBe("2 pp");
+    expect(edited.xml).toContain(money(2, "Carried", "2 pp"));
+    expect(edited.xml).toContain(money(3, "Carried", "37 pp; 48 gp"));
+    expect(edited.xml).toContain(money(4, "Carried", "100 gp"));
+    expect(resolveCharacterWallet(edited.reimported.build, "carried")).toEqual({
+      amount: { ...ZERO_CURRENCY, pp: 2 },
+      sourceLevel: 2,
+    });
+
+    // "Copy of character"-shaped: a level-3 save with no level-3 key reads
+    // the level-1 wallet, not the stale level-4 one; an edit adds level 3's.
+    const copy = `<D20Character game-system="D&amp;D4E">${level(1)}${level(2)}${level(3)}${money(1, "Carried", "786 gp")}${money(4, "Carried", "15 gp")}</D20Character>`;
+    const copyEdited = roundTrip(copy, (build) => {
+      expect(resolveCharacterWallet(build, "carried")).toEqual({
+        amount: { ...ZERO_CURRENCY, gp: 786 },
+        sourceLevel: 1,
+      });
+      expect(currentWalletTextKey(build, "carried")).toBe(
+        "_PER_LEVEL_3_Carried Money",
+      );
+      return applyCharacterCommand(build, {
+        kind: "set-text",
+        name: currentWalletTextKey(build, "carried"),
+        value: "780 gp",
+      });
+    });
+    expect(copyEdited.xml).toContain(money(1, "Carried", "786 gp"));
+    expect(copyEdited.xml).toContain(money(3, "Carried", "780 gp"));
+    expect(copyEdited.xml).toContain(money(4, "Carried", "15 gp"));
+    expect(
+      resolveCharacterWallet(copyEdited.reimported.build, "carried"),
+    ).toEqual({ amount: { ...ZERO_CURRENCY, gp: 780 }, sourceLevel: 3 });
   });
 
   it("exports only the current level while preserving inactive future planning", () => {

@@ -891,13 +891,14 @@ export function isRulesInertTextKey(key: string): boolean {
 
 /**
  * Resolves the latest defined per-level value at or before `level`. Without
- * a level it is the character's current wallet: the latest value at any
- * level, so a value left above a lowered level is never shadowed (D097).
+ * a level it is the character's current wallet: the latest value at or
+ * below the character's level, the one legacy saves as its CharacterSheet
+ * money. Keys left above a lowered level are stale and never read (D097).
  */
 export function resolveCharacterWallet(
-  build: Pick<CharacterBuild, "textStrings">,
+  build: Pick<CharacterBuild, "effectiveLevel" | "textStrings">,
   wallet: CharacterWalletKind,
-  level = 30,
+  level = currentWalletLevel(build),
 ): ResolvedCharacterWallet {
   const sourceLevel = walletTextLevel(build.textStrings, wallet, level);
   if (sourceLevel === undefined) return { amount: ZERO_CURRENCY };
@@ -907,6 +908,13 @@ export function resolveCharacterWallet(
     ),
     sourceLevel,
   };
+}
+
+/** The level the current wallet is read and written at: the character's (D097). */
+export function currentWalletLevel(
+  build: Pick<CharacterBuild, "effectiveLevel">,
+): number {
+  return Math.min(30, Math.max(1, Math.floor(build.effectiveLevel)));
 }
 
 /**
@@ -1459,16 +1467,39 @@ function multipliedCopper(...factors: readonly number[]): number {
 }
 
 /**
- * The text key a wallet edit writes: the current level's, or the latest
- * stored one above it, so the edit is what {@link resolveCharacterWallet}
- * reads back. Legacy stores money per level; players see one wallet.
+ * The text key a wallet edit writes: the character's level's, which
+ * {@link resolveCharacterWallet} reads back first. Legacy stores money per
+ * level; players see one wallet (D097).
  */
 export function currentWalletTextKey(
-  build: Pick<CharacterBuild, "effectiveLevel" | "textStrings">,
+  build: Pick<CharacterBuild, "effectiveLevel">,
   wallet: CharacterWalletKind,
 ): string {
-  const source = walletTextLevel(build.textStrings, wallet) ?? 0;
-  return characterWalletTextKey(Math.max(build.effectiveLevel, source), wallet);
+  return characterWalletTextKey(currentWalletLevel(build), wallet);
+}
+
+/**
+ * Raising the character's level carries the current wallet text verbatim to
+ * every level above it up to `level`, as native `D20Workspace.LevelUp`
+ * copies each `_PER_LEVEL_<n>_*` text to level n+1. Keys left above a level
+ * that was lowered are overwritten, so they never resurface (D097).
+ */
+function withWalletCarriedUp(
+  build: CharacterBuild,
+  level: number,
+): CharacterBuild {
+  const from = currentWalletLevel(build);
+  if (level <= from) return build;
+  const textStrings = { ...build.textStrings };
+  for (const wallet of ["carried", "stored"] as const) {
+    const source = walletTextLevel(build.textStrings, wallet, from);
+    if (source === undefined) continue;
+    const text = build.textStrings[characterWalletTextKey(source, wallet)];
+    if (text === undefined) continue;
+    for (let target = from + 1; target <= level; target += 1)
+      textStrings[characterWalletTextKey(target, wallet)] = text;
+  }
+  return { ...build, textStrings };
 }
 
 function withCurrentWallet(
@@ -1542,7 +1573,10 @@ export function applyCharacterCommand(
         command.level > 30
       )
         throw new Error("Effective level must be an integer from 1 through 30");
-      return { ...build, effectiveLevel: command.level };
+      return {
+        ...withWalletCarriedUp(build, command.level),
+        effectiveLevel: command.level,
+      };
     }
     case "set-base-ability": {
       if (!Number.isInteger(command.value) || command.value < 1)
@@ -1598,7 +1632,7 @@ export function applyCharacterCommand(
       if (command.frame.level !== expected || expected > 30)
         throw new Error(`The next level frame must be level ${expected}`);
       return {
-        ...build,
+        ...withWalletCarriedUp(build, expected),
         effectiveLevel: expected,
         levels: [...build.levels, command.frame],
       };

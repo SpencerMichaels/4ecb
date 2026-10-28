@@ -2710,10 +2710,25 @@ Decision:
   legacy TallyLoot sums to the current holdings; an unedited import writes
   its rows back unchanged. Holdings bought above a lowered level are
   exported at the current level.
-- The current wallet is the latest stored wallet text at any level; edits
-  write that key (`currentWalletTextKey`), so a later level's value never
-  shadows them. Export copies it to the current level's key when it sits
-  higher.
+- The current wallet is the latest stored wallet text **at or below the
+  character's level** (`resolveCharacterWallet`, `walletTextLevel(text,
+kind, effectiveLevel)`); edits write the character's level's key
+  (`currentWalletTextKey`). Amended 2026-10-28: the first rule read the
+  latest key at any level, so levelled-down legacy saves showed and edited a
+  stale higher wallet (Beatrix, level 8, showed her level-10/11 "100 gp"
+  over level 8's "1 pp; 48 gp"; "copy of character", level 5, showed level
+  6's "15 gp" over "786 gp"), and export copied it over the real one. Native
+  evidence: `GetPerLevelText(ws, null, name)` (`-Module-.cs` ~16170) reads
+  only `_PER_LEVEL_<current level>_<name>`, `WritePLDetailTag` (~12068)
+  saves that as the CharacterSheet `CarriedMoney`/`StoredMoney` (which
+  always equals the current level's key in the player saves), and
+  `D20Workspace.LevelUp` (~877–960) copies every `_PER_LEVEL_<n>_*` text to
+  level n+1 while lowering a level leaves the higher keys. So raising the
+  character's level (`set-effective-level`, `add-level`) carries the current
+  wallet text to each new level, overwriting stale keys; lowering keeps them
+  unread. Export writes the wallet keys verbatim, stale higher ones included
+  (loss-free; re-import and legacy both ignore them, and legacy's own
+  LevelUp overwrites them).
 
 Implemented in `packages/character-domain/src/build.ts`,
 `packages/legacy-dnd4e/src/{index,writer}.ts`,

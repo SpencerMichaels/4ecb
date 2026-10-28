@@ -1183,6 +1183,24 @@ describe("sheet model", () => {
         withoutCoinWeight.encumbrance!.carriedWeight!,
     ).toBe(10);
     expect(withCoinWeight.currency).toEqual(withoutCoinWeight.currency);
+    // The current wallet is read at the build's level; a key left above a
+    // lowered level is stale (D097).
+    expect(build.effectiveLevel).toBe(3);
+    expect(
+      buildEvaluatedSheetModel(
+        snapshot,
+        {
+          ...build,
+          textStrings: {
+            ...build.textStrings,
+            "_PER_LEVEL_2_Carried Money": "1 pp; 48 gp",
+            "_PER_LEVEL_4_Carried Money": "100 gp",
+          },
+        },
+        evaluation,
+        content,
+      ).currency?.[0],
+    ).toEqual({ label: "Carried", value: "1 pp; 48 gp" });
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
     expect(model.defenses).toContainEqual({
