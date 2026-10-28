@@ -1,5 +1,23 @@
 # Implementation status
 
+## Player report: DV shows the off-hand weapon's to-hit (2026-10-28)
+
+DV (Hybrid Swordmage/Warlock) showed +9 MBA / +12 Eldritch Strike where
+legacy shows +13 with Aegis Blade. Native `AddLoot` names any equipped
+off-hand item as `_INTERNAL_MainHandWeapon` (D20Workspace.cs ~3323), but
+`CharLootSlot` (`-Module-.cs` ~19185) honours it only while no one-handed
+item is equipped; the old power rows honoured it always, so the arms-worn
+Wrist Razors became the main hand. D101's loadout resolver already fixes
+it (Aegis Blade main: +10 / +13; razors off: +9 / +12); a `powers.test.ts`
+case pins the DV shape. The parity comparison matched rows by weapon, so
+the swap was invisible: `compareLegacyMainHandOrder` (`legacy-dnd4e`) now
+checks that the first equipped cached row is the evaluated main hand
+(native `comes_before` sorts the "Main hand" loot first), reported as
+`main hand` counts and keys by `parity:baseline` (`1426b8c`). AC 24 vs 26
+stays (old CBLoader Wrist Razors line; see the D102 entry). No evaluation
+change, so no cache bump. Full baseline: no key changes, main hand 59/59
+on 8 characters; accepted.
+
 ## Statlinks share type caps; Large-weapon proficiency (2026-10-28)
 
 D103 (`9abfdb4`). As native `CalculateStatAddValue` does, a linked stat is

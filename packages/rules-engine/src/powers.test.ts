@@ -2976,6 +2976,69 @@ describe("power evaluation", () => {
     );
   });
 
+  it("keeps a one-handed weapon main over a stale main-hand name on an alternate-slot off-hand weapon", () => {
+    // Native AddLoot names any equipped off-hand item as
+    // _INTERNAL_MainHandWeapon, but CharLootSlot honours that name only
+    // while no one-handed item is equipped (-Module-.cs ~19185), and legacy
+    // power rows list the one-handed "Main hand" weapon first.
+    const entities = [
+      entity("POWER", "Synthetic Strike", "Power", {
+        Keywords: "Arcane, Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Intelligence vs. AC",
+        Hit: "1[W] + Intelligence modifier damage.",
+      }),
+      entity("SWORD", "Longsword", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+        "Hands Required": "One-Handed",
+        "Item Slot": "One-hand",
+      }),
+      entity("RAZOR", "Wrist Razors", "Weapon", {
+        Damage: "1d4",
+        "Proficiency Bonus": "3",
+        "Hands Required": "One-Handed",
+        "Item Slot": "Off-hand",
+        Properties: "Off-hand",
+        _AlternateSlot: "Arms",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 6,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "sword",
+          name: "Aegis sword",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "razor",
+          name: "Rhythm razors",
+          definitionIds: ["RAZOR"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+          overrides: { _AlternateSlot: "1" },
+        },
+      ],
+      textStrings: { _INTERNAL_MainHandWeapon: "Rhythm razors" },
+      stats: { "Intelligence modifier": stat("Intelligence modifier", 4) },
+      overlays: [],
+      entities,
+    });
+
+    const hands = Object.fromEntries(
+      (power?.variants ?? [])
+        .filter((variant) => variant.equipped === true)
+        .map((variant) => [variant.equipmentName, variant.hand]),
+    );
+    expect(hands).toEqual({ "Aegis sword": "main", "Rhythm razors": "off" });
+  });
+
   it("uses only the selected off-hand implement enhancement for dual implements", () => {
     const entities = [
       entity("POWER", "Arcane Bolt", "Power", {
