@@ -15,7 +15,9 @@
      ungranted, so their IDs still resolve.
   3. Legacy CalcBeast adds your Wisdom modifier to enclose the prey's damage
      when the companion is a cat, a spider or a wolf (Martial Power). That is
-     a statadd on those three records here, not a special case in code (D089).
+     native engine behavior, so the engine ports it
+     (rules-engine native-power-field-bonuses.ts); the statadds this part
+     used to add to those three records are gone (D100/D103).
   4. A sentinel's animal companion has hit points equal to your bloodied
      value (Heroes of the Forgotten Kingdoms pp. 89-90; product owner,
      2026-10-21). The content approximates it with a "Pet Hit Points" running
@@ -84,8 +86,6 @@
       <statadd name="Companion.Charisma" value="+6" />
       <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
       <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
-      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
-      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
     </rules>
   </AppendNodes>
 
@@ -146,8 +146,6 @@
       <statadd name="Companion.Charisma" value="+6" />
       <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
       <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
-      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
-      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
     </rules>
   </AppendNodes>
 
@@ -163,8 +161,6 @@
       <statadd name="Companion.Charisma" value="+6" />
       <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
       <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
-      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
-      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
     </rules>
   </AppendNodes>
 

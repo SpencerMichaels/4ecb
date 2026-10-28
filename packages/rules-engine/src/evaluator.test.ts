@@ -110,7 +110,12 @@ describe("character evaluator", () => {
         baseAbilities: {},
         occurrences: [
           rootOccurrence,
-          { id: "feat", definitionId: "FEAT", acquiredLevel: 1, kind: "grabbag" },
+          {
+            id: "feat",
+            definitionId: "FEAT",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
         ],
         inventory: [
           {

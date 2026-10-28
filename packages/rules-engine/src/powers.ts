@@ -2021,8 +2021,7 @@ function stackTypedComponents(
   return components
     .filter(
       (entry) =>
-        entry.bonusType === undefined ||
-        maxima.get(entry.bonusType) === entry,
+        entry.bonusType === undefined || maxima.get(entry.bonusType) === entry,
     )
     .map(({ component }) => component);
 }
@@ -3138,6 +3137,15 @@ export function evaluatePowers(input: {
       return entity === undefined ? [key(id)] : [key(id), key(entity.name)];
     }),
   );
+  // Native CalcBeast iterates the character's Companion elements.
+  const companionNames = [
+    ...new Set(input.activeDefinitionIds.map(key)),
+  ].flatMap((id) => {
+    const entity = byId.get(id);
+    return entity !== undefined && key(entity.type) === "companion"
+      ? [entity.name]
+      : [];
+  });
   const equipped = loadouts(
     input.inventory,
     byId,
@@ -3529,6 +3537,7 @@ export function evaluatePowers(input: {
           (equipment.unarmed && powerRange.melee ? emptyEntity : undefined),
         hasOffhand: legacyOffhand(equipment, powerEquipped) !== undefined,
         ownsElement: (name) => ownedElementKeys.has(key(name)),
+        companionNames,
         abilityModifier: (ability) =>
           numericStat(input.stats, `${ability} modifier`),
       });

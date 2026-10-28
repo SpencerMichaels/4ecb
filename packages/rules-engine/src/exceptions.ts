@@ -154,6 +154,11 @@ export const EXCEPTION_NAMES = {
   dragonsWrath: "Dragon's Wrath",
   /** CalcBonuses: the "If you are a dwarf, …" rider needs this element. */
   dwarf: "Dwarf",
+  /** CalcBeast: the Companion records (by name) whose owner's `Beast`-line
+   *  attack adds Wisdom. */
+  catCompanion: "Cat",
+  spiderCompanion: "Spider",
+  wolfCompanion: "Wolf",
   /** HigherLevelDamage: at 21st level its damage becomes "twice
    * intelligence modifier damage." by name. */
   chillingCloud: "Chilling Cloud",

@@ -1774,11 +1774,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.CalcBAB": code(
-      "Attack components: ability, half level, proficiency, enhancement; beast attack bonus.",
-      "powers.ts combatStatEntries",
+      "Attack components: ability, half level, proficiency, enhancement; beast attack bonus. Each is registered in the row's att_type_max as 'abilmod', 'HALF-LEVEL', 'Proficiency Bonus' and 'Enhancement'.",
+      "powers.ts combatStatEntries; the four built-in parts are typedExtras (NATIVE_ATTACK_TYPES), so a stat bonus of one of those types adds only its excess. CalcDamage's 'abilmod' damage registration is not shared (a damage line can hold several ability modifiers; no content statadd uses that type)",
       test(
         POWERS,
         "adds a weapon's proficiency bonus only with its weapon proficiency",
+      ),
+      test(
+        POWERS,
+        "shares the attack's ability, half-level and proficiency caps with typed stats (native CalcBAB)",
       ),
       test(
         BEAST,
@@ -1952,9 +1956,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(NATIVE_FIELD_BONUSES, "needs a Dwarf for the Special dwarf line"),
       test(NATIVE_FIELD_BONUSES, "applies an `Axe` rider only with an axe"),
     ),
-    "?A0x7555d940.CalcMisc": partial(
+    "?A0x7555d940.CalcMisc": code(
       "Power 'beast' fields (CalcBeast) and 'weapon' fields matched against the WeaponBonuses table by exact text, group and off-hand flag.",
-      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES); D105: a rider text repeated in a second Weapon field counts once per attack (Giant's Wake, PHB p81), and the 13 riders the table misses (Smashing Hammer, Earthfast Assault, Stonechannel Strike, Press Forward, Keystone Collapse, Brutal Rebuke, Titan's Hammer, Barreling Swing, Skullcrusher, Storm of Blows, Fangs of Steel, Elegant Strike, Reaping Lunge) are '<ID>,<group> group:damage' statadds in content/corrections/9E-rules-divergences.part, not code; the CalcBeast part is not ported",
+      "native-power-field-bonuses.ts ports the 16-line WeaponBonuses table (NATIVE_WEAPON_BONUSES) and the CalcBeast line; D105: a rider text repeated in a second Weapon field counts once per attack (Giant's Wake, PHB p81), and the 13 riders the table misses (Smashing Hammer, Earthfast Assault, Stonechannel Strike, Press Forward, Keystone Collapse, Brutal Rebuke, Titan's Hammer, Barreling Swing, Skullcrusher, Storm of Blows, Fangs of Steel, Elegant Strike, Reaping Lunge) are '<ID>,<group> group:damage' statadds in content/corrections/9E-rules-divergences.part, not code",
       test(
         POWERS,
         "applies recovered weapon-field ability bonuses only to eligible families",
@@ -1977,9 +1981,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "counts a rider repeated under the secondary attack once per attack (D105, Giant's Wake)",
       ),
     ),
-    "?A0x7555d940.CalcBeast": partial(
+    "?A0x7555d940.CalcBeast": code(
       "One exact companion line adds Wisdom damage for a cat, spider or wolf companion.",
-      "powers.ts companion damage; the cat/spider/wolf Wisdom line is not special-cased",
+      "native-power-field-bonuses.ts NATIVE_BEAST_WISDOM_LINE: inside CalcMisc (a weapon power wielding a main-hand weapon), a 'Beast' field (indent <= 2) with that exact text adds the Wisdom modifier to damage once per owned Companion named Cat, Spider or Wolf (EXCEPTION_NAMES). Replaces the former 'ID_FMP_POWER_4370:damage' statadds on those records in content/corrections/99-companions.part, which also reached the Unarmed row",
+      test(
+        NATIVE_FIELD_BONUSES,
+        "adds Wisdom to damage with a cat, spider or wolf Companion",
+      ),
+      test(
+        NATIVE_FIELD_BONUSES,
+        "adds nothing for another companion, a non-Companion cat or no weapon",
+      ),
     ),
     "?A0x7555d940.CalcHealing": code(
       "Healing bonus stats 'Healing', '<power>:healing' and '<class>:healing'.",
