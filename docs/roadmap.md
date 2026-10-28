@@ -1013,17 +1013,16 @@ character before it is fixed, one slice per item.
      (`2ad4731`): `_CS_ShortDescription` notes with "@" hiding, a card class
      block and Spellbook subtitle, the movement technique on the full
      discipline's card. Layout choices await the owner's visual review.
-  4. Number-changing power and item gaps: `AddArenaWeapons`;
-     `WeaponEnchant` (EnchantEquiv, ~10 items); `PowerStats` (Commander's
-     Strike rows); `SpecialCase` power lines (Warlock's Bargain, Final
-     Reproach, Deathly Retort, Summons to Doom); `NonDamagePower`;
-     `CalcDamage` (Defender's Gambit, "(off-hand weapon)" lines);
-     `CalcMisc`/`CalcBeast` companion Wisdom line; `CalcStatVsDefense`
-     "+1 per enemy adjacent to you"; `SlotManip` ring slots;
-     `HolySymbolLootSlot.IsItemCandidate` and `_INTERNAL_EquippedSymbol`
-     import (`CharLootName`); `C_RulesElementField` augment overlays;
-     stat-engine details (three unshared base-attack caps, `type=""`,
-     conditional reminder text on linked statadds, a stacking-order test).
+  4. ~~Number-changing power and item gaps~~ — done: power rows
+     (`ab5740e`…`5751d44`: WeaponEquiv loot attacks as its weapon with
+     EnchantEquiv, native SpecialCase lines, Defender's Gambit, Valiant
+     Strike's reminder; AddArenaWeapons, Commander's Strike, NonDamagePower
+     already native), stat engine (`620774f`, `ad7dfc1`: CalcBAB caps, empty
+     type, CalcBeast in the engine) and equipment (`8192120`…`ad50818`: Ring
+     Slots, holy symbol slot and `_INTERNAL_EquippedSymbol`, augment-parent
+     field overlays). Left: Additional Slot (one Large-only record); damage
+     `abilmod` cap sharing (no content). Awaiting the owner: Critical on
+     WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets.
   5. Move content text parsing out of evaluation into pack generation (the
      standing rule in CLAUDE.md/AGENTS.md): power attack/hit lines, increase
      sentences, the WeaponBonuses table and CalcBonuses riders in `powers.ts`

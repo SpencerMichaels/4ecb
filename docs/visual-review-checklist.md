@@ -1191,3 +1191,33 @@ groups.
     card edge, or the builder pane shows the technique twice.
   - **Decide:** keep the technique's own card (legacy), or drop it now that
     the discipline card carries it?
+
+## Ring slots, holy symbol slot, augment overlays (2026-10-28, `8192120`…`ad50818`)
+
+- [ ] **Holy symbol slot.**
+  - **Where:** Trey Spectre 12 → Equipment → Loadout; Hu Sheng-Ming Level 8
+    → Loadout; Drizzt → Loadout (if it has Holy Symbol proficiency).
+  - **Expect:** Trey's Beacon of Erathis +1 in the Holy symbol slot and on
+    its power rows (Abjure Undead, Radiant Vengeance, Divine Rage); Hu's
+    Symbol of Hope +1 in both Main hand and the Holy symbol slot; Drizzt's
+    Holy Symbol in the slot.
+  - **Wrong if:** the Holy symbol slot is empty, or Hu's symbol is in only
+    one place.
+- [ ] **Extra ring slots.**
+  - **Where:** any character → buy and equip Many-Fingered Gloves → Loadout;
+    then its print preview.
+  - **Expect:** a "Ring 3" slot below Ring 2 that takes a third ring;
+    unequipping the gloves keeps an occupied Ring 3 visible; print shows Ring
+    3 only when it holds a ring.
+  - **Wrong if:** no Ring 3, a fourth ring offered, or empty Ring 3/4 rows in
+    print.
+- [ ] **Augment-parent field overlays.**
+  - **Where:** a battlemind with Resilient Demand → Battlemind's Demand cards
+    (Augment 0 and Augment 1).
+  - **Expect:** each card shows a "Resilient Demand" field.
+  - **Wrong if:** the field is missing from either card.
+- [ ] **Items that count as weapons get weapon-power rows.**
+  - **Where:** a character with a Rod of Smiting +1 (or Boar Tusk Helm) and a
+    weapon power → card pages.
+  - **Expect:** a row for the rod/helm (e.g. Rod of Smiting +12, 1d8+6).
+  - **Wrong if:** no row, or the row lacks the enhancement bonus.
