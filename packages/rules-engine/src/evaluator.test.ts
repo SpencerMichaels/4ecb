@@ -2445,8 +2445,10 @@ describe("character evaluator", () => {
             })),
           }),
     });
-    // A warding shaped like the corrected Swordmage Warding: +1, or +3 with
-    // the off hand free, added to AC once per blade group but typed.
+    // A warding shaped like the WotC Swordmage Warding record: +1, or +3
+    // with the off hand free, typed "Ward", linked into AC by two UNTYPED
+    // statadds, one per blade group. The links share AC's type caps
+    // (native CalculateStatAddValue, D103), so the warding counts once.
     const content = [
       entity("ROOT", "Root", "Test", {
         rules: [
@@ -2466,7 +2468,6 @@ describe("character evaluator", () => {
             {
               name: "AC",
               value: "+Ward",
-              type: "Ward",
               wearing: "weapon:light blade",
             },
             2,
@@ -2476,7 +2477,6 @@ describe("character evaluator", () => {
             {
               name: "AC",
               value: "+Ward",
-              type: "Ward",
               wearing: "weapon:heavy blade",
             },
             3,
@@ -2522,8 +2522,8 @@ describe("character evaluator", () => {
       ).stats.AC?.value ?? 0;
 
     expect(ac([held("sword", ["SWORD"])])).toBe(3);
-    // Heavy and light blade both apply, but the typed bonus counts once and
-    // the razor in the off hand drops the warding to +1.
+    // Heavy and light blade both apply, but the shared cap counts it once,
+    // and the razor in the off hand drops the warding to +1.
     expect(ac([held("sword", ["SWORD"]), held("razor", ["RAZOR"])])).toBe(1);
     // Worn on the arms (_AlternateSlot), the razor leaves the off hand free.
     expect(

@@ -47,6 +47,17 @@ Evaluation proceeds as follows:
    recoverable legality diagnostics.
 6. Return values with provenance, completeness, legality, and diagnostics.
 
+Typed stacking follows native `CalculateStatValue`/`AddStatValue`
+(D103): a stat's statadds apply in order against one cap per bonus type (a
+higher bonus replaces a lower one, a lower penalty a higher one, a bonus
+overrides a penalty, and a typed literal `0` zeroes its type for good). A
+linked stat (`+X`, `-X`, `ABILITYMOD(X)`, a bare stat name) is evaluated
+against the parent stat's caps, so typed bonuses reached through links
+never stack with the parent's or with each other (two untyped AC links to
+Swordmage Warding add it once); the link's result is then added under the
+link's own type. Applied contributions sum to the total: an untyped `+`
+link is credited with what its pieces actually added.
+
 The full local corpus contains 54,012 statements across 38,339 entities. The
 audit recognizes every observed opcode and attribute with no unexplained
 required field. Public tests use synthetic content; private files remain ignored.

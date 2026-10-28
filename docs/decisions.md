@@ -2922,8 +2922,10 @@ linked stat against the parent stat's `type_max`, so the second
 "Swordmage Warding"-typed link adds 0 (`sample-chars/DV.dnd4e`: AC 26 with a
 longsword and arms-worn wrist razors; the 2 above modern's 24 is an old
 CBLoader Wrist Razors `DUAL-WIELDING:` +2 line the current part removed).
-The modern stat table applies type caps within one stat only, so the
-correction below reproduces the native result for this feature.
+The modern stat table applied type caps within one stat only, so the
+correction below reproduced the native result for this feature
+(superseded by D103: the engine now shares the caps and the correction is
+gone).
 Separately, the modern `SLOT:` selector compared the raw
 `Item Slot` ("Off-hand") with "off hand", so `SLOT:off hand` (Swordmage
 Warding's +3, Brawler Style, Brawler Guard, Guarded Flourish, Improved
@@ -2932,8 +2934,10 @@ Swordmage Armor) never matched.
 Decision:
 
 - A content correction (`content/corrections/90-4ecb-corrections.part`)
-  types both AC lines "Swordmage Warding", so the bonus counts once,
+  typed both AC lines "Swordmage Warding", so the bonus counted once,
   as native does (D091: the class feature grants one field, +1 or +3).
+  (Superseded by D103: removed; the generic statlink rule counts it once,
+  and under that rule the typed lines would have added nothing.)
 - `SLOT:` compares native `CharLootSlot` (`legacyLootSlots` in
   `rules-engine/src/item-fields.ts`), so a shield, an off-hand weapon, two
   of one weapon or a two-handed weapon fills the off hand, as native does.
@@ -3043,6 +3047,46 @@ Follow-up (2026-10-27, cache v65): power rows now apply native
 `IsProficient`'s size rule too. A Large weapon has no proficiency without
 `CanUseLargeWeapons`, and with it the weapon is matched by its normalized
 name (no " (large)").
+
+### D103 — A statlink shares its parent stat's type caps
+
+Status: accepted (2026-10-27), owner-approved (follow-up to D100).
+
+Context: native `CalculateStatValue` (D20RulesEngine `-Module-.cs`
+~36160) adds a stat's statadds in order, each typed one through
+`AddStatValue` (~36000) against one per-type cap list (`type_max`). A
+statadd whose value links another stat (`+X`, `-X`, a bare name,
+`ABILITYMOD(X)`; `ParseStatAdd` ~31955 allows only a ±1 multiplier) is
+valued by `CalculateStatAddValue` (~36137), which evaluates the linked
+stat with the PARENT's cap list. The linked stat's typed bonuses therefore
+compete with the parent's: AC's two untyped links to Swordmage Warding
+(typed "Swordmage Warding" inside) add it once (`sample-chars/DV.dnd4e`),
+a skill's own feat bonus does not stack with a feat bonus in its "Misc"
+stat, and Passive Perception's item bonus does not stack with Perception's.
+The result is then added under the link's own type, so a link typed like
+its linked stat's bonuses adds nothing (the cap already holds the value);
+that is why D100's typed correction could not survive this rule. A typed
+literal `value="0"` zeroes its type for good (`SetStatToZero` ~36063).
+The modern stat table evaluated every link independently and capped types
+within one stat only.
+
+Decision:
+
+- `StatAccumulator` (`rules-engine/src/stats.ts`) evaluates a stat in
+  order with native `AddStatValue`/`SetStatToZero` caps and evaluates
+  every link against the parent's caps. A stat evaluated on its own (its
+  sheet value, a stand-alone link display) starts its own caps, as native
+  does with a null `type_max`.
+- Provenance keeps applied contributions summing to the total: an untyped
+  `+` link is credited with what its pieces actually added (a link whose
+  pieces are all capped is "typed-stacking" at 0); a typed or transformed
+  link is credited with its result.
+- D100's Swordmage Warding content correction is removed.
+- Native also drops zero/non-zero-gated statadds inside a linked stat; no
+  linked stat in the content carries one, so the modern zero gate is kept
+  unchanged.
+
+Cache v66.
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.

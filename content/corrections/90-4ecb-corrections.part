@@ -119,20 +119,4 @@ Level 21: 2d6 + Intelligence modifier lightning damage.</specific>
       <modify name="Second Wind" Field="Action Type" value="Free Action" />
     </rules>
   </AppendNodes>
-
-  <!-- Swordmage Warding: current data adds the warding to AC untyped once per
-       blade group wielded, so a heavy blade plus a light blade (a longsword
-       and wrist razors) added it twice. The older WotC data typed both AC
-       lines "Swordmage Warding" so they never stack (D091). -->
-  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_629">
-    <rules />
-  </RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_629">
-    <rules>
-      <statadd name="Swordmage Warding" value="+1" type="Swordmage Warding" />
-      <statadd name="Swordmage Warding" value="+3" type="Swordmage Warding" not-wearing="SLOT:off hand" />
-      <statadd name="AC" value="+Swordmage Warding" type="Swordmage Warding" wearing="weapon:light blade" />
-      <statadd name="AC" value="+Swordmage Warding" type="Swordmage Warding" wearing="weapon:heavy blade" />
-    </rules>
-  </AppendNodes>
 </D20Rules>

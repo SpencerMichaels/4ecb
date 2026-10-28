@@ -54,7 +54,8 @@ export class StatAccumulator {
   }
 
   evaluate(name: string): EvaluatedStat {
-    return this.#evaluate(name, new Set());
+    const { value, contributions } = this.#run(name, new Set(), undefined);
+    return { name, value, contributions };
   }
 
   allNames(): string[] {
@@ -67,153 +68,356 @@ export class StatAccumulator {
     return this.#aliases.get(key(name)) ?? key(name);
   }
 
-  #value(value: string, visiting: Set<string>): number | string | undefined {
+  /** A statadd value as native `ParseStatAdd` (~31955) reads it: a literal,
+   *  or a link (`+X`, `-X`, `ABILITYMOD(X)`; a bare stat name) whose
+   *  multiplier is ±1. Anything else is literal text. */
+  #parse(value: string): ParsedValue {
     const trimmed = value.trim();
-    if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
+    if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed))
+      return { kind: "number", value: Number(trimmed) };
     const ability = /^([+-]?)ABILITYMOD\((.+)\)$/i.exec(trimmed);
-    if (ability?.[2] !== undefined) {
-      const score = this.#evaluate(ability[2], visiting).value;
-      return typeof score === "number"
-        ? (ability[1] === "-" ? -1 : 1) * abilityModifier(score)
-        : undefined;
-    }
+    if (ability?.[2] !== undefined)
+      return {
+        kind: "link",
+        stat: ability[2],
+        sign: ability[1] === "-" ? -1 : 1,
+        abilityModifier: true,
+        bare: false,
+      };
     const link = /^([+-])(.+)$/.exec(trimmed);
-    if (link?.[1] !== undefined && link[2] !== undefined) {
-      const linked = this.#evaluate(link[2], visiting).value;
-      return typeof linked === "number"
-        ? link[1] === "-"
-          ? -linked
-          : linked
-        : undefined;
-    }
+    if (link?.[1] !== undefined && link[2] !== undefined)
+      return {
+        kind: "link",
+        stat: link[2],
+        sign: link[1] === "-" ? -1 : 1,
+        abilityModifier: false,
+        bare: false,
+      };
     if (
       this.#contributions.some(
         (contribution) =>
           this.#canonical(contribution.stat) === this.#canonical(trimmed),
       )
     )
-      return this.#evaluate(trimmed, visiting).value;
-    return trimmed;
+      return {
+        kind: "link",
+        stat: trimmed,
+        sign: 1,
+        abilityModifier: false,
+        bare: true,
+      };
+    return { kind: "text", value: trimmed };
   }
 
+  /** The value a contribution shows on its own, its link evaluated as a
+   *  stand-alone stat (native `CalculateStatValue` with no `type_max`). */
   #raw(
     contribution: StatContribution,
     visiting: Set<string>,
   ): number | string | undefined {
-    return contribution.text === true
-      ? contribution.value
-      : this.#value(contribution.value, visiting);
+    if (contribution.text === true) return contribution.value;
+    const parsed = this.#parse(contribution.value);
+    if (parsed.kind !== "link") return parsed.value;
+    const linked = this.#run(parsed.stat, visiting, undefined).value;
+    if (typeof linked === "string") return parsed.bare ? linked : undefined;
+    return (
+      parsed.sign * (parsed.abilityModifier ? abilityModifier(linked) : linked)
+    );
   }
 
-  #evaluate(name: string, visiting: Set<string>): EvaluatedStat {
+  /**
+   * Native `CalculateStatValue` (D20RulesEngine `-Module-.cs` ~36160) adds a
+   * stat's statadds in order, each typed one through `AddStatValue`
+   * (~36000) against a per-type cap list (`type_max`). A statlink is
+   * evaluated by `CalculateStatAddValue` (~36137) with the PARENT's cap
+   * list, so typed bonuses reached through a link share the parent's caps:
+   * two untyped AC links to a stat whose bonuses are typed "Swordmage
+   * Warding" add it once, and a skill's own feat bonus does not stack with
+   * a feat bonus in its "Misc" stat (D103). The link's result (its own
+   * gains over those caps, times ±1 or as an ability modifier) is then
+   * added to the parent under the link's own type, if any.
+   *
+   * Without `shared` caps the stat starts its own list: a top-level
+   * evaluation, the only one that reports contributions.
+   */
+  #run(
+    name: string,
+    visiting: Set<string>,
+    shared: SharedCaps | undefined,
+  ): {
+    value: number | string;
+    total: number;
+    contributions: EvaluatedContribution[];
+  } {
     const canonical = this.#canonical(name);
-    if (visiting.has(canonical)) return { name, value: 0, contributions: [] };
+    if (visiting.has(canonical))
+      return { value: 0, total: 0, contributions: [] };
     const next = new Set(visiting);
     next.add(canonical);
     const candidates = this.#contributions.filter(
       (contribution) => this.#canonical(contribution.stat) === canonical,
     );
-    const evaluated: EvaluatedContribution[] = [];
+    const nested = shared !== undefined;
+    const caps = shared?.caps ?? new Map<string, TypeCap>();
+    const reports: Array<() => EvaluatedContribution> = [];
+    let total = 0;
     let untyped = 0;
     const strings: string[] = [];
-    const typed = new Map<
-      string,
-      Array<{ contribution: StatContribution; value: number }>
-    >();
     for (const contribution of candidates) {
       const equipmentMatches =
         (contribution.wearing === undefined ||
           equipmentPredicate(this.#equipment, contribution.wearing)) &&
         (contribution.notWearing === undefined ||
           !equipmentPredicate(this.#equipment, contribution.notWearing));
-      const raw = this.#raw(contribution, next);
-      if (!equipmentMatches) {
-        evaluated.push({
+      if (!equipmentMatches || contribution.condition !== undefined) {
+        if (nested) continue;
+        const raw = this.#raw(contribution, next);
+        reports.push(() => ({
           ...contribution,
+          ...(equipmentMatches && typeof raw === "number"
+            ? { numericValue: raw }
+            : {}),
           applied: false,
-          reason: "equipment",
-        });
+          reason: equipmentMatches ? "conditional" : "equipment",
+        }));
         continue;
       }
-      if (contribution.condition !== undefined) {
-        evaluated.push({
-          ...contribution,
-          ...(typeof raw === "number" ? { numericValue: raw } : {}),
-          applied: false,
-          reason: "conditional",
-        });
-        continue;
-      }
-      if (typeof raw === "string") {
-        strings.push(raw);
-        evaluated.push({ ...contribution, applied: true });
-        continue;
-      }
-      if (raw === undefined) {
-        evaluated.push({ ...contribution, applied: false, reason: "cycle" });
-        continue;
-      }
-      const numeric =
-        contribution.halfPoint === true && raw !== 0
-          ? raw + (raw > 0 ? 0.5 : -0.5)
-          : raw;
       if (
         (contribution.zeroOnly === true && untyped !== 0) ||
         (contribution.nonZeroOnly === true && untyped === 0)
       ) {
-        evaluated.push({
+        if (nested) continue;
+        const raw = this.#raw(contribution, next);
+        reports.push(() => ({
           ...contribution,
-          numericValue: numeric,
+          ...(typeof raw === "number" ? { numericValue: raw } : {}),
           applied: false,
           reason: "zero-gate",
-        });
+        }));
         continue;
       }
-      if (
+      const parsed: ParsedValue =
+        contribution.text === true
+          ? { kind: "text", value: contribution.value }
+          : this.#parse(contribution.value);
+      if (parsed.kind === "text") {
+        strings.push(parsed.value);
+        if (!nested) reports.push(() => ({ ...contribution, applied: true }));
+        continue;
+      }
+      // What this contribution adds is credited to its own cell at the top
+      // level, to the parent link's cell inside an untyped `+` link (whose
+      // pieces reach the parent unchanged), and nowhere inside other links.
+      const cell: CreditCell = nested
+        ? (shared.credit ?? { value: 0, capped: false })
+        : { value: 0, capped: false };
+      const typeKey =
         contribution.bonusType === undefined ||
         contribution.bonusType.trim().length === 0
-      ) {
-        untyped += numeric;
-        evaluated.push({
-          ...contribution,
-          numericValue: numeric,
-          applied: true,
+          ? undefined
+          : key(contribution.bonusType);
+      let numeric: number;
+      if (parsed.kind === "number") numeric = parsed.value;
+      else {
+        const transparent =
+          typeKey === undefined &&
+          parsed.sign === 1 &&
+          !parsed.abilityModifier &&
+          contribution.halfPoint !== true;
+        const linked = this.#run(parsed.stat, next, {
+          caps,
+          credit: transparent ? cell : undefined,
         });
-      } else {
-        const group = key(contribution.bonusType);
-        typed.set(group, [
-          ...(typed.get(group) ?? []),
-          { contribution, value: numeric },
-        ]);
+        if (typeof linked.value === "string") {
+          if (parsed.bare) {
+            strings.push(linked.value);
+            if (!nested)
+              reports.push(() => ({ ...contribution, applied: true }));
+          } else if (!nested)
+            reports.push(() => ({
+              ...contribution,
+              applied: false,
+              reason: "cycle",
+            }));
+          continue;
+        }
+        if (transparent) {
+          // Its pieces were added, and credited, inside the link; only the
+          // linked stat's truncation is left to credit.
+          total += linked.value;
+          untyped += linked.value;
+          cell.value += linked.value - linked.total;
+          if (!nested) reports.push(linkReport(contribution, cell));
+          continue;
+        }
+        numeric =
+          parsed.sign *
+          (parsed.abilityModifier
+            ? abilityModifier(linked.value)
+            : linked.value);
       }
-    }
-    for (const group of typed.values()) {
-      const nonnegative = group.filter(({ value }) => value >= 0);
-      const selected =
-        nonnegative.length > 0
-          ? nonnegative.sort((left, right) => right.value - left.value)[0]
-          : group.sort((left, right) => left.value - right.value)[0];
-      for (const entry of group) {
-        const applied = entry === selected;
-        if (applied) untyped += entry.value;
-        evaluated.push({
-          ...entry.contribution,
-          numericValue: entry.value,
-          applied,
-          ...(applied ? {} : { reason: "typed-stacking" as const }),
+      if (contribution.halfPoint === true && numeric !== 0)
+        numeric += numeric > 0 ? 0.5 : -0.5;
+      const value = numeric;
+      if (typeKey === undefined) {
+        total += value;
+        untyped += value;
+        cell.value += value;
+        if (!nested)
+          reports.push(() => ({
+            ...contribution,
+            numericValue: value,
+            applied: true,
+          }));
+        continue;
+      }
+      if (parsed.kind === "number" && value === 0)
+        total += zeroType(caps, typeKey, cell);
+      // Native passes `penalty` for a negative statadd value: the literal,
+      // or a `-` link's multiplier.
+      const penalty = parsed.kind === "number" ? value < 0 : parsed.sign < 0;
+      total += addTyped(caps, typeKey, value, penalty, cell);
+      if (!nested)
+        reports.push(() => {
+          const applied = caps.get(typeKey)?.holder?.cell === cell;
+          return {
+            ...contribution,
+            numericValue: value,
+            applied,
+            ...(applied ? {} : { reason: "typed-stacking" as const }),
+          };
         });
-      }
     }
     return {
-      name,
       value:
         strings.length > 0 &&
         candidates.every(
           (candidate) => typeof this.#raw(candidate, next) === "string",
         )
           ? (strings.at(-1) ?? "")
-          : Math.trunc(untyped),
-      contributions: evaluated,
+          : Math.trunc(total),
+      total,
+      contributions: reports.map((report) => report()),
     };
   }
+}
+
+type ParsedValue =
+  | { readonly kind: "number"; readonly value: number }
+  | { readonly kind: "text"; readonly value: string }
+  | {
+      readonly kind: "link";
+      readonly stat: string;
+      readonly sign: 1 | -1;
+      readonly abilityModifier: boolean;
+      /** A stat name without a sign, which may also name a text stat. */
+      readonly bare: boolean;
+    };
+
+/** What one top-level contribution has added to the stat. */
+interface CreditCell {
+  value: number;
+  /** A typed piece under it lost to an earlier one of its type. */
+  capped: boolean;
+}
+
+/** A native `StatMax`: the applied value of one bonus type, whether a 0 of
+ *  it was applied, and whether a typed `value="0"` zeroed it for good. */
+interface TypeCap {
+  value: number;
+  zeroSeen: boolean;
+  blocked: boolean;
+  holder?: { readonly cell: CreditCell; readonly value: number };
+}
+
+interface SharedCaps {
+  readonly caps: Map<string, TypeCap>;
+  readonly credit: CreditCell | undefined;
+}
+
+function linkReport(
+  contribution: StatContribution,
+  cell: CreditCell,
+): () => EvaluatedContribution {
+  return () => {
+    const absorbed = cell.value === 0 && cell.capped;
+    return {
+      ...contribution,
+      numericValue: cell.value,
+      applied: !absorbed,
+      ...(absorbed ? { reason: "typed-stacking" as const } : {}),
+    };
+  };
+}
+
+function capFor(caps: Map<string, TypeCap>, type: string): TypeCap {
+  let cap = caps.get(type);
+  if (cap === undefined) {
+    cap = { value: 0, zeroSeen: false, blocked: false };
+    caps.set(type, cap);
+  }
+  return cap;
+}
+
+/** Moves a type's applied value (and its credit) to a new holder. */
+function hold(cap: TypeCap, value: number, cell: CreditCell | undefined): void {
+  if (cap.holder !== undefined) cap.holder.cell.value -= cap.holder.value;
+  cap.value = value;
+  if (cell === undefined) delete cap.holder;
+  else {
+    cap.holder = { cell, value };
+    cell.value += value;
+  }
+}
+
+/** Native `SetStatToZero` (~36063): a typed literal 0 removes the type's
+ *  applied value and keeps the type at 0. Returns what the stat gains. */
+function zeroType(
+  caps: Map<string, TypeCap>,
+  type: string,
+  cell: CreditCell,
+): number {
+  const cap = capFor(caps, type);
+  if (cap.blocked) return 0;
+  const removed = cap.value;
+  hold(cap, 0, cell);
+  cap.blocked = true;
+  return -removed;
+}
+
+/** Native `AddStatValue` (~36000). Returns what the stat gains. */
+function addTyped(
+  caps: Map<string, TypeCap>,
+  type: string,
+  toAdd: number,
+  penalty: boolean,
+  cell: CreditCell,
+): number {
+  const cap = capFor(caps, type);
+  if (cap.blocked) return 0;
+  const current = cap.value;
+  if (!penalty) {
+    if (toAdd > current || (current === 0 && !cap.zeroSeen)) {
+      hold(cap, toAdd, cell);
+      if (toAdd === 0) cap.zeroSeen = true;
+      if (current !== 0) cell.capped = true;
+      return toAdd - current;
+    }
+    cell.capped = true;
+    return 0;
+  }
+  if (toAdd < 0) {
+    if ((current < 0 || (current === 0 && !cap.zeroSeen)) && toAdd < current) {
+      hold(cap, toAdd, cell);
+      return toAdd - current;
+    }
+    cell.capped = true;
+    return 0;
+  }
+  cap.zeroSeen = true;
+  if (current < 0) {
+    hold(cap, 0, undefined);
+    return -current;
+  }
+  return 0;
 }

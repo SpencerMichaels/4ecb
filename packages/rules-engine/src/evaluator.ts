@@ -68,7 +68,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v65-2026-10-27-large-weapon-proficiency";
+  "evaluated-character-v66-2026-10-27-statlink-type-caps";
 
 export interface CharacterOccurrence {
   readonly id: string;
