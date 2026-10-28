@@ -105,3 +105,41 @@ describe("rules worker content progress", () => {
     expect(seen.at(-1)?.content?.ready).toBe(true);
   });
 });
+
+describe("rules worker cancellation", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("drops an aborted evaluation from the worker queue and its progress", async () => {
+    vi.stubGlobal("Worker", FakeWorker);
+    const client = new RulesWorkerClient();
+    const worker = FakeWorker.latest!;
+    const seen: RulesProgress["evaluation"][] = [];
+    client.subscribeProgress(({ evaluation }) => seen.push(evaluation));
+    const superseded = new AbortController();
+
+    const stale = client.evaluate(input(3), superseded.signal);
+    const fresh = client.evaluate(input(2));
+    const [a, b] = worker.requests.map(({ requestId }) => requestId);
+    superseded.abort();
+
+    await expect(stale).rejects.toMatchObject({ name: "AbortError" });
+    expect(worker.requests.at(-1)).toEqual({ type: "cancel", requestId: a });
+    expect(seen.at(-1)).toEqual({ completed: 0, total: 2 });
+
+    // A late reply for the cancelled request is ignored.
+    worker.reply(evaluation(a!));
+    worker.reply(evaluation(b!));
+    await expect(fresh).resolves.toEqual({});
+    expect(seen.at(-1)).toEqual({ completed: 2, total: 2 });
+  });
+
+  it("never sends an evaluation whose signal is already aborted", async () => {
+    vi.stubGlobal("Worker", FakeWorker);
+    const client = new RulesWorkerClient();
+    const worker = FakeWorker.latest!;
+    await expect(
+      client.evaluate(input(1), AbortSignal.abort()),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(worker.requests).toEqual([]);
+  });
+});

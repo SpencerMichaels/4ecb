@@ -80,7 +80,8 @@ export type EvaluationHorizonRole = "current" | "selected" | "planning";
 
 /**
  * The rules worker processes requests in arrival order and evaluates each one
- * synchronously to completion, so a request dispatched first finishes first.
+ * synchronously to completion, so a request dispatched first finishes first
+ * (requests a later edit superseded are dropped from its queue unstarted).
  * Lists which horizons need their own distinct evaluation request, ordered so
  * the visible current- and selected-level results are always dispatched
  * before the hidden planning evaluation the user is not looking at.

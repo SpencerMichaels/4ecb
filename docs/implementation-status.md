@@ -1,5 +1,21 @@
 # Implementation status
 
+## Builder drops superseded rules evaluations (2026-10-28)
+
+Picking Light of Truth in Hu's level-9 daily slot took minutes to apply on a
+loaded machine. The editor sends up to three evaluations per edit to the one
+rules worker, which ran every request to completion in arrival order even
+after a later edit made it stale, so a backlog of discarded work delayed the
+fresh result. The worker now queues `evaluate` requests and yields between
+them, and a `cancel` message drops a queued one before it starts
+(`rules.worker.ts`). `RulesWorkerClient.evaluate` and the memoizing
+`RulesRuntimeClient` take an `AbortSignal`; a shared evaluation is cancelled
+only when every waiting caller has aborted. `CharacterEditorPage` aborts the
+previous edit's evaluations one microtask after the next set is requested, so
+identical requests stay shared. A running evaluation still finishes. Covered
+by `rules.worker.test.ts`, `rules-client.test.ts` and `app-runtime.test.ts`.
+No evaluation semantics changed, so no cache bump.
+
 ## Player report: DV shows the off-hand weapon's to-hit (2026-10-28)
 
 DV (Hybrid Swordmage/Warlock) showed +9 MBA / +12 Eldritch Strike where

@@ -32,6 +32,12 @@ export type RulesWorkerRequest =
       readonly input: EvaluationInput;
     }
   | {
+      /** Drops a queued evaluate request nobody awaits any more. It gets no
+       *  reply; one already running finishes and its reply is ignored. */
+      readonly type: "cancel";
+      readonly requestId: number;
+    }
+  | {
       /** Evaluates a stored character and returns only its library summary,
        *  so the library never decodes content on the main thread. */
       readonly type: "library-summary";

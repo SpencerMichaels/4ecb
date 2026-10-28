@@ -61,7 +61,9 @@ async function evaluationEntities(): Promise<readonly ContentEntity[]> {
   return entitiesReady;
 }
 
-async function handle(request: RulesWorkerRequest): Promise<void> {
+async function handle(
+  request: Exclude<RulesWorkerRequest, { type: "cancel" }>,
+): Promise<void> {
   switch (request.type) {
     case "initialize": {
       const manifest = await new ContentPackRepository().manifest(
@@ -229,13 +231,49 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
   }
 }
 
-worker.onmessage = (event: MessageEvent<RulesWorkerRequest>) => {
-  const request = event.data;
-  void handle(request).catch((error: unknown) => {
+function handleAndReport(
+  request: Exclude<RulesWorkerRequest, { type: "cancel" }>,
+): Promise<void> {
+  return handle(request).catch((error: unknown) => {
     respond({
       type: "error",
       requestId: request.requestId,
       message: error instanceof Error ? error.message : String(error),
     });
   });
+}
+
+// Evaluations run one at a time, yielding between them so cancel messages
+// that arrived during a long evaluation drop superseded queued requests
+// before they start (an editor sends a fresh set on every edit).
+const evaluationQueue: Extract<RulesWorkerRequest, { type: "evaluate" }>[] = [];
+let drainingEvaluations = false;
+
+async function drainEvaluations(): Promise<void> {
+  for (;;) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const request = evaluationQueue.shift();
+    if (request === undefined) break;
+    await handleAndReport(request);
+  }
+  drainingEvaluations = false;
+}
+
+worker.onmessage = (event: MessageEvent<RulesWorkerRequest>) => {
+  const request = event.data;
+  if (request.type === "cancel") {
+    const index = evaluationQueue.findIndex(
+      ({ requestId }) => requestId === request.requestId,
+    );
+    if (index >= 0) evaluationQueue.splice(index, 1);
+    return;
+  }
+  if (request.type !== "evaluate") {
+    void handleAndReport(request);
+    return;
+  }
+  evaluationQueue.push(request);
+  if (drainingEvaluations) return;
+  drainingEvaluations = true;
+  void drainEvaluations();
 };

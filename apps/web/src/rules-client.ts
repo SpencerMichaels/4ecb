@@ -31,6 +31,11 @@ export interface RulesProgress {
 
 export type RulesProgressListener = (progress: RulesProgress) => void;
 
+/** How an evaluation whose caller stopped waiting for it rejects. */
+export function evaluationAbortedError(): DOMException {
+  return new DOMException("Rules evaluation was superseded", "AbortError");
+}
+
 interface PendingRequest {
   readonly resolve: (response: RulesWorkerResponse) => void;
   readonly reject: (reason: Error) => void;
@@ -111,16 +116,38 @@ export class RulesWorkerClient {
       throw new Error("Unexpected rules-worker initialization response");
   }
 
-  async evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
+  /** Aborting `signal` rejects at once and drops the request from the
+   *  worker's queue if it hasn't started. */
+  async evaluate(
+    input: EvaluationInput,
+    signal?: AbortSignal,
+  ): Promise<EvaluatedCharacter> {
+    if (signal?.aborted === true) throw evaluationAbortedError();
     const startedAt = performance.now();
+    const requestId = this.#nextRequestId;
     // Same unit count the engine reports: one per earlier level, plus the
     // final pass. Queued requests count before the worker reaches them.
-    this.#batch.set(this.#nextRequestId, {
+    this.#batch.set(requestId, {
       completed: 0,
       total: Math.max(1, input.level),
     });
     this.#notifyProgress();
-    const response = await this.#request({ type: "evaluate", input });
+    const cancel = () => {
+      const pending = this.#pending.get(requestId);
+      if (pending === undefined) return;
+      this.#pending.delete(requestId);
+      this.#batch.delete(requestId);
+      this.#finishBatch();
+      this.#worker.postMessage({ type: "cancel", requestId });
+      pending.reject(evaluationAbortedError());
+    };
+    signal?.addEventListener("abort", cancel, { once: true });
+    let response: RulesWorkerResponse;
+    try {
+      response = await this.#request({ type: "evaluate", input });
+    } finally {
+      signal?.removeEventListener("abort", cancel);
+    }
     if (response.type !== "evaluation")
       throw new Error("Unexpected rules-worker evaluation response");
     recordLoadDuration("rules-worker-round-trip", startedAt, {
@@ -194,6 +221,10 @@ export class RulesWorkerClient {
     const entry = this.#batch.get(requestId);
     if (entry === undefined) return;
     this.#batch.set(requestId, { completed: entry.total, total: entry.total });
+    this.#finishBatch();
+  }
+
+  #finishBatch(): void {
     this.#notifyProgress();
     if ([...this.#batch.keys()].every((id) => !this.#pending.has(id)))
       this.#batch.clear();

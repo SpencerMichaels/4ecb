@@ -469,3 +469,74 @@ describe("application content runtime", () => {
     ).toHaveLength(2);
   });
 });
+
+describe("superseded rules evaluations", () => {
+  function pendingDelegate() {
+    const signals: AbortSignal[] = [];
+    const evaluate = vi.fn(
+      (_input: EvaluationInput, signal?: AbortSignal) =>
+        new Promise<EvaluatedCharacter>((resolve, reject) => {
+          signals.push(signal!);
+          signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+          setTimeout(() => resolve({} as EvaluatedCharacter), 10);
+        }),
+    );
+    return { evaluate, signals };
+  }
+
+  it("cancels a shared evaluation only once every waiting caller aborts", async () => {
+    const delegate = pendingDelegate();
+    const runtime = new AppContentRuntime({
+      loadPack: vi.fn(async (packId: string) => pack(packId)),
+      createRulesClient: () =>
+        rulesClient(
+          vi.fn(async () => undefined),
+          delegate.evaluate,
+        ),
+    });
+    const client = await runtime.getRulesClient("core");
+    const first = new AbortController();
+    const second = new AbortController();
+    const input = { level: 3 } as EvaluationInput;
+
+    const a = client.evaluate(input, first.signal);
+    const b = client.evaluate(input, second.signal);
+    expect(delegate.evaluate).toHaveBeenCalledOnce();
+    first.abort();
+    await expect(a).rejects.toMatchObject({ name: "AbortError" });
+    expect(delegate.signals[0]?.aborted).toBe(false);
+
+    second.abort();
+    await expect(b).rejects.toMatchObject({ name: "AbortError" });
+    expect(delegate.signals[0]?.aborted).toBe(true);
+
+    // A later identical request starts over rather than reusing the
+    // cancelled evaluation.
+    await expect(client.evaluate(input)).resolves.toEqual({});
+    expect(delegate.evaluate).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps an evaluation alive for a caller that cannot abort", async () => {
+    const delegate = pendingDelegate();
+    const runtime = new AppContentRuntime({
+      loadPack: vi.fn(async (packId: string) => pack(packId)),
+      createRulesClient: () =>
+        rulesClient(
+          vi.fn(async () => undefined),
+          delegate.evaluate,
+        ),
+    });
+    const client = await runtime.getRulesClient("core");
+    const superseded = new AbortController();
+    const input = { level: 2 } as EvaluationInput;
+
+    const aborted = client.evaluate(input, superseded.signal);
+    const kept = client.evaluate(input);
+    superseded.abort();
+    await expect(aborted).rejects.toMatchObject({ name: "AbortError" });
+    await expect(kept).resolves.toEqual({});
+    expect(delegate.signals[0]?.aborted).toBe(false);
+  });
+});

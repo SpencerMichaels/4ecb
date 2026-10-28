@@ -650,6 +650,10 @@ export function CharacterEditorPage({
       return;
     const revision = evaluationRevision.current + 1;
     evaluationRevision.current = revision;
+    // Superseded evaluations still queued in the single rules worker are
+    // dropped when the next edit's requests go out (cleanup below).
+    const superseded = new AbortController();
+    const signal = superseded.signal;
     setEvaluationStatus("Evaluating current build and plan…");
     const project = (
       projectedBuild: CharacterBuild,
@@ -672,45 +676,54 @@ export function CharacterEditorPage({
       planningHorizon,
     );
     const distinctCurrentRequest = dispatchOrder.includes("current")
-      ? client.evaluate({
-          ...project(projectBuildForLegacyExport(evaluationBuild), "current"),
-          candidateDetailLevels: currentCandidateDetailLevels(
-            workspaceTab,
-            evaluationBuild.effectiveLevel,
-            selectedLevel,
-          ),
-          includePowers: false,
-        })
+      ? client.evaluate(
+          {
+            ...project(projectBuildForLegacyExport(evaluationBuild), "current"),
+            candidateDetailLevels: currentCandidateDetailLevels(
+              workspaceTab,
+              evaluationBuild.effectiveLevel,
+              selectedLevel,
+            ),
+            includePowers: false,
+          },
+          signal,
+        )
       : undefined;
     const distinctSelectedRequest = dispatchOrder.includes("selected")
-      ? client.evaluate({
-          ...project(
-            { ...evaluationBuild, effectiveLevel: selectedLevel },
-            "selected",
-          ),
-          candidateDetailLevels: selectedCandidateDetailLevels(
-            workspaceTab,
-            selectedLevel,
-          ),
-          includePowers: false,
-        })
+      ? client.evaluate(
+          {
+            ...project(
+              { ...evaluationBuild, effectiveLevel: selectedLevel },
+              "selected",
+            ),
+            candidateDetailLevels: selectedCandidateDetailLevels(
+              workspaceTab,
+              selectedLevel,
+            ),
+            includePowers: false,
+          },
+          signal,
+        )
       : undefined;
-    const planningRequest = client.evaluate({
-      ...project(
-        { ...evaluationBuild, effectiveLevel: planningHorizon },
-        "planning",
-      ),
-      candidateDetailLevels: planningCandidateDetailLevels(
-        workspaceTab,
-        selectedLevel,
-        characterDetailLevelKey.split(",").filter(Boolean).map(Number),
-      ),
-      candidateDetailReplacementChoiceIds:
-        expandedReplacementChoiceId === undefined
-          ? []
-          : [expandedReplacementChoiceId],
-      includePowers: false,
-    });
+    const planningRequest = client.evaluate(
+      {
+        ...project(
+          { ...evaluationBuild, effectiveLevel: planningHorizon },
+          "planning",
+        ),
+        candidateDetailLevels: planningCandidateDetailLevels(
+          workspaceTab,
+          selectedLevel,
+          characterDetailLevelKey.split(",").filter(Boolean).map(Number),
+        ),
+        candidateDetailReplacementChoiceIds:
+          expandedReplacementChoiceId === undefined
+            ? []
+            : [expandedReplacementChoiceId],
+        includePowers: false,
+      },
+      signal,
+    );
     const currentRequest = distinctCurrentRequest ?? planningRequest;
     const selectedLevelRequest =
       distinctSelectedRequest ??
@@ -750,11 +763,14 @@ export function CharacterEditorPage({
           setEvaluationStatus("Rules up to date");
       })
       .catch((reason: unknown) => {
-        if (evaluationRevision.current !== revision) return;
+        if (evaluationRevision.current !== revision || signal.aborted) return;
         setEvaluationStatus(
           `${EVALUATION_FAILED_PREFIX}${reason instanceof Error ? reason.message : String(reason)}`,
         );
       });
+    // Abort after the next run has requested its evaluations, so identical
+    // ones stay shared in the client instead of being cancelled and redone.
+    return () => queueMicrotask(() => superseded.abort());
   }, [
     evaluationBuild,
     characterId,

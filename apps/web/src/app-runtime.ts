@@ -14,13 +14,22 @@ import type {
 } from "@4ecb/rules-engine";
 import { RULES_EVALUATION_CACHE_VERSION } from "@4ecb/rules-engine";
 
-import { RulesWorkerClient, type RulesProgressListener } from "./rules-client";
+import {
+  evaluationAbortedError,
+  RulesWorkerClient,
+  type RulesProgressListener,
+} from "./rules-client";
 import type { ProfileMigrationPreviewProgress } from "./rules-worker-messages";
 import { recordLoadDuration } from "./load-performance";
 
 export interface RulesRuntimeClient {
   initialize(packId: string, contentDigest?: string): Promise<void>;
-  evaluate(input: EvaluationInput): Promise<EvaluatedCharacter>;
+  /** Aborting `signal` says this caller no longer needs the result; it
+   *  rejects with an AbortError. */
+  evaluate(
+    input: EvaluationInput,
+    signal?: AbortSignal,
+  ): Promise<EvaluatedCharacter>;
   previewProfileMigration(
     build: CharacterBuild,
     targetPackId: string,
@@ -121,10 +130,18 @@ async function evaluationDigest(
     .join("");
 }
 
+interface MemoizedEvaluation {
+  readonly result: Promise<EvaluatedCharacter>;
+  readonly controller: AbortController;
+  /** Callers still waiting that may abort; Infinity once one never will. */
+  waiting: number;
+  settled: boolean;
+}
+
 class MemoizedRulesClient implements RulesRuntimeClient {
   readonly #delegate: RulesRuntimeClient;
   readonly #persistentCache: EvaluationCacheStore;
-  readonly #evaluations = new Map<string, Promise<EvaluatedCharacter>>();
+  readonly #evaluations = new Map<string, MemoizedEvaluation>();
   #profileRevision: string | undefined;
 
   constructor(
@@ -145,29 +162,78 @@ class MemoizedRulesClient implements RulesRuntimeClient {
     return this.#delegate.subscribeProgress?.(listener) ?? (() => undefined);
   }
 
-  evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
+  /**
+   * Identical requests share one evaluation, which is cancelled only when
+   * every caller waiting on it has aborted (a caller without a signal keeps
+   * it alive).
+   */
+  evaluate(
+    input: EvaluationInput,
+    signal?: AbortSignal,
+  ): Promise<EvaluatedCharacter> {
+    if (signal?.aborted === true)
+      return Promise.reject(evaluationAbortedError());
     const serializedInput = serializeEvaluationInput(input);
-    const existing = this.#evaluations.get(serializedInput);
-    if (existing !== undefined) {
+    let entry = this.#evaluations.get(serializedInput);
+    if (entry !== undefined) {
       this.#evaluations.delete(serializedInput);
-      this.#evaluations.set(serializedInput, existing);
-      return existing;
+      this.#evaluations.set(serializedInput, entry);
+    } else {
+      const controller = new AbortController();
+      const created: MemoizedEvaluation = {
+        controller,
+        waiting: 0,
+        settled: false,
+        result: this.#evaluatePersistent(
+          input,
+          serializedInput,
+          controller.signal,
+        ).then(
+          (result) => {
+            created.settled = true;
+            return result;
+          },
+          (error: unknown) => {
+            created.settled = true;
+            if (this.#evaluations.get(serializedInput) === created)
+              this.#evaluations.delete(serializedInput);
+            throw error;
+          },
+        ),
+      };
+      entry = created;
+      this.#evaluations.set(serializedInput, entry);
+      while (this.#evaluations.size > 32)
+        this.#evaluations.delete(
+          this.#evaluations.keys().next().value as string,
+        );
     }
-    const result = this.#evaluatePersistent(input, serializedInput).catch(
-      (error: unknown) => {
-        this.#evaluations.delete(serializedInput);
-        throw error;
-      },
-    );
-    this.#evaluations.set(serializedInput, result);
-    while (this.#evaluations.size > 32)
-      this.#evaluations.delete(this.#evaluations.keys().next().value as string);
-    return result;
+    if (signal === undefined) {
+      entry.waiting = Infinity;
+      return entry.result;
+    }
+    const shared = entry;
+    shared.waiting += 1;
+    return new Promise((resolve, reject) => {
+      const abort = () => {
+        reject(evaluationAbortedError());
+        shared.waiting -= 1;
+        if (shared.waiting > 0 || shared.settled) return;
+        if (this.#evaluations.get(serializedInput) === shared)
+          this.#evaluations.delete(serializedInput);
+        shared.controller.abort();
+      };
+      signal.addEventListener("abort", abort, { once: true });
+      void shared.result
+        .then(resolve, reject)
+        .finally(() => signal.removeEventListener("abort", abort));
+    });
   }
 
   async #evaluatePersistent(
     input: EvaluationInput,
     serializedInput: string,
+    signal: AbortSignal,
   ): Promise<EvaluatedCharacter> {
     const startedAt = performance.now();
     const profileRevision = this.#profileRevision;
@@ -197,7 +263,7 @@ class MemoizedRulesClient implements RulesRuntimeClient {
       } catch {
         // Derived storage and hashing are optional. Evaluation remains canonical.
       }
-      const evaluated = await this.#delegate.evaluate(input);
+      const evaluated = await this.#delegate.evaluate(input, signal);
       recordLoadDuration("rules-evaluation", startedAt, {
         source: "worker",
         level: input.level,
@@ -213,7 +279,7 @@ class MemoizedRulesClient implements RulesRuntimeClient {
           .catch(() => undefined);
       return evaluated;
     }
-    const evaluated = await this.#delegate.evaluate(input);
+    const evaluated = await this.#delegate.evaluate(input, signal);
     recordLoadDuration("rules-evaluation", startedAt, {
       source: "worker-no-persistent-cache",
       level: input.level,
