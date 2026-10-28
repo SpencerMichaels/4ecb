@@ -1023,21 +1023,27 @@ character before it is fixed, one slice per item.
      field overlays). Left: Additional Slot (one Large-only record); damage
      `abilmod` cap sharing (no content). Owner-confirmed: Critical on
      WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets (D105).
-  5. Move content text parsing out of evaluation into pack generation (the
-     standing rule in CLAUDE.md/AGENTS.md): power attack/hit lines, increase
-     sentences, the WeaponBonuses table and CalcBonuses riders in `powers.ts`
-     (~34 parse sites), and the per-profile prerequisite internalization in
-     `prerequisites.ts`, stored as normalized fields/IR in the pack. Done after
-     item 4 so those fixes are ported once; the full parity baseline is the
-     safety net.
+  5. Move content text parsing out of evaluation into pack generation — power
+     half done (`a1477e5`): power attack/hit/effect text and the native
+     field-rider tables are parsed once at pack build into the versioned
+     `_Power Text IR` field (memoized fallback for older packs and house-rule
+     modifies); an every-power sweep (221,428 lines) is identical on new and
+     pre-IR packs, parity unchanged, full Drizzt evaluation ~25% faster.
+     Open, lower value (internalizing all prerequisites costs ~870 ms cold, 7 ms
+     warm, already cached per content set): a stored `_Prerequisite IR` built
+     by `content-tool build`, used only for single-pack profiles without local
+     entities and stripped on multi-pack composition.
   6. Legality: hybrid power picks (`CheckHybridPower`, `DisallowClass`,
      `D20Choice.CheckReplaceElem`; 5 hybrid samples); Dilettante
      prerequisites (`FindDilettante`, `ImplementDilettante`,
      `MeleeDilettante`); `CategoryOpt.Build` PowersAsClass (DV's Order Adept
      feature); `RulesElement.IsPsionicClass`.
-  7. Shop: `IsValidLoot`, `IsValidWeapon`, `TransformLoot`, `LootCost`,
-     package entries, `EnchantmentItem.InitializeCategoryMembership`,
-     `GearPageData.HasSingleItem`.
+  7. ~~Shop~~ — done (`418668d`, D108): native IsValidLoot/IsValidWeapon/
+     ValidateShield/TransformLoot pairing, masterwork armor needs an
+     enchantment without Inherent Bonuses, weapon enchantments on superior
+     implements, Ritual Cost Modifier, ammunition/journeybread packages,
+     Berserk Weapon and Soulwarding Armor content fixes. Left (presentation):
+     package rows (`HasSingleItem`, `PackageCount`, `PackageManipulation`).
   8. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
