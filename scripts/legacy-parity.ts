@@ -13,6 +13,7 @@ import { promisify } from "node:util";
 import { decodeContentPack } from "@4ecb/content-pack";
 type ContentEntity = ReturnType<typeof decodeContentPack>["entities"][number];
 import {
+  compareLegacyMainHandOrder,
   importDnd4e,
   legacyEquipmentIdentityMatches,
   legacyPowerValueMatches,
@@ -188,6 +189,23 @@ export function compareCharacterParity(
       }));
     });
   });
+  // A swapped main/off hand keeps every row's numbers (rows match by
+  // weapon), so the main hand is checked against legacy's row order.
+  const handComparisons = imported.snapshot.powers.flatMap((cachedPower) => {
+    const definitionId = evaluatedPowerId(cachedPower);
+    const power =
+      (definitionId === undefined
+        ? undefined
+        : evaluatedPowers.get(definitionId)) ??
+      evaluated.powers.find((candidate) => candidate.name === cachedPower.name);
+    const comparison =
+      power === undefined
+        ? undefined
+        : compareLegacyMainHandOrder(cachedPower.weapons, power.variants);
+    return comparison === undefined
+      ? []
+      : [{ power: cachedPower.name, ...comparison }];
+  });
   // A cached power whose ID the content now resolves to a non-power record
   // was retired on purpose, e.g. the community "Familiar: X" cards that
   // content/corrections/91-familiar-cards.part turns into inert Internal
@@ -277,6 +295,12 @@ export function compareCharacterParity(
       ).length,
       mismatches: powerComparisons.filter((comparison) => !comparison.matches),
       legacyPlaceholderRows,
+      mainHand: {
+        comparable: handComparisons.length,
+        matching: handComparisons.filter((comparison) => comparison.matches)
+          .length,
+        mismatches: handComparisons.filter((comparison) => !comparison.matches),
+      },
       unsupported: evaluated.powers
         .filter((power) => power.unsupported.length > 0)
         .map((power) => ({

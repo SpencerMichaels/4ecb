@@ -536,6 +536,56 @@ export function legacyEquipmentIdentityMatches(
   );
 }
 
+/** An evaluated power variant as the main-hand row-order check reads it. */
+export interface LegacyHandOrderVariant {
+  readonly equipmentName: string;
+  readonly definitionIds?: readonly string[] | undefined;
+  readonly equipped?: boolean | undefined;
+  readonly hand?: "main" | "off" | undefined;
+}
+
+/**
+ * Native PowerStats lists a power's weapon rows in the order of the
+ * workspace weapons list, which BuildWeaponsList sorts with comes_before
+ * (`-Module-.cs` ~22312 and the comes_before below weapon_sort): equipped
+ * items first, then the loot whose CharLootSlot is "Main hand", then by
+ * level. So when two or more cached rows are equipped items and the modern
+ * evaluation names a main-hand item, the first equipped cached row must be a
+ * main-hand variant. Returns undefined when that is not comparable (no
+ * modern main hand, or fewer than two equipped cached rows). The cached rows'
+ * values are compared by weapon identity elsewhere, so a swapped hand is
+ * invisible there; this check catches it.
+ */
+export function compareLegacyMainHandOrder(
+  cachedWeapons: readonly LegacyWeaponSnapshot[],
+  variants: readonly LegacyHandOrderVariant[],
+):
+  | { readonly expected: string; readonly actual: string; matches: boolean }
+  | undefined {
+  const mains = variants.filter(
+    (variant) => variant.equipped === true && variant.hand === "main",
+  );
+  if (mains.length === 0) return undefined;
+  const equippedRows = cachedWeapons.flatMap((cached) => {
+    const variant = variants.find((candidate) =>
+      legacyEquipmentIdentityMatches(cached, {
+        equipmentName: candidate.equipmentName,
+        definitionIds: candidate.definitionIds ?? [],
+      }),
+    );
+    return variant?.equipped === true ? [{ cached, variant }] : [];
+  });
+  const [first] = equippedRows;
+  if (first === undefined || equippedRows.length < 2) return undefined;
+  if (!equippedRows.some(({ variant }) => variant.hand === "main"))
+    return undefined;
+  return {
+    expected: first.cached.name,
+    actual: mains.map((variant) => variant.equipmentName).join(", "),
+    matches: first.variant.hand === "main",
+  };
+}
+
 function canonicalLegacyPowerValue(value: string): string {
   return value
     .replace(/\s+/g, "")

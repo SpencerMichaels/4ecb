@@ -40,10 +40,12 @@ interface CharacterBaseline {
   /** Cached Power Usage / Action Type against the sheet card (absent in older baselines). */
   readonly usage?: { matching: number; comparable: number };
   readonly action?: { matching: number; comparable: number };
+  /** Cached weapon-row order against the evaluated main hand (absent in older baselines). */
+  readonly mainHand?: { matching: number; comparable: number };
   /**
    * `stat <name>: <expected> -> <actual>`,
-   * `power <name> [<equipment>] <field>: ...`, `usage <name>: ...` and
-   * `action <name>: ...`.
+   * `power <name> [<equipment>] <field>: ...`, `usage <name>: ...`,
+   * `action <name>: ...` and `main hand <name>: <first cached row> -> <evaluated main hand>`.
    */
   readonly mismatches: readonly string[];
 }
@@ -56,6 +58,7 @@ interface Baseline {
     powers: { matching: number; comparable: number };
     usage?: { matching: number; comparable: number };
     action?: { matching: number; comparable: number };
+    mainHand?: { matching: number; comparable: number };
   };
   readonly characters: readonly CharacterBaseline[];
 }
@@ -102,6 +105,10 @@ function summarize(
       matching: report.cachedPowerTypeParity.action.matching,
       comparable: report.cachedPowerTypeParity.action.comparable,
     },
+    mainHand: {
+      matching: report.cachedPowerParity.mainHand.matching,
+      comparable: report.cachedPowerParity.mainHand.comparable,
+    },
     mismatches: [
       ...report.cachedNumericParity.mismatches.map(
         (stat) =>
@@ -117,6 +124,10 @@ function summarize(
       ].map(
         (power) =>
           `${power.field} ${power.power}: ${power.expected} -> ${show(power.actual)}`,
+      ),
+      ...report.cachedPowerParity.mainHand.mismatches.map(
+        (power) =>
+          `main hand ${power.power}: ${power.expected} -> ${power.actual}`,
       ),
     ],
   };
@@ -198,6 +209,7 @@ async function main(): Promise<void> {
       powers: sum((character) => character.powers),
       usage: sum((character) => character.usage),
       action: sum((character) => character.action),
+      mainHand: sum((character) => character.mainHand),
     },
     characters,
   };
@@ -229,7 +241,7 @@ async function main(): Promise<void> {
     if (previous !== undefined) regressions += added.length;
     const state = character.complete ? "" : " incomplete";
     console.log(
-      `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
+      `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}, main hand ${delta(character.mainHand, previous?.mainHand)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
     );
     if (previous === undefined) {
       if (baseline !== undefined) console.log("  (not in the baseline)");
@@ -247,7 +259,7 @@ async function main(): Promise<void> {
       }
   }
   console.log(
-    `Total: stats ${delta(latest.totals.stats, baseline?.totals.stats)}, powers ${delta(latest.totals.powers, baseline?.totals.powers)}, usage ${delta(latest.totals.usage, baseline?.totals.usage)}, action ${delta(latest.totals.action, baseline?.totals.action)}`,
+    `Total: stats ${delta(latest.totals.stats, baseline?.totals.stats)}, powers ${delta(latest.totals.powers, baseline?.totals.powers)}, usage ${delta(latest.totals.usage, baseline?.totals.usage)}, action ${delta(latest.totals.action, baseline?.totals.action)}, main hand ${delta(latest.totals.mainHand, baseline?.totals.mainHand)}`,
   );
   console.log(`Wrote ${join(OUTPUT_DIR, "latest.json")}`);
   if (accept) {

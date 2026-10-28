@@ -16,6 +16,7 @@ import {
 
 import {
   compareEditedDnd4eRoundTrip,
+  compareLegacyMainHandOrder,
   comparePreservation,
   exportDnd4e,
   exportEditedDnd4e,
@@ -48,6 +49,66 @@ describe("legacy .dnd4e import", () => {
     expect(legacyPowerValueMatches("1d4+0", "1d4")).toBe(true);
     expect(legacyPowerValueMatches("1d4 + 0", "1d4")).toBe(true);
     expect(legacyPowerValueMatches("1d4+1", "1d4")).toBe(false);
+  });
+
+  it("checks the evaluated main hand against legacy weapon-row order", () => {
+    const longsword = {
+      name: "Synthetic Longsword +2",
+      definitionIds: ["LONGSWORD", "MAGIC_A"],
+    };
+    const razors = {
+      name: "Synthetic Wrist Razors +1",
+      definitionIds: ["RAZORS", "MAGIC_B"],
+    };
+    const unarmed = { name: "Unarmed", definitionIds: [] };
+    // Legacy lists the "Main hand" loot first among equipped items.
+    const cached = [longsword, razors, unarmed];
+    const variant = (
+      row: { name: string; definitionIds: string[] },
+      hand?: "main" | "off",
+    ) => ({
+      equipmentName: row.name,
+      definitionIds: row.definitionIds,
+      equipped: row !== unarmed,
+      ...(hand === undefined ? {} : { hand }),
+    });
+    expect(
+      compareLegacyMainHandOrder(cached, [
+        variant(longsword, "main"),
+        variant(razors, "off"),
+        variant(unarmed),
+      ]),
+    ).toEqual({
+      expected: "Synthetic Longsword +2",
+      actual: "Synthetic Longsword +2",
+      matches: true,
+    });
+    // Swapped hands keep every row's numbers but fail the order check.
+    expect(
+      compareLegacyMainHandOrder(cached, [
+        variant(longsword, "off"),
+        variant(razors, "main"),
+        variant(unarmed),
+      ]),
+    ).toMatchObject({
+      expected: "Synthetic Longsword +2",
+      actual: "Synthetic Wrist Razors +1",
+      matches: false,
+    });
+    // Not comparable without a modern main hand or two equipped rows.
+    expect(
+      compareLegacyMainHandOrder(cached, [
+        variant(longsword),
+        variant(razors),
+        variant(unarmed),
+      ]),
+    ).toBeUndefined();
+    expect(
+      compareLegacyMainHandOrder(
+        [longsword, unarmed],
+        [variant(longsword, "main"), variant(unarmed)],
+      ),
+    ).toBeUndefined();
   });
 
   it("matches cached weapon variants by definitions before display order", () => {
