@@ -75,6 +75,79 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("internalizes a prerequisite the same whichever caller reads it first", () => {
+    // A paragon path power reads its path's prerequisite (BaseClass) before
+    // or after the path's choice is checked; the cached IR must not depend
+    // on which, nor on what the character owns.
+    const content = () => [
+      entity("ROOT", "Root", "Test", {
+        rules: [rule("select", { type: "Paragon Path" }, 0)],
+      }),
+      entity("ID_FMP_POWER_6515", "Call Spirit Companion", "Power"),
+      // The clause names a Power as a class feature (Spirit of Courage).
+      entity(
+        "ID_FMP_CLASS_FEATURE_2912",
+        "Child of All Races",
+        "Class Feature",
+      ),
+      entity("PATH", "Spirit Path", "Paragon Path", {
+        prerequisites: "call spirit companion class feature",
+      }),
+      entity("PATH_POWER", "Spirit Path Power", "Power", {
+        specifics: { Class: "PATH", "Power Usage": "Encounter", Level: "11" },
+      }),
+    ];
+    const chooser = (owned: boolean) => ({
+      level: 11,
+      baseAbilities: {},
+      inventory: [],
+      occurrences: [
+        rootOccurrence,
+        ...(owned
+          ? [
+              {
+                id: "companion",
+                definitionId: "ID_FMP_POWER_6515",
+                acquiredLevel: 1,
+                kind: "grabbag",
+              } as CharacterOccurrence,
+            ]
+          : []),
+      ],
+    });
+    const powerHolder = {
+      level: 11,
+      baseAbilities: {},
+      inventory: [],
+      occurrences: [
+        {
+          id: "path-power",
+          definitionId: "PATH_POWER",
+          acquiredLevel: 11,
+          kind: "grabbag",
+        } as CharacterOccurrence,
+      ],
+    };
+    const pathCandidate = (result: ReturnType<typeof evaluateCharacter>) =>
+      result.choices[0]?.candidates.find(
+        (candidate) => candidate.definitionId === "PATH",
+      );
+    const fresh = pathCandidate(evaluateCharacter(chooser(true), content()));
+    expect(fresh).toMatchObject({ eligible: true, reasons: [] });
+    const shared = content();
+    evaluateCharacter(powerHolder, shared);
+    expect(pathCandidate(evaluateCharacter(chooser(true), shared))).toEqual(
+      fresh,
+    );
+    // Changing the build re-reads ownership against the same cached IR.
+    expect(
+      pathCandidate(evaluateCharacter(chooser(false), shared))?.reasons,
+    ).toEqual(["prerequisite"]);
+    expect(pathCandidate(evaluateCharacter(chooser(true), shared))).toEqual(
+      fresh,
+    );
+  });
+
   it("substitutes a [Select] name in statadd and textstring names (native BracketSubstitute)", () => {
     const evaluate = (chosen: boolean) =>
       evaluateCharacter(

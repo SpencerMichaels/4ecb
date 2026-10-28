@@ -241,7 +241,15 @@ same-named records skips three kinds of record: `Grants` records,
 ID, and one named as `<name> <type>` (for example `!Dwarf CountsAsRace`).
 When the walk finds nothing, native SpecialCase follows: a bare `Shifter`
 clause (feats, paragon paths, backgrounds, themes) is Razorclaw Shifter or
-Longtooth Shifter, each looked up the same way (`legacyClause`).
+Longtooth Shifter, each looked up the same way (`legacyClause`). Before
+SpecialCase, a clause that is still a name or `<name> <type>` token of some
+record of the profile (`Warpriest Paragon Path` where only the Warpriest class
+exists, a name only skipped records carry) becomes an element on that token,
+met when the character owns a record with that token. The internalized tree
+therefore depends only on the profile, the owning record and the text: it is
+cached by profile array identity, then owner record identity (its type steers
+the walk), then text, and is shared by every caller and character
+(`prerequisiteIrCache`); ownership is read only when the tree is evaluated.
 
 ## Verified parity and performance
 
@@ -249,8 +257,8 @@ The supplied private level-8 character matches all 72 numeric aliases shared by
 the modern evaluation and legacy cached `StatBlock`, including ability-derived
 values, typed modifier stacking, defenses, resources, senses, and skills. It
 converges in one grant iteration. The immutable full-profile rules index,
-known-definition tokens, and compiled prerequisite trees are cached by profile
-array identity; per-character prerequisite ownership uses a normalized token
+the profile's record tokens, and compiled prerequisite trees are cached by
+profile array identity; per-character prerequisite ownership uses a normalized token
 index. On the 38,339-record private pack, a four-pass Silaqui benchmark measures
 approximately 5.7 seconds cold and 1.5 seconds warm in the development runner,
 versus about 13.1 seconds on every pass before these caches. These are checkpoint

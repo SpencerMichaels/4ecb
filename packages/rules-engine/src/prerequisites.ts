@@ -12,8 +12,13 @@ export interface PrerequisiteContext {
   readonly definitions?: readonly ContentEntity[];
   /** The definition whose prerequisite is being internalized. */
   readonly subject?: ContentEntity;
-  /** Compatibility indexes used while callers transition to resolved definitions. */
+  /** The owned definitions' tokens (`ownedPrerequisiteTokens`): evaluation only. */
   readonly ownedTokens?: ReadonlySet<string>;
+  /**
+   * Extra names to read as records beyond `definitions`' own
+   * (`definitionTokens`). For definition-less callers and tests; a context
+   * that sets it bypasses the IR cache.
+   */
   readonly knownTokens?: ReadonlySet<string>;
 }
 
@@ -108,10 +113,36 @@ const definitionIndexCache = new WeakMap<
   readonly ContentEntity[],
   DefinitionIndex
 >();
+/**
+ * Internalized prerequisites per content set, owner and text. The IR reads
+ * nothing else from the context (`definitionTokens`, never the owned
+ * tokens), so every evaluation of every character over this content shares
+ * it. The owner is keyed by identity: its ID and type steer internalizing.
+ */
 const prerequisiteIrCache = new WeakMap<
   readonly ContentEntity[],
-  Map<string, PrerequisiteIr>
+  WeakMap<ContentEntity, Map<string, PrerequisiteIr>>
 >();
+
+const definitionTokensCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlySet<string>
+>();
+
+/**
+ * Every token that names a record of this content set (ID, name,
+ * "<name> <type>", "<type> <name>"): the string table a prerequisite token
+ * is internalized against. Memoized per content set.
+ */
+function definitionTokens(
+  definitions: readonly ContentEntity[],
+): ReadonlySet<string> {
+  const cached = definitionTokensCache.get(definitions);
+  if (cached !== undefined) return cached;
+  const tokens = ownedPrerequisiteTokens(definitions);
+  definitionTokensCache.set(definitions, tokens);
+  return tokens;
+}
 
 function definitionIndex(
   definitions: readonly ContentEntity[],
@@ -1306,11 +1337,17 @@ function internalizeLeaf(
       definitionIds: matches.map((definition) => definition.id),
       negated,
     };
+  // A token naming some record that no reading above resolved (a typed
+  // clause naming a record of another type, "Warpriest Paragon Path"; a name
+  // only skipped records carry): an element checked against the owned
+  // tokens. Read from the content set, never from what the character owns,
+  // so the IR does not depend on the character (prerequisiteIrCache).
   const token = normalized(reference.name);
-  const known = context.knownTokens?.has(token) ?? false;
-  const owned = context.ownedTokens?.has(token) ?? false;
-  if (known || owned)
-    return { kind: "element", text, definitionIds: [token], negated };
+  const known =
+    (context.definitions !== undefined &&
+      definitionTokens(context.definitions).has(token)) ||
+    (context.knownTokens?.has(token) ?? false);
+  if (known) return { kind: "element", text, definitionIds: [token], negated };
   return (
     (negated ? undefined : legacyClause(text, canonical, context)) ?? {
       kind: "unverified",
@@ -1682,21 +1719,8 @@ export function internalizePrerequisite(
 ): PrerequisiteIr | undefined {
   if (prerequisite === undefined || prerequisite.trim().length === 0)
     return undefined;
-  const definitions = context.definitions;
-  const subject = context.subject;
-  const cache =
-    definitions === undefined || subject === undefined
-      ? undefined
-      : (prerequisiteIrCache.get(definitions) ??
-        new Map<string, PrerequisiteIr>());
-  if (
-    definitions !== undefined &&
-    cache !== undefined &&
-    !prerequisiteIrCache.has(definitions)
-  )
-    prerequisiteIrCache.set(definitions, cache);
-  const cacheKey = `${subject?.id ?? ""}\0${prerequisite}`;
-  const cached = cache?.get(cacheKey);
+  const cache = prerequisiteIrCacheFor(context);
+  const cached = cache?.get(prerequisite);
   if (cached !== undefined) return cached;
   const blocks = splitTopLevel(prerequisite, [/^\s*;\s*/]);
   const result = connective(
@@ -1704,8 +1728,32 @@ export function internalizePrerequisite(
     prerequisite,
     blocks.map((block) => internalizeBlock(block.text, context)),
   );
-  cache?.set(cacheKey, result);
+  cache?.set(prerequisite, result);
   return result;
+}
+
+/** The IR cache for this context's content set and owner, if it has both. */
+function prerequisiteIrCacheFor(
+  context: PrerequisiteContext,
+): Map<string, PrerequisiteIr> | undefined {
+  const { definitions, subject } = context;
+  if (
+    definitions === undefined ||
+    subject === undefined ||
+    context.knownTokens !== undefined
+  )
+    return undefined;
+  let bySubject = prerequisiteIrCache.get(definitions);
+  if (bySubject === undefined) {
+    bySubject = new WeakMap();
+    prerequisiteIrCache.set(definitions, bySubject);
+  }
+  let byText = bySubject.get(subject);
+  if (byText === undefined) {
+    byText = new Map();
+    bySubject.set(subject, byText);
+  }
+  return byText;
 }
 
 function ownsDefinition(

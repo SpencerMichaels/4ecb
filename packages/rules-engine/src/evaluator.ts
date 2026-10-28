@@ -39,6 +39,7 @@ import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
   evaluatePrerequisiteStatus,
+  ownedPrerequisiteTokens,
   withoutOwnedDefinitions,
   type PrerequisiteContext,
 } from "./prerequisites";
@@ -76,7 +77,7 @@ import { nativePsionics } from "./psionics";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v86-2026-10-28-associates";
+  "evaluated-character-v87-2026-10-28-character-independent-prerequisite-ir";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -401,30 +402,6 @@ export function sharedRulesIndex(
   const created = new RulesIndex(entities);
   sharedRulesIndexCache.set(entities, created);
   return created;
-}
-
-const knownDefinitionTokensCache = new WeakMap<
-  readonly ContentEntity[],
-  ReadonlySet<string>
->();
-
-function knownDefinitionTokens(
-  entities: readonly ContentEntity[],
-): ReadonlySet<string> {
-  const cached = knownDefinitionTokensCache.get(entities);
-  if (cached !== undefined) return cached;
-  const tokens = new Set(
-    entities.flatMap((entity) =>
-      [
-        entity.id,
-        entity.name,
-        `${entity.name} ${entity.type}`,
-        `${entity.type} ${entity.name}`,
-      ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
-    ),
-  );
-  knownDefinitionTokensCache.set(entities, tokens);
-  return tokens;
 }
 
 const prerequisiteSnapshotCaches = new WeakMap<
@@ -2930,7 +2907,6 @@ function evaluateCharacterInternal(
     "Wisdom",
     "Charisma",
   ] as const;
-  const knownTokens = knownDefinitionTokens(evaluationEntities);
   const prerequisiteContextFor = (
     level: number,
     owned: readonly ContentEntity[],
@@ -2945,17 +2921,7 @@ function evaluateCharacterInternal(
         return [ability, typeof value === "number" ? value : 0];
       }),
     ),
-    ownedTokens: new Set(
-      owned.flatMap((entity) =>
-        [
-          entity.id,
-          entity.name,
-          `${entity.name} ${entity.type}`,
-          `${entity.type} ${entity.name}`,
-        ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
-      ),
-    ),
-    knownTokens,
+    ownedTokens: ownedPrerequisiteTokens(owned),
   });
   const prerequisiteScopes = new Map<
     string,

@@ -186,6 +186,31 @@ describe("legacy prerequisites", () => {
     expect(read("Human or shifter", theme, razorclaw)).toBe("satisfied");
   });
 
+  it("caches an internalized prerequisite per owner, not per owner ID", () => {
+    // InternalizeElement reads a CountsAsRace by name only for a Feat owner.
+    const countsAsDwarf = {
+      id: "ID_INTERNAL_COUNTSASRACE_DWARF",
+      name: "Dwarf",
+      type: "CountsAsRace",
+    } as ContentEntity;
+    const dwarfDefinitions = [...definitions, countsAsDwarf];
+    const owner = { id: "SAME_ID", name: "Owner", type: "Feat" };
+    const read = (type: string) =>
+      internalizePrerequisite("Dwarf", {
+        ...context,
+        definitions: dwarfDefinitions,
+        subject: { ...owner, type } as ContentEntity,
+      });
+    expect(read("Feat")).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_INTERNAL_COUNTSASRACE_DWARF"],
+    });
+    expect(read("Background")).toMatchObject({
+      kind: "element",
+      definitionIds: ["dwarf"],
+    });
+  });
+
   it("skips what legacy InternalizeElement drops from a name lookup", () => {
     // -Module-.cs ~29875: Grants records, CountsAsRace records outside a
     // Feat's prerequisite, and a Background named "assassin" never answer a
@@ -249,7 +274,8 @@ describe("legacy prerequisites", () => {
         subject: { ...pathOwner, type: "Feat" } as ContentEntity,
       }).status,
     ).toBe("satisfied");
-    // A name only a Grants record carries resolves to nothing.
+    // A name only a Grants record carries resolves to no record; the
+    // content-set token fallback reads it as a name the character must own.
     const grantsOnly = {
       id: "ID_INTERNAL_GRANTS_RANGER_IMPLEMENTS",
       name: "Ranger Implements",
@@ -261,7 +287,12 @@ describe("legacy prerequisites", () => {
         owned: [grantsOnly],
         definitions: [...assassinDefinitions, grantsOnly],
       }),
-    ).toEqual({ kind: "unverified", text: "Ranger Implements" });
+    ).toEqual({
+      kind: "element",
+      text: "Ranger Implements",
+      definitionIds: ["ranger implements"],
+      negated: false,
+    });
   });
 
   it("meets a story membership by a representing option, else leaves it unverified", () => {
