@@ -994,6 +994,40 @@ character before it is fixed, one slice per item.
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
   (`1b92954`).
+- **Remaining audit gaps (owner-ordered queue, 2026-10-28).** Sources:
+  `reverse-engineering/docs/12-calculation-logic-audit.md` and the
+  partial/not-handled entries in `apps/content-tool/src/legacy-special-cases.ts`
+  (run `pnpm audit:legacy-special-cases`). No `sample-chars/` save exercises
+  the number-changing ones. Work top to bottom; strike items as they land.
+  0. Associates (54 `Associate` records; Fey Beast Tamer blink dog): data
+     model, engine numbers, companion-style card — in progress.
+  1. Prerequisite IR cache keyed on subject and text only, not on owned or
+     known tokens: a cached result can outlive a change of choices (bug).
+  2. Sheet display: power short descriptions in notes
+     (`NoteHolder.GetShortDescription`, ~820 records, 20 samples); monk
+     movement technique cards (`PowerCard.MonkMovementTechnique`,
+     `BasicUtils.IsMonkTechnique`, ~390 records, 4 samples);
+     `PowerCardPower.UpdatePowerCardPower`.
+  3. Number-changing power and item gaps: `AddArenaWeapons`;
+     `WeaponEnchant` (EnchantEquiv, ~10 items); `PowerStats` (Commander's
+     Strike rows); `SpecialCase` power lines (Warlock's Bargain, Final
+     Reproach, Deathly Retort, Summons to Doom); `NonDamagePower`;
+     `CalcDamage` (Defender's Gambit, "(off-hand weapon)" lines);
+     `CalcMisc`/`CalcBeast` companion Wisdom line; `CalcStatVsDefense`
+     "+1 per enemy adjacent to you"; `SlotManip` ring slots;
+     `HolySymbolLootSlot.IsItemCandidate` and `_INTERNAL_EquippedSymbol`
+     import (`CharLootName`); `C_RulesElementField` augment overlays;
+     stat-engine details (three unshared base-attack caps, `type=""`,
+     conditional reminder text on linked statadds, a stacking-order test).
+  4. Legality: hybrid power picks (`CheckHybridPower`, `DisallowClass`,
+     `D20Choice.CheckReplaceElem`; 5 hybrid samples); Dilettante
+     prerequisites (`FindDilettante`, `ImplementDilettante`,
+     `MeleeDilettante`); `CategoryOpt.Build` PowersAsClass (DV's Order Adept
+     feature); `RulesElement.IsPsionicClass`.
+  5. Shop: `IsValidLoot`, `IsValidWeapon`, `TransformLoot`, `LootCost`,
+     package entries, `EnchantmentItem.InitializeCategoryMembership`,
+     `GearPageData.HasSingleItem`.
+  6. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
