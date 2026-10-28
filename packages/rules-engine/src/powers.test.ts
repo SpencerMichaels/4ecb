@@ -4797,3 +4797,91 @@ describe("native BuildKeywordSet channels", () => {
     ]);
   });
 });
+
+describe("encounter uses (native RulesElementEncounterUses)", () => {
+  const healingWordSpecial =
+    "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter.";
+  const uses = (
+    power: ContentEntity,
+    level: number,
+    overlays: Parameters<typeof evaluatePowers>[0]["overlays"] = [],
+    stats: Record<string, EvaluatedStat> = {},
+  ) =>
+    evaluatePowers({
+      level,
+      activeDefinitionIds: [power.id],
+      inventory: [],
+      stats,
+      overlays,
+      entities: [power],
+    })[0]?.encounterUses;
+
+  it("gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level", () => {
+    const word = entity("ID_FMP_POWER_1455", "Healing Word", "Power", {
+      "Power Usage": "Encounter",
+      Keywords: "Divine, Healing",
+      Special: healingWordSpecial,
+    });
+    expect(uses(word, 15)).toBe(2);
+    expect(uses(word, 16)).toBe(3);
+    // Ardent Surge's Special breaks its line before "but only once" (D091).
+    const surge = entity("ID_FMP_POWER_10273", "Ardent Surge", "Power", {
+      "Power Usage": "Encounter",
+      Special:
+        "You can use this power twice per encounter, but only once per round. At 16th level, you can use this power three times per encounter,\n but only once per round.",
+    });
+    expect(uses(surge, 1)).toBe(2);
+  });
+
+  it("adds the overlaid _ADDITIONAL_USES field and the '<ID>_ADDITIONAL_USES' stat", () => {
+    const rage = entity("ID_FMP_POWER_4807", "Rage Strike", "Power", {
+      "Power Usage": "Daily",
+      _ADDITIONAL_USES: "1",
+    });
+    expect(uses(rage, 5)).toBe(2);
+    const reaping = entity("DARK_REAPING", "Dark Reaping", "Power", {
+      "Power Usage": "Encounter",
+    });
+    expect(uses(reaping, 1)).toBeUndefined();
+    // Reaping Renewal: `modify name="Dark Reaping" type="Power"
+    // Field="_ADDITIONAL_USES" value="1"`.
+    const renewal = [
+      {
+        providerOccurrenceId: "feat",
+        targetDefinitionIds: ["DARK_REAPING"],
+        targetName: "Dark Reaping",
+        targetType: "Power",
+        field: "_ADDITIONAL_USES",
+        value: "1",
+      },
+    ];
+    expect(uses(reaping, 1, renewal)).toBe(2);
+    expect(
+      uses(reaping, 1, renewal, {
+        DARK_REAPING_ADDITIONAL_USES: stat("DARK_REAPING_ADDITIONAL_USES", 1),
+      }),
+    ).toBe(3);
+  });
+
+  it("counts Fight On's additional use on top of Inspiring Word's two (D091)", () => {
+    const word = entity("ID_FMP_POWER_1590", "Inspiring Word", "Power", {
+      "Power Usage": "Encounter",
+      Special:
+        "You can use this power twice per encounter, but only once per round. At 16th level, you can use inspiring word three times per encounter.",
+    });
+    // Fight On: `modify name="Inspiring Word" type="Power"
+    // Field="_ADDITIONAL_USES" value="1"`.
+    const fightOn = [
+      {
+        providerOccurrenceId: "feat",
+        targetDefinitionIds: ["ID_FMP_POWER_1590"],
+        targetName: "Inspiring Word",
+        targetType: "Power",
+        field: "_ADDITIONAL_USES",
+        value: "1",
+      },
+    ];
+    expect(uses(word, 1)).toBe(2);
+    expect(uses(word, 1, fightOn)).toBe(3);
+  });
+});

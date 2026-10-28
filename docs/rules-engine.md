@@ -554,6 +554,13 @@ powers, a paragon path power counting as its path's prerequisite class
 Class field; Pact Reward's `ID_FMP_PARAGON_PATH_<n>:damage`) and, per native
 `InsertParagonPath`, the ID of the "<class name> Paragon Path" record
 (Sorcerous Power's `ID_INTERNAL_CATEGORY_SORCERER_PARAGON_PATH:damage`).
+`EvaluatedPower.encounterUses` (set when above one) is native
+`RulesElementEncounterUses`, the legacy tracker's use boxes: 2 (3 from 16th
+level) for the recovered "twice per encounter" Special texts, plus the
+overlaid `_ADDITIONAL_USES` field and the "<power ID>\_ADDITIONAL_USES" stat.
+Two D091 divergences, both from the records' own text: Special texts compare
+with whitespace collapsed (Ardent Surge), and additional uses add to the
+twice-per-encounter count (Fight On on Inspiring Word).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and

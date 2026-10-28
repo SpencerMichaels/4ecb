@@ -11,7 +11,11 @@ import {
   halfLevel,
   type BeastCompanionStatistics,
 } from "./derived-values";
-import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
+import {
+  EXCEPTION_IDS,
+  EXCEPTION_NAMES,
+  TWICE_PER_ENCOUNTER_SPECIALS,
+} from "./exceptions";
 import { internalizePrerequisite, type PrerequisiteIr } from "./prerequisites";
 import {
   keyAbilityOverride,
@@ -132,6 +136,9 @@ export interface EvaluatedPower {
   readonly definitionId: string;
   readonly name: string;
   readonly usage?: string;
+  /** Uses per encounter when more than one (`legacyEncounterUses`); a
+   * play tracker shows one box per use of a non-at-will power. */
+  readonly encounterUses?: number;
   readonly actionType?: string;
   readonly attackType?: string;
   /** Effective authored _BasicAttack field, including active rule overlays. */
@@ -1264,6 +1271,54 @@ function legacyWeaponType(entity: ContentEntity | undefined): {
       /ranged/iu.test(category) ||
       (melee && (field(entity ?? emptyEntity, "Range")?.trim() ?? "") !== ""),
   };
+}
+
+const twicePerEncounterSpecials = new Set(
+  TWICE_PER_ENCOUNTER_SPECIALS.map((text) => whitespaceKey(text)),
+);
+
+/** Lower-cased, with every whitespace run one space. */
+function whitespaceKey(value: string): string {
+  return key(value).replace(/\s+/gu, " ");
+}
+
+/**
+ * Native D20Workspace.RulesElementEncounterUses (~1880), the use boxes the
+ * legacy play tracker gives a non-at-will power: 2 (3 from 16th level) for a
+ * power whose Special is one of the recovered "twice per encounter" texts,
+ * else 1 + the overlaid `_ADDITIONAL_USES` field (Fight On, Rage Strike,
+ * Blurred Strike Ki Focus) + the "<power ID>_ADDITIONAL_USES" stat.
+ *
+ * Divergences (D091, from the records' own rules text):
+ * - native compares the Special text exactly, so Ardent Surge, whose
+ *   Special carries a line break, gets 1 use although its text grants two;
+ *   whitespace runs compare as one space here.
+ * - native returns the "twice per encounter" count before reading
+ *   `_ADDITIONAL_USES`, so Fight On ("Gain additional use of inspiring
+ *   word") adds nothing to Inspiring Word; here the additional uses count
+ *   on top.
+ */
+function legacyEncounterUses(
+  power: ContentEntity,
+  overlays: readonly FieldOverlay[],
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): number {
+  const special = effectiveField(power, "Special", overlays);
+  const base =
+    special !== undefined &&
+    twicePerEncounterSpecials.has(whitespaceKey(special))
+      ? level < 16
+        ? 2
+        : 3
+      : 1;
+  // _wtoi: the leading integer, else 0.
+  const additional =
+    Number.parseInt(
+      effectiveField(power, "_ADDITIONAL_USES", overlays)?.trim() ?? "",
+      10,
+    ) || 0;
+  return base + additional + numericStat(stats, `${power.id}_ADDITIONAL_USES`);
 }
 
 /** The row-independent class channels of one power's keyword set. */
@@ -3951,11 +4006,18 @@ export function evaluatePowers(input: {
       `${power.id}:extra damage`,
       `${power.name}:extra damage`,
     ]);
+    const encounterUses = legacyEncounterUses(
+      power,
+      input.overlays,
+      input.level,
+      input.stats,
+    );
     return [
       {
         definitionId: power.id,
         name: power.name,
         ...(usage === undefined ? {} : { usage }),
+        ...(encounterUses > 1 ? { encounterUses } : {}),
         ...(actionType === undefined ? {} : { actionType }),
         ...(attackType === undefined ? {} : { attackType }),
         ...(basicAttackKind === undefined ? {} : { basicAttackKind }),

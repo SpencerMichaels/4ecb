@@ -1915,9 +1915,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.AddPieces": generic("Component explanation text."),
     "?A0x7555d940.PieceComment": generic("Component explanation text."),
-    "D20Workspace.RulesElementEncounterUses": notHandled(
+    "D20Workspace.RulesElementEncounterUses": code(
       "Six healing-word style powers by exact Special text get 2 uses per encounter (3 from level 16); _ADDITIONAL_USES field and stat add uses.",
-      "use tracking belongs to the deferred M6 play tracker; add `_ADDITIONAL_USES` support and corrections then",
+      "powers.ts legacyEncounterUses sets EvaluatedPower.encounterUses (TWICE_PER_ENCOUNTER_SPECIALS in exceptions.ts; the overlaid _ADDITIONAL_USES of Fight On, Reaping Renewal, Martial Dilettante, Blurred Strike Ki Focus and 12 more; the '<ID>_ADDITIONAL_USES' stat). D091 divergences: whitespace runs compare as one space (Ardent Surge's Special has a line break, so native gives it 1 use) and _ADDITIONAL_USES adds to the twice-per-encounter count (native returns before reading it, so Fight On adds nothing to Inspiring Word). No sheet surface shows the count yet: the use boxes belong to the deferred M6 play tracker",
+      test(
+        POWERS,
+        "gives a recovered 'twice per encounter' Special 2 uses, 3 from 16th level",
+      ),
+      test(
+        POWERS,
+        "adds the overlaid _ADDITIONAL_USES field and the '<ID>_ADDITIONAL_USES' stat",
+      ),
+      test(
+        POWERS,
+        "counts Fight On's additional use on top of Inspiring Word's two (D091)",
+      ),
     ),
 
     // --- D20RulesEngine: companions ----------------------------------
