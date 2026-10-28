@@ -1,7 +1,12 @@
 import type { EvaluatedContribution, EvaluatedStat } from "./stats";
 
-/** 4E ability modifier: (score − 10) / 2, rounded down. */
+/**
+ * 4E ability modifier: (score − 10) / 2, rounded down. A blank score (0, an
+ * imported incomplete save) has modifier 0, as native `GetAbilityMod`
+ * (D20RulesEngine `-Module-.cs` ~7081) gives it.
+ */
 export function abilityModifier(score: number): number {
+  if (score === 0) return 0;
   return Math.floor((score - 10) / 2);
 }
 

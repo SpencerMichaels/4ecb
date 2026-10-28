@@ -400,4 +400,17 @@ describe("stat evaluation", () => {
       ["later", false],
     ]);
   });
+
+  it("gives a blank (0) ability base score 0 and modifier 0 (native GetAbilityMod)", () => {
+    // An imported incomplete save: the base is an untyped literal 0, so the
+    // racial +2 after it is skipped and ABILITYMOD reads 0, not -5.
+    const stats = new StatAccumulator();
+    add(stats, "base", "Strength", "0");
+    add(stats, "race", "Strength", "+2");
+    add(stats, "half", "Athletics", "+HALF-LEVEL");
+    add(stats, "mod", "Athletics", "+ABILITYMOD(Strength)", "Ability");
+    add(stats, "level", "HALF-LEVEL", "+1");
+    expect(stats.evaluate("Strength").value).toBe(0);
+    expect(stats.evaluate("Athletics").value).toBe(1);
+  });
 });

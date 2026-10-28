@@ -16,7 +16,9 @@ describe("shared derived values", () => {
       abilityModifier(18),
       abilityModifier(9),
       abilityModifier(8),
-    ]).toEqual([4, -1, -1]);
+      abilityModifier(1),
+      abilityModifier(0),
+    ]).toEqual([4, -1, -1, -5, 0]);
     expect([halfLevel(7), halfLevel(8)]).toEqual([3, 4]);
     expect(bloodiedValue(67)).toBe(33);
     expect(bloodiedValue(undefined)).toBeUndefined();
