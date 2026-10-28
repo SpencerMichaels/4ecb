@@ -227,3 +227,11 @@ export function reminderCovered(
         CLAUSE_COVERAGE * clause.size,
     );
 }
+
+/** Whether a reminder names any game term (an action, a defense, a
+ *  condition, …): one that names none only says the character has
+ *  something, which the card showing that thing covers (D107). */
+export function reminderNamesGameTerm(reminder: string): boolean {
+  const text = withoutLevelScaling(reminder);
+  return TERMS.some(([, pattern]) => pattern.test(text));
+}

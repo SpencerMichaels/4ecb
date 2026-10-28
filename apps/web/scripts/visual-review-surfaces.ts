@@ -21,6 +21,7 @@ import {
 } from "@4ecb/sheet-model";
 import { characterDisplayName } from "@4ecb/character-domain";
 
+import { AssociateCard } from "../src/AssociateCard";
 import { BeastCompanionCard } from "../src/BeastCompanionCard";
 import {
   BuilderCardContext,
@@ -115,6 +116,7 @@ function printCardElement(
       : createElement(PrintSkillsCard, { model });
   if (card.kind === "beast") return createElement(BeastCompanionCard, { card });
   if (card.kind === "familiar") return createElement(FamiliarCard, { card });
+  if (card.kind === "associate") return createElement(AssociateCard, { card });
   if (card.kind === "item-set") return createElement(ItemSetCard, { card });
   return card.kind === "power"
     ? createElement(PowerCard, { card, characterLevel: level })

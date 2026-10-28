@@ -1,3 +1,4 @@
+import { associateCardText } from "./associate-card";
 import {
   displayPrerequisites,
   getAttribute,
@@ -27,6 +28,7 @@ import {
   nameSourceKey,
   provenanceSourceResolver,
   reminderCovered,
+  reminderNamesGameTerm,
 } from "./reminder-coverage";
 import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
@@ -832,6 +834,17 @@ export function withSheetOverview(
           }))
         : [],
     ),
+    // An associate card shows the creature its providers give (D107).
+    ...model.companions.flatMap((card) =>
+      card.kind === "associate"
+        ? [
+            {
+              sources: card.provenanceIds.flatMap((id) => sourceOf(id)),
+              text: associateCardText(card),
+            },
+          ]
+        : [],
+    ),
   ];
   // Power cards' rider lines (the Action Point card's included): a reminder
   // they cover is a rider, offered but off by default (D099).
@@ -843,8 +856,23 @@ export function withSheetOverview(
   );
   // A power card's own reminder line, whatever its provenance.
   const cardLines = new Set(riderEntries.map((entry) => key(entry.text)));
+  // The features that give an associate (D107): a reminder of theirs that
+  // names no game term only says the character has the creature its card
+  // shows.
+  const associateSources = new Set(
+    model.companions.flatMap((card) =>
+      card.kind === "associate"
+        ? card.provenanceIds.flatMap((id) => sourceOf(id))
+        : [],
+    ),
+  );
   const coverage = (reminder: OverviewReminder) => {
     const sources = new Set(reminderMeta.get(reminder)?.sources ?? []);
+    if (
+      [...sources].some((source) => associateSources.has(source)) &&
+      !reminderNamesGameTerm(reminder.value)
+    )
+      return "pane";
     const matching = (entries: typeof paneEntries) =>
       entries
         .filter((entry) => entry.sources.some((source) => sources.has(source)))

@@ -42,7 +42,7 @@ const internal = (note: string): ContentTypeCoverage => ({
   kind: "internal",
   note,
 });
-const gap = (note: string): ContentTypeCoverage => ({ kind: "gap", note });
+// A gap is written as { kind: "gap", note } when one appears.
 
 const abilityIncrease = applied("Raises an ability score.");
 // The beast companion card's abilities include the picks.
@@ -70,9 +70,10 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   // Page 1 names the deity; its Character Reference entry has the text.
   Deity: presented("identity", "references"),
   Familiar: presented("companions"),
-  // The beast companion card. Associates and summons (step 3 of
-  // docs/companion-card-proposal.md) stay unpresented.
+  // The beast companion card.
   Companion: presented("companions"),
+  // The associate card (D107).
+  Associate: presented("companions"),
   "Companion Ability Increase (Level 4)": companionAbilityIncrease,
   "Companion Ability Increase (Level 8)": companionAbilityIncrease,
   "Companion Ability Increase (Level 14)": companionAbilityIncrease,
@@ -141,9 +142,6 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Ability Score": internal("Reference text."),
   Money: internal("Coin reference; the wallet is separate."),
   "Item Set": internal("Never owned; its card lists its Item Set Benefits."),
-
-  // Known gaps, for triage
-  Associate: gap("Associates and summoned-creature stat blocks are not shown."),
 };
 
 export function contentTypeCoverage(

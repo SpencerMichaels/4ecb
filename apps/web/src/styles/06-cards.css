@@ -955,6 +955,12 @@
 .print-beast-note-source {
   opacity: 0.75;
 }
+/* Associate: the familiar card's frame with its stat block's traits and
+   powers as sections. */
+.print-associate-usage {
+  font-weight: 400;
+  opacity: 0.75;
+}
 /* A beast power's damage, in place of the weapon table. */
 .print-card-beast-damage p {
   margin: 0;

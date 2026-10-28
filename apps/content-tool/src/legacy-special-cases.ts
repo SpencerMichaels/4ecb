@@ -2463,9 +2463,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "starts companion and familiar choices as their own presentation flows",
       ),
     ),
-    "PanelModelCompanion.UpdatePanel": notHandled(
+    "PanelModelCompanion.UpdatePanel": code(
       "Sheet companion panel for Beast Mastery (ID_FMP_CLASS_FEATURE_1030), with low-light vision.",
-      "no sheet companion card yet (familiar card only)",
+      "sheet-model beast-companion-card.ts prints the beast companion card; associates, which have no legacy panel, print as associate cards (D107, sheet-model associate-card.ts)",
+      test(
+        "packages/sheet-model/src/beast-companion-card.test.ts",
+        "shows the evaluated statistics with the player's name",
+      ),
     ),
     "MainWindow.UpdatePages": code(
       "Mage's Spellbook (ID_FMP_CLASS_FEATURE_2868) shows the spellbook page.",

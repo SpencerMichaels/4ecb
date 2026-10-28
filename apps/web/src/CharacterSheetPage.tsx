@@ -49,6 +49,7 @@ import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
 import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
+import { AssociateCard } from "./AssociateCard";
 import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
@@ -117,6 +118,7 @@ function PrintCard({
     );
   if (card.kind === "beast") return <BeastCompanionCard card={card} />;
   if (card.kind === "familiar") return <FamiliarCard card={card} />;
+  if (card.kind === "associate") return <AssociateCard card={card} />;
   if (card.kind === "item-set") return <ItemSetCard card={card} />;
   return card.kind === "power" ? (
     <PowerCard card={card} characterLevel={characterLevel} />

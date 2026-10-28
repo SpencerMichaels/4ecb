@@ -6,6 +6,7 @@ import {
   type EvaluatedStat,
 } from "@4ecb/rules-engine";
 
+import type { SheetAssociateCard } from "./associate-card";
 import type { SheetBeastCompanionCard } from "./beast-companion-card";
 
 /**
@@ -36,8 +37,10 @@ export interface SheetFamiliarCard {
   readonly source: string;
 }
 
-/** Cards for creatures that accompany the character: beast, then familiars. */
-export type SheetCompanionCard = SheetBeastCompanionCard | SheetFamiliarCard;
+/** Cards for creatures that accompany the character: beast, familiars, then
+ *  associates (D107). */
+export type SheetCompanionCard =
+  SheetBeastCompanionCard | SheetFamiliarCard | SheetAssociateCard;
 
 /** The familiar rules every familiar shares, in brief (Arcane Power). */
 export const FAMILIAR_RULES_REMINDER =

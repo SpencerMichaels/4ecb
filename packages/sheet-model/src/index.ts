@@ -45,6 +45,7 @@ import {
   type SheetCompanionCard,
 } from "./familiar-card";
 import { sheetBeastCompanionCard } from "./beast-companion-card";
+import { sheetAssociateCard } from "./associate-card";
 import {
   inventoryWeight,
   inventoryHoldingWeight,
@@ -165,6 +166,7 @@ export {
   sheetBeastCompanionCard,
   type SheetBeastCompanionCard,
 } from "./beast-companion-card";
+export { sheetAssociateCard, type SheetAssociateCard } from "./associate-card";
 export type {
   SheetOverview,
   OverviewFeature,
@@ -1707,6 +1709,17 @@ export function buildSheetModel(
   });
 }
 
+/** Where an associate's provenance stops climbing its granting features. */
+const ASSOCIATE_PROVENANCE_STOP_TYPES = new Set([
+  "class",
+  "hybrid class",
+  "race",
+  "theme",
+  "background",
+  "paragon path",
+  "epic destiny",
+]);
+
 /** Build a sheet only from a converged rules evaluation and its exact content profile. */
 export function buildEvaluatedSheetModel(
   snapshot: LegacyCharacterSnapshot,
@@ -1764,6 +1777,42 @@ export function buildEvaluatedSheetModel(
           }),
         ]),
     ...familiarCards,
+    // Associates (D107) after the beast and familiars. A provider that is an
+    // inert Internal record (a community card, 9F-associates.part) stands
+    // for the features that grant it, up to the class, race or theme.
+    ...(evaluation.associates ?? []).flatMap((associate) => {
+      const entity = entities.get(associate.definitionId.toLocaleLowerCase());
+      if (entity === undefined) return [];
+      const occurrenceById = new Map(
+        evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+      );
+      const typeOf = (occurrenceId: string | undefined) => {
+        const occurrence =
+          occurrenceId === undefined
+            ? undefined
+            : occurrenceById.get(occurrenceId);
+        return occurrence === undefined
+          ? undefined
+          : entities
+              .get(occurrence.definitionId.toLocaleLowerCase())
+              ?.type.trim()
+              .toLocaleLowerCase();
+      };
+      const provenanceIds = associate.providerIds.flatMap((providerId) => {
+        const chain = [providerId];
+        if (typeOf(providerId) !== "internal") return chain;
+        let parentId = occurrenceById.get(providerId)?.parentId;
+        while (
+          parentId !== undefined &&
+          !ASSOCIATE_PROVENANCE_STOP_TYPES.has(typeOf(parentId) ?? "")
+        ) {
+          chain.push(parentId);
+          parentId = occurrenceById.get(parentId)?.parentId;
+        }
+        return chain;
+      });
+      return [sheetAssociateCard(entity, associate, provenanceIds)];
+    }),
   ];
   const personalizePowerText = createEvaluatedPowerTextPersonalizer(
     evaluation,

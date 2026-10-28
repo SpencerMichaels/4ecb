@@ -317,7 +317,8 @@ describe("registry findings", () => {
         ],
         byId,
         sheet({
-          // An associate shows (contradicting its gap entry); the power has no card.
+          // An associate shows as a feature row, not its registered companion
+          // card; the power has no card.
           features: [
             {
               group: "Associate",
@@ -331,9 +332,12 @@ describe("registry findings", () => {
         }),
       ),
     );
-    expect(registryFindings(tallies).map(({ type }) => type)).toEqual([
-      "Associate",
-      "Power",
+    expect(
+      registryFindings(tallies).map(({ type, problem }) => [type, problem]),
+    ).toEqual([
+      ["Associate", "registered on companions, never seen there"],
+      ["Associate", "also shown on unregistered features"],
+      ["Power", expect.any(String)],
     ]);
     expect(
       registryFindings(tallies, () => undefined).every(
@@ -348,7 +352,7 @@ describe("registry findings", () => {
       ["Skill Training", { rows: 4, presented: 1, surfaces: { choices: 1 } }],
       // Listed as a feature, and also chosen under one.
       ["Feat", { rows: 2, presented: 2, surfaces: { features: 2 } }],
-      // A gap that now shows contradicts its entry.
+      // Shown only as a choice, never on its registered companion card.
       ["Associate", { rows: 1, presented: 1, surfaces: { choices: 1 } }],
     ]);
     expect(registryFindings(tallies).map(({ type }) => type)).toEqual([
