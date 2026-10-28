@@ -992,3 +992,8 @@ button.inventory-icon-action:disabled {
 .item-context-menu button:focus-visible {
   background: var(--surface-subtle);
 }
+
+.item-context-menu button[aria-disabled="true"] {
+  color: var(--muted);
+  cursor: default;
+}

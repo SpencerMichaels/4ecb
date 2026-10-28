@@ -4,6 +4,11 @@ import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 export interface ItemContextMenuItem {
   readonly label: string;
   readonly checked: boolean;
+  /**
+   * Why the action can't be changed (a Small character's versatile weapon
+   * is always two-handed): the item stays in the menu, shown but inert.
+   */
+  readonly disabledReason?: string;
   readonly onSelect: () => void;
 }
 
@@ -86,10 +91,13 @@ export function ItemContextMenu({
       {menu.items.map((item) => (
         <button
           aria-checked={item.checked}
+          aria-disabled={item.disabledReason === undefined ? undefined : true}
           key={item.label}
           role="menuitemcheckbox"
+          title={item.disabledReason}
           type="button"
           onClick={() => {
+            if (item.disabledReason !== undefined) return;
             item.onSelect();
             onClose();
           }}

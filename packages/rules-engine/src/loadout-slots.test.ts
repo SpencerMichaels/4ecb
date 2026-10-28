@@ -4,12 +4,17 @@ import type { EquipmentSlotAssignment } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
+  inventoryForcedTwoHanded,
+  inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
   legacyLoadoutHints,
   legacyLoadoutState,
+  loadoutContext,
   resolveLoadoutAssignments,
   type LoadoutHolding,
+  type LoadoutSlotContext,
 } from "./loadout-slots";
 
 function entity(
@@ -201,5 +206,149 @@ describe("loadout slots (D101)", () => {
     expect(worn.mainHandWeapon).toBeUndefined();
     expect([...worn.alternateEntryIds]).toEqual(["r"]);
     expect([...worn.twoHandedEntryIds]).toEqual(["s"]);
+  });
+});
+
+describe("loadout size rules (D102)", () => {
+  const sized = [
+    ...content,
+    entity("GREAT", "Great blade", "Weapon", {
+      "Item Slot": "Two-Hands",
+      "Hands Required": "Two-Handed",
+    }),
+    entity("SMALLV", "Little spear", "Weapon", {
+      "Item Slot": "One-hand",
+      "Hands Required": "One-Handed",
+      Properties: "Versatile, Small",
+    }),
+    entity("HUGE", "Large arming sword", "Weapon", {
+      "Item Slot": "One-hand",
+      "Hands Required": "One-Handed",
+      Size: "Large",
+    }),
+  ];
+  const sizedById = new Map(
+    sized.map((value) => [value.id.toLowerCase(), value]),
+  );
+  const facts = (
+    extra: Partial<LoadoutSlotContext> = {},
+  ): LoadoutSlotContext => ({
+    small: false,
+    oversized: false,
+    oneSizeLarger: false,
+    ambidextrous: false,
+    ...extra,
+  });
+  const small = loadoutContext({}, facts({ small: true }));
+
+  it("holds a non-small versatile weapon in both hands for a Small character", () => {
+    const sword = holding("s", "SWORD", { wieldedTwoHanded: false });
+    expect(inventoryForcedTwoHanded(sword, sizedById, small)).toBe(true);
+    expect(inventoryWieldsTwoHanded(sword, sizedById, small)).toBe(true);
+    expect(inventoryRequiresBothHands(sword, sizedById, small)).toBe(true);
+    // Imported equip counts land in both hands, and the rules see the
+    // versatile weapon used two-handed.
+    const state = legacyLoadoutState([holding("s", "SWORD")], sizedById, small);
+    expect(slots(state.assignmentsByEntry)).toEqual({
+      s: "main-hand+off-hand",
+    });
+    expect([...state.twoHandedEntryIds]).toEqual(["s"]);
+    // A Small weapon, One Size Larger, or no size facts leave it a choice.
+    expect(
+      inventoryForcedTwoHanded(holding("v", "SMALLV"), sizedById, small),
+    ).toBe(false);
+    expect(
+      inventoryForcedTwoHanded(
+        sword,
+        sizedById,
+        loadoutContext({}, facts({ small: true, oneSizeLarger: true })),
+      ),
+    ).toBe(false);
+    expect(inventoryRequiresBothHands(sword, sizedById)).toBe(false);
+  });
+
+  it("fills the free other hand for a weapon placed in one hand that needs both", () => {
+    const placed = holding("s", "SWORD", {
+      equippedSlots: [{ slot: "main-hand", quantityIndex: 0 }],
+    });
+    expect(
+      slots(
+        resolveLoadoutAssignments([placed], sizedById, small)
+          .assignmentsByEntry,
+      ),
+    ).toEqual({ s: "main-hand+off-hand" });
+    // Something else in the off hand keeps it; nothing is displaced.
+    expect(
+      slots(
+        resolveLoadoutAssignments(
+          [
+            placed,
+            holding("r", "RAZOR", {
+              equippedSlots: [{ slot: "off-hand", quantityIndex: 0 }],
+            }),
+          ],
+          sizedById,
+          small,
+        ).assignmentsByEntry,
+      ),
+    ).toEqual({ s: "main-hand", r: "off-hand" });
+  });
+
+  it("holds a two-handed weapon in one hand with One Size Larger", () => {
+    const larger = loadoutContext({}, facts({ oneSizeLarger: true }));
+    const great = holding("g", "GREAT");
+    expect(inventoryRequiresBothHands(great, sizedById, larger)).toBe(false);
+    expect(
+      slots(
+        resolveLoadoutAssignments([great], sizedById, larger)
+          .assignmentsByEntry,
+      ),
+    ).toEqual({ g: "main-hand" });
+    expect(inventoryRequiresBothHands(great, sizedById)).toBe(true);
+  });
+
+  it("leaves Ambidextrous to the rules' SLOT: matching", () => {
+    const ambidextrous = loadoutContext({}, facts({ ambidextrous: true }));
+    expect(
+      slots(
+        resolveLoadoutAssignments(
+          [holding("s", "SWORD")],
+          sizedById,
+          ambidextrous,
+        ).assignmentsByEntry,
+      ),
+    ).toEqual({ s: "main-hand" });
+  });
+
+  it("names weapons the character can't wield, and still places them as authored", () => {
+    const great = holding("g", "GREAT");
+    expect(
+      inventoryUnwieldableReason(great, sizedById, small.slotContext),
+    ).toBe("small");
+    expect(inventoryRequiresBothHands(great, sizedById, small)).toBe(true);
+    expect(
+      slots(
+        resolveLoadoutAssignments([great], sizedById, small).assignmentsByEntry,
+      ),
+    ).toEqual({ g: "main-hand+off-hand" });
+
+    const huge = holding("h", "HUGE");
+    expect(inventoryUnwieldableReason(huge, sizedById, facts())).toBe("large");
+    expect(
+      inventoryUnwieldableReason(huge, sizedById, facts({ oversized: true })),
+    ).toBeUndefined();
+    expect(
+      inventoryUnwieldableReason(
+        huge,
+        sizedById,
+        facts({ oneSizeLarger: true }),
+      ),
+    ).toBeUndefined();
+    expect(inventoryUnwieldableReason(huge, sizedById, undefined)).toBe(
+      undefined,
+    );
+    expect(
+      inventoryUnwieldableReason(holding("s", "SWORD"), sizedById, facts()),
+    ).toBeUndefined();
   });
 });

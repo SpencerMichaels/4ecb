@@ -2560,6 +2560,71 @@ describe("character evaluator", () => {
     ).toBe(1);
   });
 
+  it("exposes the size facts and holds a Small character's versatile weapon in both hands (D102)", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Free", value: "+1", "not-wearing": "SLOT:off hand" },
+            0,
+          ),
+        ],
+      }),
+      entity("SMALL", "Small", "Size"),
+      entity("SWORD", "Arming sword", "Weapon", {
+        specifics: {
+          "Hands Required": "One-Handed",
+          "Item Slot": "One-hand",
+          Properties: "Versatile",
+        },
+      }),
+    ];
+    const evaluate = (size: boolean) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            ...(size
+              ? [
+                  {
+                    id: "size",
+                    definitionId: "SMALL",
+                    acquiredLevel: 1,
+                    kind: "grant" as const,
+                    parentId: "root",
+                  },
+                ]
+              : []),
+          ],
+          inventory: [
+            {
+              id: "sword",
+              definitionIds: ["SWORD"],
+              quantity: 1,
+              equippedQuantity: 1,
+              acquiredLevel: 1,
+              equippedSlots: [{ slot: "main-hand", quantityIndex: 0 }],
+            },
+          ],
+        },
+        content,
+      );
+    const small = evaluate(true);
+    expect(small.loadoutSlotContext).toEqual({
+      small: true,
+      oversized: false,
+      oneSizeLarger: false,
+      ambidextrous: false,
+    });
+    // Native ItemSlot makes the versatile sword "two-hands" for a Small
+    // character, which fills the off hand.
+    expect(small.stats.Free?.value ?? 0).toBe(0);
+    expect(evaluate(false).stats.Free?.value ?? 0).toBe(1);
+  });
+
   it("resolves weapon and armor fields through modify overlays, including BaseItem", () => {
     const result = evaluateCharacter(
       {

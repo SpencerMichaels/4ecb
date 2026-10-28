@@ -16,7 +16,7 @@ import { contentSpecificValue } from "./builder-ui";
 import {
   inventoryRequiresBothHands,
   inventorySlotCandidates,
-  legacyLoadoutHints,
+  loadoutContext,
   resolveLoadoutAssignments,
 } from "./equipment-ui";
 
@@ -67,7 +67,10 @@ function giftSlots(
  */
 export function freebeeGiftCommand(
   build: CharacterBuild,
-  evaluation: Pick<EvaluatedCharacter, "level" | "occurrences" | "stats">,
+  evaluation: Pick<
+    EvaluatedCharacter,
+    "level" | "occurrences" | "stats" | "loadoutSlotContext"
+  >,
   byId: ReadonlyMap<string, ContentEntity>,
 ): CharacterCommand | undefined {
   const pending = pendingFreebeeItems(build, evaluation, (id) =>
@@ -79,7 +82,7 @@ export function freebeeGiftCommand(
       ...resolveLoadoutAssignments(
         build.inventory,
         byId,
-        legacyLoadoutHints(build.textStrings),
+        loadoutContext(build.textStrings, evaluation.loadoutSlotContext),
       ).assignmentsByEntry,
     ]
       .flatMap(([, assignments]) => assignments)

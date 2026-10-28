@@ -26,6 +26,7 @@ import {
   itemChoiceCandidates,
   LOADOUT_SLOT_COLUMNS,
   loadoutChangeCommand,
+  loadoutContext,
   missingInventoryElements,
   practiceKind,
   resolveLoadoutAssignments,
@@ -1257,5 +1258,67 @@ describe("alternate slots and two-handed wielding in the Loadout (D101)", () => 
       slots: ["main-hand", "off-hand"],
       displaces: false,
     });
+  });
+});
+
+describe("size rules in the Loadout (D102)", () => {
+  const sword = entity("SWORD", "Bastard blade", "Weapon", {
+    "Item Slot": "One-hand",
+    Properties: "Versatile",
+  });
+  const great = entity("GREAT", "Great blade", "Weapon", {
+    "Item Slot": "Two-Hands",
+    "Hands Required": "Two-Handed",
+  });
+  const index = entityIndex(sword, great);
+  const facts = {
+    small: false,
+    oversized: false,
+    oneSizeLarger: false,
+    ambidextrous: false,
+  };
+
+  it("puts a Small character's versatile weapon in both hands", () => {
+    const small = loadoutContext({}, { ...facts, small: true });
+    expect(
+      inventoryLoadoutToggle(
+        [holding(sword)],
+        index,
+        sword.id,
+        ["main-hand", "off-hand"],
+        small,
+      ),
+    ).toEqual({
+      kind: "equip",
+      slots: ["main-hand", "off-hand"],
+      displaces: false,
+    });
+    expect(inventoryRequiresBothHands(holding(sword), index, small)).toBe(true);
+    // An unwieldable two-handed weapon is still placed, in both hands.
+    expect(
+      inventoryLoadoutToggle(
+        [holding(great)],
+        index,
+        great.id,
+        ["main-hand", "off-hand"],
+        small,
+      ),
+    ).toEqual({
+      kind: "equip",
+      slots: ["main-hand", "off-hand"],
+      displaces: false,
+    });
+  });
+
+  it("puts a two-handed weapon in one hand with One Size Larger", () => {
+    expect(
+      inventoryLoadoutToggle(
+        [holding(great)],
+        index,
+        great.id,
+        ["main-hand", "off-hand"],
+        loadoutContext({}, { ...facts, oneSizeLarger: true }),
+      ),
+    ).toEqual({ kind: "equip", slots: ["main-hand"], displaces: false });
   });
 });

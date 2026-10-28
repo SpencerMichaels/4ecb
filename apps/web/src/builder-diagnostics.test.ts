@@ -17,6 +17,7 @@ import {
   evaluationFailedIssue,
   missingHoldingContentIssues,
   savedOccurrenceNames,
+  unwieldableWeaponIssues,
   withCharacterIssues,
 } from "./builder-diagnostics";
 
@@ -962,5 +963,117 @@ describe("dormant saved selections", () => {
       abilityScoresHouseRuled: false,
     });
     for (const issues of Object.values(groups)) expect(issues).toEqual([]);
+  });
+});
+
+describe("unwieldable weapon issues (D102)", () => {
+  const weapon = (
+    id: string,
+    name: string,
+    specifics: Record<string, string>,
+  ): ContentEntity => ({
+    id,
+    name,
+    type: "Weapon",
+    source: "test",
+    sources: ["test"],
+    attributes: [],
+    categories: [],
+    specifics: Object.entries(specifics).map(([fieldName, value], ordinal) => ({
+      name: fieldName,
+      value,
+      extraAttributes: [],
+      ordinal,
+    })),
+    rules: [],
+    description: "",
+    extensions: [],
+    provenance: { sourceKey: "test", sourceOrdinal: 0 },
+  });
+  const great = weapon("GREAT", "Great blade", {
+    "Item Slot": "Two-Hands",
+    "Hands Required": "Two-Handed",
+  });
+  const huge = weapon("HUGE", "Large arming sword", {
+    "Item Slot": "One-hand",
+    Size: "Large",
+  });
+  const byId = new Map([
+    ["great", great],
+    ["huge", huge],
+  ]);
+  const holding = (
+    id: string,
+    item: ContentEntity,
+    equippedQuantity: number,
+  ): BuildInventoryEntry => ({
+    id,
+    acquiredLevel: 1,
+    quantity: 1,
+    equippedQuantity,
+    elements: [{ definitionId: item.id, name: item.name, type: item.type }],
+    overrides: {},
+    legality: "rules-legal",
+  });
+  const build: CharacterBuild = {
+    formatVersion: 3,
+    known: [],
+    effectiveLevel: 1,
+    levels: [],
+    grabbag: [],
+    inventory: [
+      holding("great", great, 1),
+      holding("huge", huge, 1),
+      holding("spare", great, 0),
+    ],
+    alternates: [],
+    baseAbilities: {},
+    textStrings: {},
+  };
+  const facts = {
+    small: true,
+    oversized: false,
+    oneSizeLarger: false,
+    ambidextrous: false,
+  };
+
+  it("raises a house-rule issue per equipped weapon the character can't wield", () => {
+    const issues = unwieldableWeaponIssues(build, byId, facts);
+    expect(issues).toEqual([
+      {
+        key: "house-rule:unwieldable-weapon:great",
+        kind: "house-rule",
+        title: "Great blade",
+        detail:
+          "Small characters can't wield two-handed weapons, so this character can't wield the Great blade.",
+        effect:
+          "The weapon stays equipped and its attacks are still listed, but the character is marked as using house rules.",
+        target: { kind: "inventory", entryId: "great" },
+      },
+      expect.objectContaining({
+        key: "house-rule:unwieldable-weapon:huge",
+        detail:
+          "The Large arming sword is a Large weapon, which this character can't wield without a feature such as Oversized.",
+      }),
+    ]);
+    const groups = withCharacterIssues(
+      builderIssueGroups({ ...common, evaluation: evaluation(), build }),
+      issues,
+    );
+    expect(groups.houseRules.map(({ key }) => key)).toEqual([
+      "house-rule:unwieldable-weapon:great",
+      "house-rule:unwieldable-weapon:huge",
+    ]);
+  });
+
+  it("raises nothing for a character who can wield them, or before evaluation", () => {
+    expect(
+      unwieldableWeaponIssues(build, byId, {
+        ...facts,
+        small: false,
+        oversized: true,
+      }),
+    ).toEqual([]);
+    expect(unwieldableWeaponIssues(build, byId, undefined)).toEqual([]);
   });
 });

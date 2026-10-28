@@ -5,7 +5,13 @@ import type {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { equipmentName } from "./item-fields";
+import {
+  equipmentName,
+  legacyIsStaff,
+  legacyItemSlot,
+  legacyUnwieldableReason,
+  type LootSlotContext,
+} from "./item-fields";
 
 /**
  * The single loadout-slot resolver shared by the evaluator, the builder's
@@ -41,6 +47,33 @@ export interface LoadoutHolding extends ItemElements {
 export interface LegacyLoadoutHints {
   readonly mainHandWeapon?: string;
   readonly versatileUsedTwoHanded?: boolean;
+}
+
+/**
+ * The character facts native ItemSlot reads (Small size, Oversized, One
+ * Size Larger, Ambidextrous), as the evaluator found them
+ * (`EvaluatedCharacter.loadoutSlotContext`, D102).
+ */
+export type LoadoutSlotContext = Omit<LootSlotContext, "mainHandWeapon">;
+
+/**
+ * Everything the resolver reads beyond the holdings: the imported legacy
+ * hints and, once the character is evaluated, its size facts. Without the
+ * size facts a holding fills the hands its record names.
+ */
+export interface LoadoutContext extends LegacyLoadoutHints {
+  readonly slotContext?: LoadoutSlotContext;
+}
+
+/** The loadout context of a build's text strings and evaluated size facts. */
+export function loadoutContext(
+  textStrings: Readonly<Record<string, string>> | undefined,
+  slotContext: LoadoutSlotContext | undefined,
+): LoadoutContext {
+  return {
+    ...legacyLoadoutHints(textStrings),
+    ...(slotContext === undefined ? {} : { slotContext }),
+  };
 }
 
 export interface ResolvedLoadoutAssignments {
@@ -217,6 +250,63 @@ function inventoryWeapon(
   );
 }
 
+/**
+ * The hands native ItemSlot gives the holding's weapon for this character's
+ * size ("two-hands", "one-hand", ...): a Small character holds a non-small
+ * versatile weapon in two hands, One Size Larger holds a two-handed weapon
+ * in one. Undefined without size facts, for a staff (native holds it
+ * off-hand, which the loadout leaves to the record) or for a weapon the
+ * character can't wield at all, which the loadout places as authored (and
+ * the builder raises as a character issue). Ambidextrous only renames a
+ * one-handed item's slot, so it is ignored here.
+ */
+function sizedHandSlot(
+  entry: ItemElements,
+  byId: ReadonlyMap<string, ContentEntity>,
+  slotContext: LoadoutSlotContext | undefined,
+): string | undefined {
+  const weapon = inventoryWeapon(entry, byId);
+  if (slotContext === undefined || weapon === undefined) return undefined;
+  if (legacyIsStaff(weapon)) return undefined;
+  const slot = key(
+    legacyItemSlot(weapon, { ...slotContext, ambidextrous: false }),
+  );
+  return slot === "" ? undefined : slot;
+}
+
+/**
+ * Why the character can't wield the holding's weapon (native ItemSlot gives
+ * it no slot and native ValidateEquip refuses to equip it): "small" for a
+ * non-small two-handed weapon held by a Small character, "large" for a
+ * Large weapon without Oversized or One Size Larger. The builder still
+ * places it as authored and raises a character issue (D102).
+ */
+export function inventoryUnwieldableReason<Item extends ItemElements>(
+  entry: Item,
+  byId: ReadonlyMap<string, ContentEntity>,
+  slotContext: LoadoutSlotContext | undefined,
+): "small" | "large" | undefined {
+  const weapon = inventoryWeapon(entry, byId);
+  if (slotContext === undefined || weapon === undefined) return undefined;
+  return legacyUnwieldableReason(weapon, slotContext);
+}
+
+/**
+ * A versatile weapon the character's size forces into both hands (a Small
+ * character with a non-small versatile weapon): there is no one-handed
+ * choice to make.
+ */
+export function inventoryForcedTwoHanded<Item extends ItemElements>(
+  entry: Item,
+  byId: ReadonlyMap<string, ContentEntity>,
+  context: LoadoutContext = {},
+): boolean {
+  return (
+    inventoryIsVersatile(entry, byId) &&
+    sizedHandSlot(entry, byId, context.slotContext) === "two-hands"
+  );
+}
+
 /** Whether the holding's weapon has the versatile property. */
 export function inventoryIsVersatile<Item extends ItemElements>(
   entry: Item,
@@ -230,10 +320,11 @@ export function inventoryIsVersatile<Item extends ItemElements>(
 }
 
 /**
- * A versatile weapon the character wields in two hands: the holding's own
- * choice, or, for an imported holding without exact slots and no modern
- * choice, legacy `_INTERNAL_VersatileUsedTwoHanded` (native applies it to
- * every versatile weapon).
+ * A versatile weapon the character wields in two hands: forced by the
+ * character's size, the holding's own choice, or, for an imported holding
+ * without exact slots and no modern choice, legacy
+ * `_INTERNAL_VersatileUsedTwoHanded` (native applies it to every versatile
+ * weapon).
  */
 export function inventoryWieldsTwoHanded<
   Item extends ItemElements &
@@ -241,27 +332,34 @@ export function inventoryWieldsTwoHanded<
 >(
   entry: Item,
   byId: ReadonlyMap<string, ContentEntity>,
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): boolean {
   if (!inventoryIsVersatile(entry, byId)) return false;
+  if (inventoryForcedTwoHanded(entry, byId, hints)) return true;
   return (
     entry.wieldedTwoHanded ??
     (entry.equippedSlots === undefined && hints.versatileUsedTwoHanded === true)
   );
 }
 
-/** True when the holding fills both hand slots: a two-handed weapon, or a
- * versatile one wielded two-handed. */
+/** True when the holding fills both hand slots: a two-handed weapon (as
+ * native ItemSlot sizes it for the character, D102), or a versatile one
+ * wielded two-handed. */
 export function inventoryRequiresBothHands<
   Item extends ItemElements &
     Pick<LoadoutHolding, "wieldedTwoHanded" | "equippedSlots">,
 >(
   entry: Item,
   byId: ReadonlyMap<string, ContentEntity>,
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): boolean {
   const item = inventoryWeapon(entry, byId);
   if (item === undefined) return false;
+  const sized = sizedHandSlot(entry, byId, hints.slotContext);
+  if (sized !== undefined)
+    return (
+      sized === "two-hands" || inventoryWieldsTwoHanded(entry, byId, hints)
+    );
   return (
     key(specific(item, "Item Slot") ?? "").includes("two-hand") ||
     key(specific(item, "Hands Required") ?? "").includes("two-handed") ||
@@ -329,7 +427,7 @@ const inferredSlotPriority: readonly EquipmentSlotId[] = [
 export function resolveLoadoutAssignments(
   inventory: readonly LoadoutHolding[],
   byId: ReadonlyMap<string, ContentEntity>,
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): ResolvedLoadoutAssignments {
   const assignmentsByEntry = new Map<
     string,
@@ -342,6 +440,32 @@ export function resolveLoadoutAssignments(
     const assignments = [...entry.equippedSlots];
     assignmentsByEntry.set(entry.id, assignments);
     assignments.forEach(({ slot }) => occupied.add(slot));
+  }
+  // A weapon placed in one hand that needs both (a Small character's
+  // longsword, placed before the loadout knew the character's size, D102)
+  // also fills the other hand when nothing else holds it.
+  for (const entry of inventory) {
+    const placed = assignmentsByEntry.get(entry.id);
+    if (placed === undefined || !inventoryRequiresBothHands(entry, byId, hints))
+      continue;
+    const extended = [...placed];
+    for (const { slot, quantityIndex } of placed) {
+      if (slot !== "main-hand" && slot !== "off-hand") continue;
+      const other = slot === "main-hand" ? "off-hand" : "main-hand";
+      if (
+        occupied.has(other) ||
+        placed.some(
+          (assignment) =>
+            assignment.slot === other &&
+            assignment.quantityIndex === quantityIndex,
+        )
+      )
+        continue;
+      extended.push({ slot: other, quantityIndex });
+      occupied.add(other);
+    }
+    if (extended.length !== placed.length)
+      assignmentsByEntry.set(entry.id, extended);
   }
 
   const handRank = (entry: LoadoutHolding): number => {
@@ -453,7 +577,7 @@ export interface LegacyLoadoutState {
 export function legacyLoadoutState(
   inventory: readonly LoadoutHolding[],
   byId: ReadonlyMap<string, ContentEntity>,
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): LegacyLoadoutState {
   const { assignmentsByEntry } = resolveLoadoutAssignments(
     inventory,

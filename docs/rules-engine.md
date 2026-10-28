@@ -433,6 +433,21 @@ per holding: `BuildInventoryEntry.wieldedTwoHanded`, set by the
 are placed from those legacy encodings; export writes them back
 (`withLegacyLoadoutState` in `legacy-dnd4e`). The versatile +1 damage and
 the power requirements' two-handed use read the same per-holding state.
+
+The loadout applies the same native `ItemSlot` size rules to the hands a
+weapon fills (D102), from the evaluated size facts
+(`EvaluatedCharacter.loadoutSlotContext`: Small, Oversized, One Size Larger,
+Ambidextrous): a Small character holds a non-small versatile weapon in both
+hands (`inventoryForcedTwoHanded`), and One Size Larger holds a two-handed
+weapon in one. A weapon placed in one hand that needs both also fills the
+other hand when it is free. Staff-as-off-hand and Ambidextrous only rename
+the slot `SLOT:` compares, so placement ignores them. A weapon native
+`ItemSlot` leaves with no slot (a non-small two-handed weapon for a Small
+character, a Large weapon without Oversized or One Size Larger) is one
+native `ValidateEquip` refuses to equip; the loadout still places it as
+authored and the builder raises a house-rule character issue. Its attack
+rows stay, as native `BuildWeaponsList` lists every owned weapon whatever
+its slot.
 The ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 

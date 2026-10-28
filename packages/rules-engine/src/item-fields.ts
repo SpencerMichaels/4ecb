@@ -268,12 +268,34 @@ export function legacyItemSlot(
       slot = "two-hands";
   }
   if (weapon && key(rawField(base, "Size") ?? "") === "large") {
-    const canUseLarge =
-      context.oversized || (context.oneSizeLarger && !context.small);
-    if (!canUseLarge) return "";
+    if (!legacyCanUseLargeWeapons(context)) return "";
   } else if (key(slot) === "two-hands" && oneSizeLarger) slot = "one-hand";
   if (key(slot) === "one-hand" && context.ambidextrous) slot = "off-hand";
   return slot;
+}
+
+/** Native CanUseLargeWeapons: Oversized, or One Size Larger when not Small. */
+function legacyCanUseLargeWeapons(context: LootSlotContext): boolean {
+  return context.oversized || (context.oneSizeLarger && !context.small);
+}
+
+/**
+ * Why native ItemSlot leaves a weapon with no slot, so native ValidateEquip
+ * refuses to equip it: "large" for a Large weapon the character can't use
+ * (CanUseLargeWeapons), "small" for a non-small two-handed weapon held by a
+ * Small character. Undefined when the weapon fits a slot (D102).
+ */
+export function legacyUnwieldableReason(
+  base: ContentEntity,
+  context: LootSlotContext,
+): "small" | "large" | undefined {
+  if (key(base.type) !== "weapon" || legacyIsStaff(base)) return undefined;
+  if ((rawField(base, "Item Slot") ?? "").trim() === "") return undefined;
+  if (legacyItemSlot(base, context) !== "") return undefined;
+  return key(rawField(base, "Size") ?? "") === "large" &&
+    !legacyCanUseLargeWeapons(context)
+    ? "large"
+    : "small";
 }
 
 /** One equipped holding as native CharLootSlot sees it. */

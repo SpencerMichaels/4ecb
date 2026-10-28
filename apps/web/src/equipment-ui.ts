@@ -17,14 +17,17 @@ import {
 import {
   inventoryAlternateSlot,
   inventoryDefinitionIds,
+  inventoryForcedTwoHanded,
   inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
   isAuthoredShield,
   legacyLoadoutHints,
+  loadoutContext,
   resolveLoadoutAssignments,
-  type LegacyLoadoutHints,
+  type LoadoutContext,
 } from "@4ecb/sheet-model";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
@@ -35,15 +38,20 @@ import { LOADOUT_SLOT_ICONS } from "./item-icons";
 // builder and the sheet share it (D101); re-exported for builder callers.
 export {
   inventoryDefinitionIds,
+  inventoryForcedTwoHanded,
   inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
   legacyLoadoutHints,
+  loadoutContext,
   resolveLoadoutAssignments,
 };
 export type {
   LegacyLoadoutHints,
+  LoadoutContext,
+  LoadoutSlotContext,
   ResolvedLoadoutAssignments,
 } from "@4ecb/sheet-model";
 
@@ -916,7 +924,7 @@ export function loadoutChangeCommand(
   slots: readonly EquipmentSlotId[],
   currentEntryId?: string,
   currentSlots: readonly EquipmentSlotId[] = slots,
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): CharacterCommand | undefined {
   const loadout = resolveLoadoutAssignments(inventory, byId, hints);
   const assignmentsFor = (
@@ -1002,7 +1010,7 @@ export function inventoryLoadoutToggle(
   byId: ReadonlyMap<string, ContentEntity>,
   entryId: string,
   visibleSlots: readonly EquipmentSlotId[],
-  hints: LegacyLoadoutHints = {},
+  hints: LoadoutContext = {},
 ): InventoryLoadoutToggle {
   const entry = inventory.find(({ id }) => id === entryId);
   if (entry === undefined) return { kind: "unavailable" };

@@ -59,14 +59,15 @@ import {
 } from "./item-fields";
 import { legacyKeywordList } from "./weapon-groups";
 import {
-  legacyLoadoutHints,
   legacyLoadoutState,
+  loadoutContext,
   type LegacyLoadoutState,
+  type LoadoutSlotContext,
 } from "./loadout-slots";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v63-2026-10-27-loadout-slots";
+  "evaluated-character-v64-2026-10-27-loadout-size";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -252,6 +253,9 @@ export interface EvaluatedCharacter {
   readonly textContributions?: readonly EvaluatedTextContribution[];
   readonly overlays: readonly FieldOverlay[];
   readonly powers: readonly EvaluatedPower[];
+  /** The size facts native ItemSlot reads, for the builder's loadout
+   *  (`loadout-slots.ts`, D102); always set by the evaluator. */
+  readonly loadoutSlotContext?: LoadoutSlotContext;
   /** The beast companion's statistics, when the character has one. */
   readonly beastCompanion?: EvaluatedBeastCompanion;
   /** Item sets the character has pieces of (legacy `ItemSetCount`). */
@@ -534,7 +538,7 @@ function equippedState(
   let loadout: LegacyLoadoutState | undefined;
   const build = () => {
     if (builtFor === overlays.length && loadout !== undefined) return;
-    loadout = evaluatedLoadout(input, index, overlays);
+    loadout = evaluatedLoadout(input, index, overlays, slotContext);
     items = equippedItems(
       input,
       index,
@@ -570,6 +574,7 @@ function evaluatedLoadout(
   input: EvaluationInput,
   index: RulesIndex,
   overlays: readonly FieldOverlay[],
+  slotContext: LootSlotContext,
 ): LegacyLoadoutState {
   const holdings = input.inventory.filter(
     (item) => item.acquiredLevel <= input.level,
@@ -597,7 +602,7 @@ function evaluatedLoadout(
         : { wieldedTwoHanded: entry.wieldedTwoHanded }),
     })),
     byId,
-    legacyLoadoutHints(input.textStrings),
+    loadoutContext(input.textStrings, slotContext),
   );
 }
 
@@ -1608,12 +1613,8 @@ function evaluateCharacterInternal(
           key,
         );
   const overlays: FieldOverlay[] = [];
-  const equipment = equippedState(
-    currentInput,
-    index,
-    overlays,
-    lootSlotContext(ownedDefinitions),
-  );
+  const slotContext = lootSlotContext(ownedDefinitions);
+  const equipment = equippedState(currentInput, index, overlays, slotContext);
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
     stats.add({
@@ -3156,6 +3157,7 @@ function evaluateCharacterInternal(
     textContributions,
     overlays,
     powers,
+    loadoutSlotContext: slotContext,
     ...(beastCompanion === undefined ? {} : { beastCompanion }),
     ...(itemSets.itemSets.length === 0 ? {} : { itemSets: itemSets.itemSets }),
     suggestions,

@@ -33,6 +33,7 @@ import {
   evaluationFailedIssue,
   deityAlignmentIssue,
   missingHoldingContentIssues,
+  unwieldableWeaponIssues,
   withCharacterIssues,
   type BuilderIssue,
 } from "./builder-diagnostics";
@@ -122,7 +123,7 @@ import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
-import { legacyLoadoutHints, loadoutChangeCommand } from "./equipment-ui";
+import { loadoutChangeCommand, loadoutContext } from "./equipment-ui";
 import { useArmedAction } from "./useArmedAction";
 import { freebeeGiftCommand } from "./freebee-gifts";
 import { type InspectedOption } from "./CandidateSelectionTable";
@@ -1361,6 +1362,11 @@ export function CharacterEditorPage({
       ...(contentMissing || byId.size === 0
         ? []
         : missingHoldingContentIssues(build, byId)),
+      ...unwieldableWeaponIssues(
+        build,
+        byId,
+        currentEvaluation?.loadoutSlotContext,
+      ),
     ],
   );
   const totalUnresolved = builderIssues.unresolved.length;
@@ -2811,6 +2817,7 @@ export function CharacterEditorPage({
                     activeDefinitionIds={
                       currentEvaluation?.activeDefinitionIds ?? []
                     }
+                    loadoutSlotContext={currentEvaluation?.loadoutSlotContext}
                     workspace={workspaceTab === "shop" ? "shop" : "equipment"}
                     loadoutView={
                       navigation.workspace === "equipment" &&
@@ -2859,7 +2866,10 @@ export function CharacterEditorPage({
                         slotIds,
                         currentEntryId,
                         displacedSlotIds,
-                        legacyLoadoutHints(build.textStrings),
+                        loadoutContext(
+                          build.textStrings,
+                          currentEvaluation?.loadoutSlotContext,
+                        ),
                       );
                       if (command !== undefined) dispatch(command);
                     }}

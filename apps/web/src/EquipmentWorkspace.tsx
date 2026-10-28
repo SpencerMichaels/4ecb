@@ -34,13 +34,15 @@ import {
   inventoryDefinitionIds,
   inventoryDisplayName,
   inventoryEntryForEntity,
+  inventoryForcedTwoHanded,
   inventoryIsVersatile,
   inventoryLoadoutToggle,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
   inventoryWieldsTwoHanded,
-  legacyLoadoutHints,
-  type LegacyLoadoutHints,
+  loadoutContext,
+  type LoadoutContext,
+  type LoadoutSlotContext,
   missingInventoryElements,
   resolveLoadoutAssignments,
   resolvedItemChoices,
@@ -380,7 +382,7 @@ function LoadoutGrid({
 }: {
   readonly inventory: readonly BuildInventoryEntry[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly hints: LegacyLoadoutHints;
+  readonly hints: LoadoutContext;
   readonly activeDefinitionIds: readonly string[];
   readonly onInspect: (entry: BuildInventoryEntry) => void;
   readonly onItemContextMenu: (
@@ -929,6 +931,7 @@ export function EquipmentWorkspace({
   byId,
   wallet,
   activeDefinitionIds,
+  loadoutSlotContext,
   workspace,
   loadoutView,
   shopCategory,
@@ -945,6 +948,9 @@ export function EquipmentWorkspace({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
+  /** The evaluated size facts the loadout applies (Small, Oversized, One
+   *  Size Larger; D102). */
+  readonly loadoutSlotContext?: LoadoutSlotContext | undefined;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -997,17 +1003,26 @@ export function EquipmentWorkspace({
     [activeDefinitionIds, byId],
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
-  const loadoutHints = legacyLoadoutHints(build.textStrings);
+  const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
   // Per-item right-click actions, as in the legacy builder (no menu button).
   const itemActions = (
     entry: BuildInventoryEntry,
   ): readonly ItemContextMenuItem[] => {
     if (!inventoryIsVersatile(entry, byId)) return [];
     const twoHanded = inventoryWieldsTwoHanded(entry, byId, loadoutHints);
+    // A Small character holds a non-small versatile weapon in both hands:
+    // the choice stays in the menu, checked and inert.
+    const forced = inventoryForcedTwoHanded(entry, byId, loadoutHints);
     return [
       {
         label: "Wield two-handed",
         checked: twoHanded,
+        ...(forced
+          ? {
+              disabledReason:
+                "Small characters wield this weapon in both hands.",
+            }
+          : {}),
         onSelect: () => onSetWielding(entry.id, !twoHanded),
       },
     ];

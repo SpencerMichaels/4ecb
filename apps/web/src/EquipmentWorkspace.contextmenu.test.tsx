@@ -147,3 +147,65 @@ describe("Equipment item right-click actions (D101)", () => {
     expect(container.querySelector('[role="menu"]')).toBeNull();
   });
 });
+
+describe("Equipment loadout size rules (D102)", () => {
+  it("keeps Wield two-handed checked and inert for a Small character's versatile weapon", () => {
+    const onSetWielding = vi.fn();
+    act(() =>
+      root.render(
+        <EquipmentWorkspace
+          build={build}
+          entities={[sword, dagger]}
+          byId={
+            new Map([
+              ["sword", sword],
+              ["dagger", dagger],
+            ])
+          }
+          wallet={{ carried: noCoins, stored: noCoins }}
+          activeDefinitionIds={[]}
+          loadoutSlotContext={{
+            small: true,
+            oversized: false,
+            oneSizeLarger: false,
+            ambidextrous: false,
+          }}
+          workspace="equipment"
+          loadoutView={false}
+          shopCategory="weapons"
+          onShopCategoryChange={() => undefined}
+          onPutInventory={() => undefined}
+          onPurchase={() => undefined}
+          onSell={() => undefined}
+          onEquipSlot={() => undefined}
+          onSetWielding={onSetWielding}
+          onSetText={() => undefined}
+        />,
+      ),
+    );
+    const row = [...container.querySelectorAll("tr")].find((candidate) =>
+      candidate.textContent?.includes("Bastard blade"),
+    )!;
+    act(() => {
+      row.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 40,
+          clientY: 50,
+        }),
+      );
+    });
+    const item = container.querySelector<HTMLElement>(
+      '[role="menu"] [role="menuitemcheckbox"]',
+    );
+    expect(item?.textContent).toBe("Wield two-handed");
+    expect(item?.getAttribute("aria-checked")).toBe("true");
+    expect(item?.getAttribute("aria-disabled")).toBe("true");
+    expect(item?.getAttribute("title")).toMatch(/Small characters/);
+    act(() => item!.click());
+    expect(onSetWielding).not.toHaveBeenCalled();
+    // The menu stays open: the click changed nothing.
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+  });
+});

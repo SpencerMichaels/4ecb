@@ -3000,6 +3000,49 @@ Decision:
   two-handed use exports as the one native flag, so a re-import applies it
   to every versatile weapon, as native does.
 
+### D102 — The loadout applies the character's size; unwieldable weapons are a house rule
+
+Status: accepted (2026-10-27), owner-approved (part 2 of the Equipment-tab
+slot work).
+
+Context: after D101 the Equipment tab's slot logic (`inventoryRequiresBothHands`,
+the Loadout selects, double-click equip, `set-inventory-wielding`) read only
+the record's Item Slot, while the evaluator's `SLOT:` matching applies native
+`ItemSlot` (`-Module-.cs` ~19019): a halfling's longsword sat in the main hand
+with a free off hand, but the engine counted it as two-handed. Native
+`ItemSlot` returns an empty slot for a weapon the character can't wield (a
+non-small two-handed weapon for a Small character; a Large weapon without
+`CanUseLargeWeapons`), and native `ValidateEquip` (~20144) then refuses to
+equip it. Native `BuildWeaponsList` (~22312) lists every owned weapon for
+power rows regardless of slot.
+
+Decision:
+
+- The evaluator exposes the size facts native `ItemSlot` reads as
+  `EvaluatedCharacter.loadoutSlotContext` (Small, Oversized, One Size
+  Larger, Ambidextrous; cache v64). The loadout resolver takes them through
+  `loadoutContext(textStrings, slotContext)` and applies `legacyItemSlot` to
+  the hands a weapon fills: a Small character holds a non-small versatile
+  weapon in both hands, One Size Larger holds a two-handed weapon in one.
+  The Equipment tab, the sheet and the evaluator pass the same facts.
+- A weapon placed in one hand that now needs both (saved before the loadout
+  knew the character's size) also fills the other hand when it is free; the
+  durable build changes only on the next loadout edit.
+- Staff-as-off-hand and Ambidextrous only rename the slot `SLOT:` compares;
+  loadout placement ignores them.
+- The right-click "Wield two-handed" item stays on a versatile weapon whose
+  two-handed use the character's size forces, checked and inert, with the
+  reason as its tooltip.
+- Unlike native, a weapon the character can't wield may still be placed
+  (owner decision: allow with an issue). It fills the hands its record
+  names, and the builder raises one house-rule character issue per equipped
+  weapon (`unwieldableWeaponIssues`, via `withCharacterIssues`) naming the
+  weapon and why. Its attack rows stay, as native lists every owned weapon.
+
+Not changed: native `IsProficient` also denies proficiency with a Large
+weapon without `CanUseLargeWeapons`; the modern proficiency check does not
+read weapon size yet.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 

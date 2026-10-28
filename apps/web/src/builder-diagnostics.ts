@@ -19,7 +19,12 @@ import {
   type DeityAlignmentConstraint,
   type LegacyChoiceSection,
 } from "./builder-ui";
-import { inventoryDisplayName, missingInventoryElements } from "./equipment-ui";
+import {
+  inventoryDisplayName,
+  inventoryUnwieldableReason,
+  missingInventoryElements,
+  type LoadoutSlotContext,
+} from "./equipment-ui";
 
 export type BuilderIssueKind =
   "unresolved" | "warning" | "error" | "house-rule" | "update";
@@ -264,6 +269,41 @@ export function missingHoldingContentIssues(
         effect: equipped
           ? "The item stays equipped and is preserved on export, but its effects aren't calculated."
           : "The item stays in the inventory and is preserved on export, but its effects can't be calculated.",
+        target: { kind: "inventory", entryId: entry.id },
+      },
+    ];
+  });
+}
+
+/**
+ * Equipped weapons the character can't wield at its size (D102): a
+ * non-small two-handed weapon for a Small character, or a Large weapon
+ * without Oversized or One Size Larger. The legacy builder refuses to equip
+ * them; here the weapon stays where it was placed, its attacks stay listed
+ * (as legacy lists every owned weapon), and the character is marked as
+ * using house rules.
+ */
+export function unwieldableWeaponIssues(
+  build: CharacterBuild,
+  byId: ReadonlyMap<string, ContentEntity>,
+  slotContext: LoadoutSlotContext | undefined,
+): BuilderIssue[] {
+  return build.inventory.flatMap((entry): BuilderIssue[] => {
+    if (entry.quantity <= 0 || entry.equippedQuantity <= 0) return [];
+    const reason = inventoryUnwieldableReason(entry, byId, slotContext);
+    if (reason === undefined) return [];
+    const name = inventoryDisplayName(entry, byId);
+    return [
+      {
+        key: `house-rule:unwieldable-weapon:${entry.id}`,
+        kind: "house-rule",
+        title: name,
+        detail:
+          reason === "small"
+            ? `Small characters can't wield two-handed weapons, so this character can't wield the ${name}.`
+            : `The ${name} is a Large weapon, which this character can't wield without a feature such as Oversized.`,
+        effect:
+          "The weapon stays equipped and its attacks are still listed, but the character is marked as using house rules.",
         target: { kind: "inventory", entryId: entry.id },
       },
     ];

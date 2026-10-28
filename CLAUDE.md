@@ -256,8 +256,14 @@ separate header or level rail.
   resolver (evaluator, Equipment tab, sheet; sheet-model and `equipment-ui.ts`
   re-export it). The evaluator takes the main hand, alternate-slot wear and
   versatile two-handed use from the resolved loadout (`legacyLoadoutState`,
-  D101), never from raw legacy text strings. Equipment-tab per-item actions
-  are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield two-handed".
+  D101), never from raw legacy text strings. The resolver also applies the
+  character's size facts (`EvaluatedCharacter.loadoutSlotContext`, passed as
+  `loadoutContext(textStrings, slotContext)`; D102): a Small character's
+  versatile weapon fills both hands, One Size Larger holds a two-handed
+  weapon in one, and an equipped weapon the character can't wield is a
+  house-rule character issue (`unwieldableWeaponIssues`). Equipment-tab
+  per-item actions are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield
+  two-handed" (checked and inert when size forces it).
 - **Stylesheets.** `apps/web/src/styles/index.css` imports every app
   stylesheet in cascade order: `primitives.css`, then `01-base.css` …
   `16-actions-notices.css`, split by surface without reordering rules. Put a

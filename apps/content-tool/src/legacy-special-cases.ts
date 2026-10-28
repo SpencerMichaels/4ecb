@@ -1085,22 +1085,34 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     IsLargeWeapon: code("Size 'Large' weapon.", "equipment-ui inventory names"),
     CanUseLargeWeapons: partial(
       "Oversized / One Size Larger / Small character text strings change which weapon sizes fit.",
-      "item-fields.ts legacyItemSlot (SLOT: selectors only); equipment-ui loadout slots and weapon rows do not model size",
+      "item-fields.ts legacyItemSlot for SLOT: selectors and the loadout hands (loadout-slots.ts, D102); an equipped Large weapon without it is a house-rule character issue (unwieldableWeaponIssues); IsProficient's large-weapon check is not read",
       test(ITEM_FIELDS, "adjusts the Item Slot for size and Ambidextrous"),
+      test(
+        LOADOUT_SLOTS,
+        "names weapons the character can't wield, and still places them as authored",
+      ),
     ),
-    "?A0x0bed2cbe.SmallWithNonSmallWeapon": partial(
+    "?A0x0bed2cbe.SmallWithNonSmallWeapon": code(
       "Small characters wield non-small weapons two-handed unless One Size Larger.",
-      "power-requirements.ts versatile two-handed use for requirements and powers.ts versatile damage (EXCEPTION_NAMES.smallSize/oneSizeLarger); slots do not model size",
+      "power-requirements.ts versatile two-handed use for requirements and powers.ts versatile damage (EXCEPTION_NAMES.smallSize/oneSizeLarger); the loadout holds the weapon in both hands and the Wield two-handed menu item is checked and inert (loadout-slots.ts inventoryForcedTwoHanded, D102)",
       test(
         REQUIREMENTS,
         "uses a versatile weapon two-handed for a Small character",
       ),
+      test(
+        LOADOUT_SLOTS,
+        "holds a non-small versatile weapon in both hands for a Small character",
+      ),
     ),
-    "?A0x0bed2cbe.ItemSlot": partial(
+    "?A0x0bed2cbe.ItemSlot": code(
       "Slot of a held item: staff as off-hand, versatile two-hands for Small characters, large weapons only with CanUseLargeWeapons, One Size Larger, Ambidextrous one-hand -> off-hand.",
-      "item-fields.ts legacyItemSlot for SLOT: selectors; equipment-ui loadout slots read Item Slot, so size, staff-as-off-hand and Ambidextrous are not modeled there",
+      "item-fields.ts legacyItemSlot for SLOT: selectors; the loadout applies its size rules to the hands a weapon fills (loadout-slots.ts, from EvaluatedCharacter.loadoutSlotContext, D102); staff-as-off-hand and Ambidextrous only rename the slot for SLOT: matching, so placement ignores them; a weapon with no slot (unwieldable) is placed as authored and raised as a house-rule character issue",
       test(EQUIPMENT_UI, "limits explicit loadout choices to authored slots"),
       test(ITEM_FIELDS, "adjusts the Item Slot for size and Ambidextrous"),
+      test(
+        LOADOUT_SLOTS,
+        "holds a two-handed weapon in one hand with One Size Larger",
+      ),
     ),
     "?A0x0bed2cbe.CharLootSlot": code(
       "A holding's slot for HasLoot SLOT: — Two-hands (double weapon, versatile used two-handed), the _AlternateSlot when the loot is worn there, 'Main hand, off hand' for two equipped, Main hand (one-hand, or the _INTERNAL_MainHandWeapon item), Off hand, else ItemSlot.",
@@ -1133,8 +1145,8 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x0bed2cbe.ValidateEquip": code(
-      "Two off-hand/ring items allowed.",
-      "equipment-ui loadout",
+      "Two off-hand/ring items allowed; an item whose ItemSlot is empty (a weapon too big for the character) cannot be equipped.",
+      "equipment-ui loadout; an unwieldable weapon may still be placed and is raised as a house-rule character issue (builder-diagnostics.ts unwieldableWeaponIssues, D102)",
       test(
         EQUIPMENT_UI,
         "shows legacy equipped counts in deterministic modern slots",

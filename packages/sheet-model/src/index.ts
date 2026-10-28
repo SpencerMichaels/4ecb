@@ -24,6 +24,7 @@ import {
   halfLevel,
   knownRecords,
   legacyLoadoutHints,
+  loadoutContext,
   overlaidEntity,
   resolveLoadoutAssignments,
   type EvaluatedCharacter,
@@ -69,14 +70,19 @@ export { characterClassName, hybridClassName } from "./class-identity";
 export {
   inventoryAlternateSlot,
   inventoryDefinitionIds,
+  inventoryForcedTwoHanded,
   inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
+  inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
   isAuthoredShield,
   legacyLoadoutHints,
+  loadoutContext,
   resolveLoadoutAssignments,
   type LegacyLoadoutHints,
+  type LoadoutContext,
+  type LoadoutSlotContext,
   type LoadoutHolding,
   type ResolvedLoadoutAssignments,
 } from "@4ecb/rules-engine";
@@ -2150,7 +2156,7 @@ export function buildEvaluatedSheetModel(
         })),
     })),
     entities,
-    legacyLoadoutHints(build.textStrings),
+    loadoutContext(build.textStrings, evaluation.loadoutSlotContext),
   );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: evaluation.level,
