@@ -131,7 +131,7 @@ column names only the formatting or formula native code adds.
 | Row gating | Rows only with a Hit line, `EffectPower` or the Healing keyword; a Healing power without a Hit line gets a placeholder row. | Divergent by decision (D094): attacks without a Hit line keep a row; no healing placeholder. | Confirmed (parity). | High | None. |
 | Restrictions | `IsRestricted` (wielding clauses, weapon swaps, monk weapons, two weapons). | Reproduced; D093 stops second-weapon/shield/free-hand clauses filtering rows. | Confirmed (save): extra modern Twin Strike rows. | High | Row set only. |
 | Off-hand | `DetermineOffhand`: same loot when equip count > 1, else the next equipped weapon or non-ki implement, else the double weapon's other end. | Reproduced (`legacyOffhand`). | Confirmed (parity). | High | Two-weapon channels. |
-| Unarmed melee base | For a melee power without a weapon, the WeaponBase is the record named by the `Unarmed Weapon` text (Belt of the Brawler → Club), else `Unarmed attack`; it feeds weapon keywords, proficiency bonus and weapon dice. | Open: the Unarmed row uses the base only for requirements and strikers; keywords, proficiency and dice ignore it. | Inferred (code); probe shows an `Unarmed group:attack` bonus ignored. | High | Brawler Style, Versatile Expertise (Unarmed), Weapon Expertise/Focus (Unarmed), Belt of the Brawler. |
+| Unarmed melee base | For a melee power without a weapon, the WeaponBase is the record named by the `Unarmed Weapon` text (Belt of the Brawler → Club), else `Unarmed attack`; it feeds weapon keywords, proficiency bonus and weapon dice. | Reproduced (`f533156`): `withUnarmedWeaponBase` gives a melee power's Unarmed row the record's keywords, proficiency bonus and Damage with `:die` steps; one helper also feeds requirements, strikers and `CalcBonuses`. | Inferred (code); probes (a sample + Brawler Style: Unarmed rows +2 attack; + Belt of the Brawler: Club +2 proficiency, 1d6). RaidonKane's older save keeps Weapon Focus (Unarmed) off its Unarmed basic attack (1d4+3; modern 1d4+5): unresolved. | High | Brawler Style, Versatile Expertise (Unarmed), Weapon Expertise/Focus (Unarmed), Belt of the Brawler. |
 | Enchant equivalents | `WeaponEnchant` reads the base's `EnchantEquiv` record (10 items). | Open (partial, already in the special-case registry). | Inferred (code). | Medium | Rarely; their own Enhancement usually agrees. |
 | Attack line selection | First non-empty attack field; a level-11/21 attack text replaces the line; theme powers read level headers. | Reproduced (modern supports every authored attack). | Inferred (code), probe. | High | None. |
 | Highest/mental/chosen ability | `CalcStatVsDefense`: "your highest ability" and "primary ability" prefixes → `HighestAbility` over all six scores (strict >, first wins); "highest mental ability" → Int/Wis/Cha by score; "chosen ability" → the `Chosen Ability` string stat; a `±N` suffix is a power modifier. | Fix in progress for highest, highest mental and chosen (`main` yields Unknown and drops the modifier and any `+N` after "ability modifier"/"ability score"). "Primary ability" is divergent: `main` uses the best class key ability (owner question). | Inferred (code); probe shows the modern loss; parity agrees on DV and Fei Zhu, whose highest score is a class key ability. | High | 36 highest-ability attack lines, 1 highest-mental, 2 chosen, 126 primary-ability; the whole ability modifier plus +4/+6/+9. |
@@ -144,11 +144,11 @@ column names only the formatting or formula native code adds.
 | `_DamageDie` | `ParseDamage` lets a power's `_DamageDie` field replace the size of the first die (set by `modify` from Empowered Dragon Breath and Greathorn). | Fix in progress (not read on `main`; missing from the special-case registry). | Inferred (code), probe. | High | Dragon Breath, Goring Charge dice size. |
 | Higher-level damage | `HigherLevelDamage`: increase lines, a by-name Chilling Cloud rule doubling Intelligence at 21+, one exact rewrite, `ParseIncreaseLine`, separate level fields. | Increase lines and named scaling reproduced (`65aa0c7`). Chilling Cloud: fix in progress. | Confirmed (parity/tests) / inferred. | High | Chilling Cloud at 21+. |
 | Special damage | `SpecialCase`, `NonDamagePower`, `EffectPower` (Storm Pillar). | Partial, already tracked in the special-case registry. | Inferred (code). | Medium | A few powers. |
-| Weapon dice | N[W] multiplies dice count; off-hand terms use the off-hand item; loot damage override; die increases; arena improvised dice. | Reproduced except the Unarmed base above. | Confirmed (parity). | High | None beyond Unarmed. |
-| Keywords | `AddWeaponKeywords`, `BuildKeywordSet`, `AttackTypeKeywords`, `AddLaterKeywords`, `AdditionalKeywords`, `InsertParagonPath`. | Reproduced; `_PowerstatKeywords` (`98a4ade`) and the `<class> Paragon Path` channel (`8565dc5`). Unarmed keywords open; `AddArenaWeapons` open (registry). | Confirmed (parity, tests). | High | Channel bonuses. |
+| Weapon dice | N[W] multiplies dice count; off-hand terms use the off-hand item; loot damage override; die increases; arena improvised dice. | Reproduced, the Unarmed base included (`f533156`). | Confirmed (parity). | High | None. |
+| Keywords | `AddWeaponKeywords`, `BuildKeywordSet`, `AttackTypeKeywords`, `AddLaterKeywords`, `AdditionalKeywords`, `InsertParagonPath`. | Reproduced; `_PowerstatKeywords` (`98a4ade`) and the `<class> Paragon Path` channel (`8565dc5`). Unarmed keywords reproduced (`f533156`); `AddArenaWeapons` open (registry). | Confirmed (parity, tests). | High | Channel bonuses. |
 | Keyword bonuses | `CalcKeywords`, `AttackKeyword`, `DamageKeyword`, `CalcGlobal` with one typed table per row. | Reproduced (`combatStatEntries`, `stackTypedComponents`). | Confirmed (parity). | High | None. |
 | Strikers | `CalcStrikers`/`DiceAdjustment`. | Reproduced as reminder text. | Confirmed (parity: Drizzt, Japheth). | High | Conditions only. |
-| Versatile | `CalcVersatile`: +1 only when the character-global two-handed flag is set and `SmallWithNonSmallWeapon` is false. | Per holding by D101 (decision). A Small character's non-small versatile weapon fills both hands (D102) and currently gets +1, where native refuses it: open. | Inferred (code). | High | Small characters with a versatile weapon (none in the samples). |
+| Versatile | `CalcVersatile`: +1 only when the character-global two-handed flag is set and `SmallWithNonSmallWeapon` is false. | Per holding by D101 (decision). A Small character's non-small versatile weapon fills both hands (D102) without the +1, as native and the PHB say: reproduced (`3d7238b`). | Inferred (code); tests. | High | Small characters with a versatile weapon (none in the samples). |
 | WeaponBonuses | `CalcMisc`: a power's `weapon` field matching one of 16 exact table texts adds an ability modifier to attack or damage when wielding a listed group (flags: attack, half with C truncation, needs off-hand); `beast` fields → `CalcBeast`. | Fix in progress. `main` uses two regexes with fixed group lists: 6 table lines unported (12 powers), 6 texts native does not apply (9 powers), wrong groups on two lines. | Confirmed (save) for the two lines chopper farlund prints; rest inferred plus probe. | High (table decoded from the DLL) | Several build-option powers. |
 | CalcBonuses | Non-standard power fields named "Special", an owned element (Brutal Scoundrel, Rageblood Vigor, a pact, an aegis…) or "axe" with an axe-group base: seven exact sentences add Int/Wis/Con/Str to damage (typed by field name) or Str to attack, on every row including Unarmed. | Fix in progress (not modeled on `main`, though the registry marks it handled). | Inferred (code), probe. | High | 31 powers. |
 | Healing | `CalcHealing`: "Healing", `<power>:healing`, `<class>:healing` with one typed table. | Reproduced (`powerHealing`). | Confirmed (parity). | High | None. |
@@ -201,14 +201,14 @@ A power-row difference found on the way is likewise content revision: Hunzu
 4. **`_DamageDie` and Chilling Cloud.** Fix in progress with the single-power
    items (Hawk's Talon, Attacks on the Run/Reactive Shot). Add a `ParseDamage`
    entry to the registry.
-5. **Unarmed melee WeaponBase.** Open. Give the Unarmed row the record named
-   by `Unarmed Weapon` (else `Unarmed attack`) as its keyword, proficiency and
-   dice base.
+5. **Unarmed melee WeaponBase.** Reproduced (`f533156`). RaidonKane's
+   Unarmed basic attack damage (+2 Weapon Focus) is an open conflict with his
+   older save.
 6. **Fey Pact Charisma on Constitution attack lines.** Explained: player homebrew
    (a warlock ability-options part) rewrites the attack lines; not a native
    factor, no modern change.
-7. **Versatile +1 for a Small character's non-small weapon.** Open. Add the
-   `SmallWithNonSmallWeapon` exclusion; this also matches the rulebook.
+7. **Versatile +1 for a Small character's non-small weapon.** Reproduced
+   (`3d7238b`); this also matches the rulebook.
 8. **Smaller items.** `EnchantEquiv`, the three unshared base-attack caps,
    conditional reminder text for linked statadds, the empty-type question, and
    an explicit stacking-order test.
@@ -219,6 +219,12 @@ A power-row difference found on the way is likewise content revision: Hunzu
   dual wielding for the `DUAL-WIELDING:heavy blade,light blade` Dexterity bonus,
   as the power text describes; the older save's Cross-Body Parry and Blade
   Dance rows omit it. Accept the new rows into the baseline, or keep legacy's?
+- **RaidonKane's Unarmed basic attack.** Native `WeaponBase` gives the row
+  the Unarmed attack record (group Unarmed), so Weapon Focus (Unarmed) adds
+  +2 damage (modern 1d4+5). His save, from an older builder and content
+  revision (its Weapon Focus writes `Unarmed group:damage` directly; its
+  Focused Expertise record no longer exists), shows 1d4+3. Accept the new
+  row into the baseline, or keep investigating?
 - **"Primary ability".** Native resolves it to the highest of all six scores;
   modern uses the best class key ability (126 powers). They agree on every
   sample. Switch to native, or record the modern reading as a D091 decision?
