@@ -8,6 +8,7 @@ import {
   familiarSpeed,
   halfLevel,
   healingSurgeValue,
+  ritualCostPercent,
 } from "./derived-values";
 
 describe("shared derived values", () => {
@@ -40,6 +41,22 @@ describe("healing surge value", () => {
         },
       }),
     ).toBe(17);
+  });
+});
+
+describe("ritual cost percent", () => {
+  it("divides 100 by the Ritual Cost Modifier plus one, as legacy LootCost does", () => {
+    const stats = (value: number) => ({
+      "Ritual Cost Modifier": {
+        name: "Ritual Cost Modifier",
+        value,
+        contributions: [],
+      },
+    });
+    expect(ritualCostPercent({})).toBe(100);
+    expect(ritualCostPercent(stats(1))).toBe(50);
+    expect(ritualCostPercent(stats(2))).toBe(33);
+    expect(ritualCostPercent(stats(-1))).toBe(100);
   });
 });
 

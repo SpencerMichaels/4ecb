@@ -2,6 +2,7 @@ import {
   augmentHosts,
   boundAugmentHolding,
   formatInventoryItemName,
+  inventoryEntryWithQuantity,
   type BuildInventoryElement,
   type BuildInventoryEntry,
   type BuildOccurrence,
@@ -38,6 +39,13 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
+import {
+  isLegacyEnchantment,
+  isValidLoot,
+  lootFinder,
+  transformedLootBase,
+  type LootValidityOptions,
+} from "./loot-validity";
 import type { IconName } from "./Icon";
 import { LOADOUT_SLOT_ICONS } from "./item-icons";
 
@@ -535,6 +543,21 @@ export function entityCurrencyCopper(
     total += value * factor;
   }
   return total > 0 && Number.isFinite(total) ? total : undefined;
+}
+
+/**
+ * What the character pays for `entity` (legacy D20Workspace.LootCost): its
+ * authored price, with a ritual (not a formula or practice) at
+ * `ritualCostPercent` percent of it.
+ */
+export function lootPriceCopper(
+  entity: ContentEntity,
+  ritualCostPercent = 100,
+): number | undefined {
+  const price = entityCurrencyCopper(entity);
+  if (price === undefined || practiceKind(entity) !== "ritual") return price;
+  // Native keeps fractional gold; the wallet counts whole copper.
+  return Math.round((price * ritualCostPercent) / 100);
 }
 
 export function formatCopperPrice(copper: number | undefined): string {
@@ -1154,121 +1177,102 @@ export function itemCanBeBought(entity: ContentEntity): boolean {
   );
 }
 
+const compatibleBaseCache = new WeakMap<
+  readonly ContentEntity[],
+  WeakMap<readonly ContentEntity[], Map<string, readonly ContentEntity[]>>
+>();
+
+/**
+ * The base items `item` is bought on (legacy D20Workspace.IsValidLoot).
+ * An enchantment (an Armor or Weapon magic item, or a shield Arms Slot
+ * Item) or an implement magic item lists every valid base in `catalog`; any
+ * other slotless magic item whose Weapon or Armor field names one record
+ * becomes that base (legacy TransformLoot). `entities` resolves the records
+ * a base refers to (Quarterstaff, WeaponEquiv, _Secondary End).
+ */
 export function compatibleBaseItems(
-  enchantment: ContentEntity,
+  item: ContentEntity,
   catalog: readonly ContentEntity[],
+  entities: readonly ContentEntity[] = catalog,
 ): readonly ContentEntity[] {
-  const authoredKind =
-    contentSpecificValue(enchantment, "Magic Item Type")?.toLocaleLowerCase() ??
-    "";
-  const enchantmentTarget = contentSpecificValue(
-    enchantment,
-    "_IsEnchant",
-  )?.toLocaleLowerCase();
-  const implementTypes = IMPLEMENT_KINDS.filter(
-    (implement) =>
-      authoredKind === implement ||
-      authoredKind.split(/\s*[,;]\s*/u).includes(implement),
+  let byEntities = compatibleBaseCache.get(catalog);
+  if (byEntities === undefined) {
+    byEntities = new WeakMap();
+    compatibleBaseCache.set(catalog, byEntities);
+  }
+  let results = byEntities.get(entities);
+  if (results === undefined) {
+    results = new Map();
+    byEntities.set(entities, results);
+  }
+  const cached = results.get(item.id);
+  if (cached !== undefined) return cached;
+  const find = lootFinder(entities);
+  let compatible: readonly ContentEntity[] = [];
+  if (
+    isLegacyEnchantment(item) ||
+    shopBrowseCategory(item) === "implement-enchantments"
+  ) {
+    compatible = catalog
+      .filter((base) => BASE_ITEM_TYPES.has(normalized(base.type)))
+      // Barding is its own shop category in legacy (ArmorItem.CategoryName),
+      // never a base the magic armor picker lists.
+      .filter(
+        (base) =>
+          normalized(base.type) !== "armor" ||
+          !normalized(base.name).includes("barding"),
+      )
+      .filter((base) => isValidLoot(base, item, find))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  } else {
+    // D091: native TransformLoot keeps a base the pair cannot use and then
+    // refuses the item; the item is kept on its own instead.
+    const base = transformedLootBase(item, find);
+    if (base !== undefined && isValidLoot(base, item, find))
+      compatible = [base];
+  }
+  results.set(item.id, compatible);
+  return compatible;
+}
+
+const BASE_ITEM_TYPES = new Set(["weapon", "armor", "superior implement"]);
+
+/**
+ * Weapon enchantments that also fit a superior implement (a staff as a
+ * Quarterstaff, a dagger as its WeaponEquiv) list with the implement
+ * enchantments too (legacy EnchantmentItem.InitializeCategoryMembership,
+ * which tests Accurate Staff and Accurate Dagger).
+ */
+export function shopAlsoImplementEnchantment(
+  item: ContentEntity,
+  catalog: readonly ContentEntity[],
+  entities: readonly ContentEntity[] = catalog,
+): boolean {
+  return (
+    shopBrowseCategory(item) === "weapon-enchantments" &&
+    compatibleBaseItems(item, catalog, entities).some(
+      (base) => normalized(base.type) === "superior implement",
+    )
   );
-  const kind =
-    authoredKind === "armor" || authoredKind === "weapon"
-      ? authoredKind
-      : enchantmentTarget === "shield"
-        ? "armor"
-        : implementTypes.length > 0
-          ? "superior implement"
-          : undefined;
-  if (kind === undefined) return [];
-  const allowedText = (
-    kind === "superior implement"
-      ? (contentSpecificValue(enchantment, "Implement Type") ?? authoredKind)
-      : (contentSpecificValue(
-          enchantment,
-          kind === "armor" ? "Armor" : "Weapon",
-        ) ?? (enchantmentTarget === "shield" ? "Shield" : ""))
-  ).replace(/\s+\(.*$/, "");
-  const allowed = allowedText
-    .split(",")
-    .map((value) => value.trim().toLocaleLowerCase())
-    .filter(Boolean);
-  const enhancement = Number(
-    enchantment.name.match(/\+(\d+)$/)?.[1] ??
-      contentSpecificValue(enchantment, "Enhancement")?.match(
-        /\+?(\d+)/,
-      )?.[1] ??
-      0,
-  );
-  return catalog
-    .filter((entity) => entity.type.trim().toLocaleLowerCase() === kind)
-    .filter((entity) => {
-      const minimum = Number(
-        contentSpecificValue(entity, "Minimum Enhancement Bonus") ?? 0,
-      );
-      if (Number.isFinite(minimum) && minimum > enhancement) return false;
-      if (allowed.length === 0 || allowed.includes("any")) return true;
-      const name = entity.name.toLocaleLowerCase();
-      if (kind === "superior implement") {
-        const implementType = normalized(
-          contentSpecificValue(entity, "Implement Type") ??
-            contentSpecificValue(entity, "Group") ??
-            contentSpecificValue(entity, "Type"),
-        );
-        return allowed.some(
-          (value) =>
-            value === "implement" ||
-            value === "any" ||
-            implementType === value ||
-            name === value ||
-            name.endsWith(` ${value}`),
-        );
-      }
-      if (kind === "armor") {
-        const category = contentSpecificValue(
-          entity,
-          "Armor Category",
-        )?.toLocaleLowerCase();
-        const armorType = contentSpecificValue(
-          entity,
-          "Armor Type",
-        )?.toLocaleLowerCase();
-        return allowed.some(
-          (value) =>
-            value === category || value === armorType || value === name,
-        );
-      }
-      const category =
-        contentSpecificValue(entity, "Weapon Category")?.toLocaleLowerCase() ??
-        "";
-      const groups = (contentSpecificValue(entity, "Group") ?? "")
-        .split(",")
-        .map((value) => value.trim().toLocaleLowerCase());
-      const hands =
-        contentSpecificValue(entity, "Hands Required")?.toLocaleLowerCase() ??
-        "";
-      const range = contentSpecificValue(entity, "Range") ?? "";
-      const properties =
-        contentSpecificValue(entity, "Properties")?.toLocaleLowerCase() ?? "";
-      return allowed.some(
-        (value) =>
-          value === name ||
-          value === category ||
-          groups.includes(value) ||
-          (value === "any melee" && category.includes("melee")) ||
-          (value === "any melee except reach" &&
-            category.includes("melee") &&
-            !properties.includes("reach")) ||
-          (value.startsWith("any one-handed melee") &&
-            category.includes("melee") &&
-            hands === "one-handed") ||
-          (value === "any one-handed weapon" && hands === "one-handed") ||
-          (value === "any ranged" &&
-            (category.includes("ranged") || range.trim() !== "")) ||
-          (value === "any thrown" && properties.includes("thrown")) ||
-          (value === "one-handed" && hands.includes("one-handed")) ||
-          (value === "two-handed" && hands.includes("two-handed")),
-      );
-    })
-    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/** Why the shop cannot add `item` (bought or given), if it cannot. */
+export function shopAcquireBlockedReason(
+  item: ContentEntity,
+  catalog: readonly ContentEntity[],
+  entities: readonly ContentEntity[],
+  options: LootValidityOptions,
+): string | undefined {
+  if (isLegacyEnchantment(item))
+    return compatibleBaseItems(item, catalog, entities).length === 0
+      ? "No base item fits this enchantment."
+      : undefined;
+  if (
+    normalized(item.type) === "armor" &&
+    !isValidLoot(item, undefined, lootFinder(entities), options)
+  )
+    return "Masterwork armor comes with its enhancement: buy it as the base of a magic armor, or use Inherent Bonuses.";
+  return undefined;
 }
 
 const itemChoiceIndexCache = new WeakMap<
@@ -1340,6 +1344,102 @@ export function inventoryEntryForEntity(
     overrides: {},
     legality: "rules-legal",
   };
+}
+
+/** Legacy CharacterLootItem.GetLotSize: the item's "count" field, else 1. */
+function lotSize(entity: ContentEntity): number {
+  const count = Number.parseInt(
+    contentSpecificValue(entity, "count") ?? "",
+    10,
+  );
+  return Number.isFinite(count) ? count : 1;
+}
+
+/** The plain holding of one record (no enchantment, name or choices). */
+function plainHolding(
+  inventory: readonly BuildInventoryEntry[],
+  entity: ContentEntity,
+): BuildInventoryEntry | undefined {
+  const id = entity.id.toLocaleLowerCase();
+  return inventory.find(
+    (entry) =>
+      entry.name === undefined &&
+      entry.elements.length === 1 &&
+      entry.elements[0]!.definitionId?.toLocaleLowerCase() === id &&
+      (entry.elements[0]!.children?.length ?? 0) === 0,
+  );
+}
+
+/**
+ * The commands that add `entry` (bought at `priceCopper` each, or given at
+ * 0) to `inventory`. Packaged gear (Arrows and Arrow, Journeybreads and
+ * Journeybread: a `_RelatedElement` pair with different "count" lot sizes)
+ * is rebalanced as legacy CharacterLootItem.PackageManipulation does: the
+ * pair's total units become as many full packages as fit, with the rest
+ * as single items.
+ */
+export function acquisitionCommands(
+  inventory: readonly BuildInventoryEntry[],
+  entry: BuildInventoryEntry,
+  priceCopper: number,
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly CharacterCommand[] {
+  const purchase: CharacterCommand = {
+    kind: "purchase-inventory",
+    entry,
+    priceCopper,
+  };
+  const element = entry.elements.length === 1 ? entry.elements[0] : undefined;
+  const added =
+    element?.definitionId === undefined ||
+    entry.name !== undefined ||
+    (element.children?.length ?? 0) > 0
+      ? undefined
+      : byId.get(element.definitionId.toLocaleLowerCase());
+  const relatedRef =
+    added === undefined
+      ? undefined
+      : contentSpecificValue(added, "_RelatedElement")?.trim();
+  // Native FindRulesElement: by internal ID (as the content names it) or name.
+  const related =
+    relatedRef === undefined || relatedRef === ""
+      ? undefined
+      : (byId.get(relatedRef.toLocaleLowerCase()) ??
+        [...byId.values()].find(
+          ({ name }) =>
+            name.toLocaleLowerCase() === relatedRef.toLocaleLowerCase(),
+        ));
+  // Legacy IsPackageRelated: a related record, and one of them a package.
+  if (
+    added === undefined ||
+    related === undefined ||
+    (lotSize(added) === 1 && lotSize(related) === 1)
+  )
+    return [purchase];
+  const addedHolding = plainHolding(inventory, added);
+  const relatedHolding = plainHolding(inventory, related);
+  const units =
+    ((addedHolding?.quantity ?? 0) + entry.quantity) * lotSize(added) +
+    (relatedHolding?.quantity ?? 0) * lotSize(related);
+  // After the purchase the added record's holding is the owned one (the
+  // purchase joins it) or the new entry.
+  const addedAfter = addedHolding ?? entry;
+  const relatedAfter =
+    relatedHolding ?? inventoryEntryForEntity(related, entry.acquiredLevel);
+  const [single, singleLot, pack, packLot] =
+    lotSize(added) > lotSize(related)
+      ? [relatedAfter, lotSize(related), addedAfter, lotSize(added)]
+      : [addedAfter, lotSize(added), relatedAfter, lotSize(related)];
+  const put = (holding: BuildInventoryEntry, quantity: number) =>
+    ({
+      kind: "put-inventory",
+      entry: inventoryEntryWithQuantity(holding, quantity),
+    }) satisfies CharacterCommand;
+  return [
+    purchase,
+    put(pack, Math.floor(units / packLot)),
+    put(single, Math.floor((units % packLot) / singleLot)),
+  ];
 }
 
 function holdingParts(

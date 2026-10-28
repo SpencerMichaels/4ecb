@@ -291,4 +291,41 @@ Choose a Skill for +2 Bonus
       <modify name="Drow Long Knife" type="Weapon" Field="_ImplementEquiv" value="Wand" />
     </rules>
   </AppendNodes>
+
+  <!-- Base item lists the legacy shop cannot read (native ListContains
+       matches whole comma entries, D20Workspace.IsValidLoot): Berserk
+       Weapon names plural groups, so no weapon fits it, and Soulwarding
+       Armor's "or Plate" entry never matches plate armor. -->
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_1"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_1">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_2"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_2">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_3"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_3">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_4"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_4">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_5"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_5">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_HF_BOV_ITEM_6"><specific name="Weapon" /></RemoveNodes>
+  <AppendNodes internal-id="ID_HF_BOV_ITEM_6">
+    <specific name="Weapon">Axe, Hammer, Heavy Blade</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_MAGIC_ITEM_1818"><specific name="Armor" /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_MAGIC_ITEM_1818">
+    <specific name="Armor">Chain, Scale, Plate</specific>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_MAGIC_ITEM_1819"><specific name="Armor" /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_MAGIC_ITEM_1819">
+    <specific name="Armor">Chain, Scale, Plate</specific>
+  </AppendNodes>
 </D20Rules>

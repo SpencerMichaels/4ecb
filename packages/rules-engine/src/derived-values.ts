@@ -57,6 +57,19 @@ function numericStat(
   return stat === undefined || !Number.isFinite(value) ? undefined : value;
 }
 
+/**
+ * The percent of its market price a ritual costs the character (legacy
+ * D20Workspace.LootCost): 100 / ("Ritual Cost Modifier" + 1), in whole
+ * percent as native's integer division gives (Secret Formularies' +1 halves
+ * it).
+ */
+export function ritualCostPercent(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): number {
+  const divisor = (numericStat(stats, "Ritual Cost Modifier") ?? 0) + 1;
+  return divisor > 0 ? Math.trunc(100 / divisor) : 100;
+}
+
 export function evaluatedHealingSurgeValue(
   stats: Readonly<Record<string, EvaluatedStat>>,
 ): number | undefined {

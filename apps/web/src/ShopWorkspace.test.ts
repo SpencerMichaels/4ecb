@@ -495,6 +495,27 @@ describe("Shop catalog in learning mode", () => {
     expect(markup).toMatch(/aria-pressed="false">.*Known<\/button>/);
   });
 
+  it("prices rituals at the character's Ritual Cost Modifier percent (legacy LootCost)", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ShopWorkspace, {
+        mode: "learning",
+        browse: "rituals",
+        characterLevel: 1,
+        entities: [ritual],
+        inventory: [],
+        ownedDefinitions: [],
+        walletCopper: 100_000,
+        ritualCostPercent: 50,
+        onInspect: vi.fn(),
+        onAcquire: vi.fn(),
+        onBrowseChange: vi.fn(),
+        onLearn: vi.fn(),
+      }),
+    );
+    expect(markup).toContain(">25 gp</td>");
+    expect(markup).not.toContain(">50 gp</td>");
+  });
+
   it("marks known records, learned or granted, and disables learning them", () => {
     const markup = render(new Set(["public_ritual"]));
     expect(markup).toContain(">Known</td>");

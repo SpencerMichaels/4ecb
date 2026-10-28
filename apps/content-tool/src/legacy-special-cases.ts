@@ -778,12 +778,20 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "meetsItemRequirement ignores item Prerequisite, as legacy always passes it",
       test(REQUIREMENTS, "passes every other Requirement, as legacy does"),
     ),
-    "D20Workspace.IsValidLoot": partial(
+    "D20Workspace.IsValidLoot": code(
       "Enchantment/base compatibility: weapons via IsValidWeapon; superior implements when the enchantment's Magic Item Type equals the Group, a staff via Quarterstaff (ID_FMP_WEAPON_10) or a WeaponEquiv weapon; shields via ValidateShield; armor by Armor/Armor Category name and Minimum Enhancement; masterwork armor (a Minimum Enhancement Bonus) held without an enchantment only with Inherent Bonuses; Weapon/Armor enchantments never alone.",
-      "equipment-ui.ts compatibleBaseItems covers armor, shields, minimum enhancement and superior implement types; masterwork armor (80 armors) can be bought and kept mundane without Inherent Bonuses, and superior-implement Quarterstaff/WeaponEquiv validation is not reproduced",
+      "apps/web/src/loot-validity.ts isValidLoot (equipment-ui.ts compatibleBaseItems, shopAcquireBlockedReason: Buy/Give disabled for an enchantment with no base and for masterwork armor without Inherent Bonuses, EXCEPTION_IDS.inherentBonuses). D108: an Armor magic item naming shields in its Armor field (Shield of Turathi Defiance) may go on those shields; an empty list entry matches nothing (no barding base for every item); barding is no magic armor base (ArmorItem.CategoryName)",
       test(
         EQUIPMENT_UI,
         "pairs armor and weapon enchantments only with compatible bases",
+      ),
+      test(
+        EQUIPMENT_UI,
+        "puts weapon enchantments on superior staffs and daggers, as implement enchantments",
+      ),
+      test(
+        EQUIPMENT_UI,
+        "keeps enchantments and masterwork armor from being held alone",
       ),
       test(
         EQUIPMENT_UI,
@@ -792,15 +800,19 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.IsEnchantment": code(
       "Armor/Weapon magic items and shield arms-slot items enchant a base item.",
-      "equipment-ui.ts shopBrowseCategory / compatibleBaseItems",
+      "apps/web/src/loot-validity.ts isLegacyEnchantment (equipment-ui.ts compatibleBaseItems, shopAcquireBlockedReason)",
       test(
         EQUIPMENT_UI,
         "pairs armor and weapon enchantments only with compatible bases",
       ),
+      test(
+        EQUIPMENT_UI,
+        "keeps enchantments and masterwork armor from being held alone",
+      ),
     ),
     "?A0x0bed2cbe.ValidateShield": code(
       "Arms-slot enchantments named for shields require a shield base.",
-      "equipment-ui.ts compatibleBaseItems keys shield enchantments on _IsEnchant 'Shield' rather than the 'shield' name",
+      "apps/web/src/loot-validity.ts isValidLoot: a shield base takes an Arms Slot Item named for shields (whatever its Armor field says), never an 'Any' armor enchantment; D108 adds Armor items that name the shield",
       test(
         EQUIPMENT_UI,
         "pairs armor and weapon enchantments only with compatible bases",
@@ -814,17 +826,21 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "pairs armor and weapon enchantments only with compatible bases",
       ),
     ),
-    "?A0x0bed2cbe.IsValidWeapon": partial(
+    "?A0x0bed2cbe.IsValidWeapon": code(
       "Weapon enchantment 'Weapon' field grammar: Spiked Gauntlets (base named 'spiked gauntlet'), Any Melee, Any melee except reach weapons, (Any) one-handed melee weapon, Any one-handed weapon, Any Ranged (IsRanged), Any thrown, else a list matching the base's Group, name or double weapon's _Secondary End group.",
-      "equipment-ui.ts compatibleBaseItems: probing the pack, 'Any melee except reach weapons' (6 enchantments, e.g. Reckless Weapon), 'One-handed melee weapon' (6, e.g. Warsoul Weapon) and 'Spiked gauntlets' (5, e.g. Tigerclaw Gauntlets) offer no base at all; the _Secondary End group is not read; plural lists ('Axes, hammers, heavy blades', 6) also offer none",
+      "apps/web/src/loot-validity.ts isValidWeaponBase with native ListContains/ListContainsOneOf (whole comma entries, first occurrence, 'any'); the plural 'Axes, hammers, heavy blades' (Berserk Weapon) and Soulwarding Armor's 'Chain, Scale, or Plate' fit nothing natively and are fixed in content/corrections/96-content-fixes.part",
       test(
         EQUIPMENT_UI,
-        "pairs armor and weapon enchantments only with compatible bases",
+        "reads the Weapon field grammar as native IsValidWeapon does",
       ),
     ),
     IsRanged: code(
       "A base is ranged by a ranged Weapon Category or a Range (thrown).",
-      "equipment-ui.ts compatibleBaseItems 'any ranged'",
+      "apps/web/src/loot-validity.ts isRanged ('Any Ranged' in isValidWeaponBase)",
+      test(
+        EQUIPMENT_UI,
+        "reads the Weapon field grammar as native IsValidWeapon does",
+      ),
     ),
     "?A0x0bed2cbe.CharLootName": partial(
       "Composes '<enchantment> <base>' item names, replacing implement/weapon words.",
@@ -862,19 +878,31 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "counts the _INTERNAL_EquippedSymbol holding as equipped for its rows (native comes_before)",
       ),
     ),
-    "?A0x0bed2cbe.TransformLoot": notHandled(
+    "?A0x0bed2cbe.TransformLoot": code(
       "Buying a slotless magic item whose Weapon or Armor field names exactly one base turns it into that base plus the item as its enchantment.",
-      "modern buys such an item on its own (no automatic base)",
+      "apps/web/src/loot-validity.ts transformedLootBase via equipment-ui.ts compatibleBaseItems: the Shop pairs the single base automatically (38 artifacts/intelligent items). D108: when the pair is not valid, native refuses the item; modern keeps it on its own",
+      test(
+        EQUIPMENT_UI,
+        "turns a slotless magic item naming one weapon into that base (TransformLoot)",
+      ),
     ),
     "?A0x0bed2cbe.CopyCost": code(
       "Item cost from Copper/Silver/Gold fields, else the Market Price text.",
       "equipment-ui.ts entityCurrencyCopper",
       test(EQUIPMENT_UI, "reads authored prices and ritual subtypes"),
     ),
-    "D20Workspace.LootCost": partial(
+    "D20Workspace.LootCost": code(
       "Loot cost: the enchantment's cost when valid, else the base's; rituals divided by the '<type> Cost Modifier' stat + 1.",
-      "equipment-ui.ts entityCurrencyCopper; the 'Ritual Cost Modifier' stat (Secret Formularies) does not discount ritual prices",
+      "equipment-ui.ts lootPriceCopper with derived-values.ts ritualCostPercent (100 / ('Ritual Cost Modifier' + 1), integer percent; Secret Formularies halves ritual prices), passed to the learning Shop by RitualsWorkspace; rounded to whole copper",
       test(EQUIPMENT_UI, "reads authored prices and ritual subtypes"),
+      test(
+        "packages/rules-engine/src/derived-values.test.ts",
+        "divides 100 by the Ritual Cost Modifier plus one, as legacy LootCost does",
+      ),
+      test(
+        "apps/web/src/ShopWorkspace.test.ts",
+        "prices rituals at the character's Ritual Cost Modifier percent (legacy LootCost)",
+      ),
     ),
     ImplementType: code(
       "Implement kind from Magic Item Type (Rod, Staff, Wand, Orb, Totem, Tome, Holy Symbol, Ki Focus), '<X> Implement'/'Implement, <X>' gear names, Holy Symbol/Totem/Ki Focus gear, and a superior implement's WeaponEquiv name or Group.",
@@ -2425,9 +2453,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "normalizes player-facing subtypes and classifies corpus edge cases",
       ),
     ),
-    "EnchantmentItem.InitializeCategoryMembership": notHandled(
+    "EnchantmentItem.InitializeCategoryMembership": code(
       "When the superior implements Accurate Staff/Dagger exist, implement enchantments also list under Magic Implements.",
-      "presentation only; modern lists superior implements under implements",
+      "equipment-ui.ts shopAlsoImplementEnchantment: a weapon enchantment valid on any superior implement in the catalog (staffs as Quarterstaff, daggers by WeaponEquiv) also lists under Implement enchantments, where its picker offers the superior implements",
+      test(
+        EQUIPMENT_UI,
+        "puts weapon enchantments on superior staffs and daggers, as implement enchantments",
+      ),
     ),
     "EnchantmentItem.CategoryName": code(
       "Magic armor/weapon category names.",
@@ -2462,21 +2494,37 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "GearPageData.FindLootCategory": generic(
       "Category lookup with an Other fallback.",
     ),
-    "GearPageData.HasSingleItem": notHandled(
+    "GearPageData.HasSingleItem": partial(
       "Ammunition and rations packs: a _RelatedElement record pairs the bundle with its single item.",
-      "modern buys bundles and singles independently (8 gear records)",
+      "presentation: legacy hides the package row while the single item is owned and shows the pair's total on the single row; modern lists both holdings with their own quantities (D108)",
+      test(
+        EQUIPMENT_UI,
+        "folds single items into full packages and keeps the rest single",
+      ),
     ),
-    "CharacterLootItem.IsPackageRelated": notHandled(
+    "CharacterLootItem.IsPackageRelated": code(
       "A gear item with a _RelatedElement of a different lot size is part of a package.",
-      "see GearPageData.HasSingleItem",
+      "equipment-ui.ts acquisitionCommands",
+      test(
+        EQUIPMENT_UI,
+        "folds single items into full packages and keeps the rest single",
+      ),
     ),
-    "CharacterLootItem.PackageCount": notHandled(
+    "CharacterLootItem.PackageCount": partial(
       "Quantity of a packaged item counts both the bundle and the singles.",
-      "see GearPageData.HasSingleItem",
+      "equipment-ui.ts acquisitionCommands counts the pair's units when adding; the inventory shows each holding's own quantity (see GearPageData.HasSingleItem)",
+      test(
+        EQUIPMENT_UI,
+        "folds single items into full packages and keeps the rest single",
+      ),
     ),
-    "CharacterLootItem.PackageManipulation": notHandled(
+    "CharacterLootItem.PackageManipulation": partial(
       "Adding or removing packaged items rebalances bundles and singles.",
-      "see GearPageData.HasSingleItem",
+      "equipment-ui.ts acquisitionCommands rebalances on Buy/Give (CharacterEditorPage batch); selling one unit sells from the exact holding without breaking a package (D108)",
+      test(
+        EQUIPMENT_UI,
+        "folds single items into full packages and keeps the rest single",
+      ),
     ),
     "CharacterLootItem.GetLotSize": generic(
       "Lot size from the 'count' field, shown as '<name> (<quantity x lot>)'.",

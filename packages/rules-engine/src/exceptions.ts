@@ -33,6 +33,10 @@ export const EXCEPTION_IDS = {
   exterminationUrge: "ID_FMP_POWER_11126",
   /** WeaponBase/IsStaff: a staff used as a weapon is this Quarterstaff. */
   quarterstaff: "ID_FMP_WEAPON_10",
+  /** D20Workspace.InherentBonuses: the Inherent Bonuses house rule
+   *  (native finds it by name, type Internal); IsValidLoot lets masterwork
+   *  armor go without an enchantment only with it. */
+  inherentBonuses: "ID_INTERNAL_INTERNAL_INHERENT_BONUSES",
   /** DualWieldingConditional `DUAL-WIELDING:rapier-blade`: the rapier,
    *  matched as a substring of the weapon's ID. */
   rapier: "ID_FMP_WEAPON_29",
