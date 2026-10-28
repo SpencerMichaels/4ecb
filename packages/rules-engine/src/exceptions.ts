@@ -137,6 +137,11 @@ export const EXCEPTION_NAMES = {
   /** InternalizeElement: a prerequisite token "assassin" never matches a
    * Background of that name (only the class and its features). */
   assassinBackground: "assassin",
+  /** Prerequisite SpecialCase: a bare "shifter" clause (when no record has
+   * that name) is either shifter race, by name. */
+  shifter: "shifter",
+  razorclawShifter: "Razorclaw Shifter",
+  longtoothShifter: "Longtooth Shifter",
   /** AttackPowerModRepl: powers whose `+N` attack bonus becomes +4 at 11th
    * level and +6 at 21st (Dragon's Wrath: +6 at 21st only) by name. */
   bloodDrain: "Blood Drain",

@@ -221,3 +221,97 @@ describe("native Psionics (Hybrid Power Points)", () => {
     expect(evaluated.stats["Hybrid Power Points"]?.value).toBe(2);
   });
 });
+
+describe("native CharPowerAugmentCount (power rows)", () => {
+  const version = (id: string, name: string, parent: string) =>
+    entity(id, name, "Power", {
+      specifics: {
+        "Power Usage": "At-Will",
+        "Power Type": "Attack",
+        Class: "ID_FMP_CLASS_124",
+        Level: "1",
+        Keywords: "Augmentable, Implement, Psionic, Psychic",
+        _AugmentParent: parent,
+      },
+    });
+  const withVersions = [
+    ...content,
+    version(
+      "MIND_THRUST_(AUGMENT_0)",
+      "Mind Thrust (Augment 0)",
+      "MIND_THRUST",
+    ),
+    version(
+      "MIND_THRUST_(AUGMENT_1)",
+      "Mind Thrust (Augment 1)",
+      "MIND_THRUST",
+    ),
+    version(
+      "FORCEFUL_PUSH_(AUGMENT_0)",
+      "Forceful Push (Augment 0)",
+      "FORCEFUL_PUSH",
+    ),
+    version(
+      "FORCEFUL_PUSH_(AUGMENT_1)",
+      "Forceful Push (Augment 1)",
+      "FORCEFUL_PUSH",
+    ),
+  ];
+  const rowIds = (evaluated: ReturnType<typeof evaluateCharacter>) =>
+    evaluated.powers.map(({ definitionId }) => definitionId).sort();
+
+  it("lists a locked (Dilettante) augmentable power's version 0 only", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          root,
+          choice("a", "MIND_THRUST", "root", 0),
+          {
+            id: "trait",
+            definitionId: "ID_FMP_RACIAL_TRAIT_643",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          choice("d", "FORCEFUL_PUSH", "trait", 0),
+        ],
+        inventory: [],
+      },
+      withVersions,
+    );
+    expect(rowIds(evaluated)).toEqual([
+      "FORCEFUL_PUSH_(AUGMENT_0)",
+      "MIND_THRUST_(AUGMENT_0)",
+      "MIND_THRUST_(AUGMENT_1)",
+    ]);
+  });
+
+  it("lists version 0 only for a power whose _SuppressAugments is set", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [root, choice("a", "MIND_THRUST", "root", 0)],
+        inventory: [],
+      },
+      withVersions.map((record) =>
+        record.id === "MIND_THRUST"
+          ? {
+              ...record,
+              specifics: [
+                ...record.specifics,
+                {
+                  name: "_SuppressAugments",
+                  value: "true",
+                  extraAttributes: [],
+                  ordinal: 99,
+                },
+              ],
+            }
+          : record,
+      ),
+    );
+    expect(rowIds(evaluated)).toEqual(["MIND_THRUST_(AUGMENT_0)"]);
+  });
+});

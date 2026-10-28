@@ -250,7 +250,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0xca3c2cf6.Psionics": code(
       "Power points: strips 'Augmentable' from locked powers' Keywords and adds 2/4/6 'Hybrid Power Points' per owned class at-will attack by its Level, then applies Psionic Conventionalist.",
-      "psionics.ts nativePsionics, appended after every element's rules: the Hybrid Power Points literal (which ID_INTERNAL_INTERNAL_HYBRID_POWER_POINTS and Psionic Dabbler link into Power Points) and Keywords overlays for locked records. Unlocked = _AugmentVersions, no _SuppressAugments, not chosen by a Racial Trait (the original of its replacement chain). Psionic Dabbler's own 'modify Power Usage Encounter' makes its power fail the At-Will test, as the overlaid native field read does",
+      "psionics.ts nativePsionics, appended after every element's rules: the Hybrid Power Points literal (which ID_INTERNAL_INTERNAL_HYBRID_POWER_POINTS and Psionic Dabbler link into Power Points) and Keywords overlays for locked records (plus a _SuppressAugments overlay on a Racial Trait's augmentable pick, so power rows read the same lock). Unlocked =_AugmentVersions, no _SuppressAugments, not chosen by a Racial Trait (the original of its replacement chain). Psionic Dabbler's own 'modify Power Usage Encounter' makes its power fail the At-Will test, as the overlaid native field read does",
       test(
         PSIONICS,
         "adds 2/4/6 per owned unlocked augmentable at-will attack and strips locked keywords",
@@ -412,9 +412,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(POWERS, "materializes and deduplicates psionic augment versions"),
     ),
     "D20Workspace.PowerAugmentCount": code(
-      "Number of _AugmentVersions entries.",
-      "powers.ts evaluatePowers",
+      "Number of _AugmentVersions entries. CharPowerAugmentCount (D20Workspace.cs ~1691), which the sheet's power cards iterate, gives a locked augmentable power (not IsUnlockedAugmentablePower) only version 0.",
+      "powers.ts evaluatePowers; a locked power (_SuppressAugments, which psionics.ts nativePsionics also overlays on a Racial Trait's pick) lists only its first _AugmentVersions entry",
       test(POWERS, "materializes and deduplicates psionic augment versions"),
+      test(
+        PSIONICS,
+        "lists a locked (Dilettante) augmentable power's version 0 only",
+      ),
+      test(
+        PSIONICS,
+        "lists version 0 only for a power whose _SuppressAugments is set",
+      ),
     ),
     "D20Workspace.AugmentPowerVersion": code(
       "Resolves the Nth _AugmentVersions entry.",
@@ -437,10 +445,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     // --- D20RulesEngine: prerequisite parser ---------------------------
     SpecialCase: declarative(
       "Prerequisite alias table: about 60 exact clauses mapped to other records or combinations (shifter -> Razorclaw/Longtooth, spellscar, Fighter Weapon Talent, Flurry of Blows, 21st-level wizard/bard, Turn Undead, Harpers, House Vadalis, manifestations, healing infusions, dragon breath damage types, ...), plus generic Nth-level, race-plus-class and family branches.",
-      "Exact aliases are Prereqs rewrites in content/corrections/93-prerequisites.part (records with print-prereqs) and the Shifter CountsAsRace in 92-legacy-special-cases.part; generic branches are prerequisites.ts legacyClause. Deliberately different (D090): legacy maps spellscar, Harpers, House Vadalis and Circle of Smoke to records nothing grants, so it always fails them; 93-prerequisites.part instead lets a representing option meet them (Harper Agent background or theme, a Vadalis background, the Spellscar CountsAsFeature) and leaves the original wording as an unverified alternative (Circle of Smoke has no option). Generalized in prerequisites.ts qualifiedClause (records without print-prereqs too): 'Nth-level <X>' (the 21st-level wizard/bard aliases), '<A> with the <B>', '<A> from <place>', '<B> <class>' (race-plus-class beyond the first word), and 'Cormyr' as every 'Cormyr (...)' record of a typed prefix's type. Deliberately different (D091): the Ghost of Eventide and Silverstar aliases are no longer rewrites, since legacy's readings needed a rogue only for Cormyr and dropped the implement qualifier from 'any arcane'; the parser reads the published text. Still open: '1 or more power points' (no power-point stat) and the Dilettante predicates stay unverified",
+      "Exact aliases are Prereqs rewrites in content/corrections/93-prerequisites.part (records with print-prereqs); the bare 'shifter' alias (-Module-.cs ~29551, after the name walk finds nothing) is prerequisites.ts legacyClause: Razorclaw Shifter or Longtooth Shifter, each through the InternalizeElement walk (EXCEPTION_NAMES.shifter/razorclawShifter/longtoothShifter); generic branches are legacyClause too. Deliberately different (D090): legacy maps spellscar, Harpers, House Vadalis and Circle of Smoke to records nothing grants, so it always fails them; 93-prerequisites.part instead lets a representing option meet them (Harper Agent background or theme, a Vadalis background, the Spellscar CountsAsFeature) and leaves the original wording as an unverified alternative (Circle of Smoke has no option). Generalized in prerequisites.ts qualifiedClause (records without print-prereqs too): 'Nth-level <X>' (the 21st-level wizard/bard aliases), '<A> with the <B>', '<A> from <place>', '<B> <class>' (race-plus-class beyond the first word), and 'Cormyr' as every 'Cormyr (...)' record of a typed prefix's type. Deliberately different (D091): the Ghost of Eventide and Silverstar aliases are no longer rewrites, since legacy's readings needed a rogue only for Cormyr and dropped the implement qualifier from 'any arcane'; the parser reads the published text. Still open: '1 or more power points' (no power-point stat) and the Dilettante predicates stay unverified",
       test(
         PREREQUISITES,
-        "resolves a bare race-family name through a granted CountsAsRace",
+        "reads a bare Shifter as either shifter race (SpecialCase)",
       ),
       test(PREREQUISITES, "reads Nth-level <class> as the level and the class"),
       test(
@@ -574,14 +582,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     InternalizeElement: code(
       "Name lookup for a prerequisite token. Its walk of the same-named records skips Grants records, CountsAsRace records unless the prerequisite's owner is a Feat, and a Background named 'assassin' (so the Assassin background never meets a bare 'Assassin' clause); the internal-ID and '<name> <type>' links bypass the walk.",
-      "prerequisites.ts internalizedDefinitions (the name walk) and compositeElement / typed references (the '<name> <type>' link); the 'assassin' name is EXCEPTION_NAMES.assassinBackground. A non-feat's bare 'Shifter' (the corrections CountsAsRace) still resolves through the evaluator's owned-token lookup, as native SpecialCase 'shifter' does.",
+      "prerequisites.ts internalizedDefinitions (the name walk) and compositeElement / typed references (the '<name> <type>' link); the 'assassin' name is EXCEPTION_NAMES.assassinBackground. A bare 'Shifter' (no record has the name) falls through to SpecialCase 'shifter' in legacyClause, for feat and non-feat owners alike.",
       test(
         PREREQUISITES,
         "skips what legacy InternalizeElement drops from a name lookup",
       ),
       test(
         PREREQUISITES,
-        "resolves a bare race-family name through a granted CountsAsRace",
+        "reads a bare Shifter as either shifter race (SpecialCase)",
       ),
     ),
     AnyClassSpecific: code(

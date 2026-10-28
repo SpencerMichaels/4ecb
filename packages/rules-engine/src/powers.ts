@@ -3092,9 +3092,19 @@ export function evaluatePowers(input: {
           ?.split(",")
           .map((value) => value.trim())
           .filter(Boolean);
-        return versions === undefined || versions.length === 0
-          ? [definitionId]
-          : versions;
+        if (
+          power === undefined ||
+          versions === undefined ||
+          versions.length === 0
+        )
+          return [definitionId];
+        // Native CharPowerAugmentCount (D20Workspace.cs ~1691): a locked
+        // augmentable power (`_SuppressAugments`, which nativePsionics also
+        // sets on a Racial Trait's pick) has only its version 0.
+        return (effectiveField(power, "_SuppressAugments", input.overlays) ??
+          "") === ""
+          ? versions
+          : versions.slice(0, 1);
       }),
     ),
   ];

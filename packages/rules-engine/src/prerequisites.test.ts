@@ -113,67 +113,77 @@ describe("legacy prerequisites", () => {
     );
   });
 
-  it("resolves a bare race-family name through a granted CountsAsRace", () => {
-    // Legacy SpecialCase maps "Shifter" to either shifter race; the
-    // corrections pack expresses that as a CountsAsRace both races grant.
-    const shifter = {
-      id: "COUNTS_SHIFTER",
-      name: "Shifter",
-      type: "CountsAsRace",
-    } as ContentEntity;
+  it("reads a bare Shifter as either shifter race (SpecialCase)", () => {
+    // -Module-.cs ~29551: when no record is named "Shifter", native
+    // SpecialCase reads it as Razorclaw Shifter or Longtooth Shifter, for a
+    // feat's prerequisite and a background's alike.
     const razorclaw = {
-      id: "RAZORCLAW",
+      id: "ID_FMP_RACE_30",
       name: "Razorclaw Shifter",
       type: "Race",
     } as ContentEntity;
-    const shifterDefinitions = [...definitions, shifter, razorclaw];
-    const feat = { id: "SHIFTER_FEAT", name: "Shifter Feat", type: "Feat" };
-    const shifterContext = {
-      ...context,
-      owned: [razorclaw, shifter],
-      definitions: shifterDefinitions,
-      subject: feat as ContentEntity,
-    };
-    expect(evaluatePrerequisite("Shifter, Wis 13", shifterContext).status).toBe(
-      "satisfied",
-    );
-    expect(
-      evaluatePrerequisite("Shifter", {
-        ...context,
-        definitions: shifterDefinitions,
-        subject: feat as ContentEntity,
-      }).status,
-    ).toBe("failed");
-    // InternalizeElement reads a CountsAsRace by name only for a Feat's
-    // prerequisite (native SpecialCase then maps "shifter" to either shifter
-    // race). The evaluator's owned-token lookup meets a background's
-    // "Shifter" through the same granted record.
+    const longtooth = {
+      id: "ID_FMP_RACE_27",
+      name: "Longtooth Shifter",
+      type: "Race",
+    } as ContentEntity;
+    const longtoothGrants = {
+      id: "ID_INTERNAL_GRANTS_LONGTOOTH_SHIFTER",
+      name: "Longtooth Shifter",
+      type: "Grants",
+    } as ContentEntity;
+    const dwarf = { id: "ID_FMP_RACE_1", name: "Dwarf", type: "Race" };
+    const shifterDefinitions = [
+      ...definitions,
+      razorclaw,
+      longtooth,
+      longtoothGrants,
+      dwarf as ContentEntity,
+    ];
+    const feat = {
+      id: "ID_FMP_FEAT_1410",
+      name: "Sturdy Shifter",
+      type: "Feat",
+    } as ContentEntity;
     const background = {
-      id: "SHIFTER_BACKGROUND",
+      id: "ID_FMP_BACKGROUND_753",
       name: "Shifter - Luskan",
       type: "Background",
     } as ContentEntity;
-    const tokens = (entities: readonly ContentEntity[]) =>
-      new Set(
-        entities.flatMap((entity) =>
-          [entity.id, entity.name].map((value) => value.toLocaleLowerCase()),
-        ),
-      );
+    const theme = {
+      id: "ID_FMP_THEME_871",
+      name: "Pack Outcast",
+      type: "Theme",
+    } as ContentEntity;
+    const read = (
+      prerequisite: string,
+      subject: ContentEntity,
+      race: ContentEntity,
+    ) =>
+      evaluatePrerequisite(prerequisite, {
+        ...context,
+        owned: [race],
+        definitions: shifterDefinitions,
+        subject,
+      }).status;
     expect(
       internalizePrerequisite("Shifter", {
-        ...shifterContext,
+        ...context,
+        definitions: shifterDefinitions,
         subject: background,
       }),
-    ).toEqual({ kind: "unverified", text: "Shifter" });
-    expect(
-      evaluatePrerequisite("Shifter", {
-        ...shifterContext,
-        // A separate subject: the IR cache keys on subject and text only.
-        subject: { ...background, id: "SHIFTER_BACKGROUND_2" },
-        ownedTokens: tokens([razorclaw, shifter]),
-        knownTokens: tokens(shifterDefinitions),
-      }).status,
-    ).toBe("satisfied");
+    ).toEqual({
+      kind: "element",
+      text: "Shifter",
+      definitionIds: ["ID_FMP_RACE_30", "ID_FMP_RACE_27"],
+      negated: false,
+    });
+    expect(read("Shifter", feat, razorclaw)).toBe("satisfied");
+    expect(read("Shifter", feat, longtooth)).toBe("satisfied");
+    expect(read("Shifter", feat, dwarf as ContentEntity)).toBe("failed");
+    expect(read("Shifter", background, longtooth)).toBe("satisfied");
+    expect(read("Shifter", background, dwarf as ContentEntity)).toBe("failed");
+    expect(read("Human or shifter", theme, razorclaw)).toBe("satisfied");
   });
 
   it("skips what legacy InternalizeElement drops from a name lookup", () => {

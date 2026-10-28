@@ -158,8 +158,8 @@ paragon multiclassing as/in, the class-specific multiclass families,
 proficiency forms, and the psionic-daily and healing-infusion predicates.
 Names it keys on are in `EXCEPTION_NAMES`. The exact-text aliases are
 `Prereqs` rewrites in `content/corrections/93-prerequisites.part` (records
-with `print-prereqs` only, so what players read is unchanged) and the
-Shifter CountsAsRace in `92-legacy-special-cases.part`. Across the private
+with `print-prereqs` only, so what players read is unchanged); the bare
+`Shifter` alias is code (`legacyClause`, either shifter race). Across the private
 pack this took unverified clause uses from 650 (257 distinct) to 122 (59),
 measured by `tsx scripts/audit-prerequisites.ts`.
 
