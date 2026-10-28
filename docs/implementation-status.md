@@ -1,5 +1,43 @@
 # Implementation status
 
+## Loadout applies the character's size; unwieldable weapons are an issue (2026-10-27)
+
+D102 (part 2 of the Equipment-tab slot work, `cb945bd`). The evaluator
+exposes `EvaluatedCharacter.loadoutSlotContext` (Small, Oversized, One Size
+Larger, Ambidextrous) and the one loadout resolver applies native
+`ItemSlot` size rules through `legacyItemSlot`: a Small character's
+non-small versatile weapon fills both hands (its "Wield two-handed" menu
+item shows checked and inert), One Size Larger holds a two-handed weapon in
+one hand. A weapon the character can't wield (Small with a two-handed
+weapon, a Large weapon without Oversized/One Size Larger) can still be
+equipped and raises a house-rule character issue naming the weapon and why
+(`unwieldableWeaponIssues` in `builder-diagnostics.ts`); its attack rows
+stay, as native `BuildWeaponsList` lists every owned weapon. Staff and
+Ambidextrous only change `SLOT:` matching, not placement. Export still
+resolves without the size flags (best effort). Cache version v64.
+
+Verification: synthetic tests in `loadout-slots.test.ts`,
+`evaluator.test.ts`, `equipment-ui.test.ts`, `builder-diagnostics.test.ts`
+and `EquipmentWorkspace.contextmenu.test.tsx`; 1526 tests pass, typecheck
+clean. No sample character is Small with an equipped versatile or
+two-handed weapon, so real-character coverage of the size rules is nil.
+
+**DV (new player save).** Legacy AC 26 vs modern 24 is a stale content
+revision, not the D100 correction: native counts Swordmage Warding once
+(see D100), and the player's CBLoader still had the old Wrist Razors
+`requires="Swordmage Warding" wearing="DUAL-WIELDING:"` +2 line the current
+`07-darksun.part` removed. DV is now in the accepted parity baseline with
+that known 2-point AC/Armor Class mismatch.
+
+**Faster parity baseline.** Exhaustive candidate prerequisite checks
+dominated evaluation (up to 4.7M checks per character); memoised owned-set
+narrowing, a per-profile type index, cached `parseRules` and an ASCII fast
+path for name comparisons cut a cold evaluation from ~40–55 s to ~8 s (app
+evaluation benefits too; results byte-identical). `parity:baseline` runs
+characters on worker threads (`--jobs N`, default by cores and free
+memory): a full run takes about 2 minutes instead of ~19. Full run after
+merging all of the above: no new or fixed mismatch keys; accepted with DV.
+
 ## Loadout drives the main hand, arms slot and two-handed use (2026-10-27)
 
 D101 (part 1 of the Equipment-tab slot work). The loadout resolver moved to
@@ -27,7 +65,7 @@ apps`, typecheck, lint. `pnpm parity:baseline` (not accepted): no stat or
 power count changed; main hand 59/59 (Skye's two longswords keep the
 named one first; DV's stale `_INTERNAL_MainHandWeapon` no longer puts the
 arms-worn Wrist Razors ahead of the longsword). DV's AC 24 vs legacy 26 is
-the D100 typed-warding divergence, unchanged by this work.
+an old CBLoader Wrist Razors line, not D100 (see the entry above).
 
 ## Player report: Swordmage Warding counted twice (2026-10-26)
 

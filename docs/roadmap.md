@@ -994,6 +994,16 @@ character before it is fixed, one slice per item.
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card
   (`1b92954`).
+- **From the Swordmage Warding report (2026-10-27), open:**
+  1. Native type caps across stat links: `CalculateStatAddValue` evaluates a
+     linked stat against the parent's `type_max`, so a typed bonus reached
+     through a link doesn't stack with the same type already on the parent
+     (D100). The modern stat table caps within one stat only. Proposed:
+     audit which statlinks target stats with typed statadds, then implement
+     generically (awaiting owner go-ahead).
+  2. Large-weapon proficiency: native `IsProficient` denies proficiency with
+     a Large weapon without `CanUseLargeWeapons`; the modern check ignores
+     weapon size (D102 only raises the unwieldable issue).
 - **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
   `UniversalClassSkill`, gated resistances, summoning powers whose creature
   attacks sit in " Standard action"/" Minor Action" fields (86+ powers; no
