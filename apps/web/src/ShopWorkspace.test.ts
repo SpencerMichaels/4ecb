@@ -6,13 +6,17 @@ import type { BuildInventoryEntry } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import {
-  acquisitionDialogPages,
-  compatibleChoiceType,
+  chooseItemChoice,
   isComplexItemChoice,
   itemChoicePages,
+  itemChoiceSelectionsFrom,
+  resolveItemChoiceOccurrences,
+} from "./item-choice-pages";
+import {
+  acquisitionDialogPages,
+  compatibleChoiceType,
   preferredShopBrowse,
   readShopSessionPreferences,
-  resolveItemChoiceOccurrences,
   retainedShopFilter,
   shopKnownFilterMatches,
   ShopWorkspace,
@@ -322,6 +326,35 @@ describe("Shop workspace", () => {
     expect(resolved).toHaveLength(1);
     expect(resolved[0]?.identity.definitionId).toBe(simplePower.id);
     expect(resolved[0]?.children).toEqual([]);
+  });
+
+  it("reads an owned holding's saved choices back as selections", () => {
+    const saved = resolveItemChoiceOccurrences(
+      soulArmor,
+      nestedChoiceEntities,
+      1,
+      new Map([
+        ["0", ashfallEvasion.id],
+        ["0.0", ashfallWisdom.id],
+      ]),
+    );
+    const selections = itemChoiceSelectionsFrom(
+      soulArmor,
+      saved,
+      nestedChoiceEntities,
+      1,
+    );
+    expect([...selections]).toEqual([
+      ["0", ashfallEvasion.id],
+      ["0.0", ashfallWisdom.id],
+    ]);
+    // Re-choosing the top slot drops the nested pick it held.
+    expect([...chooseItemChoice(selections, [0], simplePower.id)]).toEqual([
+      ["0", simplePower.id],
+    ]);
+    expect(
+      itemChoiceSelectionsFrom(soulArmor, [], nestedChoiceEntities, 1).size,
+    ).toBe(0);
   });
 
   it("treats only Power candidates as complex enough for the detail-card layout", () => {

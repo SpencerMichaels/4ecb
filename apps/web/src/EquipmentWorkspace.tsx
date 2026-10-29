@@ -22,7 +22,7 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { itemSetPartyCountName } from "@4ecb/rules-engine";
+import { itemChoiceSlots, itemSetPartyCountName } from "@4ecb/rules-engine";
 import { offeredDetailEntities } from "./detail-stack";
 import {
   alchemicalFormulaItems,
@@ -36,6 +36,7 @@ import {
   inventoryAugmentAttachedTo,
   inventoryAugmentHosts,
   inventoryDisplayName,
+  itemChoiceCandidates,
   inventoryIsAugment,
   inventoryEntryForEntity,
   inventoryForcedTwoHanded,
@@ -62,7 +63,12 @@ import {
   type ItemContextMenuItem,
   type ItemContextMenuState,
 } from "./ItemContextMenu";
+import {
+  itemChoiceHeading,
+  itemChoiceSelectionsFrom,
+} from "./item-choice-pages";
 import { canonicalItemIcon } from "./item-icons";
+import { ItemChoiceDialog } from "./ItemChoicePicker";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
@@ -952,7 +958,16 @@ export function EquipmentWorkspace({
   onSetWielding,
   onSetAugment,
   onSetText,
+  focusRequest,
 }: {
+  /**
+   * A holding to select (shown in the detail pane, its category expanded),
+   * as an issue's Review link asks; `request` changes on each ask.
+   */
+  readonly focusRequest?: {
+    readonly entryId: string;
+    readonly request: number;
+  };
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
@@ -996,6 +1011,11 @@ export function EquipmentWorkspace({
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [contextMenu, setContextMenu] = useState<ItemContextMenuState>();
   const closeContextMenu = useCallback(() => setContextMenu(undefined), []);
+  const [choosing, setChoosing] = useState<{
+    readonly entry: BuildInventoryEntry;
+    readonly elementIndex: number;
+    readonly entity: ContentEntity;
+  }>();
   const [openSaleId, setOpenSaleId] = useState<string>();
   // A "Remove" click arms the button (a second click confirms) instead of a
   // native confirm() dialog.
@@ -1021,6 +1041,30 @@ export function EquipmentWorkspace({
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
   const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
+  // Select the requested holding once per request: inspect it, expand its
+  // category and bring its row into view.
+  const handledFocusRequest = useRef<number>(undefined);
+  useEffect(() => {
+    if (
+      focusRequest === undefined ||
+      handledFocusRequest.current === focusRequest.request
+    )
+      return;
+    handledFocusRequest.current = focusRequest.request;
+    const entry = build.inventory.find(({ id }) => id === focusRequest.entryId);
+    if (entry === undefined) return;
+    setInspected(inventoryItemDetail(entry, byId));
+    const category = groupInventoryByCategory([entry], byId)[0]?.category.id;
+    if (category !== undefined)
+      setInventoryCategoryExpansion((current) =>
+        new Map(current).set(category, true),
+      );
+    requestAnimationFrame(() =>
+      [...document.querySelectorAll<HTMLElement>("[data-inventory-entry]")]
+        .find((row) => row.dataset.inventoryEntry === entry.id)
+        ?.scrollIntoView?.({ block: "nearest" }),
+    );
+  }, [focusRequest, build.inventory, byId]);
   // Per-item right-click actions, as in the legacy builder (no menu button).
   const augmentActions = (
     augment: BuildInventoryEntry,
@@ -1069,7 +1113,40 @@ export function EquipmentWorkspace({
       },
     ];
   };
+  // An item's own choices (an Armor of Resistance's damage type), settled
+  // in the Shop's item-choice pages; always offered for an item that has
+  // them, so a choice an older save never made can be made here.
+  const choiceActions = (
+    entry: BuildInventoryEntry,
+  ): readonly ItemContextMenuItem[] =>
+    entry.elements.flatMap((element, elementIndex) => {
+      const entity =
+        element.definitionId === undefined
+          ? undefined
+          : byId.get(element.definitionId.toLocaleLowerCase());
+      const slot =
+        entity === undefined ? undefined : itemChoiceSlots(entity)[0];
+      if (entity === undefined || slot === undefined) return [];
+      const empty =
+        itemChoiceCandidates(slot, entities, build.effectiveLevel).length === 0;
+      return [
+        {
+          key: `choose:${elementIndex}`,
+          label: `${itemChoiceHeading(slot)}…`,
+          ...(empty
+            ? { disabledReason: "The content in use offers nothing to choose." }
+            : {}),
+          onSelect: () => setChoosing({ entry, elementIndex, entity }),
+        },
+      ];
+    });
   const itemActions = (
+    entry: BuildInventoryEntry,
+  ): readonly ItemContextMenuItem[] => [
+    ...holdingActions(entry),
+    ...choiceActions(entry),
+  ];
+  const holdingActions = (
     entry: BuildInventoryEntry,
   ): readonly ItemContextMenuItem[] => {
     if (inventoryIsAugment(entry, byId)) return augmentActions(entry);
@@ -1333,6 +1410,7 @@ export function EquipmentWorkspace({
                                         return (
                                           <tr
                                             className="table-clickable-row"
+                                            data-inventory-entry={entry.id}
                                             key={entry.id}
                                             title={loadoutToggleDescription}
                                             onClick={() =>
@@ -1683,6 +1761,31 @@ export function EquipmentWorkspace({
       </div>
       {contextMenu === undefined ? null : (
         <ItemContextMenu menu={contextMenu} onClose={closeContextMenu} />
+      )}
+      {choosing === undefined ? null : (
+        <ItemChoiceDialog
+          entity={choosing.entity}
+          itemName={inventoryDisplayName(choosing.entry, byId)}
+          entities={entities}
+          characterLevel={build.effectiveLevel}
+          initialSelections={itemChoiceSelectionsFrom(
+            choosing.entity,
+            choosing.entry.elements[choosing.elementIndex]?.children ?? [],
+            entities,
+            build.effectiveLevel,
+          )}
+          onSave={(children) =>
+            onPutInventory({
+              ...choosing.entry,
+              elements: choosing.entry.elements.map((element, index) =>
+                index === choosing.elementIndex
+                  ? { ...element, children }
+                  : element,
+              ),
+            })
+          }
+          onClose={() => setChoosing(undefined)}
+        />
       )}
     </section>
   );

@@ -355,3 +355,140 @@ describe("Equipment augment attachment (CharLootAugment)", () => {
     expect(none[0]?.getAttribute("title")).toMatch(/magic weapon or staff/);
   });
 });
+
+describe("Equipment item-owned choices", () => {
+  const select: ContentEntity["rules"][number] = {
+    name: "select",
+    attributes: [
+      { name: "type", value: "Class Feature" },
+      { name: "number", value: "1" },
+      { name: "Category", value: "Armor of Resistance +2" },
+    ],
+    text: "Choose Resistance Type ",
+    children: [],
+    ordinal: 0,
+  };
+  const armor: ContentEntity = {
+    ...weapon("ID_FMP_MAGIC_ITEM_1474", "Armor of Resistance +2", {
+      "Magic Item Type": "Armor",
+    }),
+    type: "Magic Item",
+    rules: [select],
+  };
+  const resistance = (id: string, name: string): ContentEntity => ({
+    ...weapon(id, name, {}),
+    type: "Class Feature",
+    categories: ["Armor of Resistance +2"],
+  });
+  const entities = [
+    armor,
+    resistance("ID_INTERNAL_RESIST_FIRE_2", "Resist Fire"),
+    resistance("ID_INTERNAL_RESIST_COLD_2", "Resist Cold"),
+  ];
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity] as const),
+  );
+  const unchosen: BuildInventoryEntry = {
+    ...holding(armor),
+    id: "resistance-armor",
+  };
+  beforeEach(() => {
+    // The selected holding's detail card measures itself.
+    globalThis.ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    // jsdom has no modal dialogs.
+    HTMLDialogElement.prototype.showModal ??= function showModal(
+      this: HTMLDialogElement,
+    ) {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close ??= function close(
+      this: HTMLDialogElement,
+    ) {
+      this.open = false;
+      this.dispatchEvent(new Event("close"));
+    };
+  });
+
+  it("offers the item's choice from its right-click menu and saves the pick", () => {
+    const onPutInventory = vi.fn();
+    act(() =>
+      root.render(
+        <EquipmentWorkspace
+          // An issue's Review link selects the holding and expands its group.
+          focusRequest={{ entryId: "resistance-armor", request: 1 }}
+          build={{ ...build, inventory: [unchosen] }}
+          entities={entities}
+          byId={byId}
+          wallet={{ carried: noCoins, stored: noCoins }}
+          activeDefinitionIds={[]}
+          workspace="equipment"
+          loadoutView={false}
+          shopCategory="items"
+          onShopCategoryChange={() => undefined}
+          onPutInventory={onPutInventory}
+          onPurchase={() => undefined}
+          onSell={() => undefined}
+          onEquipSlot={() => undefined}
+          onSetWielding={() => undefined}
+          onSetAugment={() => undefined}
+          onSetText={() => undefined}
+        />,
+      ),
+    );
+    const row = container.querySelector(
+      '[data-inventory-entry="resistance-armor"]',
+    )!;
+    act(() => {
+      row.dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 40,
+          clientY: 50,
+        }),
+      );
+    });
+    const items = [
+      ...container.querySelectorAll<HTMLElement>('[role="menu"] button'),
+    ];
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Choose Resistance Type…",
+    ]);
+    act(() => items[0]!.click());
+    const dialog = container.querySelector("dialog")!;
+    expect(dialog.querySelector("h2")?.textContent).toBe(
+      "Choose Resistance Type",
+    );
+    const button = (label: string) =>
+      [...dialog.querySelectorAll("button")].find(
+        (candidate) => candidate.textContent === label,
+      )!;
+    expect(button("Save").disabled).toBe(true);
+    act(() => button("Resist Fire").click());
+    expect(button("Save").disabled).toBe(false);
+    act(() => button("Save").click());
+    expect(onPutInventory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "resistance-armor",
+        elements: [
+          expect.objectContaining({
+            definitionId: "ID_FMP_MAGIC_ITEM_1474",
+            children: [
+              expect.objectContaining({
+                identity: {
+                  definitionId: "ID_INTERNAL_RESIST_FIRE_2",
+                  name: "Resist Fire",
+                  type: "Class Feature",
+                },
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+  });
+});

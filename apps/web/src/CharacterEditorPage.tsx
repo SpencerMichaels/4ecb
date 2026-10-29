@@ -332,6 +332,11 @@ export function CharacterEditorPage({
   // The choice an issue led to, scrolled into view once its tab renders it
   // (it can sit below a window-height table, as step 2 of a feat's flow).
   const [scrollToChoiceId, setScrollToChoiceId] = useState<string>();
+  // The holding an issue's Review link selects on the Equipment tab.
+  const [inventoryFocus, setInventoryFocus] = useState<{
+    readonly entryId: string;
+    readonly request: number;
+  }>();
   // The accordion item the user opened (or null: all folded) on one level
   // tab; elsewhere, and after a tab change or Review jump, the default rules.
   const [settingLevel, setSettingLevel] = useState(false);
@@ -1416,6 +1421,11 @@ export function CharacterEditorPage({
       return;
     }
     if (issue.target?.kind === "inventory") {
+      const { entryId } = issue.target;
+      setInventoryFocus((current) => ({
+        entryId,
+        request: (current?.request ?? 0) + 1,
+      }));
       onNavigate(characterId, { workspace: "equipment" });
       return;
     }
@@ -2842,6 +2852,9 @@ export function CharacterEditorPage({
                   value={equipmentCardSettings ?? buildCardSettings}
                 >
                   <EquipmentWorkspace
+                    {...(inventoryFocus === undefined
+                      ? {}
+                      : { focusRequest: inventoryFocus })}
                     build={build}
                     entities={entities}
                     byId={byId}

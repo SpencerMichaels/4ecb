@@ -86,6 +86,93 @@ describe("builder issue groups", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it("titles an item's own unresolved choice after the holding and links to it", () => {
+    const armor: ContentEntity = {
+      id: "ID_FMP_MAGIC_ITEM_1474",
+      name: "Armor of Resistance +2",
+      type: "Magic Item",
+      source: "Public test fixture",
+      sources: ["Public test fixture"],
+      attributes: [],
+      categories: [],
+      specifics: [],
+      rules: [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Class Feature" },
+            { name: "number", value: "1" },
+            { name: "Category", value: "Armor of Resistance +2" },
+          ],
+          text: "Choose Resistance Type ",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "diagnostics-test", sourceOrdinal: 0 },
+    };
+    const entry: BuildInventoryEntry = {
+      id: "legacy:loot:11",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 1,
+      elements: [
+        {
+          definitionId: armor.id,
+          name: armor.name,
+          type: armor.type,
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    const result = builderIssueGroups({
+      ...common,
+      byId: new Map([[armor.id.toLocaleLowerCase(), armor]]),
+      build: {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [],
+        inventory: [entry],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      },
+      evaluation: evaluation({
+        occurrences: [
+          {
+            id: "legacy:loot:11:definition:0",
+            definitionId: armor.id,
+            acquiredLevel: 1,
+            kind: "inventory",
+          },
+        ],
+        choices: [
+          {
+            id: "armor-choice",
+            level: 1,
+            providerOccurrenceId: "legacy:loot:11:definition:0",
+            ruleOrdinal: 0,
+            index: 0,
+            type: "Class Feature",
+            optional: false,
+            candidates: [],
+          },
+        ],
+      }),
+    });
+    expect(result.unresolved).toEqual([
+      expect.objectContaining({
+        title: "Armor of Resistance +2: Resistance Type",
+        target: { kind: "inventory", entryId: "legacy:loot:11" },
+      }),
+    ]);
+  });
+
   it("lists an equipped item's unmet requirement as a house rule", () => {
     const result = builderIssueGroups({
       ...common,
