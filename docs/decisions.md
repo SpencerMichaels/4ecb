@@ -3264,6 +3264,16 @@ Kept modern, where native contradicts the text or nullifies the feature:
   Smiting as a mace) shows the item's Critical (+1d10 force per plus), not
   the equivalent weapon's. Native power stats never read Critical; the item
   text grants its critical to attacks made with it.
+- **A retrained theme's later features are lost** (Neverwinter Campaign
+  Setting, "Changing Themes": "When you do lose a theme, you lose all the
+  features that it granted to you"; added 2026-10-28 with the new-saves
+  pass). Mellivora-L7 took Explorer at level 1 and retrained it to Gladiator
+  at level 2 (`replaces=` the Explorer element), yet legacy still lists
+  "Level 5 Explorer Feature" in its level-5 tally and applies its +2
+  `Endurance Misc` (legacy Endurance 9, builder 7): native keeps the grants
+  the replaced level-1 element schedules for later levels. The builder drops
+  every feature of the replaced theme. Inferred from the save, not traced
+  in native code.
 
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093
