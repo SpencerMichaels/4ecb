@@ -4,10 +4,11 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type {
-  EngineDiagnostic,
-  EvaluatedCharacter,
-  EvaluatedChoice,
+import {
+  userEditName,
+  type EngineDiagnostic,
+  type EvaluatedCharacter,
+  type EvaluatedChoice,
 } from "@4ecb/rules-engine";
 import {
   candidateReason,
@@ -104,7 +105,10 @@ export function savedOccurrenceNames(
   };
   for (const frame of build.levels) {
     visit(frame.root);
-    if (frame.userEdit !== undefined) visit(frame.userEdit.root);
+    if (frame.userEdit !== undefined) {
+      visit(frame.userEdit.root);
+      names.set(frame.userEdit.root.id, userEditName(frame) ?? "");
+    }
   }
   build.grabbag.forEach(visit);
   for (const alternate of build.alternates) visit(alternate.choice);

@@ -12,6 +12,7 @@ import {
   commandForEvaluatedChoice,
   itemChoiceSlots,
   projectBuildForEvaluation,
+  userEditName,
 } from "./build-projection";
 import { evaluateCharacter } from "./evaluator";
 
@@ -1572,6 +1573,255 @@ describe("build projection", () => {
         overrides: { note: "kept" },
       },
     ]);
+  });
+
+  describe("saves made before content wrapped fixed grants in a selection", () => {
+    // Stock Elf granted Group Awareness and Elven Accuracy directly; the
+    // CBLoader merge grants an Elf Subrace container whose select offers
+    // Standard Elf Racial Traits (granting both) and other subraces.
+    const withCategory = (value: ContentEntity, category: string) => ({
+      ...value,
+      categories: [category],
+    });
+    const content = [
+      entity("ID_INTERNAL_GRANTS_ELF", "Elf", "Grants", [
+        statement(
+          "grant",
+          { name: "ID_DRU_RACIAL_TRAIT_004", type: "Racial Trait" },
+          0,
+        ),
+        statement(
+          "grant",
+          { name: "ID_FMP_RACIAL_TRAIT_354", type: "Racial Trait" },
+          1,
+        ),
+        statement("select", { type: "Feat", number: "1" }, 2),
+      ]),
+      entity("ID_FMP_RACIAL_TRAIT_354", "Wild Step", "Racial Trait"),
+      entity("ID_DRU_RACIAL_TRAIT_004", "Elf Subrace", "Racial Trait", [
+        statement(
+          "select",
+          { type: "Racial Trait", number: "1", Category: "Elf Subrace" },
+          0,
+        ),
+      ]),
+      withCategory(
+        entity(
+          "ID_DRU_SUBRACE_03",
+          "Standard Elf Racial Traits",
+          "Racial Trait",
+          [
+            statement(
+              "grant",
+              { name: "ID_FMP_RACIAL_TRAIT_359", type: "Racial Trait" },
+              0,
+            ),
+            statement(
+              "grant",
+              { name: "ID_FMP_RACIAL_TRAIT_353", type: "Racial Trait" },
+              1,
+            ),
+          ],
+        ),
+        "ID_DRU_RACIAL_TRAIT_004",
+      ),
+      withCategory(
+        entity("ID_FMP_SUBRACE_58", "Wild Elf", "Racial Trait", [
+          statement(
+            "grant",
+            { name: "ID_FMP_RACIAL_TRAIT_353", type: "Racial Trait" },
+            0,
+          ),
+          statement(
+            "grant",
+            { name: "ID_FMP_RACIAL_TRAIT_3964", type: "Racial Trait" },
+            1,
+          ),
+        ]),
+        "ID_DRU_RACIAL_TRAIT_004",
+      ),
+      entity("ID_FMP_RACIAL_TRAIT_359", "Group Awareness", "Racial Trait", [
+        statement("statadd", { name: "Perception Misc", value: "+1" }, 0),
+      ]),
+      entity("ID_FMP_RACIAL_TRAIT_353", "Elven Accuracy", "Racial Trait"),
+      entity("ID_FMP_RACIAL_TRAIT_3964", "Wild Elf Trait", "Racial Trait"),
+      entity("ID_FMP_FEAT_1", "Alertness", "Feat"),
+    ];
+    const child = (
+      id: string,
+      definitionId: string | undefined,
+      name: string,
+      type: string,
+    ) => ({
+      id,
+      identity:
+        definitionId === undefined
+          ? { name, type }
+          : { definitionId, name, type },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      unresolved: definitionId === undefined,
+      children: [],
+    });
+    const buildWith = (
+      children: CharacterBuild["levels"][number]["root"]["children"],
+    ): CharacterBuild => ({
+      formatVersion: 3,
+      known: [],
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...child("elf", "ID_INTERNAL_GRANTS_ELF", "Elf", "Grants"),
+            children,
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    });
+
+    it("selects the one candidate that grants the leftover children", () => {
+      const build = buildWith([
+        child(
+          "wild-step",
+          "ID_FMP_RACIAL_TRAIT_354",
+          "Wild Step",
+          "Racial Trait",
+        ),
+        child(
+          "group",
+          "ID_FMP_RACIAL_TRAIT_359",
+          "Group Awareness",
+          "Racial Trait",
+        ),
+        child(
+          "accuracy",
+          "ID_FMP_RACIAL_TRAIT_353",
+          "Elven Accuracy",
+          "Racial Trait",
+        ),
+        // An empty select the player left blank keeps only its own place.
+        child("blank", undefined, "", ""),
+        child("feat", "ID_FMP_FEAT_1", "Alertness", "Feat"),
+      ]);
+      const projected = projectBuildForEvaluation(build, content);
+      const recoveredId = "elf:grant:0:recovered:0:0";
+      expect(projected.occurrences).toContainEqual(
+        expect.objectContaining({
+          id: recoveredId,
+          definitionId: "ID_DRU_SUBRACE_03",
+          parentId: "elf:grant:0",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+          kind: "choice",
+        }),
+      );
+      expect(projected.occurrences).toContainEqual(
+        expect.objectContaining({
+          id: "group",
+          parentId: recoveredId,
+          ruleOrdinal: 0,
+          kind: "grant",
+        }),
+      );
+      expect(projected.occurrences).toContainEqual(
+        expect.objectContaining({ id: "feat", ruleOrdinal: 2 }),
+      );
+      const evaluated = evaluateCharacter(projected, content);
+      expect(evaluated.diagnostics).toEqual([]);
+      expect(evaluated.stats["Perception Misc"]?.value).toBe(1);
+      expect(
+        evaluated.occurrences.filter(
+          ({ definitionId }) => definitionId === "ID_FMP_RACIAL_TRAIT_353",
+        ),
+      ).toHaveLength(1);
+    });
+
+    it("leaves the selection open when no single candidate fits", () => {
+      // Elven Accuracy alone fits both Standard Elf and Wild Elf.
+      const build = buildWith([
+        child(
+          "wild-step",
+          "ID_FMP_RACIAL_TRAIT_354",
+          "Wild Step",
+          "Racial Trait",
+        ),
+        child(
+          "accuracy",
+          "ID_FMP_RACIAL_TRAIT_353",
+          "Elven Accuracy",
+          "Racial Trait",
+        ),
+      ]);
+      const evaluated = evaluateCharacter(
+        projectBuildForEvaluation(build, content),
+        content,
+      );
+      expect(evaluated.diagnostics.map(({ code }) => code).sort()).toEqual([
+        "choice.required",
+        "choice.required",
+        "occurrence.unslotted",
+      ]);
+    });
+  });
+
+  it("names an unnamed UserEdit after its level", () => {
+    const root = (id: string, name: string) => ({
+      id,
+      identity: { name, type: "" },
+      acquiredLevel: 7,
+      legality: "houserule" as const,
+      unresolved: true,
+      children: [],
+    });
+    const build: CharacterBuild = {
+      formatVersion: 3,
+      known: [],
+      effectiveLevel: 7,
+      levels: [
+        {
+          level: 7,
+          root: { ...root("level-7", "7"), legality: "rules-legal" },
+          userEdit: {
+            root: root("legacy:1ef27b20", ""),
+            rules: [
+              {
+                name: "statadd",
+                attributes: [
+                  { name: "name", value: "Speed" },
+                  { name: "value", value: "1" },
+                ],
+                text: "DOMT",
+                children: [],
+              },
+            ],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const frame = build.levels[0]!;
+    expect(userEditName(frame)).toBe("Level 7 manual edits");
+    const evaluated = evaluateCharacter(
+      projectBuildForEvaluation(build, []),
+      [],
+    );
+    expect(evaluated.stats.Speed?.value).toBe(1);
+    expect(evaluated.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "occurrence.houserule",
+        message: "Level 7 manual edits is marked as a house rule.",
+      }),
+    );
   });
 
   describe("item-owned choice slots", () => {
