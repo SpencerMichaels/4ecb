@@ -1051,7 +1051,12 @@ character before it is fixed, one slice per item.
      errors (homebrew vs engine/import bug vs known gap,
      `tmp/new-saves-triage.md`), then fixes in batches and a baseline
      `--accept` once every remaining diff is explained.
-  9. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
+  9. Small follow-ups found during the new-saves pass: `rules.worker.test.ts`
+     ("skips queued evaluations cancelled before they start") is load-flaky;
+     Salman Ibn Jad's Weight evaluates to none on the stock pack (a missing
+     Sun balm definition likely blanks the total); KrizDevvon, Lily and others
+     flagged by the parity profile suggestions are unmapped.
+  10. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
