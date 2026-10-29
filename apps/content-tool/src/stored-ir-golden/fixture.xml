@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Synthetic input for stored-ir-golden.test.ts: the text the pack build parses
-  into _Power Text IR, _Associate Stat Block and _Prerequisite IR, written in
+  into _Power Text IR, _Associate Stat Block, _Creature Stat Block and
+  _Prerequisite IR, written in
   the spellings real records use. Changing this file means regenerating the
   goldens (see the test); it never needs a version bump by itself.
 -->
@@ -183,5 +184,62 @@ Hit: 2d8 + your Wisdom modifier fire damage, and ongoing 5 fire damage (save end
 MINOR
 Minor Action F At-Will (1/round)
 Effect: The spirit either walks, shifts, runs, stands up, squeezes, or crawls.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_MOUNT_STRIDER" name="Golden Strider" type="Gear" source="Synthetic">
+    <specific name="Category"> Mount </specific>
+    <specific name="_Monster"> Golden Strider - Level 4 Skirmisher
+Large  natural beast (mount, reptile) - XP 175
+Initiative +6 Senses Perception +3; low-light vision
+HP 50; Bloodied 25
+AC 27 (29 against opportunity attacks); Fortitude 16, Reflex 18, Will 14
+Immune fear (while bloodied only); Resist 5 fire
+Speed 8, climb 4 (spider climb)
+
+m Peck (standard;  At-Will) ▪ Poison
++9 vs. AC; 1d8+4 damage. 
+
+M Swift Kick (standard; Recharge 5, or 6)
+Attack: Melee 1 (one creature); +9 vs. Reflex; Hit: 2d6 + 4 damage, and the target is
+knocked prone.
+
+Sure Stride (while mounted by a friendly rider of 4th level or higher; at-will) • Mount
+The strider's rider gains a +2 bonus to Acrobatics checks..
+
+Alignment Unaligned Languages -
+Skills Athletics +10
+Str 18 (+6) ◦ Dex 18 (+6) ◦ Wis 12 (+3)
+Con 14 (+4) ◦ Int 2 (-2) ◦ Cha 8 (+1)
+
+Description: A synthetic strider used only by the stored IR golden. </specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_MOUNT_STEED" name="Golden Steed" type="Gear" source="Synthetic">
+    <specific name="Category"> Mount </specific>
+    <specific name="_Monster"> Golden Steed - Large immortal beast (mount)
+   -   
+Initiative equal to yours, Perception equal to yours
+
+HP your bloodied value
+
+Healing Surges none, but you can spend a healing surge for the steed if an effect allows it to spend one
+
+Defenses your defenses +1, not including any temporary bonuses or penalties
+
+Resist 5 all
+
+Speed 8, fly 8
+
+Traits
+Steady Charge (mount) - The steed's rider gains a +2 bonus to damage rolls on charge attacks.
+
+Standard Actions
+m Kick (At-Will)
+Attack: Melee 1 (one creature); your level + 5 vs. AC
+Hit: 2d6 + your Charisma modifier damage.
+
+Triggered Actions
+C Glare (radiant, Encounter)
+Trigger: An enemy enters a square adjacent to the steed.
+Attack (Immediate Reaction): Close burst 1 (triggering enemy); your level + 3 vs. Will
+Hit: 1d8 + your Charisma modifier radiant damage. </specific>
   </RulesElement>
 </D20Rules>

@@ -2817,15 +2817,22 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "MonsterDisplay.Build": partial(
       "Mount detail shows the _Monster stat block (47 mounts).",
-      "presentation only: sheet-model splits the block into the legacy " +
-        "header band and sections (SheetCard.statBlock, monster-stat-block.ts) " +
-        "and flags the five descriptions that repeat it; no card renders it " +
-        "yet, because 8-12 of the 47 blocks exceed the printed item card at " +
-        "the 6.5pt fit floor and the deck has no continuation card (owner " +
-        "decision pending)",
+      "the pack build parses each block once into _Creature Stat Block " +
+        "(legacy-wotc creature-stat-block.ts, D110): a published block's " +
+        "printed numbers, or an owner-relative block (Celestial steeds, Jade " +
+        "Horse) as an associate stat block; unplaced lines are " +
+        "mount.stat-block-unparsed diagnostics (1 of 47: Cat's doubled size " +
+        "line). No card renders it yet: the creature card's tile layout " +
+        "overflows the printed card for 31 of 47 at the 6 pt floor (owner " +
+        "decision pending); sheet-model still splits the raw text into " +
+        "SheetCard.statBlock",
       test(
-        "packages/sheet-model/src/monster-stat-block.test.ts",
-        "splits a mount's _Monster block into a header band and sections",
+        "packages/legacy-wotc/src/creature-stat-block.test.ts",
+        "parses a published monster block into its printed numbers",
+      ),
+      test(
+        "packages/legacy-wotc/src/creature-stat-block.test.ts",
+        "parses an owner-relative block as an associate stat block",
       ),
       test(
         "packages/sheet-model/src/monster-stat-block.test.ts",

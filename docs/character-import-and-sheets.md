@@ -521,18 +521,30 @@ changes presentation only, not rule identifiers or attack/damage calculations.
 
 Mount stat blocks (legacy `MonsterDisplay.Build`): 47 of the 49 Gear records
 with Category "Mount" carry the published monster stat block as text in the
-internal `_Monster` field (Crodlu and War crodlu have none). Item cards carry it
-as `SheetCard.statBlock` (`sheet-model/src/monster-stat-block.ts`), split the
-way the legacy detail pane splits it and parsed no further: a header band from
-the first two lines (each split at " - ", blank sides dropped), the statistics
-lines, blank-separated entries with a highlighted first line, and the
-highlighted "Alignment"/ability-score rows. `repeatsDescription` marks the five
-records (Celestial mounts, Silver Dragon Steed) whose description repeats the
-block, so a surface showing the block drops that description. No card renders
-the block yet: measured against the printed item card with Arial metrics at the
-6.5pt fit floor, 8-12 of the 47 blocks overflow (Silver Dragon Steed and
-Mekillot about 130-145% of the body) and 7-8 more fill 90-100%, while the deck
-has no continuation card. How to show it is an open owner decision.
+internal `_Monster` field (Crodlu and War crodlu have none). The pack build
+parses each block once into `_Creature Stat Block` (D110;
+`legacy-wotc/src/creature-stat-block.ts`, read back with content-domain
+`readCreatureStatBlock`): a published block (41) keeps its printed numbers
+(level and role, XP, size and type, initiative, perception and senses, HP and
+bloodied, defenses with any conditional note, immunities/resistances/saving
+throws/action points, speed, its powers and traits with their attack icon,
+parenthesis and keywords, alignment, languages, skills, scores with printed
+modifiers, and an embedded "Description:" paragraph); an owner-relative block
+(Celestial Battle Tiger, Warhorse, Behemoth and Pegasus, Silver Dragon Steed
+and Jade Horse) is respelled and stored as the
+associate stat block it is (D107), so rules-engine `associateStatistics`
+works out its numbers from the owner's evaluated stats. Unplaced lines are
+`mount.stat-block-unparsed` build diagnostics: one on the full pack, Cat's
+`_Monster` repeating a "Large natural beast (mount) - XP 175" line above
+its real "Tiny natural beast - XP 25" (a content error; the block is still
+stored with the first line). The golden guard covers the field.
+
+Item cards still carry the raw text split as `SheetCard.statBlock`
+(`sheet-model/src/monster-stat-block.ts`) and no card renders it: the owner
+chose a creature card in the companion card frame (tiles, then attacks and
+traits), but at the 6 pt fit floor that layout overflows the printed card for
+31 of the 47 blocks (`tmp/queue10/fit-creature.mjs`), and even the most
+compact variant leaves 3-4 over. The layout is an open owner decision.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser

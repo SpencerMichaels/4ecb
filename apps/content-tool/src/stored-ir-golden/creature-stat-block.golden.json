@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "fixture": "525c68d7678359d3b530cba3274d83bb64aacc0db2ec86598e5e24ae1608a512",
+  "output": {
+    "ID_GOLDEN_MOUNT_STRIDER": {
+      "version": 1,
+      "kind": "fixed",
+      "name": "Golden Strider",
+      "level": 4,
+      "role": "Skirmisher",
+      "xp": 175,
+      "size": "Large",
+      "creatureType": "natural beast (mount, reptile)",
+      "initiative": 6,
+      "perception": 3,
+      "senses": "low-light vision",
+      "hitPoints": 50,
+      "bloodied": 25,
+      "defenses": {
+        "ac": 27,
+        "fortitude": 16,
+        "reflex": 18,
+        "will": 14
+      },
+      "defensesNote": "AC 29 against opportunity attacks",
+      "defenseTraits": [
+        "Immune fear (while bloodied only)",
+        "Resist 5 fire"
+      ],
+      "speed": "8, climb 4 (spider climb)",
+      "entries": [
+        {
+          "name": "Peck",
+          "attackKind": "basic-melee",
+          "usage": "standard; At-Will",
+          "keywords": "Poison",
+          "lines": [
+            {
+              "text": "+9 vs. AC; 1d8+4 damage."
+            }
+          ]
+        },
+        {
+          "name": "Swift Kick",
+          "attackKind": "melee",
+          "usage": "standard; Recharge 5, or 6",
+          "lines": [
+            {
+              "label": "Attack",
+              "text": "Melee 1 (one creature); +9 vs. Reflex"
+            },
+            {
+              "label": "Hit",
+              "text": "2d6 + 4 damage, and the target is knocked prone."
+            }
+          ]
+        },
+        {
+          "name": "Sure Stride",
+          "usage": "while mounted by a friendly rider of 4th level or higher; at-will",
+          "keywords": "Mount",
+          "lines": [
+            {
+              "text": "The strider's rider gains a +2 bonus to Acrobatics checks."
+            }
+          ]
+        }
+      ],
+      "alignment": "Unaligned",
+      "skills": "Athletics +10",
+      "abilities": {
+        "Strength": {
+          "score": 18,
+          "modifier": 6
+        },
+        "Dexterity": {
+          "score": 18,
+          "modifier": 6
+        },
+        "Wisdom": {
+          "score": 12,
+          "modifier": 3
+        },
+        "Constitution": {
+          "score": 14,
+          "modifier": 4
+        },
+        "Intelligence": {
+          "score": 2,
+          "modifier": -2
+        },
+        "Charisma": {
+          "score": 8,
+          "modifier": 1
+        }
+      },
+      "description": "A synthetic strider used only by the stored IR golden."
+    },
+    "ID_GOLDEN_MOUNT_STEED": {
+      "version": 1,
+      "kind": "master",
+      "name": "Golden Steed",
+      "block": {
+        "version": 1,
+        "size": "Large",
+        "creatureType": "immortal beast (mount)",
+        "hitPoints": {
+          "kind": "master-bloodied"
+        },
+        "healingSurges": "none, but you can spend a healing surge for the steed if an effect allows it to spend one",
+        "defenses": {
+          "kind": "master",
+          "bonus": {
+            "ac": 1,
+            "fortitude": 1,
+            "reflex": 1,
+            "will": 1
+          }
+        },
+        "defensesNote": "not including any temporary bonuses or penalties",
+        "defenseTraits": [
+          "Resist 5 all"
+        ],
+        "initiative": {
+          "bonus": 0
+        },
+        "perception": {
+          "bonus": 0
+        },
+        "speed": "8, fly 8",
+        "traits": [
+          {
+            "name": "Steady Charge",
+            "keywords": "mount",
+            "lines": [
+              {
+                "text": "The steed's rider gains a +2 bonus to damage rolls on charge attacks."
+              }
+            ]
+          }
+        ],
+        "powers": [
+          {
+            "name": "Kick",
+            "usage": "At-Will",
+            "lines": [
+              {
+                "label": "Attack",
+                "text": "Melee 1 (one creature); your level + 5 vs. AC",
+                "attack": {
+                  "range": "Melee 1 (one creature)",
+                  "bonus": {
+                    "kind": "level",
+                    "plus": 5
+                  },
+                  "defense": "AC"
+                }
+              },
+              {
+                "label": "Hit",
+                "text": "2d6 + your Charisma modifier damage.",
+                "damage": {
+                  "terms": [
+                    {
+                      "kind": "dice",
+                      "dice": "2d6"
+                    },
+                    {
+                      "kind": "ability",
+                      "abilities": [
+                        "Charisma"
+                      ]
+                    }
+                  ]
+                },
+                "rest": "."
+              }
+            ],
+            "action": "Standard"
+          },
+          {
+            "name": "Glare",
+            "keywords": "radiant",
+            "usage": "Encounter",
+            "lines": [
+              {
+                "label": "Trigger",
+                "text": "An enemy enters a square adjacent to the steed."
+              },
+              {
+                "label": "Attack (Immediate Reaction)",
+                "text": "Close burst 1 (triggering enemy); your level + 3 vs. Will",
+                "attack": {
+                  "range": "Close burst 1 (triggering enemy)",
+                  "bonus": {
+                    "kind": "level",
+                    "plus": 3
+                  },
+                  "defense": "Will"
+                }
+              },
+              {
+                "label": "Hit",
+                "text": "1d8 + your Charisma modifier radiant damage.",
+                "damage": {
+                  "terms": [
+                    {
+                      "kind": "dice",
+                      "dice": "1d8"
+                    },
+                    {
+                      "kind": "ability",
+                      "abilities": [
+                        "Charisma"
+                      ]
+                    }
+                  ],
+                  "damageType": "radiant"
+                },
+                "rest": "."
+              }
+            ],
+            "action": "Triggered"
+          }
+        ]
+      }
+    }
+  }
+}

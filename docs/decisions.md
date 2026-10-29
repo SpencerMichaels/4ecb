@@ -3573,3 +3573,33 @@ Consequences
 Alternatives considered
 Evidence / milestone that triggered the decision
 ```
+
+### D110 — Creature stat blocks parsed at pack build (mounts first)
+
+Status: accepted for the stored model; the card layout is pending. Date:
+2026-10-29.
+
+Legacy showed a mount's `_Monster` stat block only in the builder's detail
+pane (`MonsterDisplay.Build`), as split text, and never printed it. The
+owner asked for a creature card instead (a card in the companion frame:
+defense and HP tiles, speed and senses, ability scores, then attacks and
+traits), generic enough that a summoned creature can reuse it later. Following
+the pack-build parsing rule, the import parses each `_Monster` block once into
+the versioned internal field `_Creature Stat Block` (`CREATURE_STAT_BLOCK_VERSION`
+in content-domain, covered by the stored-IR golden guard), with
+`mount.stat-block-unparsed` diagnostics for lines it cannot place.
+
+Two shapes, because the content has two kinds of block: `fixed` keeps a
+published monster block's printed numbers (a monster's ability modifiers
+include half its level, so nothing is recomputed), and `master` stores an
+owner-relative block ("HP your bloodied value", "your level + 5 vs. AC") as an
+associate stat block (D107), so one model and one function
+(`associateStatistics`) cover every owner-relative creature. The `master`
+respelling is a spelling adapter in front of the associate parser, not a
+second parser.
+
+Fit, measured before any UI was built (Arial metrics, the companion card
+CSS, 6 pt floor, `tmp/queue10/fit-creature.mjs`): the tile layout overflows
+the printed card for 31 of 47 blocks, worst Silver Dragon Steed at 155%. How
+the card is laid out (a more compact frame, dropping text, or a second card)
+is open.

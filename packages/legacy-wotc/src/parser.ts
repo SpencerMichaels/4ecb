@@ -15,6 +15,7 @@ import {
 import { SaxesParser } from "saxes";
 
 import { associateStatBlockField } from "./associate-stat-block";
+import { creatureStatBlockField } from "./creature-stat-block";
 import { powerTextField } from "./power-text";
 import { applyLoadTimeSelfModifies } from "./self-modify";
 
@@ -326,6 +327,25 @@ export class D20RulesParser {
             "warning",
             "associate.stat-block-unparsed",
             `Associate stat block: ${issue}`,
+            ordinal,
+            id,
+          ),
+        );
+    }
+    // A mount's monster stat block (`_Monster`, legacy MonsterDisplay),
+    // parsed once here into the creature card's typed field (D110).
+    const monster = specifics.find(
+      (field) => field.name.trim().toLocaleLowerCase() === "_monster",
+    )?.value;
+    if (monster !== undefined && monster.trim() !== "") {
+      const parsed = creatureStatBlockField(monster, specifics.length);
+      if (parsed.field !== undefined) specifics.push(parsed.field);
+      for (const issue of parsed.issues)
+        this.#diagnostics.push(
+          makeDiagnostic(
+            "warning",
+            "mount.stat-block-unparsed",
+            `Mount stat block: ${issue}`,
             ordinal,
             id,
           ),
