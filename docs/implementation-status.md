@@ -1,5 +1,33 @@
 # Implementation status
 
+## New player saves and parity content profiles (2026-10-28)
+
+24 new `sample-chars/` saves (plus 6 re-saved) were triaged. Most diffs were
+the players' content, not the engine: many legacy builders ran stock WotC data
+(`combined.dnd40.original.xml`, no CBLoader parts) or only some parts.
+`parity:baseline` now evaluates such saves against a stock pack
+(`scripts/build-private-content.sh --stock` → `tmp/content/stock-local.4ecp`)
+through the ignored `tmp/parity/content-profiles.json`; the run prints
+suggestions for unmapped saves. Mapping and evidence (keep in sync with that
+file):
+
+- **stock:** Azreille, Dunfinshmurts, Ebok, Edward Kenway, Gareth at 8th,
+  Gizmo, Hystan, Salman Ibn Jad, Zilvra at 8th, bannor the bloodguard, idon
+  tkare at 6th, irina at 6th, sonya morecut, Must _Mustard_, corvo attano type
+  1 5th (placeholder and statadd evidence, triage); KrizDevvon (23 mismatches
+  on full, 0 on stock); Hystan_Original_7 (Weight); jackie lee 5th (Stone Fist
+  Flurry of Blows action); Chopper Farlund, chopper farlund at 8th, HystanStart,
+  kai at 5th, Sagittarius, Skye (cached weapon-group attack stats only stock
+  produces).
+- **full:** yew, Mellivora-L7, tazer face 2, KrizDevvon15, krizdevvon15_2,
+  krizdevvon16_2 (saved CBLoader records); Lily, 171793, Alysa Redfield, Piri
+  (identical on both packs).
+
+Engine and import fixes from the pass are listed in the roadmap queue (items
+8–9). Baseline accepted with all 58 saves: stats 4829/4868, powers 3313/3444,
+usage 1102/1114, action 1101/1113, main hand 122/122. Known content-only
+diffs: oleander_8/9 Weight (homebrew TIV items).
+
 ## Equipment edits keep earlier-level prerequisite snapshots (2026-10-28)
 
 Every equipment, loadout or rules-text edit invalidated each earlier level's

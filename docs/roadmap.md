@@ -1056,11 +1056,11 @@ character before it is fixed, one slice per item.
      item choices resolved from Equipment (`2dc7341`…`4fb03a0`); Mellivora's
      retrained-theme Endurance kept modern (D105). Baseline accepted with all
      58 saves (stats 4816/4860, powers 3291/3444).
-  9. Small follow-ups found during the new-saves pass: `rules.worker.test.ts`
-     ("skips queued evaluations cancelled before they start") is load-flaky;
-     Salman Ibn Jad's Weight evaluates to none on the stock pack (a missing
-     Sun balm definition likely blanks the total); KrizDevvon, Lily and others
-     flagged by the parity profile suggestions are unmapped.
+  9. ~~Small follow-ups from the new-saves pass~~ — done: the worker cancel
+     test is deterministic (`4ffb07e`); an unresolvable holding weighs 0 like
+     native `LootWeight` instead of blanking Weight (`5a7bf5b`); 16 more saves
+     mapped to content profiles (see implementation status). Left: oleander_8/9
+     Weight (homebrew TIV items we lack).
   10. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
