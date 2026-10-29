@@ -1,9 +1,9 @@
 {
-  "version": 1,
-  "fixture": "525c68d7678359d3b530cba3274d83bb64aacc0db2ec86598e5e24ae1608a512",
+  "version": 2,
+  "fixture": "8aa2b0f4037cb584444351d566767d7e043b0abb45e21167dd67468261b7082a",
   "output": {
     "ID_GOLDEN_MOUNT_STRIDER": {
-      "version": 1,
+      "version": 2,
       "kind": "fixed",
       "name": "Golden Strider",
       "level": 4,
@@ -97,7 +97,7 @@
       "description": "A synthetic strider used only by the stored IR golden."
     },
     "ID_GOLDEN_MOUNT_STEED": {
-      "version": 1,
+      "version": 2,
       "kind": "master",
       "name": "Golden Steed",
       "block": {
@@ -224,6 +224,184 @@
           }
         ]
       }
+    },
+    "ID_GOLDEN_SUMMON_HERON": {
+      "version": 2,
+      "kind": "master",
+      "name": "Golden Heron",
+      "block": {
+        "version": 1,
+        "role": "Summoned Creature",
+        "size": "Medium",
+        "creatureType": "golden heron",
+        "hitPoints": {
+          "kind": "master-bloodied"
+        },
+        "defenses": {
+          "kind": "master",
+          "bonus": {
+            "ac": 4,
+            "fortitude": 2,
+            "reflex": 2,
+            "will": 2
+          }
+        },
+        "defensesNote": "not including any temporary bonuses or penalties",
+        "defenseTraits": [
+          "Resist 5 fire"
+        ],
+        "speed": "6, fly 8 (hover)",
+        "traits": [
+          {
+            "name": "Instinctive Effect",
+            "lines": [
+              {
+                "text": "If you haven't given the heron any commands by the end of your turn, it attacks the nearest enemy."
+              }
+            ]
+          }
+        ],
+        "powers": [
+          {
+            "name": "Standard Action",
+            "action": "Standard",
+            "lines": [
+              {
+                "text": "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage."
+              }
+            ]
+          },
+          {
+            "name": "Opportunity Attack",
+            "action": "Opportunity",
+            "lines": [
+              {
+                "text": "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage."
+              }
+            ]
+          }
+        ]
+      },
+      "powerFields": [
+        " Standard action",
+        " Opportunity Attack",
+        "Instinctive Effect"
+      ]
+    },
+    "ID_GOLDEN_SUMMON_WRAITH": {
+      "version": 2,
+      "kind": "master",
+      "name": "Golden Wraith",
+      "block": {
+        "version": 1,
+        "role": "Summoned Creature",
+        "size": "Medium",
+        "creatureType": "shadow humanoid (undead)",
+        "hitPoints": {
+          "kind": "master-surge-value"
+        },
+        "healingSurges": "None, but you can lose a healing surge for the wraith if an effect allows it to spend one",
+        "defenses": {
+          "kind": "master",
+          "bonus": {
+            "ac": 0,
+            "fortitude": 0,
+            "reflex": 0,
+            "will": 0
+          }
+        },
+        "defensesNote": "not including any temporary bonuses or penalties",
+        "speed": "6",
+        "traits": [
+          {
+            "name": "Insubstantial",
+            "lines": [
+              {
+                "text": "The wraith takes half damage."
+              }
+            ]
+          },
+          {
+            "name": "Chill Shroud",
+            "aura": 1,
+            "lines": [
+              {
+                "text": "Enemies in the aura take a -1 penalty to attack rolls."
+              }
+            ]
+          }
+        ],
+        "powers": [
+          {
+            "name": "Standard Action",
+            "usage": "At-Will",
+            "lines": [
+              {
+                "label": "Attack",
+                "text": "Melee 1 (one creature); your level + 5 vs. Fortitude",
+                "attack": {
+                  "range": "Melee 1 (one creature)",
+                  "bonus": {
+                    "kind": "level",
+                    "plus": 5
+                  },
+                  "defense": "Fortitude"
+                }
+              },
+              {
+                "label": "Hit",
+                "text": "1d10 + your Wisdom modifier cold damage.",
+                "damage": {
+                  "terms": [
+                    {
+                      "kind": "dice",
+                      "dice": "1d10"
+                    },
+                    {
+                      "kind": "ability",
+                      "abilities": [
+                        "Wisdom"
+                      ]
+                    }
+                  ],
+                  "damageType": "cold"
+                },
+                "rest": ".",
+                "steps": [
+                  {
+                    "level": 21,
+                    "damage": {
+                      "terms": [
+                        {
+                          "kind": "dice",
+                          "dice": "2d10"
+                        },
+                        {
+                          "kind": "ability",
+                          "abilities": [
+                            "Wisdom"
+                          ]
+                        }
+                      ],
+                      "damageType": "cold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "action": "Standard"
+          }
+        ]
+      },
+      "powerFields": [
+        "Statistics",
+        "Hit Points",
+        "Defenses",
+        "Healing Surges",
+        "Traits",
+        "Chill Shroud",
+        "Standard Action"
+      ]
     }
   }
 }

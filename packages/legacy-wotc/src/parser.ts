@@ -17,6 +17,7 @@ import { SaxesParser } from "saxes";
 import { associateStatBlockField } from "./associate-stat-block";
 import { creatureStatBlockField } from "./creature-stat-block";
 import { powerTextField } from "./power-text";
+import { summonCreatureField } from "./summon-creature";
 import { applyLoadTimeSelfModifies } from "./self-modify";
 
 interface MutableElementNode {
@@ -346,6 +347,22 @@ export class D20RulesParser {
             "warning",
             "mount.stat-block-unparsed",
             `Mount stat block: ${issue}`,
+            ordinal,
+            id,
+          ),
+        );
+    }
+    // A summon power's creature (D111), parsed once here into the same
+    // creature card field; the power card keeps only the summoning.
+    if (type.toLocaleLowerCase() === "power") {
+      const summon = summonCreatureField(name, specifics, specifics.length);
+      if (summon.field !== undefined) specifics.push(summon.field);
+      for (const issue of summon.issues)
+        this.#diagnostics.push(
+          makeDiagnostic(
+            "warning",
+            "summon.stat-block-unparsed",
+            `Summoned creature: ${issue}`,
             ordinal,
             id,
           ),

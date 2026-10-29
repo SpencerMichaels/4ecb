@@ -242,4 +242,31 @@ Trigger: An enemy enters a square adjacent to the steed.
 Attack (Immediate Reaction): Close burst 1 (triggering enemy); your level + 3 vs. Will
 Hit: 1d8 + your Charisma modifier radiant damage. </specific>
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_SUMMON_HERON" name="Summon Golden Heron" type="Power" source="Synthetic">
+    <specific name="Power Usage">Daily</specific>
+    <specific name="Keywords">Arcane, Implement, Summoning</specific>
+    <specific name="Action Type">Minor Action</specific>
+    <specific name="Attack Type">Ranged 5</specific>
+    <specific name="Effect">You summon a Medium golden heron in an unoccupied square within range. The heron has speed 6 and fly 8 (hover). It has a +4 bonus to AC and a +2 bonus to its other defenses. The heron has resist 5 fire. You can give the heron the following special commands.</specific>
+    <specific name=" Standard action">Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.</specific>
+    <specific name=" Opportunity Attack">Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.</specific>
+    <specific name="Instinctive Effect">If you haven't given the heron any commands by the end of your turn, it attacks the nearest enemy.</specific>
+    <specific name="Augment">2</specific>
+    <specific name=" Effect">As above, and the heron has fly 10.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_SUMMON_WRAITH" name="Golden Wraith" type="Power" source="Synthetic">
+    <specific name="Power Usage">Encounter</specific>
+    <specific name="Keywords">Divine, Summoning</specific>
+    <specific name="Statistics">Medium shadow humanoid (undead), Speed 6</specific>
+    <specific name="Hit Points">(your healing surge value)</specific>
+    <specific name="Healing Surges">None, but you can lose a healing surge for the wraith if an effect allows it to spend one.</specific>
+    <specific name="Defenses">Your defenses, not including any temporary bonuses or penalties</specific>
+    <specific name="Traits">Insubstantial: The wraith takes half damage.</specific>
+    <specific name="Chill Shroud">(Aura 1)
+Enemies in the aura take a -1 penalty to attack rolls.</specific>
+    <specific name="Standard Action">(At-Will)
+Attack: Melee 1 (one creature); your level + 5 vs. Fortitude
+Hit: 1d10 + your Wisdom modifier cold damage.
+Level 21: 2d10 + your Wisdom modifier cold damage.</specific>
+  </RulesElement>
 </D20Rules>

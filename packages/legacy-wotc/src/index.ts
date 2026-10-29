@@ -5,3 +5,4 @@ export {
 } from "./associate-stat-block";
 export { powerTextField } from "./power-text";
 export { parseCreatureStatBlock } from "./creature-stat-block";
+export { parseSummonCreature } from "./summon-creature";

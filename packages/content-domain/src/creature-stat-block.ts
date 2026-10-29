@@ -8,7 +8,8 @@ import {
 
 /**
  * A creature's stat block stored on a content record (D110): a mount's
- * `_Monster` block today, a summoned creature's later. The legacy-wotc import
+ * `_Monster` block, or the creature a summon power describes (D111). The
+ * legacy-wotc import
  * parses the text once, at pack build, into the internal field
  * {@link CREATURE_STAT_BLOCK_FIELD} (versioned JSON); sheet-model reads it
  * back with {@link readCreatureStatBlock}. Two shapes:
@@ -24,8 +25,8 @@ import {
 /** The internal field holding the parsed stat block. */
 export const CREATURE_STAT_BLOCK_FIELD = "_Creature Stat Block";
 /** Bump when the stored shape or the parse changes; an older pack's field is
- *  ignored. */
-export const CREATURE_STAT_BLOCK_VERSION = 1;
+ *  ignored. 2: summon powers' creatures and `powerFields` (D111). */
+export const CREATURE_STAT_BLOCK_VERSION = 2;
 
 /** A power-icon letter of a monster block: m basic melee, M melee, R ranged,
  *  C close, A area. */
@@ -105,6 +106,14 @@ export interface MasterCreatureStatBlock {
   readonly kind: "master";
   readonly name: string;
   readonly block: AssociateStatBlock;
+  /**
+   * A summon power's creature (D111): the names of the power's own fields
+   * the block shows (its stat fields, special commands and creature
+   * traits), exactly as the record spells them. The power card leaves these
+   * to the creature card and keeps the rest (the summoning effect, its
+   * augments, its own attack).
+   */
+  readonly powerFields?: readonly string[];
 }
 
 export type CreatureStatBlock = (
@@ -147,6 +156,11 @@ export function readCreatureStatBlock(
           value: JSON.stringify(parsed.block),
         },
       ]);
+      const powerFields = Array.isArray(parsed.powerFields)
+        ? parsed.powerFields.filter(
+            (field): field is string => typeof field === "string",
+          )
+        : undefined;
       return block === undefined
         ? undefined
         : {
@@ -154,6 +168,7 @@ export function readCreatureStatBlock(
             kind: "master",
             name: parsed.name,
             block,
+            ...(powerFields === undefined ? {} : { powerFields }),
           };
     }
     return undefined;

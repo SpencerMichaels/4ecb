@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "fixture": "525c68d7678359d3b530cba3274d83bb64aacc0db2ec86598e5e24ae1608a512",
+  "fixture": "8aa2b0f4037cb584444351d566767d7e043b0abb45e21167dd67468261b7082a",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
       "version": 2,
@@ -854,6 +854,52 @@
           }
         }
       }
+    },
+    "ID_GOLDEN_SUMMON_HERON": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          6,
+          "attack",
+          1
+        ]
+      ],
+      "summonedCreature": true,
+      "texts": {
+        "As above, and the heron has fly 10.": {
+          "recoveries": []
+        },
+        "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Intelligence"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        },
+        "You summon a Medium golden heron in an unoccupied square within range. The heron has speed 6 and fly 8 (hover). It has a +4 bonus to AC and a +2 bonus to its other defenses. The heron has resist 5 fire. You can give the heron the following special commands.": {
+          "recoveries": []
+        }
+      }
+    },
+    "ID_GOLDEN_SUMMON_WRAITH": {
+      "version": 2,
+      "summonedCreature": true,
+      "texts": {}
     }
   }
 }
