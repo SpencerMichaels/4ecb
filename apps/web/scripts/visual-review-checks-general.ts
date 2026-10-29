@@ -46,6 +46,8 @@ rule(LIBRARY, "Pane band", (context) => {
     "executioner-fighter",
     "executioner-rogue",
     "artificer-ardent",
+    "sylestine",
+    "dv",
   ];
   return [
     truthy(
@@ -172,7 +174,25 @@ rule(FREE, "Undo and Remove", (context) => {
   const removedEvaluation = evaluate(removed.current, context.entities, {
     candidateDetailLevels: [],
   });
+  // One Undo: the editor amends the gift into the edit that entitled it
+  // (CharacterEditorPage's amend → CharacterTransaction.amend), so a single
+  // undo takes back the edit and the gift together.
+  const gift = freebeeGiftCommand(before, evaluation, context.byId);
+  const step = new CharacterTransaction(before);
+  if (classOccurrence !== undefined)
+    step.dispatch({
+      kind: "remove-occurrence",
+      occurrenceId: classOccurrence.id,
+    });
+  if (gift !== undefined) step.amend(gift);
+  const gave = has(step.current);
+  step.undo();
   return [
+    truthy(
+      "One Undo takes back the edit and its gift together",
+      gift !== undefined && gave && step.current === before && !step.canUndo,
+      `gift ${gift === undefined ? "none" : "amended"}; after undo: ${holdingNames(step.current).join("; ")}`,
+    ),
     truthy(
       "Picking Wizard gives the Spellbook",
       !has(before) && has(after),

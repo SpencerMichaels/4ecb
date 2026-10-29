@@ -15,9 +15,9 @@ import { resolve } from "node:path";
 
 import { ROW_CLASSIFICATION } from "../../../scripts/visual-review-classification";
 import {
-  matchItem,
+  normalizeTitle,
   parseChecklist,
-  rowKey,
+  resolveRowKey,
   type Verification,
 } from "../../../scripts/visual-review-page";
 import {
@@ -27,6 +27,7 @@ import {
 import type { Check, Rule } from "./visual-review-assert";
 import { CHARACTER_RULES } from "./visual-review-checks-characters";
 import { GENERAL_RULES } from "./visual-review-checks-general";
+import { LATER_RULES } from "./visual-review-checks-later";
 import { loadReviewContext } from "./visual-review-context";
 
 function parseArgs(argv: readonly string[]) {
@@ -43,34 +44,51 @@ async function main(): Promise<void> {
   const started = Date.now();
   const context = await loadReviewContext(args.outDir);
   const checklist = parseChecklist(await readFile(CHECKLIST_PATH, "utf8"));
+  // A rule's row: the plan link (or General section) naming its item, keyed
+  // by the checklist item, or by the classification once a fully automated
+  // item has left the checklist.
   const keyFor = (rule: Rule): string => {
-    const item = matchItem(checklist, rule.item);
-    if (item === undefined)
-      throw new Error(`No checklist item starts with "${rule.item}"`);
-    const items = (entries: readonly (readonly [string, string])[]) =>
-      entries.some(([name]) => matchItem(checklist, name) === item);
+    const wanted = normalizeTitle(rule.item);
+    const names = (entries: readonly (readonly [string, string])[]) =>
+      entries.some(([name]) => {
+        const plain = normalizeTitle(name);
+        return plain.startsWith(wanted) || wanted.startsWith(plain);
+      });
+    const resolveIn = (scope: string) => {
+      const resolved = resolveRowKey(
+        checklist,
+        ROW_CLASSIFICATION,
+        scope,
+        rule.item,
+      );
+      if (resolved === undefined)
+        throw new Error(
+          `"${rule.item}" is neither a checklist item nor an automatic row of ${scope}`,
+        );
+      return resolved.key;
+    };
     if (rule.where.startsWith("general:")) {
       const title = rule.where.slice("general:".length);
       const index = context.plan.general.findIndex(
-        (section) => section.title === title && items(section.items),
+        (section) => section.title === title && names(section.items),
       );
       if (index < 0) throw new Error(`No general section ${title}`);
-      return rowKey(`general|${index}`, item);
+      return resolveIn(`general|${index}`);
     }
     const review = context.plan.reviews.find(
       ({ spec }) => spec.slug === rule.where,
     );
     const index =
       review?.links.findIndex(
-        (link) => link.label === rule.link && items(link.items),
+        (link) => link.label === rule.link && names(link.items),
       ) ?? -1;
     if (index < 0)
       throw new Error(`${rule.where} has no link "${rule.link}" with it`);
-    return rowKey(`${rule.where}|${index}`, item);
+    return resolveIn(`${rule.where}|${index}`);
   };
 
   const rows: Record<string, { checks: Check[]; error?: string }> = {};
-  for (const rule of [...CHARACTER_RULES, ...GENERAL_RULES]) {
+  for (const rule of [...CHARACTER_RULES, ...GENERAL_RULES, ...LATER_RULES]) {
     if (
       args.only !== undefined &&
       !args.only.includes(rule.where.replace(/^general:.*/, "general"))

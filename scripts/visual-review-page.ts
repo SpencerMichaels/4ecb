@@ -95,6 +95,31 @@ export function matchItem(
   return items.find((item) => normalizeTitle(item.title).startsWith(wanted));
 }
 
+/**
+ * The row key of a plan entry named `name` on the page row `scope`
+ * (`<slug>|<link index>` or `general|<section index>`): the checklist
+ * item's when the checklist still has it, otherwise a fully automatic
+ * classified row's. Fully automated items leave the checklist (it lists
+ * only what needs the owner's eyes) but keep their plan entry,
+ * classification and verifier rule, so they are still checked.
+ */
+export function resolveRowKey(
+  checklist: readonly ChecklistItem[],
+  classification: Readonly<Record<string, RowClass>>,
+  scope: string,
+  name: string,
+): { readonly key: string; readonly item?: ChecklistItem } | undefined {
+  const item = matchItem(checklist, name);
+  if (item !== undefined) return { key: rowKey(scope, item), item };
+  const wanted = `${scope}|${normalizeTitle(name)}`;
+  const key = Object.keys(classification).find(
+    (candidate) =>
+      candidate.startsWith(wanted) &&
+      classification[candidate]?.kind === "auto",
+  );
+  return key === undefined ? undefined : { key };
+}
+
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, "&amp;")
@@ -250,19 +275,26 @@ export function renderReviewPage(input: ReviewPageInput): {
     anchor: string,
     where: string,
   ) => {
-    const item = matchItem(checklist, name);
-    if (item === undefined) {
+    const resolved = resolveRowKey(checklist, classification, scope, name);
+    if (resolved === undefined) {
       unknownKeys.add(name);
       return `<li class="item missing-item"><span>Plan names a checklist item that no longer exists: <strong>${escapeHtml(name)}</strong></span></li>`;
+    }
+    const { key: id, item } = resolved;
+    seenRows.add(id);
+    const kind = classification[id];
+    rowKinds.set(id, kind?.kind ?? "visual");
+    if (item === undefined) {
+      // A fully automated item that has left the checklist.
+      autoRows += 1;
+      const result = autoHtml(id, kind?.auto ?? note, `${where} — ${name}`);
+      if (visualOnly) return "";
+      return `<li class="item item-auto item-${result.status}"><span class="item-title">${inline(name)}</span>${result.html}</li>`;
     }
     used.set(item, [
       ...(used.get(item) ?? []),
       `<a href="#${anchor}">${escapeHtml(where)}</a>`,
     ]);
-    const id = rowKey(scope, item);
-    seenRows.add(id);
-    const kind = classification[id];
-    rowKinds.set(id, kind?.kind ?? "visual");
     const details = `<details><summary>Checklist text</summary><div class="item-body">${itemBodyHtml(item.body)}</div></details>`;
     const title = `${where} — ${item.title}`;
     if (kind?.kind === "auto") {

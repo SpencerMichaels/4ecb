@@ -85,6 +85,8 @@ import {
 } from "../src/RitualsWorkspace";
 import { canonicalHashRedirect } from "../src/routes";
 
+import { swapPresentationChecks } from "./visual-review-checks-later";
+
 import {
   contains,
   createElement,
@@ -278,7 +280,17 @@ function requiredSwaps(c: ReviewCharacter): Check[] {
     ),
   ];
   for (const swap of swaps) {
-    const selected = selectedDefinition(c, swap, evaluation);
+    // A pick a later swap replaces again (a chain) is no longer an evaluated
+    // occurrence; read it from the stored build.
+    const stored =
+      swap.selectedOccurrenceId === undefined
+        ? undefined
+        : findOccurrence(c.build, swap.selectedOccurrenceId);
+    const selected =
+      selectedDefinition(c, swap, evaluation) ??
+      (stored?.identity.definitionId === undefined
+        ? undefined
+        : c.context.byId.get(key(stored.identity.definitionId)));
     checks.push(
       truthy(
         `Level ${swap.level} swap is filled`,
@@ -476,11 +488,11 @@ rule("beatrix", "Build, level 1: Class", "Benefits by level", (c) => {
       ["Legendary Hexblade (Levels 11–20)"],
     ),
     inOrder(
-      "The pact card: flavor, Prerequisites, then the benefits line",
+      'The pact card: flavor, one "Prerequisite: Hexblade" line, then the benefits line',
       pactCard,
       [
         (pact.flavor ?? "").slice(0, 40),
-        "Prerequisites",
+        "Prerequisite: Hexblade",
         "You gain the following benefits:",
       ],
     ),
@@ -534,6 +546,8 @@ function classCard(c: ReviewCharacter, entity: ContentEntity) {
   return {
     // The lede leads with the heading: "Arcane Striker. You wield …".
     lede: elementsWithClass(html, "entity-card-lede").map(textOf),
+    ledeHtml: elementsWithClass(html, "entity-card-lede").join(""),
+    text: textOf(html),
     shortDescription: (
       contentSpecificValue(entity, "Short Description") ?? ""
     ).trim(),
@@ -582,6 +596,17 @@ rule("beatrix", "Build, level 1: Class", "Class detail card", (c) => {
           keyRow.map(([, value]) => value),
           [card.expectedKeyAbilities],
         ),
+        truthy(
+          `${name}: only "${heading}." is bold, the rest normal weight`,
+          new RegExp(`<strong[^>]*>${heading}\\.</strong>`).test(
+            card.ledeHtml,
+          ) && (card.ledeHtml.match(/<strong[\s>]/g) ?? []).length === 1,
+          card.ledeHtml.slice(0, 240),
+        ),
+        inOrder(`${name}: About comes before Class features`, card.text, [
+          `About ${name}`,
+          "Class features",
+        ]),
         equal(
           `${name}: the row heads the class traits grid`,
           card.rows.findIndex(([label]) => label === "Key abilities"),
@@ -602,6 +627,7 @@ rule(
     [
       ...requiredSwaps(c),
       ...requiredSwaps(context.character("executioner-fighter")),
+      ...swapPresentationChecks(context.character("executioner-fighter")),
     ].filter((check) => check.pass || !check.label.startsWith("beatrix has")),
 );
 
@@ -677,15 +703,95 @@ rule("beatrix", "Equipment", "Superior implements", (c) => {
   return itemCardDetail(itemDetailHtml(c, detail), detail.displayName);
 });
 
-rule("beatrix", "Equipment", "A free item appears", (c) =>
-  freeItem(c, "Fey Pact of the White Well Weapon"),
+rule("beatrix", "Equipment", "A free item appears", (c) => [
+  // The gift is the pact weapon; its card reads the artifact's name, as the
+  // legacy builder names it (e7ba7f6).
+  ...freeItem(c, "Fey Pact of the White Well Weapon").slice(0, 1),
+  truthy(
+    'It has an item card, "Sword of the White Well"',
+    c.sheet.items.some(({ name }) => name === "Sword of the White Well"),
+    c.sheet.items.map(({ name }) => name).join("; "),
+  ),
+]);
+
+rule("beatrix", "Equipment", "Pact weapon named by its artifact", (c) =>
+  pactWeaponNames(c),
 );
 
-rule("beatrix", "Print preview", "Sub-choices on feature rows", (c) => [
-  ...printedHeading(c, "Pact Choice: Fey Pact of the White Well"),
-  ...printedHeading(c, "Past life: Eladrin"),
-  ...printedHeading(c, "Level 1 Hexblade Daily Power: Crown of Stars"),
-]);
+/** Beatrix's pact weapon reads "Sword of the White Well" everywhere. */
+function pactWeaponNames(c: ReviewCharacter): Check[] {
+  const holding = c.build.inventory.find((entry) =>
+    entry.elements.some(
+      ({ name }) => key(name) === key("Fey Pact of the White Well Weapon"),
+    ),
+  );
+  const detail =
+    holding === undefined
+      ? undefined
+      : inventoryItemDetail(holding, c.context.byId);
+  const powerRows = printedDeck(c)
+    .filter(({ kind }) => kind === "power")
+    .map(({ text }) => text)
+    .join(" ");
+  const itemNames = c.sheet.items.map(({ name }) => name);
+  return [
+    equal(
+      "The inventory row (and loadout slot) name",
+      detail?.displayName,
+      "Sword of the White Well",
+    ),
+    truthy(
+      'The item card is "Sword of the White Well"',
+      itemNames.includes("Sword of the White Well"),
+      itemNames.join("; "),
+    ),
+    contains(
+      "Melee Basic Attack has a Sword of the White Well row",
+      printedCard(c, "Melee Basic Attack").text,
+      "Sword of the White Well",
+    ),
+    lacks(
+      'No power card names it "… + Sword of the White Well"',
+      powerRows,
+      "Weapon + Sword of the White Well",
+    ),
+    lacks(
+      "No power card repeats the base after the name",
+      powerRows,
+      "Sword of the White Well Fey Pact",
+    ),
+    truthy(
+      'The rod still reads "Accurate rod of the Feywild +2"',
+      itemNames.includes("Accurate rod of the Feywild +2"),
+      itemNames.join("; "),
+    ),
+  ];
+}
+
+rule("beatrix", "Print preview", "Sub-choices on feature rows", (c) => {
+  // The pact and power-slot rows ("Pact Choice: …", "Daily Power: …") are
+  // off the sheet since 2ad4731: their _CS_ShortDescription is a bare "@",
+  // which the legacy CharTracker leaves off too.
+  const headings = referenceHeadings(c);
+  return [
+    ...printedHeading(c, "Past life: Eladrin"),
+    equal(
+      "Two Guardian Feature rows (Levels 1 and 5)",
+      headings.filter((heading) => heading === "Guardian Feature").length,
+      2,
+    ),
+    truthy(
+      'No heading repeats a "Level N" tag or the class ("Hexblade … Power")',
+      !headings.some((heading) => /^Level \d|Hexblade \w+ Power/.test(heading)),
+      headings.join(" | "),
+    ),
+    lacks(
+      "No dangling choice lead-in",
+      printedPagesFor(c).text,
+      "You gain one of the following",
+    ),
+  ];
+});
 
 rule("beatrix", "Print preview", "Background benefit card", (c) => [
   ...backgroundCards(c, ["Luskan"]),
@@ -708,9 +814,9 @@ function proficiencies(c: ReviewCharacter): Check[] {
   const labels = lines.map(({ label }) => label);
   return [
     equal(
-      "Items pages: Equipped, Inventory, then Proficiencies",
+      "Items pages: Worn/Held Items, Carried Items, then Proficiencies",
       items.map((entry) => entry.name),
-      ["Equipped", "Inventory", "Proficiencies"],
+      ["Worn/Held Items", "Carried Items", "Proficiencies"],
     ),
     truthy(
       "Lines are labelled Armor / Shields / Weapons / Implements (in that order)",
@@ -2449,9 +2555,8 @@ rule(
 );
 
 rule("executioner-fighter", "Equipment", "A free item appears", (c) => {
-  // The plan expected Poison Use's doses, but the hybrid's Poison Use
-  // (Hybrid) chooses no recipe, so it has no gift; a full executioner's
-  // poison recipe gift is checked under General.
+  // The hybrid's Poison Use (Hybrid) now picks a recipe (Bloodroot Poison
+  // Recipe), whose FREEBEE gives one dose, once.
   const gifts = c.build.inventory.filter((holding) =>
     /poison/i.test(holding.elements.map(({ name }) => name).join(" ")),
   );
@@ -2465,7 +2570,13 @@ rule("executioner-fighter", "Equipment", "A free item appears", (c) => {
       ),
     ),
     equal("No free item is pending", pending, undefined),
-    equal("… so no poison doses", gifts.length, 0),
+    equal(
+      "Its recipe's poison, once",
+      gifts.map((holding) =>
+        holding.elements.map(({ name }) => name).join(" + "),
+      ),
+      ["Bloodroot Poison (heroic tier)"],
+    ),
   ];
 });
 

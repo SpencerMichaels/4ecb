@@ -111,8 +111,8 @@ const reviews: ReviewCharacter[] = [
             "Hexblade swaps: open each required replacement in the Build replacement editor; only powers of the matching kind are offered to lose.",
           ],
           [
-            "Multi-card detail stacks",
-            "The White Well pact's stack: each card only as tall as its content; a lone detail card keeps the printed proportions.",
+            "Choice card rhythm",
+            "The White Well pact's card and its benefit cards: even gaps, the Prerequisite line, flush-left paragraphs, the flavor divider.",
           ],
           [
             "Benefits by level",
@@ -156,6 +156,10 @@ const reviews: ReviewCharacter[] = [
             "A free item appears",
             "The Fey Pact of the White Well Weapon (pact weapon gift) is in the inventory.",
           ],
+          [
+            "Pact weapon named by its artifact",
+            'The pact weapon reads "Sword of the White Well" in Inventory, the loadout and on the cards.',
+          ],
         ],
       },
       {
@@ -164,7 +168,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Sub-choices on feature rows",
-            'Card headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Daily Power: Crown of Stars" (no text under it); check wrapping next to "Level N".',
+            'Reference headings "Past life: Eladrin" and two "Guardian Feature" rows; check wrapping next to "Level N".',
+          ],
+          [
+            "Print Play data card",
+            "The first card: identity, abilities, defenses, hit points and senses.",
           ],
           [
             "Background benefit card",
@@ -176,7 +184,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Proficiencies pane",
-            "Character Reference pages, after Equipped and Inventory: Armor / Shields / Weapons / Implements lines, lower case.",
+            "Character Reference pages, after Worn/Held Items and Carried Items: Armor / Shields / Weapons / Implements lines, lower case.",
           ],
           [
             "Printed Deity entry",
@@ -249,6 +257,10 @@ const reviews: ReviewCharacter[] = [
             "Summoned allies",
             'Mourning Handmaiden\'s Attack "Level+5 vs Ref"; Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each with its number; no "UNKNOWN" on any card.',
           ],
+          [
+            "Paired attack and damage effects",
+            "Melee Basic Attack: one Back to the Wall line for attack and damage.",
+          ],
         ],
       },
     ],
@@ -274,6 +286,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Background benefit card",
             "Two background cards, then the background benefit card.",
+          ],
+          [
+            "Class block in the card type bar",
+            'Twin Strike "Ranger · Level 1", Master Diplomat "Diplomacy · Level 6", Mighty Sprint "Athletics · …" at the right of the type bar.',
           ],
         ],
       },
@@ -313,6 +329,11 @@ const reviews: ReviewCharacter[] = [
             "Granted aliases on feature rows",
             'The heading is "Battle Awareness"; the reference body retains "Choices: Athletics; counts as Fighter".',
           ],
+          ["Edit toolbar", "View | Edit, Sections, Reset, Print."],
+          ["Sections menu: show and hide", "The Sections panel."],
+          ["Sections menu: reorder", "Drag rows by their grip."],
+          ["Sections menu: copies", "The − [n] + steppers."],
+          ["Card right-click feel", "Right-click cards in Edit mode."],
         ],
       },
       {
@@ -322,6 +343,20 @@ const reviews: ReviewCharacter[] = [
           [
             "Granted aliases on feature rows",
             'The feature label is "Battle Awareness"; its body retains "Choices: Athletics; counts as Fighter".',
+          ],
+          [
+            "Alias wording",
+            'Decide whether "Choices: Athletics; counts as Fighter" reads well.',
+          ],
+        ],
+      },
+      {
+        label: "Equipment",
+        path: "tab=equipment",
+        items: [
+          [
+            "Holy symbol slot",
+            "Loadout: Symbol of Hope +1 in both Main hand and the Holy symbol slot.",
           ],
         ],
       },
@@ -360,7 +395,6 @@ const reviews: ReviewCharacter[] = [
             "Printed reference pages",
             'Granted ritual entries show "Granted by: Druid".',
           ],
-          ["Print Play data card", "Looks unchanged."],
         ],
       },
     ],
@@ -493,6 +527,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Beast power cards",
             '"Beast +N vs AC" header and "Beast damage" lines on the companion powers.',
+          ],
+          [
+            "Paired attack and damage effects",
+            "Melee Basic Attack: one Back to the Wall line for attack and damage.",
           ],
         ],
       },
@@ -699,11 +737,17 @@ const reviews: ReviewCharacter[] = [
         AS_HYBRID_POWER,
         ...UPGRADES_TO_23,
         "ID_FMP_CLASS_FEATURE_3536",
-        "ID_FMP_POWER_13796",
+        "ID_FMP_CLASS_FEATURE_HYBRID_LEAGUE_OF_WHISPERS",
+        // Cleave: a hybrid's two at-wills come one from each class (D109).
+        "ID_FMP_POWER_992",
+        // Press of Steel: a shield-requirement daily (D093).
+        "ID_FMP_POWER_10480",
         { id: "ID_FMP_POWER_4360", from: 27 },
       ],
-      excluded: UPGRADES_27,
-      keep: [AS_HYBRID_POWER],
+      // League of Whispers offers Bola Takedown or Hidden Sting/Wasp Strike;
+      // the fighter half fills the class at-will slot (D109).
+      excluded: [...UPGRADES_27, "ID_FMP_POWER_13797"],
+      keep: [AS_HYBRID_POWER, "ID_FMP_POWER_10480"],
       items: [{ id: "ID_FMP_WEAPON_76", equip: true }, { id: "Rapier" }],
       expectLegal: true,
       required: [
@@ -754,6 +798,14 @@ const reviews: ReviewCharacter[] = [
           [
             "Hybrid characters",
             'Class identity line "Executioner / Fighter", not "Hybrid".',
+          ],
+          [
+            "Paired attack and damage effects",
+            "Press of Steel: one Back to the Wall line; Bull Rush Attack keeps the attack-only line.",
+          ],
+          [
+            "Situational requirements keep weapon rows",
+            "Press of Steel without a shield: the Requirement line, Rapier and Unarmed rows, Additional effects.",
           ],
         ],
       },
@@ -1155,6 +1207,16 @@ const reviews: ReviewCharacter[] = [
           ],
         ],
       },
+      {
+        label: "Build, level 3: Powers",
+        path: build(3, "powers"),
+        items: [
+          [
+            "Opening a filled choice scrolls to its pick",
+            "Open the folded Steel Serpent Strike heading; then level 6 Feats and level 1 Powers with the level picker.",
+          ],
+        ],
+      },
     ],
   },
   {
@@ -1255,6 +1317,285 @@ const reviews: ReviewCharacter[] = [
       },
     ],
   },
+
+  /* Player saves (sample-chars/) and SampleHeroes for the later checks. */
+  ...(
+    [
+      {
+        slug: "beldin",
+        title: "Review – Beldin Hammertongue (Ardent L11)",
+        source: "sample-chars/Beldin Hammertongue 11.dnd4e",
+        purpose: "Player save: Ardent Surge's two uses per encounter.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Uses per encounter on power cards",
+                'Ardent Surge\'s type bar: "Encounter (2×)" on one line with the level at the right.',
+              ],
+            ],
+          },
+          {
+            label: "Build, level 1: Powers",
+            path: build(1, "powers"),
+            items: [
+              [
+                "Uses per encounter on power cards",
+                "Ardent Surge's builder card: the same bar, in dark theme too.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "flint",
+        title: "Review – Flint (Mage L6)",
+        source: "sample-chars/Flint.dnd4e",
+        purpose:
+          "Player save: mage feature rows hidden as legacy hides them; a dragonshard augment bound to a staff.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Feature notes follow legacy",
+                'Enchantment and Pyromancy Apprentice listed; no "Level N Mage … Powers" rows.',
+              ],
+            ],
+          },
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [
+              [
+                "Augments attach/detach",
+                "The staff's muted Augment note and the shard's Attached to note; right-click the shard.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "raidon",
+        title: "Review – Raidon Kane (SampleHero monk)",
+        source: "CharacterBuilder/SampleChars/SampleHeroes/RaidonKane.dnd4e",
+        purpose:
+          "SampleHero monk: a class block in a card's type bar and full-discipline movement techniques.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Class block in the card type bar",
+                'Destined for Greatness: "Adroit Explorer · Level 11" at the right of the type bar.',
+              ],
+              [
+                "Monk movement technique on the discipline card",
+                "Five Storms and Dragon's Tail: the Movement Technique section inside the card.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "jim",
+        title: "Review – Jim Darkmagic (SampleHero wizard)",
+        source: "CharacterBuilder/SampleChars/SampleHeroes/Jim_Darkmagic.dnd4e",
+        purpose: "SampleHero wizard: spellbook powers' subtitle.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Spellbook subtitle",
+                'Expeditious Retreat and Freezing Cloud: "Spellbook" at the right of the title band; not on Sleep.',
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "sylestine",
+        title: "Review – Sylestine (Hybrid bard, blink dog)",
+        source: "sample-chars/Sylestine.dnd4e",
+        purpose:
+          "Player save: a Trained Blink Dog associate and an imported Hybrid Talent.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Associate card",
+                "The Trained Blink Dog card after Skills and the Arcane Wisp.",
+              ],
+            ],
+          },
+          {
+            label: "Build, level 4: Feats",
+            path: build(4, "feats"),
+            items: [
+              [
+                "Imported Hybrid Talent stays editable",
+                "Hybrid Talent's step 2 has Bard Armor Proficiency picked.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "dv",
+        title: "Review – DV (Hybrid swordmage/warlock)",
+        source: "sample-chars/DV.dnd4e",
+        purpose:
+          "Player save: hybrid at-will alternation, Order Adept utilities and wrist razors in the Arms slot.",
+        links: [
+          {
+            label: "Build, level 1",
+            path: build(1),
+            items: [
+              [
+                "Hybrid slots alternate classes",
+                "The second at-will slot: Warlock at-wills unavailable with the hybrid reason.",
+              ],
+            ],
+          },
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [
+              [
+                "Wrist razors on the arms",
+                "Loadout: the razors in Arms, the longsword in Main hand.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "zilvra",
+        title: "Review – Zilvra (L8, older content)",
+        source: "sample-chars/Zilvra at 8th.dnd4e",
+        purpose:
+          "Player save made on older content: an armor's missing damage type and a level-7 manual edit.",
+        links: [
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [
+              [
+                "Armor of Resistance's damage type",
+                'The "Resistance Type" issue routes to the Equipment tab.',
+              ],
+            ],
+          },
+          {
+            label: "House rules",
+            path: "tab=house-rules",
+            items: [
+              [
+                "User edit named in House rules",
+                'A "Level 7 manual edits" row.',
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "trey",
+        title: "Review – Trey Spectre (L12)",
+        source: "sample-chars/Trey Spectre 12.dnd4e",
+        purpose:
+          "Player save: a holy symbol in its own loadout slot, and five conditional-modifier rows on page 1.",
+        links: [
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [
+              [
+                "Holy symbol slot",
+                "Loadout: Beacon of Erathis +1 in the Holy symbol slot.",
+              ],
+            ],
+          },
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Holy symbol slot",
+                "Abjure Undead, Radiant Vengeance, Divine Rage: Beacon of Erathis +1 rows.",
+              ],
+              [
+                "Page 1 Conditional modifiers pane",
+                "Five conditional rows: layout and fit at 100% and 140%.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "natan",
+        title: "Review – Natan (L12)",
+        source: "sample-chars/Natan 12.dnd4e",
+        purpose:
+          "Player save: resistances and three combined defense rows in the Conditional modifiers pane.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Page 1 Conditional modifiers pane",
+                "Resistances plus three combined defense rows: wrapping, striping and fit.",
+              ],
+              [
+                "Play data card lines",
+                "The Play data card's note lines fit inside the card.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "sample-beatrix",
+        title: "Review – Beatrix (player save, wallet)",
+        source: "sample-chars/Beatrix.dnd4e",
+        purpose: "The player's own Beatrix save: the wallet at her level.",
+        links: [
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [
+              ["Wallet at a lowered level", "The wallet reads 1 pp; 48 gp."],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "copy-of-character",
+        title: "Review – copy of character (wallet)",
+        source: "sample-chars/copy of character.dnd4e",
+        purpose: "Player save whose wallet sits at its own level: 786 gp.",
+        links: [
+          {
+            label: "Equipment",
+            path: "tab=equipment",
+            items: [["Wallet at a lowered level", "The wallet reads 786 gp."]],
+          },
+        ],
+      },
+    ] as const
+  ).map(({ slug, title, source, purpose, links }): ReviewCharacter => ({
+    spec: { kind: "import", slug, title, source, required: [] },
+    purpose,
+    links,
+  })),
 ];
 
 const general: GeneralSection[] = [
@@ -1322,6 +1663,40 @@ const general: GeneralSection[] = [
         "A free item appears",
         "Other gifts the same way: Student of Sword Magic (swordmage feat), a hexblade's pact weapon, an executioner's poison, Harper Agent theme (Harper Pin), Trap-Making Kit.",
       ],
+    ],
+  },
+  {
+    title: "Shop and new characters",
+    steps:
+      "Checked in code against the review content: shop validity, enchantment pairing, packages, ritual prices, starting gold and the theme-power reason. Open #/characters → New to look for yourself.",
+    items: [
+      [
+        "Masterwork armor needs an enchantment",
+        "Feyleather Armor without and with Inherent Bonuses.",
+      ],
+      [
+        "Weapon enchantment pairing",
+        "Warsoul and Reckless list their own base weapons.",
+      ],
+      [
+        "Superior implements under implement enchantments",
+        "Lifedrinker lists accurate staff and dagger.",
+      ],
+      ['No shields for "Any" armor', "Delver's lists armors only."],
+      [
+        "Artifacts come with their weapon",
+        "Spear of the Skylord is one holding on a Longspear.",
+      ],
+      [
+        "Arrows fold into a package",
+        "Arrows and Arrow fold into one row of arrows.",
+      ],
+      [
+        "Secret Formularies halves ritual prices",
+        "Ritual cost percent 50 with the feat.",
+      ],
+      ["Starting gold", "A new character's Carried Money."],
+      ["Theme-power reason", "The theme-power restriction's reason text."],
     ],
   },
 ];
