@@ -1023,16 +1023,14 @@ character before it is fixed, one slice per item.
      field overlays). Left: Additional Slot (one Large-only record); damage
      `abilmod` cap sharing (no content). Owner-confirmed: Critical on
      WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets (D105).
-  5. Move content text parsing out of evaluation into pack generation — power
-     half done (`a1477e5`): power attack/hit/effect text and the native
-     field-rider tables are parsed once at pack build into the versioned
-     `_Power Text IR` field (memoized fallback for older packs and house-rule
-     modifies); an every-power sweep (221,428 lines) is identical on new and
-     pre-IR packs, parity unchanged, full Drizzt evaluation ~25% faster.
-     Open, lower value (internalizing all prerequisites costs ~870 ms cold, 7 ms
-     warm, already cached per content set): a stored `_Prerequisite IR` built
-     by `content-tool build`, used only for single-pack profiles without local
-     entities and stripped on multi-pack composition.
+  5. ~~Move content text parsing out of evaluation into pack generation~~ —
+     done: power text and field riders in `_Power Text IR` (`a1477e5`, full
+     Drizzt evaluation ~25% faster) and prerequisites in `_Prerequisite IR`
+     (`18027b7`, stamped by record set, stripped on multi-pack composition;
+     first Build-tab evaluation ~450 ms faster for feat-choosing characters).
+     Both verified by an identical every-power/prerequisite sweep and parity.
+     Hazard: bump `POWER_TEXT_VERSION` / `PREREQUISITE_IR_VERSION` whenever the
+     parse changes, or rebuild the pack.
   6. ~~Legality~~ — done (`98dfeba`, D109): hybrid DisallowClass/IsPsionicClass
      slots and retrainings (reason `hybrid-class`), CheckHybridPower on
      multiclass/power-replace swaps, PowersAsClass per choice level for powers
