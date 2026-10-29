@@ -30,14 +30,28 @@ vi.mock("@4ecb/rules-engine", async (importOriginal) => ({
 }));
 
 describe("rules worker evaluation queue", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
 
   it("skips queued evaluations cancelled before they start", async () => {
+    // Sequenced explicitly (promises resolved by postMessage, fake timers for
+    // the queue's yield) rather than polled with vi.waitFor, whose real-time
+    // timeout made this fail under machine load.
     const responses: RulesWorkerResponse[] = [];
+    const waiting = new Map<RulesWorkerResponse["type"], () => void>();
+    const received = (type: RulesWorkerResponse["type"]) =>
+      new Promise<void>((resolve) => waiting.set(type, resolve));
     const scope: {
       onmessage?: (event: MessageEvent<RulesWorkerRequest>) => void;
       postMessage: (message: RulesWorkerResponse) => void;
-    } = { postMessage: (message) => responses.push(message) };
+    } = {
+      postMessage: (message) => {
+        responses.push(message);
+        waiting.get(message.type)?.();
+      },
+    };
     vi.stubGlobal("self", scope);
     await import("./rules.worker");
     const send = (request: RulesWorkerRequest) =>
@@ -49,21 +63,27 @@ describe("rules worker evaluation queue", () => {
         input: { level } as EvaluationInput,
       });
 
+    const initialized = received("initialized");
+    const contentReady = received("content-progress");
     send({ type: "initialize", requestId: 1, packId: "core" });
-    await vi.waitFor(() =>
-      expect(responses.some(({ type }) => type === "initialized")).toBe(true),
-    );
-    evaluate(2, 3);
-    evaluate(3, 4);
-    evaluate(4, 5);
-    send({ type: "cancel", requestId: 2 });
-    send({ type: "cancel", requestId: 3 });
+    await initialized;
+    await contentReady;
 
-    await vi.waitFor(() =>
-      expect(
-        responses.filter(({ type }) => type === "evaluation"),
-      ).toHaveLength(1),
-    );
+    vi.useFakeTimers();
+    // Each worker message is its own task, so the cancels arrive after the
+    // first evaluate has already scheduled the queue.
+    for (const deliver of [
+      () => evaluate(2, 3),
+      () => evaluate(3, 4),
+      () => evaluate(4, 5),
+      () => send({ type: "cancel", requestId: 2 }),
+      () => send({ type: "cancel", requestId: 3 }),
+    ])
+      setTimeout(deliver, 0);
+    const evaluation = received("evaluation");
+    await vi.runAllTimersAsync();
+    await evaluation;
+
     expect(evaluated).toEqual([5]);
     expect(
       responses.flatMap((response) =>
