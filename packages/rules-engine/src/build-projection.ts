@@ -272,16 +272,8 @@ function assignChildSlots(
       ).find((slot) => slot.kind === "choice");
       const selectType = select?.type;
       if (select === undefined || selectType === undefined) continue;
-      const leftover = occurrence.children.flatMap((child, index) =>
-        free(index) &&
-        child.identity.definitionId !== undefined &&
-        !recovered.some((value) => value.children.has(index))
-          ? [index]
-          : [],
-      );
-      if (leftover.length === 0) continue;
       const seen = new Set<string>();
-      const fits = [container.id, container.name]
+      const candidates = [container.id, container.name]
         .flatMap((category) => lookups.inCategory(category))
         .filter((candidate) => {
           const id = lower(candidate.id);
@@ -290,11 +282,33 @@ function assignChildSlots(
           seen.add(id);
           return true;
         })
-        .flatMap((candidate): RecoveredSelection[] => {
-          const grants = childSlots(
-            { ...occurrence, children: [] },
-            candidate,
-          ).filter((slot) => slot.grantTarget !== undefined);
+        .map((candidate) => ({
+          candidate,
+          grants: childSlots({ ...occurrence, children: [] }, candidate).filter(
+            (slot) => slot.grantTarget !== undefined,
+          ),
+        }));
+      // Only leftovers of a type some candidate grants are in question: an
+      // older save's stray Race Ability Bonus says nothing about a subrace.
+      const grantedTypes = new Set(
+        candidates.flatMap(({ grants }) =>
+          grants.flatMap((slot) => {
+            const target = lookups.entityById(slot.grantTarget ?? "");
+            return target === undefined ? [] : [lower(target.type)];
+          }),
+        ),
+      );
+      const leftover = occurrence.children.flatMap((child, index) =>
+        free(index) &&
+        child.identity.definitionId !== undefined &&
+        grantedTypes.has(lower(child.identity.type)) &&
+        !recovered.some((value) => value.children.has(index))
+          ? [index]
+          : [],
+      );
+      if (leftover.length === 0) continue;
+      const fits = candidates.flatMap(
+        ({ candidate, grants }): RecoveredSelection[] => {
           const children = new Map<number, ChildSlot>();
           const used = new Set<ChildSlot>();
           for (const childIndex of leftover) {
@@ -310,7 +324,8 @@ function assignChildSlots(
             children.set(childIndex, candidateGrant);
           }
           return [{ grant, select, candidate, children }];
-        });
+        },
+      );
       const [fit] = fits;
       if (fit === undefined || fits.length !== 1) continue;
       recovered.push(fit);

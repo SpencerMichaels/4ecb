@@ -1646,6 +1646,11 @@ describe("build projection", () => {
       entity("ID_FMP_RACIAL_TRAIT_353", "Elven Accuracy", "Racial Trait"),
       entity("ID_FMP_RACIAL_TRAIT_3964", "Wild Elf Trait", "Racial Trait"),
       entity("ID_FMP_FEAT_1", "Alertness", "Feat"),
+      entity(
+        "ID_INTERNAL_RACE_ABILITY_BONUS_DEXTERITY",
+        "Dexterity",
+        "Race Ability Bonus",
+      ),
     ];
     const child = (
       id: string,
@@ -1708,6 +1713,13 @@ describe("build projection", () => {
         // An empty select the player left blank keeps only its own place.
         child("blank", undefined, "", ""),
         child("feat", "ID_FMP_FEAT_1", "Alertness", "Feat"),
+        // A stray child of a type no subrace grants doesn't block recovery.
+        child(
+          "dexterity",
+          "ID_INTERNAL_RACE_ABILITY_BONUS_DEXTERITY",
+          "Dexterity",
+          "Race Ability Bonus",
+        ),
       ]);
       const projected = projectBuildForEvaluation(build, content);
       const recoveredId = "elf:grant:0:recovered:0:0";
@@ -1733,7 +1745,12 @@ describe("build projection", () => {
         expect.objectContaining({ id: "feat", ruleOrdinal: 2 }),
       );
       const evaluated = evaluateCharacter(projected, content);
-      expect(evaluated.diagnostics).toEqual([]);
+      expect(evaluated.diagnostics).toEqual([
+        expect.objectContaining({
+          code: "occurrence.unslotted",
+          occurrenceId: "dexterity",
+        }),
+      ]);
       expect(evaluated.stats["Perception Misc"]?.value).toBe(1);
       expect(
         evaluated.occurrences.filter(
