@@ -12,6 +12,7 @@ import {
   powerClassBlock,
   spellbookPowerIds,
 } from "./power-card-header";
+import { deckPowerCards } from "./card-deck";
 import { buildEvaluatedSheetModel, createSheetPowerCardFinder } from "./index";
 
 type Occurrence = EvaluatedCharacter["occurrences"][number];
@@ -344,10 +345,14 @@ describe("evaluated sheet", () => {
       },
     });
     expect(card("Synthetic Storms")?.spellbook).toBeUndefined();
-    // Legacy still prints the technique's own card.
+    // The model keeps the technique's power (page-1 lists); only the card
+    // deck drops its own card, since the discipline's card prints it.
     expect(card("Synthetic Storms [Movement Technique]")).toMatchObject({
       classBlock: "Synthetic Monk",
     });
+    expect(deckPowerCards(sheet.powers).map(({ name }) => name)).not.toContain(
+      "Synthetic Storms [Movement Technique]",
+    );
     expect(card("Synthetic Cloud Burst")?.spellbook).toBe(true);
     expect(card("Synthetic Sleep")?.spellbook).toBeUndefined();
   });

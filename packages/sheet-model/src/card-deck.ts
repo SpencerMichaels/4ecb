@@ -74,6 +74,28 @@ export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
 const keyPart = (value: string) => value.trim().toLocaleLowerCase();
 
 /**
+ * The power cards the deck prints, in `sortedPowerCards` order: a movement
+ * technique a full discipline's card already prints (`movementTechnique`)
+ * gets no card of its own. Legacy prints both; the owner chose one copy
+ * (D099). A technique owned without its discipline keeps its card.
+ */
+export function deckPowerCards(cards: readonly SheetCard[]): SheetCard[] {
+  const folded = new Set(
+    cards.flatMap(({ movementTechnique }) =>
+      movementTechnique === undefined ? [] : [keyPart(movementTechnique.id)],
+    ),
+  );
+  return sortedPowerCards(
+    cards.filter(
+      (card) =>
+        card.id === undefined ||
+        card.movementTechnique !== undefined ||
+        !folded.has(keyPart(card.id)),
+    ),
+  );
+}
+
+/**
  * Keys for one run of cards, in the model's own order: the provenance key,
  * else a `name:` fallback, with `#n` from the second card sharing a key.
  */
@@ -110,7 +132,7 @@ export const sheetItemCardKeyBase = (card: SheetCard) =>
  * The printed card deck in order with stable keys: the Play data and Skills
  * cards, the beast companion then familiars (companion card proposal, owner
  * answer 5), the special Action Point and Second Wind cards (as in the legacy
- * builder), the other powers (`sortedPowerCards`), then items with each item
+ * builder), the other powers (`deckPowerCards`), then items with each item
  * set's card after its last shown piece's card (legacy CharTracker; a set
  * with no shown piece card closes the deck).
  *
@@ -134,7 +156,7 @@ export function sheetCardDeck(
     model.itemSets ?? [],
     (card) => `item-set:${keyPart(card.id)}`,
   );
-  const powerCards = sortedPowerCards(model.powers);
+  const powerCards = deckPowerCards(model.powers);
   const specialCardRank = (card: SheetCard) =>
     ["action point", "second wind"].indexOf(card.name.trim().toLowerCase());
   const specialCards = powerCards

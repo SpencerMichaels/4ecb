@@ -35,7 +35,7 @@ import {
   buildSheetModel,
   featureChoiceText,
   isSheetPlayCard,
-  sortedPowerCards,
+  deckPowerCards,
   type CharacterSheetModel,
   type SheetDeckCard,
   type SheetLayoutCard,
@@ -625,7 +625,7 @@ export function CharacterSheetPage({
                   `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
       </>
     );
-  const powerCards = sortedPowerCards(model.powers);
+  const powerCards = deckPowerCards(model.powers);
   const screenItems = resolvedLayout.deck.flatMap(({ card, group }) =>
     group === "items" && card.kind === "item" ? [card] : [],
   );

@@ -190,6 +190,7 @@ const THROWN_ALTERNATIVE =
 const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
 const CARD_PARTS = "packages/sheet-model/src/legacy-card-parts.test.ts";
 const POWER_CARD = "apps/web/src/PowerCard.test.tsx";
+const CARD_DECK = "packages/sheet-model/src/card-deck.test.ts";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
 const HYBRID_POWERS = "packages/rules-engine/src/hybrid-powers.test.ts";
@@ -2624,7 +2625,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "BasicUtils.IsMonkTechnique": code(
       "A power whose _ChildPower is a '[Movement Technique]' record is a monk full discipline.",
-      "sheet-model power-card-header.ts movementTechniqueOf; builder detail panes (detail-stack.ts) show the technique on the discipline's card rather than as a sibling card",
+      "sheet-model power-card-header.ts movementTechniqueOf; builder detail panes (detail-stack.ts) and the sheet card deck (card-deck.ts deckPowerCards) show the technique on the discipline's card rather than as its own card",
       test(CARD_PARTS, "finds only a '[Movement Technique]' child power"),
       test(
         "apps/web/src/detail-stack.test.ts",
@@ -2847,7 +2848,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "PowerCard.MonkMovementTechnique": code(
       "Power cards append the _ChildPower movement technique (its Action Type, Attack Type and specifics).",
-      "SheetCard.movementTechnique, printed after the attack by PowerCard.tsx; as in legacy the technique also keeps its own card",
+      "SheetCard.movementTechnique, printed after the attack by PowerCard.tsx. Deliberate difference (owner decision 2026-10-28, D099, a layout choice): legacy also prints the technique's own card; card-deck.ts deckPowerCards drops it from the deck (print and screen sheet) when the discipline's card carries it, and a technique owned without its discipline keeps its card",
       test(
         CARD_PARTS,
         "gives power cards their class block, technique and spellbook mark",
@@ -2855,6 +2856,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         POWER_CARD,
         "appends a full discipline's movement technique after its attack",
+      ),
+      test(
+        CARD_DECK,
+        "prints a movement technique only on its full discipline's card",
       ),
     ),
     "PowerCardPower.UpdatePowerCardPower": code(

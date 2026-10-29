@@ -4,6 +4,7 @@ import type { SheetFamiliarCard } from "./familiar-card";
 import type { SheetItemSetCard } from "./item-set-card";
 import {
   isSheetPlayCard,
+  deckPowerCards,
   sheetCardDeck,
   sortedPowerCards,
   type SheetDeckCard,
@@ -163,6 +164,32 @@ describe("sheet card deck", () => {
       "items",
       "items",
     ]);
+  });
+
+  it("prints a movement technique only on its full discipline's card", () => {
+    const technique = { id: "TECHNIQUE", name: "Storms [MT]", fields: [] };
+    const deck = sheetCardDeck({
+      powers: [
+        power("Storms", { id: "DISCIPLINE", movementTechnique: technique }),
+        power("Storms [MT]", { id: "technique", actionType: "Move Action" }),
+        power("Lone [MT]", { id: "LONE", actionType: "Move Action" }),
+      ],
+      companions: [],
+      items: [],
+    });
+    expect(deck.map(({ card }) => label(card))).toEqual([
+      "play-character",
+      "play-skills",
+      "Storms",
+      // Owned without its discipline: keeps its own card.
+      "Lone [MT]",
+    ]);
+    expect(
+      deckPowerCards([
+        power("Storms [MT]", { id: "TECHNIQUE" }),
+        power("Other", { movementTechnique: technique }),
+      ]).map(({ name }) => name),
+    ).toEqual(["Other"]);
   });
 
   it("keys cards by provenance, not text", () => {

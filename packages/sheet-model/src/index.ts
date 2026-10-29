@@ -121,6 +121,7 @@ export {
   sheetCardDeck,
   sheetItemCardKeyBase,
   sheetPowerCardKeyBase,
+  deckPowerCards,
   sortedPowerCards,
   type SheetDeckCard,
   type SheetDeckEntry,

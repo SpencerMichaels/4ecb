@@ -2917,6 +2917,16 @@ Decision:
   without edit behaviour; probe copies never carry it. Toggling never
   re-evaluates. Custom reminders, provenance hints, per-row or per-section
   reset, starring and reminder ordering were not approved.
+- A monk full discipline's movement technique prints once, on the
+  discipline's card (owner decision 2026-10-28, a layout choice, not a
+  rules one): `deckPowerCards` drops the technique's own card from the deck
+  (print and screen sheet) when an owned power's card carries it as
+  `SheetCard.movementTechnique`. Legacy prints both (PowerCard
+  `MonkMovementTechnique` plus the technique's own card). A technique the
+  character owns without its discipline keeps its card, and the technique
+  stays in `model.powers`, so page-1 lists and the power index are
+  unchanged. Builder detail panes already show it only inside the
+  discipline's card.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

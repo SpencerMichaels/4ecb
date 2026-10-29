@@ -398,9 +398,12 @@ Evaluated sheets follow the legacy CharTracker for three record-driven parts
   `_ChildPower` record is named "[Movement Technique]" carries
   `SheetCard.movementTechnique` (action, attack type and body fields minus the
   legacy power-card excludes), printed after the attack and before the weapon
-  table. As in legacy, the technique keeps its own card too; builder detail
-  panes show it only inside the discipline's card. Other child powers are
-  unaffected.
+  table. Unlike legacy, the technique gets no card of its own when an owned
+  discipline's card carries it (owner decision 2026-10-28, D099):
+  `deckPowerCards` drops it from the print and screen-sheet deck, and builder
+  detail panes show it only inside the discipline's card. A technique owned
+  without its discipline keeps its card; the technique still lists on page 1
+  and in the power index. Other child powers are unaffected.
 
 ## Sheet and print behavior
 

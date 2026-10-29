@@ -1185,12 +1185,12 @@ groups.
     its Build tab with Five Storms selected.
   - **Expect:** after the attack/Hit lines and before the weapon table, a thin
     rule, "MOVEMENT TECHNIQUE", a band "Move" + "Personal" (Dragon's Tail
-    "Melee 1"), then "Effect: You shift 2 squares." The technique keeps its own
-    card (legacy). The builder pane shows it inside the Five Storms card only.
+    "Melee 1"), then "Effect: You shift 2 squares." No separate "… [Movement
+    Technique]" card in the card pages (print or screen sheet). The builder
+    pane shows it inside the Five Storms card only.
   - **Wrong if:** the section is missing or clipped, its band runs past the
-    card edge, or the builder pane shows the technique twice.
-  - **Decide:** keep the technique's own card (legacy), or drop it now that
-    the discipline card carries it?
+    card edge, a separate technique card still prints, or the builder pane
+    shows the technique twice.
 
 ## Ring slots, holy symbol slot, augment overlays (2026-10-28, `8192120`…`ad50818`)
 
