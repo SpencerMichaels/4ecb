@@ -1046,11 +1046,16 @@ character before it is fixed, one slice per item.
      implements, Ritual Cost Modifier, ammunition/journeybread packages,
      Berserk Weapon and Soulwarding Armor content fixes. Left (presentation):
      package rows (`HasSingleItem`, `PackageCount`, `PackageManipulation`).
-  8. New player saves (2026-10-28, 24 added to `sample-chars/` plus 6
-     re-saved) — in progress: triage of the 19 with mismatches or import
-     errors (homebrew vs engine/import bug vs known gap,
-     `tmp/new-saves-triage.md`), then fixes in batches and a baseline
-     `--accept` once every remaining diff is explained.
+  8. ~~New player saves (2026-10-28)~~ — done. Most diffs were player content:
+     15 players ran stock WotC data and 3 partial CBLoader parts, now mapped
+     to a stock pack in `parity:baseline` content profiles (`e64f9ec`,
+     `build-private-content.sh --stock`). Engine fixes: signed attack-line
+     penalties, `+ NdM` dice after [W], no `,weapon` stats on implement rows
+     (`52368d0`); UniversalClassSkill under `$$CLASS`, self-negating grants
+     vs saved choices, recovery of choices CBLoader added over saved children,
+     item choices resolved from Equipment (`2dc7341`…`4fb03a0`); Mellivora's
+     retrained-theme Endurance kept modern (D105). Baseline accepted with all
+     58 saves (stats 4816/4860, powers 3291/3444).
   9. Small follow-ups found during the new-saves pass: `rules.worker.test.ts`
      ("skips queued evaluations cancelled before they start") is load-flaky;
      Salman Ibn Jad's Weight evaluates to none on the stock pack (a missing
