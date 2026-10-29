@@ -1,9 +1,9 @@
 {
-  "version": 2,
-  "fixture": "8aa2b0f4037cb584444351d566767d7e043b0abb45e21167dd67468261b7082a",
+  "version": 3,
+  "fixture": "b9437d65aa8c12564f621dfcc0447d5c667b20c356e1ccc31aa299f498f10af9",
   "output": {
     "ID_GOLDEN_MOUNT_STRIDER": {
-      "version": 2,
+      "version": 3,
       "kind": "fixed",
       "name": "Golden Strider",
       "level": 4,
@@ -97,7 +97,7 @@
       "description": "A synthetic strider used only by the stored IR golden."
     },
     "ID_GOLDEN_MOUNT_STEED": {
-      "version": 2,
+      "version": 3,
       "kind": "master",
       "name": "Golden Steed",
       "block": {
@@ -226,7 +226,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 2,
+      "version": 3,
       "kind": "master",
       "name": "Golden Heron",
       "block": {
@@ -269,7 +269,13 @@
               {
                 "text": "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage."
               }
-            ]
+            ],
+            "roll": {
+              "attack": "Intelligence vs. Reflex",
+              "hit": "1d8 + Intelligence modifier fire damage.",
+              "attackType": "Melee 1",
+              "target": "One creature"
+            }
           },
           {
             "name": "Opportunity Attack",
@@ -278,7 +284,13 @@
               {
                 "text": "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage."
               }
-            ]
+            ],
+            "roll": {
+              "attack": "Intelligence vs. Reflex",
+              "hit": "1d8 + Intelligence modifier fire damage.",
+              "attackType": "Melee 1",
+              "target": "One creature"
+            }
           }
         ]
       },
@@ -289,7 +301,7 @@
       ]
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 2,
+      "version": 3,
       "kind": "master",
       "name": "Golden Wraith",
       "block": {
@@ -350,7 +362,7 @@
               },
               {
                 "label": "Hit",
-                "text": "1d10 + your Wisdom modifier cold damage.",
+                "text": "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.",
                 "damage": {
                   "terms": [
                     {
@@ -360,7 +372,9 @@
                     {
                       "kind": "ability",
                       "abilities": [
-                        "Wisdom"
+                        "Intelligence",
+                        "Wisdom",
+                        "Charisma"
                       ]
                     }
                   ],
@@ -379,7 +393,9 @@
                         {
                           "kind": "ability",
                           "abilities": [
-                            "Wisdom"
+                            "Intelligence",
+                            "Wisdom",
+                            "Charisma"
                           ]
                         }
                       ],
@@ -389,7 +405,13 @@
                 ]
               }
             ],
-            "action": "Standard"
+            "action": "Standard",
+            "roll": {
+              "attack": "your level + 5 vs. Fortitude",
+              "hit": "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.",
+              "attackType": "Melee 1",
+              "target": "One creature"
+            }
           }
         ]
       },
@@ -401,6 +423,141 @@
         "Traits",
         "Chill Shroud",
         "Standard Action"
+      ]
+    },
+    "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
+      "version": 3,
+      "kind": "master",
+      "name": "Golden Lantern",
+      "block": {
+        "version": 1,
+        "role": "Summoned Creature",
+        "size": "Medium",
+        "creatureType": "fey humanoid",
+        "hitPoints": {
+          "kind": "master-bloodied"
+        },
+        "defenses": {
+          "kind": "master",
+          "bonus": {
+            "ac": 2,
+            "fortitude": 2,
+            "reflex": 2,
+            "will": 2
+          }
+        },
+        "defensesNote": "not including any temporary bonuses or penalties",
+        "speed": "6",
+        "traits": [
+          {
+            "name": "Glow",
+            "aura": 2,
+            "lines": [
+              {
+                "text": "You gain a +2 power bonus to Insight checks while you are in the aura."
+              }
+            ]
+          }
+        ],
+        "powers": [
+          {
+            "name": "Special Movement",
+            "usage": "At-Will; 1/round",
+            "action": "Minor",
+            "lines": [
+              {
+                "label": "Effect",
+                "text": "The lantern either walks, shifts, runs, stands up, squeezes, or crawls."
+              }
+            ]
+          },
+          {
+            "name": "Opportunity Action",
+            "keywords": "teleportation",
+            "usage": "At-Will",
+            "action": "Opportunity",
+            "lines": [
+              {
+                "label": "Trigger",
+                "text": "An enemy hits you."
+              },
+              {
+                "label": "Effect (Immediate Interrupt)",
+                "text": "The lantern teleports to a square adjacent to you."
+              }
+            ]
+          },
+          {
+            "name": "Golden Lantern's Attack",
+            "keywords": "Arcane, Radiant, Summoning",
+            "usage": "At-Will",
+            "action": "Standard",
+            "lines": [
+              {
+                "label": "Target",
+                "text": "One creature"
+              },
+              {
+                "label": "Attack",
+                "text": "Melee 1; your level + 5 vs. Reflex",
+                "attack": {
+                  "range": "Melee 1",
+                  "bonus": {
+                    "kind": "level",
+                    "plus": 5
+                  },
+                  "defense": "Reflex"
+                }
+              },
+              {
+                "label": "Hit",
+                "text": "2d8 + your Charisma modifier radiant damage.",
+                "damage": {
+                  "terms": [
+                    {
+                      "kind": "dice",
+                      "dice": "2d8"
+                    },
+                    {
+                      "kind": "ability",
+                      "abilities": [
+                        "Charisma"
+                      ]
+                    }
+                  ],
+                  "damageType": "radiant"
+                },
+                "rest": "."
+              }
+            ],
+            "roll": {
+              "attack": "your level + 5 vs. Reflex",
+              "hit": "2d8 + your Charisma modifier radiant damage.",
+              "attackType": "Melee 1",
+              "target": "One creature",
+              "source": {
+                "id": "ID_GOLDEN_COMPANION_1_POWERCARD_2",
+                "name": "Golden Lantern's Attack"
+              }
+            }
+          }
+        ],
+        "other": [
+          "The creature lacks actions of its own. Instead, you spend actions to command it."
+        ]
+      },
+      "powerFields": [
+        "Creature",
+        "Size",
+        "Origin",
+        "Type",
+        "Speed",
+        "Hit Points",
+        "Defenses"
+      ],
+      "absorbed": [
+        "ID_GOLDEN_COMPANION_1_POWERCARD_1",
+        "ID_GOLDEN_COMPANION_1_POWERCARD_2"
       ]
     }
   }

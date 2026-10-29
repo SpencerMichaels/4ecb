@@ -25,8 +25,9 @@ import {
 /** The internal field holding the parsed stat block. */
 export const CREATURE_STAT_BLOCK_FIELD = "_Creature Stat Block";
 /** Bump when the stored shape or the parse changes; an older pack's field is
- *  ignored. 2: summon powers' creatures and `powerFields` (D111). */
-export const CREATURE_STAT_BLOCK_VERSION = 2;
+ *  ignored. 2: summon powers' creatures and `powerFields` (D111). 3: their
+ *  commands' rolls, merged community cards and `absorbed` (D111). */
+export const CREATURE_STAT_BLOCK_VERSION = 3;
 
 /** A power-icon letter of a monster block: m basic melee, M melee, R ranged,
  *  C close, A area. */
@@ -114,6 +115,13 @@ export interface MasterCreatureStatBlock {
    * augments, its own attack).
    */
   readonly powerFields?: readonly string[];
+  /**
+   * The community power cards the pack build merged into this creature
+   * (D111): a hexblade's or binder's `<id>_POWERCARD_<n>` trait and attack
+   * cards, granted with the summon power. The pack keeps them as inert
+   * Internal records under their own IDs.
+   */
+  readonly absorbed?: readonly string[];
 }
 
 export type CreatureStatBlock = (
@@ -156,11 +164,12 @@ export function readCreatureStatBlock(
           value: JSON.stringify(parsed.block),
         },
       ]);
-      const powerFields = Array.isArray(parsed.powerFields)
-        ? parsed.powerFields.filter(
-            (field): field is string => typeof field === "string",
-          )
-        : undefined;
+      const strings = (value: unknown) =>
+        Array.isArray(value)
+          ? value.filter((entry): entry is string => typeof entry === "string")
+          : undefined;
+      const powerFields = strings(parsed.powerFields);
+      const absorbed = strings(parsed.absorbed);
       return block === undefined
         ? undefined
         : {
@@ -169,6 +178,7 @@ export function readCreatureStatBlock(
             name: parsed.name,
             block,
             ...(powerFields === undefined ? {} : { powerFields }),
+            ...(absorbed === undefined ? {} : { absorbed }),
           };
     }
     return undefined;

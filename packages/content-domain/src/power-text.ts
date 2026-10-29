@@ -22,8 +22,9 @@ import { PREREQUISITE_IR_FIELD } from "./prerequisite-ir";
 /** The internal field holding a record's parsed power texts. */
 export const POWER_TEXT_FIELD = "_Power Text IR";
 /** Bump when the stored shape or any parse changes; an older pack's field
- *  is then ignored and the engine parses the text itself. */
-export const POWER_TEXT_VERSION = 2;
+ *  is then ignored and the engine parses the text itself. 3: a summoned
+ *  creature's command rolls (D111). */
+export const POWER_TEXT_VERSION = 3;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",

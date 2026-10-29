@@ -7,6 +7,7 @@ import {
   parsePowerFieldBonuses,
   parsePowerText,
   powerAttackSlots,
+  readCreatureStatBlock,
   type PowerTextEntry,
   type PowerTextStore,
   type RuleStatement,
@@ -113,6 +114,15 @@ export function powerTextField(
       if (facets.hit === true || facets.recoveries === true)
         addText(wanted, specific.value, facets);
     }
+    // A summoned creature's commands the summoner rolls (D111): the engine
+    // works out each one's row from these texts.
+    const creature = readCreatureStatBlock(specifics);
+    if (creature?.kind === "master")
+      for (const { roll } of creature.block.powers) {
+        if (roll === undefined) continue;
+        addText(wanted, roll.attack, { attack: true });
+        if (roll.hit !== undefined) addText(wanted, roll.hit, { hit: true });
+      }
   }
   for (const rule of rules) {
     if (rule.name.toLocaleLowerCase() !== "modify") continue;

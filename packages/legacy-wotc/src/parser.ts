@@ -17,6 +17,7 @@ import { SaxesParser } from "saxes";
 import { associateStatBlockField } from "./associate-stat-block";
 import { creatureStatBlockField } from "./creature-stat-block";
 import { powerTextField } from "./power-text";
+import { mergeSummonCommunityCards } from "./summon-community-cards";
 import { summonCreatureField } from "./summon-creature";
 import { applyLoadTimeSelfModifies } from "./self-modify";
 
@@ -223,7 +224,9 @@ export class D20RulesParser {
     return {
       gameSystem: this.#gameSystem,
       sourceKey: this.#sourceKey,
-      entities: this.#entities,
+      // A summoned creature's community cards join its stat block (D111),
+      // across records, once every record is read.
+      entities: mergeSummonCommunityCards(this.#entities),
       rejected: this.#rejected,
       rawTopLevel: this.#rawTopLevel,
       diagnostics: this.#diagnostics,

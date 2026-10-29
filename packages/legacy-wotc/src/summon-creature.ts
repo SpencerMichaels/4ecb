@@ -7,6 +7,7 @@ import {
   type AssociateEntry,
   type AssociatePower,
   type AssociateStatBlock,
+  type CreatureRoll,
   type CreatureStatBlock,
   type SpecificField,
 } from "@4ecb/content-domain";
@@ -162,6 +163,42 @@ function actionTitle(
 }
 
 /**
+ * The roll of a stat-field action ("Attack: Melee 1 (one creature); your
+ * level + 5 vs. Fortitude", "Hit: 1d10 + … damage.", "Level 21: 2d10 + …"):
+ * the attack after the range, the hit with its level steps on later lines.
+ */
+function statFieldRoll(lines: readonly string[]): CreatureRoll | undefined {
+  const attackIndex = lines.findIndex((line) => /^Attack\s*:/i.test(line));
+  if (attackIndex < 0) return undefined;
+  const attackText = lines[attackIndex]!.replace(/^Attack\s*:\s*/i, "");
+  const split = attackText.lastIndexOf(";");
+  const attack = attackText.slice(split + 1).trim();
+  if (!/\bvs\.?\s+\w+/i.test(attack)) return undefined;
+  const rangeText = split < 0 ? "" : attackText.slice(0, split).trim();
+  const range = /^(.*?)\s*(?:\(([^)]*)\))?$/.exec(rangeText);
+  const hitIndex = lines.findIndex(
+    (line, index) => index > attackIndex && /^Hit\s*:/i.test(line),
+  );
+  const hit =
+    hitIndex < 0
+      ? undefined
+      : [
+          lines[hitIndex]!.replace(/^Hit\s*:\s*/i, ""),
+          ...lines
+            .slice(hitIndex + 1)
+            .filter((line) => /^Level \d+\s*:/i.test(line)),
+        ].join("\n");
+  return {
+    attack,
+    ...(hit === undefined ? {} : { hit }),
+    ...(range?.[1] === undefined || range[1] === ""
+      ? {}
+      : { attackType: range[1] }),
+    ...(range?.[2] === undefined ? {} : { target: capitalized(range[2]) }),
+  };
+}
+
+/**
  * Respells a power's stat fields as an associate stat block's text (D107:
  * heading, size and type line, HP/Defenses/Speed lines, TRAITS and action
  * sections) for the associate parser.
@@ -276,6 +313,8 @@ function parseStatFields(
   ];
   const traits: string[] = [];
   const actions: string[] = [];
+  // Each action field's roll, in order: the creature's powers (D111).
+  const actionRolls: (CreatureRoll | undefined)[] = [];
   for (const field of fields) {
     if (taken.includes(field.name)) continue;
     const key = fieldKey(field.name);
@@ -295,6 +334,7 @@ function parseStatFields(
         title,
         ...(rest ? valueLines.slice(1) : valueLines),
       );
+      actionRolls.push(statFieldRoll(valueLines));
       take(field);
       continue;
     }
@@ -322,10 +362,23 @@ function parseStatFields(
   const parsed = parseAssociateStatBlock(lines.join("\n"));
   issues.push(...parsed.issues);
   if (parsed.block === undefined) return { issues };
-  const block: AssociateStatBlock =
-    speedTail === undefined
-      ? parsed.block
-      : { ...parsed.block, speed: speedTail };
+  // One power per action field; its roll rides along.
+  if (parsed.block.powers.length !== actionRolls.length)
+    issues.push(
+      `${actionRolls.length} action fields read as ${parsed.block.powers.length} powers`,
+    );
+  const powers = parsed.block.powers.map((power, index) => {
+    const roll = actionRolls[index];
+    return roll === undefined ||
+      parsed.block!.powers.length !== actionRolls.length
+      ? power
+      : { ...power, roll };
+  });
+  const block: AssociateStatBlock = {
+    ...parsed.block,
+    powers,
+    ...(speedTail === undefined ? {} : { speed: speedTail }),
+  };
   return {
     block: {
       version: CREATURE_STAT_BLOCK_VERSION,
@@ -519,6 +572,57 @@ function creatureName(powerName: string, noun: string): string {
     .join(" ");
 }
 
+const ABILITY_WORDS =
+  "Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma";
+/** A command's attack: "Wisdom vs. Fortitude", "Intelligence + 2 vs. AC",
+ *  "Intelligence or Charisma vs. Will", at the start of a "; "/": " part. */
+const COMMAND_ATTACK = new RegExp(
+  String.raw`(?:^|[;:]\s*)((?:${ABILITY_WORDS})(?:\s+or\s+(?:${ABILITY_WORDS}))*(?:\s*[+-]\s*\d+)?\s+vs\.?\s+(?:AC|Fortitude|Reflex|Will))\b[.;]?\s*`,
+  "gi",
+);
+
+/**
+ * The roll of a special command the summoner makes with their own
+ * statistics (D095): "Melee 1; targets one creature; Wisdom vs. Fortitude;
+ * 1d8 + Wisdom modifier damage." gives the attack "Wisdom vs. Fortitude",
+ * the hit text after it, the range and the target before it. A command
+ * with no attack, or with two (the text then describes two attacks), has
+ * none: its text alone is printed.
+ */
+export function commandRoll(text: string): CreatureRoll | undefined {
+  const value = collapse(text);
+  const attacks = [...value.matchAll(COMMAND_ATTACK)];
+  if (attacks.length !== 1) return undefined;
+  const match = attacks[0]!;
+  const attack = match[1]!;
+  const hit = value.slice((match.index ?? 0) + match[0].length).trim();
+  // "Melee 1; targets one creature" / "melee 1 (one creature)" before it,
+  // after any lead-in ("The panther shifts 3 squares and then attacks:").
+  const before = value
+    .slice(0, match.index ?? 0)
+    .split(/[;:]\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const target = before.find((part) => /^targets?\b/i.test(part));
+  const range = before.find((part) =>
+    /^(?:melee|ranged|close|area)\b/i.test(part),
+  );
+  const rangeWithTarget =
+    range === undefined ? undefined : /^(.*?)\s*\(([^)]*)\)$/.exec(range);
+  return {
+    attack,
+    ...(hit === "" ? {} : { hit }),
+    ...(range === undefined
+      ? {}
+      : { attackType: capitalized(rangeWithTarget?.[1] ?? range) }),
+    ...(target !== undefined
+      ? { target: capitalized(target.replace(/^targets?\s+/i, "")) }
+      : rangeWithTarget?.[2] === undefined
+        ? {}
+        : { target: capitalized(rangeWithTarget[2]) }),
+  };
+}
+
 function parseCommands(
   powerName: string,
   specifics: readonly SpecificField[],
@@ -569,11 +673,13 @@ function parseCommands(
       const action =
         COMMAND_ACTIONS[(command[1] ?? "").toLocaleLowerCase()] ?? name;
       const usage = command[3]?.trim();
+      const roll = commandRoll(text);
       powers.push({
         name,
         action,
         ...(usage === undefined || usage === "" ? {} : { usage }),
         lines: [{ text }],
+        ...(roll === undefined ? {} : { roll }),
       });
       continue;
     }

@@ -62,7 +62,8 @@ export type AssociateDamageTerm =
   | { readonly kind: "half-level" }
   | { readonly kind: "level" }
   /** "your Wisdom modifier"; several abilities: "your Strength or Charisma
-   *  modifier", one of them. */
+   *  modifier", "your Intelligence, Wisdom, or Charisma modifier": the
+   *  highest of them (native MultipleAbilityChoices, D111). */
   | {
       readonly kind: "ability";
       readonly abilities: readonly AssociateAbilityName[];
@@ -122,9 +123,37 @@ export interface AssociateEntry {
   readonly lines: readonly AssociateLine[];
 }
 
+/**
+ * A summoned creature's attack the summoner rolls (D111): the attack and
+ * hit texts, as the content writes them, that the rules engine reads
+ * through the power's text IR to work out this command's own row (attack
+ * bonus and damage), as it does a power's attack. Only a summon power's
+ * creature (`_Creature Stat Block`) carries these; an Associate record's
+ * numbers come from its stat block alone (D107).
+ */
+export interface CreatureRoll {
+  /** "Wisdom vs. Fortitude", "Intelligence + 2 vs. AC", "your level + 5
+   *  vs. Reflex". */
+  readonly attack: string;
+  /** The hit text, with its "Level 21: …" steps on later lines. */
+  readonly hit?: string;
+  /** "Melee 1", "Close burst 1": the attack's range, for keyword bonuses. */
+  readonly attackType?: string;
+  readonly target?: string;
+  /**
+   * The content record this command came from, when another record than
+   * the summon power wrote it (a hexblade's community attack card merged
+   * into the creature): bonuses the content keys to that record
+   * ("<id>:damage") apply to this command.
+   */
+  readonly source?: { readonly id: string; readonly name: string };
+}
+
 export interface AssociatePower extends AssociateEntry {
   /** The stat-block section: Standard, Minor, Move, Triggered, … */
   readonly action: string;
+  /** A summoned creature's attack the summoner rolls (D111). */
+  readonly roll?: CreatureRoll;
 }
 
 export interface AssociateStatBlock {

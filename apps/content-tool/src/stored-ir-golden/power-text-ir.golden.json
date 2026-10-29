@@ -1,9 +1,9 @@
 {
-  "version": 2,
-  "fixture": "8aa2b0f4037cb584444351d566767d7e043b0abb45e21167dd67468261b7082a",
+  "version": 3,
+  "fixture": "b9437d65aa8c12564f621dfcc0447d5c667b20c356e1ccc31aa299f498f10af9",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -115,7 +115,7 @@
       }
     },
     "ID_GOLDEN_POWER_HIGHEST": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -185,7 +185,7 @@
       }
     },
     "ID_GOLDEN_POWER_TWO_WEAPON": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -342,7 +342,7 @@
       }
     },
     "ID_GOLDEN_POWER_MELEE_RANGED": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -523,7 +523,7 @@
       }
     },
     "ID_GOLDEN_POWER_IMPLEMENT": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -653,7 +653,7 @@
       }
     },
     "ID_GOLDEN_POWER_BEAST": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -727,7 +727,7 @@
       }
     },
     "ID_GOLDEN_POWER_SUMMON": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -801,7 +801,7 @@
       }
     },
     "ID_GOLDEN_FEAT_MODIFY": {
-      "version": 2,
+      "version": 3,
       "texts": {
         "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
           "hit": {
@@ -856,7 +856,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 2,
+      "version": 3,
       "slots": [
         [
           3,
@@ -871,8 +871,56 @@
       ],
       "summonedCreature": true,
       "texts": {
+        "1d8 + Intelligence modifier fire damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "1d8",
+                        "modifierAbilities": [
+                          "Intelligence"
+                        ],
+                        "listedAbilities": [
+                          "Intelligence"
+                        ],
+                        "damageType": "fire",
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Intelligence"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
         "As above, and the heron has fly 10.": {
           "recoveries": []
+        },
+        "Intelligence vs. Reflex": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Intelligence"
+                ],
+                "bonus": {}
+              }
+            }
+          }
         },
         "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.": {
           "attack": {
@@ -897,9 +945,146 @@
       }
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 2,
+      "version": 3,
       "summonedCreature": true,
-      "texts": {}
+      "texts": {
+        "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "1d10",
+                        "modifierAbilities": [
+                          "Charisma"
+                        ],
+                        "listedAbilities": [
+                          "Intelligence",
+                          "Wisdom",
+                          "Charisma"
+                        ],
+                        "hasOr": true,
+                        "damageType": "cold",
+                        "beast": {
+                          "fixedDice": "1d10",
+                          "ownAbilities": [
+                            "Charisma"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 21,
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "2d10",
+                        "modifierAbilities": [
+                          "Charisma"
+                        ],
+                        "listedAbilities": [
+                          "Intelligence",
+                          "Wisdom",
+                          "Charisma"
+                        ],
+                        "hasOr": true,
+                        "damageType": "cold",
+                        "beast": {
+                          "fixedDice": "2d10",
+                          "ownAbilities": [
+                            "Charisma"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "your level + 5 vs. Fortitude": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Fortitude"
+            ],
+            "other": {
+              "line": {
+                "defense": "Fortitude",
+                "levelAttack": {
+                  "bonus": 5,
+                  "defense": "Fortitude"
+                },
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
+      "version": 3,
+      "summonedCreature": true,
+      "texts": {
+        "2d8 + your Charisma modifier radiant damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "2d8",
+                        "modifierAbilities": [
+                          "Charisma"
+                        ],
+                        "listedAbilities": [
+                          "Charisma"
+                        ],
+                        "damageType": "radiant",
+                        "beast": {
+                          "fixedDice": "2d8",
+                          "ownAbilities": [
+                            "Charisma"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "your level + 5 vs. Reflex": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "levelAttack": {
+                  "bonus": 5,
+                  "defense": "Reflex"
+                },
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

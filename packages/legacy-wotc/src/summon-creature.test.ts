@@ -7,7 +7,7 @@ import {
 } from "@4ecb/content-domain";
 
 import { parseD20Rules } from "./parser";
-import { parseSummonCreature } from "./summon-creature";
+import { commandRoll, parseSummonCreature } from "./summon-creature";
 
 // Synthetic summon powers in the spellings the real content uses: indented
 // command fields (" Standard action"), "Instinctive Effect", augment fields
@@ -51,6 +51,62 @@ const commandSummon = fields([
   ["Class", "ID_SYN_CLASS_1"],
   ["Level", "9"],
 ]);
+
+describe("commandRoll", () => {
+  it.each([
+    [
+      "Melee 1; targets one creature; Wisdom vs. Fortitude; 1d8 + Wisdom modifier damage.",
+      {
+        attack: "Wisdom vs. Fortitude",
+        hit: "1d8 + Wisdom modifier damage.",
+        attackType: "Melee 1",
+        target: "One creature",
+      },
+    ],
+    [
+      "The panther shifts 3 squares and then attacks: melee 1; targets one creature; Wisdom vs. Reflex; 1d10 + Wisdom modifier damage.",
+      {
+        attack: "Wisdom vs. Reflex",
+        hit: "1d10 + Wisdom modifier damage.",
+        attackType: "Melee 1",
+        target: "One creature",
+      },
+    ],
+    [
+      "Melee 1 (one creature); Dexterity vs. Reflex; 2d6 + Dexterity modifier psychic damage.",
+      {
+        attack: "Dexterity vs. Reflex",
+        hit: "2d6 + Dexterity modifier psychic damage.",
+        attackType: "Melee 1",
+        target: "One creature",
+      },
+    ],
+    [
+      "Melee 1; targets one creature; Intelligence + 2 vs. AC; 2d10 + Intelligence modifier damage.",
+      {
+        attack: "Intelligence + 2 vs. AC",
+        hit: "2d10 + Intelligence modifier damage.",
+        attackType: "Melee 1",
+        target: "One creature",
+      },
+    ],
+    [
+      "Close burst 2; targets each enemy in burst; Wisdom vs. Reflex; the angel pulls the target 1 square.",
+      {
+        attack: "Wisdom vs. Reflex",
+        hit: "the angel pulls the target 1 square.",
+        attackType: "Close burst 2",
+        target: "Each enemy in burst",
+      },
+    ],
+  ])("reads %j", (text, roll) => {
+    expect(commandRoll(text)).toEqual(roll);
+  });
+
+  it("is nothing for a command with no attack", () => {
+    expect(commandRoll("The angel shifts 3 squares.")).toBeUndefined();
+  });
+});
 
 describe("parseSummonCreature", () => {
   it("reads a special-command summon as a summoned creature with your hit points and defenses", () => {
@@ -155,11 +211,15 @@ describe("parseSummonCreature", () => {
         ],
         [
           "Standard Action",
-          "(At-Will)\nAttack: Melee 1 (one creature); your level + 5 vs. Fortitude\nHit: 1d10 + your Wisdom modifier cold damage.\nLevel 21: 2d10 + your Wisdom modifier cold damage.",
+          "(At-Will)\nAttack: Melee 1 (one creature); your level + 5 vs. Fortitude\nHit: 1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.",
         ],
         [
           "Minor Action",
           "(Teleportation) * At-will (1/round)\n  Effect: The wraith teleports 3 squares.",
+        ],
+        [
+          "Opportunity Action",
+          "(At-Will)\nTrigger: An enemy hits you while you are adjacent to the wraith.\nEffect: The wraith can push the triggering enemy 1 square.\nLevel 21: The wraith pushes the triggering enemy up to 3 squares.",
         ],
         ["Class", "ID_SYN_CLASS_2"],
       ]),
@@ -187,6 +247,19 @@ describe("parseSummonCreature", () => {
       plus: 5,
     });
     expect(standard?.lines[1]?.steps?.[0]?.level).toBe(21);
+    // "X, Y, or Z modifier": the three listed abilities (D111).
+    expect(standard?.lines[1]?.damage?.terms[1]).toEqual({
+      kind: "ability",
+      abilities: ["Intelligence", "Wisdom", "Charisma"],
+    });
+    // The engine works out the attack from these texts (D111).
+    expect(standard?.roll).toEqual({
+      attack: "your level + 5 vs. Fortitude",
+      hit: "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.",
+      attackType: "Melee 1",
+      target: "One creature",
+    });
+    expect(minor?.roll).toBeUndefined();
     expect(minor).toMatchObject({
       action: "Minor",
       keywords: "Teleportation",
@@ -201,6 +274,7 @@ describe("parseSummonCreature", () => {
       "Chill Shroud",
       "Standard Action",
       "Minor Action",
+      "Opportunity Action",
     ]);
   });
 

@@ -201,12 +201,15 @@ function damageTerm(
       term: { kind: "highest-ability" },
       rest: value.slice(highest[0].length),
     };
+  // "your Wisdom modifier", "your Strength or Charisma modifier", "your
+  // Intelligence, Wisdom, or Charisma modifier".
   const ability = new RegExp(
-    `^your (${ABILITY_PATTERN})(?: or (${ABILITY_PATTERN}))? modifier\\b`,
+    `^your ((?:${ABILITY_PATTERN})(?:(?:,\\s*(?:or\\s+)?|\\s+or\\s+)(?:${ABILITY_PATTERN}))*) modifier\\b`,
     "i",
   ).exec(value);
   if (ability !== null) {
-    const abilities = [ability[1], ability[2]].flatMap((name) => {
+    const names = (ability[1] ?? "").split(/\s*,\s*(?:or\s+)?|\s+or\s+/);
+    const abilities = names.flatMap((name) => {
       const found = ABILITY_NAMES.find(
         (candidate) =>
           candidate.toLocaleLowerCase() === name?.toLocaleLowerCase(),
@@ -277,6 +280,21 @@ function parseAttack(text: string): AssociateAttack {
       defense: fixed[2] ?? "",
     };
   return { range };
+}
+
+/**
+ * A labeled line of a stat-block entry: an Attack line's range, bonus and
+ * defense ("Melee 1 (one creature); your level + 5 vs. AC") and a Hit
+ * line's leading damage expression, parsed; any other line as written.
+ */
+export function associateEntryLine(label: string, text: string): AssociateLine {
+  if (/^attack/i.test(label)) return { label, text, attack: parseAttack(text) };
+  if (/^hit$/i.test(label)) {
+    const parsed = parseAssociateDamage(text);
+    if (parsed !== undefined)
+      return { label, text, damage: parsed.damage, rest: parsed.rest };
+  }
+  return { label, text };
 }
 
 interface ParsedTitle {
@@ -537,7 +555,11 @@ export function parseAssociateStatBlock(
           .find((candidate) => /^hit$/i.test(candidate.label ?? ""));
         const parsed = parseAssociateDamage(text);
         if (hit === undefined || parsed === undefined) {
-          issues.push(`level step not understood: ${line}`);
+          // A step of an effect ("Level 21: The soul pushes the triggering
+          // enemy up to 3 squares.") is text; a damage step it cannot read
+          // would leave the numbers wrong.
+          if (/\bdamage\b/i.test(text))
+            issues.push(`level step not understood: ${line}`);
           entry.lines.push({ label, text });
           continue;
         }
@@ -554,33 +576,20 @@ export function parseAssociateStatBlock(
         };
         continue;
       }
-      if (/^attack/i.test(label)) {
-        const attack = parseAttack(text);
-        if (
-          attack.bonus === undefined &&
-          /your level|\+\s*\d+\s+vs/i.test(text)
-        )
-          issues.push(`attack not understood: ${line}`);
-        entry.lines.push({ label, text, attack });
-        continue;
-      }
-      if (/^hit$/i.test(label)) {
-        const parsed = parseAssociateDamage(text);
-        if (parsed === undefined) {
-          const before = text.split(/\bdamage\b/i)[0] ?? "";
-          if (/\byour\b/i.test(before))
-            issues.push(`hit damage not understood: ${line}`);
-          entry.lines.push({ label, text });
-        } else
-          entry.lines.push({
-            label,
-            text,
-            damage: parsed.damage,
-            rest: parsed.rest,
-          });
-        continue;
-      }
-      entry.lines.push({ label, text });
+      const parsedLine = associateEntryLine(label, text);
+      if (
+        parsedLine.attack !== undefined &&
+        parsedLine.attack.bonus === undefined &&
+        /your level|\+\s*\d+\s+vs/i.test(text)
+      )
+        issues.push(`attack not understood: ${line}`);
+      if (
+        /^hit$/i.test(label) &&
+        parsedLine.damage === undefined &&
+        /\byour\b/i.test(text.split(/\bdamage\b/i)[0] ?? "")
+      )
+        issues.push(`hit damage not understood: ${line}`);
+      entry.lines.push(parsedLine);
       continue;
     }
     if (current !== undefined && current.lines.length === 0) {

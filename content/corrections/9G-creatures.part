@@ -6,6 +6,10 @@
   CBLoader parts by scripts/build-private-content.sh. The owner allows the
   corrected official block text here (as 9F-associates.part restores
   associate text from the compendium).
+
+  Summoned creatures (D111) are parsed the same way from a summon power's
+  stat fields; a garbled damage line prints as text and is a
+  summon.stat-block-unparsed diagnostic.
 -->
 <D20Rules game-system="D&amp;D4E">
   <!-- Cat (Dragon 399, CBLoader 40-gear.part): the block carries a stray
@@ -28,5 +32,31 @@ Skills Athletics +2, Stealth +9
 Str 4 (-3) ◦ Dex 19 (+4) ◦ Wis 12 (+1)
 Con 11 (+0) ◦ Int 2 (-4) ◦ Cha 11 (0)
 Alignment Unaligned Languages -</specific>
+  </AppendNodes>
+
+  <!-- Bound Soul (Dragon 427, CBLoader 38-paragon-paths.part): both damage
+       lines of its Standard Action read "your intelligence, Wisdom, or
+       Charisma necrotic and radiant damage", dropping "modifier". Restore
+       the word (the owner allows this much official text) so the line
+       parses as the highest of the three modifiers, as native
+       MultipleAbilityChoices reads "X, Y, or Z modifier". The Minor and
+       Opportunity Action fields are re-added unchanged after it, so the
+       actions keep their order. -->
+  <RemoveNodes internal-id="ID_DRAG427_SOUL">
+    <specific name="Standard Action" />
+    <specific name="Minor Action" />
+    <specific name="Opportunity Action" />
+  </RemoveNodes>
+  <AppendNodes internal-id="ID_DRAG427_SOUL">
+    <specific name="Standard Action"> (At-Will)
+Attack: Melee 1 (one creature); your level + 5 vs. Fortitude
+Hit: 1d10 + your Intelligence, Wisdom, or Charisma modifier necrotic and radiant damage.
+Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier necrotic and radiant damage.</specific>
+    <specific name="Minor Action"> (At-Will)
+Effect: The soul walks, shifts, runs, stands up, squeezes, or crawls. </specific>
+    <specific name="Opportunity Action"> (At-Will)
+Trigger: An enemy hits you with a melee attack while you are adjacent to the soul.
+Effect: The soul can push the triggering enemy 1 square.
+Level 21: The soul pushes the triggering enemy up to 3 squares. </specific>
   </AppendNodes>
 </D20Rules>
