@@ -1,0 +1,304 @@
+{
+  "version": 1,
+  "fixture": "b4e3f72520c5e827556c9e3be85e61cdb9c0e7eccaebe4d2d90405388956e4e7",
+  "output": {
+    "ID_GOLDEN_FEAT_ABILITIES": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Str 13, Dex 13",
+      "ir": {
+        "kind": "all",
+        "text": "Str 13, Dex 13",
+        "children": [
+          {
+            "kind": "ability",
+            "text": "Str 13",
+            "ability": "Strength",
+            "minimum": 13
+          },
+          {
+            "kind": "ability",
+            "text": "Dex 13",
+            "ability": "Dexterity",
+            "minimum": 13
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_RACE_OR": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Dwarf or Elf; Con 15",
+      "ir": {
+        "kind": "all",
+        "text": "Dwarf or Elf; Con 15",
+        "children": [
+          {
+            "kind": "any",
+            "text": "Dwarf or Elf",
+            "children": [
+              {
+                "kind": "element",
+                "text": "Dwarf",
+                "definitionIds": [
+                  "ID_GOLDEN_RACE_DWARF"
+                ],
+                "negated": false
+              },
+              {
+                "kind": "element",
+                "text": "Elf",
+                "definitionIds": [
+                  "ID_GOLDEN_RACE_ELF"
+                ],
+                "negated": false
+              }
+            ]
+          },
+          {
+            "kind": "ability",
+            "text": "Con 15",
+            "ability": "Constitution",
+            "minimum": 15
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_CLASS_FEATURE": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Fighter, Two-Blade Fighting Style class feature",
+      "ir": {
+        "kind": "all",
+        "text": "Fighter, Two-Blade Fighting Style class feature",
+        "children": [
+          {
+            "kind": "element",
+            "text": "Fighter",
+            "definitionIds": [
+              "ID_GOLDEN_CLASS_FIGHTER"
+            ],
+            "negated": false
+          },
+          {
+            "kind": "element",
+            "text": "Two-Blade Fighting Style class feature",
+            "definitionIds": [
+              "ID_GOLDEN_CLASS_FEATURE_TWO_BLADE"
+            ],
+            "negated": false
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_TRAINING": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Trained in Athletics",
+      "ir": {
+        "kind": "training",
+        "text": "Trained in Athletics",
+        "value": "Athletics"
+      }
+    },
+    "ID_GOLDEN_FEAT_TIER": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Paragon Tier, Toughness",
+      "ir": {
+        "kind": "all",
+        "text": "Paragon Tier, Toughness",
+        "children": [
+          {
+            "kind": "level",
+            "text": "Paragon Tier",
+            "minimum": 11
+          },
+          {
+            "kind": "element",
+            "text": "Toughness",
+            "definitionIds": [
+              "ID_GOLDEN_FEAT_TOUGHNESS"
+            ],
+            "negated": false
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_LEVEL": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "11th level, Wis 15",
+      "ir": {
+        "kind": "all",
+        "text": "11th level, Wis 15",
+        "children": [
+          {
+            "kind": "level",
+            "text": "11th level",
+            "minimum": 11
+          },
+          {
+            "kind": "ability",
+            "text": "Wis 15",
+            "ability": "Wisdom",
+            "minimum": 15
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_HEROIC": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Heroic tier",
+      "ir": {
+        "kind": "level",
+        "text": "Heroic tier",
+        "minimum": 1,
+        "maximum": 10
+      }
+    },
+    "ID_GOLDEN_FEAT_WORSHIP": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Must worship Pelor",
+      "ir": {
+        "kind": "worship",
+        "text": "Must worship Pelor",
+        "value": "Pelor"
+      }
+    },
+    "ID_GOLDEN_FEAT_DOMAIN": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Must worship a deity of the Sun domain",
+      "ir": {
+        "kind": "worship-domain",
+        "text": "Must worship a deity of the Sun domain",
+        "value": "Sun"
+      }
+    },
+    "ID_GOLDEN_FEAT_PROFICIENCY": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Proficiency with longsword",
+      "ir": {
+        "kind": "proficiency",
+        "text": "Proficiency with longsword",
+        "value": "longsword"
+      }
+    },
+    "ID_GOLDEN_FEAT_SOURCE": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Arcane class",
+      "ir": {
+        "kind": "class-source",
+        "text": "Arcane class",
+        "value": "Arcane"
+      }
+    },
+    "ID_GOLDEN_FEAT_NEGATED": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Wizard, not Elf",
+      "ir": {
+        "kind": "all",
+        "text": "Wizard, not Elf",
+        "children": [
+          {
+            "kind": "element",
+            "text": "Wizard",
+            "definitionIds": [
+              "ID_GOLDEN_CLASS_WIZARD"
+            ],
+            "negated": false
+          },
+          {
+            "kind": "unverified",
+            "text": "not Elf"
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_NESTED": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Fighter or Wizard, trained in Athletics or Dex 15; 11th level",
+      "ir": {
+        "kind": "all",
+        "text": "Fighter or Wizard, trained in Athletics or Dex 15; 11th level",
+        "children": [
+          {
+            "kind": "all",
+            "text": "Fighter or Wizard, trained in Athletics or Dex 15",
+            "children": [
+              {
+                "kind": "any",
+                "text": "Fighter or Wizard",
+                "children": [
+                  {
+                    "kind": "element",
+                    "text": "Fighter",
+                    "definitionIds": [
+                      "ID_GOLDEN_CLASS_FIGHTER"
+                    ],
+                    "negated": false
+                  },
+                  {
+                    "kind": "element",
+                    "text": "Wizard",
+                    "definitionIds": [
+                      "ID_GOLDEN_CLASS_WIZARD"
+                    ],
+                    "negated": false
+                  }
+                ]
+              },
+              {
+                "kind": "any",
+                "text": "trained in Athletics or Dex 15",
+                "children": [
+                  {
+                    "kind": "training",
+                    "text": "trained in Athletics",
+                    "value": "Athletics"
+                  },
+                  {
+                    "kind": "ability",
+                    "text": "Dex 15",
+                    "ability": "Dexterity",
+                    "minimum": 15
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "level",
+            "text": "11th level",
+            "minimum": 11
+          }
+        ]
+      }
+    },
+    "ID_GOLDEN_FEAT_HYBRID": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Hybrid fighter",
+      "ir": {
+        "kind": "unverified",
+        "text": "Hybrid fighter"
+      }
+    },
+    "ID_GOLDEN_FEAT_UNKNOWN": {
+      "version": 1,
+      "definitions": "34:3879c0a78bfa2f73",
+      "text": "Member of the Order of the Golden Fixture",
+      "ir": {
+        "kind": "unverified",
+        "text": "Member of the Order of the Golden Fixture"
+      }
+    }
+  }
+}

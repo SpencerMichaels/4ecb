@@ -1,0 +1,859 @@
+{
+  "version": 2,
+  "fixture": "b4e3f72520c5e827556c9e3be85e61cdb9c0e7eccaebe4d2d90405388956e4e7",
+  "output": {
+    "ID_GOLDEN_POWER_PENALTY": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          4,
+          "attack",
+          1
+        ],
+        [
+          5,
+          "hit",
+          1
+        ]
+      ],
+      "fieldBonuses": {
+        "weapon": [
+          {
+            "entry": 0,
+            "label": " for using an axe, a hammer, or a mace",
+            "groups": "axe,hammer,mace",
+            "ability": "Constitution"
+          }
+        ]
+      },
+      "texts": {
+        "1[W] + Strength modifier damage.\nLevel 21: 2[W] + Strength modifier damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 1
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "beast": {
+                          "ownAbilities": [
+                            "Strength"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 21,
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "beast": {
+                          "ownAbilities": [
+                            "Strength"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Strength –2 vs. AC": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "AC"
+            ],
+            "other": {
+              "line": {
+                "defense": "AC",
+                "abilities": [
+                  "Strength"
+                ],
+                "bonus": {
+                  "base": -2
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_HIGHEST": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          4,
+          "attack",
+          1
+        ],
+        [
+          5,
+          "hit",
+          1
+        ]
+      ],
+      "texts": {
+        "3d10 + your highest ability modifier psychic damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "3d10",
+                        "abilityPhrase": "highest",
+                        "damageType": "psychic",
+                        "beast": {
+                          "fixedDice": "3d10"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Highest ability modifier + 2 vs. Will": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Will"
+            ],
+            "other": {
+              "line": {
+                "defense": "Will",
+                "special": "highest",
+                "bonus": {
+                  "base": 2
+                }
+              }
+            }
+          }
+        },
+        "You or one ally within 5 squares can spend a healing surge and regain additional hit points equal to your Wisdom modifier.": {
+          "recoveries": [
+            {
+              "kind": "healing-surge",
+              "expression": "You or one ally within 5 squares can spend a healing surge and regain additional hit points equal to your Wisdom modifier."
+            }
+          ]
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_TWO_WEAPON": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          5,
+          "attack",
+          1
+        ],
+        [
+          6,
+          "hit",
+          1
+        ],
+        [
+          7,
+          "attack",
+          2
+        ],
+        [
+          8,
+          "hit",
+          2
+        ]
+      ],
+      "fieldBonuses": {
+        "weapon": [
+          {
+            "entry": 12,
+            "label": " for using two melee weapons",
+            "ability": "Dexterity",
+            "needsOffhand": true
+          }
+        ]
+      },
+      "texts": {
+        "2[W] (off-hand) + Strength modifier damage. Until the end of your next turn, you also gain combat advantage and concealment against the target.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "offHand": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2,
+                            "offhand": true
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "beast": {
+                          "ownAbilities": [
+                            "Strength"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "2[W] + 1[W] (off-hand weapon) + twice your Strength modifier + 4 fire damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "offHand": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2
+                          },
+                          {
+                            "count": 1,
+                            "offhand": true
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "twice": [
+                          "Strength"
+                        ],
+                        "powerDamageBonus": 4,
+                        "damageType": "fire",
+                        "beast": {
+                          "ownAbilities": [
+                            "Strength"
+                          ],
+                          "flatBonus": 4
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Strength vs. AC (main weapon)": {
+          "attack": {
+            "isAttack": true,
+            "mainWeapon": true,
+            "defenses": [
+              "AC"
+            ],
+            "other": {
+              "line": {
+                "defense": "AC",
+                "abilities": [
+                  "Strength"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        },
+        "Strength vs. Reflex (off-hand weapon)": {
+          "attack": {
+            "isAttack": true,
+            "offHand": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Strength"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_MELEE_RANGED": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          4,
+          "attack",
+          1
+        ],
+        [
+          5,
+          "hit",
+          1
+        ]
+      ],
+      "fieldBonuses": {
+        "riders": [
+          {
+            "field": "Brutal Scoundrel",
+            "ability": "Strength"
+          }
+        ]
+      },
+      "texts": {
+        "1[W] + 1d8 + Strength modifier damage (melee) or 1[W] + 1d8 + Dexterity modifier damage (ranged).\nIncrease damage to 2[W] + 1d8 + Strength modifier damage (melee) or 2[W] + 1d8 + Dexterity modifier damage (ranged) at 21st level.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 1
+                          }
+                        ],
+                        "fixedDice": "1d8",
+                        "weaponAddedDice": [
+                          "1d8"
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Strength"
+                          ]
+                        }
+                      },
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 1
+                          }
+                        ],
+                        "fixedDice": "1d8",
+                        "weaponAddedDice": [
+                          "1d8"
+                        ],
+                        "modifierAbilities": [
+                          "Dexterity"
+                        ],
+                        "listedAbilities": [
+                          "Dexterity"
+                        ],
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Dexterity"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 21,
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2
+                          }
+                        ],
+                        "fixedDice": "1d8",
+                        "weaponAddedDice": [
+                          "1d8"
+                        ],
+                        "modifierAbilities": [
+                          "Strength"
+                        ],
+                        "listedAbilities": [
+                          "Strength"
+                        ],
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Strength"
+                          ]
+                        }
+                      },
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2
+                          }
+                        ],
+                        "fixedDice": "1d8",
+                        "weaponAddedDice": [
+                          "1d8"
+                        ],
+                        "modifierAbilities": [
+                          "Dexterity"
+                        ],
+                        "listedAbilities": [
+                          "Dexterity"
+                        ],
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Dexterity"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Strength vs. AC (melee) or Dexterity vs. AC (ranged)": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "AC"
+            ],
+            "raw": {
+              "defense": "AC",
+              "abilities": [
+                "Strength",
+                "Dexterity"
+              ],
+              "bonus": {}
+            },
+            "other": {
+              "alternatives": [
+                {
+                  "defense": "AC",
+                  "abilities": [
+                    "Strength"
+                  ],
+                  "bonus": {}
+                },
+                {
+                  "defense": "AC",
+                  "abilities": [
+                    "Dexterity"
+                  ],
+                  "bonus": {}
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_IMPLEMENT": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          4,
+          "attack",
+          1
+        ],
+        [
+          5,
+          "hit",
+          1
+        ]
+      ],
+      "texts": {
+        "1d8 + Wisdom modifier radiant damage. Increase damage to 2d8 + Wisdom modifier at 11th level and 3d8 + Wisdom modifier at 21st level.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "1d8",
+                        "modifierAbilities": [
+                          "Wisdom"
+                        ],
+                        "listedAbilities": [
+                          "Wisdom"
+                        ],
+                        "damageType": "radiant",
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "ownAbilities": [
+                            "Wisdom"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 11,
+                "line": {
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "2d8",
+                        "modifierAbilities": [
+                          "Wisdom"
+                        ],
+                        "listedAbilities": [
+                          "Wisdom"
+                        ],
+                        "beast": {
+                          "fixedDice": "2d8",
+                          "ownAbilities": [
+                            "Wisdom"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 21,
+                "line": {
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "3d8",
+                        "modifierAbilities": [
+                          "Wisdom"
+                        ],
+                        "listedAbilities": [
+                          "Wisdom"
+                        ],
+                        "beast": {
+                          "fixedDice": "3d8",
+                          "ownAbilities": [
+                            "Wisdom"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Wisdom +4 vs. Reflex\nIncrease to +6 bonus at 11th level and +8 bonus at 21st level.": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Wisdom"
+                ],
+                "bonus": {
+                  "base": 4,
+                  "tier": {
+                    "paragon": 6,
+                    "epic": 8
+                  },
+                  "steps": [
+                    {
+                      "level": 11,
+                      "bonus": 6
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_BEAST": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          4,
+          "attack",
+          1
+        ],
+        [
+          5,
+          "hit",
+          1
+        ]
+      ],
+      "fieldBonuses": {
+        "weapon": [
+          {
+            "beast": true
+          }
+        ]
+      },
+      "texts": {
+        "1d8 + beast's Wisdom modifier psychic damage, and the target is immobilized (save ends).": {
+          "hit": {
+            "companionAbility": true,
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "companionAbility": true,
+                  "beastHit": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "beastHit": true,
+                        "fixedDice": "1d8",
+                        "damageType": "psychic",
+                        "beast": {
+                          "fixedDice": "1d8",
+                          "beastAbilities": [
+                            "Wisdom"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Beast's attack bonus + 2 vs. AC": {
+          "attack": {
+            "isAttack": true,
+            "beast": true,
+            "defenses": [
+              "AC"
+            ],
+            "other": {
+              "line": {
+                "defense": "AC",
+                "beastBonus": 2,
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "ID_GOLDEN_POWER_SUMMON": {
+      "version": 2,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          5,
+          "attack",
+          1
+        ],
+        [
+          6,
+          "hit",
+          1
+        ]
+      ],
+      "summonedCreature": true,
+      "texts": {
+        "2d8 + Intelligence modifier fire damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "fixedDice": "2d8",
+                        "modifierAbilities": [
+                          "Intelligence"
+                        ],
+                        "listedAbilities": [
+                          "Intelligence"
+                        ],
+                        "damageType": "fire",
+                        "beast": {
+                          "fixedDice": "2d8",
+                          "ownAbilities": [
+                            "Intelligence"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Intelligence vs. Reflex": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Intelligence"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        },
+        "You summon a Medium ember spirit in an unoccupied square within range. The summoned creature has speed 6.": {
+          "recoveries": []
+        }
+      }
+    },
+    "ID_GOLDEN_FEAT_MODIFY": {
+      "version": 2,
+      "texts": {
+        "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 1
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Constitution"
+                        ],
+                        "listedAbilities": [
+                          "Constitution"
+                        ],
+                        "beast": {
+                          "ownAbilities": [
+                            "Constitution"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Constitution vs. AC": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "AC"
+            ],
+            "other": {
+              "line": {
+                "defense": "AC",
+                "abilities": [
+                  "Constitution"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

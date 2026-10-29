@@ -216,7 +216,11 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   `_Prerequisite IR` (prerequisite trees, content-domain
   `prerequisite-ir.ts`, stored by `content-tool build` against the whole
   pack and used only for that same record set); bump the field's version
-  when its parse changes.
+  when its parse changes. `apps/content-tool/src/stored-ir-golden.test.ts`
+  enforces it: it snapshots each kind's output for a synthetic fixture with
+  its version, fails when output changes under an unchanged version, and
+  after a bump the golden is regenerated with
+  `UPDATE_STORED_IR_GOLDEN=1 pnpm vitest run apps/content-tool/src/stored-ir-golden.test.ts`.
 - **Rules engine** (`rules-engine`) implements the recovered rule language as
   explicit phases (resolve profile -> level/history context -> grants/removals
   -> choices -> prerequisites/legality -> stat/text/power statements ->

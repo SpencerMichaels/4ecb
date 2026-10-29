@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Synthetic input for stored-ir-golden.test.ts: the text the pack build parses
+  into _Power Text IR, _Associate Stat Block and _Prerequisite IR, written in
+  the spellings real records use. Changing this file means regenerating the
+  goldens (see the test); it never needs a version bump by itself.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_GOLDEN_RACE_DWARF" name="Dwarf" type="Race" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_RACE_ELF" name="Elf" type="Race" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_CLASS_FIGHTER" name="Fighter" type="Class" source="Synthetic">
+    <specific name="Power Source">Martial.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_CLASS_WIZARD" name="Wizard" type="Class" source="Synthetic">
+    <specific name="Power Source">Arcane.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_CLASS_FEATURE_TWO_BLADE" name="Two-Blade Fighting Style" type="Class Feature" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_SKILL_ATHLETICS" name="Athletics" type="Skill Training" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_PROFICIENCY_LONGSWORD" name="Weapon Proficiency (Longsword)" type="Proficiency" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_DEITY_PELOR" name="Pelor" type="Deity" source="Synthetic" />
+  <RulesElement internal-id="ID_GOLDEN_FEAT_TOUGHNESS" name="Toughness" type="Feat" source="Synthetic" />
+
+  <RulesElement internal-id="ID_GOLDEN_FEAT_ABILITIES" name="Golden Abilities" type="Feat" source="Synthetic">
+    <Prereqs>Str 13, Dex 13</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_RACE_OR" name="Golden Race Or" type="Feat" source="Synthetic">
+    <Prereqs>Dwarf or Elf; Con 15</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_CLASS_FEATURE" name="Golden Class Feature" type="Feat" source="Synthetic">
+    <Prereqs>Fighter, Two-Blade Fighting Style class feature</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_TRAINING" name="Golden Training" type="Feat" source="Synthetic">
+    <Prereqs>Trained in Athletics</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_TIER" name="Golden Tier" type="Feat" source="Synthetic">
+    <Prereqs>Paragon Tier, Toughness</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_LEVEL" name="Golden Level" type="Feat" source="Synthetic">
+    <Prereqs>11th level, Wis 15</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_HEROIC" name="Golden Heroic" type="Feat" source="Synthetic">
+    <Prereqs>Heroic tier</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_WORSHIP" name="Golden Worship" type="Feat" source="Synthetic">
+    <Prereqs>Must worship Pelor</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_DOMAIN" name="Golden Domain" type="Feat" source="Synthetic">
+    <Prereqs>Must worship a deity of the Sun domain</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROFICIENCY" name="Golden Proficiency" type="Feat" source="Synthetic">
+    <Prereqs>Proficiency with longsword</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_SOURCE" name="Golden Source" type="Feat" source="Synthetic">
+    <Prereqs>Arcane class</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NEGATED" name="Golden Negated" type="Feat" source="Synthetic">
+    <Prereqs>Wizard, not Elf</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NESTED" name="Golden Nested" type="Feat" source="Synthetic">
+    <Prereqs>Fighter or Wizard, trained in Athletics or Dex 15; 11th level</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_HYBRID" name="Golden Hybrid" type="Feat" source="Synthetic">
+    <Prereqs>Hybrid fighter</Prereqs>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_UNKNOWN" name="Golden Unknown" type="Feat" source="Synthetic">
+    <Prereqs>Member of the Order of the Golden Fixture</Prereqs>
+  </RulesElement>
+
+  <RulesElement internal-id="ID_GOLDEN_POWER_PENALTY" name="Golden Reckless Strike" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+    <specific name="Keywords">Martial, Weapon</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee weapon</specific>
+    <specific name="Attack">Strength –2 vs. AC </specific>
+    <specific name="Hit">1[W] + Strength modifier damage.
+Level 21: 2[W] + Strength modifier damage.</specific>
+    <specific name="Weapon">If you're wielding an axe, a hammer, or a mace, you gain a bonus to the damage roll equal to your Constitution modifier.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_HIGHEST" name="Golden Mind Lash" type="Power" source="Synthetic">
+    <specific name="Power Usage">Encounter</specific>
+    <specific name="Keywords">Psionic, Implement, Psychic</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Ranged 10</specific>
+    <specific name="Attack">Highest ability modifier + 2 vs. Will</specific>
+    <specific name="Hit">3d10 + your highest ability modifier psychic damage.</specific>
+    <specific name="Effect">You or one ally within 5 squares can spend a healing surge and regain additional hit points equal to your Wisdom modifier.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_TWO_WEAPON" name="Golden Twin Fang" type="Power" source="Synthetic">
+    <specific name="Power Usage">Daily</specific>
+    <specific name="Keywords">Martial, Weapon</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee weapon</specific>
+    <specific name="Requirement">You must be wielding two melee weapons.</specific>
+    <specific name="Attack">Strength vs. AC (main weapon) </specific>
+    <specific name="Hit">2[W] + 1[W] (off-hand weapon) + twice your Strength modifier + 4 fire damage.</specific>
+    <specific name="Secondary Attack">Strength vs. Reflex (off-hand weapon)</specific>
+    <specific name="Hit">2[W] (off-hand) + Strength modifier damage. Until the end of your next turn, you also gain combat advantage and concealment against the target.</specific>
+    <specific name="Weapon">If you're wielding two melee weapons, the attack deals extra damage equal to your Dexterity modifier.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_MELEE_RANGED" name="Golden Hunter's Choice" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+    <specific name="Keywords">Martial, Weapon</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee or Ranged weapon</specific>
+    <specific name="Attack">Strength vs. AC (melee) or Dexterity vs. AC (ranged)</specific>
+    <specific name="Hit">1[W] + 1d8 + Strength modifier damage (melee) or 1[W] + 1d8 + Dexterity modifier damage (ranged).
+Increase damage to 2[W] + 1d8 + Strength modifier damage (melee) or 2[W] + 1d8 + Dexterity modifier damage (ranged) at 21st level.</specific>
+    <specific name="Brutal Scoundrel">The attack deals extra damage equal to your Strength modifier.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_IMPLEMENT" name="Golden Searing Light" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+    <specific name="Keywords">Divine, Implement, Radiant</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Ranged 5</specific>
+    <specific name="Attack">Wisdom +4 vs. Reflex
+Increase to +6 bonus at 11th level and +8 bonus at 21st level.</specific>
+    <specific name="Hit">1d8 + Wisdom modifier radiant damage. Increase damage to 2d8 + Wisdom modifier at 11th level and 3d8 + Wisdom modifier at 21st level.</specific>
+    <specific name="Miss">Half damage.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_BEAST" name="Golden Pack Strike" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+    <specific name="Keywords">Beast, Martial</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee 1</specific>
+    <specific name="Attack">Beast's attack bonus + 2 vs. AC</specific>
+    <specific name="Hit">1d8 + beast's Wisdom modifier psychic damage, and the target is immobilized (save ends).</specific>
+    <specific name="Beast">If your companion is a cat, a spider, or a wolf, the attack deals extra damage equal to your Wisdom modifier.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_SUMMON" name="Golden Summon Ember" type="Power" source="Synthetic">
+    <specific name="Power Usage">Daily</specific>
+    <specific name="Keywords">Arcane, Fire, Implement, Summoning</specific>
+    <specific name="Action Type">Minor Action</specific>
+    <specific name="Attack Type">Ranged 5</specific>
+    <specific name="Effect">You summon a Medium ember spirit in an unoccupied square within range. The summoned creature has speed 6.</specific>
+    <specific name="Attack">Intelligence vs. Reflex</specific>
+    <specific name="Hit">2d8 + Intelligence modifier fire damage.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_MODIFY" name="Golden Melee Training" type="Feat" source="Synthetic">
+    <rules>
+      <modify name="Melee Basic Attack" type="Power" Field="Attack" value="Constitution vs. AC" />
+      <modify name="Melee Basic Attack" type="Power" Field="Hit" value="1[W] + Constitution modifier damage.
+Level 21: 2[W] + Constitution modifier damage." />
+    </rules>
+  </RulesElement>
+
+  <RulesElement internal-id="ID_GOLDEN_ASSOCIATE_BEAST" name="Golden Moss Hound" type="Associate" source="Synthetic">
+    <specific name="_Associated Power"> ID_GOLDEN_POWER_BEAST </specific>
+TRAINED MOSS HOUND		Fey Beast Companion
+Medium fey beast
+HP your bloodied value				Initiative equal to yours
+Defenses (Add your level to each defense)
+AC 14, Fortitude 12, Reflex 13, Will 11		Perception equal to yours +2
+Speed  6 , climb 4 		low-light vision
+TRAITS
+Mossy Pack (zone)  Aura 1
+Allies in the aura gain a +1 power bonus to Stealth checks.
+STANDARD
+Mossy Bite (poison)  At-Will
+Attack: Melee 1 (one creature); your level + 5 vs. AC
+Hit: 1d8 + one-half your level damage, and the target is slowed until the end of your next turn.
+	Level 21: 2d8 + one-half your level damage.
+Str 14 * Dex 18 * Wis 12
+Con 16 * Int 2 * Cha 6
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ASSOCIATE_SUMMON" name="Golden Ember Spirit" type="Associate" source="Synthetic">
+    <specific name="_Associated Power"> ID_GOLDEN_POWER_SUMMON </specific>
+EMBER SPIRIT		Summoned Creature
+Large elemental magical beast (fire)
+
+HP your bloodied value; Healing Surges none, but you can expend a healing surge for the spirit if an effect allows it to spend one
+Defenses your defenses + 2, not including any temporary bonuses or penalties; Vulnerable 5 cold
+Speed land 6 , fly 4 (hover; altitude limit 1)
+
+TRAITS
+O Smoldering Aura 2
+The aura is lightly obscured.
+
+STANDARD
+M Standard Action (fire)  F At-Will
+Attack: Melee 2 (one creature); your level + 7 vs. Reflex
+Hit: 2d8 + your Wisdom modifier fire damage, and ongoing 5 fire damage (save ends).
+
+MINOR
+Minor Action F At-Will (1/round)
+Effect: The spirit either walks, shifts, runs, stands up, squeezes, or crawls.
+  </RulesElement>
+</D20Rules>
