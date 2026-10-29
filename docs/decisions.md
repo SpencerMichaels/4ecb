@@ -3312,6 +3312,37 @@ Kept modern, where native contradicts the text or nullifies the feature:
   every feature of the replaced theme. Inferred from the save, not traced
   in native code.
 
+- **Power text native reads that contradict the power** (added 2026-10-29
+  with queue item 12, the unconsumed power-text sweep, `POWER_TEXT_VERSION`
+  4, cache v97; owner-confirmed 2026-10-29). Native CalcDamage's "+" chain,
+  LevelIncrease's "Level N:" texts anywhere, theme "Level N" header fields
+  and CalcStatVsDefense's sign after any stat word are now followed
+  (`docs/rules-engine.md`, audit doc rows), except where the power text
+  disagrees:
+  - a hit with no "damage" word, or with a sentence before its first
+    "damage", still deals its dice (native deals none);
+  - a later line starting (after indentation) "Level 13/17/23/26/27:" steps
+    there (native reads only 5/11/15/21/25); a level step's text is cut at
+    its first "damage" (native's uncut "Level 21:" text adds Magic Weapon's
+    "+2 power bonus to attack rolls" to damage); Goring Charge at 21st level
+    is unchanged;
+  - "3[W] + Strength (melee) or Dexterity (ranged) modifier damage" (Wolf
+    Howl Strike, Deadly Nightshade, Blood for Blood, Bloodfury Rampage,
+    Rattle the Senses): the ranged row deals the weapon dice + Dexterity;
+    native reads "Dexterity (ranged) modifier" alone;
+  - a theme power's "Level N" header Hit "As above, but …" (Cruel Decree,
+    Wildfire Bolt, Mind Clash, Unnerving Suggestion) keeps the main Hit's
+    damage; native parses the changed rider ("+4 power bonus to damage
+    rolls") as the damage expression;
+  - a "+N bonus to …"/"penalty to …" of prose before the first "damage" is
+    not a damage term (native's chain would add it);
+  - a "(melee) or (ranged)" hit's ranged clause is the part naming
+    "(ranged", not the text after its last " or ";
+  - "1d4 squares" (Winds of Woe, Call of the Plague) is a push/pull
+    distance, not damage.
+    Knockdown Assault's by-name ability-only damage is gone: its "Strength
+    modifier damage" is the generic flat Strength damage (parity identical).
+
 Consequence: no sample character owns a changed power or feature, so parity
 is unchanged. Code comments that cite these departures cite D105; D093
 (power requirements) and D095 (summoned creatures) stay as decided.

@@ -1632,7 +1632,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     // --- D20RulesEngine: power math -------------------------------------
     "?A0x7555d940.SpecialCase": code(
       "Fixed outputs: Bond of Censure dice by name, and exact hit lines (ongoing 10 family, Strength-only damage, damage-taken, rage strike, 3d10 + Constitution + half level, a 4[W] rewrite, 15 force).",
-      "content-domain power-text.ts specialHit (matched at pack build) and powers.ts nativeSpecialDamage port every line: Bond of Censure, the ongoing 10 lines, rage strike, the Strength-only prefix (no current record; Knockdown Assault is keyed by name), Deathly Retort's 'The damage you took', Warlock's Bargain's 3d10 + Constitution + half level (a damage roll, so enhancement and roll bonuses apply), Final Reproach's flat 15 (not a damage roll). Summons to Doom's 4[W] rewrite matches what CalcDamage already parses from its first 'damage'",
+      "content-domain power-text.ts specialHit (matched at pack build) and powers.ts nativeSpecialDamage port every line: Bond of Censure, the ongoing 10 lines, rage strike, the Strength-only prefix (no current record; Knockdown Assault's 'Strength modifier damage' is the generic flat Strength damage), Deathly Retort's 'The damage you took', Warlock's Bargain's 3d10 + Constitution + half level (a damage roll, so enhancement and roll bonuses apply), Final Reproach's flat 15 (not a damage roll). Summons to Doom's 4[W] rewrite matches what CalcDamage already parses from its first 'damage'",
       test(
         POWERS,
         "projects recovered fixed-output native power special cases",
@@ -1987,7 +1987,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.HigherLevelDamage": partial(
       "Higher-level damage lines; Chilling Cloud by name at 21; one exact Constitution line; a riposte damage line trimmed.",
-      "content-domain power-text.ts hitLineAtLevel/parseHitField (pack build; powers.ts hitLineAtLevel reads the step): 'Level N:' lines (native LevelIncrease) before the increase sentence (increaseClauses); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage), keeping its cold type (D105; native's rewrite drops it); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
+      "content-domain power-text.ts hitLineAtLevel/parseHitField (pack build; powers.ts hitLineAtLevel reads the step): 'Level 5/11/15/21/25:' texts anywhere in the hit, indented or mid-line (native LevelIncrease; levelLines), and D105 line-start 'Level 13/17/23/26/27:' lines, before the increase sentence (increaseClauses); a step's text replaces the whole expression, so one without 'damage' is all expression (Monstrous Savagery at 29); Chilling Cloud by name (EXCEPTION_NAMES.chillingCloud) deals twice its Intelligence modifier from 21st level (calculateDamage), keeping its cold type (D105; native's rewrite drops it); the exact Constitution and riposte lines match no current record, and the separate 'Level 21'/'Level 11' fields are not read (no current damage record uses them)",
       test(
         POWERS,
         "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",
@@ -1999,7 +1999,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     FindLine: code(
       "Theme power level lines ('Level N' specifics) and 'As above, but ' stripping.",
-      "content-domain power-text.ts parseHitField / powers.ts hitLineAtLevel",
+      "content-domain power-text.ts powerAttackSlots (a 'Level N' header's fields read from level N, slot fromLevel) and levelHeaderText ('As above, but ' stripped) / powers.ts authoredAttacks; D105: a header's 'As above, but' Hit keeps the main Hit's damage",
       test(POWERS, "handles primary attacks and prose level scaling"),
     ),
     "?A0x7555d940.CalcDamage": code(

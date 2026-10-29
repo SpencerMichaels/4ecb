@@ -543,9 +543,10 @@ level-5 power through a complete, legal native workflow with no diagnostics;
 the generated character remains ignored and is not a public golden.
 
 Ordinary named parsing also preserves Howling Strike's level-scaled extra die
-beside its weapon dice, treats Knockdown Assault as ability-only damage without
-weapon/enhancement damage additions, and records Call of the Beast's psychic
-damage as a next-turn conditional expression rather than an immediate hit.
+beside its weapon dice, reads Knockdown Assault's "Strength modifier damage" as
+generic flat Strength damage (a dice-less expression, not a damage roll, so no
+weapon or enhancement damage; no by-name case), and records Call of the
+Beast's psychic damage as a next-turn conditional expression rather than an immediate hit.
 Exact synthetic fixtures pin all three forms. Unknown prose still takes the
 explicit unsupported path.
 
