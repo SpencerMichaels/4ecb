@@ -151,8 +151,6 @@ const drift = (
   ...evidence: string[]
 ): LegacySpecialCase => withEvidence("drift-risk", description, note, evidence);
 
-const PREREQ_UNVERIFIED =
-  "modern prerequisites.ts has no equivalent; the clause evaluates as unverified (shown, not blocking)";
 const AUTO_BUILD = "the modern builder has no auto-build/suggestion engine";
 const LEGACY_IO =
   "legacy file I/O; the modern .dnd4e import/export lives in legacy-dnd4e";
@@ -194,13 +192,27 @@ const CARD_PARTS = "packages/sheet-model/src/legacy-card-parts.test.ts";
 const POWER_CARD = "apps/web/src/PowerCard.test.tsx";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
+const HYBRID_POWERS = "packages/rules-engine/src/hybrid-powers.test.ts";
+const CLASS_CATEGORIES = "packages/rules-engine/src/class-categories.test.ts";
 
 export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
   {
     // --- D20RulesEngine: rules, categories and classes -------------------
-    "CategoryOpt.Build": partial(
+    "CategoryOpt.Build": code(
       "Builds the dynamic $$ category sets: class and _ParentClass, hybrid _BaseClass, CountsAsClass, Diverse Study (ID_FMP_FEAT_651 -> ID_FMP_PSEUDO_CLASS_216), Seeker, Versatile Master and Paragon Multiclassing records by ID, and the 'PowersAsClass' text string's class.",
-      "rules-engine exceptions.ts EXCEPTION_IDS + evaluator category expansion. Missing: the 'PowersAsClass' text string (42 records outside Level1Rules, e.g. the Knowledge of Ancient Lives features) never adds its class to the power categories",
+      "rules-engine exceptions.ts EXCEPTION_IDS + evaluator category expansion. PowersAsClass (Level1Rules' Any Class, 42 other records: Knowledge of Ancient Lives, Witch, the level 5 Order Adept feature): evaluator powersAsClassCategoryValues joins each applicable textstring's class to $$CLASS/$$NOT_CLASS for Power candidates only, from the level its provider adds it (native builds the categories per choice level). D109: every value counts, where native keeps only the last (which would end the skill and Any Class powers)",
+      test(
+        CLASS_CATEGORIES,
+        "lets a power of the named class fill a $$CLASS slot",
+      ),
+      test(
+        CLASS_CATEGORIES,
+        "counts from the level that adds it, as native builds categories per choice level",
+      ),
+      fixture(
+        "sample-chars/DV.dnd4e",
+        "the level 5 Order Adept feature offers Wizard utility powers in the level-6 utility slot, not the level-2 one",
+      ),
       test(EXCEPTIONS, "covers Diverse Study"),
       test(EXCEPTIONS, "covers Seeker and Versatile Master class powers"),
       test(
@@ -237,9 +249,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "requires a deity from either recovered class metadata field",
       ),
     ),
-    "RulesElement.IsPsionicClass": notHandled(
-      "A class is psionic when _PARSED_CLASS_FEATURE names Psionic Augmentation (power points, augmentable at-wills).",
-      "no modern psionic/power-point model; augmentable powers are not calculated",
+    "RulesElement.IsPsionicClass": code(
+      "A class is psionic when it is a Class whose _PARSED_CLASS_FEATURE names Psionic Augmentation; DisallowClass then counts it as already holding an encounter attack power.",
+      "exceptions.ts isPsionicClass (hasPsionicAugmentation, shared with the prerequisite psionic-class readers), read by hybrid-powers.ts disallowedHybridClass",
+      test(
+        HYBRID_POWERS,
+        "counts a psionic class as already having an encounter power",
+      ),
     ),
     PsionicDaily: code(
       "Prerequisite 'at least one psionic daily attack power': owned daily psionic attack powers.",
@@ -267,21 +283,49 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
       "private: sample-chars/Beldin Hammertongue 11.dnd4e: Hybrid Power Points 6 (full Ardent) matches the cached stat",
     ),
-    "?A0xca3c2cf6.CheckHybridPower": notHandled(
-      "Hybrid characters: a power of one hybrid class is offered only when the other class already has a power of the same Power Type and Power Usage at that level (alternating hybrid power picks).",
-      "modern power choices do not constrain hybrid characters by the other class's picks",
+    "?A0xca3c2cf6.CheckHybridPower": code(
+      "Hybrid characters (two hybrid classes, three class entries): a replacement that is neither a retraining nor a power swap (multiclass swap, power-replace, plain replace) may give up a hybrid class's power only while another held power of that class has the same Power Type and Power Usage at the replacement's level.",
+      "hybrid-powers.ts hybridPowerReplaceable: the evaluator drops such replacement options (power-replace included) after the rule pass, reading fields through modify overlays; a slot's current target stays listed",
+      test(
+        HYBRID_POWERS,
+        "keeps a power-replace from taking a hybrid class's only power of its kind",
+      ),
+      test(
+        HYBRID_POWERS,
+        "checks class, Power Type and Power Usage of the other powers",
+      ),
     ),
-    DisallowClass: notHandled(
-      "Hybrid power choice slots: once one class has the level's power (by Power Usage/Power Type; psionic classes count for encounter slots), the slot is limited to the other class.",
-      "modern hybrid power choices offer both classes for every slot",
+    DisallowClass: code(
+      "Hybrid power slots (selects named 'Power At-Will/Encounter/Utility/Daily N', 'Hybrid Encounter N', 'Hybrid At-Will/Encounter N', or a replacement of a power one chose, at the replacement's level): when exactly one hybrid class holds a power of the slot's Power Usage and Power Type at that level (psionic classes count for encounter slots), candidates matching only through the other class are illegal ('Must choose power from second hybrid class.').",
+      "hybrid-powers.ts hybridPowerSlot / disallowedHybridClass; evaluator withHybridSlotLimit, after the rule pass so Class, Power Type and Power Usage read through modify overlays, rechecks each candidate's category without that hybrid class (reason 'hybrid-class', a choice.ineligible error when picked, also for a retraining's gain). Spellbook-select picks are skipped (native IsSpellbook; its other half, a '_Prepared' field starting with 0, is runtime preparation state no content sets)",
+      test(
+        HYBRID_POWERS,
+        "limits the second at-will slot to the class the first lacks",
+      ),
+      test(
+        HYBRID_POWERS,
+        "makes a level-3 encounter power of the class that has one illegal",
+      ),
+      test(
+        HYBRID_POWERS,
+        "applies the slot of the retrained power at the retraining's level",
+      ),
+      fixture(
+        "sample-chars/DV.dnd4e",
+        "Swordmage/Warlock picks stay legal; the second level-1 at-will slot offers only Swordmage at-wills",
+      ),
     ),
     "D20Choice.CheckReplaceElem": partial(
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (Display 'attack' at-wills), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; the multiclass Display 'attack' and hybrid CheckHybridPower limits are not reproduced",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); the multiclass Display 'attack' limit is not reproduced",
       test(CONFORMANCE, "reads a bare level as that level or lower"),
       test(
         CONFORMANCE,
         "applies the swap: the lost power is gone and the named power is held",
+      ),
+      test(
+        HYBRID_POWERS,
+        "keeps a power-replace from taking a hybrid class's only power of its kind",
       ),
     ),
     "?A0x7555d940.FromDilettante": code(
@@ -292,17 +336,37 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "applies dilettante and multiclass overrides by where the power came from",
       ),
     ),
-    FindDilettante: notHandled(
-      "Prerequisite clauses about the Dilettante power's kind look up the Dilettante racial trait's chosen power by ID.",
-      `${PREREQ_UNVERIFIED}; needs choice provenance in the prerequisite context (3 records)`,
+    FindDilettante: code(
+      "The first owned element whose parent is the Dilettante racial trait (ID_FMP_RACIAL_TRAIT_643): read by MeleeDilettante, ImplementDilettante, CountsAsClassDilettante ('CountsAsClass(Dilettante)', Adept Dilettante's prerequisite) and FindGrantElement (Adept Dilettante's grant of the CountsAsClass '[Dilettante]').",
+      "exceptions.ts dilettanteChoice: the evaluator puts its power in the prerequisite context (PrerequisiteContext.dilettantePower, dropped with a retrain's set-aside definitions) and resolves the '[Dilettante]' CountsAsClass grant to the CountsAsClass named after the power's class (nothing, and no missing-grant error, before one is chosen)",
+      test(
+        PREREQUISITES,
+        "reads CountsAsClass(Dilettante) as owning the power's class's CountsAsClass",
+      ),
+      test(
+        CLASS_CATEGORIES,
+        "grants the CountsAsClass of the Dilettante power's class",
+      ),
+      test(
+        CLASS_CATEGORIES,
+        "reads a Dilettante prerequisite from the power chosen through the trait",
+      ),
     ),
-    MeleeDilettante: notHandled(
+    MeleeDilettante: code(
       "Prerequisite 'you must have chosen a melee attack power for your Dilettante racial trait': the Dilettante power is an attack (Power Type) with a melee Attack Type.",
-      `${PREREQ_UNVERIFIED} (FindDilettante)`,
+      "prerequisites.ts predicate dilettante-melee-attack (FindDilettante)",
+      test(
+        PREREQUISITES,
+        "reads the melee attack clause from the chosen power's Power Type and Attack Type",
+      ),
     ),
-    ImplementDilettante: notHandled(
+    ImplementDilettante: code(
       "Prerequisite 'you must have chosen an implement power for your Dilettante racial trait': the Dilettante power has the Implement keyword.",
-      `${PREREQ_UNVERIFIED} (FindDilettante)`,
+      "prerequisites.ts predicate dilettante-implement (FindDilettante)",
+      test(
+        PREREQUISITES,
+        "reads the implement clause from the chosen power's Keywords",
+      ),
     ),
     "?A0x7555d940.FromMulticlassing": code(
       "Multiclass-sourced powers (Dilettante, Paragon Multiclassing IDs, multiclass feats) get the 'multiclass' (and, from feats, 'multiclass feat') keyword and read 'multiclass:key ability'.",

@@ -78,7 +78,21 @@ Families recovered by the inventory beyond the sections below:
   categories across classes.
 - selected class, hybrid class, `CountsAsClass`, multiclass-derived class,
   paragon-multiclassing, and a `PowersAsClass` text override build separate dynamic
-  sets used by the `$$...` category prefixes.
+  sets used by the `$$...` category prefixes. `CategoryOpt::Build` runs per
+  choice, at the choice's level; `PowersAsClass` is the last applicable
+  textstring value (Level1Rules sets Any Class; Knowledge of Ancient Lives,
+  Witch and the level 5 Order Adept feature name another class) and only a
+  `Power` matches `$$CLASS`/`$$NOT_CLASS` through it. The builder keeps every
+  applicable value (D109).
+- hybrid power slots (`DisallowClass`, `CheckHybridPower`, 2026-10-28): a
+  select named `Power At-Will|Encounter|Utility|Daily N`, `Hybrid Encounter N`
+  or `Hybrid At-Will/Encounter N` (or a replacement of a power one chose)
+  clears one hybrid class from the class categories when only the other class
+  holds a power of that kind at that level (a psionic class, by
+  `IsPsionicClass`, always "has" an encounter power); "Must choose power from
+  second hybrid class." A multiclass swap or power-replace may not take a
+  hybrid class's only power of a Power Type and Usage. Both need exactly two
+  hybrid classes and three class entries.
 - `CategoryMatch::Matches` has an additional power-only theme branch: when the
   ordinary selected-class scan fails for `$$CLASS`, it tests the candidate
   `Power` against the character's selected theme. Theme powers identify that
@@ -304,9 +318,12 @@ granted by Student of the Plague, its Spellscarred class features and the
 Spellscarred Harbinger starting feature) and keep the original wording as
 an unverified alternative, so the audit still counts it. Also left
 unverified: Circle of Smoke (no representing option),
-`1 or more power points` (no power-point stat), the Dilettante predicates
-(need choice provenance), aliased clauses on granted class features without
-`print-prereqs`, and freeform prose the legacy parser also cannot read.
+`1 or more power points` (no power-point stat), aliased clauses on granted
+class features without `print-prereqs`, and freeform prose the legacy parser
+also cannot read. The Dilettante predicates (`MeleeDilettante`,
+`ImplementDilettante`, `CountsAsClassDilettante`) read the power chosen
+through the trait (`FindDilettante`, 2026-10-28), as does Adept Dilettante's
+`[Dilettante]` CountsAsClass grant (`FindGrantElement`).
 
 A choice's own pick is set aside (2026-10-21, recovered, not an exception).
 `D20Choice::UpdateArrays` calls `Preserve` before it checks the slot's

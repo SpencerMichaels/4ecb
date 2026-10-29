@@ -8,8 +8,10 @@ import {
 } from "./equipment";
 import {
   archeryMasteryPowerId,
+  dilettanteChoice,
   diverseStudyException,
   EXCEPTION_IDS,
+  EXCEPTION_NAMES,
   isLeveledRangerAtWillAttack,
   isCustomChoiceException,
   isUniversalSkill,
@@ -30,6 +32,7 @@ import {
   parseRules,
   splitPowerReplace,
   type ExecutableRule,
+  type GrantRule,
   type ModifyRule,
   type ReplaceRule,
   type SelectRule,
@@ -74,10 +77,17 @@ import {
   type LoadoutSlotContext,
 } from "./loadout-slots";
 import { nativePsionics } from "./psionics";
+import {
+  disallowedHybridClass,
+  hybridPowerReplaceable,
+  hybridPowerSlot,
+  nativeHybridClasses,
+  type NativeHybridClasses,
+} from "./hybrid-powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v92-2026-10-28-augment-parent-overlays";
+  "evaluated-character-v93-2026-10-28-hybrid-power-legality";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -538,7 +548,6 @@ function dynamicCategories(
   owned: readonly ContentEntity[],
   occurrences: readonly CharacterOccurrence[],
   index: RulesIndex,
-  text: Readonly<Record<string, string>>,
 ): Readonly<Record<string, ReadonlySet<string>>> {
   // The stock builder seeds $$CLASS with its synthetic "Any Class" entry.
   // Published racial utility powers use that category, then restrict the
@@ -599,10 +608,6 @@ function dynamicCategories(
         .filter(Boolean)
         .forEach((value) => target.add(key(value)));
   }
-  const powersAsClass = Object.entries(text).find(
-    ([name]) => key(name) === key(POWERS_AS_CLASS_TEXT),
-  )?.[1];
-  if (powersAsClass) classValues.add(key(powersAsClass));
   if (
     owned.some(
       (entity) => key(entity.id) === key(EXCEPTION_IDS.paragonMulticlassing),
@@ -617,6 +622,59 @@ function dynamicCategories(
     $$CLASS_OR_MULTICLASS: all,
     $$NOT_CLASS: classValues,
   };
+}
+
+/**
+ * Category values of the classes the `PowersAsClass` text string names
+ * (native CategoryOpt::Build, `-Module-.cs` ~30610: GetCharText, then the
+ * Class record), which CategoryMatch::Matches lets a Power match `$$CLASS`
+ * through. Level1Rules sets it to Any Class; Knowledge of Ancient Lives,
+ * Witch (Wizard) and the level 5 Order Adept feature name another class.
+ * Native keeps only the last value set, so any of those would end the Any
+ * Class (skill and racial) powers; the builder keeps every value set (D109:
+ * PHB3 p165 lets any character take a skill power in place of a class
+ * utility power, and each of those features adds a class, replacing none).
+ * Native builds the categories for each choice at the choice's level
+ * (D20Workspace::UpdateSelections), so a value counts from the level its
+ * provider (or the rule's Level) adds it. A text string saved on the
+ * character counts from level 1, as native's comes first.
+ */
+function powersAsClassCategoryValues(
+  occurrences: readonly CharacterOccurrence[],
+  index: RulesIndex,
+  input: EvaluationInput,
+  applies: (rule: ExecutableRule, occurrence: CharacterOccurrence) => boolean,
+): readonly { readonly level: number; readonly values: readonly string[] }[] {
+  const entries: { level: number; value: string }[] = Object.entries(
+    input.textStrings ?? {},
+  )
+    .filter(([name]) => key(name) === key(POWERS_AS_CLASS_TEXT))
+    .map(([, value]) => ({ level: 1, value }));
+  for (const occurrence of occurrences) {
+    const entity = index.get(occurrence.definitionId);
+    if (entity === undefined) continue;
+    for (const rule of parseRules(entity.id, entity.rules))
+      if (
+        rule.kind === "textstring" &&
+        rule.condition === undefined &&
+        key(rule.name) === key(POWERS_AS_CLASS_TEXT) &&
+        applies(rule, occurrence)
+      )
+        entries.push({
+          level: Math.max(occurrence.acquiredLevel, rule.source.level.minimum),
+          value: rule.value,
+        });
+  }
+  return entries.map(({ level, value }) => {
+    const classEntity = index.find(value.trim(), "Class");
+    return {
+      level,
+      values:
+        classEntity === undefined
+          ? [key(value)]
+          : [key(classEntity.id), key(classEntity.name)],
+    };
+  });
 }
 
 /**
@@ -1278,11 +1336,39 @@ function evaluateCharacterInternal(
         definitions,
         activeOccurrences,
         index,
-        input.textStrings ?? {},
       ),
       categoryAliases: index.categoryAliases,
       categoryValuesFor: (entity) => index.categoryValues(entity),
     };
+  };
+  /**
+   * A grant's target. Native FindGrantElement (`-Module-.cs` ~35482) reads
+   * a CountsAsClass grant named "[Dilettante]" (Adept Dilettante) as the
+   * CountsAsClass named after the class of the Dilettante power
+   * (FindDilettante), and grants nothing without one.
+   */
+  const grantTarget = (
+    rule: GrantRule,
+    activeOccurrences: readonly CharacterOccurrence[],
+  ): ContentEntity | null | undefined => {
+    if (
+      key(rule.name) !== key(EXCEPTION_NAMES.dilettanteGrant) ||
+      key(rule.type ?? "") !== "countsasclass"
+    )
+      return index.find(rule.name, rule.type);
+    const dilettante = dilettanteChoice(activeOccurrences);
+    const power =
+      dilettante === undefined ? undefined : index.get(dilettante.definitionId);
+    const classField = power === undefined ? undefined : field(power, "Class");
+    const powerClass =
+      classField === undefined
+        ? undefined
+        : index.find(classField.trim(), "Class");
+    return (
+      (powerClass === undefined
+        ? undefined
+        : index.find(powerClass.name, rule.type)) ?? null
+    );
   };
   const activeProviderRule = (
     occurrence: CharacterOccurrence,
@@ -1451,7 +1537,8 @@ function evaluateCharacterInternal(
         )
           continue;
         if (rule.kind === "grant") {
-          const target = index.find(rule.name, rule.type);
+          const target = grantTarget(rule, occurrences);
+          if (target === null) continue;
           if (target === undefined) {
             diagnostics.push({
               severity: "error",
@@ -1709,12 +1796,7 @@ function evaluateCharacterInternal(
   const expressionContext: ExpressionContext = {
     owned: ownedDefinitions,
     level: input.level,
-    dynamicCategories: dynamicCategories(
-      ownedDefinitions,
-      occurrences,
-      index,
-      input.textStrings ?? {},
-    ),
+    dynamicCategories: dynamicCategories(ownedDefinitions, occurrences, index),
     categoryAliases: index.categoryAliases,
     categoryValuesFor: (entity) => index.categoryValues(entity),
   };
@@ -1740,8 +1822,8 @@ function evaluateCharacterInternal(
         )
       )
         continue;
-      const target = index.find(rule.name, rule.type);
-      if (target === undefined) continue;
+      const target = grantTarget(rule, occurrences);
+      if (target === undefined || target === null) continue;
       const membership = memberships.get(key(target.id));
       if (
         membership !== undefined &&
@@ -1762,6 +1844,19 @@ function evaluateCharacterInternal(
       : [selectedTheme.id, selectedTheme.name, ...selectedTheme.categories].map(
           key,
         );
+  const powersAsClassEntries = powersAsClassCategoryValues(
+    occurrences,
+    index,
+    input,
+    (rule, occurrence) =>
+      activeAt(rule, input.level) &&
+      ruleRequiresMet(
+        rule.requires,
+        occurrence,
+        occurrences,
+        expressionContext,
+      ),
+  );
   const overlays: FieldOverlay[] = [];
   const slotContext = legacyLootSlotContext(ownedDefinitions);
   const equipment = equippedState(
@@ -2019,10 +2114,73 @@ function evaluateCharacterInternal(
         }
       : candidate;
   };
+  // The legacy engine treats the selected theme as a class category for
+  // power choices only. This is what permits a theme attack such as Sly
+  // Gambit to occupy the ordinary level-7 class encounter-power slot.
+  // Native CategoryMatch::Matches likewise lets a Power match `$$CLASS` (and
+  // fail `$$NOT_CLASS`) through the PowersAsClass class (CategoryOpt::Build).
+  /** How many PowersAsClass values count at a choice level (a cache key). */
+  const powersAsClassCount = (level: number): number =>
+    powersAsClassEntries.filter((entry) => entry.level <= level).length;
+  const powerCategoryContexts = new WeakMap<
+    ExpressionContext,
+    Map<number, ExpressionContext>
+  >();
+  const powerCategoryContext = (
+    base: ExpressionContext,
+    level: number,
+  ): ExpressionContext => {
+    const count = powersAsClassCount(level);
+    if (themeClassValues.length === 0 && count === 0) return base;
+    const byCount = powerCategoryContexts.get(base) ?? new Map();
+    powerCategoryContexts.set(base, byCount);
+    const cached = byCount.get(count);
+    if (cached !== undefined) return cached;
+    const powerClassValues = [
+      ...themeClassValues,
+      ...powersAsClassEntries
+        .filter((entry) => entry.level <= level)
+        .flatMap((entry) => entry.values),
+    ];
+    const context: ExpressionContext = {
+      ...base,
+      dynamicCategories: {
+        ...base.dynamicCategories,
+        $$CLASS: new Set([
+          ...(base.dynamicCategories?.$$CLASS ?? []),
+          ...powerClassValues,
+        ]),
+        $$NOT_CLASS: new Set([
+          ...(base.dynamicCategories?.$$NOT_CLASS ?? []),
+          ...powerClassValues,
+        ]),
+      },
+      ...(themeClassValues.length === 0
+        ? {}
+        : {
+            categoryValuesFor: (entity: ContentEntity) =>
+              new Set([
+                ...index.categoryValues(entity),
+                ...[field(entity, "Class"), field(entity, "_ThemePower")]
+                  .filter((value): value is string => value !== undefined)
+                  .map(key),
+              ]),
+          }),
+    };
+    byCount.set(count, context);
+    return context;
+  };
+  /**
+   * A candidate's decision for a select. `baseContext` replaces the
+   * character's categories: a hybrid slot DisallowClass limits to one class
+   * checks the category without the other.
+   */
   const candidateFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
     candidate: ContentEntity,
+    level: number = input.level,
+    baseContext: ExpressionContext = expressionContext,
   ): CandidateDecision => {
     const reasons: string[] = [];
     if (key(candidate.id) === key(provider.definitionId)) reasons.push("self");
@@ -2031,33 +2189,10 @@ function evaluateCharacterInternal(
         categoryCache.get(rule.category) ??
         parseCategoryExpression(rule.category);
       categoryCache.set(rule.category, category);
-      // The legacy engine treats the selected theme as a class category for
-      // power choices only. This is what permits a theme attack such as Sly
-      // Gambit to occupy the ordinary level-7 class encounter-power slot.
       const candidateContext =
-        key(candidate.type) !== "power" || themeClassValues.length === 0
-          ? expressionContext
-          : {
-              ...expressionContext,
-              dynamicCategories: {
-                ...expressionContext.dynamicCategories,
-                $$CLASS: new Set([
-                  ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
-                  ...themeClassValues,
-                ]),
-                $$NOT_CLASS: new Set([
-                  ...(expressionContext.dynamicCategories?.$$NOT_CLASS ?? []),
-                  ...themeClassValues,
-                ]),
-              },
-              categoryValuesFor: (entity: ContentEntity) =>
-                new Set([
-                  ...index.categoryValues(entity),
-                  ...[field(entity, "Class"), field(entity, "_ThemePower")]
-                    .filter((value): value is string => value !== undefined)
-                    .map(key),
-                ]),
-            };
+        key(candidate.type) !== "power"
+          ? baseContext
+          : powerCategoryContext(baseContext, level);
       let match = matchesCategory(candidate, category, candidateContext);
       const terms =
         categoryTermsCache.get(rule.category) ??
@@ -2110,19 +2245,21 @@ function evaluateCharacterInternal(
   const candidatesFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
+    level: number = input.level,
   ): CandidateDecision[] => {
     const cacheKey = [
       key(rule.type),
       rule.category ?? "",
       provider.definitionId,
       input.level,
+      powersAsClassCount(level),
       rule.existing,
     ].join("\0");
     const cached = candidateCache.get(cacheKey);
     if (cached !== undefined) return cached;
     const decisions = index
       .type(rule.type)
-      .map((candidate) => candidateFor(rule, provider, candidate));
+      .map((candidate) => candidateFor(rule, provider, candidate, level));
     candidateCache.set(cacheKey, decisions);
     return decisions;
   };
@@ -2170,9 +2307,190 @@ function evaluateCharacterInternal(
         key(ownerClass.type) === "class" &&
         (classes?.has(key(ownerClass.name)) === true ||
           classes?.has(key(ownerClass.id)) === true) &&
-        !candidateFor(rule, provider, entity).reasons.includes("category")
+        !candidateFor(rule, provider, entity, choiceLevel).reasons.includes(
+          "category",
+        )
       );
     });
+  };
+  const findEntity = (nameOrId: string, type?: string) =>
+    index.find(nameOrId, type);
+  const hybrid = nativeHybridClasses(ownedDefinitions, findEntity);
+  const hybridClassContexts = new Map<number, ExpressionContext>();
+  /** The categories without one hybrid class: native DisallowClass clears
+   *  that class's entry while UpdateArrays checks the candidates. */
+  const withoutHybridClass = (
+    classes: NativeHybridClasses,
+    removed: 0 | 1,
+  ): ExpressionContext => {
+    const cached = hybridClassContexts.get(removed);
+    if (cached !== undefined) return cached;
+    const hybridClassId = key(classes.hybridClasses[removed].id);
+    const context: ExpressionContext = {
+      ...expressionContext,
+      dynamicCategories: dynamicCategories(
+        ownedDefinitions,
+        occurrences.filter(
+          (occurrence) => key(occurrence.definitionId) !== hybridClassId,
+        ),
+        index,
+      ),
+    };
+    hybridClassContexts.set(removed, context);
+    return context;
+  };
+  /** Native IsSpellbook (its select half): a pick of a spellbook select. */
+  const chosenBySpellbook = (occurrence: CharacterOccurrence): boolean => {
+    if (
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal === undefined
+    )
+      return false;
+    const parent =
+      occurrences.find(({ id }) => id === occurrence.parentId) ??
+      savedById.get(occurrence.parentId);
+    const parentEntity =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    if (parentEntity === undefined) return false;
+    const rule = parseRules(parentEntity.id, parentEntity.rules).find(
+      (candidate) => candidate.source.ordinal === occurrence.ruleOrdinal,
+    );
+    return rule?.kind === "select" && rule.spellbook !== undefined;
+  };
+  const heldPowersCache = new Map<string, readonly ContentEntity[]>();
+  /** The powers held at `level` (native ElemAtLevel), without
+   *  `excludedIds` and spellbook picks. */
+  const heldPowersAt = (
+    level: number,
+    excludedIds: readonly string[],
+  ): readonly ContentEntity[] => {
+    const cacheKey = [level, ...excludedIds].join("\0");
+    const cached = heldPowersCache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    const displacedThen = displacedBy(
+      occurrences,
+      expressionContext,
+      (replacement) => replacement.acquiredLevel <= level,
+    );
+    const live = new Set(occurrences.map(({ id }) => id));
+    const powers = [
+      ...occurrences,
+      ...saved.filter(({ id }) => !live.has(id) && displacedIds.has(id)),
+    ].flatMap((occurrence) => {
+      if (
+        occurrence.acquiredLevel > level ||
+        displacedThen.has(occurrence.id) ||
+        excludedIds.includes(occurrence.id) ||
+        chosenBySpellbook(occurrence)
+      )
+        return [];
+      const entity = index.get(occurrence.definitionId);
+      return entity !== undefined && key(entity.type) === "power"
+        ? [entity]
+        : [];
+    });
+    heldPowersCache.set(cacheKey, powers);
+    return powers;
+  };
+  /** A hybrid power slot whose candidates DisallowClass checks once the
+   *  rule pass has collected every `modify` overlay (native
+   *  C_RulesElementField reads them). */
+  interface HybridSlotRequest {
+    readonly slotName: string | undefined;
+    readonly level: number;
+    readonly excludedIds: readonly string[];
+    readonly replacement: boolean;
+    readonly rule: SelectRule;
+    readonly provider: CharacterOccurrence;
+  }
+  /** By choice ID, or `<choice ID>\0<replaced occurrence ID>` for a
+   *  replacement's gain list. */
+  const hybridSlotRequests = new Map<string, HybridSlotRequest>();
+  /** Replacements CheckHybridPower limits (not a retraining or power swap),
+   *  by choice ID, with the slot's current target (always kept). */
+  const hybridReplaceChecks = new Map<
+    string,
+    { readonly level: number; readonly currentTargetId?: string }
+  >();
+  /** A record field through the character's `modify` overlays. */
+  const overlaidField = (
+    entity: ContentEntity,
+    name: string,
+  ): string | undefined => {
+    const fields = overlaidFields(entity, overlays);
+    const fieldName = Object.keys(fields).find(
+      (candidate) => key(candidate) === key(name),
+    );
+    return fieldName === undefined ? undefined : fields[fieldName];
+  };
+  /**
+   * Native DisallowClass for a hybrid power slot (a select named "Power
+   * Encounter 3", or a replacement of a power such a select chose): once one
+   * hybrid class holds a power of the slot's kind at that level, the slot's
+   * candidates of the other class's category become illegal ("hybrid-class",
+   * native "Must choose power from second hybrid class."). A select reads
+   * the level its name carries, a replacement its own level.
+   */
+  const withHybridSlotLimit = (
+    request: HybridSlotRequest | undefined,
+    candidates: readonly CandidateDecision[],
+  ): readonly CandidateDecision[] => {
+    const slot =
+      request === undefined ? undefined : hybridPowerSlot(request.slotName);
+    if (hybrid === undefined || request === undefined || slot === undefined)
+      return candidates;
+    const removed = disallowedHybridClass(
+      hybrid,
+      slot,
+      heldPowersAt(
+        request.replacement ? request.level : slot.level,
+        request.excludedIds,
+      ),
+      findEntity,
+      overlaidField,
+    );
+    if (removed === undefined) return candidates;
+    const context = withoutHybridClass(hybrid, removed);
+    return candidates.map((candidate) => {
+      if (candidate.reasons.includes("category")) return candidate;
+      const entity = index.get(candidate.definitionId);
+      if (
+        entity === undefined ||
+        !candidateFor(
+          request.rule,
+          request.provider,
+          entity,
+          request.level,
+          context,
+        ).reasons.includes("category")
+      )
+        return candidate;
+      return {
+        ...candidate,
+        eligible: false,
+        rulesLegal: false,
+        reasons: [...candidate.reasons, "hybrid-class"],
+      };
+    });
+  };
+  /**
+   * Native CheckHybridPower (CheckReplaceElem): a replacement that is not a
+   * retraining or power swap may lose a hybrid class's power only while
+   * another power of that class, Power Type and Power Usage is held then.
+   */
+  const hybridReplaceable = (lostId: string, level: number): boolean => {
+    const lost = index.get(lostId);
+    return (
+      hybrid === undefined ||
+      lost === undefined ||
+      hybridPowerReplaceable(
+        hybrid,
+        lost,
+        heldPowersAt(level, []),
+        findEntity,
+        overlaidField,
+      )
+    );
   };
   /** A Power select matching `category`, for category checks only. */
   const powerCategoryRule = (
@@ -2246,7 +2564,9 @@ function evaluateCharacterInternal(
         candidate.acquiredLevel > level ||
         !slot.held(candidate) ||
         gainedBySwap(candidate) ||
-        candidateFor(loseRule, provider, lost).reasons.includes("category")
+        candidateFor(loseRule, provider, lost, level).reasons.includes(
+          "category",
+        )
       )
         return [];
       const selectedGain =
@@ -2256,7 +2576,12 @@ function evaluateCharacterInternal(
       let gains: readonly CandidateDecision[];
       if (named !== undefined)
         gains = [
-          candidateFor(powerCategoryRule(rule.source, ""), provider, named),
+          candidateFor(
+            powerCategoryRule(rule.source, ""),
+            provider,
+            named,
+            level,
+          ),
         ];
       else {
         const lostLevel = field(lost, "Level")?.trim();
@@ -2265,10 +2590,10 @@ function evaluateCharacterInternal(
           [gain, lose, lostLevel].filter((part) => part).join(","),
         );
         gains = detailed
-          ? candidatesFor(gainRule, provider)
+          ? candidatesFor(gainRule, provider, level)
           : selectedGain === undefined
             ? []
-            : [candidateFor(gainRule, provider, selectedGain)];
+            : [candidateFor(gainRule, provider, selectedGain, level)];
       }
       return [
         {
@@ -2477,19 +2802,32 @@ function evaluateCharacterInternal(
                 ? undefined
                 : index.get(selected.definitionId);
             const baseCandidates = detailed
-              ? candidatesFor(rule, occurrence)
+              ? candidatesFor(rule, occurrence, choiceLevel)
               : selectedEntity !== undefined
-                ? [candidateFor(rule, occurrence, selectedEntity)]
+                ? [candidateFor(rule, occurrence, selectedEntity, choiceLevel)]
                 : rule.existing
                   ? ownedDefinitions
                       .filter(
                         (candidate) => key(candidate.type) === key(rule.type),
                       )
                       .map((candidate) =>
-                        candidateFor(rule, occurrence, candidate),
+                        candidateFor(rule, occurrence, candidate, choiceLevel),
                       )
                   : [];
             let themeRestricted: boolean | undefined;
+            const choiceId = `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`;
+            if (
+              hybrid !== undefined &&
+              hybridPowerSlot(rule.name) !== undefined
+            )
+              hybridSlotRequests.set(choiceId, {
+                slotName: rule.name,
+                level: choiceLevel,
+                excludedIds: selected === undefined ? [] : [selected.id],
+                replacement: false,
+                rule,
+                provider: occurrence,
+              });
             const candidates = baseCandidates
               .map((candidate) => {
                 const definition = index.get(candidate.definitionId);
@@ -2552,7 +2890,7 @@ function evaluateCharacterInternal(
                   !candidate.reasons.includes("category"),
               );
             choices.push({
-              id: `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`,
+              id: choiceId,
               level: choiceLevel,
               providerOccurrenceId: occurrence.id,
               ruleOrdinal: rule.source.ordinal,
@@ -2690,16 +3028,40 @@ function evaluateCharacterInternal(
                         gainSelect,
                         gainProvider,
                         lost,
+                        replacementLevel,
                       ).reasons.includes("category")
                     )
                       return [];
+                    const excludedIds = [
+                      candidate.id,
+                      ...(selected === undefined ? [] : [selected.id]),
+                    ];
+                    if (
+                      hybrid !== undefined &&
+                      hybridPowerSlot(originalSelect.name) !== undefined
+                    )
+                      hybridSlotRequests.set(
+                        `${replacementChoiceId}\0${candidate.id}`,
+                        {
+                          slotName: originalSelect.name,
+                          level: replacementLevel,
+                          excludedIds,
+                          replacement: true,
+                          rule: gainSelect,
+                          provider: gainProvider,
+                        },
+                      );
                     return [
                       {
                         replacesOccurrenceId: candidate.id,
                         definitionId: candidate.definitionId,
                         // Retraining X into X changes nothing, so it isn't offered.
                         candidates: detailedReplacement
-                          ? candidatesFor(gainSelect, gainProvider)
+                          ? candidatesFor(
+                              gainSelect,
+                              gainProvider,
+                              replacementLevel,
+                            )
                               .filter(
                                 (decision) =>
                                   key(decision.definitionId) !==
@@ -2709,12 +3071,7 @@ function evaluateCharacterInternal(
                                 markOwned(
                                   decision,
                                   replacementLevel,
-                                  [
-                                    candidate.id,
-                                    ...(selected === undefined
-                                      ? []
-                                      : [selected.id]),
-                                  ],
+                                  excludedIds,
                                   heldThenReplaced,
                                 ),
                               )
@@ -2725,11 +3082,23 @@ function evaluateCharacterInternal(
                                   gainSelect,
                                   gainProvider,
                                   selectedReplacement,
+                                  replacementLevel,
                                 ),
                               ],
                       },
                     ];
                   });
+          if (
+            hybrid !== undefined &&
+            rule.retrain === undefined &&
+            rule.powerSwap === undefined
+          )
+            hybridReplaceChecks.set(replacementChoiceId, {
+              level: replacementLevel,
+              ...(selected?.replacesId === undefined
+                ? {}
+                : { currentTargetId: selected.replacesId }),
+            });
           choices.push({
             id: replacementChoiceId,
             level: replacementLevel,
@@ -2924,18 +3293,25 @@ function evaluateCharacterInternal(
     level: number,
     owned: readonly ContentEntity[],
     abilityValue: (ability: string) => number | string | undefined,
-  ): PrerequisiteContext => ({
-    owned,
-    definitions: evaluationEntities,
-    level,
-    abilities: Object.fromEntries(
-      abilityNames.map((ability) => {
-        const value = abilityValue(ability);
-        return [ability, typeof value === "number" ? value : 0];
-      }),
-    ),
-    ownedTokens: ownedPrerequisiteTokens(owned),
-  });
+    owners: readonly CharacterOccurrence[],
+  ): PrerequisiteContext => {
+    const dilettante = dilettanteChoice(owners);
+    const dilettantePower =
+      dilettante === undefined ? undefined : index.get(dilettante.definitionId);
+    return {
+      owned,
+      ...(dilettantePower === undefined ? {} : { dilettantePower }),
+      definitions: evaluationEntities,
+      level,
+      abilities: Object.fromEntries(
+        abilityNames.map((ability) => {
+          const value = abilityValue(ability);
+          return [ability, typeof value === "number" ? value : 0];
+        }),
+      ),
+      ownedTokens: ownedPrerequisiteTokens(owned),
+    };
+  };
   const prerequisiteScopes = new Map<
     string,
     {
@@ -2950,6 +3326,7 @@ function evaluateCharacterInternal(
           input.level,
           ownedDefinitions,
           (ability) => stats.evaluate(ability).value,
+          occurrences,
         ),
         expressionContext,
       },
@@ -3081,6 +3458,7 @@ function evaluateCharacterInternal(
         level,
         scopedOwned,
         (ability: string) => scoped.stats[ability]?.value,
+        scopedOccurrences,
       ),
       expressionContext: {
         owned: scopedOwned,
@@ -3089,7 +3467,6 @@ function evaluateCharacterInternal(
           scopedOwned,
           scopedOccurrences,
           index,
-          input.textStrings ?? {},
         ),
         categoryAliases: index.categoryAliases,
         categoryValuesFor: (entity: ContentEntity) =>
@@ -3174,6 +3551,44 @@ function evaluateCharacterInternal(
   // holding's projected level 1.
   const prerequisiteLevel = (choice: (typeof choices)[number]) =>
     itemDerived().has(choice.providerOccurrenceId) ? input.level : choice.level;
+  if (hybridSlotRequests.size > 0 || hybridReplaceChecks.size > 0)
+    choices = choices.map((choice) => {
+      const replaceCheck = hybridReplaceChecks.get(choice.id);
+      const kept = (choice.replacementOptions ?? []).map(
+        (option) =>
+          replaceCheck === undefined ||
+          option.replacesOccurrenceId === replaceCheck.currentTargetId ||
+          hybridReplaceable(option.definitionId, replaceCheck.level),
+      );
+      return {
+        ...choice,
+        candidates: [
+          ...withHybridSlotLimit(
+            hybridSlotRequests.get(choice.id),
+            choice.replacementOptions === undefined
+              ? choice.candidates
+              : choice.candidates.filter((_, index) => kept[index] !== false),
+          ),
+        ],
+        ...(choice.replacementOptions === undefined
+          ? {}
+          : {
+              replacementOptions: choice.replacementOptions
+                .filter((_, index) => kept[index])
+                .map((option) => ({
+                  ...option,
+                  candidates: [
+                    ...withHybridSlotLimit(
+                      hybridSlotRequests.get(
+                        `${choice.id}\0${option.replacesOccurrenceId}`,
+                      ),
+                      option.candidates,
+                    ),
+                  ],
+                })),
+            }),
+      };
+    });
   choices = choices.map((choice) => {
     const setAside = selectionSetAside(choice);
     return {
@@ -3258,6 +3673,24 @@ function evaluateCharacterInternal(
     const selected = choice.candidates.find(
       (candidate) => candidate.definitionId === selectedDefinitionId,
     );
+    // A retraining or swap must still follow the hybrid power rules (PHB3
+    // p138 "Retraining"), so a gain DisallowClass forbids is an error.
+    const replacementGain = choice.replacementOptions
+      ?.find(
+        (option) =>
+          option.replacesOccurrenceId === selectedOccurrence.replacesId,
+      )
+      ?.candidates.find(
+        (candidate) => candidate.definitionId === selectedDefinitionId,
+      );
+    if (replacementGain?.reasons.includes("hybrid-class") === true)
+      diagnostics.push({
+        severity: "error",
+        code: "choice.ineligible",
+        message: `The selected ${choice.type} is not eligible: hybrid-class.`,
+        occurrenceId: choice.selectedOccurrenceId,
+        ruleOrdinal: choice.ruleOrdinal,
+      });
     const selectedEntity =
       selectedDefinitionId === undefined
         ? undefined

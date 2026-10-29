@@ -1388,6 +1388,8 @@ export function candidateReason(reasons: readonly string[]): string {
     "already-class-skill": "Already a class skill",
     "theme-power":
       "You cannot choose a theme attack power in place of a class attack power if you have no other class power of that type",
+    "hybrid-class":
+      "Must choose a power from your other hybrid class: with two powers of this kind, at least one must come from each hybrid class",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }

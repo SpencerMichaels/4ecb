@@ -1,6 +1,10 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
+import {
+  EXCEPTION_IDS,
+  EXCEPTION_NAMES,
+  hasPsionicAugmentation,
+} from "./exceptions";
 
 export type PrerequisiteStatus = "satisfied" | "failed" | "unverified";
 
@@ -20,7 +24,30 @@ export interface PrerequisiteContext {
    * that sets it bypasses the IR cache.
    */
   readonly knownTokens?: ReadonlySet<string>;
+  /**
+   * The power chosen through the Dilettante racial trait (native
+   * FindDilettante: the first owned element whose parent is the trait).
+   */
+  readonly dilettantePower?: ContentEntity;
 }
+
+/** Legacy SpecialCase texts about the Dilettante power, by lowercased text. */
+const DILETTANTE_PREDICATES = new Map<
+  string,
+  | "dilettante-melee-attack"
+  | "dilettante-implement"
+  | "dilettante-counts-as-class"
+>([
+  [
+    "you must have chosen a melee attack power for your dilettante racial trait",
+    "dilettante-melee-attack",
+  ],
+  [
+    "you must have chosen an implement power for your dilettante racial trait",
+    "dilettante-implement",
+  ],
+  ["countsasclass(dilettante)", "dilettante-counts-as-class"],
+]);
 
 export type PrerequisiteIr =
   | {
@@ -66,7 +93,12 @@ export type PrerequisiteIr =
       /** Legacy predicate prerequisites over the owned powers. */
       readonly kind: "predicate";
       readonly text: string;
-      readonly predicate: "psionic-daily-attack" | "healing-infusion-power";
+      readonly predicate:
+        | "psionic-daily-attack"
+        | "healing-infusion-power"
+        | "dilettante-melee-attack"
+        | "dilettante-implement"
+        | "dilettante-counts-as-class";
     }
   | { readonly kind: "hybrid" | "never" | "ignored"; readonly text: string }
   | { readonly kind: "unverified"; readonly text: string };
@@ -817,12 +849,6 @@ function multiclassTarget(feat: ContentEntity): string | undefined {
   return /^multiclass .+/i.test(type) ? type.slice(11).trim() : undefined;
 }
 
-function isPsionicClass(entity: ContentEntity): boolean {
-  return normalized(rawField(entity, "_PARSED_CLASS_FEATURE")).includes(
-    normalized(EXCEPTION_NAMES.psionicAugmentation),
-  );
-}
-
 /** Legacy AnyFeat: feats whose `type` field contains the named kind. */
 function anyFeat(
   text: string,
@@ -874,7 +900,7 @@ function classSpecificFamily(
         const target = multiclassTarget(feat);
         if (target === undefined) return false;
         const owner = classNamed(target) ?? classNamed(target, "Pseudo Class");
-        return owner !== undefined && isPsionicClass(owner) === wanted;
+        return owner !== undefined && hasPsionicAugmentation(owner) === wanted;
       }),
     );
   }
@@ -886,7 +912,7 @@ function classSpecificFamily(
       text,
       withCountsAsAlternates(
         definitionsOfType(context, "Class").filter(
-          (entity) => !isPsionicClass(entity),
+          (entity) => !hasPsionicAugmentation(entity),
         ),
         context,
       ),
@@ -1059,6 +1085,11 @@ function legacyClause(
     return { kind: "predicate", text, predicate: "psionic-daily-attack" };
   if (lower === "at least one healing infusion power")
     return { kind: "predicate", text, predicate: "healing-infusion-power" };
+  // Legacy SpecialCase MeleeDilettante, ImplementDilettante and
+  // CountsAsClassDilettante (-Module-.cs ~29339, read through FindDilettante).
+  const dilettante = DILETTANTE_PREDICATES.get(lower);
+  if (dilettante !== undefined)
+    return { kind: "predicate", text, predicate: dilettante };
   return (
     qualifiedClass(text, lower, context) ??
     qualifiedClause(text, canonical.trim(), context)
@@ -1100,7 +1131,7 @@ function qualifiedClass(
         (entity) =>
           classHasSource(entity, source) &&
           (qualifier === "uses power points"
-            ? isPsionicClass(entity)
+            ? hasPsionicAugmentation(entity)
             : rawField(entity, "Implements").trim().length > 0),
       ),
       context,
@@ -1877,12 +1908,17 @@ export function withoutOwnedDefinitions(
   const owned = context.owned.filter(
     (entity) => !excluded.has(normalized(entity.id)),
   );
+  const { dilettantePower, ...rest } = context;
   const result =
     owned.length === context.owned.length
       ? context
       : {
-          ...context,
+          ...rest,
           owned,
+          ...(dilettantePower === undefined ||
+          excluded.has(normalized(dilettantePower.id))
+            ? {}
+            : { dilettantePower }),
           ...(context.ownedTokens === undefined
             ? {}
             : { ownedTokens: ownedPrerequisiteTokens(owned) }),
@@ -2004,6 +2040,10 @@ export function evaluatePrerequisiteIr(
         : "unverified";
     }
     case "predicate":
+      if (ir.predicate.startsWith("dilettante-"))
+        return dilettantePredicate(ir.predicate, context)
+          ? "satisfied"
+          : "failed";
       return context.owned.some(
         (entity) =>
           normalized(entity.type) === "power" &&
@@ -2030,6 +2070,37 @@ export function evaluatePrerequisiteIr(
     case "unverified":
       return "unverified";
   }
+}
+
+/**
+ * Legacy MeleeDilettante (an attack whose Attack Type names melee),
+ * ImplementDilettante (Keywords name implement) and CountsAsClassDilettante
+ * (the character owns the CountsAsClass named after the power's class).
+ * Each fails without a Dilettante power.
+ */
+function dilettantePredicate(
+  predicate: string,
+  context: PrerequisiteContext,
+): boolean {
+  const power = context.dilettantePower;
+  if (power === undefined) return false;
+  if (predicate === "dilettante-melee-attack")
+    return (
+      normalized(rawField(power, "Power Type")) === "attack" &&
+      normalized(rawField(power, "Attack Type")).includes("melee")
+    );
+  if (predicate === "dilettante-implement")
+    return normalized(rawField(power, "Keywords")).includes("implement");
+  const classField = rawField(power, "Class").trim();
+  const powerClass = resolveDefinitions(classField, context, "Class")[0];
+  return (
+    powerClass !== undefined &&
+    context.owned.some(
+      (entity) =>
+        normalized(entity.type) === "countsasclass" &&
+        normalized(entity.name) === normalized(powerClass.name),
+    )
+  );
 }
 
 function leafResults(

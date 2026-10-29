@@ -1460,3 +1460,96 @@ describe("qualifiers that scope over a whole list", () => {
     expect(status(prerequisite, [])).toBe("failed");
   });
 });
+
+describe("Dilettante power prerequisites (FindDilettante)", () => {
+  const halfElf = entity("ID_FMP_RACE_HALF_ELF", "Half-Elf", "Race");
+  const druid = entity("ID_FMP_CLASS_DRUID", "Druid", "Class");
+  const cleric = entity("ID_FMP_CLASS_2", "Cleric", "Class");
+  const clericCountsAs = entity(
+    "ID_INTERNAL_COUNTSASCLASS_CLERIC",
+    "Cleric",
+    "CountsAsClass",
+  );
+  const meleeAttack = entity("MELEE", "Righteous Brand", "Power", {
+    "Power Type": "Attack",
+    "Attack Type": "Melee weapon",
+    Keywords: "Divine, Weapon",
+    Class: "ID_FMP_CLASS_2",
+  });
+  const implementAttack = entity("IMPLEMENT", "Sacred Flame", "Power", {
+    "Power Type": "Attack",
+    "Attack Type": "Ranged 5",
+    Keywords: "Divine, Implement, Radiant",
+    Class: "ID_FMP_CLASS_2",
+  });
+  const definitions = [halfElf, druid, cleric, clericCountsAs];
+  const status = (
+    prerequisite: string,
+    owned: readonly ContentEntity[],
+    dilettantePower?: ContentEntity,
+  ) =>
+    evaluatePrerequisite(prerequisite, {
+      owned: [
+        ...owned,
+        ...(dilettantePower === undefined ? [] : [dilettantePower]),
+      ],
+      level: 1,
+      abilities: {},
+      definitions,
+      ...(dilettantePower === undefined ? {} : { dilettantePower }),
+    }).status;
+
+  it("reads the melee attack clause from the chosen power's Power Type and Attack Type", () => {
+    const text =
+      "Half-elf, you must have chosen a melee attack power for your Dilettante racial trait";
+    expect(status(text, [halfElf], meleeAttack)).toBe("satisfied");
+    expect(status(text, [halfElf], implementAttack)).toBe("failed");
+    // Owning a melee attack some other way is not the Dilettante power.
+    expect(status(text, [halfElf, meleeAttack])).toBe("failed");
+  });
+
+  it("reads the implement clause from the chosen power's Keywords", () => {
+    const text =
+      "Half-elf, druid, you must have chosen an implement power for your Dilettante racial trait";
+    expect(status(text, [halfElf, druid], implementAttack)).toBe("satisfied");
+    expect(status(text, [halfElf, druid], meleeAttack)).toBe("failed");
+  });
+
+  it("reads CountsAsClass(Dilettante) as owning the power's class's CountsAsClass", () => {
+    expect(
+      evaluatePrerequisite("CountsAsClass(Dilettante)", {
+        owned: [clericCountsAs, meleeAttack],
+        level: 1,
+        abilities: {},
+        definitions,
+        dilettantePower: meleeAttack,
+      }).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("CountsAsClass(Dilettante)", {
+        owned: [meleeAttack],
+        level: 1,
+        abilities: {},
+        definitions,
+        dilettantePower: meleeAttack,
+      }).status,
+    ).toBe("failed");
+  });
+
+  it("drops the Dilettante power with the definitions a retrain sets aside", () => {
+    const context = {
+      owned: [halfElf, meleeAttack],
+      level: 1,
+      abilities: {},
+      definitions,
+      dilettantePower: meleeAttack,
+    };
+    expect(
+      withoutOwnedDefinitions(context, ["MELEE"]).dilettantePower,
+    ).toBeUndefined();
+    expect(
+      withoutOwnedDefinitions(context, ["ID_FMP_RACE_HALF_ELF"])
+        .dilettantePower,
+    ).toBe(meleeAttack);
+  });
+});

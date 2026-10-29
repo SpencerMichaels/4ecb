@@ -114,6 +114,8 @@ export const EXCEPTION_NAMES = {
   /** Prerequisite AnyClassSpecific: counted as class-specific multiclass feats. */
   studentOfThePlague: "Student of the Plague",
   adeptDilettante: "Adept Dilettante",
+  /** FindGrantElement: Adept Dilettante's CountsAsClass grant names this. */
+  dilettanteGrant: "[Dilettante]",
   /** IsPsionicClass / AnyClassMoreSpecific: `_PARSED_CLASS_FEATURE` names it. */
   psionicAugmentation: "Psionic Augmentation",
   /** Prerequisite HealingInfusion: power names with this prefix. */
@@ -206,6 +208,24 @@ function field(entity: ContentEntity, name: string): string | undefined {
     (specific) =>
       specific.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
   )?.value;
+}
+
+/** Whether a record's `_PARSED_CLASS_FEATURE` names Psionic Augmentation. */
+export function hasPsionicAugmentation(entity: ContentEntity): boolean {
+  return (
+    field(entity, "_PARSED_CLASS_FEATURE")
+      ?.toLocaleLowerCase()
+      .includes(EXCEPTION_NAMES.psionicAugmentation.toLocaleLowerCase()) ??
+    false
+  );
+}
+
+/** Native RulesElement::IsPsionicClass: a Class with Psionic Augmentation. */
+export function isPsionicClass(entity: ContentEntity): boolean {
+  return (
+    entity.type.trim().toLocaleLowerCase() === "class" &&
+    hasPsionicAugmentation(entity)
+  );
 }
 
 function containsChannelDivinity(value: string | undefined): boolean {
@@ -354,5 +374,32 @@ export function isCustomChoiceException(candidate: ContentEntity): boolean {
         attribute.name.toLocaleLowerCase() === "legality" &&
         attribute.value.toLocaleLowerCase() === "houserule",
     )
+  );
+}
+
+/**
+ * Native FindDilettante (`-Module-.cs` ~29282): the first owned element whose
+ * parent is the half-elf Dilettante racial trait, i.e. the power chosen
+ * through it.
+ */
+export function dilettanteChoice<
+  T extends {
+    readonly id: string;
+    readonly parentId?: string;
+    readonly definitionId: string;
+  },
+>(occurrences: readonly T[]): T | undefined {
+  const traitId = EXCEPTION_IDS.dilettante.toLocaleLowerCase();
+  const traits = new Set(
+    occurrences
+      .filter(
+        (occurrence) => occurrence.definitionId.toLocaleLowerCase() === traitId,
+      )
+      .map((occurrence) => occurrence.id),
+  );
+  if (traits.size === 0) return undefined;
+  return occurrences.find(
+    (occurrence) =>
+      occurrence.parentId !== undefined && traits.has(occurrence.parentId),
   );
 }

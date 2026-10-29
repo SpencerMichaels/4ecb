@@ -1888,6 +1888,7 @@ describe("builder planning UI", () => {
     expect(candidateReason(["prerequisite", "prerequisite-unverified"])).toBe(
       "Does not meet prerequisites; Prerequisites could not be verified",
     );
+    expect(candidateReason(["hybrid-class"])).toMatch(/other hybrid class/);
   });
 
   it("saves a pick as a house rule only when it is known to break a rule", () => {

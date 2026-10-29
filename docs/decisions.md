@@ -3414,6 +3414,31 @@ come with their weapon or armor, "Any" armor enchantments no longer reach
 shields, and the 80 masterwork armors show disabled Buy/Give (with the
 reason) unless the character has Inherent Bonuses. Evaluation is unchanged.
 
+### D109 — Every PowersAsClass value counts
+
+Status: accepted (2026-10-28), roadmap queue item 6.
+
+Context: native `CategoryOpt::Build` (`-Module-.cs` ~30610) reads the
+`PowersAsClass` text string with `GetCharText`, which keeps only the last
+applicable value (`CalculateStringValue` without stacking), and lets a Power
+match `$$CLASS` through that one class. Level1Rules sets it to Any Class
+(`ID_FMP_CLASS_0`, the category of the 677 skill and racial utility
+powers); Knowledge of Ancient Lives (40 class variants), Witch (Wizard) and
+the level 5 Order Adept feature set another class, which in native ends the
+Any Class powers for those characters.
+
+Decision: the builder joins every applicable value's class to `$$CLASS` and
+`$$NOT_CLASS` for Power candidates, each from the level its provider adds it
+(native builds the categories per choice level). PHB3 p165 (PDF page) lets any
+character take a skill power in place of a class utility power, and each of
+those features adds a class ("You can choose Cleric powers when choosing or
+retraining a class power"), replacing none. The builder already seeded Any
+Class into `$$CLASS`; this keeps that seed alongside the new classes.
+
+Consequences: DV (Order Adept) is offered Wizard utility powers in the
+level-6 utility slot, as native does, and keeps its skill powers there, which
+native drops.
+
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 
