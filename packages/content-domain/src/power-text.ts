@@ -22,7 +22,7 @@ import type { PowerFieldBonuses } from "./power-field-bonuses";
 export const POWER_TEXT_FIELD = "_Power Text IR";
 /** Bump when the stored shape or any parse changes; an older pack's field
  *  is then ignored and the engine parses the text itself. */
-export const POWER_TEXT_VERSION = 1;
+export const POWER_TEXT_VERSION = 2;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",
@@ -50,7 +50,7 @@ export type PowerAttackSlot = readonly [
 export interface AttackBonusIr {
   /** "+ 1 per enemy adjacent to you vs." (Valiant Strike): always 0. */
   readonly perAdjacentEnemy?: true;
-  /** The first line's "<ability> + N". */
+  /** The first line's signed "<ability> + N" / "<ability> -N". */
   readonly base?: number;
   /** An exact native AttackPowerModRepl increase line's tier values. */
   readonly tier?: { readonly paragon?: number; readonly epic: number };
@@ -121,6 +121,10 @@ export interface DamageClauseIr {
   }[];
   /** The clause's first "NdM". */
   readonly fixedDice?: string;
+  /** Native CalcDamage's "+ NdM" terms in the "+ …" chain after the first
+   *  N[W] term ("1[W] + 1d8 + Wisdom modifier"): ParseAbilityMod appends
+   *  each to the weapon dice. */
+  readonly weaponAddedDice?: readonly string[];
   /** Native CalcDamage's dice-less flat damage constant. */
   readonly flatBase?: number;
   /** "<Ability> modifier" terms of the expression (beast's ones removed). */
@@ -433,14 +437,15 @@ function attackBonus(line: string): AttackBonusIr {
     normalized.includes(lower(text)),
   );
   const firstLine = line.split("\n")[0] ?? line;
-  // Native CalcStatVsDefense reads a "+N" after any word of the attack
-  // stat: "Strength + 2", "Your highest ability modifier + 6", "Your
-  // highest ability score +9".
-  const base = Number(
-    firstLine.match(
-      /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)(?:\s+score)?(?:\s+modifier)?\s*\+\s*(\d+)/i,
-    )?.[1] ?? 0,
+  // Native CalcStatVsDefense (-Module-.cs ~23811) reads a signed number
+  // after any word of the attack stat: '+' adds, '-' or '–' subtracts.
+  // "Strength + 2", "Your highest ability modifier + 6", "Your highest
+  // ability score +9", "Strength -2 vs. AC", "Dexterity – 2 vs. AC".
+  const signed = firstLine.match(
+    /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)(?:\s+score)?(?:\s+modifier)?\s*([+\-–])\s*(\d+)/i,
   );
+  const base =
+    signed === null ? 0 : (signed[1] === "+" ? 1 : -1) * Number(signed[2]);
   const steps: { level: number; bonus: number }[] = [];
   for (const match of line.matchAll(
     /(?:Level\s+)?(\d+)(?:st|nd|rd|th)?(?:\s+level)?\s*:\s*[^\n]*?\+\s*(\d+)|Increase\s+to\s+\+(\d+)\s+bonus\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi,
@@ -739,6 +744,36 @@ function nativeFlatDamageBase(hitClause: string): number | undefined {
  *  Cahulaks). */
 const WEAPON_TERM = /(\d*)\[W\]( \(off-hand(?: weapon| end)?\))?/giu;
 
+/**
+ * Native CalcDamage (`-Module-.cs` ~24860-24930): after the first damage
+ * term it reads consecutive "+ <word>" terms (skipping "your"/"twice", an
+ * "(off-hand weapon)" and a following " modifier "), stopping at anything
+ * else ("plus", "or", "damage"). ParseAbilityMod's digit branch (~24364)
+ * appends a dice word ("1d8") to the damage; this returns those words.
+ */
+function weaponAddedDice(expression: string): readonly string[] {
+  const first = /\d*\[W\]( \(off-hand(?: weapon| end)?\))?/iu.exec(expression);
+  if (first === null) return [];
+  let rest = expression.slice(first.index + first[0].length);
+  const dice: string[] = [];
+  for (;;) {
+    const term = /^\s*\+\s*(\S+)/u.exec(rest);
+    if (term === null) break;
+    let word = term[1] ?? "";
+    rest = rest.slice(term[0].length);
+    while (/^(?:your|twice)$/iu.test(word)) {
+      const next = /^\s*(\S+)/u.exec(rest);
+      if (next === null) break;
+      word = next[1] ?? "";
+      rest = rest.slice(next[0].length);
+    }
+    if (/^\d+d\d+$/iu.test(word)) dice.push(word);
+    rest = rest.replace(/^ \(off-hand weapon\)/iu, "");
+    if (/^ modifier\s/iu.test(rest)) rest = rest.replace(/^ modifier/iu, "");
+  }
+  return dice;
+}
+
 function damageClause(clause: string): DamageClauseIr {
   const expression = clause.split(/\bdamage\b/iu)[0] ?? "";
   const expressionTerms = [...expression.matchAll(WEAPON_TERM)];
@@ -788,6 +823,7 @@ function damageClause(clause: string): DamageClauseIr {
       })),
     ),
     ...(fixedDice === undefined ? {} : { fixedDice }),
+    ...listed("weaponAddedDice", weaponAddedDice(expression)),
     ...(flatBase === undefined ? {} : { flatBase }),
     ...listed("modifierAbilities", modifierAbilities),
     ...(abilityPhrase === undefined ? {} : { abilityPhrase }),

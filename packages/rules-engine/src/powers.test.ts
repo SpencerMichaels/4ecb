@@ -1347,6 +1347,50 @@ describe("power evaluation", () => {
     ).toEqual([]);
   });
 
+  it("subtracts an attack-line penalty and appends '+ NdM' after the weapon dice", () => {
+    const powers = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["RECKLESS", "DEVASTATING"],
+      inventory: [
+        {
+          id: "hammer",
+          definitionIds: ["HAMMER"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Strength modifier": stat("Strength modifier", 4) },
+      overlays: [],
+      entities: [
+        // Native CalcStatVsDefense: '-' and '–' subtract.
+        entity("RECKLESS", "Reckless Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength –2 vs. AC",
+          Hit: "3[W] + Strength modifier damage.",
+        }),
+        // Native CalcDamage/ParseAbilityMod: "+ 1d8" is appended.
+        entity("DEVASTATING", "Devastating Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + 1d8 + Strength modifier damage.",
+        }),
+        entity("HAMMER", "Synthetic Maul", "Weapon", {
+          Damage: "2d6",
+          "Proficiency Bonus": "2",
+        }),
+      ],
+    });
+    const variant = (id: string) =>
+      powers.find(({ definitionId }) => definitionId === id)?.variants[0];
+    // 4 Strength + 4 half level + 2 proficiency - 2.
+    expect(variant("RECKLESS")?.attackBonus).toBe(8);
+    expect(variant("DEVASTATING")?.attackBonus).toBe(10);
+    expect(variant("DEVASTATING")?.damage).toBe("2d6+1d8+4");
+  });
+
   it("applies one contribution once across overlapping implement and weapon channels", () => {
     const [power] = evaluatePowers({
       level: 7,
@@ -1938,6 +1982,58 @@ describe("power evaluation", () => {
     expect(power?.variants[0]?.attackComponents).not.toContainEqual(
       expect.objectContaining({ label: "heavy blade group,weapon:attack" }),
     );
+  });
+
+  it("reads no `,weapon` damage stat on an implement row through a weapon (native IsKeyword)", () => {
+    const evaluate = (stats: Record<string, ReturnType<typeof stat>>) =>
+      evaluatePowers({
+        level: 7,
+        activeDefinitionIds: ["POWER", "POLEARM_IMPLEMENT"],
+        inventory: [
+          {
+            id: "polearm",
+            definitionIds: ["POLEARM"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Wisdom modifier": stat("Wisdom modifier", 4), ...stats },
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic Shackles", "Power", {
+            Keywords: "Divine, Implement, Radiant",
+            "Attack Type": "Ranged 5",
+            Attack: "Wisdom vs. Will",
+            Hit: "1d8 + Wisdom modifier radiant damage.",
+          }),
+          entity(
+            "POLEARM_IMPLEMENT",
+            "Implement Proficiency (Synthetic Polearm)",
+            "Proficiency",
+            {},
+          ),
+          entity("POLEARM", "Synthetic Polearm", "Weapon", {
+            Damage: "1d10",
+            Group: "Polearm",
+          }),
+        ],
+      })[0]?.variants[0];
+
+    // Weapon Focus spells its stat "Polearm group,weapon:damage".
+    expect(
+      evaluate({
+        "Polearm group,weapon:damage": combatStat(
+          "Polearm group,weapon:damage",
+          1,
+        ),
+      })?.damage,
+    ).toBe("1d8+4");
+    expect(
+      evaluate({
+        "Polearm group:damage": combatStat("Polearm group:damage", 1),
+      })?.damage,
+    ).toBe("1d8+5");
   });
 
   it("calculates no rows for a power with neither an attack nor a Hit line", () => {
@@ -3240,7 +3336,7 @@ describe("power evaluation", () => {
     expect(power?.variants[0]).toMatchObject({ damage: "1d4+7" });
   });
 
-  it("applies weapon damage bonuses when a weapon serves as an implement", () => {
+  it("applies weapon-group damage bonuses when a weapon serves as an implement", () => {
     const entities = [
       entity("POWER", "Sword Burst", "Power", {
         Keywords: "Arcane, Implement",
@@ -3272,10 +3368,9 @@ describe("power evaluation", () => {
       ],
       stats: {
         "Intelligence modifier": stat("Intelligence modifier", 4),
-        "heavy blade group,weapon:damage": combatStat(
-          "heavy blade group,weapon:damage",
-          2,
-        ),
+        // Older data's spelling (GeranHulmaster); a "…,weapon:damage" stat
+        // would miss this implement row (native IsKeyword).
+        "heavy blade group:damage": combatStat("heavy blade group:damage", 2),
       },
       overlays: [],
       entities,

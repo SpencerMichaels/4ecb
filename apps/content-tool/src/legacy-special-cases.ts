@@ -1909,12 +1909,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcStatVsDefense": code(
       "Attack stat parsing: beast's attack bonus, power-bonus suffixes, 'your highest ability', 'Primary ability', 'Chosen Ability', the '+1 per enemy adjacent to you' condition, then OverrideStat.",
-      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel ('+N' after 'ability [score] [modifier]' too); 'Primary ability' is HighestAbility over all six scores like native (owner decision, 126 powers); the exact '+ 1 per enemy adjacent to you' suffix (Valiant Strike) adds no number and gives the row the native condition text '+1 attack bonus per enemy adjacent to you.' as an additional effect (modern added +1 before; not yet written to an exported row's Conditions); OverrideStat is key-ability-overrides.ts",
+      "powers.ts attackLineAbility / specialAttackAbility / powerBonusAtLevel (a signed '+N', '-N' or '–N' after the stat word, also after 'ability [score] [modifier]'; content-domain power-text.ts attackBonus, 11 penalty lines such as Reckless Strike 'Strength –2 vs. AC'); 'Primary ability' is HighestAbility over all six scores like native (owner decision, 126 powers); the exact '+ 1 per enemy adjacent to you' suffix (Valiant Strike) adds no number and gives the row the native condition text '+1 attack bonus per enemy adjacent to you.' as an additional effect (modern added +1 before; not yet written to an exported row's Conditions); OverrideStat is key-ability-overrides.ts",
       test(
         POWERS,
         "chooses the best attack ability and retains explicit power bonuses",
       ),
       test(POWERS, "keeps the power bonus of %j at level %i"),
+      test(
+        POWERS,
+        "subtracts an attack-line penalty and appends '+ NdM' after the weapon dice",
+      ),
       test(
         POWERS,
         "resolves Primary ability to the highest of all six scores, not the class key abilities (native HighestAbility)",
@@ -1997,8 +2001,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcDamage": code(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit by name (EXCEPTION_NAMES.defendersGambit) deals its indented ' Hit' field plus ' damage.' (5[W] + Strength); NonDamagePower's powers deal none. D105 departures: a '+ <ability> (off-hand weapon)' term adds the ability modifier (native looks up a nonexistent stat; no current record has one), and every term after a parenthetical is read where native stops (Eruption of Steel, Deceptive Steel, Binding Cahulaks). A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit by name (EXCEPTION_NAMES.defendersGambit) deals its indented ' Hit' field plus ' damage.' (5[W] + Strength); NonDamagePower's powers deal none. D105 departures: a '+ <ability> (off-hand weapon)' term adds the ability modifier (native looks up a nonexistent stat; no current record has one), and every term after a parenthetical is read where native stops (Eruption of Steel, Deceptive Steel, Binding Cahulaks). A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way. Each '+ NdM' word in the '+ …' chain after the weapon dice is appended (ParseAbilityMod's digit branch; DamageClauseIr.weaponAddedDice, 47 Hit lines such as Devastating Strike '1[W] + 1d8 + Strength modifier'), replacing the former Howling Strike by-name case",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
+      test(
+        POWERS,
+        "subtracts an attack-line penalty and appends '+ NdM' after the weapon dice",
+      ),
       test(
         POWERS,
         "doubles Chilling Cloud's Intelligence damage from 21st level by name and reads 'twice' terms",
@@ -2277,10 +2285,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.DamageKeyword": code(
       "Damage keyword components and typed maxima.",
-      "powers.ts combatStatEntries + stackTypedComponents: one dmg_type_max per row, shared by an implement power's implement and weapon (pact blade) paths",
+      "powers.ts combatStatEntries + stackTypedComponents: one dmg_type_max per row, shared by an implement power's implement and weapon (pact blade) paths; the weapon path of an implement power reads no stat whose keyword list names 'weapon' (IsKeyword: BuildKeywordSet adds 'weapon' only from the power's Keywords), so Weapon Focus's '<group> group,weapon:damage' misses it",
       test(
         POWERS,
         "applies one contribution once across overlapping implement and weapon channels",
+      ),
+      test(
+        POWERS,
+        "reads no `,weapon` damage stat on an implement row through a weapon (native IsKeyword)",
       ),
       test(
         POWERS,

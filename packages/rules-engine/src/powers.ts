@@ -1804,6 +1804,16 @@ const NATIVE_ATTACK_TYPES = {
   proficiency: "Proficiency Bonus",
 } as const;
 
+/** A `<keywords>:<channel>` stat whose comma-separated keyword list names
+ *  `weapon` ("Polearm group,weapon:damage", "weapon:damage"). */
+function statNeedsWeaponKeyword(statName: string): boolean {
+  const keywords = /^(.*):[^:]*$/u.exec(key(statName))?.[1];
+  return (
+    keywords !== undefined &&
+    keywords.split(",").some((token) => token.trim() === "weapon")
+  );
+}
+
 type TypedPowerComponent = {
   readonly component: PowerComponent;
   readonly bonusType?: string;
@@ -3737,9 +3747,9 @@ export function evaluatePowers(input: {
                         ),
                       )
                       .join("+"),
-                key(power.name) === "howling strike"
-                  ? clause.fixedDice
-                  : undefined,
+                // Native ParseAbilityMod's digit branch: each "+ NdM" term
+                // after the weapon dice is appended ("1[W] + 1d8").
+                ...(clause.weaponAddedDice ?? []),
               ]
                 .filter(Boolean)
                 .join("+")
@@ -3950,6 +3960,15 @@ export function evaluatePowers(input: {
                       nativeKeywords,
                       damageRoll: !flat,
                     },
+                    // Native IsKeyword (`-Module-.cs` ~20876): `weapon` is
+                    // in the row's keyword set only from the power's
+                    // Keywords (BuildKeywordSet never adds it for an
+                    // implement power), so "Polearm group,weapon:damage"
+                    // (Weapon Focus) misses an implement row through a
+                    // weapon; "<group> group:damage" still applies.
+                  ).filter(
+                    ({ component: { label } }) =>
+                      weaponPower || !statNeedsWeaponKeyword(label),
                   )
                 : []),
             ]),

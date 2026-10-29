@@ -681,6 +681,11 @@ Implement Spellcaster's do not stack. The attack's own parts hold their
 native `CalcBAB` types in that maximum ("abilmod", "HALF-LEVEL",
 "Proficiency Bonus", "Enhancement"), so a stat bonus of one of those types
 adds only its excess.
+An implement power's row through a weapon has no `weapon` keyword (native
+`BuildKeywordSet` adds it only from the power's Keywords), so it reads no
+stat whose keyword list names `weapon`: Weapon Focus's
+`Polearm group,weapon:damage` misses it, while `Polearm group:damage` and
+group-limited expertise still apply.
 A melee power's Unarmed row has native `WeaponBase`'s unarmed record as its
 base: the weapon the "Unarmed Weapon" text names (Belt of the Brawler's Club),
 else "Unarmed attack" (`withUnarmedWeaponBase`). Its name, ID, group, slot and

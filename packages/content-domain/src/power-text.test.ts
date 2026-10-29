@@ -29,6 +29,21 @@ describe("power attack lines", () => {
     expect(field.raw).toBeUndefined();
   });
 
+  it("reads a penalty after the stat word with '-' or '–' (native CalcStatVsDefense)", () => {
+    expect(
+      authoredAttackLine(parseAttackField("Strength -2 vs. AC"))?.bonus,
+    ).toEqual({ base: -2 });
+    expect(
+      authoredAttackLine(parseAttackField("Strength –2 vs. AC"))?.bonus,
+    ).toEqual({ base: -2 });
+    expect(
+      authoredAttackLine(parseAttackField("Dexterity – 2 vs. AC"))?.bonus,
+    ).toEqual({ base: -2 });
+    expect(
+      authoredAttackLine(parseAttackField("Wisdom - 1 vs. AC"))?.bonus,
+    ).toEqual({ base: -1 });
+  });
+
   it("keeps a thrown-weapon alternative and a dual power's two lines", () => {
     const thrown = parseAttackField(
       "Strength (thrown weapon) or Dexterity vs. AC",
@@ -123,6 +138,28 @@ describe("power hit lines", () => {
         (level) => hitLineAt(increase, level).other.clauses[0].fixedDice,
       ),
     ).toEqual(["1d8", "2d8", "3d8"]);
+  });
+
+  it("reads the '+ NdM' terms chained after the weapon dice (native CalcDamage)", () => {
+    const added = (text: string) =>
+      parseHitField(text).steps[0]!.line.other.clauses[0]?.weaponAddedDice;
+    expect(added("1[W] + 1d8 + Wisdom modifier damage, and")).toEqual(["1d8"]);
+    expect(added("2[W] + 2d6 + Strength modifier damage.")).toEqual(["2d6"]);
+    expect(added("4[W] + 3d8 + Strength modifier force damage.")).toEqual([
+      "3d8",
+    ]);
+    // Outside the chain: after "damage", after "plus", after "or".
+    expect(
+      added(
+        "1[W] + Strength modifier damage + 1d8 lightning damage, and you gain",
+      ),
+    ).toBeUndefined();
+    expect(
+      added("1[W] + Wisdom modifier damage plus 1d10 thunder damage."),
+    ).toBeUndefined();
+    expect(
+      added("1[W] (weapon attack) or +1d8 (not weapon attack) damage"),
+    ).toBeUndefined();
   });
 
   it("reads a damage expression's terms", () => {
