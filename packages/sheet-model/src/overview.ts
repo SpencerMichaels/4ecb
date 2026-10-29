@@ -1,4 +1,5 @@
 import { associateCardText } from "./associate-card";
+import { creatureCardText, type SheetCreatureCard } from "./creature-card";
 import {
   displayPrerequisites,
   getAttribute,
@@ -804,6 +805,13 @@ export function withSheetOverview(
   ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId));
   // What page 1's other panes and the companion card show: a reminder they
   // already cover is never offered (never twice on one page).
+  // What gives a creature card: its mount holding, or its providers.
+  const creatureSources = (card: SheetCreatureCard) => [
+    ...(card.origin.holdingId === undefined
+      ? []
+      : [inventorySourceKey(card.origin.holdingId)]),
+    ...card.provenanceIds.flatMap((id) => sourceOf(id)),
+  ];
   const paneEntries: { sources: readonly string[]; text: string }[] = [
     ...conditional.map((modifier) => ({
       sources: sourceKeys(modifier.provenanceId, modifier.source),
@@ -844,6 +852,12 @@ export function withSheetOverview(
           ]
         : [],
     ),
+    // A creature card (D110) shows its holding's or providers' creature.
+    ...model.companions.flatMap((card) =>
+      card.kind === "creature"
+        ? [{ sources: creatureSources(card), text: creatureCardText(card) }]
+        : [],
+    ),
   ];
   // Power cards' rider lines (the Action Point card's included): a reminder
   // they cover is a rider, offered but off by default (D099).
@@ -862,7 +876,9 @@ export function withSheetOverview(
     model.companions.flatMap((card) =>
       card.kind === "associate"
         ? card.provenanceIds.flatMap((id) => sourceOf(id))
-        : [],
+        : card.kind === "creature"
+          ? creatureSources(card)
+          : [],
     ),
   );
   const coverage = (reminder: OverviewReminder) => {

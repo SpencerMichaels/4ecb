@@ -44,9 +44,13 @@ function layoutCardBands(element: HTMLElement) {
 }
 
 /** Shrinks a fixed-size printed card's text until it fits. Fluid panel cards
- * (`fit: false`) keep their text size and only lay out their bands. */
-export function usePrintCardFit(fit = true) {
+ * (`fit: false`) keep their text size and only lay out their bands. `onFit`
+ * hears whether a printed card fits at the minimum text size (a measuring
+ * copy's report, D110). */
+export function usePrintCardFit(fit = true, onFit?: (fits: boolean) => void) {
   const cardRef = useRef<HTMLElement>(null);
+  const onFitRef = useRef(onFit);
+  onFitRef.current = onFit;
   useLayoutEffect(() => {
     const element = cardRef.current;
     const body = element?.querySelector<HTMLElement>(".print-card-body");
@@ -94,6 +98,7 @@ export function usePrintCardFit(fit = true) {
         }
       }
       element.dataset.fitOverflow = String(!fits);
+      onFitRef.current?.(fits);
     };
     const observer = new ResizeObserver(fitCard);
     observer.observe(body);

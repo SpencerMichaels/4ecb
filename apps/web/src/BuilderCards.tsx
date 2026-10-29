@@ -15,11 +15,14 @@ import {
 import {
   authoredSheetPowerCard,
   createSheetPowerCardFinder,
+  creatureRecord,
+  sheetCreatureCard,
   sheetBeastCompanionCard,
   sheetFamiliarCard,
   sheetItemCard,
   type SheetBeastCompanionCard,
   type SheetCard,
+  type SheetCreatureCard,
   type SheetFamiliarCard,
   itemSetOf,
   sheetItemSetCard,
@@ -30,6 +33,7 @@ import { entityCardSource } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import { BeastCompanionCard } from "./BeastCompanionCard";
+import { CreatureCard } from "./CreatureCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { PowerCard, type CardTextPresentation } from "./PowerCard";
@@ -53,6 +57,13 @@ export interface BuilderCardSettings {
   readonly beastCardFor: (
     entity: ContentEntity,
   ) => SheetBeastCompanionCard | undefined;
+  /** The creature an item's records carry (a mount, D110) as this
+   *  character would have it; undefined for an item without a stat block, or
+   *  an owner-relative one before the character is evaluated. */
+  readonly creatureCardFor: (
+    name: string,
+    entities: readonly ContentEntity[],
+  ) => SheetCreatureCard | undefined;
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
   readonly abbreviateAbilityValues: boolean;
@@ -151,6 +162,18 @@ export function evaluatedBuilderCardSettings(
         owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
       ),
     familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
+    creatureCardFor: (name, entities) => {
+      const record = creatureRecord(entities);
+      return record === undefined
+        ? undefined
+        : sheetCreatureCard({
+            ...record,
+            origin: { kind: "mount" },
+            name,
+            stats: evaluation.stats,
+            level: evaluation.level,
+          });
+    },
     beastCardFor: (entity) => {
       const beast = previewBeastCompanion({
         entity,
@@ -199,6 +222,20 @@ export function authoredBuilderCardSettings(
       authoredSheetPowerCard(entity, abbreviatePowerAbilities),
     familiarCardFor: (entity) => sheetFamiliarCard(entity, {}),
     beastCardFor: () => undefined,
+    // A published block prints its own numbers; an owner-relative one needs
+    // the evaluated character.
+    creatureCardFor: (name, entities) => {
+      const record = creatureRecord(entities);
+      return record === undefined || record.block.kind !== "fixed"
+        ? undefined
+        : sheetCreatureCard({
+            ...record,
+            origin: { kind: "mount" },
+            name,
+            stats: {},
+            level: characterLevel,
+          });
+    },
     characterLevel,
     abbreviateAbilityValues: false,
   };
@@ -306,6 +343,38 @@ export function BuilderItemCard({
         ),
       }}
     />
+  );
+}
+
+/** The creature an item carries (a mount's stat block, D110), as the
+ *  sheet prints it, beside the item's own card. */
+export function BuilderCreatureCard({
+  name,
+  entities,
+  headingSuffix = "-creature",
+}: {
+  readonly name: string;
+  readonly entities: readonly ContentEntity[];
+  readonly headingSuffix?: string;
+}) {
+  const settings = useContext(BuilderCardContext);
+  const showSource = useContext(ShowEntitySourceContext);
+  const card = settings.creatureCardFor(name, entities);
+  const entity = entities.at(-1);
+  if (card === undefined || entity === undefined) return null;
+  return (
+    <div className="candidate-card-panel">
+      <CreatureCard
+        card={card}
+        layout="panel"
+        panel={{
+          headingId: headingIdFor(entity, headingSuffix),
+          ...(showSource
+            ? { source: `Source: ${entityCardSource(entity)}` }
+            : {}),
+        }}
+      />
+    </div>
   );
 }
 

@@ -36,6 +36,8 @@ import {
   featureChoiceText,
   isSheetPlayCard,
   deckPowerCards,
+  sheetCreatureCardKeyBase,
+  sheetLayoutCardKey,
   type CharacterSheetModel,
   type SheetDeckCard,
   type SheetLayoutCard,
@@ -51,6 +53,7 @@ import { inventoryCategory } from "./equipment-ui";
 import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
 import { AssociateCard } from "./AssociateCard";
 import { BeastCompanionCard } from "./BeastCompanionCard";
+import { CreatureCard } from "./CreatureCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { ItemSetCard } from "./ItemSetCard";
@@ -119,6 +122,7 @@ function PrintCard({
   if (card.kind === "beast") return <BeastCompanionCard card={card} />;
   if (card.kind === "familiar") return <FamiliarCard card={card} />;
   if (card.kind === "associate") return <AssociateCard card={card} />;
+  if (card.kind === "creature") return <CreatureCard card={card} />;
   if (card.kind === "item-set") return <ItemSetCard card={card} />;
   return card.kind === "power" ? (
     <PowerCard card={card} characterLevel={characterLevel} />
@@ -387,9 +391,10 @@ export function CharacterSheetPage({
       const holdingIds = cards.flatMap(({ holdingId }) =>
         holdingId === undefined ? [] : [holdingId],
       );
-      const layoutCards = cards.filter(
-        ({ holdingId }) => holdingId === undefined,
-      );
+      // A split creature's actions card stands for the creature (D110).
+      const layoutCards = cards
+        .filter(({ holdingId }) => holdingId === undefined)
+        .map((card) => ({ ...card, key: sheetLayoutCardKey(card) }));
       const current = latestPresentation.current;
       const nextLayout =
         layoutCards.length === 0
@@ -428,12 +433,30 @@ export function CharacterSheetPage({
       ),
     });
   }, [savePresentation]);
+  // Creatures whose whole card overflows the printed card at the minimum
+  // text size, as their measuring copies report: each prints as a stats card
+  // and an actions card (D110).
+  const [splitCreatures, setSplitCreatures] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const reportCreatureFit = useCallback((key: string, fits: boolean) => {
+    setSplitCreatures((current) => {
+      if (current.has(key) === !fits) return current;
+      const next = new Set(current);
+      if (fits) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
   const resolvedLayout = useMemo(
     () =>
       model === undefined
         ? undefined
-        : applySheetLayout(model, sheetLayout, { itemCardsShown }),
-    [model, sheetLayout, itemCardsShown],
+        : applySheetLayout(model, sheetLayout, {
+            itemCardsShown,
+            splitCreatures,
+          }),
+    [model, sheetLayout, itemCardsShown, splitCreatures],
   );
   // Page 1's reminder rows: Edit mode (never while printing) lists hidden
   // rows too, in place; View mode and print only the shown ones.
@@ -474,11 +497,27 @@ export function CharacterSheetPage({
   }, []);
   const moveCard = useCallback(
     (key: string, target: string, after: boolean) => {
-      if (resolvedLayout === undefined || key === target) return;
-      const order = resolvedLayout.cards.map((card) => card.key);
-      const before = after ? order[order.indexOf(target) + 1] : target;
-      if (before === key) return;
-      const next = movedBefore(order, key, before);
+      if (resolvedLayout === undefined) return;
+      // A split creature's actions card moves, and takes drops, as the
+      // creature: a drop onto it lands after the pair (D110).
+      const layoutKeyOf = (cardKey: string) => {
+        const card = resolvedLayout.cards.find(
+          (candidate) => candidate.key === cardKey,
+        );
+        return card === undefined ? cardKey : sheetLayoutCardKey(card);
+      };
+      const moving = layoutKeyOf(key);
+      const onto = layoutKeyOf(target);
+      const dropAfter = after || onto !== target;
+      if (moving === onto) return;
+      const order = [
+        ...new Set(
+          resolvedLayout.cards.map((card) => sheetLayoutCardKey(card)),
+        ),
+      ];
+      const before = dropAfter ? order[order.indexOf(onto) + 1] : onto;
+      if (before === moving) return;
+      const next = movedBefore(order, moving, before);
       if (next.every((entry, index) => entry === order[index])) return;
       updateLayout(
         withSheetCardOrder(
@@ -985,6 +1024,24 @@ export function CharacterSheetPage({
         </section>
       </div>
 
+      {/* Each creature's whole card, measured at print size: one that
+          overflows at the minimum text size prints as its stats and actions
+          cards (D110). Never printed or seen. */}
+      {model.companions.some((card) => card.kind === "creature") ? (
+        <div className="print-card-probe print-excluded" aria-hidden="true">
+          {model.companions.flatMap((card) => {
+            if (card.kind !== "creature") return [];
+            const key = sheetCreatureCardKeyBase(card);
+            return [
+              <CreatureCard
+                card={card}
+                key={key}
+                onFit={(fits) => reportCreatureFit(key, fits)}
+              />,
+            ];
+          })}
+        </div>
+      ) : null}
       <div className="sheet-preview-pages">
         <SheetOverview
           model={model}

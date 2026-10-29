@@ -9,6 +9,10 @@ import {
 } from "@4ecb/character-domain";
 
 import { sheetCardDeck, type SheetDeckEntry } from "./card-deck";
+import {
+  CREATURE_ACTIONS_KEY_SUFFIX,
+  type SheetCreatureCard,
+} from "./creature-card";
 import type { CharacterSheetModel, SheetCard } from "./index";
 import type { OverviewReminderCandidate } from "./overview";
 
@@ -20,6 +24,12 @@ export interface SheetLayoutCard extends SheetDeckEntry {
    * card; absent for every card the layout's own lists control.
    */
   readonly holdingId?: string;
+  /**
+   * The key the layout stores for this card when it differs from `key`: a
+   * split creature's actions card (D110) is hidden, shown and moved with
+   * its stats card, under the creature's one key.
+   */
+  readonly layoutKey?: string;
 }
 
 export interface SheetLayoutReminder extends OverviewReminderCandidate {
@@ -64,7 +74,13 @@ export function applySheetLayout(
   model: Pick<CharacterSheetModel, "powers" | "items" | "companions"> &
     Partial<Pick<CharacterSheetModel, "itemSets" | "overview">>,
   layout: SheetLayout | undefined,
-  options: { readonly itemCardsShown?: ReadonlyMap<string, boolean> } = {},
+  options: {
+    readonly itemCardsShown?: ReadonlyMap<string, boolean>;
+    /** Creature cards (by deck key) whose whole card overflows the printed
+     *  card at the minimum text size: each prints as a stats card and an
+     *  actions card (D110). */
+    readonly splitCreatures?: ReadonlySet<string>;
+  } = {},
 ): ResolvedSheetLayout {
   const hiddenCards = new Set(layout?.hiddenCards ?? []);
   const shownCards = new Set(layout?.shownCards ?? []);
@@ -81,14 +97,18 @@ export function applySheetLayout(
       : shownCards.has(entry.key);
   };
   const defaultCards = sheetCardDeck(model, shown);
-  const cards = orderedCards(defaultCards, layout?.cardOrder ?? []).map(
-    (entry): SheetLayoutCard => {
+  const cards = orderedCards(defaultCards, layout?.cardOrder ?? []).flatMap(
+    (entry): SheetLayoutCard[] => {
       const holdingId = holdingOf(entry);
-      return {
+      const card: SheetLayoutCard = {
         ...entry,
         shown: shown(entry),
         ...(holdingId === undefined ? {} : { holdingId }),
       };
+      return entry.card.kind === "creature" &&
+        options.splitCreatures?.has(entry.key) === true
+        ? splitCreatureCard(card, entry.card)
+        : [card];
     },
   );
   const hiddenSections = new Set(
@@ -170,3 +190,25 @@ export function orderedCards<Entry extends { readonly key: string }>(
   });
   return result;
 }
+
+/** A creature's stats card then its actions card, in the creature's deck
+ *  place; the actions card follows its stats card wherever it moves. */
+function splitCreatureCard(
+  entry: SheetLayoutCard,
+  card: SheetCreatureCard,
+): SheetLayoutCard[] {
+  return [
+    { ...entry, card: { ...card, part: "stats" } },
+    {
+      ...entry,
+      key: `${entry.key}${CREATURE_ACTIONS_KEY_SUFFIX}`,
+      layoutKey: entry.key,
+      card: { ...card, part: "actions" },
+    },
+  ];
+}
+
+/** The key a sheet layout stores for a card (hidden cards, card order). */
+export const sheetLayoutCardKey = (
+  card: Pick<SheetLayoutCard, "key" | "layoutKey">,
+) => card.layoutKey ?? card.key;

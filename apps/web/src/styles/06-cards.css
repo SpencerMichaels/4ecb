@@ -991,6 +991,44 @@
   font-weight: 400;
   opacity: 0.75;
 }
+/* Creature (D110): the associate card's frame, compacted so most stat blocks
+   fit one printed card: defense and hit point tiles share one row, and the
+   notes shrink with the body text. */
+.print-creature-vitals {
+  display: grid;
+  gap: 0.045in;
+  grid-template-columns: 2fr 1fr;
+}
+.print-creature-card
+  .print-creature-vitals
+  .stat-tiles:not(.stat-tiles-compact) {
+  --stat-value-size: 1.55em;
+}
+.print-creature-note {
+  margin: 0;
+}
+.print-creature-note strong {
+  color: var(--card-color);
+}
+.print-card-body .print-creature-description {
+  display: grid;
+  gap: 0.03in;
+}
+.print-creature-description > .prose-table {
+  margin-block: 0;
+}
+/* The measuring copies that decide whether a creature prints as one card or
+   as its stats and actions cards: laid out at print size, never seen. */
+.print-card-probe {
+  height: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  visibility: hidden;
+  width: 0;
+}
 /* A beast power's damage, in place of the weapon table. */
 .print-card-beast-damage p {
   margin: 0;

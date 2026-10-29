@@ -1,6 +1,13 @@
 import type { SheetAssociateCard } from "@4ecb/sheet-model";
 
-import { abilityAbbreviation } from "./ability-abbreviations";
+import {
+  CreatureAbilityTiles,
+  CreatureEntrySection,
+  creatureDefenseTiles,
+  creatureHitPointTiles,
+  creatureNotes,
+  signedNumber,
+} from "./CreatureCard";
 import { Icon } from "./Icon";
 import {
   CardPanelSubheading,
@@ -9,50 +16,6 @@ import {
 } from "./PowerCard";
 import { StatGroup } from "./StatTiles";
 import { usePrintCardFit } from "./use-print-card-fit";
-
-const signed = (value: number) => (value >= 0 ? `+${value}` : String(value));
-
-type Entry = SheetAssociateCard["powers"][number];
-
-/** "Blinking Bite (teleportation)", "Dust and Smoke · Aura 1". */
-function entryHeading(entry: Entry): string {
-  const name =
-    entry.keywords === undefined
-      ? entry.name
-      : `${entry.name} (${entry.keywords})`;
-  return entry.aura === undefined ? name : `${name} · Aura ${entry.aura}`;
-}
-
-/** The power's action and usage, leaving out an action its name states
- *  ("Standard Action"). */
-function entryMeta(entry: Entry): string {
-  const action =
-    entry.action === undefined ||
-    entry.name.toLocaleLowerCase().includes(entry.action.toLocaleLowerCase())
-      ? undefined
-      : entry.action;
-  return [action, entry.usage].filter(Boolean).join(" · ");
-}
-
-function EntrySection({ entry }: { readonly entry: Entry }) {
-  const meta = entryMeta(entry);
-  return (
-    <section className="print-familiar-section print-associate-entry">
-      <h4>
-        {entryHeading(entry)}
-        {meta === "" ? null : (
-          <span className="print-associate-usage"> {meta}</span>
-        )}
-      </h4>
-      {entry.lines.map((line, index) => (
-        <p key={index}>
-          {line.label === undefined ? null : <strong>{line.label}: </strong>}
-          {line.text}
-        </p>
-      ))}
-    </section>
-  );
-}
 
 /**
  * An associate's card (D107), in the companion cards' frame: one format for
@@ -76,14 +39,7 @@ export function AssociateCard({
   ]
     .filter(Boolean)
     .join(" ");
-  const notes = [
-    card.defensesNote,
-    card.defenseTraits?.join("; "),
-    card.hitPointsNote,
-    card.healingSurges === undefined
-      ? undefined
-      : `Healing surges: ${card.healingSurges}`,
-  ].filter((note): note is string => note !== undefined && note !== "");
+  const notes = creatureNotes(card);
   return (
     <article
       ref={cardRef}
@@ -120,46 +76,23 @@ export function AssociateCard({
         <StatGroup
           label="Defenses"
           tone="defenses"
-          values={[
-            { label: "AC", value: String(card.defenses.ac) },
-            { label: "Fort", value: String(card.defenses.fortitude) },
-            { label: "Ref", value: String(card.defenses.reflex) },
-            { label: "Will", value: String(card.defenses.will) },
-          ]}
+          values={creatureDefenseTiles(card.defenses)}
         />
         <StatGroup
           label="Health"
           tone="health"
           values={[
-            {
-              label: "HP",
-              value: String(card.hitPoints),
-              ...(card.hitPointsFrom === undefined
-                ? {}
-                : { title: card.hitPointsFrom }),
-            },
-            ...(card.bloodied === undefined
-              ? []
-              : [{ label: "Bloodied", value: String(card.bloodied) }]),
+            ...creatureHitPointTiles(card),
             ...(card.initiative === undefined
               ? []
-              : [{ label: "Init", value: signed(card.initiative) }]),
+              : [{ label: "Init", value: signedNumber(card.initiative) }]),
             ...(card.perception === undefined
               ? []
-              : [{ label: "Perc", value: signed(card.perception) }]),
+              : [{ label: "Perc", value: signedNumber(card.perception) }]),
           ]}
         />
         {card.abilities === undefined ? null : (
-          <StatGroup
-            label="Abilities"
-            tone="abilities"
-            compact
-            values={card.abilities.map((ability) => ({
-              lead: String(ability.score),
-              label: abilityAbbreviation(ability.name),
-              value: signed(ability.modifier),
-            }))}
-          />
+          <CreatureAbilityTiles abilities={card.abilities} />
         )}
         <p className="print-play-note">
           <strong>Speed</strong> {card.speed || "—"}
@@ -171,10 +104,10 @@ export function AssociateCard({
           </p>
         ))}
         {card.traits.map((entry, index) => (
-          <EntrySection entry={entry} key={`trait-${index}`} />
+          <CreatureEntrySection entry={entry} key={`trait-${index}`} />
         ))}
         {card.powers.map((entry, index) => (
-          <EntrySection entry={entry} key={`power-${index}`} />
+          <CreatureEntrySection entry={entry} key={`power-${index}`} />
         ))}
         {(card.other ?? []).map((line) => (
           <p className="print-play-note" key={line}>

@@ -8,6 +8,7 @@ import {
 
 import type { SheetAssociateCard } from "./associate-card";
 import type { SheetBeastCompanionCard } from "./beast-companion-card";
+import type { SheetCreatureCard } from "./creature-card";
 
 /**
  * A familiar's card (legacy `FamiliarBlock` panel), with the general familiar
@@ -37,10 +38,13 @@ export interface SheetFamiliarCard {
   readonly source: string;
 }
 
-/** Cards for creatures that accompany the character: beast, familiars, then
- *  associates (D107). */
+/** Cards for creatures that accompany the character: beast, familiars,
+ *  associates (D107), then creatures such as mounts (D110). */
 export type SheetCompanionCard =
-  SheetBeastCompanionCard | SheetFamiliarCard | SheetAssociateCard;
+  | SheetBeastCompanionCard
+  | SheetFamiliarCard
+  | SheetAssociateCard
+  | SheetCreatureCard;
 
 /** The familiar rules every familiar shares, in brief (Arcane Power). */
 export const FAMILIAR_RULES_REMINDER =

@@ -38,9 +38,11 @@ import {
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
 import {
-  itemMonsterStatBlock,
-  type SheetMonsterStatBlock,
-} from "./monster-stat-block";
+  creatureRecord,
+  descriptionRepeatsStatBlock,
+  sheetCreatureCard,
+  type SheetCreatureCard,
+} from "./creature-card";
 import { universalPowerDefinitionIds } from "./power-reference";
 import { mergeAdditionalEffects } from "./additional-effects";
 import { withUniversalActionCards } from "./universal-action-cards";
@@ -83,11 +85,20 @@ import {
 } from "./power-card-header";
 export { characterClassName, hybridClassName } from "./class-identity";
 export { featureNoteHidden, featureNoteText } from "./feature-notes";
-export type {
-  SheetMonsterStatBlock,
-  SheetStatBlockHeaderRow,
-  SheetStatBlockSection,
-} from "./monster-stat-block";
+export {
+  CREATURE_ACTIONS_KEY_SUFFIX,
+  creatureCardText,
+  creatureCardTitle,
+  creatureRecord,
+  descriptionRepeatsStatBlock,
+  sheetCreatureCard,
+  sheetCreatureCardKeyBase,
+  type SheetCreatureCard,
+  type SheetCreatureCardInput,
+  type SheetCreatureCardPart,
+  type SheetCreatureEntry,
+  type SheetCreatureOrigin,
+} from "./creature-card";
 export {
   POWER_CARD_BODY_EXCLUDES,
   movementTechniqueOf,
@@ -152,6 +163,7 @@ export {
 } from "./card-deck";
 export {
   applySheetLayout,
+  sheetLayoutCardKey,
   type ResolvedSheetLayout,
   type SheetLayoutCard,
   type SheetLayoutReminder,
@@ -304,8 +316,6 @@ export interface SheetCard {
   readonly spellbook?: boolean;
   /** A monk full discipline's movement technique, printed on its card. */
   readonly movementTechnique?: SheetMovementTechnique;
-  /** A mount's monster stat block (legacy `MonsterDisplay.Build`). */
-  readonly statBlock?: SheetMonsterStatBlock;
 }
 
 /** The movement technique part of a monk full discipline's card. */
@@ -697,7 +707,9 @@ function entityPresentation(
     ...(prerequisites === undefined || prerequisites.length === 0
       ? {}
       : { prerequisites }),
-    ...(entity.description.length === 0
+    // A mount whose description repeats its stat block (D110) leaves it to
+    // the creature card.
+    ...(entity.description.length === 0 || descriptionRepeatsStatBlock(entity)
       ? {}
       : { description: entity.description }),
     ...(entity.source.length === 0 ? {} : { source: entity.source }),
@@ -1397,15 +1409,7 @@ export function sheetItemCard(input: {
       ...entities.flatMap((candidate) => entityFields(candidate)),
     ],
     ...entityPresentation(entity),
-    ...statBlockPart(entities),
   };
-}
-
-function statBlockPart(
-  entities: readonly (ContentEntity | undefined)[],
-): Pick<SheetCard, "statBlock"> {
-  const statBlock = itemMonsterStatBlock(entities);
-  return statBlock === undefined ? {} : { statBlock };
 }
 
 function powerCard(
@@ -1670,7 +1674,6 @@ export function buildSheetModel(
           ...itemEntities.flatMap((candidate) => entityFields(candidate)),
         ],
         ...entityPresentation(entity),
-        ...statBlockPart([...itemEntities, entity]),
       };
     });
   const learnedReferences = lootPresentations.flatMap(
@@ -2185,6 +2188,24 @@ export function buildEvaluatedSheetModel(
       ];
     },
   );
+  // A held mount's creature card (D110), after the companions above.
+  const creatureCards: SheetCreatureCard[] = inventoryRows.flatMap(
+    ({ entry, itemEntities, name, referenceKind }) => {
+      const record =
+        referenceKind === undefined ? creatureRecord(itemEntities) : undefined;
+      return record === undefined
+        ? []
+        : [
+            sheetCreatureCard({
+              ...record,
+              origin: { kind: "mount", holdingId: entry.id },
+              name,
+              stats: evaluation.stats,
+              level: evaluation.level,
+            }),
+          ];
+    },
+  );
   // Known records: the build's learned entries plus what the evaluation
   // grants (`grant type="Ritual"`, `FREEBEE:`), once each, with their source.
   const learnedReferences = knownRecords(build, evaluation, (id) =>
@@ -2362,7 +2383,7 @@ export function buildEvaluatedSheetModel(
     proficiencies: sheetProficiencies(active),
     powers: powerCards,
     items: itemCards,
-    companions: companionCards,
+    companions: [...companionCards, ...creatureCards],
     ...(itemSets.length === 0 ? {} : { itemSets }),
     ...(deityEntity === undefined
       ? {}

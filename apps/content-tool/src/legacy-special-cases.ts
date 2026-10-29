@@ -2815,17 +2815,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Power detail: keywords, usage, display, _ChildPower movement technique.",
       "detail-pane presentation",
     ),
-    "MonsterDisplay.Build": partial(
+    "MonsterDisplay.Build": code(
       "Mount detail shows the _Monster stat block (47 mounts).",
       "the pack build parses each block once into _Creature Stat Block " +
         "(legacy-wotc creature-stat-block.ts, D110): a published block's " +
         "printed numbers, or an owner-relative block (Celestial steeds, Jade " +
         "Horse) as an associate stat block; unplaced lines are " +
-        "mount.stat-block-unparsed diagnostics (1 of 47: Cat's doubled size " +
-        "line). No card renders it yet: the creature card's tile layout " +
-        "overflows the printed card for 31 of 47 at the 6 pt floor (owner " +
-        "decision pending); sheet-model still splits the raw text into " +
-        "SheetCard.statBlock",
+        "mount.stat-block-unparsed diagnostics (none on the full pack; Cat's " +
+        "block restored by 9G-creatures.part). Each held mount prints a " +
+        "creature card (sheet-model creature-card.ts, web CreatureCard.tsx), " +
+        "split into stats and actions cards when the whole card overflows at " +
+        "the 6 pt floor; the builder item detail shows it as a panel card",
       test(
         "packages/legacy-wotc/src/creature-stat-block.test.ts",
         "parses a published monster block into its printed numbers",
@@ -2835,8 +2835,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "parses an owner-relative block as an associate stat block",
       ),
       test(
-        "packages/sheet-model/src/monster-stat-block.test.ts",
-        "has no stat block for a mount without _Monster (Crodlu)",
+        "packages/sheet-model/src/creature-card.test.ts",
+        "prints a published block's own numbers, traits apart from actions",
+      ),
+      test(
+        "packages/sheet-model/src/creature-card.test.ts",
+        "prints a split creature as stats then actions, under one layout key",
+      ),
+      test(
+        "packages/sheet-model/src/creature-card.test.ts",
+        "has no creature for a mount without a stat block (Crodlu)",
       ),
     ),
     "MountDisplay.BuildFromFullText": generic(

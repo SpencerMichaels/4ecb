@@ -77,7 +77,11 @@ import { ItemChoiceDialog } from "./ItemChoicePicker";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
-import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
+import {
+  BuilderCreatureCard,
+  BuilderItemCard,
+  BuilderPowerCard,
+} from "./BuilderCards";
 import { BuilderItemSetCard } from "./BuilderItemSetCard";
 
 type MoneyLocation = "carried" | "stored";
@@ -360,6 +364,7 @@ export function ItemDetail({
               })}
         />
       </div>
+      <BuilderCreatureCard name={item.displayName} entities={item.entities} />
       {powers.map((power) => (
         <BuilderPowerCard
           entity={power}

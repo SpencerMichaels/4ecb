@@ -1,3 +1,4 @@
+import { sheetCreatureCardKeyBase } from "./creature-card";
 import type { SheetCompanionCard } from "./familiar-card";
 import type { CharacterSheetModel, SheetCard } from "./index";
 import type { SheetItemSetCard } from "./item-set-card";
@@ -131,7 +132,7 @@ export const sheetItemCardKeyBase = (card: SheetCard) =>
 /**
  * The printed card deck in order with stable keys: the Play data and Skills
  * cards, the beast companion then familiars (companion card proposal, owner
- * answer 5), the special Action Point and Second Wind cards (as in the legacy
+ * answer 5), associates (D107) and creatures such as mounts (D110), the special Action Point and Second Wind cards (as in the legacy
  * builder), the other powers (`deckPowerCards`), then items with each item
  * set's card after its last shown piece's card (legacy CharTracker; a set
  * with no shown piece card closes the deck).
@@ -148,9 +149,10 @@ export function sheetCardDeck(
 ): SheetDeckEntry[] {
   const powerKeys = keyed(model.powers, sheetPowerCardKeyBase);
   const itemKeys = keyed(model.items, sheetItemCardKeyBase);
-  const companionKeys = keyed(
-    model.companions,
-    (card) => `companion:${keyPart(card.id)}`,
+  const companionKeys = keyed(model.companions, (card) =>
+    card.kind === "creature"
+      ? sheetCreatureCardKeyBase(card)
+      : `companion:${keyPart(card.id)}`,
   );
   const setKeys = keyed(
     model.itemSets ?? [],
