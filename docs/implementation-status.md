@@ -1,5 +1,19 @@
 # Implementation status
 
+## .dnd4e export and parity skip candidate catalogs (2026-10-29)
+
+The `.dnd4e` export (`character-export.ts`) evaluated in the exhaustive mode
+in a fresh worker that decoded the pack again; it now uses the app's shared
+pack and rules worker (`appContentRuntime`, so an open character's warm
+snapshots are reused) and passes `candidateDetailLevels: []`. The writer reads
+only occurrences, stats, overlays, powers and legality: on all 58
+`sample-chars/` saves the exported XML is byte-identical in both modes, at
+~0.3 s instead of ~4.9 s per evaluation (Node). `parity:baseline`
+(`scripts/legacy-parity.ts`) evaluates the same scoped way as the app's
+sheet; every result matches the accepted baseline and a run takes ~26 s
+instead of ~2 min. Developer audits that walk choices
+(`audit:native-workflow`, coverage/modifier audits) keep exhaustive lists.
+
 ## Content-update preview skips candidate catalogs (2026-10-29)
 
 "Checking what would change…" evaluated the character twice (old and new

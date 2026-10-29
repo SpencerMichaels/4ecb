@@ -60,7 +60,12 @@ export function compareCharacterParity(
       ? {}
       : { matchMissingDefinitionsIn: entities },
   );
-  const input = projectBuildForEvaluation(imported.build, entities);
+  // Scoped like the app's sheet: parity compares stats, powers, the sheet and
+  // diagnostics, never candidate catalogs.
+  const input = {
+    ...projectBuildForEvaluation(imported.build, entities),
+    candidateDetailLevels: [],
+  };
   const started = performance.now();
   const evaluated = evaluateCharacter(input, entities);
   const elapsedMilliseconds = performance.now() - started;
