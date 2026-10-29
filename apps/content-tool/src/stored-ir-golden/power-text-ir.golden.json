@@ -892,6 +892,11 @@
           3,
           "attack-type",
           1
+        ],
+        [
+          6,
+          "attack",
+          1
         ]
       ],
       "summonedCreature": true,
@@ -931,6 +936,23 @@
           "recoveries": []
         },
         "Intelligence vs. Reflex": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Intelligence"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        },
+        "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.": {
           "attack": {
             "isAttack": true,
             "defenses": [

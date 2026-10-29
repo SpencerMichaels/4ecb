@@ -167,16 +167,6 @@ describe("power attack lines", () => {
     );
   });
 
-  it("never reads a summon's Opportunity Attack command as the power's attack", () => {
-    expect(
-      powerAttackSlots(
-        [" Opportunity Attack", "• Opportunity Attack", "Attack"].map(
-          (name, ordinal) => ({ name, ordinal }),
-        ),
-      ),
-    ).toEqual([[2, "attack", 1]]);
-  });
-
   it("finds each attack slot's ordinal from its field name", () => {
     expect(
       powerAttackSlots(

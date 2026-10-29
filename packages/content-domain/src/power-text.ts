@@ -309,8 +309,6 @@ export function levelHeaderText(value: string): string {
  * damage rolls", Wildfire Bolt's larger critical rider) restates the hit
  * with a changed rider, so the damage stays the main Hit's; native parses
  * the rider as the damage expression.
- * A summon's " Opportunity Attack" field is one of its creature's commands
- * (native AttackLine never reads it), not the power's attack.
  */
 export function powerAttackSlots(
   specifics: readonly {
@@ -349,8 +347,7 @@ export function powerAttackSlots(
     )
       continue;
     if (/targets?$/i.test(name)) slot("target");
-    if (/attack$/i.test(name) && !/opportunity attack$/iu.test(name))
-      slot("attack");
+    if (/attack$/i.test(name)) slot("attack");
     if (/^(?:(?:primary|secondary|tertiary|quaternary)\s+)?hit$/i.test(name))
       slot("hit");
     if (/attack type$/i.test(name)) slot("attack-type");
