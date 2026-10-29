@@ -2815,13 +2815,27 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Power detail: keywords, usage, display, _ChildPower movement technique.",
       "detail-pane presentation",
     ),
-    "MonsterDisplay.Build": notHandled(
+    "MonsterDisplay.Build": partial(
       "Mount detail shows the _Monster stat block (47 mounts).",
-      "presentation gap: modern shows the mount's own record",
+      "presentation only: sheet-model splits the block into the legacy " +
+        "header band and sections (SheetCard.statBlock, monster-stat-block.ts) " +
+        "and flags the five descriptions that repeat it; no card renders it " +
+        "yet, because 8-12 of the 47 blocks exceed the printed item card at " +
+        "the 6.5pt fit floor and the deck has no continuation card (owner " +
+        "decision pending)",
+      test(
+        "packages/sheet-model/src/monster-stat-block.test.ts",
+        "splits a mount's _Monster block into a header band and sections",
+      ),
+      test(
+        "packages/sheet-model/src/monster-stat-block.test.ts",
+        "has no stat block for a mount without _Monster (Crodlu)",
+      ),
     ),
     "MountDisplay.BuildFromFullText": generic(
       "Maps mount names to their monster stat block names for display.",
-      "presentation; modern shows the mount's own record",
+      "presentation; modern reads the mount's own _Monster field " +
+        "(MonsterDisplay.Build)",
     ),
     "GearPageInfoPanel.MagicItemToPanel": generic(
       "Artifact/intelligent item headings.",

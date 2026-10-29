@@ -37,6 +37,10 @@ import {
   featureClauseKey,
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
+import {
+  itemMonsterStatBlock,
+  type SheetMonsterStatBlock,
+} from "./monster-stat-block";
 import { universalPowerDefinitionIds } from "./power-reference";
 import { mergeAdditionalEffects } from "./additional-effects";
 import { withUniversalActionCards } from "./universal-action-cards";
@@ -79,6 +83,11 @@ import {
 } from "./power-card-header";
 export { characterClassName, hybridClassName } from "./class-identity";
 export { featureNoteHidden, featureNoteText } from "./feature-notes";
+export type {
+  SheetMonsterStatBlock,
+  SheetStatBlockHeaderRow,
+  SheetStatBlockSection,
+} from "./monster-stat-block";
 export {
   POWER_CARD_BODY_EXCLUDES,
   movementTechniqueOf,
@@ -295,6 +304,8 @@ export interface SheetCard {
   readonly spellbook?: boolean;
   /** A monk full discipline's movement technique, printed on its card. */
   readonly movementTechnique?: SheetMovementTechnique;
+  /** A mount's monster stat block (legacy `MonsterDisplay.Build`). */
+  readonly statBlock?: SheetMonsterStatBlock;
 }
 
 /** The movement technique part of a monk full discipline's card. */
@@ -1386,7 +1397,15 @@ export function sheetItemCard(input: {
       ...entities.flatMap((candidate) => entityFields(candidate)),
     ],
     ...entityPresentation(entity),
+    ...statBlockPart(entities),
   };
+}
+
+function statBlockPart(
+  entities: readonly (ContentEntity | undefined)[],
+): Pick<SheetCard, "statBlock"> {
+  const statBlock = itemMonsterStatBlock(entities);
+  return statBlock === undefined ? {} : { statBlock };
 }
 
 function powerCard(
@@ -1651,6 +1670,7 @@ export function buildSheetModel(
           ...itemEntities.flatMap((candidate) => entityFields(candidate)),
         ],
         ...entityPresentation(entity),
+        ...statBlockPart([...itemEntities, entity]),
       };
     });
   const learnedReferences = lootPresentations.flatMap(
