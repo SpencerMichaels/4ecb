@@ -241,8 +241,14 @@ export function previewProfileMigration(
           );
         });
 
+  // The comparison reads stats, powers and diagnostics only, so neither
+  // evaluation builds candidate catalogs (the exhaustive lists check every
+  // power in the content against each slot and dominate the cost).
   const targetEvaluation = evaluateCharacter(
-    projectBuildForEvaluation(build, targetEntities),
+    {
+      ...projectBuildForEvaluation(build, targetEntities),
+      candidateDetailLevels: [],
+    },
     targetEntities,
     {
       onProgress: (progress) =>
@@ -253,7 +259,10 @@ export function previewProfileMigration(
     sourceEntities === undefined
       ? undefined
       : evaluateCharacter(
-          projectBuildForEvaluation(build, sourceEntities),
+          {
+            ...projectBuildForEvaluation(build, sourceEntities),
+            candidateDetailLevels: [],
+          },
           sourceEntities,
           {
             onProgress: (progress) =>

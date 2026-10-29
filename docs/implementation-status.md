@@ -1,5 +1,15 @@
 # Implementation status
 
+## Content-update preview skips candidate catalogs (2026-10-29)
+
+"Checking what would change…" evaluated the character twice (old and new
+content) in the exhaustive mode that builds every level's full candidate
+catalog, though the preview compares only stats, powers and diagnostic codes.
+`previewProfileMigration` now passes `candidateDetailLevels: []` to both
+evaluations. On all 34 `sample-chars/` saves the stats, powers and diagnostic
+codes are identical in both modes; per evaluation it averages ~0.3 s instead
+of ~4.9 s (Node; Hu Sheng-Ming 0.9 s vs 5.9 s).
+
 ## New player saves and parity content profiles (2026-10-28)
 
 24 new `sample-chars/` saves (plus 6 re-saved) were triaged. Most diffs were
