@@ -1080,7 +1080,19 @@ character before it is fixed, one slice per item.
       partial CBLoader, pack). (b) Unconsumed power text: report tokens in
       every pack attack/hit line that the power-text parse does not consume.
       (c) Selection invariant: every saved element of every sample either
-      appears in the projection or has a stated reason.
+      appears in the projection or has a stated reason. Built:
+      `audit:saved-selections` (`fb1990e`: no silent drops; extras are all
+      newer content) and `audit:record-drift` (`383a6c9`: 171793, Alysa
+      Redfield, Piri and Lily look stock but map to full; 24 saves unmapped;
+      Beldin/Erdan/Hunzu/Max Unger/Natan/Trey 11–12 used another CBLoader set;
+      remaining parity diffs are drift or homebrew). `audit:power-text` is on
+      branch `worktree-agent-ace99db8d7efb0a24` (`2c0e5bb`), unmerged until the
+      in-flight `POWER_TEXT_VERSION` 3 change lands; it found nine native
+      parse gaps (flat `+ N` chain terms, abilities without "modifier",
+      "+ X + Y modifier", "(melee) or (ranged)" clauses, step text without
+      "damage", indented/mid-line "Level 11/21:" steps, "Base + 4" attack
+      lines, abilities after " vs.", theme "Level N" headers read early) and
+      modern over-reads awaiting owner decisions.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
