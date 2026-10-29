@@ -336,9 +336,24 @@ evaluates the player characters in `sample-chars/` and the SampleHeroes on a
 pool of worker threads (cores, capped by available memory; output is the
 same for any job count), writes `tmp/parity/latest.json`, and diffs per-character
 match counts and mismatch keys against the accepted
-`tmp/parity/baseline.json`. It exits 1 on any new key. Run it after an
+`tmp/parity/baseline.json`. It exits 1 on any new key on a `sample-chars/`
+save; SampleHeroes keys are informational. Run it after an
 engine or content change, then `--accept` once each new difference is
 fixed or classified in `docs/implementation-status.md`.
+
+Some players' legacy builders ran stock WotC data without CBLoader parts (or
+only some parts), so on our full pack their saves differ in content, not
+engine. `tmp/parity/content-profiles.json` (ignored) maps such saves to the
+`stock` profile: they are evaluated on `tmp/content/stock-local.4ecp`
+(`scripts/build-private-content.sh --stock`: `combined.dnd40.original.xml`
+alone, no 4ecb corrections, since those patch CBLoader-merged records), and
+that run is their baselined result. Each is also shown on the full pack as an
+informational line that never fails the run, so engine diffs stay separate
+from content diffs. The run suggests, never applies, profiles for unmapped
+saves: CBLoader-only IDs saved only as `legality="houserule"` placeholders
+point to stock data; placeholders beside saved CBLoader records point to
+partial parts, which stay on `full`. `--no-profiles` evaluates every save on
+the run's pack.
 
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current

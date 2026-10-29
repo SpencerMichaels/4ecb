@@ -10,6 +10,7 @@
  *   pnpm parity:baseline --pack P.4ecp   # another pack
  *   pnpm parity:baseline FILE.dnd4e ...  # only these characters (no accept)
  *   pnpm parity:baseline --no-name-matching  # keep saved IDs the pack lacks
+ *   pnpm parity:baseline --no-profiles   # every save on --pack (see below)
  *   pnpm parity:baseline --jobs 4        # worker threads (default: CPUs,
  *                                        # capped at one per 1.5 GB free)
  *
@@ -25,12 +26,37 @@
  * `sample-chars/` save (current-builder saves, the canonical baseline), or a
  * baseline character is missing from a full run. SampleHeroes were saved by
  * older builders, so their new keys are reported as informational only.
+ *
+ * Content profiles. Some players' legacy builders ran stock WotC data
+ * (no CBLoader parts), so their saves differ from our full pack in content,
+ * not engine. tmp/parity/content-profiles.json (ignored) maps such saves to
+ * another pack:
+ *
+ *   { "packs": { "stock": "tmp/content/stock-local.4ecp" },
+ *     "characters": { "sample-chars/X.dnd4e": "stock",
+ *                     "sample-chars/Y.dnd4e": "full" } }
+ *
+ * "full" is the run's pack (--pack); "stock" defaults to the pack that
+ * `scripts/build-private-content.sh --stock` builds. A mapped save's counts,
+ * keys and regressions come from its profile's pack; it is also evaluated on
+ * the run's pack, shown as an informational "full pack" line (stored as
+ * `defaultPack` in latest.json) that never fails the run. A character whose
+ * profile differs from its baseline entry is not compared until re-accepted.
+ * `--no-profiles` evaluates every save on the run's pack.
+ *
+ * With CBLoader/Cache present, the run also suggests (never applies) profiles
+ * for unmapped `sample-chars/` saves: a save whose `legality="houserule"`
+ * placeholders are CBLoader-only IDs (absent from combined.dnd40.original.xml,
+ * present in combined.dnd40.merged.xml) and which saved no other CBLoader-only
+ * ID was probably made on stock data; placeholders beside real CBLoader IDs
+ * mean partial parts (keep on "full"). Mapping a save, to either profile,
+ * silences its suggestion.
  */
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import {
   Worker,
   isMainThread,
@@ -64,11 +90,24 @@ interface CharacterBaseline {
    * `action <name>: ...` and `main hand <name>: <first cached row> -> <evaluated main hand>`.
    */
   readonly mismatches: readonly string[];
+  /** The content profile the counts and keys come from; absent: the run's pack. */
+  readonly profile?: string;
+  /** For a profiled save, the informational evaluation on the run's pack. */
+  readonly defaultPack?: PackEvaluation;
 }
+
+type PackEvaluation = Omit<
+  CharacterBaseline,
+  "file" | "character" | "profile" | "defaultPack"
+>;
 
 interface Baseline {
   readonly generatedAt: string;
   readonly pack: { path: string; sha256: string };
+  /** The packs of the content profiles this run used, by profile name. */
+  readonly profiles?: Readonly<
+    Record<string, { path: string; sha256: string }>
+  >;
   readonly totals: {
     stats: { matching: number; comparable: number };
     powers: { matching: number; comparable: number };
@@ -298,10 +337,196 @@ async function evaluateInWorkers(
   });
 }
 
+const CONTENT_PROFILES = join(OUTPUT_DIR, "content-profiles.json");
+/** The profile name of the run's own pack (--pack). */
+const DEFAULT_PROFILE = "full";
+const DEFAULT_PROFILE_PACKS: Readonly<Record<string, string>> = {
+  stock: "tmp/content/stock-local.4ecp",
+};
+
+interface ContentProfiles {
+  /** Profile name -> pack path (without "full"). */
+  readonly packs: ReadonlyMap<string, string>;
+  /** Character file -> profile name (including explicit "full"). */
+  readonly characters: ReadonlyMap<string, string>;
+}
+
+async function readContentProfiles(): Promise<ContentProfiles> {
+  const raw: {
+    packs?: Record<string, string>;
+    characters?: Record<string, string>;
+  } = existsSync(CONTENT_PROFILES)
+    ? (JSON.parse(await readFile(CONTENT_PROFILES, "utf8")) as object)
+    : {};
+  const packs = new Map(
+    Object.entries({ ...DEFAULT_PROFILE_PACKS, ...raw.packs }),
+  );
+  packs.delete(DEFAULT_PROFILE);
+  const characters = new Map(
+    Object.entries(raw.characters ?? {}).map(([file, profile]) => [
+      relative(".", resolve(file)),
+      profile,
+    ]),
+  );
+  for (const [file, profile] of characters)
+    if (profile !== DEFAULT_PROFILE && !packs.has(profile))
+      throw new Error(
+        `${CONTENT_PROFILES}: ${file} names unknown profile "${profile}"`,
+      );
+  return { packs, characters };
+}
+
+/**
+ * Evaluates each (file, pack) task, one worker pool per pack in turn (so a
+ * worker holds one pack), and returns the results in task order.
+ */
+async function evaluateTasks(
+  tasks: readonly { file: string; pack: string }[],
+  matchMissingByName: boolean,
+  jobsArgument: number | undefined,
+): Promise<CharacterBaseline[]> {
+  const results: (CharacterBaseline | undefined)[] = tasks.map(() => undefined);
+  const byPack = new Map<string, number[]>();
+  tasks.forEach((task, index) =>
+    byPack.set(task.pack, [...(byPack.get(task.pack) ?? []), index]),
+  );
+  for (const [packPath, indexes] of byPack) {
+    const files = indexes.map((index) => tasks[index]!.file);
+    const jobs = jobsArgument ?? defaultJobs(files.length);
+    let evaluated: CharacterBaseline[];
+    if (jobs === 1) {
+      const entities = await loadPackEntities(packPath);
+      evaluated = [];
+      for (const file of files)
+        evaluated.push(await evaluateFile(file, entities, matchMissingByName));
+    } else {
+      evaluated = await evaluateInWorkers(
+        files,
+        { packPath, matchMissingByName },
+        jobs,
+      );
+    }
+    indexes.forEach((index, position) => {
+      results[index] = evaluated[position];
+    });
+  }
+  return results.map((result, index) => {
+    if (result === undefined)
+      throw new Error(`No result for ${tasks[index]!.file}`);
+    return result;
+  });
+}
+
+function packEvaluation(character: CharacterBaseline): PackEvaluation {
+  const evaluation: Record<string, unknown> = { ...character };
+  for (const key of ["file", "character", "profile", "defaultPack"])
+    delete evaluation[key];
+  return evaluation as unknown as PackEvaluation;
+}
+
+const sha256 = async (path: string) =>
+  createHash("sha256")
+    .update(await readFile(resolve(path)))
+    .digest("hex");
+
+const LEGACY_BASE_XML = "CBLoader/Cache/combined.dnd40.original.xml";
+const LEGACY_MERGED_XML = "CBLoader/Cache/combined.dnd40.merged.xml";
+
+interface ContentGeneration {
+  /** CBLoader-only IDs saved as `legality="houserule"` placeholders. */
+  readonly placeholders: readonly string[];
+  /** CBLoader-only IDs saved as real (non-houserule) records. */
+  readonly partRecords: number;
+}
+
+/**
+ * Which CBLoader-only records (in the merged cache, not the stock data) each
+ * save references, and how. Undefined when the CBLoader cache is absent.
+ */
+async function contentGenerations(
+  files: readonly string[],
+): Promise<Map<string, ContentGeneration> | undefined> {
+  if (!existsSync(LEGACY_BASE_XML) || !existsSync(LEGACY_MERGED_XML))
+    return undefined;
+  const ids = async (path: string) =>
+    new Set(
+      Array.from(
+        (await readFile(path, "utf8")).matchAll(/internal-id="([^"]+)"/g),
+        (match) => match[1]!,
+      ),
+    );
+  const stock = await ids(LEGACY_BASE_XML);
+  const merged = await ids(LEGACY_MERGED_XML);
+  const generations = new Map<string, ContentGeneration>();
+  for (const file of files) {
+    const xml = await readFile(resolve(file), "utf8");
+    const placeholders = new Set<string>();
+    const partRecords = new Set<string>();
+    for (const [element] of xml.matchAll(/<RulesElement\b[^>]*>/g)) {
+      const id = /internal-id="([^"]+)"/.exec(element)?.[1];
+      if (id === undefined || stock.has(id) || !merged.has(id)) continue;
+      (/legality="houserule"/.test(element) ? placeholders : partRecords).add(
+        id,
+      );
+    }
+    generations.set(file, {
+      placeholders: [...placeholders].sort(),
+      partRecords: partRecords.size,
+    });
+  }
+  return generations;
+}
+
+/** Prints content-profile suggestions for canonical saves; never applies them. */
+function printProfileSuggestions(
+  generations: ReadonlyMap<string, ContentGeneration>,
+  mapped: ReadonlyMap<string, string>,
+): void {
+  const lines: string[] = [];
+  const noPartIds: string[] = [];
+  for (const [file, generation] of generations) {
+    if (file.startsWith(SAMPLE_HEROES)) continue;
+    const profile = mapped.get(file);
+    const placeholders = `${generation.placeholders.slice(0, 3).join(", ")}${generation.placeholders.length > 3 ? ", ..." : ""}`;
+    if (profile !== undefined) {
+      if (profile !== DEFAULT_PROFILE && generation.partRecords > 0)
+        lines.push(
+          `  ${file}: mapped to "${profile}" but saved ${generation.partRecords} CBLoader-only record(s); check the mapping`,
+        );
+      continue;
+    }
+    if (generation.placeholders.length > 0 && generation.partRecords === 0)
+      lines.push(
+        `  ${file}: "stock"? CBLoader-only IDs saved only as houserule placeholders (${placeholders})`,
+      );
+    else if (generation.placeholders.length > 0)
+      lines.push(
+        `  ${file}: partial CBLoader parts? houserule placeholders (${placeholders}) beside ${generation.partRecords} saved CBLoader-only record(s); "full" unless a closer pack exists`,
+      );
+    else if (generation.partRecords === 0) noPartIds.push(file);
+  }
+  if (noPartIds.length > 0)
+    lines.push(
+      `  "stock"? (weaker: no CBLoader-only IDs saved at all): ${noPartIds.map((file) => basename(file, ".dnd4e")).join(", ")}`,
+    );
+  if (lines.length === 0) return;
+  console.log(
+    `Content profile suggestions (not applied; map a save in ${CONTENT_PROFILES} to silence it):`,
+  );
+  for (const line of lines) console.log(line);
+}
+
+const counts = (
+  character: PackEvaluation,
+  previous: PackEvaluation | undefined,
+) =>
+  `stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}, main hand ${delta(character.mainHand, previous?.mainHand)}${character.complete ? "" : " incomplete"}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`;
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const accept = args.includes("--accept");
   const matchMissingByName = !args.includes("--no-name-matching");
+  const useProfiles = !args.includes("--no-profiles");
   const packIndex = args.indexOf("--pack");
   const packPath =
     packIndex >= 0
@@ -314,12 +539,14 @@ async function main(): Promise<void> {
     (!Number.isInteger(jobsArgument) || jobsArgument < 1)
   )
     throw new Error("--jobs needs a positive whole number");
-  const explicit = args.filter(
-    (arg, index) =>
-      !arg.startsWith("--") &&
-      (packIndex < 0 || index !== packIndex + 1) &&
-      (jobsIndex < 0 || index !== jobsIndex + 1),
-  );
+  const explicit = args
+    .filter(
+      (arg, index) =>
+        !arg.startsWith("--") &&
+        (packIndex < 0 || index !== packIndex + 1) &&
+        (jobsIndex < 0 || index !== jobsIndex + 1),
+    )
+    .map((file) => relative(".", resolve(file)));
   if (accept && explicit.length > 0)
     throw new Error("--accept needs a full run (no character arguments)");
   const files =
@@ -331,22 +558,65 @@ async function main(): Promise<void> {
         ];
   if (files.length === 0) throw new Error("No legacy characters found");
 
-  const packBytes = await readFile(resolve(packPath));
-  const jobs = jobsArgument ?? defaultJobs(files.length);
-  const characters: CharacterBaseline[] = [];
-  if (jobs === 1) {
-    const entities = await loadPackEntities(packPath);
-    for (const file of files)
-      characters.push(await evaluateFile(file, entities, matchMissingByName));
-  } else {
-    characters.push(
-      ...(await evaluateInWorkers(
-        files,
-        { packPath, matchMissingByName },
-        jobs,
-      )),
-    );
+  const contentProfiles = await readContentProfiles();
+  const profileOf = (file: string) =>
+    useProfiles
+      ? (contentProfiles.characters.get(file) ?? DEFAULT_PROFILE)
+      : DEFAULT_PROFILE;
+  const usedProfiles = [
+    ...new Set(files.map(profileOf).filter((p) => p !== DEFAULT_PROFILE)),
+  ].sort();
+  for (const profile of usedProfiles) {
+    const path = contentProfiles.packs.get(profile)!;
+    if (!existsSync(path))
+      throw new Error(
+        `The "${profile}" content profile's pack ${path} is missing` +
+          (profile === "stock"
+            ? ": build it with scripts/build-private-content.sh --stock"
+            : "") +
+          " (or run with --no-profiles)",
+      );
   }
+
+  // Primary evaluations (each save on its profile's pack), then the
+  // informational run's-pack evaluations of the profiled saves.
+  const tasks = [
+    ...files.map((file) => {
+      const profile = profileOf(file);
+      return {
+        file,
+        pack:
+          profile === DEFAULT_PROFILE
+            ? packPath
+            : contentProfiles.packs.get(profile)!,
+      };
+    }),
+    ...files
+      .filter((file) => profileOf(file) !== DEFAULT_PROFILE)
+      .map((file) => ({ file, pack: packPath })),
+  ];
+  const evaluated = await evaluateTasks(
+    tasks,
+    matchMissingByName,
+    jobsArgument,
+  );
+  const informational = new Map(
+    evaluated
+      .slice(files.length)
+      .map((character) => [character.file, packEvaluation(character)]),
+  );
+  const characters: CharacterBaseline[] = evaluated
+    .slice(0, files.length)
+    .map((character) => {
+      const profile = profileOf(character.file);
+      if (profile === DEFAULT_PROFILE) return character;
+      return {
+        ...character,
+        profile,
+        defaultPack: informational.get(character.file)!,
+      };
+    });
+
   const sum = (
     pick: (
       character: CharacterBaseline,
@@ -359,12 +629,15 @@ async function main(): Promise<void> {
       }),
       { matching: 0, comparable: 0 },
     );
+  const profilePacks: Record<string, { path: string; sha256: string }> = {};
+  for (const profile of usedProfiles) {
+    const path = contentProfiles.packs.get(profile)!;
+    profilePacks[profile] = { path, sha256: await sha256(path) };
+  }
   const latest: Baseline = {
     generatedAt: new Date().toISOString(),
-    pack: {
-      path: packPath,
-      sha256: createHash("sha256").update(packBytes).digest("hex"),
-    },
+    pack: { path: packPath, sha256: await sha256(packPath) },
+    ...(usedProfiles.length > 0 ? { profiles: profilePacks } : {}),
     totals: {
       stats: sum((character) => character.stats),
       powers: sum((character) => character.powers),
@@ -391,24 +664,52 @@ async function main(): Promise<void> {
     console.log(
       `Note: the baseline used another pack (${baseline.pack.path}, ${baseline.pack.sha256.slice(0, 12)}).`,
     );
+  for (const [profile, pack] of Object.entries(latest.profiles ?? {})) {
+    const previous = baseline?.profiles?.[profile];
+    if (previous !== undefined && previous.sha256 !== pack.sha256)
+      console.log(
+        `Note: the baseline used another "${profile}" pack (${previous.path}, ${previous.sha256.slice(0, 12)}).`,
+      );
+  }
 
   let regressions = 0;
   for (const character of characters) {
     const previous = before.get(character.file);
-    const known = new Set(previous?.mismatches ?? []);
-    const current = new Set(character.mismatches);
-    const added = character.mismatches.filter((key) => !known.has(key));
-    const fixed = [...known].filter((key) => !current.has(key));
+    const profile = character.profile ?? DEFAULT_PROFILE;
+    const previousProfile = previous?.profile ?? DEFAULT_PROFILE;
+    const sameProfile = profile === previousProfile;
+    const comparedTo = sameProfile ? previous : undefined;
     const canonical = !character.file.startsWith(SAMPLE_HEROES);
-    if (previous !== undefined && canonical) regressions += added.length;
-    const state = character.complete ? "" : " incomplete";
     console.log(
-      `${character.file}: stats ${delta(character.stats, previous?.stats)}, powers ${delta(character.powers, previous?.powers)}, usage ${delta(character.usage, previous?.usage)}, action ${delta(character.action, previous?.action)}, main hand ${delta(character.mainHand, previous?.mainHand)}${state}${character.errors > 0 ? `, ${character.errors} error(s)` : ""}`,
+      `${character.file}${profile === DEFAULT_PROFILE ? "" : ` [${profile}]`}: ${counts(character, comparedTo)}`,
     );
+    if (character.defaultPack !== undefined) {
+      const defaultKeys = new Set(character.defaultPack.mismatches);
+      const contentOnly = [...defaultKeys].filter(
+        (key) => !character.mismatches.includes(key),
+      ).length;
+      const previousDefault =
+        previous?.defaultPack ??
+        (previousProfile === DEFAULT_PROFILE ? previous : undefined);
+      console.log(
+        `  on the ${DEFAULT_PROFILE} pack (informational): ${counts(character.defaultPack, previousDefault)}; ${contentOnly} mismatch(es) only there`,
+      );
+    }
     if (previous === undefined) {
       if (baseline !== undefined) console.log("  (not in the baseline)");
       continue;
     }
+    if (!sameProfile) {
+      console.log(
+        `  (content profile ${previousProfile} -> ${profile}: not compared; re-accept the baseline)`,
+      );
+      continue;
+    }
+    const known = new Set(previous.mismatches);
+    const current = new Set(character.mismatches);
+    const added = character.mismatches.filter((key) => !known.has(key));
+    const fixed = [...known].filter((key) => !current.has(key));
+    if (canonical) regressions += added.length;
     for (const key of added)
       console.log(
         `  + ${key}${canonical ? "" : " (older-builder save; informational)"}`,
@@ -426,6 +727,9 @@ async function main(): Promise<void> {
   console.log(
     `Total: stats ${delta(latest.totals.stats, baseline?.totals.stats)}, powers ${delta(latest.totals.powers, baseline?.totals.powers)}, usage ${delta(latest.totals.usage, baseline?.totals.usage)}, action ${delta(latest.totals.action, baseline?.totals.action)}, main hand ${delta(latest.totals.mainHand, baseline?.totals.mainHand)}`,
   );
+  const generations = await contentGenerations(files);
+  if (generations !== undefined)
+    printProfileSuggestions(generations, contentProfiles.characters);
   console.log(`Wrote ${join(OUTPUT_DIR, "latest.json")}`);
   if (accept) {
     await writeFile(baselinePath, `${JSON.stringify(latest, null, 2)}\n`);
