@@ -3713,3 +3713,55 @@ also prints), while the command text is on the creature card; the
 hexblade pact powers now print an empty body and their trait cards
 (auras, special movement) stay separate cards. Glyph of Warding is a trap,
 not a summon, and keeps its card (115% at 6.5 pt, 87% at 6 pt).
+
+Amended (2026-10-29, owner decisions on the open questions):
+
+- **Numbers on the creature card.** Each command the summoner rolls gets
+  its own row from the rules engine (`PowerCommand`: `PowerVariant.commands`
+  per equipment row, `EvaluatedPower.commands` for a power with no rows of
+  its own), worked out by the same calculation as a power's attack: the
+  summoner's ability, half level, implement or weapon and every
+  non-temporary bonus for "Wisdom vs. Reflex" (D095), "your level + N" with
+  only creature (`SUMMON.`) and keyed bonuses for a fixed-bonus creature.
+  The pack build stores each command's attack and hit texts as its `roll`
+  (`_Creature Stat Block` version 3; their parse in the power text IR,
+  version 3). The creature card prints the row of the power card's own
+  row (equipped main hand, else equipped, else first): a stat-block line
+  ("Attack: Melee 1; +30 vs. Reflex", "Hit: 2d8+21 radiant damage …")
+  takes the row's numbers, and a special command written as one text gets
+  an "Attack +13 vs. Fortitude · Damage 1d8+8" row beside it. A summon
+  whose commands moved prints no attack band or weapon table on its power
+  card; the engine keeps its legacy-compatible row (the first "X vs. Y"
+  command field) for parity. A power with its own attack (Servant of the
+  Staff) keeps its rows.
+- **Usage in the type bar; empty pact cards fold.** A summoned creature's
+  type bar reads "Summoned creature · <usage>" ("· Daily"). A summon power
+  whose card has nothing left beyond its header (the 16 hexblade and binder
+  pact summons, Earth-friend, Bound Soul) prints no card
+  (`foldedIntoCreature`); it stays in page-1 lists and the power index.
+- **Community cards merge.** The pack build merges each pact summon's
+  community cards (`<prefix>_POWERCARD_<n>`, granted by the same records as
+  `<prefix>_POWERCARD_0`; legacy-wotc `summon-community-cards.ts`) into
+  its creature: a trait card's auras and passive traits become traits (the
+  stats card), its "Minor Action. …" and opportunity actions become actions,
+  and each attack card becomes an action with its corrected "your level +
+  N" line (its own `modify`, `9B-summoned-allies.part`) and a roll keyed to
+  the card, so bonuses the content keys to it (Pact Reward, Superior
+  Warlock's Ally) still reach its row. The card's Requirement ("You must
+  have summoned your …") is left off, and the Special every attack card
+  repeats prints once with the creature's notes. The merged cards become
+  inert Internal records under their IDs (no fields, no self-`modify`), so
+  imports resolve and export writes the same IDs, as D107's associate cards.
+  All 16 creatures merge (44 cards).
+- **"X, Y, or Z modifier"** is the highest of the listed abilities by score,
+  earlier ones winning ties, as native MultipleAbilityChoices (`-Module-.cs`
+  ~24663) reads a damage line's ability list: in the engine when the attack
+  names none of them (a fixed-bonus creature) and in `associateStatistics`
+  (the Unicorn Destrier's "your Strength or Charisma modifier" now prints
+  one total). Bound Soul's damage lines lost "modifier"; `9G-creatures.part`
+  restores the word, so its creature parses clean. On the full pack the
+  summon diagnostics are the 3 Effect-only ones above.
+
+Consequences: `pnpm parity:baseline` is unchanged (the legacy rows stay;
+no legacy save prints the community cards' rows). A republish of the
+content is needed for the merged creatures and command rows.

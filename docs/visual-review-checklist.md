@@ -507,9 +507,9 @@ are yours.
 
 ## Pass 13: Summoned creature cards
 
-The creature cards' numbers, commands, order, type bar and what left the
-power cards are checked automatically; fit is measured in the browser, so
-only these are yours.
+The creature cards' numbers (each command's engine row), commands, order,
+type bar, merged community cards and what left the power cards are checked
+automatically; fit is measured in the browser, so only these are yours.
 
 - [ ] **Summoned creature card (D111).**
   - **Where:** `invoker-drow` → `?preview=1`, the card after the Spiderling
@@ -520,35 +520,34 @@ only these are yours.
     angel", one row of AC/Fort/Ref/Will and HP/Bloodied tiles, a Speed
     "6, fly 6 (hover)" line, "Your defenses, not including any temporary
     bonuses or penalties", then the Minor Action and Opportunity Attack
-    commands, "Summoned creature" in the type bar, no red "Text exceeds
-    card" outline. The Summon Blade Angel power card keeps its keyword and
-    action bands, its "Wis vs Ref" attack band, the Effect and its weapon
-    table, and is visibly shorter than before. The printed cards are light.
+    commands, each with a bold "Attack +13 vs. … · Damage 1d8+8" row under
+    its name, "Summoned creature · Daily" in the type bar, no red "Text
+    exceeds card" outline. The Summon Blade Angel power card keeps its
+    keyword and action bands and the Effect, with no attack band and no
+    weapon table. The printed cards are light.
   - **Wrong if:** either card is outlined as overflowing, a command appears
-    on both cards, the attack band on the power card sits over nothing
-    readable, or the creature card's text is unreadable at its size.
-  - **Decide:** whether the power card's attack band and weapon table (the
-    summoner's attack numbers, which the Opportunity Attack command uses)
-    should stay on the power card, or the totals should move to the
-    creature card's commands (needs per-command rows from the rules engine).
+    on both cards, the command row reads as part of the command text, or
+    the creature card's text is unreadable at its size.
 - [ ] **Summoned creature in power detail (D111).**
   - **Where:** `invoker-drow` → `edit?tab=build&level=9&section=powers`,
     select Summon Blade Angel. Dark theme, 140% zoom.
   - **Expect:** under the power card, the creature's panel card (dark card
-    paper on screen) with the same tiles and commands as the print card.
+    paper on screen) with the same tiles, commands and command rows as the
+    print card.
   - **Wrong if:** the panel card overflows the detail pane, or the command
-    text is unreadable on the dark card.
+    text or its row is unreadable on the dark card.
 - [ ] **Summoned creature cards (D111).**
   - **Where:** `hexblade-white-well` → `?preview=1`, the cards after
-    Skills, then the "Summoned Creature (White Well)" and "Greater Summon
-    (White Well Pact)" power cards.
+    Skills (each creature may print as a stats card and a "— Actions"
+    card).
   - **Expect:** "Mourning Handmaiden" and "Spectral Protector" creature
-    cards (tiles, Speed line, healing surges note, "Summoned creature" type
-    bar). The two pact power cards now hold only their name, usage and
-    keyword bands; the handmaiden's and protector's trait cards and attack
-    cards are unchanged.
-  - **Wrong if:** a creature card overflows, or a pact card looks broken.
-  - **Decide:** whether the emptied pact cards should still print (they
-    track the daily use), and whether the trait cards ("Mourning
-    Handmaiden": aura, special movement, opportunity action) should join
-    the creature card instead.
+    cards (tiles, Speed line, healing surges note, "Summoned creature ·
+    Daily" type bar). The aura (Shining Presence) sits with the stats; Special
+    Movement, the opportunity action and the attacks ("Mourning
+    Handmaiden's Attack": "Attack: Melee 1; +30 vs. Reflex", "Hit: 2d8+21
+    radiant damage …") sit with the actions, and "The creature lacks
+    actions of its own …" prints once in the notes. No pact power cards and
+    no separate trait, attack, aura or opportunity cards.
+  - **Wrong if:** a creature card overflows, an entry's heading (name,
+    keywords, action and usage) is hard to tell from its lines, or the
+    stats and actions halves look unbalanced.

@@ -568,7 +568,7 @@ whole creature as a panel card under the item card, description included.
 
 Summon powers (D111): a Power with the Summoning keyword, or a field naming
 a "summoned creature", gets the same `_Creature Stat Block` at pack build
-(`legacy-wotc/src/summon-creature.ts`, field version 2), with
+(`legacy-wotc/src/summon-creature.ts`, field version 3), with
 `powerFields`, the names of the power's own fields the block shows. Two
 spellings carry a creature. Stat fields (`Hit Points`, `Defenses`,
 `Speed`, `Statistics` or `Creature`/`Size`/`Origin`/`Type`, traits and
@@ -588,22 +588,36 @@ attack (Servant of the Staff) and Summon Elemental Warrior's per-element
 riders stay on the power card. A summon whose creature cannot be placed
 (no "you summon a …" sentence, a defense bonus of another subject) is a
 `summon.stat-block-unparsed` diagnostic and keeps its whole power card.
+Each command or action with an attack ("Wisdom vs. Fortitude", "your
+level + 5 vs. Reflex") stores its attack and hit texts as its `roll`,
+parsed into the power text IR, from which the rules engine works out the
+command's own row (D111 amendment). After every record is read, the import
+merges a hexblade's or binder's pact creature's community cards
+(`<prefix>_POWERCARD_<n>`, granted with the summon power
+`<prefix>_POWERCARD_0`; `legacy-wotc/src/summon-community-cards.ts`) into
+its creature: trait-card auras as traits, its actions and the attack cards
+as actions (the attack card's corrected "your level + N" line, a roll keyed
+to the card), and keeps each card as an inert Internal record under its ID.
 On the full pack 118 of 196 summon powers carry a creature; 3 are
 diagnostics (Dancing Weapon and Animate Arbalester throw a weapon, Fleeting
-Thoughts (Augment 1)'s Effect has no summon sentence) plus 3 for Bound
-Soul's damage lines, which print as text; the other 75 have no creature of
-their own (associates with D107 cards, the community trait and attack
-cards, Effect-only summons, Summon Elemental Warrior).
+Thoughts (Augment 1)'s Effect has no summon sentence); Bound Soul's damage
+lines parse since `9G-creatures.part` restores their "modifier". The 16
+pact creatures absorb 44 community cards.
 
 The sheet prints each owned summon power's creature as a creature card
 after the mounts (origin `summon`, key `creature:summon:<power id>`, type
-bar "Summoned creature"), split into stats and actions cards like a mount;
-its provenance is the power's occurrences (and Internal records that
-granted them) for page-1 dedup. The power card keeps the summoning: its
-header, keyword and action bands, Effect, augments, and the evaluated
-attack rows (the engine's legacy-compatible row from the first "X vs. Y"
-command). The builder's power detail and item detail show the creature's
-panel card under the power card.
+bar "Summoned creature · <usage>"), split into stats and actions cards like
+a mount; its provenance is the power's occurrences, the Internal records
+that granted them and the merged community cards, for page-1 dedup. Each
+command prints the engine's row for the power card's leading equipment row
+(`summonCommandRows`): a stat-block attack or hit line takes the row's
+numbers, a special command an "Attack … · Damage …" row. The power card
+keeps the summoning (header, keyword and action bands, Effect, augments);
+when its commands moved to the creature it prints no attack band or weapon
+table, and a power with nothing left beyond its header (the pact summons,
+Earth-friend, Bound Soul) prints no card at all (`foldedIntoCreature`),
+staying in page-1 lists and the power index. The builder's power detail
+and item detail show the creature's panel card under the power card.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser

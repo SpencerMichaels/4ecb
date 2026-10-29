@@ -224,9 +224,10 @@ const reviews: ReviewCharacter[] = [
       required: [
         WHITE_WELL,
         "ID_FMP_PARAGON_PATH_796",
-        "ID_WOG_COMPANION_6_POWERCARD_2",
-        "ID_WOG_COMPANION_10_POWERCARD_2",
-        "ID_WOG_COMPANION_10_POWERCARD_4",
+        // The pact summons; their community cards merge into the
+        // creatures (D111).
+        "ID_WOG_COMPANION_6_POWERCARD_0",
+        "ID_WOG_COMPANION_10_POWERCARD_0",
       ],
     },
     purpose:
@@ -258,11 +259,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Summoned allies",
-            'Mourning Handmaiden\'s Attack "Level+5 vs Ref"; Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each with its number; no "UNKNOWN" on any card.',
+            'On the creature cards: Mourning Handmaiden\'s Attack "+30 vs. Reflex"; Spectral Protector\'s Attack and Opportunity "+30 vs. Will", each your level + 5; no "UNKNOWN" on any card.',
           ],
           [
             "Summoned creature cards",
-            "Mourning Handmaiden and Spectral Protector creature cards after Skills (HP your bloodied value, your defenses + 2, speed); the pact cards keep only their header.",
+            'Mourning Handmaiden and Spectral Protector creature cards after Skills ("Summoned creature · Daily", HP your bloodied value, your defenses + 2, speed), with their auras as traits and their movement, opportunity actions and attacks as actions; no pact power cards and no separate trait or attack cards.',
           ],
           [
             "Paired attack and damage effects",
@@ -1142,7 +1143,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Summoned creature card",
-            'Summon Blade Angel keeps its Effect; a "Blade Angel" card after the familiar, "Summoned creature" in its type bar, with the Minor Action and Opportunity Attack commands.',
+            'Summon Blade Angel keeps its Effect but no attack band; a "Blade Angel" card after the familiar, "Summoned creature · Daily" in its type bar, with the Minor Action and Opportunity Attack commands, each with its own "Attack … · Damage …" row.',
           ],
         ],
       },

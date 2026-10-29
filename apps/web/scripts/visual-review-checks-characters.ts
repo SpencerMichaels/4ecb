@@ -29,6 +29,7 @@ import {
   powerActionLabel,
   sheetFamiliarCard,
   sheetItemSetCard,
+  summonCommandRows,
 } from "@4ecb/sheet-model";
 
 import {
@@ -938,50 +939,65 @@ rule(HEXBLADE_25, "Build, level 11", "Other detail stacks", (c) =>
   detailStack(c, c.context.named("Legendary Hexblade", "Paragon Path")),
 );
 
-/** A printed card's table cells, as text. */
-const tableCells = (html: string): string[] =>
-  [...html.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g)].map(([, cell]) =>
-    textOf(cell!),
-  );
-
 rule(HEXBLADE_25, "Print preview", "Summoned allies", (c) => {
   const deck = printedDeck(c);
   const level = c.build.effectiveLevel;
+  // The pact creatures' attacks print on their creature cards (D111): the
+  // community attack cards merge into the summon power's creature at pack
+  // build, and the engine works out each one's row.
   const attacks = [
-    ["ID_WOG_COMPANION_6_POWERCARD_2", "Ref"],
-    ["ID_WOG_COMPANION_10_POWERCARD_2", "Will"],
-    ["ID_WOG_COMPANION_10_POWERCARD_4", "Will"],
+    [
+      "ID_WOG_COMPANION_6_POWERCARD_0",
+      "Mourning Handmaiden's Attack",
+      "Reflex",
+    ],
+    ["ID_WOG_COMPANION_10_POWERCARD_0", "Spectral Protector's Attack", "Will"],
+    [
+      "ID_WOG_COMPANION_10_POWERCARD_0",
+      "Spectral Protector's Opportunity",
+      "Will",
+    ],
   ] as const;
   const checks: Check[] = [equal("The character's level", level, 25)];
-  for (const [id, defense] of attacks) {
-    const name = c.context.entity(id).name;
-    const printed = deck.find(({ label }) => key(label) === key(name));
-    const evaluated = c.evaluation.powers.find(
-      ({ definitionId }) => key(definitionId) === key(id),
+  for (const [summonId, name, defense] of attacks) {
+    const creature = c.sheet.companions.find(
+      (card) =>
+        card.kind === "creature" &&
+        card.origin.kind === "summon" &&
+        key(card.origin.powerId) === key(summonId),
     );
-    const bonuses = (evaluated?.variants ?? []).flatMap((variant) =>
-      (variant.attacks ?? []).map(({ attackBonus }) => attackBonus),
-    );
+    const index =
+      creature?.kind === "creature"
+        ? creature.actions.findIndex((entry) => entry.name === name)
+        : -1;
+    const entry =
+      creature?.kind === "creature" ? creature.actions[index] : undefined;
+    const row = summonCommandRows(
+      c.evaluation.powers.find(
+        ({ definitionId }) => key(definitionId) === key(summonId),
+      ),
+      true,
+    )?.find((command) => command.entry === index);
     // "your level + 5": the published bonus; no ability, weapon or
     // implement applies.
     const expected = level + 5;
+    const printed = deck
+      .filter(({ kind }) => kind === "creature")
+      .map(({ text }) => text)
+      .join(" ");
     checks.push(
-      truthy(`${name} is printed`, printed !== undefined),
-      contains(
-        `${name}: the attack header`,
-        printed?.text ?? "",
-        `Level+5 vs ${defense}`,
-      ),
+      truthy(`${name} is on its creature card`, entry !== undefined),
       equal(
-        `${name}: the evaluated attack bonus is your level + 5`,
-        [...new Set(bonuses)],
-        [expected],
+        `${name}: the engine's row is your level + 5`,
+        row?.attackBonus,
+        expected,
       ),
-      truthy(
-        `${name}: the card's table prints +${expected}`,
-        tableCells(printed?.html ?? "").includes(`+${expected}`),
-        tableCells(printed?.html ?? "").join(" | "),
+      contains(
+        `${name}: the attack line prints +${expected}`,
+        entry?.lines.map(({ text }) => text).join(" ") ?? "",
+        `+${expected} vs. ${defense}`,
       ),
+      contains(`${name}: printed`, printed, `+${expected} vs. ${defense}`),
     );
   }
   const unknown = deck.filter(({ text }) => /unknown/i.test(text));

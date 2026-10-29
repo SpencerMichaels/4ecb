@@ -10,6 +10,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   applySheetLayout,
   sheetCreatureCardKeyBase,
+  summonCommandRows,
   type SheetCreatureCard,
 } from "@4ecb/sheet-model";
 import {
@@ -1254,6 +1255,18 @@ function summonCard(
   );
 }
 
+/** Fey Pact of the White Well's summon powers (hexblade levels 9 and 25). */
+const WHITE_WELL_SUMMON = "ID_WOG_COMPANION_6_POWERCARD_0";
+const WHITE_WELL_GREATER_SUMMON = "ID_WOG_COMPANION_10_POWERCARD_0";
+
+/** The engine's command rows the summon's creature card shows. */
+function summonCommands(c: ReviewCharacter, powerId: string) {
+  const power = c.evaluation.powers.find(
+    ({ definitionId }) => key(definitionId) === key(powerId),
+  );
+  return summonCommandRows(power, true);
+}
+
 /** Your evaluated value of a stat, for the owner-relative numbers. */
 const ownerStat = (c: ReviewCharacter, name: string) =>
   c.evaluation.stats[name]?.value ?? NaN;
@@ -1277,7 +1290,11 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
         labels.indexOf("Blade Angel") < labels.indexOf("Action Point"),
       labels.join(" → "),
     ),
-    contains("Its type bar", creature?.text ?? "", "Summoned creature"),
+    contains(
+      "Its type bar names the power's usage",
+      creature?.text ?? "",
+      "Summoned creature · Daily",
+    ),
     contains("Its identity", creature?.text ?? "", "Medium blade angel"),
     inOrder("HP is your bloodied value", creature?.text ?? "", [
       "HP",
@@ -1296,6 +1313,32 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
       creature?.text ?? "",
       "Wisdom modifier (+",
     ),
+    ...(card?.actions ?? []).flatMap((entry, index) => {
+      const row = summonCommands(c, SUMMON_BLADE_ANGEL)?.find(
+        (command) => command.entry === index,
+      );
+      return [
+        truthy(`${entry.name} has its own row`, entry.roll !== undefined),
+        equal(
+          `${entry.name}'s attack is the engine's command row`,
+          entry.roll?.attack,
+          row === undefined
+            ? undefined
+            : `${row.attackBonus < 0 ? "" : "+"}${row.attackBonus} vs. ${row.defense}`,
+        ),
+        contains(
+          `${entry.name}'s row prints`,
+          creature?.text ?? "",
+          `Attack ${entry.roll?.attack ?? "?"}`,
+        ),
+      ];
+    }),
+    equal(
+      "The Minor Action command is Wisdom vs. Fortitude for 1d8 + Wisdom",
+      card?.actions[0]?.roll?.attack.endsWith("vs. Fortitude") === true &&
+        card.actions[0].roll.damage?.startsWith("1d8+") === true,
+      true,
+    ),
     equal("Keyed by the power", card?.origin, {
       kind: "summon",
       powerId: SUMMON_BLADE_ANGEL,
@@ -1309,6 +1352,11 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
       "The power card leaves the commands to the creature card",
       power?.text ?? "",
       "slowed until the end of its turn",
+    ),
+    lacks(
+      "The power card leaves the attack band to the creature card",
+      power?.text ?? "",
+      " vs Ref",
     ),
   ];
 });
@@ -1340,23 +1388,103 @@ rule(
 rule("hexblade-white-well", "Print preview", "Summoned creature cards", (c) => {
   const deck = printedDeck(c);
   const creatures = deck.filter(({ kind }) => kind === "creature");
-  const handmaiden = creatures.find(
-    ({ label }) => label === "Mourning Handmaiden",
-  );
-  const protector = creatures.find(
-    ({ label }) => label === "Spectral Protector",
-  );
-  const pact = deck.find(
-    ({ kind, label }) =>
-      kind === "power" && label === "Summoned Creature (White Well)",
-  );
+  // A creature split into stats and actions cards prints both under its
+  // name (the actions card "— Actions").
+  const handmaiden = {
+    text: creatures
+      .filter(({ label }) => label.startsWith("Mourning Handmaiden"))
+      .map(({ text }) => text)
+      .join(" "),
+  };
+  const protector = {
+    text: creatures
+      .filter(({ label }) => label.startsWith("Spectral Protector"))
+      .map(({ text }) => text)
+      .join(" "),
+  };
+  const handmaidenCard = summonCard(c, WHITE_WELL_SUMMON);
+  const protectorCard = summonCard(c, WHITE_WELL_GREATER_SUMMON);
+  const level = Number(c.evaluation.level);
+  const handmaidenAttack = summonCommands(c, WHITE_WELL_SUMMON)?.[0];
   const hp = String(Math.floor(Number(ownerStat(c, "Hit Points")) / 2));
   const ac = String(Number(ownerStat(c, "AC")) + 2);
+  const powerLabels = deck
+    .filter(({ kind }) => kind === "power")
+    .map(({ label }) => label);
   return [
     equal(
-      "Two summoned creature cards",
-      creatures.map(({ label }) => label),
+      "Two summoned creatures",
+      [
+        ...new Set(
+          creatures.map(({ label }) => label.replace(/ — Actions$/, "")),
+        ),
+      ],
       ["Mourning Handmaiden", "Spectral Protector"],
+    ),
+    contains(
+      "The handmaiden's type bar names the power's usage",
+      handmaiden.text,
+      "Summoned creature · Daily",
+    ),
+    equal(
+      "The handmaiden's aura is a trait (stats card)",
+      handmaidenCard?.traits.map(({ name }) => name),
+      ["Shining Presence"],
+    ),
+    equal(
+      "Its movement, opportunity action and attack are actions",
+      handmaidenCard?.actions.map(({ name }) => name),
+      [
+        "Special Movement",
+        "Opportunity Action",
+        "Mourning Handmaiden's Attack",
+      ],
+    ),
+    equal(
+      "Its attack is your level + 5 (the engine's row)",
+      handmaidenAttack?.attackBonus,
+      level + 5 + Number(ownerStat(c, "SUMMON.attack rolls") || 0),
+    ),
+    contains(
+      "Its attack line prints the number",
+      handmaiden.text,
+      `Melee 1; +${handmaidenAttack?.attackBonus ?? "?"} vs. Reflex`,
+    ),
+    contains(
+      "Its hit line prints the worked-out damage",
+      handmaiden.text,
+      `${handmaidenAttack?.damage ?? "?"} radiant damage`,
+    ),
+    equal(
+      "The protector's attacks and aura join its card",
+      protectorCard?.actions.map(({ name }) => name),
+      [
+        "Special Movement",
+        "Spectral Protector's Attack",
+        "Spectral Protector's Aura",
+        "Spectral Protector's Opportunity",
+      ],
+    ),
+    ...[
+      "Summoned Creature (White Well)",
+      "Greater Summon (White Well Pact)",
+      "Mourning Handmaiden",
+      "Mourning Handmaiden's Attack",
+      "Spectral Protector",
+      "Spectral Protector's Attack",
+      "Spectral Protector's Aura",
+      "Spectral Protector's Opportunity",
+    ].map((label) =>
+      truthy(`No "${label}" power card`, !powerLabels.includes(label)),
+    ),
+    truthy(
+      "The pact powers stay in the power index",
+      c.sheet.powers.some(
+        ({ name }) => name === "Summoned Creature (White Well)",
+      ) &&
+        c.sheet.powers.some(
+          ({ name }) => name === "Greater Summon (White Well Pact)",
+        ),
     ),
     contains(
       "The handmaiden's identity",
@@ -1378,11 +1506,6 @@ rule("hexblade-white-well", "Print preview", "Summoned creature cards", (c) => {
       "Its healing surges",
       protector?.text ?? "",
       "None, but you can expend a healing surge for the protector",
-    ),
-    lacks(
-      "The pact card leaves the stat block to the creature card",
-      pact?.text ?? "",
-      "Your bloodied value",
     ),
   ];
 });
