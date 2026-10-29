@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "fixture": "b4e3f72520c5e827556c9e3be85e61cdb9c0e7eccaebe4d2d90405388956e4e7",
+  "output": {
+    "ID_GOLDEN_ASSOCIATE_BEAST": {
+      "version": 1,
+      "role": "Fey Beast Companion",
+      "size": "Medium",
+      "creatureType": "fey beast",
+      "hitPoints": {
+        "kind": "master-bloodied"
+      },
+      "defenses": {
+        "kind": "level",
+        "base": {
+          "ac": 14,
+          "fortitude": 12,
+          "reflex": 13,
+          "will": 11
+        }
+      },
+      "initiative": {
+        "bonus": 0
+      },
+      "perception": {
+        "bonus": 2
+      },
+      "speed": "6, climb 4",
+      "senses": "low-light vision",
+      "traits": [
+        {
+          "name": "Mossy Pack",
+          "keywords": "zone",
+          "aura": 1,
+          "lines": [
+            {
+              "text": "Allies in the aura gain a +1 power bonus to Stealth checks."
+            }
+          ]
+        }
+      ],
+      "powers": [
+        {
+          "name": "Mossy Bite",
+          "keywords": "poison",
+          "usage": "At-Will",
+          "lines": [
+            {
+              "label": "Attack",
+              "text": "Melee 1 (one creature); your level + 5 vs. AC",
+              "attack": {
+                "range": "Melee 1 (one creature)",
+                "bonus": {
+                  "kind": "level",
+                  "plus": 5
+                },
+                "defense": "AC"
+              }
+            },
+            {
+              "label": "Hit",
+              "text": "1d8 + one-half your level damage, and the target is slowed until the end of your next turn.",
+              "damage": {
+                "terms": [
+                  {
+                    "kind": "dice",
+                    "dice": "1d8"
+                  },
+                  {
+                    "kind": "half-level"
+                  }
+                ]
+              },
+              "rest": ", and the target is slowed until the end of your next turn.",
+              "steps": [
+                {
+                  "level": 21,
+                  "damage": {
+                    "terms": [
+                      {
+                        "kind": "dice",
+                        "dice": "2d8"
+                      },
+                      {
+                        "kind": "half-level"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "action": "Standard"
+        }
+      ],
+      "abilities": {
+        "Strength": 14,
+        "Dexterity": 18,
+        "Wisdom": 12,
+        "Constitution": 16,
+        "Intelligence": 2,
+        "Charisma": 6
+      }
+    },
+    "ID_GOLDEN_ASSOCIATE_SUMMON": {
+      "version": 1,
+      "role": "Summoned Creature",
+      "size": "Large",
+      "creatureType": "elemental magical beast (fire)",
+      "hitPoints": {
+        "kind": "master-bloodied"
+      },
+      "healingSurges": "none, but you can expend a healing surge for the spirit if an effect allows it to spend one",
+      "defenses": {
+        "kind": "master",
+        "bonus": {
+          "ac": 2,
+          "fortitude": 2,
+          "reflex": 2,
+          "will": 2
+        }
+      },
+      "defensesNote": "not including any temporary bonuses or penalties",
+      "defenseTraits": [
+        "Vulnerable 5 cold"
+      ],
+      "speed": "6, fly 4 (hover; altitude limit 1)",
+      "traits": [
+        {
+          "name": "Smoldering",
+          "aura": 2,
+          "lines": [
+            {
+              "text": "The aura is lightly obscured."
+            }
+          ]
+        }
+      ],
+      "powers": [
+        {
+          "name": "Standard Action",
+          "keywords": "fire",
+          "usage": "At-Will",
+          "lines": [
+            {
+              "label": "Attack",
+              "text": "Melee 2 (one creature); your level + 7 vs. Reflex",
+              "attack": {
+                "range": "Melee 2 (one creature)",
+                "bonus": {
+                  "kind": "level",
+                  "plus": 7
+                },
+                "defense": "Reflex"
+              }
+            },
+            {
+              "label": "Hit",
+              "text": "2d8 + your Wisdom modifier fire damage, and ongoing 5 fire damage (save ends).",
+              "damage": {
+                "terms": [
+                  {
+                    "kind": "dice",
+                    "dice": "2d8"
+                  },
+                  {
+                    "kind": "ability",
+                    "abilities": [
+                      "Wisdom"
+                    ]
+                  }
+                ],
+                "damageType": "fire"
+              },
+              "rest": ", and ongoing 5 fire damage (save ends)."
+            }
+          ],
+          "action": "Standard"
+        },
+        {
+          "name": "Minor Action",
+          "usage": "At-Will (1/round)",
+          "lines": [
+            {
+              "label": "Effect",
+              "text": "The spirit either walks, shifts, runs, stands up, squeezes, or crawls."
+            }
+          ],
+          "action": "Minor"
+        }
+      ]
+    }
+  }
+}

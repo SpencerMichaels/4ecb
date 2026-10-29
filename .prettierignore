@@ -14,3 +14,4 @@ pnpm-lock.yaml
 *.dndcamp
 *.part
 *.xml
+apps/content-tool/src/stored-ir-golden/*.golden.json
