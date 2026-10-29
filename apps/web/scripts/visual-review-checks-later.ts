@@ -8,6 +8,11 @@
 import { CharacterTransaction } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  applySheetLayout,
+  sheetCreatureCardKeyBase,
+  type SheetCreatureCard,
+} from "@4ecb/sheet-model";
+import {
   loadoutContext,
   resolveLoadoutAssignments,
   ritualCostPercent,
@@ -38,6 +43,7 @@ import {
   packageSalePriceCopper,
   shopBrowseCategory,
 } from "../src/equipment-ui";
+import { inventoryItemDetail } from "../src/EquipmentWorkspace";
 
 import {
   contains,
@@ -52,6 +58,7 @@ import {
 } from "./visual-review-assert";
 import type { ReviewCharacter, ReviewContext } from "./visual-review-context";
 import {
+  itemDetailHtml,
   printedDeck,
   printedPagesFor,
   type PrintedCard,
@@ -1049,5 +1056,183 @@ export function swapPresentationChecks(c: ReviewCharacter): Check[] {
     );
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Mount creature cards (D110)                                          */
+/* ------------------------------------------------------------------ */
+
+const WARHORSE = "ID_FMP_GEAR_77";
+const SILVER_DRAGON_STEED = "ID_FMP_GEAR_100004";
+
+function mountHolding(c: ReviewCharacter, id: string) {
+  return c.build.inventory.find((entry) =>
+    entry.elements.some(
+      (element) => key(element.definitionId ?? "") === key(id),
+    ),
+  );
+}
+
+/** The owner-relative numbers the Silver Dragon Steed's block names: the
+ *  owner's bloodied value, defenses + 2, level + 5 / + 3. */
+function steedNumbers(c: ReviewCharacter) {
+  const stat = (name: string) => c.evaluation.stats[name]?.value ?? NaN;
+  return {
+    hitPoints: Math.floor(stat("Hit Points") / 2),
+    ac: stat("AC") + 2,
+    bite: c.evaluation.level + 5,
+    breath: c.evaluation.level + 3,
+  };
+}
+
+rule("fighter-arena", "Print preview", "Mount creature cards", (c) => {
+  const deck = printedDeck(c);
+  const creatures = deck.filter(({ kind }) => kind === "creature");
+  const warhorse = creatures.find(({ label }) => label === "Warhorse");
+  const steed = creatures.find(({ label }) => label === "Silver Dragon Steed");
+  const numbers = steedNumbers(c);
+  const steedHolding = mountHolding(c, SILVER_DRAGON_STEED);
+  const steedCard = c.sheet.companions.find(
+    (candidate): candidate is SheetCreatureCard =>
+      candidate.kind === "creature" && candidate.id === SILVER_DRAGON_STEED,
+  );
+  // As the print preview lays it out when the whole card overflows.
+  const split =
+    steedCard === undefined
+      ? []
+      : printedDeck(
+          c,
+          c.sheet,
+          applySheetLayout(c.sheet, undefined, {
+            splitCreatures: new Set([sheetCreatureCardKeyBase(steedCard)]),
+          }).deck,
+        );
+  const labels = split.map(({ label }) => label);
+  const stats = split.find(({ label }) => label === "Silver Dragon Steed");
+  const actions = split.find(
+    ({ label }) => label === "Silver Dragon Steed — Actions",
+  );
+  const itemText = (name: string) =>
+    deck.find(({ kind, label }) => kind === "item" && label === name)?.text ??
+    "";
+  return [
+    equal(
+      "Two creature cards, after Skills and before Action Point",
+      creatures.map(({ label }) => label),
+      ["Warhorse", "Silver Dragon Steed"],
+    ),
+    truthy(
+      "… in the companions run",
+      deck.findIndex(({ kind }) => kind === "creature") >
+        deck.findIndex(({ label }) => label === "Skills") &&
+        deck.findIndex(({ label }) => label === "Silver Dragon Steed") <
+          deck.findIndex(({ label }) => label === "Action Point"),
+      deck.map(({ label }) => label).join(" → "),
+    ),
+    contains(
+      "Warhorse identity",
+      warhorse?.text ?? "",
+      "Level 3 Brute · Large natural beast (mount)",
+    ),
+    inOrder("Warhorse defenses and HP", warhorse?.text ?? "", [
+      "AC",
+      "17",
+      "Fort",
+      "16",
+      "Ref",
+      "14",
+      "Will",
+      "14",
+      "HP",
+      "58",
+      "Bloodied",
+      "29",
+    ]),
+    contains("Warhorse Kick", warhorse?.text ?? "", "Melee basic attack"),
+    contains(
+      "Warhorse Charger trait",
+      warhorse?.text ?? "",
+      "The warhorse grants its rider a +5 bonus to damage rolls on charge attacks.",
+    ),
+    contains("Warhorse load table", warhorse?.text ?? "", "1,312 lb."),
+    lacks("No alignment line", warhorse?.text ?? "", "Unaligned"),
+    contains("A Mount type bar", warhorse?.text ?? "", "Mount"),
+    inOrder("Steed HP is your bloodied value", steed?.text ?? "", [
+      "HP",
+      String(numbers.hitPoints),
+    ]),
+    inOrder("Steed AC is your AC + 2", steed?.text ?? "", [
+      "AC",
+      String(numbers.ac),
+    ]),
+    contains(
+      "Steed Bite: your level + 5",
+      steed?.text ?? "",
+      `Melee 2 (one creature); +${numbers.bite} vs. AC`,
+    ),
+    contains(
+      "Steed Breath Weapon: your level + 3",
+      steed?.text ?? "",
+      `+${numbers.breath} vs. Reflex`,
+    ),
+    truthy(
+      "The warhorse is a held mount",
+      mountHolding(c, WARHORSE) !== undefined,
+    ),
+    truthy("The steed is a held mount", steedHolding !== undefined),
+    truthy(
+      "Split: stats card then actions card, adjacent",
+      labels.indexOf("Silver Dragon Steed — Actions") ===
+        labels.indexOf("Silver Dragon Steed") + 1 &&
+        labels.indexOf("Silver Dragon Steed") > 0,
+      labels.join(" → "),
+    ),
+    contains("Stats card: Draconic Power", stats?.text ?? "", "Draconic Power"),
+    contains("Stats card: resist cold", stats?.text ?? "", "Resist 25 Cold"),
+    lacks("Stats card: no Breath Weapon", stats?.text ?? "", "Breath Weapon"),
+    contains(
+      "Actions card: Breath Weapon",
+      actions?.text ?? "",
+      "Breath Weapon",
+    ),
+    contains("Actions card: Tail Slam", actions?.text ?? "", "Tail Slam"),
+    lacks("Actions card: no defenses", actions?.text ?? "", "Fort"),
+    lacks("Never a continued card", labels.join(" "), "continued"),
+    lacks(
+      "The steed's item card drops the repeated stat block",
+      itemText("Silver Dragon Steed"),
+      "HP your bloodied value",
+    ),
+    contains(
+      "The warhorse's item card keeps its load",
+      itemText("Warhorse"),
+      "1,312 lb.",
+    ),
+  ];
+});
+
+rule(
+  "fighter-arena",
+  "Equipment",
+  "Mount creature card in item detail",
+  (c) => {
+    const holding = mountHolding(c, SILVER_DRAGON_STEED);
+    const detail =
+      holding === undefined
+        ? undefined
+        : inventoryItemDetail(holding, c.context.byId);
+    if (detail === undefined)
+      return [truthy("The Silver Dragon Steed's detail resolves", false)];
+    const html = itemDetailHtml(c, detail);
+    const panel = elementsWithClass(html, "print-creature-card")[0] ?? "";
+    const numbers = steedNumbers(c);
+    return [
+      truthy("A creature panel card", panel.includes("is-panel")),
+      contains("Its title", textOf(panel), "Silver Dragon Steed"),
+      inOrder("Its HP", textOf(panel), ["HP", String(numbers.hitPoints)]),
+      contains("Its Bite", textOf(panel), `+${numbers.bite} vs. AC`),
+      contains("Its New Vigor", textOf(panel), "New Vigor"),
+    ];
+  },
+);
 
 export const LATER_RULES: readonly Rule[] = rules;

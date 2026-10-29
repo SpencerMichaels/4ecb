@@ -342,6 +342,14 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "fighter-arena|0|equipment and shop item detail": auto(
     "The Clear-Blood Baldric's detail pane has an Item Set panel card.",
   ),
+  "fighter-arena|0|mount creature card in item detail (d110)": mixed(
+    "The Silver Dragon Steed's detail pane has a creature panel card with its owner-relative HP, Bite and New Vigor.",
+    "The panel card's tiles, meta text and load table in dark theme and at 140% zoom.",
+  ),
+  "fighter-arena|1|mount creature cards (d110)": mixed(
+    'Warhorse and Silver Dragon Steed creature cards after Skills: identity, defense and HP tiles, Kick, Charger, load table, no alignment; the steed\'s owner-relative HP, AC, Bite and Breath Weapon; a split puts the stats card then the "— Actions" card; the item cards keep load and drop the repeated block.',
+    "Whether the Warhorse fits one card and the Silver Dragon Steed prints as two (measured in the browser), legibility at the reduced size, light in print.",
+  ),
   "fighter-arena|1|sub-choices on feature rows": auto(
     "The Fighter Weapon Talent reminder label shows Arena Training.",
   ),

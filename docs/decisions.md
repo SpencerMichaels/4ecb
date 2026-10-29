@@ -3576,8 +3576,8 @@ Evidence / milestone that triggered the decision
 
 ### D110 — Creature stat blocks parsed at pack build (mounts first)
 
-Status: accepted for the stored model; the card layout is pending. Date:
-2026-10-29.
+Status: accepted (2026-10-29): the stored model, then the card layout
+(owner decisions, roadmap queue item 10).
 
 Legacy showed a mount's `_Monster` stat block only in the builder's detail
 pane (`MonsterDisplay.Build`), as split text, and never printed it. The
@@ -3600,6 +3600,49 @@ second parser.
 
 Fit, measured before any UI was built (Arial metrics, the companion card
 CSS, 6 pt floor, `tmp/queue10/fit-creature.mjs`): the tile layout overflows
-the printed card for 31 of 47 blocks, worst Silver Dragon Steed at 155%. How
-the card is laid out (a more compact frame, dropping text, or a second card)
-is open.
+the printed card for 31 of 47 blocks, worst Silver Dragon Steed at 155%.
+
+Card layout (owner decisions):
+
+- **One creature card, or two, never a continuation.** A mount prints a
+  creature card in the companion frame (sheet-model `creature-card.ts`,
+  web `CreatureCard.tsx`, which shares the stat and entry parts with the
+  associate card). When the whole card fits the printed card at the 6 pt
+  floor it prints as one card. When it does not, it prints as two
+  deliberately formatted cards: a **stats** card (identity, defense and HP
+  tiles, initiative/perception/speed/senses, abilities, skills and
+  languages, notes, passive traits and auras, the load table) and an
+  **actions** card titled "<creature> — Actions" (attacks, triggered, minor
+  and move actions, each shown like a power entry). Never "(continued)".
+- **Compact frame.** Defense and HP tiles share one row; initiative and
+  perception join the speed line; notes take the body text size, so they
+  shrink with it.
+- **Printed text.** The alignment line, a description that only repeats
+  the stat block (the Celestial steeds, Silver Dragon Steed) and the
+  description's flavor prose stay off the printed card; its tables (the
+  load table) stay. The builder's panel card shows the whole description.
+  Rules text is never abbreviated or reworded. The mount's item card keeps
+  its price and load, not the block.
+- **Split by measurement, not a stored hint.** The print preview renders
+  each creature's whole card at print size in a hidden probe copy
+  (`print-card-probe`), as page 1 measures its panes, and the fit hook's
+  `onFit` reports whether it fits at the floor; `applySheetLayout`'s
+  `splitCreatures` then puts the stats and actions cards in the creature's
+  deck place. Measuring in the browser follows the real fonts, the reader's
+  preferred card text size and future CSS changes, which a pack-build
+  font-metric hint would not; the metric model
+  (`tmp/queue10b/fit-split.mjs`) is evidence only: 13 of 47 blocks overflow
+  as one card and every stats and actions half fits at 8 pt.
+- **Edit mode.** The deck key is `creature:mount:<holding id>` (companions
+  run, after associates); the actions card's key adds `:actions` with the
+  creature's key as its `layoutKey`, so hiding either half hides both and
+  dragging either moves the pair; the stored card order holds only the
+  creature's key.
+- **Page-1 reminders** from what gives the creature (its holding, or a
+  summon's providers) are dropped by provenance as the associate card's
+  are (D107).
+- **Content**: Cat's `_Monster` (Dragon 399, CBLoader 40-gear.part) is
+  restored by `content/corrections/9G-creatures.part` (a stray "Large
+  natural beast (mount) - XP 175" line and "Skills s Athletics"), so the
+  full pack builds with no `mount.stat-block-unparsed` diagnostic. The
+  parse is unchanged, so the stored version stays 1.

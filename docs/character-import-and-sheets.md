@@ -534,17 +534,37 @@ modifiers, and an embedded "Description:" paragraph); an owner-relative block
 and Jade Horse) is respelled and stored as the
 associate stat block it is (D107), so rules-engine `associateStatistics`
 works out its numbers from the owner's evaluated stats. Unplaced lines are
-`mount.stat-block-unparsed` build diagnostics: one on the full pack, Cat's
-`_Monster` repeating a "Large natural beast (mount) - XP 175" line above
-its real "Tiny natural beast - XP 25" (a content error; the block is still
-stored with the first line). The golden guard covers the field.
+`mount.stat-block-unparsed` build diagnostics: none on the full pack since
+`content/corrections/9G-creatures.part` restores Cat's block (its
+`_Monster` had a stray "Large natural beast (mount) - XP 175" line and the
+typo "Skills s Athletics"). The golden guard covers the field.
 
-Item cards still carry the raw text split as `SheetCard.statBlock`
-(`sheet-model/src/monster-stat-block.ts`) and no card renders it: the owner
-chose a creature card in the companion card frame (tiles, then attacks and
-traits), but at the 6 pt fit floor that layout overflows the printed card for
-31 of the 47 blocks (`tmp/queue10/fit-creature.mjs`), and even the most
-compact variant leaves 3-4 over. The layout is an open owner decision.
+Each held mount prints a **creature card** (D110; sheet-model
+`creature-card.ts`, web `CreatureCard.tsx`) in the companion card frame,
+after the beast, familiars and associates in the companions run, keyed
+`creature:mount:<holding id>`. A published block's numbers print as stored;
+an owner-relative block's come from `associateStatistics`. The card shows
+the identity line, one row of defense and HP tiles, the ability tiles, an
+Initiative · Perception · Speed · senses line, the block's notes, skills and
+languages, its passive traits, its actions (an attack icon becomes "Melee
+basic attack", "Ranged", …) and, from the record's description, only its
+tables (the load table). The alignment line and the description's flavor
+prose stay off the printed card; a description that repeats the block (the
+Celestial steeds, Silver Dragon Steed) shows nowhere, so the mount's item
+card keeps only its price and load. Rules text is never shortened.
+
+The print preview measures each creature's whole card at print size in a
+hidden probe copy (`print-card-probe`, the fit hook's `onFit`). A card
+that overflows at the 6 pt floor prints as two cards instead: a **stats**
+card (identity, tiles, notes, traits, load table) and an **actions** card
+titled "<creature> — Actions" (its attacks and other actions), never a
+"(continued)" card. `applySheetLayout`'s `splitCreatures` puts the pair in
+the creature's deck place; the actions card (key `…:actions`, `layoutKey`
+the creature's) is hidden, shown and moved with the stats card in Edit mode.
+On the full pack 13 of 47 blocks overflow as one card by the font-metric
+model (`tmp/queue10b/fit-split.mjs`), and every stats and actions half fits
+at 8 pt. The builder's item detail (Inventory, Loadout, Shop) shows the
+whole creature as a panel card under the item card, description included.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser

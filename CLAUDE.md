@@ -312,7 +312,13 @@ separate header or level rail.
   `companion:<id>`) are the beast (`BeastCompanionCard.tsx`), familiars
   (`FamiliarCard.tsx`) and associates (`AssociateCard.tsx`, D107: the stat
   block is parsed at pack build, the numbers come from `associateStatistics`
-  in `derived-values.ts`).
+  in `derived-values.ts`), then creatures (`CreatureCard.tsx`, D110: a held
+  mount's `_Creature Stat Block`, key `creature:mount:<holding id>`; it
+  shares the stat/entry parts with `AssociateCard.tsx`). A creature whose
+  whole card overflows at the 6 pt floor, measured by a hidden
+  `print-card-probe` copy, prints as a stats card and a "<name> — Actions"
+  card (`applySheetLayout`'s `splitCreatures`; the halves share one
+  `layoutKey`), never a continuation card.
 - **One card format (D079).** Every power/item card on every surface (print,
   screen sheet, builder detail panes) is `PowerCard`/`ItemCard` rendering a
   `SheetCard`: `layout="print"` is fixed-size and fitted, `layout="panel"` is

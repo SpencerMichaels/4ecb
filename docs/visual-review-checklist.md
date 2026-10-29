@@ -6,8 +6,8 @@ power cards"), and 74 were factual. Their labels, text, order, numbers,
 links, issues and the CSS that decides their look are now checked by code:
 `pnpm review:verify` and `apps/web/src/visual-review-styles.test.ts`, plus
 the unit tests named in their commits. Those items are gone from this list.
-The items left are the ones that need your eyes: 40 items
-over 11 passes. Each pass is one character or one page, and you walk it
+The items left are the ones that need your eyes: 42 items
+over 12 passes. Each pass is one character or one page, and you walk it
 once. Every automated check passes (2026-10-28, after `f22c5fc`).
 
 ## How to use this list
@@ -52,7 +52,7 @@ The characters are named "Review – …" and have the ID
 - `artificer-ardent`: hybrid artificer/ardent 11 with a Sprite familiar.
 - `invoker-drow`: drow invoker 11 with a Spiderling of Lolth familiar and
   two Caelynnvala's Boons pieces.
-- `fighter-arena`: githzerai arena fighter 11.
+- `fighter-arena`: githzerai arena fighter 11 with a Warhorse and a Silver Dragon Steed.
 - `wizard-gnome`: gnome wizard 5.
 - Player saves and SampleHeroes, imported unchanged: `hystan`, `piri`,
   `beldin`, `flint`, `raidon` (Raidon Kane), `jim` (Jim Darkmagic),
@@ -466,3 +466,41 @@ automatically. Look only at fit and legibility.
     character's muted, checked version, both read well.
   - **Wrong if:** the menu is clipped at 140% zoom or unreadable in dark
     theme.
+
+## Pass 12: Mount creature cards
+
+The cards' numbers, text, order and the split's card pair are checked
+automatically; whether a card fits is measured in the browser, so only these
+are yours.
+
+- [ ] **Mount creature cards (D110).**
+  - **Where:** `fighter-arena` → `?preview=1`, the cards after Skills: the
+    Warhorse, then the Silver Dragon Steed. Then Edit mode. Print (or save as
+    PDF) once, and look at the preview in dark theme and at 140% zoom.
+  - **Expect:** the Warhorse is one card: name, "Level 3 Brute · Large
+    natural beast (mount)", one row of AC/Fort/Ref/Will and HP/Bloodied
+    tiles, the ability tiles, an Initiative · Perception · Speed line, Kick,
+    Trample, Charger, and the Normal/Heavy Load/Max.Drag table at the
+    bottom, with no red "Text exceeds card" outline. The Silver Dragon Steed
+    is two adjacent cards: "Silver Dragon Steed" (tiles, notes, resist cold,
+    Draconic Power) and "Silver Dragon Steed — Actions" (Bite, Breath
+    Weapon, New Vigor, Tail Slam), neither outlined. In Edit mode,
+    right-clicking either half hides or shows both, and dragging either
+    moves the pair. The printed cards are light.
+  - **Wrong if:** a card is outlined as overflowing, the steed prints as one
+    clipped card, a "(continued)" card appears, the halves separate after a
+    drag, the tiles wrap onto two rows, or text is unreadable at the reduced
+    size.
+  - **Decide:** whether the one-row tiles and the load table at the bottom
+    read well, or want another arrangement.
+- [ ] **Mount creature card in item detail (D110).**
+  - **Where:** `fighter-arena` → `edit?tab=equipment`, select the Silver
+    Dragon Steed, then the Warhorse; also open one mount in the Shop. Dark
+    theme, 140% zoom.
+  - **Expect:** under the item card, the creature's panel card (dark card
+    paper on screen) with the same tiles and entries as the print card, and
+    the Warhorse's load table. A Dark Sun mount (Kank, in the Shop) also
+    shows its flavor paragraph here.
+  - **Wrong if:** the panel card overflows the detail pane, the meta text
+    ("Melee basic attack · standard, at-will") is unreadable on the dark
+    card, or the table is clipped at 140%.

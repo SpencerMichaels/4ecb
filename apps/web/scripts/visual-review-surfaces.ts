@@ -13,6 +13,7 @@ import type {
   EvaluatedChoice,
 } from "@4ecb/rules-engine";
 import {
+  creatureCardTitle,
   featureChoiceText,
   isSheetPlayCard,
   sheetCardDeck,
@@ -23,6 +24,7 @@ import { characterDisplayName } from "@4ecb/character-domain";
 
 import { AssociateCard } from "../src/AssociateCard";
 import { BeastCompanionCard } from "../src/BeastCompanionCard";
+import { CreatureCard } from "../src/CreatureCard";
 import {
   BuilderCardContext,
   type BuilderCardSettings,
@@ -117,38 +119,44 @@ function printCardElement(
   if (card.kind === "beast") return createElement(BeastCompanionCard, { card });
   if (card.kind === "familiar") return createElement(FamiliarCard, { card });
   if (card.kind === "associate") return createElement(AssociateCard, { card });
+  if (card.kind === "creature") return createElement(CreatureCard, { card });
   if (card.kind === "item-set") return createElement(ItemSetCard, { card });
   return card.kind === "power"
     ? createElement(PowerCard, { card, characterLevel: level })
     : createElement(ItemCard, { card });
 }
 
-/** The printed card deck in order, each card rendered. */
+/** The printed card deck in order, each card rendered: the default deck,
+ *  or `entries` (a resolved layout's deck, such as one with a split
+ *  creature). */
 export function printedDeck(
   c: ReviewCharacter,
   model: CharacterSheetModel = c.sheet,
+  entries?: readonly { readonly card: SheetDeckCard }[],
 ): readonly PrintedCard[] {
-  let result = decks.get(model);
+  let result = entries === undefined ? decks.get(model) : undefined;
   if (result === undefined) {
     const level = sheetLevel(model, c.build.effectiveLevel);
     const name = characterName(c);
-    result = sheetCardDeck(model)
-      .filter(({ defaultShown }) => defaultShown)
-      .map(({ card }) => {
-        const html = render(printCardElement(card, model, name, level));
-        return {
-          card,
-          label: isSheetPlayCard(card)
-            ? card.kind === "play-character"
-              ? "Play data"
-              : "Skills"
+    result = (
+      entries ?? sheetCardDeck(model).filter(({ defaultShown }) => defaultShown)
+    ).map(({ card }) => {
+      const html = render(printCardElement(card, model, name, level));
+      return {
+        card,
+        label: isSheetPlayCard(card)
+          ? card.kind === "play-character"
+            ? "Play data"
+            : "Skills"
+          : card.kind === "creature"
+            ? creatureCardTitle(card)
             : card.name,
-          kind: card.kind,
-          html,
-          text: textOf(html),
-        };
-      });
-    decks.set(model, result);
+        kind: card.kind,
+        html,
+        text: textOf(html),
+      };
+    });
+    if (entries === undefined) decks.set(model, result);
   }
   return result;
 }

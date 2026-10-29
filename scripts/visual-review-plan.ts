@@ -1165,6 +1165,10 @@ const reviews: ReviewCharacter[] = [
         { id: "Spear" },
         { id: "ID_FMP_MAGIC_ITEM_6931", base: "Hide Armor", equip: true },
         { id: "ID_FMP_MAGIC_ITEM_6940", equip: true },
+        // Mounts (D110): a published stat block that fits one card, and an
+        // owner-relative one that prints as stats and actions cards.
+        { id: "ID_FMP_GEAR_77" },
+        { id: "ID_FMP_GEAR_100004" },
       ],
       expectLegal: true,
       required: [
@@ -1176,7 +1180,7 @@ const reviews: ReviewCharacter[] = [
       ],
     },
     purpose:
-      "Githzerai fighter with Arena Training (spear, glaive), Githzerai Blade Master and Spear Expertise [Arena Fighter], a glaive, and two Aleheart Companions' Gear pieces.",
+      "Githzerai fighter with Arena Training (spear, glaive), Githzerai Blade Master and Spear Expertise [Arena Fighter], a glaive, two Aleheart Companions' Gear pieces, a Warhorse and a Silver Dragon Steed.",
     links: [
       {
         label: "Equipment",
@@ -1185,6 +1189,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Equipment and Shop item detail",
             "Select the Clear-Blood Baldric: an Item Set panel card under it.",
+          ],
+          [
+            "Mount creature card in item detail",
+            "Select the Silver Dragon Steed: its creature panel card under the item card.",
           ],
         ],
       },
@@ -1208,6 +1216,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Item Set card",
             'Aleheart after its last item card: Pieces/Tier row, check icon and "(active)" on the 2-piece benefit, the 4-piece one dimmed; no set introduction.',
+          ],
+          [
+            "Mount creature cards",
+            'After Skills: the Warhorse on one card, the Silver Dragon Steed as a stats card and a "— Actions" card.',
           ],
         ],
       },
