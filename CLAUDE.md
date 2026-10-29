@@ -111,6 +111,7 @@ pnpm evaluate:matrix
 pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N, --no-profiles; ~30 s)
 pnpm audit:saved-selections       # every saved element active or accounted for; silent drops and extras (--verbose; ~4 min)
 pnpm audit:record-drift           # which content each save was made on: saved records vs full/stock pack (--verbose)
+pnpm audit:power-text             # power text the stored parse did not consume, by pattern (tmp/audit/power-text.md)
 pnpm regenerate:edited-dnd4e
 ```
 

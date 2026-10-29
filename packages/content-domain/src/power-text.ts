@@ -987,6 +987,20 @@ export function parseHitField(value: string): HitFieldIr {
   };
 }
 
+/** The text of each `parseHitField` step, in the same order: the line each
+ *  step parsed (`audit:power-text` compares it with the step's IR). */
+export function hitFieldStepTexts(
+  value: string,
+): { readonly from?: number; readonly text: string }[] {
+  const texts: { from?: number; text: string }[] = [];
+  for (const from of [undefined, ...hitLevelThresholds(value)]) {
+    const text = hitLineAtLevel(value, from ?? -1);
+    if (text === texts.at(-1)?.text) continue;
+    texts.push({ ...(from === undefined ? {} : { from }), text });
+  }
+  return texts;
+}
+
 /** The step a level reads. */
 export function hitLineAt(field: HitFieldIr, level: number): HitLineIr {
   let line = field.steps[0]!.line;

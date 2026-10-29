@@ -401,6 +401,24 @@ entry and lists records whose statadds match neither pack, with the saves
 holding them. A parity diff on such a record is content drift, not an engine
 bug.
 
+`pnpm audit:power-text [PACK.4ecp] [--examples=N] [--top=N]` (private corpus,
+read-only) is the unconsumed-text sweep over the stored `_Power Text IR`. For
+every attack and hit text the engine reads (each level step as
+`hitFieldStepTexts` selects it, thrown and melee/ranged variants included) it
+tokenizes the source (numbers, signs, dice, `N[W]`/`N[B]`, abilities,
+"modifier", "twice", "highest", "half level") and checks each token against
+the IR values that can explain it, within the regions native reads: the attack
+stat before each " vs." (CalcStatVsDefense) and the hit line up to its first
+" damage", nothing when a sentence ends first (CalcDamage). Leftovers are
+grouped by a normalized pattern with counts and example records, regions
+`hit-expr` and `attack-stat` first, tails (riders, conditions) after. It also
+lists over-reads (`over:*`: IR values from outside native's region, "Level N:"
+lines native LevelIncrease reads differently, attack/hit slots from fields
+native never reads or reads only from a theme level header) and power fields
+that read like a CalcMisc/CalcBonuses rider but match no native table entry.
+It writes ignored `tmp/audit/power-text.{json,md}` and never fails; the pack's
+IR must have this checkout's `POWER_TEXT_VERSION`.
+
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
 checkpoint is 513/514 and 331/371 after projecting legacy alternates, suppressing
