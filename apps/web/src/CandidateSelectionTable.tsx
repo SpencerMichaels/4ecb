@@ -386,6 +386,7 @@ export function CandidateSelectionTable({
       stats: evaluation?.stats ?? {},
       activeDefinitionIds: evaluation?.activeDefinitionIds ?? [],
       byId,
+      ...(evaluation === undefined ? {} : { level: evaluation.level }),
     };
     for (const candidate of candidates) {
       const entity = byId.get(candidate.definitionId.toLocaleLowerCase());

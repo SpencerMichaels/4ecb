@@ -105,8 +105,6 @@ export const EXCEPTION_NAMES = {
   /** NonDamagePower: this exact name, and names starting with the next. */
   exactingUtterance: "Exacting Utterance",
   forcedOpportunityPrefix: "Forced Opportunity",
-  /** Strength-modifier-only damage (power SpecialCase hit-line prefix). */
-  knockdownAssault: "Knockdown Assault",
   /** IsRangedPower: also a ranged power. */
   stabAndShoot: "Stab and Shoot",
   /** DualImplementSpellcaster looks the feat up by name. */

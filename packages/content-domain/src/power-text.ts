@@ -23,8 +23,9 @@ import { PREREQUISITE_IR_FIELD } from "./prerequisite-ir";
 export const POWER_TEXT_FIELD = "_Power Text IR";
 /** Bump when the stored shape or any parse changes; an older pack's field
  *  is then ignored and the engine parses the text itself. 3: a summoned
- *  creature's command rolls (D111). */
-export const POWER_TEXT_VERSION = 3;
+ *  creature's command rolls (D111). 4: native CalcDamage's "+" chain,
+ *  level lines anywhere, level header fields. */
+export const POWER_TEXT_VERSION = 4;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",
@@ -41,11 +42,19 @@ export type PowerTextAbility = (typeof POWER_TEXT_ABILITIES)[number];
  *  field names: "Attack", "Secondary Hit", "Tertiary Targets", …): the
  *  field's ordinal on the record (SpecificField.ordinal), what an attack
  *  reads it as, and the attack ordinal it belongs to. */
-export type PowerAttackSlot = readonly [
-  specific: number,
-  role: "target" | "attack" | "hit" | "attack-type",
-  ordinal: number,
-];
+export type PowerAttackSlot =
+  | readonly [
+      specific: number,
+      role: "target" | "attack" | "hit" | "attack-type",
+      ordinal: number,
+    ]
+  | readonly [
+      specific: number,
+      role: "target" | "attack" | "hit" | "attack-type",
+      ordinal: number,
+      /** Under an empty "Level N" header field: read from level N. */
+      fromLevel: number,
+    ];
 
 /** The "+N" an attack line adds, by level (native CalcStatVsDefense and
  *  AttackPowerModRepl). */
@@ -279,29 +288,69 @@ function attackOrdinal(name: string): number | undefined {
     : attackOrdinals.get(lower(match[1]));
 }
 
+/** A level header block's "As above, but …" (native FindLine strips it). */
+const AS_ABOVE_BUT = /^\s*As above, but\s+/iu;
+
+/** The text an attack slot under a "Level N" header reads: native FindLine
+ *  (`-Module-.cs` ~23447) strips a leading "As above, but ". */
+export function levelHeaderText(value: string): string {
+  return value.replace(AS_ABOVE_BUT, "");
+}
+
 /**
  * The fields an attack reads, with the attack ordinal each belongs to: a
  * "Secondary …" name sets the ordinal for the fields after it.
+ *
+ * Native FindLine (`-Module-.cs` ~23393): an empty "Level N" field heads
+ * the indented fields after it (a theme power's "Level 19" / " Attack: As
+ * above, but Primary ability + 2 vs. AC.", Monstrous Savagery); they
+ * replace the field of their name only from level N (`fromLevel`). D105:
+ * a header's "As above, but …" Hit (Cruel Decree's "+4 power bonus to
+ * damage rolls", Wildfire Bolt's larger critical rider) restates the hit
+ * with a changed rider, so the damage stays the main Hit's; native parses
+ * the rider as the damage expression.
+ * A summon's " Opportunity Attack" field is one of its creature's commands
+ * (native AttackLine never reads it), not the power's attack.
  */
 export function powerAttackSlots(
   specifics: readonly {
     readonly name: string;
     readonly ordinal: number;
+    readonly value?: string;
   }[],
 ): PowerAttackSlot[] {
   const slots: PowerAttackSlot[] = [];
   let activeOrdinal = 1;
+  let header: number | undefined;
   for (const specific of [...specifics].sort(
     (left, right) => left.ordinal - right.ordinal,
   )) {
     const name = specific.name.trim();
+    const headerLevel = /^Level\s+(\d+)$/iu.exec(name)?.[1];
+    if (headerLevel !== undefined && (specific.value ?? "").trim() === "") {
+      header = Number(headerLevel);
+      continue;
+    }
+    if (!/^\s/u.test(specific.name)) header = undefined;
     const namedOrdinal = attackOrdinal(name);
     if (namedOrdinal !== undefined) activeOrdinal = namedOrdinal;
     const ordinal = namedOrdinal ?? activeOrdinal;
+    const fromLevel = header;
     const slot = (role: PowerAttackSlot[1]) =>
-      slots.push([specific.ordinal, role, ordinal]);
+      slots.push(
+        fromLevel === undefined
+          ? [specific.ordinal, role, ordinal]
+          : [specific.ordinal, role, ordinal, fromLevel],
+      );
+    if (
+      fromLevel !== undefined &&
+      AS_ABOVE_BUT.test(specific.value ?? "") &&
+      /hit$/iu.test(name)
+    )
+      continue;
     if (/targets?$/i.test(name)) slot("target");
-    if (/attack$/i.test(name)) slot("attack");
+    if (/attack$/i.test(name) && !/opportunity attack$/iu.test(name))
+      slot("attack");
     if (/^(?:(?:primary|secondary|tertiary|quaternary)\s+)?hit$/i.test(name))
       slot("hit");
     if (/attack type$/i.test(name)) slot("attack-type");
@@ -434,19 +483,26 @@ const NATIVE_INCREASE_LINES: readonly {
   },
 ];
 
-function attackBonus(line: string): AttackBonusIr {
+function attackBonus(line: string, meleeHalf = false): AttackBonusIr {
   const normalized = lower(line.replace(/\s+/g, " "));
   const native = NATIVE_INCREASE_LINES.find(({ text }) =>
     normalized.includes(lower(text)),
   );
   const firstLine = line.split("\n")[0] ?? line;
-  // Native CalcStatVsDefense (-Module-.cs ~23811) reads a signed number
-  // after any word of the attack stat: '+' adds, '-' or '–' subtracts.
-  // "Strength + 2", "Your highest ability modifier + 6", "Your highest
-  // ability score +9", "Strength -2 vs. AC", "Dexterity – 2 vs. AC".
-  const signed = firstLine.match(
-    /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)(?:\s+score)?(?:\s+modifier)?\s*([+\-–])\s*(\d+)/i,
-  );
+  // Native CalcStatVsDefense (-Module-.cs ~23800-23833) reads the first
+  // signed number after any word of the attack stat (the text before
+  // " vs"): '+' adds, '-' or '–' subtracts. "Strength + 2", "Your highest
+  // ability modifier + 6", "Your highest ability score +9", "Strength -2
+  // vs. AC", "Dexterity – 2 vs. AC", a companion's "Base + 4 vs. AC". A
+  // beast's or summoned creature's line keeps its own number.
+  // Without " vs" there is no stat (native reads none), but a dual
+  // power's melee half is the stat of the whole line.
+  const stat =
+    /^(.*?)\s+vs\.?\s/iu.exec(firstLine)?.[1] ?? (meleeHalf ? firstLine : "");
+  const signed =
+    BEAST_ATTACK_LINE.test(firstLine) || LEVEL_ATTACK_LINE.test(firstLine)
+      ? null
+      : stat.match(/\S\s*([+\-–])\s*(\d+)/u);
   const base =
     signed === null ? 0 : (signed[1] === "+" ? 1 : -1) * Number(signed[2]);
   const steps: { level: number; bonus: number }[] = [];
@@ -470,7 +526,22 @@ function attackBonus(line: string): AttackBonusIr {
   };
 }
 
-function attackLine(line: string): AttackLineIr {
+/**
+ * The attack stats of a line: the text before each " vs." (native
+ * CalcStatVsDefense reads the stat before " vs. "; "Intelligence vs.
+ * Fortitude, Wisdom vs. Fortitude, or Charisma vs. Fortitude" names three).
+ * An ability in the prose after the defense ("…equal to one-half your
+ * Strength modifier", Stalker's Strike) is no attack ability. A line
+ * without " vs" (a dual power's melee half) is all stat.
+ */
+function attackStatText(line: string): string {
+  const stats = [...line.matchAll(/([^]*?)\s+vs\.?\s/giu)].map(
+    (match) => match[1] ?? "",
+  );
+  return stats.length === 0 ? line : stats.join(" ");
+}
+
+function attackLine(line: string, meleeHalf = false): AttackLineIr {
   const attack = line.match(ATTACK_LINE_PATTERN);
   const left = (attack?.[1] ?? "").trim();
   const level = LEVEL_ATTACK_LINE.exec(line);
@@ -502,26 +573,29 @@ function attackLine(line: string): AttackLineIr {
     ...listed(
       "abilities",
       POWER_TEXT_ABILITIES.filter((ability) =>
-        new RegExp(`\\b${ability}\\b`, "i").test(line),
+        new RegExp(`\\b${ability}\\b`, "i").test(attackStatText(line)),
       ),
     ),
     ...(/primary ability/i.test(attack?.[1] ?? "")
       ? { primaryAbility: true as const }
       : {}),
-    bonus: attackBonus(line),
+    bonus: attackBonus(line, meleeHalf),
   };
 }
 
 function attackChoice(line: string): AttackChoiceIr {
   const alternatives = dualAttackAlternatives(line);
-  return alternatives === undefined
-    ? { line: attackLine(line) }
-    : {
-        alternatives: [
-          attackLine(alternatives[0]),
-          attackLine(alternatives[1]),
-        ],
-      };
+  if (alternatives === undefined) return { line: attackLine(line) };
+  // Native WhichAttack keeps the whole line for the melee alternative, so
+  // "Strength (melee) or Dexterity (ranged) vs. AC" targets AC with either.
+  const melee = attackLine(alternatives[0], true);
+  const defense = melee.defense ?? attackLine(line).defense;
+  return {
+    alternatives: [
+      defense === undefined ? melee : { defense, ...melee },
+      attackLine(alternatives[1]),
+    ],
+  };
 }
 
 const defenseNames = ["AC", "Fortitude", "Reflex", "Will"] as const;
@@ -655,37 +729,57 @@ function increaseClauses(
 /** The hit line a level reads: native HigherLevelDamage (a "Level N:" line,
  *  which wins over an increase sentence, else the increase clause, else
  *  the first line). */
+/** Native LevelIncrease's levels (`increaseLevels`, `-Module-.cs` ~3518). */
+const NATIVE_LEVEL_LINES = new Set([5, 11, 15, 21, 25]);
+
+/**
+ * The "Level N:" texts of a hit. Native LevelIncrease (`-Module-.cs`
+ * ~24555) finds "Level 25: ", "Level 21: ", "Level 15: ", "Level 11: " or
+ * "Level 5: " anywhere in the text, indented or mid-line ("\tLevel 11:",
+ * Stone Panoply). D105: a later line that starts (after indentation) with
+ * another level ("Level 13:", "\tLevel 23:", Spirit Flay) steps there too,
+ * as the power text says. Each text runs to the end of its line or the
+ * next "Level N:".
+ */
+function levelLines(value: string): { level: number; text: string }[] {
+  const lines: { level: number; text: string }[] = [];
+  value.split("\n").forEach((line, index) => {
+    const matches = [...line.matchAll(/\bLevel\s+(\d+):\s*/giu)];
+    matches.forEach((match, at) => {
+      const level = Number(match[1]);
+      const lineStart = index > 0 && line.slice(0, match.index).trim() === "";
+      if (!lineStart && !NATIVE_LEVEL_LINES.has(level)) return;
+      const end = matches[at + 1]?.index ?? line.length;
+      lines.push({
+        level,
+        text: line.slice(match.index + match[0].length, end).trim(),
+      });
+    });
+  });
+  return lines;
+}
+
 function hitLineAtLevel(value: string, level: number): string {
   const first = value.split("\n")[0] ?? "";
   let selected: string | undefined;
   let selectedLevel = 0;
-  for (const line of value.split("\n").slice(1)) {
-    const match = line.match(/^Level\s+(\d+):\s*(.*)$/i);
-    if (
-      match?.[1] !== undefined &&
-      match[2] !== undefined &&
-      Number(match[1]) <= level &&
-      Number(match[1]) >= selectedLevel
-    ) {
-      selectedLevel = Number(match[1]);
-      selected = match[2];
+  for (const line of levelLines(value))
+    if (line.level <= level && line.level >= selectedLevel) {
+      selectedLevel = line.level;
+      selected = line.text;
     }
-  }
   if (selected !== undefined) return selected;
   let damage: string | undefined;
   for (const clause of increaseClauses(value))
     if (level >= clause.threshold) damage = clause.damage;
-  return damage ?? first;
+  // A first line with its own "Level N:" reads the text before it.
+  return damage ?? first.replace(/\s*\bLevel\s+(?:5|11|15|21|25):[^]*$/iu, "");
 }
 
 /** Every level at which `hitLineAtLevel` may change. */
 function hitLevelThresholds(value: string): number[] {
   const thresholds = new Set<number>();
-  for (const line of value.split("\n").slice(1)) {
-    const match = line.match(/^Level\s+(\d+):\s*(.*)$/i);
-    if (match?.[1] !== undefined && match[2] !== undefined)
-      thresholds.add(Number(match[1]));
-  }
+  for (const line of levelLines(value)) thresholds.add(line.level);
   for (const clause of increaseClauses(value)) thresholds.add(clause.threshold);
   return [...thresholds].sort((left, right) => left - right);
 }
@@ -777,18 +871,141 @@ function weaponAddedDice(expression: string): readonly string[] {
   return dice;
 }
 
-function damageClause(clause: string): DamageClauseIr {
-  const expression = clause.split(/\bdamage\b/iu)[0] ?? "";
+const canonicalAbility = (word: string): PowerTextAbility | undefined =>
+  POWER_TEXT_ABILITIES.find(
+    (ability) => lower(ability) === lower(word.replace(/[.,;:]+$/u, "")),
+  );
+
+/** One "+ <term>" of native CalcDamage's chain. */
+interface DamageChainTerm {
+  /** The term's word ("2", "Strength", "1d8"), "your"/"twice" skipped. */
+  readonly word: string;
+  /** Native MultipleAbilityChoices (`-Module-.cs` ~24663): a word ending
+   *  in "," or followed by " or " starts a list of abilities, of which the
+   *  row takes one. */
+  readonly choices?: readonly PowerTextAbility[];
+  /** The text after the term up to the next "+". */
+  readonly after: string;
+}
+
+/**
+ * Native CalcDamage's "+" chain (`-Module-.cs` ~24839-24953): after the
+ * first word of the expression (and its " modifier"), every "+ <word>"
+ * term. The chain needs a "+" right after the first term; after each term
+ * it skips to the next "+" anywhere in the expression. A term's word is
+ * read past "your" and "twice"; a word ending in "," or followed by " or "
+ * is a list of ability choices. ParseAbilityMod (~24332) then adds an
+ * all-digit word as a number, appends a dice word and adds an ability
+ * word's modifier, with or without "modifier" after it.
+ * D105: a parenthetical right after the first term ("2[W] (main weapon) +
+ * …", Eruption of Steel) is skipped where native stops.
+ */
+function damageChain(expression: string): DamageChainTerm[] {
+  let rest = expression.replace(/^\s*twice\s+/iu, "");
+  const first = /^\s*\S+/u.exec(rest);
+  if (first === null) return [];
+  rest = rest.slice(first[0].length).replace(/^ modifier\b/iu, "");
+  rest = rest.replace(/^(?:\s*\([^)]*\))+/u, "");
+  const terms: DamageChainTerm[] = [];
+  for (;;) {
+    const plus = /^\s*\+\s*/u.exec(rest);
+    if (plus === null) break;
+    rest = rest.slice(plus[0].length);
+    let word = /^\S+/u.exec(rest)?.[0] ?? "";
+    const choiceText = rest;
+    rest = rest.slice(word.length);
+    const choices =
+      word.endsWith(",") || / or /iu.test(rest)
+        ? abilityChoices(choiceText)
+        : [];
+    while (/^(?:your|twice)$/iu.test(word)) {
+      const next = /^\s*(\S+)/u.exec(rest);
+      if (next === null) break;
+      word = next[1] ?? "";
+      rest = rest.slice(next[0].length);
+    }
+    rest = rest.replace(/^ \(off-hand weapon\)/iu, "");
+    const nextPlus = rest.indexOf("+");
+    const after = nextPlus < 0 ? rest : rest.slice(0, nextPlus);
+    terms.push({
+      word,
+      ...(choices.length > 1 ? { choices } : {}),
+      after,
+    });
+    rest = nextPlus < 0 ? "" : rest.slice(nextPlus);
+  }
+  return terms;
+}
+
+/** Native MultipleAbilityChoices: the ability words from the term on,
+ *  skipping "modifier", "," and "or", up to the first other word. */
+function abilityChoices(text: string): PowerTextAbility[] {
+  const choices: PowerTextAbility[] = [];
+  for (const word of text.split(/[\s,]+/u)) {
+    if (word === "" || /^(?:modifier|or)$/iu.test(word)) continue;
+    const ability = canonicalAbility(word);
+    if (ability === undefined) break;
+    if (!choices.includes(ability)) choices.push(ability);
+  }
+  return choices;
+}
+
+/**
+ * A chain term's flat number: an all-digit word (native ParseAbilityMod,
+ * ~24355). D105: only when the text after it names damage, not a bonus
+ * ("+ 2 + Strength modifier", "+ 5 fire"); native also adds a "+2" of
+ * prose before the first "damage" ("a +2 bonus to AC").
+ */
+function chainNumber(term: DamageChainTerm): number {
+  if (!/^\d+$/u.test(term.word)) return 0;
+  return /\b(?:bonus|penalty)\s+to\b|\bsquares?\b/iu.test(term.after)
+    ? 0
+    : Number(term.word);
+}
+
+/** A level step with no "damage": native HigherLevelDamage's replacement
+ *  is the whole expression. */
+interface DamageClauseOptions {
+  readonly wholeExpression?: boolean;
+}
+
+/** "1d6 squares": a distance, never damage dice. */
+const FIXED_DICE = /(\d+d\d+)(?!\s+squares?\b)/iu;
+
+function damageClause(
+  clause: string,
+  options: DamageClauseOptions = {},
+): DamageClauseIr {
+  // Without "damage" (a level step, a melee/ranged half, a hit the builder
+  // reads although native deals nothing) the expression ends with the
+  // first sentence: "2[W] + Dexterity modifier (ranged). You can also deal
+  // +1[W], …" (Grounding Attack) is 2[W] + Dexterity.
+  const expression = /\bdamage\b/iu.test(clause)
+    ? (clause.split(/\bdamage\b/iu)[0] ?? "")
+    : (clause.split(/\.(?:\s|$)/u)[0] ?? "");
   const expressionTerms = [...expression.matchAll(WEAPON_TERM)];
   const weaponTerms =
     expressionTerms.length > 0
       ? expressionTerms
       : [...clause.matchAll(WEAPON_TERM)].slice(0, 1);
-  const fixedDice = clause.match(/(\d+d\d+)/i)?.[1];
-  const flatBase = nativeFlatDamageBase(clause);
+  const fixedDice = clause.match(FIXED_DICE)?.[1];
+  const flatBase = nativeFlatDamageBase(
+    options.wholeExpression === true ? `${expression} damage` : clause,
+  );
   const primary = withoutCompanionAbilityDamage(expression);
-  const modifierAbilities = POWER_TEXT_ABILITIES.filter((ability) =>
-    new RegExp(`\\b${ability} modifier\\b`, "i").test(primary),
+  const chain = damageChain(primary);
+  // Native ParseAbilityMod: a chain term naming an ability adds its
+  // modifier, "modifier" or not ("5[W] + Strength damage", "3[W] +
+  // Strength + Constitution modifier").
+  const chainAbilities = new Set(
+    chain.flatMap((term) =>
+      term.choices === undefined ? [canonicalAbility(term.word) ?? []] : [],
+    ),
+  );
+  const modifierAbilities = POWER_TEXT_ABILITIES.filter(
+    (ability) =>
+      new RegExp(`\\b${ability} modifier\\b`, "i").test(primary) ||
+      chainAbilities.has(ability),
   );
   const abilityPhrase = /\bhighest ability(?:\s+score)?\s+modifier\b/i.test(
     primary,
@@ -801,10 +1018,10 @@ function damageClause(clause: string): DamageClauseIr {
         : undefined;
   const damageType = expression.match(DAMAGE_TYPES)?.[0];
   // Native CalcDamage parses only the damage expression: the hit line up
-  // to its first "damage".
-  const powerDamageBonus = Number(
-    `${expression} damage`.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ??
-      0,
+  // to its first "damage". Each flat "+ N" term of its chain adds.
+  const powerDamageBonus = chain.reduce(
+    (sum, term) => sum + chainNumber(term),
+    0,
   );
   const beastDice = expression.match(/(\d+)\s*\[B\]/i);
   const beastFixed =
@@ -836,7 +1053,10 @@ function damageClause(clause: string): DamageClauseIr {
         new RegExp(`\\b${ability}\\b`, "i").test(primary),
       ),
     ),
-    ...(/\bor\b/i.test(primary) ? { hasOr: true as const } : {}),
+    ...(/\bor\b/i.test(primary) ||
+    chain.some((term) => term.choices !== undefined)
+      ? { hasOr: true as const }
+      : {}),
     ...listed(
       "twice",
       POWER_TEXT_ABILITIES.filter((ability) =>
@@ -911,19 +1131,57 @@ function specialHit(hitLine: string): SpecialHitIr | undefined {
   return undefined;
 }
 
-function hitVariant(hitLine: string): HitVariantIr {
+function hitVariant(
+  hitLine: string,
+  options: DamageClauseOptions = {},
+): HitVariantIr {
   const special = specialHit(hitLine);
-  const clauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine)
-    ? hitLine.split(/\s+or\s+/i)
-    : [hitLine];
+  const split = meleeRangedClauses(hitLine);
   return {
     ...(special === undefined ? {} : { special }),
     ...(/\bongoing\b/i.test(hitLine) ? { ongoing: true as const } : {}),
     clauses:
-      clauses.length > 1
-        ? [damageClause(clauses[0] ?? ""), damageClause(clauses.at(-1) ?? "")]
-        : [damageClause(hitLine)],
+      split === undefined
+        ? [damageClause(hitLine, options)]
+        : [
+            // The melee clause ends at " or ": its whole text is the
+            // expression.
+            damageClause(split[0], {
+              wholeExpression: !/\bdamage\b/iu.test(split[0]),
+            }),
+            damageClause(split[1], options),
+          ],
   };
+}
+
+/**
+ * A "(melee …) or … (ranged …)" hit line's melee and ranged clauses: the
+ * text before its first " or ", and the first later " or " part that names
+ * "(ranged" (a later " or " of the riders, "your choice of acid, cold, fire,
+ * or …", is not the ranged clause). Undefined for any other line.
+ *
+ * A ranged clause without dice ("3[W] + Strength (melee) or Dexterity
+ * (ranged) modifier damage", Wolf Howl Strike) takes the melee clause's
+ * leading damage term. D105: native CalcDamage reads the ranged half alone
+ * ("Dexterity (ranged) modifier", no dice); the power deals 3[W] +
+ * Dexterity modifier.
+ */
+export function meleeRangedClauses(
+  hitLine: string,
+): readonly [string, string] | undefined {
+  if (!/\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine)) return undefined;
+  const parts = hitLine.split(/\s+or\s+/i);
+  const melee = parts[0] ?? "";
+  const ranged =
+    parts.slice(1).find((part) => /\(ranged/iu.test(part)) ??
+    parts.at(-1) ??
+    "";
+  if (/\[W\]/iu.test(ranged) || FIXED_DICE.test(ranged)) return [melee, ranged];
+  const lead = /^\s*(\d*\[W\]|\d+d\d+)\s*\+/iu.exec(melee)?.[1];
+  return [
+    melee,
+    lead === undefined ? ranged : `${lead} + ${ranged.trimStart()}`,
+  ];
 }
 
 /** Healing, healing-surge and temporary hit point sentences of a text. */
@@ -946,12 +1204,33 @@ export function parseRecoveries(value: string): PowerRecoveryIr[] {
     });
 }
 
-/** One (level-selected) hit line, parsed. */
-export function parseHitLine(line: string): HitLineIr {
+/** One (level-selected) hit line, parsed. A level step's text (a "Level
+ *  N:" line or an increase clause) is native HigherLevelDamage's
+ *  replacement for the damage expression: without "damage" in it
+ *  ("Increase damage to 10 + ability modifier at 29th level") the whole
+ *  text is the expression. */
+export function parseHitLine(
+  line: string,
+  options: { readonly levelStep?: boolean } = {},
+): HitLineIr {
   const thrown = thrownWeaponAlternative(line, true);
   const other = thrownWeaponAlternative(line, false);
+  const clauseOptions: DamageClauseOptions = {
+    wholeExpression: options.levelStep === true && !/\bdamage\b/i.test(line),
+  };
+  const variant = hitVariant(other, clauseOptions);
+  const stepDamage =
+    clauseOptions.wholeExpression === true &&
+    variant.clauses.some(
+      (clause) =>
+        clause.weaponTerms !== undefined ||
+        clause.fixedDice !== undefined ||
+        clause.flatBase !== undefined,
+    );
   return {
-    ...(/\bdamage\b/i.test(line) ? { damage: true as const } : {}),
+    ...(/\bdamage\b/i.test(line) || stepDamage
+      ? { damage: true as const }
+      : {}),
     ...(hasCompanionAbilityDamage(line)
       ? { companionAbility: true as const }
       : {}),
@@ -959,8 +1238,8 @@ export function parseHitLine(line: string): HitLineIr {
     ...(OFF_HAND.test(line) ? { offHand: true as const } : {}),
     ...(MAIN_WEAPON.test(line) ? { mainWeapon: true as const } : {}),
     ...listed("recoveries", parseRecoveries(line)),
-    ...(thrown === other ? {} : { thrown: hitVariant(thrown) }),
-    other: hitVariant(other),
+    ...(thrown === other ? {} : { thrown: hitVariant(thrown, clauseOptions) }),
+    other: variant,
   };
 }
 
@@ -976,7 +1255,7 @@ export function parseHitField(value: string): HitFieldIr {
     previous = line;
     steps.push({
       ...(from === undefined ? {} : { from }),
-      line: parseHitLine(line),
+      line: parseHitLine(line, { levelStep: from !== undefined }),
     });
   }
   return {

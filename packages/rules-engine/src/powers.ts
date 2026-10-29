@@ -1,6 +1,7 @@
 import {
   authoredAttackLine,
   hitLineAt,
+  levelHeaderText,
   parseHitLine,
   readCreatureStatBlock,
   weaponPropertyText,
@@ -1104,8 +1105,6 @@ function nativeSpecialDamage(
   // conditional movement prose.
   if (key(power.name) === key(EXCEPTION_NAMES.bondOfCensure))
     return { dice: level >= 21 ? "2d10" : "1d10", suppressAbility: true };
-  if (key(power.name) === key(EXCEPTION_NAMES.knockdownAssault))
-    return { dice: "", ability: "Strength", abilityOnly: true };
 
   // The exact hit lines, matched at pack build (content-domain power-text).
   switch (hit) {
@@ -2166,12 +2165,16 @@ function authoredAttacks(
   power: ContentEntity,
   overlays: readonly FieldOverlay[],
   texts: PowerTexts,
+  level: number,
 ): readonly AuthoredAttack[] {
   const attacks = new Map<number, string>();
   const targets = new Map<number, string>();
   const hits = new Map<number, string>();
   const attackTypes = new Map<number, string>();
-  for (const [specificOrdinal, role, ordinal] of texts.slots) {
+  for (const [specificOrdinal, role, ordinal, fromLevel] of texts.slots) {
+    // A "Level N" header's fields replace their namesakes from level N
+    // (native FindLine), "As above, but " stripped.
+    if (fromLevel !== undefined && fromLevel > level) continue;
     const specific = power.specifics.find(
       (candidate) => candidate.ordinal === specificOrdinal,
     );
@@ -2185,7 +2188,8 @@ function authoredAttacks(
         value = modifiedFieldValue(value, overlay) ?? "";
       }
     }
-    const text = value.trim();
+    const text =
+      fromLevel === undefined ? value.trim() : levelHeaderText(value.trim());
     if (role === "target" && text.length > 0) targets.set(ordinal, text);
     if (role === "attack" && texts.attack(text).isAttack)
       attacks.set(ordinal, text);
@@ -2257,11 +2261,18 @@ export function powerAttackProfile(
     readonly stats: Readonly<Record<string, EvaluatedStat>>;
     readonly activeDefinitionIds: readonly string[];
     readonly byId: ReadonlyMap<string, ContentEntity>;
+    /** The character's level (a "Level N" header's attack from N). */
+    readonly level?: number;
   },
 ): PowerAttackProfile {
   const abilities = new Set<string>();
   const defenses = new Set<string>();
-  for (const { field } of authoredAttacks(power, [], powerTexts(power))) {
+  for (const { field } of authoredAttacks(
+    power,
+    [],
+    powerTexts(power),
+    input.level ?? 0,
+  )) {
     const ability = attackLineAbility(
       authoredAttackLine(field),
       input.stats,
@@ -3093,7 +3104,12 @@ export function evaluatePowers(input: {
           : /^ranged basic attack$/i.test(power.name)
             ? "ranged"
             : undefined;
-    const attackDefinitions = authoredAttacks(power, input.overlays, texts);
+    const attackDefinitions = authoredAttacks(
+      power,
+      input.overlays,
+      texts,
+      input.level,
+    );
     // A summoned creature's commands the summoner rolls (D111): each one's
     // attack and hit texts, parsed at pack build, and the record whose
     // keyed bonuses apply (a merged community card, else the power).

@@ -4,6 +4,7 @@ import {
   NATIVE_WEAPON_BONUSES,
   authoredAttackLine,
   hitLineAt,
+  levelHeaderText,
   parseAttackField,
   parseHitField,
   parsePowerFieldBonuses,
@@ -99,6 +100,81 @@ describe("power attack lines", () => {
     expect("line" in hawk.other && hawk.other.line.abilities).toEqual([
       "Dexterity",
     ]);
+  });
+
+  it("reads the first signed number after any stat word, only before ' vs.'", () => {
+    // Native CalcStatVsDefense (~23811): a WOG companion's modify.
+    expect(
+      authoredAttackLine(parseAttackField("Base + 4 vs. AC")).bonus,
+    ).toEqual({ base: 4 });
+    // No " vs": native reads no stat.
+    expect(
+      authoredAttackLine(
+        parseAttackField(
+          "The attacker repeats the attack that missed you against its own defenses with a +4 power bonus.",
+        ),
+      ).bonus,
+    ).toEqual({});
+    // A dual power's melee half is the whole line's stat.
+    const dual = parseAttackField(
+      "Strength (melee) or Dexterity (ranged) vs. AC. If the target couldn't see you before you moved, it grants combat advantage to you for this attack.",
+    );
+    expect("alternatives" in dual.other && dual.other.alternatives).toEqual([
+      { defense: "AC", abilities: ["Strength"], bonus: {} },
+      { defense: "AC", abilities: ["Dexterity"], bonus: {} },
+    ]);
+  });
+
+  it("takes attack abilities only from the stats before ' vs.'", () => {
+    const line = (text: string) =>
+      authoredAttackLine(parseAttackField(text)).abilities;
+    expect(
+      line(
+        "Dexterity vs. Fortitude. If the target is bloodied, you gain a bonus to the attack roll equal to one-half your Strength modifier.",
+      ),
+    ).toEqual(["Dexterity"]);
+    expect(
+      line(
+        "Intelligence vs. Fortitude, Wisdom vs. Fortitude, or Charisma vs. Fortitude",
+      ),
+    ).toEqual(["Intelligence", "Wisdom", "Charisma"]);
+  });
+
+  it("reads a theme power's 'Level N' header fields from that level", () => {
+    const slots = powerAttackSlots(
+      [
+        ["Attack", "Primary ability vs. AC, two attacks."],
+        ["Hit", "5 + ability modifier damage per attack."],
+        ["Level 19", ""],
+        [" Attack", "As above, but Primary ability + 2 vs. AC."],
+        ["Level 27", ""],
+        [" Hit", "As above, but +6 power bonus to damage rolls."],
+        ["_ThemePower", "ID_SYNTHETIC_THEME"],
+      ].map(([name, value], ordinal) => ({
+        name: name!,
+        value: value!,
+        ordinal,
+      })),
+    );
+    // The "As above, but" Hit only restates the main Hit's damage (D105).
+    expect(slots).toEqual([
+      [0, "attack", 1],
+      [1, "hit", 1],
+      [3, "attack", 1, 19],
+    ]);
+    expect(levelHeaderText("As above, but Primary ability + 2 vs. AC.")).toBe(
+      "Primary ability + 2 vs. AC.",
+    );
+  });
+
+  it("never reads a summon's Opportunity Attack command as the power's attack", () => {
+    expect(
+      powerAttackSlots(
+        [" Opportunity Attack", "• Opportunity Attack", "Attack"].map(
+          (name, ordinal) => ({ name, ordinal }),
+        ),
+      ),
+    ).toEqual([[2, "attack", 1]]);
   });
 
   it("finds each attack slot's ordinal from its field name", () => {
@@ -200,6 +276,102 @@ describe("power hit lines", () => {
       parseHitField("The target takes ongoing 10 radiant damage (save ends).")
         .steps[0]!.line.other.special,
     ).toBe("ongoing-10");
+  });
+
+  it("reads every term of native CalcDamage's '+' chain", () => {
+    const clause = (text: string, level = 1) =>
+      hitLineAt(parseHitField(text), level).other.clauses[0];
+    // A flat number in the chain (ParseAbilityMod's all-digit branch).
+    expect(clause("2[W] + 2 + Strength modifier damage.")).toMatchObject({
+      powerDamageBonus: 2,
+      modifierAbilities: ["Strength"],
+    });
+    // An ability without "modifier", alone or before another.
+    expect(
+      clause("5[W] + Strength damage, and you can push the target 1 square.")
+        .modifierAbilities,
+    ).toEqual(["Strength"]);
+    expect(
+      clause("3[W] + Strength + Constitution modifier damage.")
+        .modifierAbilities,
+    ).toEqual(["Strength", "Constitution"]);
+    // A comma list is a choice of abilities (MultipleAbilityChoices).
+    expect(
+      clause("1d10 + Charisma, Intelligence Wisdom modifier psychic damage."),
+    ).toMatchObject({ hasOr: true });
+    // A bonus in the prose before "damage" is no damage term.
+    expect(
+      clause(
+        "1[W] + Strength modifier, and you gain a + 2 bonus to AC until the end of your next turn and deal fire damage.",
+      ).powerDamageBonus,
+    ).toBeUndefined();
+    // A push or pull distance is not damage dice.
+    expect(clause("You push the secondary target 1d4 squares.").fixedDice).toBe(
+      undefined,
+    );
+  });
+
+  it("reads the ranged clause of a melee-or-ranged ability with the weapon dice", () => {
+    const [melee, ranged] = parseHitField(
+      "3[W] + Strength (melee) or Dexterity (ranged) modifier damage.",
+    ).steps[0]!.line.other.clauses;
+    expect(melee).toMatchObject({
+      weaponTerms: [{ count: 3 }],
+      modifierAbilities: ["Strength"],
+    });
+    expect(ranged).toMatchObject({
+      weaponTerms: [{ count: 3 }],
+      modifierAbilities: ["Dexterity"],
+    });
+    // The ranged clause is the part naming "(ranged", not the last " or ".
+    const [, choice] = parseHitField(
+      "3[W] + Strength modifier damage (melee) or 3[W] + Dexterity modifier damage (ranged). The damage type is your choice of acid, cold, fire, or thunder.",
+    ).steps[0]!.line.other.clauses;
+    expect(choice?.modifierAbilities).toEqual(["Dexterity"]);
+  });
+
+  it("reads a level step without 'damage' as the whole expression", () => {
+    const field = parseHitField(
+      "5 + ability modifier damage per attack, and the target takes a penalty to attack rolls (save ends).\nIncrease damage to 10 + ability modifier at 29th level.",
+    );
+    expect(hitLineAt(field, 29)).toMatchObject({
+      damage: true,
+      other: { clauses: [{ flatBase: 10, abilityPhrase: "ability" }] },
+    });
+  });
+
+  it("steps at an indented or mid-line native 'Level N:'", () => {
+    const indented = parseHitField(
+      "1[W] + Strength modifier damage.\n  Level 21: 2[W] + Strength modifier damage.",
+    );
+    expect(indented.steps.map((step) => step.from)).toEqual([undefined, 21]);
+    const tabbed = parseHitField(
+      "1[W] + your highest ability modifier damage.\n\tLevel 11: 2[W] + your highest ability modifier damage.\n\tLevel 21: 3[W] + your highest ability modifier damage.",
+    );
+    expect(
+      [1, 11, 21].map(
+        (level) =>
+          hitLineAt(tabbed, level).other.clauses[0].weaponTerms?.[0]?.count,
+      ),
+    ).toEqual([1, 2, 3]);
+    const midLine = parseHitField("1[W] damage. Level 21: 2[W] damage.");
+    expect(
+      [1, 21].map(
+        (level) =>
+          hitLineAt(midLine, level).other.clauses[0].weaponTerms?.[0]?.count,
+      ),
+    ).toEqual([1, 2]);
+    // D105: a line-start non-native level still steps; mid-line it does not.
+    expect(
+      parseHitField("1[W] damage.\n\tLevel 13: 2[W] damage.").steps.map(
+        (step) => step.from,
+      ),
+    ).toEqual([undefined, 13]);
+    expect(
+      parseHitField("1[W] damage. Level 13: 2[W] damage.").steps.map(
+        (step) => step.from,
+      ),
+    ).toEqual([undefined]);
   });
 
   it("finds healing and temporary hit points", () => {

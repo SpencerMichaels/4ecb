@@ -1,9 +1,9 @@
 {
-  "version": 3,
+  "version": 4,
   "fixture": "b9437d65aa8c12564f621dfcc0447d5c667b20c356e1ccc31aa299f498f10af9",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -115,7 +115,7 @@
       }
     },
     "ID_GOLDEN_POWER_HIGHEST": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -185,7 +185,7 @@
       }
     },
     "ID_GOLDEN_POWER_TWO_WEAPON": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -342,7 +342,7 @@
       }
     },
     "ID_GOLDEN_POWER_MELEE_RANGED": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -523,7 +523,7 @@
       }
     },
     "ID_GOLDEN_POWER_IMPLEMENT": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -573,6 +573,7 @@
               {
                 "from": 11,
                 "line": {
+                  "damage": true,
                   "other": {
                     "clauses": [
                       {
@@ -597,6 +598,7 @@
               {
                 "from": 21,
                 "line": {
+                  "damage": true,
                   "other": {
                     "clauses": [
                       {
@@ -653,7 +655,7 @@
       }
     },
     "ID_GOLDEN_POWER_BEAST": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -727,7 +729,7 @@
       }
     },
     "ID_GOLDEN_POWER_SUMMON": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
@@ -801,7 +803,7 @@
       }
     },
     "ID_GOLDEN_FEAT_MODIFY": {
-      "version": 3,
+      "version": 4,
       "texts": {
         "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
           "hit": {
@@ -815,6 +817,34 @@
                         "weaponTerms": [
                           {
                             "count": 1
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Constitution"
+                        ],
+                        "listedAbilities": [
+                          "Constitution"
+                        ],
+                        "beast": {
+                          "ownAbilities": [
+                            "Constitution"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "from": 21,
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 2
                           }
                         ],
                         "modifierAbilities": [
@@ -856,16 +886,11 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 3,
+      "version": 4,
       "slots": [
         [
           3,
           "attack-type",
-          1
-        ],
-        [
-          6,
-          "attack",
           1
         ]
       ],
@@ -922,30 +947,13 @@
             }
           }
         },
-        "Melee 1; targets one creature; Intelligence vs. Reflex; 1d8 + Intelligence modifier fire damage.": {
-          "attack": {
-            "isAttack": true,
-            "defenses": [
-              "Reflex"
-            ],
-            "other": {
-              "line": {
-                "defense": "Reflex",
-                "abilities": [
-                  "Intelligence"
-                ],
-                "bonus": {}
-              }
-            }
-          }
-        },
         "You summon a Medium golden heron in an unoccupied square within range. The heron has speed 6 and fly 8 (hover). It has a +4 bonus to AC and a +2 bonus to its other defenses. The heron has resist 5 fire. You can give the heron the following special commands.": {
           "recoveries": []
         }
       }
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 3,
+      "version": 4,
       "summonedCreature": true,
       "texts": {
         "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.": {
@@ -959,6 +967,7 @@
                       {
                         "fixedDice": "1d10",
                         "modifierAbilities": [
+                          "Intelligence",
                           "Charisma"
                         ],
                         "listedAbilities": [
@@ -988,6 +997,7 @@
                       {
                         "fixedDice": "2d10",
                         "modifierAbilities": [
+                          "Intelligence",
                           "Charisma"
                         ],
                         "listedAbilities": [
@@ -1032,7 +1042,7 @@
       }
     },
     "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
-      "version": 3,
+      "version": 4,
       "summonedCreature": true,
       "texts": {
         "2d8 + your Charisma modifier radiant damage.": {

@@ -2258,6 +2258,86 @@ describe("power evaluation", () => {
     });
   });
 
+  it("reads a theme power's 'Level N' header attack only from that level", () => {
+    const evaluate = (level: number) =>
+      evaluatePowers({
+        level,
+        activeDefinitionIds: ["THEME"],
+        inventory: [],
+        stats: {
+          "Strength score": stat("Strength score", 18),
+          "Strength modifier": stat("Strength modifier", 4),
+        },
+        overlays: [],
+        entities: [
+          entity("THEME", "Synthetic Savagery", "Power", {
+            Keywords: "Martial",
+            "Attack Type": "Melee 1",
+            Attack: "Primary ability vs. AC, two attacks.",
+            Hit: "5 + ability modifier damage per attack.\nIncrease damage to 10 + ability modifier at 29th level.",
+            "Level 19": "",
+            " Attack": "As above, but Primary ability + 2 vs. AC.",
+            "Level 27": "",
+            " Hit": "As above, but +6 power bonus to damage rolls.",
+            _ThemePower: "ID_SYNTHETIC_THEME",
+          }),
+        ],
+      })[0]?.variants[0];
+    expect(evaluate(9)).toMatchObject({ attackBonus: 8, damage: "9" });
+    expect(evaluate(19)).toMatchObject({ attackBonus: 15, damage: "9" });
+    // The "As above, but" Hit keeps the main Hit's damage; its increase
+    // clause has no "damage" and is the whole expression (D105).
+    expect(evaluate(29)).toMatchObject({ attackBonus: 20, damage: "14" });
+  });
+
+  it("deals a melee-or-ranged power's weapon dice with the ranged ability", () => {
+    const [power] = evaluatePowers({
+      level: 23,
+      activeDefinitionIds: ["HOWL"],
+      inventory: [
+        {
+          id: "bow",
+          definitionIds: ["BOW"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 2),
+        "Dexterity modifier": stat("Dexterity modifier", 5),
+      },
+      overlays: [],
+      entities: [
+        entity("HOWL", "Synthetic Howl Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee or Ranged weapon",
+          Attack: "Strength (melee) or Dexterity (ranged) vs. AC.",
+          Hit: "3[W] + Strength (melee) or Dexterity (ranged) modifier damage.",
+        }),
+        entity("BOW", "Synthetic Longbow", "Weapon", {
+          Damage: "1d10",
+          "Proficiency Bonus": "2",
+          Group: "Bow",
+          Range: "20/40",
+        }),
+      ],
+    });
+    const bow = power?.variants.find(
+      (variant) => variant.equipmentName === "Synthetic Longbow",
+    );
+    expect(bow).toMatchObject({
+      attackStat: "Dexterity",
+      defense: "AC",
+      damage: "3d10+5",
+    });
+    const unarmed = power?.variants.find(
+      (variant) => variant.equipmentName !== "Synthetic Longbow",
+    );
+    expect(unarmed).toMatchObject({ attackStat: "Strength", defense: "AC" });
+    expect(unarmed?.damage).toMatch(/\+2$/u);
+  });
+
   it("applies evaluated weapon-group and power-specific combat stats once", () => {
     const entities = [
       entity("POWER", "Melee Basic Attack", "Power", {

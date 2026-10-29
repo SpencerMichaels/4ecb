@@ -3,6 +3,7 @@ import {
   POWER_TEXT_VERSION,
   authoredAttackLine,
   getAttribute,
+  levelHeaderText,
   namesSummonedCreature,
   parsePowerFieldBonuses,
   parsePowerText,
@@ -99,13 +100,16 @@ export function powerTextField(
   const power = type.toLocaleLowerCase() === "power";
   const slots = power ? powerAttackSlots(specifics) : [];
   if (power) {
-    for (const [specificOrdinal, role] of slots) {
+    for (const [specificOrdinal, role, , fromLevel] of slots) {
       if (role !== "attack" && role !== "hit") continue;
       const specific = specifics.find(
         (candidate) => candidate.ordinal === specificOrdinal,
       );
-      if (specific !== undefined)
-        addText(wanted, specific.value.trim(), { [role]: true });
+      if (specific === undefined) continue;
+      const text = specific.value.trim();
+      addText(wanted, fromLevel === undefined ? text : levelHeaderText(text), {
+        [role]: true,
+      });
     }
     for (const specific of specifics) {
       const facets = facetsOfField(specific.name);
