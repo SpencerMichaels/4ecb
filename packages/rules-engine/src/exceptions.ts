@@ -310,14 +310,22 @@ export function isLeveledRangerAtWillAttack(candidate: ContentEntity): boolean {
   );
 }
 
+/**
+ * Native `IsUniversalSkill` (Module.decoded.cs ~31099): a Skill Training
+ * element whose `UniversalClassSkill` field is set counts as a class skill of
+ * any Class it is checked against. The field comes from content or from a
+ * character's `modify ... Field="UniversalClassSkill"` (native
+ * `C_RulesElementField` reads the modified field); `modifiedIds` holds the
+ * lower-cased IDs the character's modifies mark.
+ */
 export function isUniversalSkill(
   candidate: ContentEntity,
-  requestedCategoryType: string,
+  modifiedIds: ReadonlySet<string>,
 ): boolean {
   return (
-    candidate.type.toLocaleLowerCase() === "skill" &&
-    requestedCategoryType.toLocaleLowerCase() === "class" &&
-    (field(candidate, "UniversalClassSkill")?.length ?? 0) > 0
+    candidate.type.toLocaleLowerCase() === "skill training" &&
+    ((field(candidate, "UniversalClassSkill")?.length ?? 0) > 0 ||
+      modifiedIds.has(candidate.id.toLocaleLowerCase()))
   );
 }
 

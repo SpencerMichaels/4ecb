@@ -2200,10 +2200,27 @@ function evaluateCharacterInternal(
           group.alternatives.map((term) => term.value),
         );
       categoryTermsCache.set(rule.category, terms);
-      match ||= terms.some((term) => isUniversalSkill(candidate, term));
-      match ||=
-        universalSkillIds.has(key(candidate.id)) &&
-        terms.some((term) => key(index.find(term)?.type ?? "") === "class");
+      // Native CategoryMatch.Matches (Module.decoded.cs ~31125-31240) checks
+      // IsUniversalSkill against each of the character's classes for
+      // $$CLASS/$$NOT_CLASS (so a universal skill is a class skill, and never
+      // "not a class skill"), accepts it outright for $$HYBRID, and against
+      // each literal Class term.
+      if (isUniversalSkill(candidate, universalSkillIds)) {
+        const prefix = category.dynamicPrefix?.toLocaleUpperCase();
+        if (prefix === "$$NOT_CLASS") match = false;
+        else if (prefix === "$$HYBRID") match = true;
+        else {
+          if (prefix === "$$CLASS")
+            match ||= matchesCategory(
+              candidate,
+              { groups: category.groups },
+              candidateContext,
+            );
+          match ||= terms.some(
+            (term) => key(index.find(term)?.type ?? "") === "class",
+          );
+        }
+      }
       match ||= terms.some((term) =>
         diverseStudyException(candidate, term, ownedIds),
       );
