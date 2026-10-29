@@ -1075,6 +1075,10 @@ const reviews: ReviewCharacter[] = [
             "Select the Scarf of Reconciliation: an Item Set panel card under it.",
           ],
           [
+            "Augments attach/detach",
+            "Buy a Siberys Shard of Merciless Cold (heroic tier) in the Shop, then right-click it → Attach to → Rose Scythe of Chauntea: the scythe's muted Augment note and the shard's Attached to note.",
+          ],
+          [
             "Party pieces field",
             'Caelynnvala\'s Boons: the Party pieces field and hint under "Item set" (check at 140% zoom). Enter a count, clear it, try -1 and 1.5.',
           ],
@@ -1353,8 +1357,7 @@ const reviews: ReviewCharacter[] = [
         slug: "flint",
         title: "Review – Flint (Mage L6)",
         source: "sample-chars/Flint.dnd4e",
-        purpose:
-          "Player save: mage feature rows hidden as legacy hides them; a dragonshard augment bound to a staff.",
+        purpose: "Player save: mage feature rows hidden as legacy hides them.",
         links: [
           {
             label: "Print preview",
@@ -1363,16 +1366,6 @@ const reviews: ReviewCharacter[] = [
               [
                 "Feature notes follow legacy",
                 'Enchantment and Pyromancy Apprentice listed; no "Level N Mage … Powers" rows.',
-              ],
-            ],
-          },
-          {
-            label: "Equipment",
-            path: "tab=equipment",
-            items: [
-              [
-                "Augments attach/detach",
-                "The staff's muted Augment note and the shard's Attached to note; right-click the shard.",
               ],
             ],
           },

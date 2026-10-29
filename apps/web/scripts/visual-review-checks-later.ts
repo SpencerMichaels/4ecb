@@ -28,6 +28,7 @@ import {
   acquisitionCommands,
   compatibleBaseItems,
   inventoryAttachedAugment,
+  inventoryAugmentHosts,
   inventoryAugmentAttachedTo,
   inventoryDisplayName,
   inventoryEntryForEntity,
@@ -636,32 +637,68 @@ rule("dv", "Equipment", "Wrist razors on the arms", (c) => {
 /* Augments (Flint)                                                     */
 /* ------------------------------------------------------------------ */
 
-rule("flint", "Equipment", "Augments attach/detach", (c) => {
-  const inventory = c.build.inventory;
-  const name = (entry: (typeof inventory)[number]) =>
-    inventoryDisplayName(entry, c.context.byId);
-  const staff = inventory.find((entry) =>
-    /^Staff of Sleep and Charm/.test(name(entry)),
+// Flint's own shard was saved with count 0, so (as in legacy) it isn't owned
+// and binds nothing; the invoker buys one and attaches it to her scythe.
+rule("invoker-drow", "Equipment", "Augments attach/detach", (c) => {
+  const shardEntity = c.context.named(
+    "Siberys Shard of Merciless Cold (heroic tier)",
   );
-  const shard = inventory.find((entry) => /^Siberys Shard/.test(name(entry)));
+  const transaction = new CharacterTransaction(c.build);
+  const bought = inventoryEntryForEntity(shardEntity, c.build.effectiveLevel);
+  for (const command of acquisitionCommands(
+    c.build.inventory,
+    bought,
+    0,
+    c.context.byId,
+  ))
+    transaction.dispatch(command);
+  const name = (entry: (typeof c.build.inventory)[number]) =>
+    inventoryDisplayName(entry, c.context.byId);
+  const before = transaction.current.inventory;
+  const shard = before.find((entry) => /^Siberys Shard/.test(name(entry)));
+  const hosts = inventoryAugmentHosts(before, c.context.byId);
+  const scythe = hosts.find((entry) => /Rose Scythe/.test(name(entry)));
+  if (shard !== undefined && scythe !== undefined)
+    transaction.dispatch({
+      kind: "set-inventory-augment",
+      hostEntryId: scythe.id,
+      augmentEntryId: shard.id,
+    });
+  const inventory = transaction.current.inventory;
+  const host = inventory.find(({ id }) => id === scythe?.id);
   const attached =
-    staff === undefined
-      ? undefined
-      : inventoryAttachedAugment(staff, inventory);
-  const hosts =
-    shard === undefined ? [] : inventoryAugmentAttachedTo(shard, inventory);
+    host === undefined ? undefined : inventoryAttachedAugment(host, inventory);
+  const attachedTo =
+    shard === undefined
+      ? []
+      : inventoryAugmentAttachedTo(
+          inventory.find(({ id }) => id === shard.id) ?? shard,
+          inventory,
+        );
   return [
+    truthy(
+      "The bought shard is an owned holding",
+      shard !== undefined,
+      before.map(name).join("; "),
+    ),
+    truthy(
+      "Attach to… offers the Rose Scythe (a magic weapon)",
+      scythe !== undefined,
+      hosts.map(name).join("; ") || "no hosts",
+    ),
     equal(
-      "The staff's note",
+      "The scythe's note",
       attached === undefined ? undefined : `Augment: ${name(attached)}`,
       "Augment: Siberys Shard of Merciless Cold (heroic tier)",
     ),
     equal(
       "The shard's note",
-      hosts.length === 0
+      attachedTo.length === 0
         ? undefined
-        : `Attached to ${hosts.map(name).join(", ")}`,
-      "Attached to Staff of Sleep and Charm +1",
+        : `Attached to ${attachedTo.map(name).join(", ")}`,
+      scythe === undefined
+        ? "Attached to the scythe"
+        : `Attached to ${name(scythe)}`,
     ),
   ];
 });

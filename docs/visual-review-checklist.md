@@ -8,8 +8,8 @@ links, issues and the CSS that decides their look are now checked by code:
 the unit tests named in their commits. Those items are gone from this list.
 The 46 items left are the ones that need your eyes, merged into 41 items
 over 11 passes. Each pass is one character or one page, and you walk it
-once. Two items are automated checks that fail today (see Pass 1 and
-Pass 11). Re-check them once the bugs are fixed.
+once. One item is an automated check that fails today (Pass 1, a bug
+being fixed). Re-check it once the fix lands.
 
 ## How to use this list
 
@@ -454,16 +454,16 @@ automatically. Look only at fit and legibility.
 
 ## Pass 11: Equipment-tab menus
 
-- [ ] **Augments attach/detach.** Automated. **The check fails today:**
-      `flint`'s staff carries the shard's binding (its `augment` attribute),
-      but the shard itself was saved with count 0. The import drops it, so
-      neither the staff's "Augment: …" note nor the shard's "Attached to …"
-      note appears.
-  - **Where:** `flint` → `edit?tab=equipment` once fixed (or any character
-    with a dragonshard and a magic weapon or staff).
-  - **Expect:** the staff's note is muted and the row's columns stay aligned.
-    Right-clicking the shard opens a menu with the staff ticked, then
-    "Detach". The menu is readable at 140% zoom and in dark theme.
+- [ ] **Augments attach/detach.**
+  - **Where:** `invoker-drow` → `edit?tab=shop`, buy a Siberys Shard of
+    Merciless Cold (heroic tier). In Inventory, right-click the shard →
+    Attach to → the Rose Scythe of Chauntea. The notes' text and the hosts
+    offered are checked automatically. (Flint's own shard was saved with
+    count 0, so, as in legacy, it isn't owned and shows no binding.)
+  - **Expect:** the scythe's "Augment: …" note is muted and the row's columns
+    stay aligned. Right-clicking the shard opens a menu with the scythe
+    ticked, then "Detach". The menu is readable at 140% zoom and in dark
+    theme.
   - **Wrong if:** a warning-coloured note, misaligned columns, or a clipped
     menu.
 - [ ] **Wield two-handed (D101/D102).**

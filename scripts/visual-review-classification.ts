@@ -424,8 +424,8 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "flint|0|feature notes follow legacy (`_cs_shortdescription`)": auto(
     'Enchantment and Pyromancy Apprentice listed; no "Level N Mage … Powers", Mage Cantrips or Mage\'s Spellbook rows; Magic Missile still a card.',
   ),
-  "flint|1|augments attach/detach": mixed(
-    'The staff reads "Augment: Siberys Shard of Merciless Cold (heroic tier)" and the shard "Attached to Staff of Sleep and Charm +1".',
+  "invoker-drow|9|augments attach/detach": mixed(
+    'A Siberys Shard of Merciless Cold (heroic tier) bought and attached to the Rose Scythe: the scythe reads "Augment: …" and the shard "Attached to …"; an augment can attach only to owned magic weapons or staffs.',
     "The muted note's look and row alignment; the right-click menu at 140% zoom and in dark theme.",
   ),
   "raidon|0|class block in the card type bar": mixed(
