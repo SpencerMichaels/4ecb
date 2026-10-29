@@ -42,13 +42,23 @@ file):
   on full, 0 on stock); Hystan_Original_7 (Weight); jackie lee 5th (Stone Fist
   Flurry of Blows action); Chopper Farlund, chopper farlund at 8th, HystanStart,
   kai at 5th, Sagittarius, Skye (cached weapon-group attack stats only stock
-  produces).
+  produces); 171793, Alysa Redfield, Piri (2026-10-29, `audit:record-drift`:
+  records match stock only; identical numbers on both packs).
 - **full:** yew, Mellivora-L7, tazer face 2, KrizDevvon15, krizdevvon15_2,
-  krizdevvon16_2 (saved CBLoader records); Lily, 171793, Alysa Redfield, Piri
-  (identical on both packs).
+  krizdevvon16_2 (saved CBLoader records); Lily (identical on both packs);
+  since 2026-10-29 every other save, which `audit:record-drift` matches to
+  the full pack. Beldin Hammertongue 11, Erdan 11, Hunzu 10, Max Unger 12,
+  Natan 12 and Trey Spectre 12 were made with another CBLoader set (records
+  neither pack has); full is the closest and their stats match it.
+
+Three private checks guard this (roadmap queue item 12):
+`audit:record-drift` classifies each save's content from its saved records,
+`audit:saved-selections` requires every saved element to be active or
+accounted for (no silent drops on the 58 saves), and `audit:power-text`
+lists power text the stored parse leaves unread.
 
 Engine and import fixes from the pass are listed in the roadmap queue (items
-8–9). Baseline accepted with all 58 saves: stats 4829/4868, powers 3313/3444,
+8–9). Baseline re-accepted with the 2026-10-29 profiles: stats 4829/4868, powers 3313/3444,
 usage 1102/1114, action 1101/1113, main hand 122/122. Known content-only
 diffs: oleander_8/9 Weight (homebrew TIV items).
 
@@ -568,7 +578,10 @@ total). Import now:
   ability-bonus choice);
 - preserves saved picks whose slot a `requires` switches off, silently (D043;
   the "Inactive saved choices" notes of `ace6cb5`, `e8b6ffd` were removed on
-  2026-10-25: Erdan 9, Beldin 3, Hu Sheng-Ming's Divine Fortune, KrizDevvon).
+  2026-10-25: Erdan 9, Beldin 3, Hu Sheng-Ming's Divine Fortune, KrizDevvon),
+  except a house-rule pick legacy applied, which is a warning with Review and
+  Remove since 2026-10-29 (`e187bee`; Erdan's 7, Beldin's 2; import marks
+  picks absent from `RulesElementTally` `legacyInactive`).
 
 Remaining differences on the new files are classified (triage notes in ignored
 `tmp/triage18/`): one player's homebrew (TIV skills, DOMT items, Lunge, many
