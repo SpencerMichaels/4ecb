@@ -6,10 +6,9 @@ power cards"), and 74 were factual. Their labels, text, order, numbers,
 links, issues and the CSS that decides their look are now checked by code:
 `pnpm review:verify` and `apps/web/src/visual-review-styles.test.ts`, plus
 the unit tests named in their commits. Those items are gone from this list.
-The 46 items left are the ones that need your eyes, merged into 41 items
+The items left are the ones that need your eyes: 40 items
 over 11 passes. Each pass is one character or one page, and you walk it
-once. The 45 rows `review:verify` lists for the owner are these items;
-every automated check passes (2026-10-28, after `f22c5fc`).
+once. Every automated check passes (2026-10-28, after `f22c5fc`).
 
 ## How to use this list
 
