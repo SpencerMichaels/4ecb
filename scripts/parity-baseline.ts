@@ -54,7 +54,7 @@
  */
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
 import {
@@ -64,10 +64,17 @@ import {
   workerData,
 } from "node:worker_threads";
 
-import { compareCharacterParity, loadPackEntities } from "./legacy-parity";
+import {
+  CONTENT_PROFILES,
+  DEFAULT_PROFILE,
+  PLAYER_CHARACTERS,
+  SAMPLE_HEROES,
+  compareCharacterParity,
+  dnd4eFiles,
+  loadPackEntities,
+  readContentProfiles,
+} from "./legacy-parity";
 
-const PLAYER_CHARACTERS = "sample-chars";
-const SAMPLE_HEROES = "CharacterBuilder/SampleChars/SampleHeroes";
 const OUTPUT_DIR = "tmp/parity";
 
 interface CharacterBaseline {
@@ -116,18 +123,6 @@ interface Baseline {
     mainHand?: { matching: number; comparable: number };
   };
   readonly characters: readonly CharacterBaseline[];
-}
-
-async function dnd4eFiles(directory: string): Promise<string[]> {
-  if (!existsSync(directory)) return [];
-  const entries = await readdir(directory, {
-    recursive: true,
-    withFileTypes: true,
-  });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".dnd4e"))
-    .map((entry) => relative(".", join(entry.parentPath, entry.name)))
-    .sort();
 }
 
 const show = (value: unknown) =>
@@ -335,45 +330,6 @@ async function evaluateInWorkers(
       throw new Error(`No result for ${files[index]}`);
     return character;
   });
-}
-
-const CONTENT_PROFILES = join(OUTPUT_DIR, "content-profiles.json");
-/** The profile name of the run's own pack (--pack). */
-const DEFAULT_PROFILE = "full";
-const DEFAULT_PROFILE_PACKS: Readonly<Record<string, string>> = {
-  stock: "tmp/content/stock-local.4ecp",
-};
-
-interface ContentProfiles {
-  /** Profile name -> pack path (without "full"). */
-  readonly packs: ReadonlyMap<string, string>;
-  /** Character file -> profile name (including explicit "full"). */
-  readonly characters: ReadonlyMap<string, string>;
-}
-
-async function readContentProfiles(): Promise<ContentProfiles> {
-  const raw: {
-    packs?: Record<string, string>;
-    characters?: Record<string, string>;
-  } = existsSync(CONTENT_PROFILES)
-    ? (JSON.parse(await readFile(CONTENT_PROFILES, "utf8")) as object)
-    : {};
-  const packs = new Map(
-    Object.entries({ ...DEFAULT_PROFILE_PACKS, ...raw.packs }),
-  );
-  packs.delete(DEFAULT_PROFILE);
-  const characters = new Map(
-    Object.entries(raw.characters ?? {}).map(([file, profile]) => [
-      relative(".", resolve(file)),
-      profile,
-    ]),
-  );
-  for (const [file, profile] of characters)
-    if (profile !== DEFAULT_PROFILE && !packs.has(profile))
-      throw new Error(
-        `${CONTENT_PROFILES}: ${file} names unknown profile "${profile}"`,
-      );
-  return { packs, characters };
 }
 
 /**

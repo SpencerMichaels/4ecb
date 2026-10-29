@@ -5,8 +5,9 @@
  * detail) and `pnpm parity:baseline` (every comparison character, baselined).
  * Private-corpus tooling: it reads whatever pack and characters it is given.
  */
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 
@@ -41,6 +42,60 @@ export async function loadPackEntities(
       ? await decompress(encoded)
       : encoded;
   return decodeContentPack(bytes.toString("utf8")).entities;
+}
+
+export const PLAYER_CHARACTERS = "sample-chars";
+export const SAMPLE_HEROES = "CharacterBuilder/SampleChars/SampleHeroes";
+
+export async function dnd4eFiles(directory: string): Promise<string[]> {
+  if (!existsSync(directory)) return [];
+  const entries = await readdir(directory, {
+    recursive: true,
+    withFileTypes: true,
+  });
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".dnd4e"))
+    .map((entry) => relative(".", join(entry.parentPath, entry.name)))
+    .sort();
+}
+
+export const CONTENT_PROFILES = "tmp/parity/content-profiles.json";
+/** The profile name of the run's own pack (--pack). */
+export const DEFAULT_PROFILE = "full";
+const DEFAULT_PROFILE_PACKS: Readonly<Record<string, string>> = {
+  stock: "tmp/content/stock-local.4ecp",
+};
+
+export interface ContentProfiles {
+  /** Profile name -> pack path (without "full"). */
+  readonly packs: ReadonlyMap<string, string>;
+  /** Character file -> profile name (including explicit "full"). */
+  readonly characters: ReadonlyMap<string, string>;
+}
+
+export async function readContentProfiles(): Promise<ContentProfiles> {
+  const raw: {
+    packs?: Record<string, string>;
+    characters?: Record<string, string>;
+  } = existsSync(CONTENT_PROFILES)
+    ? (JSON.parse(await readFile(CONTENT_PROFILES, "utf8")) as object)
+    : {};
+  const packs = new Map(
+    Object.entries({ ...DEFAULT_PROFILE_PACKS, ...raw.packs }),
+  );
+  packs.delete(DEFAULT_PROFILE);
+  const characters = new Map(
+    Object.entries(raw.characters ?? {}).map(([file, profile]) => [
+      relative(".", resolve(file)),
+      profile,
+    ]),
+  );
+  for (const [file, profile] of characters)
+    if (profile !== DEFAULT_PROFILE && !packs.has(profile))
+      throw new Error(
+        `${CONTENT_PROFILES}: ${file} names unknown profile "${profile}"`,
+      );
+  return { packs, characters };
 }
 
 export interface CharacterParityOptions {

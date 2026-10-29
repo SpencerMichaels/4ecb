@@ -28,6 +28,7 @@ import {
 } from "./definition-matching";
 
 export * from "./definition-matching";
+export * from "./saved-selection-audit";
 export * from "./writer";
 
 export interface Dnd4eImportDiagnostic {

@@ -109,6 +109,7 @@ pnpm audit:native-workflow
 pnpm evaluate:character
 pnpm evaluate:matrix
 pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N, --no-profiles; ~30 s)
+pnpm audit:saved-selections       # every saved element active or accounted for; silent drops and extras (--verbose; ~4 min)
 pnpm regenerate:edited-dnd4e
 ```
 

@@ -369,6 +369,22 @@ point to stock data; placeholders beside saved CBLoader records point to
 partial parts, which stay on `full`. `--no-profiles` evaluates every save on
 the run's pack.
 
+Parity compares cached numbers, so a saved choice that vanishes shows up only
+as a missing number later. `pnpm audit:saved-selections [--verbose] [FILE.dnd4e
+...]` (private corpus, same imports and content profiles as `parity:baseline`)
+checks the selections themselves: every element a save holds (the level tree
+with its saved grants, grabbag, alternates, UserEdit roots, loot choices and
+LootTally holdings) must be active in the evaluation or carry a stated reason
+(replaced, retrained, dormant per D043, an engine or import diagnostic, under
+an accounted provider, absent from legacy's own RulesElementTally, or a
+house rule); anything else is a silent drop. It also lists active modern
+elements the save never held, by cause (an unconditional grant of a saved
+element, i.e. newer content; a conditional grant; a recovered selection;
+unexplained), and flags accounted elements that legacy's tally shows as
+applied. The invariant is `auditSavedSelections` in
+`packages/legacy-dnd4e/src/saved-selection-audit.ts`, with synthetic public
+tests. It is a triage report and never fails.
+
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
 checkpoint is 513/514 and 331/371 after projecting legacy alternates, suppressing

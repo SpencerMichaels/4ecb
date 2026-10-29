@@ -28,6 +28,7 @@
     "audit:requires": "tsx scripts/audit-requires.ts",
     "audit:modifiers": "tsx scripts/audit-modifiers.ts",
     "audit:selectors": "tsx scripts/audit-selectors.ts",
+    "audit:saved-selections": "tsx scripts/audit-saved-selections.ts",
     "audit:parity-coverage": "tsx scripts/audit-parity-coverage.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "review:build": "tsx scripts/build-visual-review.ts",
