@@ -812,6 +812,25 @@ the UI (owner decision 2026-10-25): no Diagnostics group, badge, warning or
 note, because a pick only a `.dnd4e` save holds means nothing to a player and
 reads as a bug. They are preserved silently and kept on export (see D098).
 
+Exception (owner decision 2026-10-29): a dormant pick the player saved as a
+house rule (`legality="houserule"`) is the player's own choice, and losing it
+silently is a bug, so it is a character issue: a warning per pick
+(`dormantHouseRulePickIssues`, raised via `withCharacterIssues`), titled with
+the pick and saying which record turns the slot off ("Lightning's Revelation
+was chosen as a house rule for the level 3 encounter power slot, which Hunter
+turns off in the game content in use"). Review opens the Build tab at the
+pick's level and section; Remove drops the pick (`remove-occurrence`). There
+is no "keep it active" control. Picks above the character's level, powers the
+character holds through another occurrence, and imported picks the legacy
+builder didn't apply either stay silent: the importer marks a saved element
+absent from the save's `RulesElementTally` as `legacyInactive` (import-time
+evidence, never read by the rules engine). Characters imported before that
+flag existed carry none until re-imported. Case: Erdan 11 (Hunter) and
+Beldin Hammertongue 11 (Ardent) were saved on content without CBLoader's
+`02-base.part` "No Encounter Powers" grants, so their level 3+ house-rule
+power picks printed in legacy; their level 1 picks were dormant in legacy
+too and stay silent.
+
 This is recovered generic behavior, not a Ranger exception. In the original
 content, `ID_INTERNAL_GRANTS_RANGER` places
 `requires="!ID_FMP_CLASS_FEATURE_1030"` on the Prime Shot/Running Attack
@@ -2756,7 +2775,10 @@ Decision:
 - `.dnd4e` storage artifacts never surface as user-facing issues: dormant
   saved picks (D043) and records matched by name on import (D096) are kept
   silently for export. The import report and `EvaluatedCharacter` still
-  carry them as data for diagnostics and development.
+  carry them as data for diagnostics and development. Exception
+  (2026-10-29, D043): a dormant pick saved as a house rule that the legacy
+  builder applied (or made natively) is the player's choice and is raised as
+  a warning with Review and Remove.
 - Problems the player can act on (warnings, errors, missing content, house
   rules, content updates), progress and loading indicators, and empty states
   inside always-present controls remain.

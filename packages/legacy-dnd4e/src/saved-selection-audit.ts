@@ -35,7 +35,7 @@ import type { BuildOccurrence } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { parseRules, type EvaluatedCharacter } from "@4ecb/rules-engine";
 
-import type { Dnd4eImportResult } from ".";
+import { legacyTallyHolds, type Dnd4eImportResult } from ".";
 
 const key = (value: string) => value.trim().toLocaleLowerCase();
 
@@ -187,16 +187,8 @@ export function auditSavedSelections(
   const tallyNames = new Set(
     tally.map((rule) => `${key(rule.type)}\0${key(rule.name)}`),
   );
-  const inTally = (occurrence: BuildOccurrence) => {
-    const { definitionId, importedDefinitionId, name, type } =
-      occurrence.identity;
-    return (
-      (definitionId !== undefined && tallyIds.has(key(definitionId))) ||
-      (importedDefinitionId !== undefined &&
-        tallyIds.has(key(importedDefinitionId))) ||
-      tallyNames.has(`${key(type)}\0${key(name)}`)
-    );
-  };
+  const holds = legacyTallyHolds(tally);
+  const inTally = (occurrence: BuildOccurrence) => holds(occurrence.identity);
 
   const results = new Map<SavedNode, SavedElementResult>();
   const classify = (node: SavedNode): SavedElementResult => {

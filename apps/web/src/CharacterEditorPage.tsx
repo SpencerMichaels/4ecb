@@ -32,6 +32,7 @@ import {
   contentUpdateIssue,
   evaluationFailedIssue,
   deityAlignmentIssue,
+  dormantHouseRulePickIssues,
   missingHoldingContentIssues,
   unwieldableWeaponIssues,
   withCharacterIssues,
@@ -1403,6 +1404,12 @@ export function CharacterEditorPage({
         byId,
         currentEvaluation?.loadoutSlotContext,
       ),
+      ...dormantHouseRulePickIssues({
+        evaluation: planningEvaluation,
+        byId,
+        build,
+        effectiveLevel: build.effectiveLevel,
+      }),
     ],
   );
   const totalUnresolved = builderIssues.unresolved.length;

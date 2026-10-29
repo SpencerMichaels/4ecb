@@ -371,6 +371,8 @@ function buildOccurrence(
     (occurrence.legality === "rules-legal" ||
       occurrence.legality === "houserule") &&
     optionalString(occurrence.replacesId) &&
+    (occurrence.legacyInactive === undefined ||
+      occurrence.legacyInactive === true) &&
     Array.isArray(occurrence.children) &&
     occurrence.children.every((child) =>
       buildOccurrence(child, seen, depth + 1),

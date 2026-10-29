@@ -7,6 +7,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   itemChoiceSlots,
   userEditName,
+  type CharacterOccurrence,
   type EngineDiagnostic,
   type EvaluatedCharacter,
   type EvaluatedChoice,
@@ -401,6 +402,112 @@ export function deityAlignmentIssue(
       "The alignment remains active and is preserved on export, but the character is marked as using house rules.",
     target: { kind: "choice", choiceId: constraint.alignmentChoice.id },
   };
+}
+
+/** "Power Encounter 3" -> "level 3 encounter power", else the slot's name. */
+function dormantSlotLabel(slotName: string | undefined, slotType: string) {
+  const power = /^power\s+(\w+)\s+(\d+)$/i.exec(slotName?.trim() ?? "");
+  if (power !== null)
+    return `level ${power[2]} ${power[1]!.toLocaleLowerCase()} power`;
+  return (slotName ?? slotType).trim().toLocaleLowerCase();
+}
+
+const blockerPlumbingTypes = new Set(["internal", "grants", "level"]);
+
+/**
+ * Picks the player saved as house rules whose slot the content in use turns
+ * off (a dormant selection, D043): legacy content without CBLoader's
+ * "No Encounter Powers" grants left an Essentials Hunter's level 3 encounter
+ * slot open, the player filled it as a house rule, and here the slot is off,
+ * so the power silently vanished from the sheet. Other dormant picks stay
+ * silent .dnd4e artifacts (D098); a house-rule pick was the player's own
+ * choice, so its loss is raised. Picks above the character's level, powers
+ * the character holds anyway, and imported picks the legacy builder didn't
+ * apply either (`legacyInactive`, import-time evidence) are not lost.
+ */
+export function dormantHouseRulePickIssues({
+  evaluation,
+  byId,
+  build,
+  effectiveLevel,
+}: {
+  readonly evaluation: EvaluatedCharacter | undefined;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly build: CharacterBuild;
+  readonly effectiveLevel: number;
+}): BuilderIssue[] {
+  if (evaluation?.dormantSelections === undefined) return [];
+  const active = new Set(
+    evaluation.activeDefinitionIds.map((id) => id.toLocaleLowerCase()),
+  );
+  const savedNames = savedOccurrenceNames(build);
+  // Picks legacy didn't apply either are .dnd4e storage artifacts (D098).
+  const legacyInactiveIds = new Set<string>();
+  const collect = (occurrence: BuildOccurrence): void => {
+    if (occurrence.legacyInactive === true)
+      legacyInactiveIds.add(occurrence.id);
+    occurrence.children.forEach(collect);
+  };
+  for (const frame of build.levels) collect(frame.root);
+  build.grabbag.forEach(collect);
+  const occurrenceById = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  /** The nearest player-facing record behind a blocking marker ("Hunter",
+   * "Psionic Augmentation"), skipping internal grant plumbing. */
+  const blockerSource = (blocker: CharacterOccurrence | undefined) => {
+    let current = blocker;
+    for (let depth = 0; current !== undefined && depth < 50; depth += 1) {
+      const entity = byId.get(current.definitionId.toLocaleLowerCase());
+      if (
+        entity !== undefined &&
+        !blockerPlumbingTypes.has(entity.type.trim().toLocaleLowerCase())
+      )
+        return entity.name;
+      current =
+        current.parentId === undefined
+          ? undefined
+          : occurrenceById.get(current.parentId);
+    }
+    return undefined;
+  };
+  return evaluation.dormantSelections.flatMap((dormant): BuilderIssue[] => {
+    const { occurrence } = dormant;
+    if (
+      occurrence.legality !== "houserule" ||
+      occurrence.acquiredLevel > effectiveLevel ||
+      active.has(occurrence.definitionId.toLocaleLowerCase()) ||
+      legacyInactiveIds.has(occurrence.id)
+    )
+      return [];
+    const entity = byId.get(occurrence.definitionId.toLocaleLowerCase());
+    const name =
+      entityName(
+        occurrence.definitionId,
+        byId,
+        savedNames.get(occurrence.id),
+      ) ?? occurrence.definitionId;
+    const slot = dormantSlotLabel(dormant.slotName, dormant.slotType);
+    const source = blockerSource(dormant.blockedBy[0]);
+    const removable = isRemovableOccurrence(build, occurrence.id);
+    return [
+      {
+        key: `dormant-house-rule:${occurrence.id}`,
+        kind: "warning",
+        title: name,
+        detail: `${name} was chosen as a house rule for the ${slot} slot, which ${source === undefined ? "the game content in use turns off" : `${source} turns off in the game content in use`}.`,
+        effect: `${name} isn't on the character or its sheet. The pick is kept on export${removable ? "; remove it if it no longer belongs on the character" : ""}.`,
+        target: {
+          kind: "level-section",
+          level: occurrence.acquiredLevel,
+          section: legacyChoiceSection({
+            type: entity?.type ?? dormant.slotType,
+          }),
+        },
+        ...(removable ? { removal: { occurrenceId: occurrence.id } } : {}),
+      },
+    ];
+  });
 }
 
 export function withCharacterIssues(

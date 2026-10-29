@@ -11,6 +11,7 @@ import {
   newNativeCharacterRecord,
   resolveCharacterWallet,
   ZERO_CURRENCY,
+  type BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
@@ -1464,5 +1465,40 @@ describe("removed occurrences on export", () => {
     expect(xml).toContain('internal-id="RULES"');
     expect(xml).not.toContain("HOMEBREW_SKILL");
     expect(xml).not.toContain("Cooking");
+  });
+});
+
+describe("legacy-inactive saved elements", () => {
+  const save = (tally: string) =>
+    `<D20Character game-system="D&amp;D4E"><CharacterSheet>${tally}</CharacterSheet><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Bane" type="Power" internal-id="BANE" charelem="bane" legality="houserule"/><RulesElement name="Hymn" type="Power" internal-id="HYMN" charelem="hymn" legality="houserule"><RulesElement name="Rider" type="Internal" charelem="rider"/></RulesElement><RulesElement name="" type="" charelem="blank"/></RulesElement></Level></D20Character>`;
+  const flags = (xml: string) => {
+    const result: Record<string, boolean> = {};
+    const visit = (occurrence: BuildOccurrence): void => {
+      result[occurrence.id] = occurrence.legacyInactive === true;
+      occurrence.children.forEach(visit);
+    };
+    importDnd4e(xml).build.levels.forEach((frame) =>
+      frame.root.children.forEach(visit),
+    );
+    return result;
+  };
+
+  it("marks saved elements the legacy tally lacks, by ID or by type and name", () => {
+    expect(
+      flags(
+        save(
+          `<RulesElementTally><RulesElement name="1" type="Level" internal-id="L1"/><RulesElement name="Hymn" type="Power" internal-id="HYMN"/><RulesElement name="Rider" type="Internal"/></RulesElementTally>`,
+        ),
+      ),
+    ).toEqual({
+      "legacy:bane": true,
+      "legacy:hymn": false,
+      "legacy:rider": false,
+      "legacy:blank": false,
+    });
+  });
+
+  it("marks nothing when the save has no tally", () => {
+    expect(Object.values(flags(save("")))).not.toContain(true);
   });
 });

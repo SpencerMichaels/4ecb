@@ -463,6 +463,60 @@ function tallyLevelsFrom(sheet: XmlNode | undefined): Map<string, number> {
   return levels;
 }
 
+/**
+ * Whether legacy's RulesElementTally holds a saved element: by its saved or
+ * matched internal ID, else by type and name. The tally lists what the
+ * legacy builder applied, so a saved element it lacks was inactive there.
+ */
+export function legacyTallyHolds(
+  tally: readonly LegacyRuleElement[],
+): (identity: BuildElementIdentity) => boolean {
+  const ids = new Set(
+    tally.flatMap((rule) => (rule.id === undefined ? [] : [key(rule.id)])),
+  );
+  const names = new Set(
+    tally.map((rule) => `${key(rule.type)}\0${key(rule.name)}`),
+  );
+  return ({ definitionId, importedDefinitionId, name, type }) =>
+    (definitionId !== undefined && ids.has(key(definitionId))) ||
+    (importedDefinitionId !== undefined &&
+      ids.has(key(importedDefinitionId))) ||
+    names.has(`${key(type)}\0${key(name)}`);
+}
+
+/**
+ * Marks each saved level and grab-bag element the legacy tally lacks as
+ * `legacyInactive` (import-time evidence, D043/D098). A save without a tally
+ * marks nothing.
+ */
+function markLegacyInactive(
+  build: CharacterBuild,
+  tally: readonly LegacyRuleElement[],
+): CharacterBuild {
+  if (tally.length === 0) return build;
+  const holds = legacyTallyHolds(tally);
+  const mark = (occurrence: BuildOccurrence): BuildOccurrence => {
+    const children = occurrence.children.map(mark);
+    const { legacyInactive, ...rest } = occurrence;
+    void legacyInactive;
+    return {
+      ...rest,
+      children,
+      ...(occurrence.unresolved || holds(occurrence.identity)
+        ? {}
+        : { legacyInactive: true as const }),
+    };
+  };
+  return {
+    ...build,
+    levels: build.levels.map((frame) => ({
+      ...frame,
+      root: { ...frame.root, children: frame.root.children.map(mark) },
+    })),
+    grabbag: build.grabbag.map(mark),
+  };
+}
+
 function selectedRulesFrom(sheet: XmlNode | undefined): LegacyRuleElement[] {
   const tally = first(sheet, "RulesElementTally");
   return tally === undefined
@@ -889,6 +943,7 @@ export function importDnd4e(
         message: `${entry.savedName} (${entry.type}) isn't in the active content, and ${entry.candidateIds.length} records share its name, so it wasn't matched.`,
       });
   }
+  build = markLegacyInactive(build, selectedRules);
   return {
     envelope: {
       format: "dnd4e",
