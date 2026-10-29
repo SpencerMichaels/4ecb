@@ -102,12 +102,13 @@ required by public tests/CI):
 
 ```sh
 nix develop path:. --command bash scripts/build-private-content.sh
+nix develop path:. --command bash scripts/build-private-content.sh --stock   # stock-only parity oracle, tmp/content/stock-local.4ecp
 pnpm benchmark:query tmp/content/full-local.4ecp
 pnpm audit:rules
 pnpm audit:native-workflow
 pnpm evaluate:character
 pnpm evaluate:matrix
-pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N; ~1.5 min)
+pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N, --no-profiles; ~2 min)
 pnpm regenerate:edited-dnd4e
 ```
 
@@ -116,7 +117,11 @@ characters are in `sample-chars/*.dnd4e` (both ignored). They are the inputs for
 checking real-character output against legacy PDFs, and `parity:baseline`
 covers only them and the SampleHeroes: copy every player's legacy-builder save
 (e.g. one attached to a bug report) into `sample-chars/` and re-accept the
-baseline, never leave it in `scratch/` or Downloads.
+baseline, never leave it in `scratch/` or Downloads. A save made on stock WotC
+data (no CBLoader parts) goes in the ignored `tmp/parity/content-profiles.json`
+as `"stock"`: the run then baselines it on the stock pack and shows the full
+pack as an informational line; the run prints profile suggestions for
+unmapped saves (`docs/rules-engine.md`).
 
 Small-group deployment (static PWA container, no backend):
 
