@@ -2,6 +2,7 @@ import {
   authoredAttackLine,
   hitLineAt,
   parseHitLine,
+  readCreatureStatBlock,
   weaponPropertyText,
   type AttackBonusIr,
   type AttackFieldIr,
@@ -117,6 +118,22 @@ export interface PowerVariant {
   readonly proficient: boolean;
   /** Every attack of this variant is the beast companion's own. */
   readonly attacker?: "beast";
+  /** A summoned creature's commands, worked out with this row's equipment
+   *  (D111). */
+  readonly commands?: readonly PowerCommand[];
+}
+
+/**
+ * A summoned creature's command the summoner rolls (D111): the row of one
+ * power (attack) of the creature stored on the summon power
+ * (`_Creature Stat Block`, `block.powers[entry].roll`), worked out as the
+ * power's own attacks are: the summoner's ability, bonuses and equipment
+ * for "Wisdom vs. Reflex" (D095), or "your level + N" with only the
+ * creature's and the command's keyed bonuses.
+ */
+export interface PowerCommand extends PowerAttack {
+  /** The index of the creature's power in `block.powers`. */
+  readonly entry: number;
 }
 
 export interface PowerAdditionalEffect {
@@ -168,6 +185,10 @@ export interface EvaluatedPower {
   readonly healing?: PowerHealing;
   /** Extra damage dice other features add to this power. */
   readonly extraDamage?: PowerExtraDamage;
+  /** A summon power with no rows of its own (a hexblade's pact creature):
+   *  its creature's commands, worked out without equipment (D111). A power
+   *  with rows carries them on each variant. */
+  readonly commands?: readonly PowerCommand[];
   readonly unsupported: readonly string[];
 }
 
@@ -1118,6 +1139,10 @@ function nativeSpecialDamage(
   }
 }
 
+/** Command rows' attack ordinals start here, apart from the power's own
+ *  attacks' (D111). */
+const COMMAND_ORDINAL = 1000;
+
 /** The attack stat of a beast companion's attack ("Beast's attack bonus"). */
 export const BEAST_ATTACK_STAT = "Beast";
 
@@ -1160,7 +1185,7 @@ function creatureStatComponents(
 /** Bonuses keyed to this one power: "<power ID>:attack", "<name>:damage". */
 function powerSpecificComponents(
   stats: Readonly<Record<string, EvaluatedStat>>,
-  power: ContentEntity,
+  power: { readonly id: string; readonly name: string },
   fieldName: "attack" | "damage",
 ): PowerComponent[] {
   const wanted = new Set([
@@ -3069,6 +3094,30 @@ export function evaluatePowers(input: {
             ? "ranged"
             : undefined;
     const attackDefinitions = authoredAttacks(power, input.overlays, texts);
+    // A summoned creature's commands the summoner rolls (D111): each one's
+    // attack and hit texts, parsed at pack build, and the record whose
+    // keyed bonuses apply (a merged community card, else the power).
+    const creature = readCreatureStatBlock(power.specifics);
+    const commandDefinitions =
+      creature?.kind !== "master"
+        ? []
+        : creature.block.powers.flatMap((entry, index) => {
+            const roll = entry.roll;
+            if (roll === undefined) return [];
+            const definition: AuthoredAttack = {
+              ordinal: COMMAND_ORDINAL + index,
+              line: roll.attack,
+              field: texts.attack(roll.attack),
+              ...(roll.target === undefined ? {} : { target: roll.target }),
+              ...(roll.hit === undefined ? {} : { hit: roll.hit }),
+              ...(roll.attackType === undefined
+                ? {}
+                : { attackType: roll.attackType }),
+            };
+            return definition.field.isAttack
+              ? [{ entry: index, definition, keyedTo: roll.source ?? power }]
+              : [];
+          });
     // `_CalculatedHit` (content corrections) supplies a damage line for a
     // power whose damage is only in prose, as legacy hardcodes Storm Pillar.
     const hitLine = hitLineAtLevel(
@@ -3316,7 +3365,7 @@ export function evaluatePowers(input: {
       byId,
       byName,
     );
-    const variants = handCandidates.map((equipment): PowerVariant => {
+    const variantFor = (equipment: Loadout): PowerVariant => {
       const nativeKeywords = nativeRowKeywords(equipment, {
         weaponPower,
         implementPower,
@@ -3376,17 +3425,12 @@ export function evaluatePowers(input: {
       // half_damage), by attack ordinal.
       const keyAbilityDamage = new Map<number, KeyAbilityOverride>();
       const chosen = chosenAbility(input.textStrings ?? {});
-      const calculatedAttacks = (
-        attackDefinitions.length === 0
-          ? [
-              {
-                ordinal: 1,
-                line: "",
-                field: texts.attack(""),
-              } as AuthoredAttack,
-            ]
-          : attackDefinitions
-      ).map((definition): PowerAttack => {
+      // One attack's row; a summoned creature's command reads the bonuses
+      // keyed to its own record (D111).
+      const computeAttack = (
+        definition: AuthoredAttack,
+        keyedTo: { readonly id: string; readonly name: string } = power,
+      ): PowerAttack => {
         const phaseAttackType = definition.attackType ?? attackType;
         // Native ExtractPowerMods (`-Module-.cs` ~23703): Hawk's Talon's
         // sentence adds a power bonus equal to the Wisdom modifier.
@@ -3411,7 +3455,7 @@ export function evaluatePowers(input: {
             ...(powerBonus === 0
               ? []
               : [{ label: "power attack bonus", value: powerBonus }]),
-            ...powerSpecificComponents(input.stats, power, "attack"),
+            ...powerSpecificComponents(input.stats, keyedTo, "attack"),
           ];
           return {
             id: `${power.id}:attack-${definition.ordinal}`,
@@ -3449,7 +3493,7 @@ export function evaluatePowers(input: {
                   "creature attack bonus",
                 )
               : []),
-            ...powerSpecificComponents(input.stats, power, "attack"),
+            ...powerSpecificComponents(input.stats, keyedTo, "attack"),
           ];
           return {
             id: `${power.id}:attack-${definition.ordinal}`,
@@ -3620,7 +3664,18 @@ export function evaluatePowers(input: {
             : { attackType: phaseAttackType }),
           attackComponents,
         };
-      });
+      };
+      const calculatedAttacks = (
+        attackDefinitions.length === 0
+          ? [
+              {
+                ordinal: 1,
+                line: "",
+                field: texts.attack(""),
+              } as AuthoredAttack,
+            ]
+          : attackDefinitions
+      ).map((definition) => computeAttack(definition));
       const primaryAttack = calculatedAttacks[0];
       const attackStat = primaryAttack?.attackStat ?? "Unknown";
       const defense = primaryAttack?.defense ?? "Unknown";
@@ -3656,6 +3711,7 @@ export function evaluatePowers(input: {
         attackStat: string,
         attackType: string | undefined,
         keyAbility: KeyAbilityOverride | undefined,
+        keyedTo: { readonly id: string; readonly name: string } = power,
       ): Pick<
         PowerVariant,
         "damage" | "damageType" | "damageComponents" | "conditionalDamage"
@@ -3800,7 +3856,13 @@ export function evaluatePowers(input: {
             : clause.hasOr === true
               ? listedAbilities.includes(attackStat)
                 ? [attackStat]
-                : damageAbilities.slice(0, 1)
+                : // Native MultipleAbilityChoices (`-Module-.cs` ~24663):
+                  // "your Intelligence, Wisdom, or Charisma modifier" is
+                  // the highest of them by score, earlier ones winning
+                  // ties (a fixed-bonus creature's attack names none, D111).
+                  listedAbilities.length > 1
+                  ? [highestScoreAbility(input.stats, listedAbilities)]
+                  : damageAbilities.slice(0, 1)
               : damageAbilities;
         // Native ParseAbilityMod: with damage_stat every ability modifier
         // in the damage is the attack ability's, halved for half_damage.
@@ -3881,7 +3943,7 @@ export function evaluatePowers(input: {
               flat ? ["damage"] : ["damage", "damage rolls"],
               "creature damage bonus",
             ),
-            ...powerSpecificComponents(input.stats, power, "damage"),
+            ...powerSpecificComponents(input.stats, keyedTo, "damage"),
           );
         if (
           dice !== undefined &&
@@ -4102,6 +4164,33 @@ export function evaluatePowers(input: {
                 ...(eligible ? {} : { eligible: false }),
               };
             });
+      // A summoned creature's commands (D111), each worked out as one of
+      // the power's own attacks with this row's equipment.
+      const commands = commandDefinitions.map(
+        ({ entry, definition, keyedTo }): PowerCommand => {
+          const attack = computeAttack(definition, keyedTo);
+          const commandDamage = calculateDamage(
+            hitLineAtLevel(texts, definition.hit, input.level),
+            attack.attackStat,
+            attack.attackType,
+            keyAbilityDamage.get(definition.ordinal),
+            keyedTo,
+          );
+          return {
+            ...attack,
+            id: `${power.id}:command-${entry}`,
+            ordinal: entry,
+            entry,
+            ...(commandDamage.damage === undefined
+              ? {}
+              : { damage: commandDamage.damage }),
+            ...(commandDamage.damageType === undefined
+              ? {}
+              : { damageType: commandDamage.damageType }),
+            damageComponents: commandDamage.damageComponents,
+          };
+        },
+      );
       const critical = criticalExpression(
         equipment,
         input.level,
@@ -4176,8 +4265,19 @@ export function evaluatePowers(input: {
         attackComponents,
         attacks,
         ...(beastOnly ? { attacker: "beast" as const } : {}),
+        ...(commands.length === 0 ? {} : { commands }),
       };
-    });
+    };
+    const variants = handCandidates.map(variantFor);
+    // A summon power with no rows (no attack or hit of its own) still has
+    // its creature's commands, worked out with no equipment.
+    const unarmed = equipped.find((item) => item.unarmed);
+    const commands =
+      variants.length > 0 ||
+      commandDefinitions.length === 0 ||
+      unarmed === undefined
+        ? undefined
+        : variantFor(unarmed).commands;
     const unsupported: string[] = [];
     const supportedStrikerIds = new Set<string>(
       strikerFeatures.flatMap(({ standardId, hybridId }) => [
@@ -4264,6 +4364,7 @@ export function evaluatePowers(input: {
         recoveries,
         ...(healing === undefined ? {} : { healing }),
         ...(extraDamage === undefined ? {} : { extraDamage }),
+        ...(commands === undefined ? {} : { commands }),
         unsupported,
       },
     ];

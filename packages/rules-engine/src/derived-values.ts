@@ -675,8 +675,10 @@ function signedTerm(value: number): string {
 /**
  * A damage expression at the master's level: dice, then the sum of every
  * number ("one-half your level", "your Wisdom modifier", flat terms and the
- * creature's damage bonus). "your Strength or Charisma modifier" gives one
- * total per ability.
+ * creature's damage bonus). "your Strength or Charisma modifier" (or "your
+ * Intelligence, Wisdom, or Charisma modifier") is the highest of them by
+ * score, earlier ones winning ties, as native MultipleAbilityChoices
+ * (`-Module-.cs` ~24663) reads a damage line's listed abilities (D111).
  */
 function associateDamageText(
   damage: AssociateDamage,
@@ -689,18 +691,21 @@ function associateDamageText(
   const dice = damage.terms.flatMap((term) =>
     term.kind === "dice" ? [term.dice] : [],
   );
+  const score = (ability: AssociateAbilityName) =>
+    numericStat(stats, ability) ?? 0;
   let fixed = creatureBonus;
-  let alternatives: readonly AssociateAbilityName[] = [];
   for (const term of damage.terms) {
     if (term.kind === "flat") fixed += term.value;
     else if (term.kind === "half-level") fixed += halfLevel(level);
     else if (term.kind === "level") fixed += level;
     else if (term.kind === "highest-ability")
       fixed += Math.max(...BEAST_ABILITY_NAMES.map(modifier));
-    else if (term.kind === "ability") {
-      if (term.abilities.length === 1) fixed += modifier(term.abilities[0]!);
-      else alternatives = term.abilities;
-    }
+    else if (term.kind === "ability" && term.abilities.length > 0)
+      fixed += modifier(
+        term.abilities.reduce((best, ability) =>
+          score(ability) > score(best) ? ability : best,
+        ),
+      );
   }
   const expression = (total: number) => {
     const base = dice.join(" + ");
@@ -709,13 +714,7 @@ function associateDamageText(
   };
   const withType = (text: string) =>
     damage.damageType === undefined ? text : `${text} ${damage.damageType}`;
-  if (alternatives.length === 0) return withType(expression(fixed));
-  return alternatives
-    .map(
-      (ability) =>
-        `${withType(expression(fixed + modifier(ability)))} (${ability})`,
-    )
-    .join(" or ");
+  return withType(expression(fixed));
 }
 
 /**

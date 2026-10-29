@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v95-2026-10-28-new-saves-recovery";
+  "evaluated-character-v96-2026-10-29-summon-commands";
 
 export interface CharacterOccurrence {
   readonly id: string;

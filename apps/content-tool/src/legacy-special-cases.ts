@@ -2004,8 +2004,12 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.CalcDamage": code(
       "Damage parsing: twice/your/beast's ability, off-hand weapon, damage types; Defender's Gambit by name reads its tabbed hit field; NonDamagePower; DualImplementSpellcaster.",
-      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit by name (EXCEPTION_NAMES.defendersGambit) deals its indented ' Hit' field plus ' damage.' (5[W] + Strength); NonDamagePower's powers deal none. D105 departures: a '+ <ability> (off-hand weapon)' term adds the ability modifier (native looks up a nonexistent stat; no current record has one), and every term after a parenthetical is read where native stops (Eruption of Steel, Deceptive Steel, Binding Cahulaks). A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way. Each '+ NdM' word in the '+ …' chain after the weapon dice is appended (ParseAbilityMod's digit branch; DamageClauseIr.weaponAddedDice, 47 Hit lines such as Devastating Strike '1[W] + 1d8 + Strength modifier'), replacing the former Howling Strike by-name case",
+      "powers.ts calculateDamage ('twice [your] X modifier' doubles the term; '[your] highest ability [score] modifier' is HighestAbility, 'chosen ability modifier' the chosen ability); Defender's Gambit by name (EXCEPTION_NAMES.defendersGambit) deals its indented ' Hit' field plus ' damage.' (5[W] + Strength); NonDamagePower's powers deal none. D105 departures: a '+ <ability> (off-hand weapon)' term adds the ability modifier (native looks up a nonexistent stat; no current record has one), and every term after a parenthetical is read where native stops (Eruption of Steel, Deceptive Steel, Binding Cahulaks). A bare '[your] ability modifier' term (and a leading 'Ability modifier', Sudden Slime) is HighestAbility unless a key-ability damage_stat makes it follow the attack, like native; D105: 'primary ability modifier' (Elemental Eruption, Soul Scourge), native's unknown 'primary' stat, resolves the same way. Each '+ NdM' word in the '+ …' chain after the weapon dice is appended (ParseAbilityMod's digit branch; DamageClauseIr.weaponAddedDice, 47 Hit lines such as Devastating Strike '1[W] + 1d8 + Strength modifier'), replacing the former Howling Strike by-name case. MultipleAbilityChoices (~24663): an 'or' list of abilities whose attack ability is not among them (a summoned creature's 'your level + N' attack, D111) is the highest score of the list, earlier ones winning ties; Bound Soul's 'your Intelligence, Wisdom, or Charisma modifier' (the missing 'modifier' restored by 9G-creatures.part)",
       test(POWERS, "adds every explicitly additive ability modifier to damage"),
+      test(
+        POWERS,
+        "reads 'your Intelligence, Wisdom, or Charisma modifier' as the highest score",
+      ),
       test(
         POWERS,
         "subtracts an attack-line penalty and appends '+ NdM' after the weapon dice",
@@ -2171,10 +2175,18 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.PowerStats": code(
       "Per-power stat block: DetermineWeapon/DeterminePower, IsValidPowerCombo, rows only with a Hit line, an EffectPower or the Healing keyword, no weapon for [B] hits, Commander's Strike by name gets no rows; then attack, damage, strikers, keywords, globals, versatile, misc, bonuses, healing, stacking.",
-      "powers.ts evaluatePowers; Commander's Strike gets no rows by name (EXCEPTION_NAMES.commandersStrike; its record has no Hit line anyway, so the earlier 'still gets rows' note was a false positive). D094 divergence: an attack without a Hit line keeps a row and a Healing power gets no placeholder row. D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats",
+      "powers.ts evaluatePowers; Commander's Strike gets no rows by name (EXCEPTION_NAMES.commandersStrike; its record has no Hit line anyway, so the earlier 'still gets rows' note was a false positive). D094 divergence: an attack without a Hit line keeps a row and a Healing power gets no placeholder row. D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats. D111 addition (no native counterpart: legacy computes only the row of the first attack field): each command of a summon power's creature (_Creature Stat Block roll texts) gets its own row from the same calculation (PowerVariant.commands; EvaluatedPower.commands with no equipment for a power with no rows), a merged community card's command reading that card's keyed bonuses ('<card id>:damage'); the legacy-compatible row stays for parity",
       test(
         POWERS,
         "calculates no rows for a power with neither an attack nor a Hit line",
+      ),
+      test(
+        POWERS,
+        "works out each special command with your statistics and keeps the legacy row",
+      ),
+      test(
+        POWERS,
+        "works out a pact creature's merged attack with its card's keyed bonuses and no equipment",
       ),
       test(
         POWERS,
@@ -2816,7 +2828,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "detail-pane presentation; a summon power's creature (its stat fields, " +
         "special commands and creature behavior) is parsed at pack build " +
         "into _Creature Stat Block (legacy-wotc summon-creature.ts, D111) and " +
-        "shown as a creature card, the power card keeping the summoning",
+        "shown as a creature card, the power card keeping the summoning; a " +
+        "hexblade's or binder's community trait and attack cards " +
+        "(<id>_POWERCARD_<n>) merge into the creature and stay as inert " +
+        "Internal records (legacy-wotc summon-community-cards.ts)",
     ),
     "MonsterDisplay.Build": code(
       "Mount detail shows the _Monster stat block (47 mounts).",

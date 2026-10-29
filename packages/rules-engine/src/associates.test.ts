@@ -246,6 +246,9 @@ describe("associate statistics", () => {
       block: spiritBlock,
       stats: {
         ...master(10),
+        // "your Strength or Charisma modifier": the higher score wins.
+        Strength: stat("Strength", 13),
+        Charisma: stat("Charisma", 14),
         "SUMMON.AC": stat("SUMMON.AC", 1),
         "SUMMON.damage": stat("SUMMON.damage", 2),
       },
@@ -265,7 +268,9 @@ describe("associate statistics", () => {
       "Melee 2 (one creature); +17 vs. Reflex",
       // Highest modifier (Wisdom +4) and Alien Summoning's +2.
       "2d6 + 6 fire damage.",
-      "2d6 + 3 (Strength) or 2d6 + 4 (Charisma) damage.",
+      // Native MultipleAbilityChoices: the highest score (Charisma 14,
+      // modifier +2) and Alien Summoning's +2.
+      "2d6 + 4 damage.",
     ]);
   });
 

@@ -3071,6 +3071,219 @@ describe("power evaluation", () => {
     ).toMatchObject({ attackBonus: 15, damage: "1d8+16" });
   });
 
+  describe("summoned creature commands (D111)", () => {
+    // A creature stored on the summon power at pack build, its commands'
+    // attack and hit texts spelled as the content writes them.
+    const creature = (
+      powers: readonly {
+        readonly name: string;
+        readonly action: string;
+        readonly roll?: Record<string, unknown>;
+      }[],
+    ) =>
+      JSON.stringify({
+        version: 3,
+        kind: "master",
+        name: "Glass Heron",
+        block: {
+          version: 1,
+          role: "Summoned Creature",
+          hitPoints: { kind: "master-bloodied" },
+          defenses: {
+            kind: "master",
+            bonus: { ac: 0, fortitude: 0, reflex: 0, will: 0 },
+          },
+          traits: [],
+          powers: powers.map((power) => ({ ...power, lines: [] })),
+        },
+        powerFields: [" Minor Action", " Opportunity Attack"],
+      });
+
+    it("works out each special command with your statistics and keeps the legacy row", () => {
+      const [power] = evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["HERON"],
+        inventory: [],
+        stats: {
+          "Intelligence modifier": stat("Intelligence modifier", 5),
+          "attack rolls": combatStat("attack rolls", 1),
+        },
+        overlays: [],
+        entities: [
+          entity("HERON", "Summon Glass Heron", "Power", {
+            Keywords: "Arcane, Implement, Summoning",
+            "Action Type": "Minor Action",
+            "Attack Type": "Ranged 5",
+            Effect:
+              "You summon a Medium glass heron in an unoccupied square within range.",
+            " Minor Action":
+              "Melee 1; targets one creature; Intelligence vs. Fortitude; 1d8 + Intelligence modifier damage.",
+            " Opportunity Attack":
+              "Melee 1; targets one creature; Intelligence vs. Reflex; 2d6 + Intelligence modifier cold damage.",
+            "_Creature Stat Block": creature([
+              {
+                name: "Minor Action",
+                action: "Minor",
+                roll: {
+                  attack: "Intelligence vs. Fortitude",
+                  hit: "1d8 + Intelligence modifier damage.",
+                  attackType: "Melee 1",
+                  target: "One creature",
+                },
+              },
+              {
+                name: "Opportunity Attack",
+                action: "Opportunity",
+                roll: {
+                  attack: "Intelligence vs. Reflex",
+                  hit: "2d6 + Intelligence modifier cold damage.",
+                  attackType: "Melee 1",
+                  target: "One creature",
+                },
+              },
+            ]),
+          }),
+        ],
+      });
+      const variant = power?.variants[0];
+      // Legacy's row: the " Opportunity Attack" field's attack, no damage.
+      expect(variant?.attacks?.[0]).toMatchObject({
+        attackStat: "Intelligence",
+        defense: "Reflex",
+        attackBonus: 11,
+      });
+      expect(
+        variant?.commands?.map(
+          ({
+            entry,
+            id,
+            attackStat,
+            defense,
+            attackBonus,
+            damage,
+            damageType,
+          }) => ({
+            entry,
+            id,
+            attackStat,
+            defense,
+            attackBonus,
+            damage,
+            damageType,
+          }),
+        ),
+      ).toEqual([
+        {
+          entry: 0,
+          id: "HERON:command-0",
+          attackStat: "Intelligence",
+          defense: "Fortitude",
+          attackBonus: 11,
+          damage: "1d8+5",
+          damageType: undefined,
+        },
+        {
+          entry: 1,
+          id: "HERON:command-1",
+          attackStat: "Intelligence",
+          defense: "Reflex",
+          attackBonus: 11,
+          damage: "2d6+5",
+          damageType: "cold",
+        },
+      ]);
+      expect(power?.commands).toBeUndefined();
+    });
+
+    it("works out a pact creature's merged attack with its card's keyed bonuses and no equipment", () => {
+      const [power] = evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["PACT"],
+        inventory: [],
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 4),
+          damage: combatStat("damage", 1),
+          "CARD_2:damage": combatStat("CARD_2:damage", 3),
+          "SUMMON.attack rolls": stat("SUMMON.attack rolls", 1),
+        },
+        overlays: [],
+        entities: [
+          entity("PACT", "Summoned Creature (Glass Well)", "Power", {
+            Keywords: "Arcane, Summoning",
+            "Action Type": "",
+            "_Creature Stat Block": creature([
+              { name: "Special Movement", action: "Minor" },
+              {
+                name: "Glass Handmaiden's Attack",
+                action: "Standard",
+                roll: {
+                  attack: "your level + 5 vs. Reflex",
+                  hit: "2d8 + your Charisma modifier radiant damage.",
+                  attackType: "Melee 1",
+                  target: "One creature",
+                  source: { id: "CARD_2", name: "Glass Handmaiden's Attack" },
+                },
+              },
+            ]),
+          }),
+        ],
+      });
+      expect(power?.variants).toEqual([]);
+      expect(power?.commands).toHaveLength(1);
+      // Level 10 + 5 + SUMMON.; 2d8 + Charisma + the card's keyed bonus,
+      // never the character's damage (D095).
+      expect(power?.commands?.[0]).toMatchObject({
+        entry: 1,
+        attackStat: "Level",
+        attackBonus: 16,
+        defense: "Reflex",
+        damage: "2d8+7",
+        damageType: "radiant",
+      });
+    });
+
+    it("reads 'your Intelligence, Wisdom, or Charisma modifier' as the highest score", () => {
+      const [power] = evaluatePowers({
+        level: 21,
+        activeDefinitionIds: ["SOUL"],
+        inventory: [],
+        stats: {
+          Intelligence: stat("Intelligence", 18),
+          "Intelligence modifier": stat("Intelligence modifier", 14),
+          Wisdom: stat("Wisdom", 20),
+          "Wisdom modifier": stat("Wisdom modifier", 15),
+          Charisma: stat("Charisma", 16),
+          "Charisma modifier": stat("Charisma modifier", 13),
+        },
+        overlays: [],
+        entities: [
+          entity("SOUL", "Bound Soul", "Power", {
+            "Power Usage": "Encounter",
+            Keywords: "Divine, Summoning",
+            "_Creature Stat Block": creature([
+              {
+                name: "Standard Action",
+                action: "Standard",
+                roll: {
+                  attack: "your level + 5 vs. Fortitude",
+                  hit: "1d10 + your Intelligence, Wisdom, or Charisma modifier necrotic and radiant damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier necrotic and radiant damage.",
+                  attackType: "Melee 1",
+                  target: "One creature",
+                },
+              },
+            ]),
+          }),
+        ],
+      });
+      // Native MultipleAbilityChoices: Wisdom (score 20), the level 21 step.
+      expect(power?.commands?.[0]).toMatchObject({
+        attackBonus: 26,
+        damage: "2d10+15",
+        damageType: "necrotic and radiant",
+      });
+    });
+  });
+
   it("classifies healing surges and temporary hit point effects", () => {
     const [power] = evaluatePowers({
       level: 6,
