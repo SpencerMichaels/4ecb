@@ -1010,6 +1010,14 @@
 .print-creature-note strong {
   color: var(--card-color);
 }
+/* A summoned creature's command as the summoner rolls it (D111), like a
+   power card's attack band in the entry. */
+.print-creature-roll {
+  font-weight: 700;
+}
+.print-creature-roll strong {
+  color: var(--card-color);
+}
 .print-card-body .print-creature-description {
   display: grid;
   gap: 0.03in;

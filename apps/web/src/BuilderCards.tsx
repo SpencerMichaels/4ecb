@@ -18,6 +18,7 @@ import {
   createSheetPowerCardFinder,
   creatureRecord,
   sheetCreatureCard,
+  summonCommandRows,
   sheetBeastCompanionCard,
   sheetFamiliarCard,
   sheetItemCard,
@@ -172,18 +173,28 @@ export function evaluatedBuilderCardSettings(
     familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
     creatureCardFor: (name, entities, origin = { kind: "mount" }) => {
       const record = creatureRecord(entities);
-      return record === undefined
-        ? undefined
-        : sheetCreatureCard({
-            ...record,
-            origin,
-            name: origin.kind === "summon" ? record.block.name : name,
-            stats: evaluation.stats,
-            level: evaluation.level,
-            ...(origin.kind === "summon"
-              ? { personalize: summonPersonalize }
-              : {}),
-          });
+      if (record === undefined) return undefined;
+      // A summon's commands take the power's evaluated rows, as the sheet's
+      // creature card does (D111).
+      const power =
+        origin.kind === "summon"
+          ? (owned.get(record.entity.id.toLocaleLowerCase()) ??
+            hypotheticalPower(record.entity))
+          : undefined;
+      const commands = summonCommandRows(
+        power,
+        preferences.proficientEquipmentOnly,
+      );
+      return sheetCreatureCard({
+        ...record,
+        origin,
+        name: origin.kind === "summon" ? record.block.name : name,
+        stats: evaluation.stats,
+        level: evaluation.level,
+        ...(origin.kind === "summon" ? { personalize: summonPersonalize } : {}),
+        ...(commands === undefined ? {} : { commands }),
+        ...(power?.usage === undefined ? {} : { usage: power.usage }),
+      });
     },
     beastCardFor: (entity) => {
       const beast = previewBeastCompanion({

@@ -1,4 +1,5 @@
 import {
+  powerAttackSlots,
   readCreatureStatBlock,
   type ContentEntity,
   type CreatureAttackKind,
@@ -9,7 +10,10 @@ import {
   BEAST_ABILITY_NAMES,
   type AssociateStatistics,
   type AssociateStatisticsEntry,
+  type AssociateStatisticsLine,
+  type EvaluatedPower,
   type EvaluatedStat,
+  type PowerCommand,
 } from "@4ecb/rules-engine";
 
 /**
@@ -34,11 +38,21 @@ export type SheetCreatureOrigin =
       readonly powerId: string;
     };
 
+/** A summoned creature's command as the summoner rolls it (D111), when
+ *  its text does not print the numbers itself: the engine's row. */
+export interface SheetCreatureRoll {
+  /** "+12 vs. Fortitude". */
+  readonly attack: string;
+  /** "1d8+7 fire". */
+  readonly damage?: string;
+}
+
 /** A trait or power of the creature, with its numbers worked out. */
 export interface SheetCreatureEntry extends AssociateStatisticsEntry {
   /** A published block's power icon: basic melee, melee, ranged, close,
    *  area. */
   readonly attackKind?: CreatureAttackKind;
+  readonly roll?: SheetCreatureRoll;
 }
 
 /**
@@ -104,6 +118,9 @@ export interface SheetCreatureCard {
   /** The occurrences that give the creature: page-1 reminders from these
    *  are what the card shows (none for a mount holding). */
   readonly provenanceIds: readonly string[];
+  /** A summoned creature's power's usage ("Daily"), shown in the type bar
+   *  (D111). */
+  readonly usage?: string;
 }
 
 const HIT_POINTS_FROM: Readonly<
@@ -180,6 +197,129 @@ export interface SheetCreatureCardInput {
    *  card's text does ("Intelligence modifier (+5)"): lines whose numbers
    *  the stat block does not work out itself. */
   readonly personalize?: (text: string) => string;
+  /** A summoned creature's command rows from the rules engine
+   *  ({@link summonCommandRows}, D111): they replace the stat block's own
+   *  attack and damage numbers, or print beside a command's text. */
+  readonly commands?: readonly PowerCommand[];
+  /** The summon power's usage, for the type bar. */
+  readonly usage?: string;
+}
+
+const signedBonus = (value: number) => `${value < 0 ? "" : "+"}${value}`;
+
+/**
+ * The command rows a summon power's creature card shows (D111): those of
+ * the row its power card would show (the equipped main-hand one, else the
+ * equipped one, else the first; `proficientOnly` as the card's option),
+ * or the power's own for a power with no rows.
+ */
+export function summonCommandRows(
+  power: EvaluatedPower | undefined,
+  proficientOnly = false,
+): readonly PowerCommand[] | undefined {
+  if (power === undefined) return undefined;
+  const variants = power.variants.filter(
+    (variant) => !proficientOnly || variant.proficient,
+  );
+  return defaultPowerVariant(variants)?.commands ?? power.commands;
+}
+
+/** The row a power card leads with: the equipped main-hand one, else the
+ *  equipped one, else the first. */
+export function defaultPowerVariant<
+  Variant extends { readonly equipped?: boolean; readonly hand?: string },
+>(variants: readonly Variant[]): Variant | undefined {
+  return (
+    variants.find(
+      (variant) => variant.equipped === true && variant.hand === "main",
+    ) ??
+    variants.find((variant) => variant.equipped === true) ??
+    variants[0]
+  );
+}
+
+/**
+ * Whether a summon power's attack rows belong to its creature card (D111):
+ * its creature has commands the summoner rolls, and every attack field of
+ * the power (the one legacy computes a row from, " Opportunity Attack") is
+ * one the creature card shows. A power with its own attack (Servant of the
+ * Staff) keeps its rows.
+ */
+export function summonRowsOnCreature(
+  entity: ContentEntity | undefined,
+): boolean {
+  if (entity === undefined) return false;
+  const block = readCreatureStatBlock(entity.specifics);
+  if (
+    block?.kind !== "master" ||
+    !block.block.powers.some((power) => power.roll !== undefined)
+  )
+    return false;
+  const shown = new Set(block.powerFields ?? []);
+  return powerAttackSlots(entity.specifics).every(
+    ([ordinal, role]) =>
+      role !== "attack" ||
+      shown.has(
+        entity.specifics.find((field) => field.ordinal === ordinal)?.name ?? "",
+      ),
+  );
+}
+
+/**
+ * A creature's entries with the engine's command rows (D111): a stat-block
+ * line that prints its attack or damage takes the row's numbers; a command
+ * written as one text (a special command) gets the row beside it.
+ */
+function withCommandRows(
+  entries: readonly AssociateStatisticsEntry[],
+  blockEntries: readonly {
+    readonly lines: readonly {
+      readonly attack?: { readonly range: string };
+      readonly rest?: string;
+    }[];
+  }[],
+  commands: readonly PowerCommand[] | undefined,
+): SheetCreatureEntry[] {
+  if (commands === undefined || commands.length === 0) return [...entries];
+  return entries.map((entry, index): SheetCreatureEntry => {
+    const row = commands.find((command) => command.entry === index);
+    if (row === undefined) return entry;
+    const damage =
+      row.damage === undefined
+        ? undefined
+        : [row.damage, row.damageType].filter(Boolean).join(" ");
+    const attack = `${signedBonus(row.attackBonus)} vs. ${row.defense}`;
+    const block = blockEntries[index];
+    let placed = false;
+    const lines = entry.lines.map(
+      (line, lineIndex): AssociateStatisticsLine => {
+        const source = block?.lines[lineIndex];
+        if (line.attackBonus !== undefined && source?.attack !== undefined) {
+          placed = true;
+          return {
+            ...line,
+            text: `${source.attack.range}; ${attack}`,
+            attackBonus: row.attackBonus,
+            defense: row.defense,
+          };
+        }
+        if (line.damage !== undefined && damage !== undefined) {
+          return {
+            ...line,
+            text: `${damage} damage${source?.rest ?? ""}`,
+            damage,
+          };
+        }
+        return line;
+      },
+    );
+    return placed
+      ? { ...entry, lines }
+      : {
+          ...entry,
+          roll: { attack, ...(damage === undefined ? {} : { damage }) },
+        };
+  });
 }
 
 const defined = <Value extends object>(value: Value) =>
@@ -278,7 +418,12 @@ export function sheetCreatureCard(
     defenses: statistics.defenses,
     hitPoints: statistics.hitPoints,
     traits: personalized(statistics.traits),
-    actions: personalized(statistics.powers),
+    actions: withCommandRows(
+      personalized(statistics.powers),
+      associate.powers,
+      input.commands,
+    ),
+    ...(input.usage === undefined ? {} : { usage: input.usage }),
     ...defined({
       level: associate.level,
       role: associate.role,
@@ -361,6 +506,9 @@ export function creatureCardText(card: SheetCreatureCard): string {
       ...entry.lines.map((line) =>
         [line.label, line.text].filter(Boolean).join(": "),
       ),
+      entry.roll === undefined
+        ? undefined
+        : [entry.roll.attack, entry.roll.damage].filter(Boolean).join(" "),
     ]),
     ...(card.other ?? []),
   ]
@@ -368,9 +516,13 @@ export function creatureCardText(card: SheetCreatureCard): string {
     .join(". ");
 }
 
-/** The type bar's label: what kind of creature the card shows. */
+/** The type bar's label: what kind of creature the card shows, with a
+ *  summon power's usage ("Summoned creature · Daily", D111). */
 export function creatureCardTypeLabel(card: SheetCreatureCard): string {
-  return card.origin.kind === "summon" ? "Summoned creature" : "Mount";
+  if (card.origin.kind !== "summon") return "Mount";
+  return card.usage === undefined || card.usage === ""
+    ? "Summoned creature"
+    : `Summoned creature · ${card.usage}`;
 }
 
 /**

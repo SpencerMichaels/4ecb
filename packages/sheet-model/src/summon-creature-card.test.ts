@@ -188,7 +188,8 @@ describe("summoned creature card (D111)", () => {
       speed: "6, fly 8 (hover)",
       provenanceIds: ["occ:heron"],
     });
-    expect(creatureCardTypeLabel(card!)).toBe("Summoned creature");
+    // The power's usage joins the type bar (D111).
+    expect(creatureCardTypeLabel(card!)).toBe("Summoned creature · Daily");
     expect(sheetCreatureCardKeyBase(card!)).toBe(
       "creature:summon:id_test_summon_heron",
     );
@@ -222,5 +223,289 @@ describe("summoned creature card (D111)", () => {
     expect(keys.indexOf("creature:summon:id_test_summon_heron")).toBeLessThan(
       keys.findIndex((key) => key.startsWith("power:")),
     );
+  });
+});
+
+/** A Power record with these fields, in order. */
+function power(
+  id: string,
+  name: string,
+  fields: Record<string, string>,
+): ContentEntity {
+  return {
+    ...heron,
+    id,
+    name,
+    specifics: Object.entries(fields).map(([fieldName, value], ordinal) => ({
+      name: fieldName,
+      value,
+      extraAttributes: [],
+      ordinal,
+    })),
+  };
+}
+
+function modelOf(
+  entity: ContentEntity,
+  evaluated: EvaluatedCharacter["powers"][number],
+) {
+  return buildEvaluatedSheetModel(
+    {
+      details: {},
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      powers: [],
+      loot: [],
+      textStrings: {},
+      levelCount: 10,
+      source: "legacy-cache",
+    },
+    {
+      formatVersion: 3,
+      known: [],
+      effectiveLevel: 10,
+      levels: [],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    },
+    {
+      ...evaluation,
+      occurrences: [
+        {
+          id: "occ:summon",
+          definitionId: entity.id,
+          acquiredLevel: 9,
+          kind: "choice",
+        },
+      ],
+      activeDefinitionIds: [entity.id],
+      powers: [evaluated],
+    },
+    [entity],
+  );
+}
+
+const creatureOf = (sheet: ReturnType<typeof modelOf>) =>
+  sheet.companions.find(
+    (candidate): candidate is SheetCreatureCard =>
+      candidate.kind === "creature",
+  );
+
+describe("summoned creature commands (D111)", () => {
+  // Legacy's row comes from the " Opportunity Attack" field; the engine
+  // works out each command (rules-engine PowerCommand).
+  const angel = power("ID_TEST_SUMMON_ANGEL", "Summon Glass Angel", {
+    "Power Usage": "Daily",
+    Keywords: "Divine, Implement, Summoning",
+    "Action Type": "Minor Action",
+    "Attack Type": "Ranged 5",
+    Effect:
+      "You summon a Medium glass angel in an unoccupied square within range.",
+    " Opportunity Attack":
+      "Melee 1; targets one creature; Wisdom vs. Reflex; 1d8 + Wisdom modifier damage.",
+    [CREATURE_STAT_BLOCK_FIELD]: JSON.stringify({
+      ...HERON_BLOCK,
+      name: "Glass Angel",
+      block: {
+        ...HERON_BLOCK.block,
+        traits: [],
+        powers: [
+          {
+            name: "Opportunity Attack",
+            action: "Opportunity",
+            lines: [
+              {
+                text: "Melee 1; targets one creature; Wisdom vs. Reflex; 1d8 + Wisdom modifier damage.",
+              },
+            ],
+            roll: {
+              attack: "Wisdom vs. Reflex",
+              hit: "1d8 + Wisdom modifier damage.",
+              attackType: "Melee 1",
+              target: "One creature",
+            },
+          },
+        ],
+      },
+      powerFields: [" Opportunity Attack"],
+    }),
+  });
+  const command = {
+    id: "ID_TEST_SUMMON_ANGEL:command-0",
+    ordinal: 0,
+    entry: 0,
+    attackStat: "Wisdom",
+    powerBonus: 0,
+    defense: "Reflex",
+    attackBonus: 12,
+    damage: "1d8+7",
+    attackComponents: [],
+    damageComponents: [],
+  };
+  const row = (
+    id: string,
+    equipped: boolean,
+    commands: readonly (typeof command)[],
+  ) => ({
+    id,
+    equipmentName: id,
+    equipped,
+    hand: "main" as const,
+    proficient: true,
+    attackStat: "Wisdom",
+    defense: "Reflex",
+    attackBonus: 12,
+    attackComponents: [],
+    damageComponents: [],
+    conditionalDamage: [],
+    commands,
+  });
+  const evaluated = {
+    definitionId: angel.id,
+    name: angel.name,
+    usage: "Daily",
+    actionType: "Minor Action",
+    keywords: ["Divine", "Implement", "Summoning"],
+    recoveries: [],
+    variants: [
+      row("staff", false, [{ ...command, attackBonus: 10, damage: "1d8+5" }]),
+      row("rod", true, [command]),
+    ],
+    unsupported: [],
+  };
+
+  it("prints each command's row from the equipped implement on the creature card", () => {
+    const card = creatureOf(modelOf(angel, evaluated));
+    expect(card?.actions[0]?.roll).toEqual({
+      attack: "+12 vs. Reflex",
+      damage: "1d8+7",
+    });
+    expect(creatureCardTypeLabel(card!)).toBe("Summoned creature · Daily");
+  });
+
+  it("leaves the power card's attack band and weapon table to the creature", () => {
+    const sheet = modelOf(angel, evaluated);
+    const card = sheet.powers.find(({ name }) => name === angel.name);
+    expect(card?.attack).toBeUndefined();
+    expect(card?.damage).toBeUndefined();
+    expect(card?.variants).toBeUndefined();
+    // Its Effect still prints, so the card does.
+    expect(card?.foldedIntoCreature).toBeUndefined();
+    expect(sheetCardDeck(sheet).map(({ key }) => key)).toContain(
+      "power:id_test_summon_angel",
+    );
+  });
+
+  // A hexblade's pact creature: the summon power has only its stat fields;
+  // its merged community attack card (legacy-wotc summon-community-cards)
+  // keeps its stat-block lines, and the engine works out its row.
+  const pact = power(
+    "ID_TEST_PACT_POWERCARD_0",
+    "Summoned Creature (Glass Well)",
+    {
+      "Power Usage": "Daily",
+      Display: "",
+      Keywords: "Arcane, Summoning",
+      "Action Type": "",
+      Creature: "Glass Handmaiden",
+      "Hit Points": "Your bloodied value.",
+      Defenses:
+        "Your defenses + 2, not including any temporary bonuses or penalties.",
+      Level: "9",
+      [CREATURE_STAT_BLOCK_FIELD]: JSON.stringify({
+        ...HERON_BLOCK,
+        name: "Glass Handmaiden",
+        block: {
+          ...HERON_BLOCK.block,
+          traits: [],
+          powers: [
+            {
+              name: "Glass Handmaiden's Attack",
+              action: "Standard",
+              usage: "At-Will",
+              lines: [
+                { label: "Target", text: "One creature" },
+                {
+                  label: "Attack",
+                  text: "Melee 1; your level + 5 vs. Reflex",
+                  attack: {
+                    range: "Melee 1",
+                    bonus: { kind: "level", plus: 5 },
+                    defense: "Reflex",
+                  },
+                },
+                {
+                  label: "Hit",
+                  text: "2d8 + your Charisma modifier radiant damage, and the target is immobilized.",
+                  damage: {
+                    terms: [
+                      { kind: "dice", dice: "2d8" },
+                      { kind: "ability", abilities: ["Charisma"] },
+                    ],
+                    damageType: "radiant",
+                  },
+                  rest: ", and the target is immobilized.",
+                },
+              ],
+              roll: {
+                attack: "your level + 5 vs. Reflex",
+                hit: "2d8 + your Charisma modifier radiant damage, and the target is immobilized.",
+                attackType: "Melee 1",
+                source: {
+                  id: "ID_TEST_PACT_POWERCARD_2",
+                  name: "Glass Handmaiden's Attack",
+                },
+              },
+            },
+          ],
+        },
+        powerFields: ["Creature", "Hit Points", "Defenses"],
+        absorbed: ["ID_TEST_PACT_POWERCARD_2"],
+      }),
+    },
+  );
+  const pactEvaluated = {
+    definitionId: pact.id,
+    name: pact.name,
+    usage: "Daily",
+    keywords: ["Arcane", "Summoning"],
+    recoveries: [],
+    variants: [],
+    commands: [
+      {
+        ...command,
+        id: "ID_TEST_PACT_POWERCARD_0:command-0",
+        attackStat: "Level",
+        attackBonus: 16,
+        damage: "2d8+10",
+        damageType: "radiant",
+      },
+    ],
+    unsupported: [],
+  };
+
+  it("puts the engine's numbers in a merged attack's stat-block lines", () => {
+    const card = creatureOf(modelOf(pact, pactEvaluated));
+    expect(
+      card?.actions[0]?.lines.map(({ label, text }) => [label, text]),
+    ).toEqual([
+      ["Target", "One creature"],
+      ["Attack", "Melee 1; +16 vs. Reflex"],
+      ["Hit", "2d8+10 radiant damage, and the target is immobilized."],
+    ]);
+    expect(card?.actions[0]?.roll).toBeUndefined();
+  });
+
+  it("prints no card for a pact power its creature card carries whole", () => {
+    const sheet = modelOf(pact, pactEvaluated);
+    const card = sheet.powers.find(({ name }) => name === pact.name);
+    expect(card?.foldedIntoCreature).toBe(true);
+    const keys = sheetCardDeck(sheet).map(({ key }) => key);
+    expect(keys).not.toContain("power:id_test_pact_powercard_0");
+    expect(keys).toContain("creature:summon:id_test_pact_powercard_0");
   });
 });

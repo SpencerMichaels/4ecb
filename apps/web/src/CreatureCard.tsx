@@ -76,6 +76,17 @@ export function CreatureEntrySection({
           <span className="print-associate-usage"> {meta}</span>
         )}
       </h4>
+      {entry.roll === undefined ? null : (
+        <p className="print-creature-roll">
+          <strong>Attack</strong> {entry.roll.attack}
+          {entry.roll.damage === undefined ? null : (
+            <>
+              {" · "}
+              <strong>Damage</strong> {entry.roll.damage}
+            </>
+          )}
+        </p>
+      )}
       {entry.lines.map((line, index) => (
         <p key={index}>
           {line.label === undefined ? null : <strong>{line.label}: </strong>}

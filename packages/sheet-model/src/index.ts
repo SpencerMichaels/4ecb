@@ -12,6 +12,7 @@ import {
 import {
   displayPrerequisites,
   isUserFacingSpecific,
+  powerAttackSlots,
   readCreatureStatBlock,
   weaponPropertyText,
   type ContentEntity,
@@ -40,9 +41,12 @@ import {
 } from "./power-feature-clauses";
 import {
   creatureRecord,
+  defaultPowerVariant,
   descriptionRepeatsStatBlock,
   sheetCreatureCard,
+  summonCommandRows,
   summonCreatureFieldNames,
+  summonRowsOnCreature,
   type SheetCreatureCard,
 } from "./creature-card";
 import { universalPowerDefinitionIds } from "./power-reference";
@@ -93,13 +97,17 @@ export {
   creatureCardTitle,
   creatureCardTypeLabel,
   creatureRecord,
+  defaultPowerVariant,
   descriptionRepeatsStatBlock,
   sheetCreatureCard,
   sheetCreatureCardKeyBase,
+  summonCommandRows,
   summonCreatureFieldNames,
+  summonRowsOnCreature,
   type SheetCreatureCard,
   type SheetCreatureCardInput,
   type SheetCreatureCardPart,
+  type SheetCreatureRoll,
   type SheetCreatureEntry,
   type SheetCreatureOrigin,
 } from "./creature-card";
@@ -320,6 +328,13 @@ export interface SheetCard {
   readonly spellbook?: boolean;
   /** A monk full discipline's movement technique, printed on its card. */
   readonly movementTechnique?: SheetMovementTechnique;
+  /**
+   * A summon power whose creature card (D111) carries everything this card
+   * would print beyond its header (a hexblade's pact creature): the deck
+   * prints no card for it; page-1 lists and the power index keep it, and
+   * the creature card's type bar shows its usage.
+   */
+  readonly foldedIntoCreature?: boolean;
 }
 
 /** The movement technique part of a monk full discipline's card. */
@@ -1195,10 +1210,11 @@ function evaluatedPowerCards(
         })),
       ]),
     }));
-  const defaultVariant =
-    variants.find((variant) => variant.equipped && variant.hand === "main") ??
-    variants.find((variant) => variant.equipped) ??
-    variants[0];
+  const defaultVariant = defaultPowerVariant(variants);
+  // A summon whose creature card shows its commands' rows (D111) leaves
+  // the numbers to it: the power card prints no attack band or weapon
+  // table (the engine keeps the rows, which legacy also computes).
+  const rowsOnCreature = summonRowsOnCreature(entity);
   // Healing bonuses other features grant this power (Healer's Lore), like
   // legacy's "regain an additional N hit points", plus the situational ones
   // ("while you are bloodied") as reminders.
@@ -1254,15 +1270,18 @@ function evaluatedPowerCards(
       ...(power.keywords.length === 0
         ? {}
         : { keywords: power.keywords.join(", ") }),
-      ...(defaultVariant?.attack === undefined
+      ...(defaultVariant?.attack === undefined || rowsOnCreature
         ? {}
         : { attack: defaultVariant.attack }),
-      ...(defaultVariant?.damage === undefined
+      ...(defaultVariant?.damage === undefined || rowsOnCreature
         ? {}
         : { damage: defaultVariant.damage }),
-      ...(variants.length === 0 ? {} : { variants }),
+      ...(variants.length === 0 || rowsOnCreature ? {} : { variants }),
       ...(additionalEffects.length > 0 ? { additionalEffects } : {}),
       fields: commonFields,
+      ...(foldsIntoCreature(entity, commonFields, additionalEffects)
+        ? { foldedIntoCreature: true }
+        : {}),
       ...(power.unsupported.length === 0
         ? {}
         : { calculationWarnings: power.unsupported }),
@@ -1278,6 +1297,43 @@ function evaluatedPowerCards(
         : {}),
     },
   ];
+}
+
+/** `{ commands }` when there are any (exactOptionalPropertyTypes). */
+function optionalCommands(commands: ReturnType<typeof summonCommandRows>): {
+  commands?: NonNullable<ReturnType<typeof summonCommandRows>>;
+} {
+  return commands === undefined ? {} : { commands };
+}
+
+/**
+ * Whether a summon power's card is empty once its creature card (D111)
+ * takes the creature's fields: no body field, no attack rows and no
+ * riders. Its flavor prints with neither card.
+ */
+function foldsIntoCreature(
+  entity: ContentEntity | undefined,
+  fields: readonly SheetValue[],
+  additionalEffects: readonly SheetAdditionalEffect[],
+): boolean {
+  if (entity === undefined) return false;
+  const block = readCreatureStatBlock(entity.specifics);
+  if (block?.kind !== "master" || additionalEffects.length > 0) return false;
+  const attackRows = powerAttackSlots(entity.specifics).some(
+    ([ordinal, role]) =>
+      role === "attack" &&
+      !(block.powerFields ?? []).includes(
+        entity.specifics.find((field) => field.ordinal === ordinal)?.name ?? "",
+      ),
+  );
+  return (
+    !attackRows &&
+    fields.every(
+      ({ label, value }) =>
+        POWER_CARD_BODY_EXCLUDES.has(label.trim().toLocaleLowerCase()) ||
+        value.trim() === "",
+    )
+  );
 }
 
 const CARD_HEADER_POWER_FIELDS = new Set([
@@ -2253,11 +2309,17 @@ export function buildEvaluatedSheetModel(
           ? undefined
           : readCreatureStatBlock(entity.specifics);
       if (entity === undefined || block === undefined) return [];
+      // The power's occurrences and the community cards merged into its
+      // creature at pack build (D111).
+      const givers = new Set(
+        [
+          power.definitionId,
+          ...(block.kind === "master" ? (block.absorbed ?? []) : []),
+        ].map((id) => id.toLocaleLowerCase()),
+      );
       const provenanceIds = evaluation.occurrences
-        .filter(
-          (occurrence) =>
-            occurrence.definitionId.toLocaleLowerCase() ===
-            power.definitionId.toLocaleLowerCase(),
+        .filter((occurrence) =>
+          givers.has(occurrence.definitionId.toLocaleLowerCase()),
         )
         .flatMap((occurrence) => {
           const chain = [occurrence.id];
@@ -2290,6 +2352,10 @@ export function buildEvaluatedSheetModel(
           level: evaluation.level,
           provenanceIds,
           personalize: summonPersonalize,
+          ...optionalCommands(
+            summonCommandRows(power, options.proficientEquipmentOnly !== false),
+          ),
+          ...(power.usage === undefined ? {} : { usage: power.usage }),
         }),
       ];
     },

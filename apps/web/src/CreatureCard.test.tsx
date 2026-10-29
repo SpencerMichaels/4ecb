@@ -111,4 +111,32 @@ describe("CreatureCard", () => {
     expect(html).toContain("Max.Drag");
     expect(html).toContain("Source: Test");
   });
+
+  it("prints a summoned creature's command row and the power's usage (D111)", () => {
+    const html = renderToStaticMarkup(
+      <CreatureCard
+        card={{
+          ...card,
+          origin: { kind: "summon", powerId: "ID_TEST_SUMMON" },
+          usage: "Daily",
+          actions: [
+            {
+              name: "Opportunity Attack",
+              action: "Opportunity",
+              lines: [
+                {
+                  text: "Melee 1; targets one creature; Wisdom vs. Reflex; 1d8 + Wisdom modifier (+4) damage.",
+                },
+              ],
+              roll: { attack: "+12 vs. Reflex", damage: "1d8+7" },
+            },
+          ],
+        }}
+      />,
+    );
+    expect(html).toContain(
+      '<p class="print-creature-roll"><strong>Attack</strong> +12 vs. Reflex · <strong>Damage</strong> 1d8+7</p>',
+    );
+    expect(html).toContain(">Summoned creature · Daily<");
+  });
 });

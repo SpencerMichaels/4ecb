@@ -78,7 +78,9 @@ const keyPart = (value: string) => value.trim().toLocaleLowerCase();
  * The power cards the deck prints, in `sortedPowerCards` order: a movement
  * technique a full discipline's card already prints (`movementTechnique`)
  * gets no card of its own. Legacy prints both; the owner chose one copy
- * (D099). A technique owned without its discipline keeps its card.
+ * (D099). A technique owned without its discipline keeps its card. A summon
+ * power its creature card carries whole (`foldedIntoCreature`, D111)
+ * prints only that creature card.
  */
 export function deckPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   const folded = new Set(
@@ -89,9 +91,10 @@ export function deckPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   return sortedPowerCards(
     cards.filter(
       (card) =>
-        card.id === undefined ||
-        card.movementTechnique !== undefined ||
-        !folded.has(keyPart(card.id)),
+        card.foldedIntoCreature !== true &&
+        (card.id === undefined ||
+          card.movementTechnique !== undefined ||
+          !folded.has(keyPart(card.id))),
     ),
   );
 }
