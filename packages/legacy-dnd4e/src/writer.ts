@@ -642,8 +642,11 @@ function baseAbilityScoresXml(build: CharacterBuild): string {
   );
 }
 
-/** Legacy `statadd` value attributes: a number, a stat link, or a string. */
-function statAddValue(value: string) {
+/**
+ * Legacy `statadd` value attributes: a number, a stat link, or a string: the
+ * form a rule's `value` takes in a save's StatBlock.
+ */
+export function legacyStatAddValue(value: string) {
   const trimmed = value.trim();
   if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed))
     return { value: String(Number(trimmed)) };
@@ -718,7 +721,7 @@ function statBlockXml(
   for (const stat of Object.values(evaluation.stats))
     for (const contribution of stat.contributions) {
       if (contribution.text === true) continue;
-      const value = statAddValue(contribution.value);
+      const value = legacyStatAddValue(contribution.value);
       if (!("statlink" in value) || value.statlink === undefined) continue;
       const linked = canonical(value.statlink);
       if (!groups.has(key(linked)))
@@ -751,7 +754,7 @@ function statBlockXml(
               const value =
                 contribution.text === true
                   ? { String: contribution.value.trim(), value: "0" }
-                  : statAddValue(contribution.value);
+                  : legacyStatAddValue(contribution.value);
               return element("statadd", {
                 type: contribution.bonusType,
                 Level: occurrence?.acquiredLevel,

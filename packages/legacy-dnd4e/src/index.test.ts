@@ -31,6 +31,7 @@ import {
   legacyEquipmentIdentityMatches,
   legacyPowerValueMatches,
   projectBuildForLegacyExport,
+  savedCharacterRules,
   withLegacyFreebeeRituals,
   withLegacyAugmentState,
   withLegacyLoadoutState,
@@ -200,6 +201,38 @@ describe("legacy .dnd4e import", () => {
     });
     expect(imported.snapshot.loot[0]?.name).toBe("Test blade");
     expect(imported.report.usesLegacyCache).toBe(true);
+  });
+
+  it("reads each saved element's specifics and its StatBlock statadds by charelem", () => {
+    const xml = `<?xml version="1.0"?><D20Character game-system="D&amp;D4E" Version="0.07a"><CharacterSheet><StatBlock><Stat value="3"><alias name="Initiative Misc"/><statadd type="Feat" Level="2" value="2" requires="11 level" charelem="f1"/><statadd Level="4" value="1" charelem="i1"/></Stat><Stat value="10"><alias name="Dexterity"/><alias name="dex"/></Stat></StatBlock><RulesElementTally><RulesElement name="Swift Feat" type="Feat" internal-id="FEAT_1" charelem="f1" legality="rules-legal"><specific name="Short Description">Quick.</specific></RulesElement><RulesElement name="Lost Feat" type="Feat" internal-id="FEAT_2" charelem="f2" legality="houserule"/></RulesElementTally><LootTally><loot count="1" equip-count="1"><RulesElement name="Quick Boots" type="Magic Item" internal-id="ITEM_1" charelem="i1"/></loot><loot count="1" equip-count="0"><RulesElement name="Spare Boots" type="Magic Item" internal-id="ITEM_2" charelem="i2"/></loot></LootTally></CharacterSheet></D20Character>`;
+    const saved = savedCharacterRules(xml);
+    expect(saved.stats).toEqual([["Initiative Misc"], ["Dexterity", "dex"]]);
+    expect(saved.elements).toEqual([
+      expect.objectContaining({
+        id: "FEAT_1",
+        section: "tally",
+        specifics: { "Short Description": "Quick." },
+        statAdds: [
+          {
+            stat: ["Initiative Misc"],
+            attributes: { type: "Feat", value: "2", requires: "11 level" },
+          },
+        ],
+      }),
+      expect.objectContaining({
+        id: "FEAT_2",
+        legality: "houserule",
+        specifics: {},
+        statAdds: [],
+      }),
+      expect.objectContaining({
+        id: "ITEM_1",
+        section: "loot",
+        equipped: true,
+        statAdds: [{ stat: ["Initiative Misc"], attributes: { value: "1" } }],
+      }),
+      expect.objectContaining({ id: "ITEM_2", equipped: false }),
+    ]);
   });
 
   it("recovers item choices nested only in the structurally matching loot cache", () => {
