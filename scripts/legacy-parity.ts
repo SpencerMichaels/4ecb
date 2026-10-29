@@ -66,8 +66,8 @@ export function compareCharacterParity(
   const elapsedMilliseconds = performance.now() - started;
   // Legacy's Weight stat is TallyLoot's inventory weight plus rule
   // contributions. The evaluated stat holds only the rules; the sheet adds
-  // the inventory, so compare what the sheet shows (without coins). Missing
-  // item definitions leave it unknown (null).
+  // the inventory, so compare what the sheet shows (without coins). Items the
+  // pack lacks weigh nothing, as in native LootWeight.
   const sheet = evaluated.converged
     ? buildEvaluatedSheetModel(
         imported.snapshot,

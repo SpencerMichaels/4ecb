@@ -17,16 +17,18 @@ const field = (entity: ContentEntity, name: string) =>
   entity.specifics.find((s) => s.name.toLowerCase() === name.toLowerCase())
     ?.value ?? "";
 
-/** D20Workspace.LootWeight/CharLootWeight and UpdateLoot's stock Weight input. */
-export function inventoryWeight(
-  holdings: readonly WeightedHolding[],
-): number | undefined {
+/**
+ * D20Workspace.LootWeight/CharLootWeight and UpdateLoot's stock Weight input.
+ * A holding whose definitions the content lacks weighs nothing: native
+ * LootWeight returns 0 when IsValidLoot fails (no base element), and a legacy
+ * save's houserule placeholder has no Weight field, so an unknown item never
+ * blanks the total.
+ */
+export function inventoryWeight(holdings: readonly WeightedHolding[]): number {
   let total = 0;
   for (const holding of holdings) {
     if (holding.quantity <= 0) continue;
-    const weight = inventoryItemWeight(holding);
-    if (weight === undefined) return undefined;
-    total += weight * holding.quantity;
+    total += (inventoryItemWeight(holding) ?? 0) * holding.quantity;
   }
   return Math.trunc(total);
 }

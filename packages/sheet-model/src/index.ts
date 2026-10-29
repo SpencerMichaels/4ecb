@@ -2198,8 +2198,8 @@ export function buildEvaluatedSheetModel(
     source: "authoritative-evaluation",
     encumbrance: sheetEncumbrance({
       countCoinWeight: options.countCoinWeight !== false,
-      gearWeight: (() => {
-        const weight = inventoryWeight(
+      gearWeight:
+        inventoryWeight(
           inventoryPresentations.map(({ entry, itemEntities }) => ({
             quantity: entry.quantity,
             definitions: itemEntities,
@@ -2208,11 +2208,7 @@ export function buildEvaluatedSheetModel(
             )?.[1],
             complete: entry.definitionIds.length === itemEntities.length,
           })),
-        );
-        return weight === undefined
-          ? undefined
-          : weight + Number(evaluatedStat(evaluation, "Weight") ?? 0);
-      })(),
+        ) + Number(evaluatedStat(evaluation, "Weight") ?? 0),
       strength: Number(
         evaluatedStat(evaluation, "Strength") ??
           build.baseAbilities.Strength ??

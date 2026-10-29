@@ -120,7 +120,16 @@ describe("native encumbrance projection", () => {
         },
       ]),
     ).toBe(9);
-    expect(inventoryWeight([{ quantity: 1, definitions: [] }])).toBeUndefined();
+  });
+  it("counts holdings the content cannot resolve as weightless, like native LootWeight", () => {
+    const staff = definition("Weapon", "Staff", { Weight: "4 lb" });
+    expect(
+      inventoryWeight([
+        { quantity: 1, definitions: [staff] },
+        { quantity: 1, definitions: [] },
+        { quantity: 2, definitions: [staff], complete: false },
+      ]),
+    ).toBe(4);
   });
   it("includes only carried coin weight with the native astral-diamond ratio", () => {
     expect(
