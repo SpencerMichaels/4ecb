@@ -2028,6 +2028,11 @@ print overflow remains a visible acceptance blocker rather than a resolved case.
 Invalid saved preferences fall back to 8 pt. The preference is presentation-only
 and does not modify character data or rules calculations.
 
+Amended 2026-10-29 (owner): the floor is 6 pt (`MIN_PRINT_CARD_TEXT_SIZE`),
+and the preference range is 6–10 pt. Section spacing still condenses at 6.5 pt
+and below, so a card that fit at 6.5 pt lays out exactly as before; only cards
+that overflowed at 6.5 pt now try 6 pt.
+
 ### D076 — Additional effects retain situational rules and calculation provenance
 
 Status: accepted. Date: 2026-10-14.

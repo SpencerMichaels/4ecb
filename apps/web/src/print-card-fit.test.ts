@@ -22,10 +22,11 @@ describe("preferred printed card text size", () => {
     expect(preferredPrintCardTextSize("9.5")).toBe(9.5);
     expect(preferredPrintCardTextSize(8.2)).toBe(8);
   });
-  it("fits gradually without going below the readable 6.5 pt minimum", () => {
-    expect(printCardFontSizes(8)).toEqual([8, 7.5, 7, 6.5]);
-    expect(printCardFontSizes(6)).toEqual([6.5]);
-    expect(preferredPrintCardTextSize(6)).toBe(6.5);
+  it("fits gradually without going below the readable 6 pt minimum", () => {
+    expect(printCardFontSizes(8)).toEqual([8, 7.5, 7, 6.5, 6]);
+    expect(printCardFontSizes(6)).toEqual([6]);
+    expect(preferredPrintCardTextSize(6)).toBe(6);
+    expect(preferredPrintCardTextSize(5.5)).toBe(8);
     expect(printCardFontSizes(10)[0]).toBe(10);
   });
 });

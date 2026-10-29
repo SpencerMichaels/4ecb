@@ -503,8 +503,8 @@ try {
     );
     assert(layout.tableFits, `${variant.name} overflows the multiattack table`);
     assert(
-      layout.minimumBodyFont >= (6.5 * 96) / 72 - 0.01,
-      `${variant.name} shrinks card bodies below 6.5 pt`,
+      layout.minimumBodyFont >= (6 * 96) / 72 - 0.01,
+      `${variant.name} shrinks card bodies below 6 pt`,
     );
     assert(
       Math.abs(parseFloat(layout.shortItemFont) - (8 * 96) / 72) < 0.01,
@@ -809,8 +809,8 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         `Firefox ${variant.name} overflows the multiattack table`,
       );
       assert(
-        layout.minimumBodyFont >= (6.5 * 96) / 72 - 0.01,
-        `Firefox ${variant.name} shrinks card bodies below 6.5 pt`,
+        layout.minimumBodyFont >= (6 * 96) / 72 - 0.01,
+        `Firefox ${variant.name} shrinks card bodies below 6 pt`,
       );
       assert(
         Math.abs(parseFloat(layout.shortItemFont) - (8 * 96) / 72) < 0.01,

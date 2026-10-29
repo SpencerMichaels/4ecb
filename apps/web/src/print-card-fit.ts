@@ -1,5 +1,5 @@
 export const DEFAULT_PRINT_CARD_TEXT_SIZE = 8;
-export const MIN_PRINT_CARD_TEXT_SIZE = 6.5;
+export const MIN_PRINT_CARD_TEXT_SIZE = 6;
 export const MAX_PRINT_CARD_TEXT_SIZE = 10;
 
 /** Only the first field on a subsequent flex row loses its separator. */
