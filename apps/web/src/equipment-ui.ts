@@ -16,6 +16,7 @@ import {
   legacyIsAugment,
   matchesCategory,
   parseCategoryExpression,
+  itemChoiceSlots,
   RulesIndex,
   type ItemChoiceSlot,
 } from "@4ecb/rules-engine";
@@ -45,7 +46,7 @@ import {
   type LoadoutSlotContext,
 } from "@4ecb/sheet-model";
 
-import { contentSpecificValue, parentheticalName } from "./builder-ui";
+import { contentSpecificValue, itemChoiceLabel } from "./builder-ui";
 import {
   isLegacyEnchantment,
   isValidLoot,
@@ -944,18 +945,53 @@ export interface ResolvedItemChoice {
 
 /** The item-owned choices resolved on `entry`'s last element (e.g. the Fire
  * damage type chosen for an Armor of Resistance), each with the chosen
- * entity looked up by definition ID when available. */
+ * entity looked up by definition ID when available. Saved loot children
+ * also hold the item's grants (a pact blade's "WearingPactBlade" Category),
+ * so only children of a type one of the item's `select` rules offers count;
+ * an item whose definition is missing keeps every child but Categories,
+ * which are internal records and never a player's choice. */
 export function resolvedItemChoices(
   entry: BuildInventoryEntry,
   byId: ReadonlyMap<string, ContentEntity>,
 ): readonly ResolvedItemChoice[] {
-  return (entry.elements.at(-1)?.children ?? []).flatMap((child) => {
+  const item = entry.elements.at(-1);
+  const itemEntity =
+    item?.definitionId === undefined
+      ? undefined
+      : byId.get(item.definitionId.toLocaleLowerCase());
+  const choiceTypes =
+    itemEntity === undefined
+      ? undefined
+      : new Set(
+          itemChoiceSlots(itemEntity).map(({ type }) =>
+            type.toLocaleLowerCase(),
+          ),
+        );
+  const granted = new Set(
+    (itemEntity?.rules ?? []).flatMap(({ name, attributes }) => {
+      const target = attributes.find((attribute) => attribute.name === "name");
+      return name === "grant" && target !== undefined
+        ? [target.value.toLocaleLowerCase()]
+        : [];
+    }),
+  );
+  return (item?.children ?? []).flatMap((child) => {
     if (child.unresolved) return [];
     const definitionId = child.identity.definitionId;
     const entity =
       definitionId === undefined
         ? undefined
         : byId.get(definitionId.toLocaleLowerCase());
+    const type = (entity?.type ?? child.identity.type).toLocaleLowerCase();
+    if (
+      choiceTypes === undefined ? type === "category" : !choiceTypes.has(type)
+    )
+      return [];
+    if (
+      granted.has(definitionId?.toLocaleLowerCase() ?? "") ||
+      granted.has(child.identity.name.toLocaleLowerCase())
+    )
+      return [];
     const name = entity?.name ?? child.identity.name;
     return name.length === 0 ? [] : [{ name, entity }];
   });
@@ -983,8 +1019,8 @@ export function inventoryDisplayName(
   // An item-owned choice (e.g. an Armor of Resistance damage type) is fixed
   // for the life of the item once made; show it as a parenthesized suffix
   // rather than a separate editor, matching "Name +X (Choice)".
-  const resolvedChoices = resolvedItemChoices(entry, byId).map(
-    ({ name }) => parentheticalName(name)?.variant ?? name,
+  const resolvedChoices = resolvedItemChoices(entry, byId).map(({ name }) =>
+    itemChoiceLabel(name),
   );
   return resolvedChoices.length === 0
     ? base

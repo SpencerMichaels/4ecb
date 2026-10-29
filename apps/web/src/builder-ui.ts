@@ -1432,6 +1432,32 @@ export function parentheticalName(
     : { base: name.slice(0, open), variant: name.slice(open + 2, -1) };
 }
 
+/**
+ * The label an item-owned choice shows beside its item: the choice record's
+ * last parenthetical, which names what was chosen. Choice records are named
+ * "<item name> (<choice>)", and the item name may carry its own tier
+ * ("Harper Pin (heroic tier) (Lliira's grace)" → "Lliira's grace",
+ * "Armor of Resistance +2 (Fire)" → "Fire"); a name without one is its own
+ * label.
+ */
+export function itemChoiceLabel(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed.endsWith(")")) return trimmed;
+  let depth = 0;
+  for (let index = trimmed.length - 1; index >= 0; index -= 1) {
+    const character = trimmed[index];
+    if (character === ")") depth += 1;
+    else if (character === "(") {
+      depth -= 1;
+      if (depth === 0) {
+        const label = trimmed.slice(index + 1, -1).trim();
+        return index === 0 || label === "" ? trimmed : label;
+      }
+    }
+  }
+  return trimmed;
+}
+
 export function groupParameterizedCandidates(
   candidates: readonly CandidateDecision[],
   nameFor: (definitionId: string) => string,

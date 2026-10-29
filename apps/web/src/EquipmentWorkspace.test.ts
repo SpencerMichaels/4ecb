@@ -492,6 +492,19 @@ describe("equipment item details", () => {
       "Magic Item",
       "Public source",
       { "Magic Item Type": "Armor", Level: "1" },
+      [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Power" },
+            { name: "number", value: "1" },
+            { name: "Category", value: "daily,fire,5" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
     );
     const power = entity(
       "FIREHEART",
@@ -556,6 +569,19 @@ describe("equipment item details", () => {
       "Magic Item",
       "Public source",
       { "Magic Item Type": "Armor", Level: "1" },
+      [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Power" },
+            { name: "number", value: "1" },
+            { name: "Category", value: "daily,fire,5" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
     );
     const power = entity(
       "FIREHEART",

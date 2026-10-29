@@ -688,11 +688,22 @@ describe("equipment catalog presentation", () => {
 
   it("appends a resolved item-owned choice in parentheses, after the +N bonus", () => {
     const base = entity("BANDED", "Banded Mail", "Armor");
-    const enchantment = entity(
-      "RESISTANCE",
-      "Armor of Resistance +2",
-      "Magic Item",
-    );
+    const enchantment: ContentEntity = {
+      ...entity("RESISTANCE", "Armor of Resistance +2", "Magic Item"),
+      rules: [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Class Feature" },
+            { name: "number", value: "1" },
+            { name: "Category", value: "Armor of Resistance +2" },
+          ],
+          text: "Choose Resistance Type ",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+    };
     const fire = entity(
       "FIRE",
       "Armor of Resistance +2 (Fire)",
@@ -743,6 +754,160 @@ describe("equipment catalog presentation", () => {
     expect(inventoryDisplayName(unresolvedEntry, byId)).toBe(
       "Banded Mail of Resistance +2",
     );
+  });
+
+  it("names each item choice once, after a tiered item's own name", () => {
+    const harperSelect = (ordinal: number, requires?: string) => ({
+      name: "select",
+      attributes: [
+        { name: "type", value: "Class Feature" },
+        { name: "number", value: "1" },
+        { name: "Category", value: "ID_FMP_MAGIC_ITEM_10197" },
+        ...(requires === undefined
+          ? []
+          : [{ name: "requires", value: requires }]),
+      ],
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const pin: ContentEntity = {
+      ...entity(
+        "ID_FMP_MAGIC_ITEM_10197",
+        "Harper Pin (heroic tier)",
+        "Magic Item",
+      ),
+      rules: [
+        harperSelect(0),
+        harperSelect(1, "5 level"),
+        harperSelect(2, "10 level"),
+      ],
+    };
+    const lliira = entity(
+      "ID_INTERNAL_CLASS_FEATURE_HARPER_PIN_(HEROIC_TIER)_(LLIIRA'S_GRACE)",
+      "Harper Pin (heroic tier) (Lliira's grace)",
+      "Class Feature",
+    );
+    const mielikki = entity(
+      "ID_INTERNAL_CLASS_FEATURE_HARPER_PIN_(HEROIC_TIER)_(MIELIKKI'S_ENDURANCE)",
+      "Harper Pin (heroic tier) (Mielikki's endurance)",
+      "Class Feature",
+    );
+    const chosen = (choice: ContentEntity, id: string) => ({
+      id,
+      identity: {
+        definitionId: choice.id,
+        name: choice.name,
+        type: choice.type,
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    });
+    const entry: BuildInventoryEntry = {
+      id: "pin",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        {
+          definitionId: pin.id,
+          name: pin.name,
+          type: pin.type,
+          children: [
+            chosen(lliira, "a"),
+            chosen(mielikki, "b"),
+            {
+              id: "c",
+              identity: { name: "", type: "" },
+              acquiredLevel: 1,
+              legality: "rules-legal",
+              children: [],
+              unresolved: false,
+            },
+          ],
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    expect(
+      inventoryDisplayName(entry, entityIndex(pin, lliira, mielikki)),
+    ).toBe("Harper Pin (heroic tier) (Lliira's grace, Mielikki's endurance)");
+  });
+
+  it("never names an item after the internal Category its rules grant", () => {
+    const pactWeapon = entity(
+      "ID_WOG_HEXBLADE_TRAIT_WEAPON_4",
+      "Fey Pact of the White Well Weapon",
+      "Weapon",
+    );
+    const whiteWell: ContentEntity = {
+      ...entity(
+        "ID_WOG_HEXBLADE_TRAIT_WEAPON_4_ITEM",
+        "Sword of the White Well",
+        "Magic Item",
+        { "Magic Item Type": "Artifact" },
+      ),
+      rules: [
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: "WearingPactBlade" },
+            { name: "type", value: "Category" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const wearing = entity(
+      "ID_INTERNAL_WOG_WEARING_PACT_BLADE",
+      "WearingPactBlade",
+      "Category",
+    );
+    const granted = {
+      id: "legacy:grant",
+      identity: {
+        definitionId: wearing.id,
+        name: wearing.name,
+        type: wearing.type,
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
+    const entry: BuildInventoryEntry = {
+      id: "pact",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 1,
+      elements: [
+        {
+          definitionId: pactWeapon.id,
+          name: pactWeapon.name,
+          type: pactWeapon.type,
+        },
+        {
+          definitionId: whiteWell.id,
+          name: whiteWell.name,
+          type: whiteWell.type,
+          children: [granted],
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    expect(
+      inventoryDisplayName(entry, entityIndex(pactWeapon, whiteWell, wearing)),
+    ).toBe("Sword of the White Well");
+    // Without the item's definition, a Category child is still internal.
+    expect(
+      inventoryDisplayName(entry, entityIndex(pactWeapon, wearing)),
+    ).not.toContain("WearingPactBlade");
   });
 
   it("pairs armor and weapon enchantments only with compatible bases", () => {
