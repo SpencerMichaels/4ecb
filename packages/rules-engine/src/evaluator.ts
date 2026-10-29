@@ -1688,6 +1688,12 @@ function evaluateCharacterInternal(
               equivalent === selectedDefinition
                 ? undefined
                 : key(equivalent.id);
+            // An occurrence this pass already drops (its provider rule's
+            // requires failed) is not "previous": Master Trickster's
+            // `grant Ghost Sound requires="!Ghost Sound"` lapses when
+            // Arcanist Cantrips selects Ghost Sound, and native
+            // CheckPrevious → AlreadyHas then keeps the selection instead
+            // of emptying the slot too.
             const duplicate = occurrences.some((candidate) => {
               // The cheap definition match first; the ancestry walk last.
               const candidateKey = key(candidate.definitionId);
@@ -1695,6 +1701,7 @@ function evaluateCharacterInternal(
                 (candidateKey === selectedKey ||
                   candidateKey === equivalentKey) &&
                 candidate.id !== selected.id &&
+                !dropped.has(candidate.id) &&
                 candidate.acquiredLevel <= choiceLevel &&
                 !isDescendantOf(candidate, selected.id)
               );

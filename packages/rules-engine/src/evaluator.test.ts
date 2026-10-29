@@ -4267,6 +4267,96 @@ describe("character evaluator", () => {
     );
   });
 
+  it("keeps a saved selection whose self-negating grant lapses", () => {
+    // A Gnome wizard saved Ghost Sound under Master Trickster's
+    // `grant ID_FMP_POWER_1217 requires="!ID_FMP_POWER_1217"` and as one of
+    // Arcanist Cantrips' `select type="Power" number="4"` picks. The cantrip
+    // switches the grant off; the grant's copy must not also empty the slot.
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "trait",
+            definitionId: "ID_FMP_RACIAL_TRAIT_1141",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "trait-ghost-sound",
+            definitionId: "ID_FMP_POWER_1217",
+            acquiredLevel: 1,
+            parentId: "trait",
+            ruleOrdinal: 1,
+            kind: "grant",
+          },
+          {
+            id: "cantrips",
+            definitionId: "ID_FMP_CLASS_FEATURE_130",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "cantrip-ghost-sound",
+            definitionId: "ID_FMP_POWER_1217",
+            acquiredLevel: 1,
+            parentId: "cantrips",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ID_FMP_RACIAL_TRAIT_1141", "Master Trickster", "Racial Trait", {
+          rules: [
+            rule(
+              "grant",
+              {
+                name: "ID_FMP_POWER_1217",
+                type: "Power",
+                requires: "!ID_FMP_POWER_1217",
+              },
+              1,
+            ),
+          ],
+        }),
+        entity(
+          "ID_FMP_CLASS_FEATURE_130",
+          "Arcanist Cantrips",
+          "Class Feature",
+          {
+            rules: [
+              rule(
+                "select",
+                {
+                  type: "Power",
+                  number: "1",
+                  Category: "ID_FMP_CLASS_FEATURE_2870",
+                },
+                0,
+              ),
+            ],
+          },
+        ),
+        entity("ID_FMP_POWER_1217", "Ghost Sound", "Power", {
+          categories: ["ID_FMP_CLASS_FEATURE_2870"],
+        }),
+      ],
+    );
+    expect(result.converged).toBe(true);
+    expect(
+      result.occurrences
+        .filter(({ definitionId }) => definitionId === "ID_FMP_POWER_1217")
+        .map(({ id }) => id),
+    ).toEqual(["cantrip-ghost-sound"]);
+    expect(
+      result.diagnostics.filter(({ code }) => code === "choice.required"),
+    ).toEqual([]);
+  });
+
   it("converges when a drop removes what another element grants", () => {
     // Born of Shadow drops Fey Origin, which the race keeps granting.
     const result = evaluateCharacter(
