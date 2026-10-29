@@ -10,7 +10,8 @@
   "dependencies": {
     "@4ecb/content-domain": "workspace:*",
     "@4ecb/content-pack": "workspace:*",
-    "@4ecb/legacy-wotc": "workspace:*"
+    "@4ecb/legacy-wotc": "workspace:*",
+    "@4ecb/rules-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

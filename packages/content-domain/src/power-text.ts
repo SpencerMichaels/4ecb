@@ -17,6 +17,7 @@
  */
 
 import type { PowerFieldBonuses } from "./power-field-bonuses";
+import { PREREQUISITE_IR_FIELD } from "./prerequisite-ir";
 
 /** The internal field holding a record's parsed power texts. */
 export const POWER_TEXT_FIELD = "_Power Text IR";
@@ -314,6 +315,7 @@ export function namesSummonedCreature(
   return specifics.some(
     (specific) =>
       specific.name !== POWER_TEXT_FIELD &&
+      specific.name !== PREREQUISITE_IR_FIELD &&
       /\bsummoned creature\b/i.test(specific.value),
   );
 }

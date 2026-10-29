@@ -17,6 +17,7 @@ import {
   type ContentPack,
 } from "@4ecb/content-pack";
 import { D20RulesParser } from "@4ecb/legacy-wotc";
+import { withStoredPrerequisiteIr } from "@4ecb/rules-engine";
 
 const gzip = promisify(gzipCallback);
 const gunzip = promisify(gunzipCallback);
@@ -95,7 +96,11 @@ async function build(arguments_: ParsedArguments): Promise<void> {
   }
 
   const parsed = parser.close();
-  const pack = await buildContentPack(parsed, { packId, name });
+  // Prerequisites are internalized against the finished record set, once.
+  const pack = await buildContentPack(
+    { ...parsed, entities: withStoredPrerequisiteIr(parsed.entities) },
+    { packId, name },
+  );
   const compressed = await gzip(Buffer.from(encodeContentPack(pack)), {
     level: 9,
   });

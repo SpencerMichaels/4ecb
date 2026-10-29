@@ -255,6 +255,20 @@ cached by profile array identity, then owner record identity (its type steers
 the walk), then text, and is shared by every caller and character
 (`prerequisiteIrCache`); ownership is read only when the tree is evaluated.
 
+Because the tree depends only on the profile, the owner and the text,
+`content-tool build` internalizes every record's prerequisites once against
+the finished record set (`withStoredPrerequisiteIr`) and stores the tree as
+the versioned internal field `_Prerequisite IR` (content-domain
+`prerequisite-ir.ts`) with the text and an order-independent stamp of the
+set's record IDs. `internalizePrerequisite` uses the stored tree only when
+the text and the stamp of the definitions it is given match, so a profile
+with a house rule's local records, a test's synthetic set or any other set
+internalizes the text itself (then cached as above). Composing several packs
+into a profile drops the field, since a later layer may replace a record
+under the same ID; a one-layer profile keeps it. Its benefit is the first
+candidate-catalog evaluation of a session: about 450 ms of a ~1.4 s cold
+builder evaluation of a character choosing feats (3,900 candidates).
+
 ## Verified parity and performance
 
 The supplied private level-8 character matches all 72 numeric aliases shared by

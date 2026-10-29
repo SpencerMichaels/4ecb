@@ -1,4 +1,10 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  prerequisiteDefinitionSetStamp,
+  prerequisiteStampSize,
+  readStoredPrerequisiteIr,
+  storedPrerequisiteIrField,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 import {
   EXCEPTION_IDS,
@@ -1753,6 +1759,12 @@ export function internalizePrerequisite(
   const cache = prerequisiteIrCacheFor(context);
   const cached = cache?.get(prerequisite);
   if (cached !== undefined) return cached;
+  const stored =
+    cache === undefined ? undefined : storedIr(prerequisite, context);
+  if (stored !== undefined) {
+    cache?.set(prerequisite, stored);
+    return stored;
+  }
   const blocks = splitTopLevel(prerequisite, [/^\s*;\s*/]);
   const result = connective(
     "all",
@@ -1761,6 +1773,74 @@ export function internalizePrerequisite(
   );
   cache?.set(prerequisite, result);
   return result;
+}
+
+const definitionStampCache = new WeakMap<readonly ContentEntity[], string>();
+
+/**
+ * The subject's stored IR (`_Prerequisite IR`, built with the pack) for
+ * this text, when it was internalized against a set with these record IDs.
+ * Any change to internalizing must bump content-domain
+ * `PREREQUISITE_IR_VERSION`, or packs built before it keep the old trees.
+ */
+function storedIr(
+  prerequisite: string,
+  context: PrerequisiteContext,
+): PrerequisiteIr | undefined {
+  const { definitions, subject } = context;
+  if (definitions === undefined || subject === undefined) return undefined;
+  // Synthetic records may omit their fields.
+  const stored = readStoredPrerequisiteIr(
+    subject.specifics as ContentEntity["specifics"] | undefined,
+  );
+  if (
+    stored === undefined ||
+    stored.text !== prerequisite ||
+    prerequisiteStampSize(stored.definitions) !== definitions.length
+  )
+    return undefined;
+  let stamp = definitionStampCache.get(definitions);
+  if (stamp === undefined) {
+    stamp = prerequisiteDefinitionSetStamp(definitions);
+    definitionStampCache.set(definitions, stamp);
+  }
+  return stamp === stored.definitions
+    ? (stored.ir as PrerequisiteIr)
+    : undefined;
+}
+
+/**
+ * The records with each non-empty prerequisite internalized against the
+ * whole set and stored as `_Prerequisite IR` (pack build; evaluation then
+ * reads it instead of internalizing). Records without one are returned as is.
+ */
+export function withStoredPrerequisiteIr<T extends ContentEntity>(
+  entities: readonly T[],
+): T[] {
+  const definitions: readonly ContentEntity[] = entities;
+  const stamp = prerequisiteDefinitionSetStamp(definitions);
+  return entities.map((entity) => {
+    const text = entity.prerequisites;
+    if (text === undefined || text.trim().length === 0) return entity;
+    const ir = internalizePrerequisite(text, {
+      owned: [],
+      level: 1,
+      abilities: {},
+      definitions,
+      subject: entity,
+    });
+    return {
+      ...entity,
+      specifics: [
+        ...entity.specifics,
+        storedPrerequisiteIrField(entity.specifics, {
+          definitions: stamp,
+          text,
+          ir,
+        }),
+      ],
+    };
+  });
 }
 
 /** The IR cache for this context's content set and owner, if it has both. */

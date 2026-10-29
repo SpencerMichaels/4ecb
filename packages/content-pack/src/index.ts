@@ -7,6 +7,7 @@ import type {
   ParsedContentSource,
   RejectedContentRecord,
 } from "@4ecb/content-domain";
+import { withoutStoredPrerequisiteIr } from "@4ecb/content-domain";
 
 export const CONTENT_PACK_FORMAT = "4ecb-content-pack";
 export const CONTENT_PACK_VERSION = 1;
@@ -260,7 +261,13 @@ export async function composeContentPacks(
       sourceKey: packs
         .map(({ manifest }) => `${manifest.packId}:${manifest.contentDigest}`)
         .join(" > "),
-      entities: entities.map((entity) => ({ ...entity, content: [] })),
+      // A stored prerequisite IR was resolved against its own pack alone;
+      // with several layers a record may be replaced under the same ID, so
+      // the engine internalizes against the composed set instead.
+      entities: entities.map((entity) => ({
+        ...(packs.length === 1 ? entity : withoutStoredPrerequisiteIr(entity)),
+        content: [],
+      })),
       rejected: packs.flatMap((candidate) => candidate.rejected),
       rawTopLevel: [],
       diagnostics: [

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { ParsedContentSource } from "@4ecb/content-domain";
+import {
+  PREREQUISITE_IR_FIELD,
+  type ParsedContentSource,
+} from "@4ecb/content-domain";
 
 import {
   buildContentPack,
@@ -129,6 +132,44 @@ describe("content pack", () => {
         }),
       ]),
     );
+  });
+
+  it("keeps a stored prerequisite IR for one layer and drops it for several", async () => {
+    const stored = {
+      name: PREREQUISITE_IR_FIELD,
+      value: '{"version":1}',
+      extraAttributes: [],
+      ordinal: 0,
+    };
+    const baseline = await buildContentPack(
+      {
+        ...source,
+        entities: [{ ...source.entities[0]!, specifics: [stored] }],
+      },
+      { packId: "baseline", name: "Baseline" },
+    );
+    const personal = await buildContentPack(
+      {
+        ...source,
+        sourceKey: "personal.xml",
+        entities: [{ ...source.entities[0]!, id: "ID_PERSONAL" }],
+      },
+      { packId: "personal", name: "Personal" },
+    );
+    const fields = async (packs: Parameters<typeof composeContentPacks>[0]) =>
+      (
+        await composeContentPacks(packs, { packId: "profile", name: "Profile" })
+      ).pack.entities.map(({ id, specifics }) => [
+        id,
+        specifics.map(({ name }) => name),
+      ]);
+    expect(await fields([baseline])).toEqual([
+      ["ID_TEST_1", [PREREQUISITE_IR_FIELD]],
+    ]);
+    expect(await fields([baseline, personal])).toEqual([
+      ["ID_PERSONAL", []],
+      ["ID_TEST_1", []],
+    ]);
   });
 
   it("overrides an earlier layer's entity whose ID differs only in case", async () => {

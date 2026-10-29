@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  PREREQUISITE_IR_FIELD,
+  prerequisiteDefinitionSetStamp,
+  readStoredPrerequisiteIr,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
   internalizePrerequisite,
   withoutOwnedDefinitions,
+  withStoredPrerequisiteIr,
 } from "./prerequisites";
 
 const owned = [
@@ -1551,5 +1557,124 @@ describe("Dilettante power prerequisites (FindDilettante)", () => {
       withoutOwnedDefinitions(context, ["ID_FMP_RACE_HALF_ELF"])
         .dilettantePower,
     ).toBe(meleeAttack);
+  });
+});
+
+describe("stored prerequisite IR", () => {
+  const record = (
+    id: string,
+    name: string,
+    type: string,
+    prerequisites?: string,
+  ): ContentEntity =>
+    ({
+      id,
+      name,
+      type,
+      source: "Synthetic",
+      sources: ["Synthetic"],
+      attributes: [],
+      categories: [],
+      specifics: [
+        { name: "Tier", value: "Heroic", extraAttributes: [], ordinal: 0 },
+      ],
+      rules: [],
+      extensions: [],
+      description: "",
+      provenance: { sourceKey: "synthetic.xml", sourceOrdinal: 0 },
+      ...(prerequisites === undefined ? {} : { prerequisites }),
+    }) as ContentEntity;
+  const records = () => [
+    record("ID_FMP_FEAT_1", "Blood Thirst", "Feat"),
+    record("ID_FMP_FEAT_2", "Power Attack", "Feat", "Str 15"),
+    record("ID_FMP_FEAT_3", "Bloodied Fury", "Feat", "Blood Thirst"),
+  ];
+  const read = (
+    definitions: readonly ContentEntity[],
+    subject: ContentEntity,
+    text = subject.prerequisites,
+  ) =>
+    internalizePrerequisite(text, {
+      owned: [],
+      level: 1,
+      abilities: {},
+      definitions,
+      subject,
+    });
+
+  it("stores each prerequisite as internalized against the whole set", () => {
+    const stored = withStoredPrerequisiteIr(records());
+    expect(stored[0]).toEqual(records()[0]);
+    const fury = stored[2]!;
+    expect(fury.specifics.map(({ name, ordinal }) => [name, ordinal])).toEqual([
+      ["Tier", 0],
+      [PREREQUISITE_IR_FIELD, 1],
+    ]);
+    const envelope = readStoredPrerequisiteIr(fury.specifics);
+    expect(envelope).toMatchObject({
+      text: "Blood Thirst",
+      definitions: prerequisiteDefinitionSetStamp(records()),
+    });
+    const fresh = records();
+    expect(envelope?.ir).toEqual(read(fresh, fresh[2]!));
+    expect(envelope?.ir).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_FMP_FEAT_1"],
+    });
+  });
+
+  it("reads the stored IR only for the set and text it was built from", () => {
+    // A marker IR shows which path answered.
+    const marker = { kind: "never", text: "stored" };
+    const [thirst, attack, fury] = withStoredPrerequisiteIr(records()).map(
+      (entity) =>
+        entity.prerequisites === undefined
+          ? entity
+          : {
+              ...entity,
+              specifics: entity.specifics.map((specific) =>
+                specific.name === PREREQUISITE_IR_FIELD
+                  ? {
+                      ...specific,
+                      value: JSON.stringify({
+                        ...JSON.parse(specific.value),
+                        ir: marker,
+                      }),
+                    }
+                  : specific,
+              ),
+            },
+    ) as [ContentEntity, ContentEntity, ContentEntity];
+    // Same records in another order (profile composition sorts them).
+    expect(read([fury, attack, thirst], fury)).toEqual(marker);
+    // Another set: a house rule's local record joins the definitions.
+    const local = record("ID_LOCAL_1", "Blood Thirst", "Feat");
+    expect(read([thirst, attack, fury, local], fury)).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_FMP_FEAT_1", "ID_LOCAL_1"],
+    });
+    // Another text than the one stored.
+    expect(read([thirst, attack, fury], fury, "Power Attack")).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_FMP_FEAT_2"],
+    });
+    // Another version.
+    const older = {
+      ...attack,
+      specifics: attack.specifics.map((specific) =>
+        specific.name === PREREQUISITE_IR_FIELD
+          ? {
+              ...specific,
+              value: JSON.stringify({
+                ...JSON.parse(specific.value),
+                version: 0,
+              }),
+            }
+          : specific,
+      ),
+    };
+    expect(read([thirst, older, fury], older)).toMatchObject({
+      kind: "ability",
+    });
   });
 });
