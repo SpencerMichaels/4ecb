@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BuildOccurrence } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { parentheticalName } from "./builder-ui";
+import { itemChoiceLabel } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
 import { CompactChoiceButtons } from "./ChoiceEditors";
 import { Icon } from "./Icon";
@@ -39,7 +39,7 @@ export function ItemChoicePicker({
       hideLabel
       options={page.candidates.map((candidate) => ({
         id: candidate.id,
-        label: parentheticalName(candidate.name)?.variant ?? candidate.name,
+        label: itemChoiceLabel(candidate.name),
         selectable: true,
       }))}
       selectedId={selectedId}
