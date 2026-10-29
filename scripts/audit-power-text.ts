@@ -42,6 +42,7 @@ import {
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
   hitFieldStepTexts,
+  meleeRangedClauses,
   parsePowerFieldBonuses,
   readPowerTextStore,
   thrownWeaponAlternative,
@@ -642,12 +643,9 @@ function auditClause(
 }
 
 function variantClauseTexts(line: string, variant: HitVariantIr): string[] {
-  return variant.clauses.length > 1
-    ? (() => {
-        const parts = line.split(/\s+or\s+/iu);
-        return [parts[0] ?? "", parts.at(-1) ?? ""];
-      })()
-    : [line];
+  const split =
+    variant.clauses.length > 1 ? meleeRangedClauses(line) : undefined;
+  return split === undefined ? [line] : [...split];
 }
 
 function auditHit(
@@ -658,22 +656,32 @@ function auditHit(
 ): void {
   // Native LevelIncrease (`-Module-.cs` ~24555) finds "Level 25: ",
   // "Level 21: ", "Level 15: ", "Level 11: " or "Level 5: " anywhere in the
-  // hit text (stristr); the pack parse reads a "Level N:" line of any N, but
-  // only at the start of a line.
-  for (const match of text.matchAll(/(^|\n)?([^\n]?)Level\s+(\d+)\s*:/giu)) {
-    const atLineStart = match[1] !== undefined && match[2] === "";
-    const level = Number(match[3]);
-    const native = [5, 11, 15, 21, 25].includes(level);
-    if (atLineStart && native) continue;
-    report(
-      "over",
-      atLineStart ? "hit-level-line-not-native" : "hit-level-midline",
-      atLineStart
-        ? `line "Level ${level}:" (native reads only 5/11/15/21/25)`
-        : `mid-line "Level ${level}:"${native ? " (native reads it)" : ""}`,
-      { record: entity.name, id: entity.id, field: fieldName, text },
-    );
-  }
+  // hit text (stristr); the pack parse must step there (`hit-level-missed`
+  // otherwise). It also steps at a later line starting (after indentation)
+  // with another level (D105, `hit-level-line-not-native`, informational).
+  const stepLevels = new Set(field.steps.map((step) => step.from));
+  text.split("\n").forEach((line, lineIndex) => {
+    for (const match of line.matchAll(/\bLevel\s+(\d+)\s*:/giu)) {
+      const atLineStart =
+        lineIndex > 0 && line.slice(0, match.index).trim() === "";
+      const level = Number(match[1]);
+      const native = [5, 11, 15, 21, 25].includes(level);
+      if (native && !stepLevels.has(level))
+        report(
+          "over",
+          "hit-level-missed",
+          `"Level ${level}:" native reads, with no step`,
+          { record: entity.name, id: entity.id, field: fieldName, text },
+        );
+      else if (!native && atLineStart)
+        report(
+          "over",
+          "hit-level-line-not-native",
+          `line "Level ${level}:" (native reads only 5/11/15/21/25)`,
+          { record: entity.name, id: entity.id, field: fieldName, text },
+        );
+    }
+  });
   const stepTexts = hitFieldStepTexts(text);
   if (stepTexts.length !== field.steps.length) {
     report(
@@ -728,7 +736,8 @@ const NATIVE_ATTACK_FIELD =
  * native AttackLine never reads ("Opportunity Attack" in a summon's stat
  * lines), and an attack or hit slot under an empty "Level N" header field,
  * which native FindLine (`-Module-.cs` ~23393) reads for a `_ThemePower` only
- * from that level, and otherwise never (the slot reads it at every level).
+ * from that level, and otherwise never, unless the slot reads it from that
+ * level too (`fromLevel`).
  */
 function auditSlots(entity: ContentEntity, store: PowerTextStore): void {
   const example = (field: string, text: string): Example => ({
@@ -753,7 +762,7 @@ function auditSlots(entity: ContentEntity, store: PowerTextStore): void {
     if (!/^\s/u.test(specific.name)) header = undefined;
     if (header !== undefined) headers.set(specific.ordinal, header);
   }
-  for (const [ordinal, role] of store.slots ?? []) {
+  for (const [ordinal, role, , fromLevel] of store.slots ?? []) {
     if (role !== "attack" && role !== "hit") continue;
     const specific = entity.specifics.find(
       (candidate) => candidate.ordinal === ordinal,
@@ -761,7 +770,8 @@ function auditSlots(entity: ContentEntity, store: PowerTextStore): void {
     if (specific === undefined) continue;
     const name = specific.name.trim();
     const header = headers.get(ordinal);
-    if (header !== undefined)
+    // A slot that reads its header's field from that level is native's.
+    if (header !== undefined && fromLevel !== header)
       report(
         "over",
         `level-header-slot:${role}`,
@@ -872,7 +882,16 @@ async function main(): Promise<void> {
         attackTexts += 1;
         auditAttack(entity, fieldName, text, entry.attack);
       }
-      if (entry.hit !== undefined) {
+      // A "Level N" header's "As above, but …" Hit restates the main Hit
+      // (D105): no slot reads it.
+      const headerRider =
+        /^As above, but /iu.test(text) &&
+        entity.specifics.some(
+          (specific) =>
+            /^Level\s+\d+$/iu.test(specific.name.trim()) &&
+            specific.value.trim() === "",
+        );
+      if (entry.hit !== undefined && !headerRider) {
         hitTexts += 1;
         auditHit(entity, fieldName, text, entry.hit);
       }
