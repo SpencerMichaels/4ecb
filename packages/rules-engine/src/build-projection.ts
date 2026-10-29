@@ -1,5 +1,6 @@
 import {
   isRulesInertTextKey,
+  type BuildLevelFrame,
   type BuildOccurrence,
   type BuildUserRule,
   type CharacterBuild,
@@ -120,6 +121,26 @@ interface ChildAssignment {
     number,
     { readonly grant: ChildSlot; readonly select: ChildSlot }
   >;
+  /**
+   * Selections recovered for unclaimed container grants (step 5): the
+   * container grant and select slots, the one candidate whose grants are the
+   * leftover children, and the candidate grant slot each child fills.
+   */
+  readonly recovered: readonly RecoveredSelection[];
+}
+
+interface RecoveredSelection {
+  readonly grant: ChildSlot;
+  readonly select: ChildSlot;
+  readonly candidate: ContentEntity;
+  readonly children: ReadonlyMap<number, ChildSlot>;
+}
+
+/** Content lookups the slot assignment uses to adopt and recover children. */
+interface SlotLookups {
+  readonly entityById: (id: string) => ContentEntity | undefined;
+  /** Entities whose categories include `category` (ID or name). */
+  readonly inCategory: (category: string) => readonly ContentEntity[];
 }
 
 /**
@@ -135,7 +156,15 @@ interface ChildAssignment {
  * 3. any other child keeps the slot at its own position if still free and
  *    still eligible: a select slot takes only a record of its own type;
  * 4. the rest fill the first free eligible choice slot in order, never
- *    another grant's slot, and any left over stay unslotted.
+ *    another grant's slot (an empty placeholder keeps only its own
+ *    position: re-seating it would take a real record's slot);
+ * 5. when content turned fixed grants into a required selection inside a new
+ *    container grant (CBLoader's Elf Subrace, Archer Warlord Optional
+ *    Choice), and exactly one candidate of that selection grants every child
+ *    still left over, that candidate is the recovered selection and those
+ *    children become its grants (Standard Elf Racial Traits: Group Awareness
+ *    and Elven Accuracy). With no single such candidate the children stay
+ *    unslotted and the selection stays an open choice for the player.
  *
  * Native load (VerifySelect, then `D20Choice::CopyLoadedChoice`/`Sync` in
  * `-Module-.cs` ~17121/6956) is purely positional and silently drops a child
@@ -143,13 +172,15 @@ interface ChildAssignment {
  * Deva saved before its Race Ability Bonus select existed) would then lose a
  * language and leave its real language slot open; step 4 instead re-seats
  * the child in a matching slot (D091: recover rather than copy the loss).
- * Adoption needs content lookups, so callers without them skip step 2.
+ * Adoption and recovery need content lookups, so callers without them skip
+ * steps 2 and 5.
  */
 function assignChildSlots(
   occurrence: BuildOccurrence,
   entity: ContentEntity | undefined,
-  entityById?: (id: string) => ContentEntity | undefined,
+  lookups?: SlotLookups,
 ): ChildAssignment {
+  const entityById = lookups?.entityById;
   const slots = childSlots(occurrence, entity);
   const assigned: (ChildSlot | undefined)[] = occurrence.children.map(
     () => undefined,
@@ -217,8 +248,11 @@ function assignChildSlots(
   const remaining = slots.filter(
     (slot) => !claimed.has(slot) && slot.grantTarget === undefined,
   );
+  const placeholder = (child: BuildOccurrence) =>
+    child.identity.definitionId === undefined &&
+    child.identity.name.trim() === "";
   occurrence.children.forEach((child, index) => {
-    if (!free(index)) return;
+    if (!free(index) || placeholder(child)) return;
     const slot = remaining.find(
       (candidate) => !claimed.has(candidate) && eligible(child, candidate),
     );
@@ -226,7 +260,78 @@ function assignChildSlots(
     assigned[index] = slot;
     claimed.add(slot);
   });
-  return { slots: assigned, adopted };
+  const recovered: RecoveredSelection[] = [];
+  if (lookups !== undefined)
+    for (const grant of slots) {
+      if (grant.grantTarget === undefined || claimed.has(grant)) continue;
+      const container = lookups.entityById(grant.grantTarget);
+      if (container === undefined) continue;
+      const select = childSlots(
+        { ...occurrence, children: [] },
+        container,
+      ).find((slot) => slot.kind === "choice");
+      const selectType = select?.type;
+      if (select === undefined || selectType === undefined) continue;
+      const seen = new Set<string>();
+      const candidates = [container.id, container.name]
+        .flatMap((category) => lookups.inCategory(category))
+        .filter((candidate) => {
+          const id = lower(candidate.id);
+          if (seen.has(id) || lower(candidate.type) !== lower(selectType))
+            return false;
+          seen.add(id);
+          return true;
+        })
+        .map((candidate) => ({
+          candidate,
+          grants: childSlots({ ...occurrence, children: [] }, candidate).filter(
+            (slot) => slot.grantTarget !== undefined,
+          ),
+        }));
+      // Only leftovers of a type some candidate grants are in question: an
+      // older save's stray Race Ability Bonus says nothing about a subrace.
+      const grantedTypes = new Set(
+        candidates.flatMap(({ grants }) =>
+          grants.flatMap((slot) => {
+            const target = lookups.entityById(slot.grantTarget ?? "");
+            return target === undefined ? [] : [lower(target.type)];
+          }),
+        ),
+      );
+      const leftover = occurrence.children.flatMap((child, index) =>
+        free(index) &&
+        child.identity.definitionId !== undefined &&
+        grantedTypes.has(lower(child.identity.type)) &&
+        !recovered.some((value) => value.children.has(index))
+          ? [index]
+          : [],
+      );
+      if (leftover.length === 0) continue;
+      const fits = candidates.flatMap(
+        ({ candidate, grants }): RecoveredSelection[] => {
+          const children = new Map<number, ChildSlot>();
+          const used = new Set<ChildSlot>();
+          for (const childIndex of leftover) {
+            const child = occurrence.children[childIndex];
+            const candidateGrant = grants.find(
+              (slot) =>
+                !used.has(slot) &&
+                child !== undefined &&
+                matches(child, slot.grantTarget ?? ""),
+            );
+            if (candidateGrant === undefined) return [];
+            used.add(candidateGrant);
+            children.set(childIndex, candidateGrant);
+          }
+          return [{ grant, select, candidate, children }];
+        },
+      );
+      const [fit] = fits;
+      if (fit === undefined || fits.length !== 1) continue;
+      recovered.push(fit);
+      claimed.add(grant);
+    }
+  return { slots: assigned, adopted, recovered };
 }
 
 export function findBuildChildIndex(
@@ -746,6 +851,40 @@ function sharedEntityIndex(
   return created;
 }
 
+const categoryIndexCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlyMap<string, readonly ContentEntity[]>
+>();
+
+/** Shared entities by lower-cased category value. */
+function categoryIndex(
+  entities: readonly ContentEntity[],
+): ReadonlyMap<string, readonly ContentEntity[]> {
+  const cached = categoryIndexCache.get(entities);
+  if (cached !== undefined) return cached;
+  const created = new Map<string, ContentEntity[]>();
+  for (const entity of entities)
+    for (const category of entity.categories) {
+      const categoryKey = category.trim().toLocaleLowerCase();
+      const list = created.get(categoryKey);
+      if (list === undefined) created.set(categoryKey, [entity]);
+      else list.push(entity);
+    }
+  categoryIndexCache.set(entities, created);
+  return created;
+}
+
+/**
+ * The display name of a level's UserEdit provider. Native saves it as an
+ * unnamed `<RulesElement name="" type="">`, so an unnamed one is named after
+ * its level rather than shown as its synthetic ID or an empty string.
+ */
+export function userEditName(frame: BuildLevelFrame): string | undefined {
+  if (frame.userEdit === undefined) return undefined;
+  const name = frame.userEdit.root.identity.name.trim();
+  return name === "" ? `Level ${frame.level} manual edits` : name;
+}
+
 export function projectBuildForEvaluation(
   build: CharacterBuild,
   entities: readonly ContentEntity[],
@@ -777,7 +916,7 @@ export function projectBuildForEvaluation(
       return [
         {
           id,
-          name: frame.userEdit.root.identity.name,
+          name: userEditName(frame) ?? "",
           type: frame.userEdit.root.identity.type,
           // Character-local rules are intrinsically available even when the
           // campaign configures a restricted source-entitlement list.
@@ -798,6 +937,7 @@ export function projectBuildForEvaluation(
     },
   );
   const sharedById = sharedEntityIndex(entities);
+  const categories = categoryIndex(entities);
   const localById = new Map(
     localEntities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
   );
@@ -843,8 +983,46 @@ export function projectBuildForEvaluation(
       occurrence.identity.definitionId === undefined
         ? undefined
         : entityById(occurrence.identity.definitionId);
-    const { slots, adopted } = assignChildSlots(occurrence, entity, entityById);
+    const { slots, adopted, recovered } = assignChildSlots(occurrence, entity, {
+      entityById,
+      inCategory: (category) =>
+        categories.get(category.trim().toLocaleLowerCase()) ?? [],
+    });
+    // A recovered selection exists only in the projection: the evaluator
+    // materializes the container grant under `<id>:grant:<ordinal>`, and the
+    // builder treats the unsaved selection like a rule default (stored only
+    // when the player changes it).
+    const recoveredParent = new Map<
+      number,
+      { readonly id: string; readonly slot: ChildSlot; readonly level: number }
+    >();
+    for (const recovery of recovered) {
+      const containerId = `${occurrence.id}:grant:${recovery.grant.ruleOrdinal}`;
+      const id = `${containerId}:recovered:${recovery.select.ruleOrdinal}:${recovery.select.choiceIndex}`;
+      const level = Math.max(
+        effectiveAcquiredLevel,
+        recovery.grant.minimumLevel,
+        recovery.select.minimumLevel,
+      );
+      occurrences.push({
+        id,
+        definitionId: recovery.candidate.id,
+        acquiredLevel: level,
+        kind: "choice",
+        parentId: containerId,
+        ruleOrdinal: recovery.select.ruleOrdinal,
+        choiceIndex: recovery.select.choiceIndex,
+        legality: "rules-legal",
+      });
+      for (const [index, slot] of recovery.children)
+        recoveredParent.set(index, { id, slot, level });
+    }
     occurrence.children.forEach((child, index) => {
+      const recovery = recoveredParent.get(index);
+      if (recovery !== undefined) {
+        visit(child, "grant", recovery.id, recovery.slot, recovery.level);
+        return;
+      }
       const adoption = adopted.get(index);
       if (adoption !== undefined) {
         // The evaluator materializes the container grant under this ID.

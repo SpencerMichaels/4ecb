@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v94-2026-10-28-attack-penalties-added-dice";
+  "evaluated-character-v95-2026-10-28-new-saves-recovery";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1688,6 +1688,12 @@ function evaluateCharacterInternal(
               equivalent === selectedDefinition
                 ? undefined
                 : key(equivalent.id);
+            // An occurrence this pass already drops (its provider rule's
+            // requires failed) is not "previous": Master Trickster's
+            // `grant Ghost Sound requires="!Ghost Sound"` lapses when
+            // Arcanist Cantrips selects Ghost Sound, and native
+            // CheckPrevious → AlreadyHas then keeps the selection instead
+            // of emptying the slot too.
             const duplicate = occurrences.some((candidate) => {
               // The cheap definition match first; the ancestry walk last.
               const candidateKey = key(candidate.definitionId);
@@ -1695,6 +1701,7 @@ function evaluateCharacterInternal(
                 (candidateKey === selectedKey ||
                   candidateKey === equivalentKey) &&
                 candidate.id !== selected.id &&
+                !dropped.has(candidate.id) &&
                 candidate.acquiredLevel <= choiceLevel &&
                 !isDescendantOf(candidate, selected.id)
               );
@@ -2200,10 +2207,27 @@ function evaluateCharacterInternal(
           group.alternatives.map((term) => term.value),
         );
       categoryTermsCache.set(rule.category, terms);
-      match ||= terms.some((term) => isUniversalSkill(candidate, term));
-      match ||=
-        universalSkillIds.has(key(candidate.id)) &&
-        terms.some((term) => key(index.find(term)?.type ?? "") === "class");
+      // Native CategoryMatch.Matches (Module.decoded.cs ~31125-31240) checks
+      // IsUniversalSkill against each of the character's classes for
+      // $$CLASS/$$NOT_CLASS (so a universal skill is a class skill, and never
+      // "not a class skill"), accepts it outright for $$HYBRID, and against
+      // each literal Class term.
+      if (isUniversalSkill(candidate, universalSkillIds)) {
+        const prefix = category.dynamicPrefix?.toLocaleUpperCase();
+        if (prefix === "$$NOT_CLASS") match = false;
+        else if (prefix === "$$HYBRID") match = true;
+        else {
+          if (prefix === "$$CLASS")
+            match ||= matchesCategory(
+              candidate,
+              { groups: category.groups },
+              candidateContext,
+            );
+          match ||= terms.some(
+            (term) => key(index.find(term)?.type ?? "") === "class",
+          );
+        }
+      }
       match ||= terms.some((term) =>
         diverseStudyException(candidate, term, ownedIds),
       );

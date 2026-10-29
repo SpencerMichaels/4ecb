@@ -4,10 +4,12 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type {
-  EngineDiagnostic,
-  EvaluatedCharacter,
-  EvaluatedChoice,
+import {
+  itemChoiceSlots,
+  userEditName,
+  type EngineDiagnostic,
+  type EvaluatedCharacter,
+  type EvaluatedChoice,
 } from "@4ecb/rules-engine";
 import {
   candidateReason,
@@ -25,6 +27,7 @@ import {
   missingInventoryElements,
   type LoadoutSlotContext,
 } from "./equipment-ui";
+import { itemChoiceHeading } from "./item-choice-pages";
 
 export type BuilderIssueKind =
   "unresolved" | "warning" | "error" | "house-rule" | "update";
@@ -104,7 +107,10 @@ export function savedOccurrenceNames(
   };
   for (const frame of build.levels) {
     visit(frame.root);
-    if (frame.userEdit !== undefined) visit(frame.userEdit.root);
+    if (frame.userEdit !== undefined) {
+      visit(frame.userEdit.root);
+      names.set(frame.userEdit.root.id, userEditName(frame) ?? "");
+    }
   }
   build.grabbag.forEach(visit);
   for (const alternate of build.alternates) visit(alternate.choice);
@@ -152,6 +158,61 @@ function choiceLabel(
   return selectedName === undefined
     ? `Level ${choice.level} ${kind}`
     : `${selectedName} — level ${choice.level} ${kind}`;
+}
+
+/**
+ * The holding whose own rules make `choice` (directly, or through a chosen
+ * candidate's further choice): its entry, display name and the choice's
+ * heading as the Shop's item-choice pages word it.
+ */
+function inventoryChoiceHolding(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  build: CharacterBuild | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+):
+  | { readonly entryId: string; readonly name: string; readonly choice: string }
+  | undefined {
+  if (build === undefined) return undefined;
+  const byOccurrenceId = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  let provider = byOccurrenceId.get(choice.providerOccurrenceId);
+  for (
+    let depth = 0;
+    provider !== undefined && provider.kind !== "inventory" && depth < 16;
+    depth += 1
+  )
+    provider =
+      provider.parentId === undefined
+        ? undefined
+        : byOccurrenceId.get(provider.parentId);
+  if (provider === undefined) return undefined;
+  const providerId = provider.id;
+  const entry = build.inventory.find((candidate) =>
+    providerId.startsWith(`${candidate.id}:definition:`),
+  );
+  if (entry === undefined) return undefined;
+  const slotOwner = byId.get(
+    (
+      byOccurrenceId.get(choice.providerOccurrenceId)?.definitionId ?? ""
+    ).toLocaleLowerCase(),
+  );
+  const slot =
+    slotOwner === undefined
+      ? undefined
+      : itemChoiceSlots(slotOwner).find(
+          ({ ruleOrdinal, choiceIndex }) =>
+            ruleOrdinal === choice.ruleOrdinal && choiceIndex === choice.index,
+        );
+  return {
+    entryId: entry.id,
+    name: inventoryDisplayName(entry, byId),
+    choice:
+      slot === undefined
+        ? (choice.name ?? choice.type)
+        : itemChoiceHeading(slot),
+  };
 }
 
 function choiceForDiagnostic(
@@ -411,23 +472,39 @@ export function builderIssueGroups({
           savedNames.get(occurrence.id),
         );
 
-  const unresolved: BuilderIssue[] = evaluation.choices.flatMap((choice) =>
-    choice.level <= effectiveLevel &&
-    !choice.optional &&
-    !isBuildPresetChoice(choice) &&
-    choice.selectedOccurrenceId === undefined
-      ? [
-          {
-            key: `choice:${choice.id}`,
-            kind: "unresolved" as const,
-            title: label(choice),
-            detail: "This required choice has not been selected.",
-            effect:
-              "The character is incomplete, and no benefits from this selection apply until it is resolved.",
-            target: { kind: "choice" as const, choiceId: choice.id },
-          },
-        ]
-      : [],
+  const unresolved: BuilderIssue[] = evaluation.choices.flatMap(
+    (choice): BuilderIssue[] => {
+      if (
+        choice.level > effectiveLevel ||
+        choice.optional ||
+        isBuildPresetChoice(choice) ||
+        choice.selectedOccurrenceId !== undefined
+      )
+        return [];
+      // An item's own choice (inventory is current state, D097) is made from
+      // the holding's right-click menu on the Equipment tab.
+      const holding = inventoryChoiceHolding(choice, evaluation, build, byId);
+      return [
+        {
+          key: `choice:${choice.id}`,
+          kind: "unresolved",
+          title:
+            holding === undefined
+              ? label(choice)
+              : `${holding.name}: ${holding.choice.replace(/^choose\s+/i, "")}`,
+          detail:
+            holding === undefined
+              ? "This required choice has not been selected."
+              : "This item's required choice has not been made. Right-click the item on the Equipment tab to make it.",
+          effect:
+            "The character is incomplete, and no benefits from this selection apply until it is resolved.",
+          target:
+            holding === undefined
+              ? { kind: "choice", choiceId: choice.id }
+              : { kind: "inventory", entryId: holding.entryId },
+        },
+      ];
+    },
   );
   if (effectiveLevel >= 1 && abilityScoresIncomplete)
     unresolved.push({

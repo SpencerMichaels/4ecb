@@ -43,13 +43,31 @@ function entity(
 
 describe("named compatibility exceptions", () => {
   const power = entity("POWER", "Power", "Power", [["Class", "Wizard"]]);
-  it("covers universal class skills", () =>
+  it("covers universal class skills", () => {
     expect(
       isUniversalSkill(
-        entity("SKILL", "Skill", "Skill", [["UniversalClassSkill", "true"]]),
-        "Class",
+        entity("SKILL", "Stealth", "Skill Training", [
+          ["UniversalClassSkill", "true"],
+        ]),
+        new Set(),
       ),
-    ).toBe(true));
+    ).toBe(true);
+    const stealth = entity(
+      "ID_FMP_SKILL_TRAINING_16",
+      "Stealth",
+      "Skill Training",
+    );
+    expect(isUniversalSkill(stealth, new Set())).toBe(false);
+    expect(
+      isUniversalSkill(stealth, new Set(["id_fmp_skill_training_16"])),
+    ).toBe(true);
+    expect(
+      isUniversalSkill(
+        entity("SKILL", "Stealth", "Skill", [["UniversalClassSkill", "true"]]),
+        new Set(),
+      ),
+    ).toBe(false);
+  });
   it("covers Diverse Study", () =>
     expect(
       diverseStudyException(

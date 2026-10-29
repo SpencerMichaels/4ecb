@@ -5,15 +5,9 @@ import type {
   BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import {
-  EXCEPTION_IDS,
-  itemChoiceSlots,
-  type ItemChoiceSlot,
-} from "@4ecb/rules-engine";
+import { EXCEPTION_IDS, itemChoiceSlots } from "@4ecb/rules-engine";
 
-import { contentSpecificValue, parentheticalName } from "./builder-ui";
-import { CandidateDetailCard } from "./CandidateDetail";
-import { CompactChoiceButtons } from "./ChoiceEditors";
+import { contentSpecificValue } from "./builder-ui";
 import { itemKindLabel } from "./EntityCard";
 import {
   compatibleBaseItems,
@@ -24,7 +18,6 @@ import {
   inventoryDisplayName,
   inventoryEntryForEntity,
   itemCanBeBought,
-  itemChoiceCandidates,
   itemProficiencyStatus,
   practiceKind,
   recommendedMagicItemVariant,
@@ -41,7 +34,15 @@ import {
   type ShopBrowseId,
 } from "./equipment-ui";
 import { Icon } from "./Icon";
+import {
+  isComplexItemChoice,
+  itemChoiceHeading,
+  itemChoicePages,
+  itemChoicePathKey,
+  resolveItemChoiceOccurrences,
+} from "./item-choice-pages";
 import { canonicalItemIcon } from "./item-icons";
+import { ItemChoicePicker } from "./ItemChoicePicker";
 
 type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
@@ -222,50 +223,6 @@ export function shopKnownFilterMatches(
   return !learning || !knownOnly || isKnown;
 }
 
-/** A dot-joined `slotPath` — the map key `itemChoiceSelections` uses. */
-function itemChoicePathKey(path: readonly number[]): string {
-  return path.join(".");
-}
-
-export interface ItemChoicePageInfo {
-  readonly path: readonly number[];
-  readonly slot: ItemChoiceSlot;
-  readonly candidates: readonly ContentEntity[];
-}
-
-/**
- * Every item-owned choice page `entity` currently needs, depth-first: each
- * of the entity's own choice slots, and — for a slot that's already been
- * answered — any further choices the chosen candidate itself requires (for
- * example a granted power that itself asks "which ability governs this"),
- * recursively. A candidate's own choices only become visible once it's been
- * picked, so this list grows as `selections` fills in; nothing needs to
- * guess ahead at what a not-yet-chosen candidate might require.
- */
-export function itemChoicePages(
-  entity: ContentEntity,
-  entities: readonly ContentEntity[],
-  characterLevel: number,
-  selections: ReadonlyMap<string, string>,
-  pathPrefix: readonly number[] = [],
-): readonly ItemChoicePageInfo[] {
-  return itemChoiceSlots(entity).flatMap((slot, index) => {
-    const path = [...pathPrefix, index];
-    const candidates = itemChoiceCandidates(slot, entities, characterLevel);
-    const chosenId = selections.get(itemChoicePathKey(path));
-    const chosen =
-      chosenId === undefined
-        ? undefined
-        : candidates.find((candidate) => candidate.id === chosenId);
-    return [
-      { path, slot, candidates },
-      ...(chosen === undefined
-        ? []
-        : itemChoicePages(chosen, entities, characterLevel, selections, path)),
-    ];
-  });
-}
-
 /**
  * The acquisition dialog's page sequence: each item-owned choice page (see
  * `itemChoicePages`) comes before a compatible-base-item choice — so the
@@ -287,67 +244,6 @@ export function acquisitionDialogPages(
       ? [{ kind: "physical" } as const satisfies AcquisitionDialogPage]
       : []),
   ];
-}
-
-/**
- * Builds the resolved `BuildOccurrence` tree for `entity`'s own choices —
- * mirroring `itemChoicePages`, but producing the actual occurrences to
- * store (each with its own resolved sub-choices nested beneath it, not a
- * flat list), so a candidate's further choice is stored right where the
- * evaluator already looks for it: as that candidate's own child.
- */
-export function resolveItemChoiceOccurrences(
-  entity: ContentEntity,
-  entities: readonly ContentEntity[],
-  characterLevel: number,
-  selections: ReadonlyMap<string, string>,
-  pathPrefix: readonly number[] = [],
-): readonly BuildOccurrence[] {
-  return itemChoiceSlots(entity).flatMap((slot, index) => {
-    const path = [...pathPrefix, index];
-    const chosenId = selections.get(itemChoicePathKey(path));
-    const chosen =
-      chosenId === undefined
-        ? undefined
-        : itemChoiceCandidates(slot, entities, characterLevel).find(
-            (candidate) => candidate.id === chosenId,
-          );
-    if (chosen === undefined) return [];
-    return [
-      {
-        id: `web:${crypto.randomUUID()}`,
-        identity: {
-          definitionId: chosen.id,
-          name: chosen.name,
-          type: chosen.type,
-        },
-        acquiredLevel: characterLevel,
-        legality: "rules-legal" as const,
-        children: resolveItemChoiceOccurrences(
-          chosen,
-          entities,
-          characterLevel,
-          selections,
-          path,
-        ),
-        unresolved: false,
-      },
-    ];
-  });
-}
-
-/**
- * Whether an item-owned choice's candidates are complex enough (e.g. a
- * Power, with its own attack/effect text worth previewing) to warrant the
- * two-column picker + detail-card layout, rather than the plain compact
- * button list used for a simple choice like a resistance type or language.
- */
-export function isComplexItemChoice(
-  candidates: readonly Pick<ContentEntity, "type">[],
-): boolean {
-  return candidates.some(
-    (candidate) => candidate.type.trim().toLocaleLowerCase() === "power",
-  );
 }
 
 interface ShopWorkspaceProps {
@@ -915,11 +811,10 @@ export function ShopWorkspace({
           ),
           byId,
         );
-  const itemChoiceHeading =
+  const currentItemChoiceHeading =
     currentItemChoicePage === undefined
       ? undefined
-      : (currentItemChoicePage.slot.label ??
-        `Choose ${currentItemChoicePage.slot.type.toLocaleLowerCase()}`);
+      : itemChoiceHeading(currentItemChoicePage.slot);
 
   const renderRow = (
     entity: ContentEntity,
@@ -1459,7 +1354,7 @@ export function ShopWorkspace({
               <div>
                 <h2>
                   {currentDialogPage?.kind === "item-choice"
-                    ? (itemChoiceHeading ?? "Choose its properties")
+                    ? (currentItemChoiceHeading ?? "Choose its properties")
                     : `Choose base ${itemKindLabel(acquisition.entity).toLocaleLowerCase()} type`}
                 </h2>
               </div>
@@ -1605,63 +1500,13 @@ export function ShopWorkspace({
                 </>
               )}
               {currentDialogPage?.kind !== "item-choice" ||
-              currentItemChoicePage === undefined
-                ? null
-                : (() => {
-                    const slot = currentItemChoicePage.slot;
-                    const pathKey = itemChoicePathKey(
-                      currentDialogPage.slotPath,
-                    );
-                    const picker = (
-                      <CompactChoiceButtons
-                        label={
-                          slot.label ??
-                          `Choose ${slot.type.toLocaleLowerCase()}`
-                        }
-                        hideLabel
-                        options={currentItemChoiceCandidates.map(
-                          (candidate) => ({
-                            id: candidate.id,
-                            label:
-                              parentheticalName(candidate.name)?.variant ??
-                              candidate.name,
-                            selectable: true,
-                          }),
-                        )}
-                        selectedId={itemChoiceSelections.get(pathKey) ?? ""}
-                        disabled={false}
-                        onChoose={(candidateId) =>
-                          setItemChoiceSelections((current) => {
-                            const next = new Map(current);
-                            // Changing this choice invalidates any further
-                            // choices made for the candidate it previously
-                            // held (for example a granted power's own
-                            // "which ability governs this" sub-choice).
-                            for (const key of next.keys())
-                              if (key.startsWith(`${pathKey}.`))
-                                next.delete(key);
-                            next.set(pathKey, candidateId);
-                            return next;
-                          })
-                        }
-                      />
-                    );
-                    if (!currentItemChoiceIsComplex) return picker;
-                    const selectedCandidateId =
-                      itemChoiceSelections.get(pathKey) ?? "";
-                    const previewedCandidate =
-                      currentItemChoiceCandidates.find(
-                        (candidate) => candidate.id === selectedCandidateId,
-                      ) ?? currentItemChoiceCandidates[0];
-                    return (
-                      <div className="choice-selection-layout">
-                        <div className="choice-editor-fields">{picker}</div>
-                        {previewedCandidate === undefined ? null : (
-                          <CandidateDetailCard entity={previewedCandidate} />
-                        )}
-                      </div>
-                    );
-                  })()}
+              currentItemChoicePage === undefined ? null : (
+                <ItemChoicePicker
+                  page={currentItemChoicePage}
+                  selections={itemChoiceSelections}
+                  onChange={setItemChoiceSelections}
+                />
+              )}
             </div>
             <footer>
               <dl className="shop-physical-summary dialog-footer-start">

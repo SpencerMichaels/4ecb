@@ -1288,3 +1288,24 @@ groups.
     are available.
   - **Wrong if:** the reason shows as a raw `hybrid-class` key, or Warlock
     at-wills are offered as legal in that slot.
+
+## Saves made on older content (2026-10-28, queue item 8)
+
+- [ ] **Armor of Resistance's damage type from the Equipment tab.**
+  - **Where:** import `sample-chars/Zilvra at 8th.dnd4e` (or `Edward
+Kenway`, `Gizmo`, `bannor the bloodguard`); open the unresolved-issues
+    badge and press Review on "Leather Armor of Resistance +2: Resistance
+    Type".
+  - **Expect:** the Equipment tab opens with that armor's category expanded
+    and its detail shown on the right. Right-click the armor row: the menu
+    has "Choose Resistance Type…"; it opens the same dialog the Shop uses for
+    the pick, headed "Choose Resistance Type", with one button per damage
+    type and Save disabled until one is picked. After Save the issue is gone
+    and the armor's resistance shows on the sheet.
+  - **Wrong if:** Review lands on Build level 1, the issue is titled "Level 1
+    Class Feature", the menu item is missing, or the dialog shows a price or a
+    base-armor page.
+- [ ] **User edit named in House rules.**
+  - **Where:** `sample-chars/Zilvra at 8th.dnd4e` → House rules badge.
+  - **Expect:** a row titled "Level 7 manual edits" (Speed +1).
+  - **Wrong if:** the title is `ID_INTERNAL_USER_EDIT_…` or blank.

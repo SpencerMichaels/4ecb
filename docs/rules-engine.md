@@ -386,10 +386,18 @@ Power Selection, Dilettante under Half-Elf Power Selection); others keep their
 own position if free and of the select's exact type, else take the first free
 select of their type (2026-10-23: an older Deva save's Elven no longer fills
 the newer Race Ability Bonus select; native `CopyLoadedChoice` would drop it).
-A saved child no slot can take stays owned, fills no choice and raises the
-`occurrence.unslotted` warning. Aeofel's
-Arcana/History remain short because current content moved them behind the
-Eladrin Subrace choice his record never made. Defense-keyed damage stats (`will:damage`, e.g. Resplendent
+An empty saved placeholder keeps only its own position (re-seating it took
+sonya's Battlefront Leader slot). When content wrapped formerly fixed grants
+in a required selection inside a new container grant (CBLoader's Elf and
+Eladrin Subrace, Archer Warlord Optional Choice) and exactly one candidate of
+that selection grants every left-over child of a type some candidate grants,
+the projection selects it (`<id>:grant:<n>:recovered:<ordinal>:<index>`,
+unsaved like a rule default) and those leftovers become its grants
+(2026-10-28: Standard Elf Racial Traits, Standard Eladrin Racial Traits,
+Standard Warlord Armor Features; this also gives bundled hero Aeofel the
+Arcana/History bonuses his Eladrin record predates). Otherwise the selection
+stays an open choice. A saved child no slot can take stays owned, fills no
+choice and raises the `occurrence.unslotted` warning. Defense-keyed damage stats (`will:damage`, e.g. Resplendent
 Gloves) apply to powers that target that defense, as legacy Hold Foe shows.
 Equipped-loadout predicates also no
 longer leak onto carried alternate power variants. These samples were created

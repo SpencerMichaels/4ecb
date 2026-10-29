@@ -2068,6 +2068,85 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("treats UniversalClassSkill trainings as class skills of every class", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "wizard",
+            definitionId: "ID_FMP_CLASS_9",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+          {
+            id: "stealth-class-skill",
+            definitionId: "ID_INTERNAL_BACKGROUND_CHOICE_STEALTH_CLASS_SKILL",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [
+            rule("select", { type: "Skill Training", Category: "$$CLASS" }, 0),
+            rule(
+              "select",
+              { type: "Skill Training", Category: "$$NOT_CLASS" },
+              1,
+            ),
+            rule(
+              "select",
+              { type: "Skill Training", Category: "ID_FMP_CLASS_713" },
+              2,
+            ),
+          ],
+        }),
+        entity("ID_FMP_CLASS_9", "Wizard", "Class"),
+        entity("ID_FMP_CLASS_713", "Knight", "Class"),
+        entity(
+          "ID_INTERNAL_BACKGROUND_CHOICE_STEALTH_CLASS_SKILL",
+          "Stealth class skill",
+          "Background Choice",
+          {
+            categories: ["ID_INTERNAL_INTERNAL_BACKGROUND_BENEFIT"],
+            rules: [
+              rule(
+                "modify",
+                {
+                  name: "Stealth",
+                  type: "Skill Training",
+                  Field: "UniversalClassSkill",
+                  value: "true",
+                },
+                0,
+              ),
+            ],
+          },
+        ),
+        entity("ID_FMP_SKILL_TRAINING_16", "Stealth", "Skill Training", {
+          categories: ["ID_FMP_CLASS_4"],
+        }),
+        entity("ID_FMP_SKILL_TRAINING_1", "Arcana", "Skill Training", {
+          categories: ["ID_FMP_CLASS_9"],
+        }),
+      ],
+    );
+    const stealth = (ordinal: number) =>
+      result.choices
+        .find((choice) => choice.ruleOrdinal === ordinal)
+        ?.candidates.find(
+          (candidate) => candidate.definitionId === "ID_FMP_SKILL_TRAINING_16",
+        )?.eligible;
+    expect(stealth(0)).toBe(true);
+    expect(stealth(1)).toBe(false);
+    expect(stealth(2)).toBe(true);
+  });
+
   it("offers the selected archery mastery power as a ranger at-will replacement", () => {
     const result = evaluateCharacter(
       {
@@ -4186,6 +4265,96 @@ describe("character evaluator", () => {
     expect(owned.overlays).not.toContainEqual(
       expect.objectContaining({ field: "Power Usage" }),
     );
+  });
+
+  it("keeps a saved selection whose self-negating grant lapses", () => {
+    // A Gnome wizard saved Ghost Sound under Master Trickster's
+    // `grant ID_FMP_POWER_1217 requires="!ID_FMP_POWER_1217"` and as one of
+    // Arcanist Cantrips' `select type="Power" number="4"` picks. The cantrip
+    // switches the grant off; the grant's copy must not also empty the slot.
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "trait",
+            definitionId: "ID_FMP_RACIAL_TRAIT_1141",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "trait-ghost-sound",
+            definitionId: "ID_FMP_POWER_1217",
+            acquiredLevel: 1,
+            parentId: "trait",
+            ruleOrdinal: 1,
+            kind: "grant",
+          },
+          {
+            id: "cantrips",
+            definitionId: "ID_FMP_CLASS_FEATURE_130",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "cantrip-ghost-sound",
+            definitionId: "ID_FMP_POWER_1217",
+            acquiredLevel: 1,
+            parentId: "cantrips",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ID_FMP_RACIAL_TRAIT_1141", "Master Trickster", "Racial Trait", {
+          rules: [
+            rule(
+              "grant",
+              {
+                name: "ID_FMP_POWER_1217",
+                type: "Power",
+                requires: "!ID_FMP_POWER_1217",
+              },
+              1,
+            ),
+          ],
+        }),
+        entity(
+          "ID_FMP_CLASS_FEATURE_130",
+          "Arcanist Cantrips",
+          "Class Feature",
+          {
+            rules: [
+              rule(
+                "select",
+                {
+                  type: "Power",
+                  number: "1",
+                  Category: "ID_FMP_CLASS_FEATURE_2870",
+                },
+                0,
+              ),
+            ],
+          },
+        ),
+        entity("ID_FMP_POWER_1217", "Ghost Sound", "Power", {
+          categories: ["ID_FMP_CLASS_FEATURE_2870"],
+        }),
+      ],
+    );
+    expect(result.converged).toBe(true);
+    expect(
+      result.occurrences
+        .filter(({ definitionId }) => definitionId === "ID_FMP_POWER_1217")
+        .map(({ id }) => id),
+    ).toEqual(["cantrip-ghost-sound"]);
+    expect(
+      result.diagnostics.filter(({ code }) => code === "choice.required"),
+    ).toEqual([]);
   });
 
   it("converges when a drop removes what another element grants", () => {
