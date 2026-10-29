@@ -674,6 +674,102 @@ function lootFrom(sheet: XmlNode | undefined): LegacyLootSnapshot[] {
   });
 }
 
+/** One `statadd` a save's StatBlock attributes to a rules element. */
+export interface SavedStatAdd {
+  /** Every alias of the Stat it adds to; the first is the Stat's own name. */
+  readonly stat: readonly string[];
+  /** Its attributes, without the instance's `Level` and `charelem`. */
+  readonly attributes: Readonly<Record<string, string>>;
+}
+
+/**
+ * A rules element instance as a save recorded it: the specifics it saved
+ * and the statadds the StatBlock attributes to its `charelem`.
+ */
+export interface SavedRuleElement extends LegacyRuleElement {
+  readonly charelem?: string;
+  /** `tally` (RulesElementTally) or `loot` (LootTally). */
+  readonly section: "tally" | "loot";
+  /** For loot: whether its holding was equipped, so its statadds applied. */
+  readonly equipped?: boolean;
+  readonly specifics: Readonly<Record<string, string>>;
+  readonly statAdds: readonly SavedStatAdd[];
+}
+
+/** The rules evidence a save stored (`savedCharacterRules`). */
+export interface SavedCharacterRules {
+  readonly elements: readonly SavedRuleElement[];
+  /** Each StatBlock Stat's aliases; the first is the Stat's own name. */
+  readonly stats: readonly (readonly string[])[];
+}
+
+/**
+ * The rules a save stored for each selected element and holding: the
+ * evidence of which content generation the legacy builder ran. Statadds are
+ * read from the StatBlock by `charelem`; a placeholder element (an ID the
+ * builder's content lacked, saved `legality="houserule"`) has none.
+ */
+export function savedCharacterRules(input: string): SavedCharacterRules {
+  const root = parseTree(input.startsWith("\uFEFF") ? input.slice(1) : input);
+  const sheet = first(root, "CharacterSheet");
+  const statAdds = new Map<string, SavedStatAdd[]>();
+  const stats: string[][] = [];
+  const block = first(sheet, "StatBlock");
+  for (const stat of block === undefined ? [] : direct(block, "Stat")) {
+    const aliases = direct(stat, "alias").flatMap((alias) => {
+      const name = attribute(alias, "name");
+      return name === undefined ? [] : [name];
+    });
+    stats.push(aliases);
+    for (const add of direct(stat, "statadd")) {
+      const charelem = attribute(add, "charelem");
+      if (charelem === undefined) continue;
+      const attributes = Object.fromEntries(
+        Object.entries(add.attributes).filter(
+          ([name]) => key(name) !== "level" && key(name) !== "charelem",
+        ),
+      );
+      statAdds.set(charelem, [
+        ...(statAdds.get(charelem) ?? []),
+        { stat: aliases, attributes },
+      ]);
+    }
+  }
+  const saved = (
+    node: XmlNode,
+    section: SavedRuleElement["section"],
+    equipped?: boolean,
+  ): SavedRuleElement => {
+    const charelem = attribute(node, "charelem");
+    return {
+      ...ruleElement(node),
+      ...(charelem === undefined ? {} : { charelem }),
+      section,
+      ...(equipped === undefined ? {} : { equipped }),
+      specifics: specifics(node),
+      statAdds: charelem === undefined ? [] : (statAdds.get(charelem) ?? []),
+    };
+  };
+  const tally = first(sheet, "RulesElementTally");
+  const loot = first(sheet, "LootTally");
+  const elements = [
+    ...(tally === undefined
+      ? []
+      : direct(tally, "RulesElement").map((node) => saved(node, "tally"))),
+    ...(loot === undefined
+      ? []
+      : direct(loot, "loot").flatMap((holding) => {
+          const equipped =
+            (Number.parseInt(attribute(holding, "equip-count") ?? "0", 10) ||
+              0) > 0;
+          return direct(holding, "RulesElement").map((node) =>
+            saved(node, "loot", equipped),
+          );
+        })),
+  ];
+  return { elements, stats };
+}
+
 function textStringsFrom(root: XmlNode): Record<string, string> {
   return Object.fromEntries(
     direct(root, "textstring").map((node) => [

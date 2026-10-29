@@ -109,6 +109,7 @@ pnpm audit:native-workflow
 pnpm evaluate:character
 pnpm evaluate:matrix
 pnpm parity:baseline              # baselined legacy-cache parity, tmp/parity/ (--accept, --jobs N, --no-profiles; ~30 s)
+pnpm audit:record-drift           # which content each save was made on: saved records vs full/stock pack (--verbose)
 pnpm regenerate:edited-dnd4e
 ```
 

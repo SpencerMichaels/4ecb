@@ -369,6 +369,22 @@ point to stock data; placeholders beside saved CBLoader records point to
 partial parts, which stay on `full`. `--no-profiles` evaluates every save on
 the run's pack.
 
+`pnpm audit:record-drift [SAVE.dnd4e ...] [--verbose]` (private corpus,
+read-only) checks the mapping record by record. A save stores, per element,
+the specifics its builder saw and, in the StatBlock by `charelem`, the
+statadds that element's record carried (`savedCharacterRules` in
+`legacy-dnd4e`). The audit compares them with the same ID's record in the full
+and stock packs, after the save's own transforms (the export writer's
+`legacyStatAddValue` form, statlinks naming the Stat rather than an alias,
+`condition` saved as `conditional`, `half-point`/`zero` dropped, base armor's
+bonus adjusted for its magic armor). It reports elements matching the full pack
+only, the stock pack only, both or neither, the CBLoader-only `houserule`
+placeholders, and IDs neither pack has, then classifies each save (full /
+stock / partial or other CBLoader / mixed) against its `content-profiles.json`
+entry and lists records whose statadds match neither pack, with the saves
+holding them. A parity diff on such a record is content drift, not an engine
+bug.
+
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
 checkpoint is 513/514 and 331/371 after projecting legacy alternates, suppressing

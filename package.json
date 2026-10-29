@@ -26,6 +26,7 @@
     "audit:coverage-matrix": "tsx scripts/audit-coverage-matrix.ts",
     "audit:legacy-special-cases": "tsx scripts/audit-legacy-special-cases.ts",
     "audit:requires": "tsx scripts/audit-requires.ts",
+    "audit:record-drift": "tsx scripts/audit-record-drift.ts",
     "audit:modifiers": "tsx scripts/audit-modifiers.ts",
     "audit:selectors": "tsx scripts/audit-selectors.ts",
     "audit:parity-coverage": "tsx scripts/audit-parity-coverage.ts",
