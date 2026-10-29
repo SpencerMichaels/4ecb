@@ -1157,8 +1157,6 @@ groups.
   - **Wrong if:** a hidden row appears on page 1, the reference pages or
     Remember in play; a note shows a trailing "@…"; a chosen power's card is
     gone.
-  - **Decide:** Flint's spellbook picks no longer list under "Level 1 Mage
-    Encounter Powers", only as cards (legacy behaviour). OK?
 - [ ] **Class block in the card type bar.**
   - **Where:** Hystan → `?preview=1`: Twin Strike, Master Diplomat, Mighty
     Sprint; RaidonKane → Destined for Greatness; Hystan's Build tab power
@@ -1169,9 +1167,6 @@ groups.
     basic attack shows no class. Fine at 140% zoom and in dark mode.
   - **Wrong if:** the right text collides with the type label, clips or
     overflows, or shows a class ID.
-  - **Decide:** keep "Class · Level N" at the bar's right, or a separate
-    CLASS/LEVEL row like legacy, or book style "Ranger Attack 1"? "Racial"
-    vs legacy's "Racial Power"?
 - [ ] **Spellbook subtitle.**
   - **Where:** Jim Darkmagic → `?preview=1`: Expeditious Retreat and Freezing
     Cloud vs Sleep.
@@ -1262,18 +1257,20 @@ groups.
   - **Expect:** added at once, no picker, as one holding on a Longspear with
     weapon damage.
 - [ ] **Arrows fold into a package.**
-  - **Where:** Shop → Ammunition → Give "Arrow" until 30 owned, then one more;
-    check Equipment.
-  - **Expect:** at 30: "Arrows" ×1 and no "Arrow" row; after one more:
-    "Arrows" ×1 and "Arrow" ×1.
-  - **Wrong if:** "Arrow" ×30, or a holding vanishes.
-  - **Decide:** keep two rows (current), or legacy's single combined row; and
-    whether selling one arrow should break a package.
+  - **Where:** Shop → Ammunition → Give "Arrows" once and "Arrow" five times;
+    check Equipment, then Sell one (100%) twice and press − / + on the row;
+    then the print preview (page-1 equipment, inventory reference, item
+    cards). A ranger with arrows (sample-chars) too.
+  - **Expect:** one combined row "Arrows" with quantity 35 (no separate
+    "Arrow" row); the Sell menu's 100% option is 4 cp (one arrow); each sale
+    leaves N−1 (35 → 34 → 33) and adds 4 cp; − and + change the count by one;
+    selling one from "Arrows" ×30 alone leaves 29. Print shows one "Arrows
+    × N" line and one Arrows card.
+  - **Wrong if:** two rows, a count in packages (×1) rather than arrows, a
+    sale that removes 30 arrows, or the wrong price.
 - [ ] **Secret Formularies halves ritual prices.**
   - **Where:** a level-11+ wizard with Secret Formularies → `edit?tab=rituals`.
   - **Expect:** each ritual at half price (50 gp → 25 gp); buying deducts that.
-  - **Decide:** weapon enchantments are listed under both Weapon and Implement
-    enchantments (as legacy); OK?
 
 ## Hybrid power picks (2026-10-28, `98dfeba`, D109)
 

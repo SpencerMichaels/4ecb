@@ -124,7 +124,9 @@ describe("loadout interaction and geometry", () => {
   });
 
   it("renders accessible collapsible Inventory role sections", () => {
-    expect(workspace).toContain("groupInventoryByCategory(inventory, byId)");
+    expect(workspace).toContain(
+      "groupInventoryByCategory(inventoryRows, byId)",
+    );
     expect(workspace).toContain(
       'className="inventory-category-row table-section-row"',
     );

@@ -20,6 +20,7 @@ import {
   type CurrencyAmount,
   type BuildInventoryEntry,
   type CharacterBuild,
+  type CharacterCommand,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { itemChoiceSlots, itemSetPartyCountName } from "@4ecb/rules-engine";
@@ -42,6 +43,10 @@ import {
   inventoryForcedTwoHanded,
   inventoryIsVersatile,
   inventoryLoadoutToggle,
+  inventoryPackageGroupsFor,
+  packageQuantityCommands,
+  packageSaleCommands,
+  packageSalePriceCopper,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
   inventoryWieldsTwoHanded,
@@ -952,6 +957,7 @@ export function EquipmentWorkspace({
   shopCategory,
   onShopCategoryChange,
   onPutInventory,
+  onInventoryCommands,
   onPurchase,
   onSell,
   onEquipSlot,
@@ -981,6 +987,9 @@ export function EquipmentWorkspace({
   readonly shopCategory: ShopCategory;
   readonly onShopCategoryChange: (category: ShopCategory) => void;
   readonly onPutInventory: (entry: BuildInventoryEntry) => void;
+  /** Applies several inventory commands as one edit (a package row's
+   *  quantity, removal or sale rebalances both of its holdings). */
+  readonly onInventoryCommands: (commands: readonly CharacterCommand[]) => void;
   readonly onPurchase: (
     entry: BuildInventoryEntry,
     priceCopper: number,
@@ -1040,6 +1049,12 @@ export function EquipmentWorkspace({
     [activeDefinitionIds, byId],
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
+  // Packaged gear (Arrows and Arrow) shows as one row of the pair's total
+  // units, on the package holding else the singles (D108).
+  const packageGroups = useMemo(
+    () => inventoryPackageGroupsFor(build.inventory, byId),
+    [build.inventory, byId],
+  );
   const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
   // Select the requested holding once per request: inspect it, expand its
   // category and bring its row into view.
@@ -1051,8 +1066,11 @@ export function EquipmentWorkspace({
     )
       return;
     handledFocusRequest.current = focusRequest.request;
-    const entry = build.inventory.find(({ id }) => id === focusRequest.entryId);
-    if (entry === undefined) return;
+    const requested = build.inventory.find(
+      ({ id }) => id === focusRequest.entryId,
+    );
+    if (requested === undefined) return;
+    const entry = packageGroups.get(requested.id)?.representative ?? requested;
     setInspected(inventoryItemDetail(entry, byId));
     const category = groupInventoryByCategory([entry], byId)[0]?.category.id;
     if (category !== undefined)
@@ -1064,7 +1082,7 @@ export function EquipmentWorkspace({
         .find((row) => row.dataset.inventoryEntry === entry.id)
         ?.scrollIntoView?.({ block: "nearest" }),
     );
-  }, [focusRequest, build.inventory, byId]);
+  }, [focusRequest, build.inventory, byId, packageGroups]);
   // Per-item right-click actions, as in the legacy builder (no menu button).
   const augmentActions = (
     augment: BuildInventoryEntry,
@@ -1180,9 +1198,13 @@ export function EquipmentWorkspace({
     );
     if (menu !== undefined) setContextMenu(menu);
   };
+  // One row per holding, except a package pair's second holding.
+  const inventoryRows = inventory.filter(
+    (entry) => (packageGroups.get(entry.id)?.representative ?? entry) === entry,
+  );
   const inventoryGroups = useMemo(
-    () => groupInventoryByCategory(inventory, byId),
-    [inventory, byId],
+    () => groupInventoryByCategory(inventoryRows, byId),
+    [inventoryRows, byId],
   );
   const loadoutSlotColumns = visibleLoadoutSlotColumns(
     activeDefinitionIds,
@@ -1334,12 +1356,43 @@ export function EquipmentWorkspace({
                                           definitionIds.length > 1
                                             ? byId.get(definitionIds[0]!)
                                             : undefined;
+                                        // A package row (Arrows ×35) counts
+                                        // units and sells one single item.
+                                        const packageGroup = packageGroups.get(
+                                          entry.id,
+                                        );
+                                        const quantity =
+                                          packageGroup?.units ?? entry.quantity;
+                                        const setQuantity = (units: number) =>
+                                          packageGroup === undefined
+                                            ? onPutInventory(
+                                                inventoryEntryWithQuantity(
+                                                  entry,
+                                                  units,
+                                                ),
+                                              )
+                                            : onInventoryCommands(
+                                                packageQuantityCommands(
+                                                  packageGroup,
+                                                  units,
+                                                ),
+                                              );
                                         const price =
-                                          definition === undefined
-                                            ? undefined
-                                            : entityCurrencyCopper(definition);
+                                          packageGroup !== undefined
+                                            ? packageSalePriceCopper(
+                                                packageGroup,
+                                              )
+                                            : definition === undefined
+                                              ? undefined
+                                              : entityCurrencyCopper(
+                                                  definition,
+                                                );
                                         const displayName =
+                                          packageGroup?.name ??
                                           inventoryDisplayName(entry, byId);
+                                        const saleName =
+                                          packageGroup?.pair.single.name ??
+                                          displayName;
                                         const saleTriggerId = `inventory-sale-trigger-${inventoryIndex}`;
                                         const saleOptionsId = `inventory-sale-options-${inventoryIndex}`;
                                         const equippedStatus =
@@ -1524,33 +1577,23 @@ export function EquipmentWorkspace({
                                                 <button
                                                   type="button"
                                                   aria-label={`Decrease quantity of ${displayName}`}
-                                                  disabled={entry.quantity <= 1}
-                                                  onClick={() => {
-                                                    onPutInventory(
-                                                      inventoryEntryWithQuantity(
-                                                        entry,
-                                                        entry.quantity - 1,
-                                                      ),
-                                                    );
-                                                  }}
+                                                  disabled={quantity <= 1}
+                                                  onClick={() =>
+                                                    setQuantity(quantity - 1)
+                                                  }
                                                 >
                                                   −
                                                 </button>
                                                 <output
                                                   aria-label={`Quantity of ${displayName}`}
                                                 >
-                                                  {entry.quantity}
+                                                  {quantity}
                                                 </output>
                                                 <button
                                                   type="button"
                                                   aria-label={`Increase quantity of ${displayName}`}
                                                   onClick={() =>
-                                                    onPutInventory(
-                                                      inventoryEntryWithQuantity(
-                                                        entry,
-                                                        entry.quantity + 1,
-                                                      ),
-                                                    )
+                                                    setQuantity(quantity + 1)
                                                   }
                                                 >
                                                   +
@@ -1588,7 +1631,7 @@ export function EquipmentWorkspace({
                                                       type="button"
                                                       id={saleTriggerId}
                                                       className="inventory-icon-action button-icon"
-                                                      aria-label={`Sell one ${displayName}`}
+                                                      aria-label={`Sell one ${saleName}`}
                                                       aria-expanded={
                                                         openSaleId === entry.id
                                                       }
@@ -1611,7 +1654,7 @@ export function EquipmentWorkspace({
                                                       <div
                                                         className="inventory-sale-options"
                                                         id={saleOptionsId}
-                                                        aria-label={`Sell one ${displayName} for`}
+                                                        aria-label={`Sell one ${saleName} for`}
                                                       >
                                                         {comparableSaleProceeds(
                                                           price,
@@ -1624,11 +1667,22 @@ export function EquipmentWorkspace({
                                                               key={percentage}
                                                               type="button"
                                                               onClick={() => {
-                                                                onSell(
-                                                                  entry,
-                                                                  price,
-                                                                  percentage,
-                                                                );
+                                                                if (
+                                                                  packageGroup ===
+                                                                  undefined
+                                                                )
+                                                                  onSell(
+                                                                    entry,
+                                                                    price,
+                                                                    percentage,
+                                                                  );
+                                                                else
+                                                                  onInventoryCommands(
+                                                                    packageSaleCommands(
+                                                                      packageGroup,
+                                                                      percentage,
+                                                                    ),
+                                                                  );
                                                                 setOpenSaleId(
                                                                   undefined,
                                                                 );
@@ -1685,12 +1739,7 @@ export function EquipmentWorkspace({
                                                       return;
                                                     }
                                                     removeAction.disarm();
-                                                    onPutInventory(
-                                                      inventoryEntryWithQuantity(
-                                                        entry,
-                                                        0,
-                                                      ),
-                                                    );
+                                                    setQuantity(0);
                                                   }}
                                                 >
                                                   <Icon

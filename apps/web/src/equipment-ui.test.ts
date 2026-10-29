@@ -4,6 +4,7 @@ import {
   applyCharacterCommand,
   type BuildInventoryEntry,
   type CharacterBuild,
+  type CharacterCommand,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
@@ -21,6 +22,7 @@ import {
   inventoryDisplayName,
   inventoryEntryForEntity,
   inventoryLoadoutToggle,
+  inventoryPackageGroupsFor,
   inventorySlotCandidates,
   isLegacyBoonType,
   inventoryRequiresBothHands,
@@ -28,6 +30,9 @@ import {
   LOADOUT_SLOT_COLUMNS,
   loadoutChangeCommand,
   loadoutContext,
+  packageQuantityCommands,
+  packageSaleCommands,
+  packageSalePriceCopper,
   missingInventoryElements,
   practiceKind,
   resolveLoadoutAssignments,
@@ -1640,6 +1645,70 @@ describe("packaged gear (legacy CharacterLootItem.PackageManipulation)", () => {
     expect(acquire([singles], arrow, 3)).toEqual(["Arrow x2", "Arrows x1"]);
     expect(acquire([singles], arrows)).toEqual(["Arrow x29", "Arrows x1"]);
     expect(acquire([], arrow, 31)).toEqual(["Arrow x1", "Arrows x1"]);
+  });
+
+  const pack = (packs: number, singles: number) =>
+    [
+      ...(packs > 0 ? [{ ...holding(arrows), quantity: packs }] : []),
+      ...(singles > 0 ? [{ ...holding(arrow), quantity: singles }] : []),
+    ] as BuildInventoryEntry[];
+  const groupOf = (inventory: BuildInventoryEntry[]) =>
+    inventoryPackageGroupsFor(inventory, byId).get(inventory[0]!.id)!;
+  const after = (
+    inventory: BuildInventoryEntry[],
+    commands: readonly CharacterCommand[],
+  ) =>
+    commands
+      .reduce(applyCharacterCommand, build(inventory))
+      .inventory.map((entry) => `${entry.elements[0]!.name} x${entry.quantity}`)
+      .sort();
+
+  it("shows a pair as one row of its total units, named for the package", () => {
+    const inventory = pack(1, 5);
+    const group = groupOf(inventory);
+    expect(group).toMatchObject({ units: 35, name: "Arrows" });
+    // The package holding stands for the row; else the singles.
+    expect(group.representative).toBe(inventory[0]);
+    expect(
+      inventoryPackageGroupsFor(inventory, byId).get(inventory[1]!.id),
+    ).toEqual(group);
+    expect(groupOf(pack(0, 7))).toMatchObject({ units: 7, name: "Arrows" });
+    expect(inventoryPackageGroupsFor([holding(rope)], byId).size).toBe(0);
+  });
+
+  it("sets a package row's units, breaking a package when needed", () => {
+    expect(
+      after(pack(1, 5), packageQuantityCommands(groupOf(pack(1, 5)), 34)),
+    ).toEqual(["Arrow x4", "Arrows x1"]);
+    const packsOnly = pack(2, 0);
+    expect(
+      after(packsOnly, packageQuantityCommands(groupOf(packsOnly), 59)),
+    ).toEqual(["Arrow x29", "Arrows x1"]);
+    const singles = pack(0, 29);
+    expect(
+      after(singles, packageQuantityCommands(groupOf(singles), 30)),
+    ).toEqual(["Arrows x1"]);
+    expect(
+      after(pack(1, 5), packageQuantityCommands(groupOf(pack(1, 5)), 0)),
+    ).toEqual([]);
+  });
+
+  it("sells one single item from a package row at the single's price", () => {
+    const packsOnly = pack(1, 0);
+    const group = groupOf(packsOnly);
+    expect(packageSalePriceCopper(group)).toBe(4);
+    const commands = packageSaleCommands(group, 100);
+    expect(commands.at(-1)).toMatchObject({
+      kind: "sell-inventory",
+      priceCopper: 4,
+      percentage: 100,
+    });
+    expect(after(packsOnly, commands)).toEqual(["Arrow x29"]);
+    const mixed = pack(1, 5);
+    expect(after(mixed, packageSaleCommands(groupOf(mixed), 50))).toEqual([
+      "Arrow x4",
+      "Arrows x1",
+    ]);
   });
 
   it("adds unpackaged gear unchanged", () => {

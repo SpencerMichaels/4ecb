@@ -2879,6 +2879,9 @@ export function CharacterEditorPage({
                     onPutInventory={(entry) =>
                       dispatch({ kind: "put-inventory", entry })
                     }
+                    onInventoryCommands={(commands) =>
+                      dispatch({ kind: "batch", commands })
+                    }
                     onPurchase={(entry, priceCopper) =>
                       dispatch({
                         kind: "batch",

@@ -109,6 +109,7 @@ describe("Equipment item right-click actions (D101)", () => {
           onPutInventory={() => undefined}
           onPurchase={() => undefined}
           onSell={() => undefined}
+          onInventoryCommands={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={onSetWielding}
           onSetAugment={() => undefined}
@@ -178,6 +179,7 @@ describe("Equipment loadout size rules (D102)", () => {
           onPutInventory={() => undefined}
           onPurchase={() => undefined}
           onSell={() => undefined}
+          onInventoryCommands={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={onSetWielding}
           onSetAugment={() => undefined}
@@ -266,6 +268,7 @@ describe("Equipment augment attachment (CharLootAugment)", () => {
           onPutInventory={() => undefined}
           onPurchase={() => undefined}
           onSell={() => undefined}
+          onInventoryCommands={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={() => undefined}
           onSetAugment={onSetAugment}
@@ -432,6 +435,7 @@ describe("Equipment item-owned choices", () => {
           onPutInventory={onPutInventory}
           onPurchase={() => undefined}
           onSell={() => undefined}
+          onInventoryCommands={() => undefined}
           onEquipSlot={() => undefined}
           onSetWielding={() => undefined}
           onSetAugment={() => undefined}

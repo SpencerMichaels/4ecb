@@ -191,6 +191,8 @@ const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
 const CARD_PARTS = "packages/sheet-model/src/legacy-card-parts.test.ts";
 const POWER_CARD = "apps/web/src/PowerCard.test.tsx";
 const CARD_DECK = "packages/sheet-model/src/card-deck.test.ts";
+const INVENTORY_PACKAGES =
+  "packages/sheet-model/src/inventory-packages.test.ts";
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
 const HYBRID_POWERS = "packages/rules-engine/src/hybrid-powers.test.ts";
@@ -2571,41 +2573,55 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "GearPageData.FindLootCategory": generic(
       "Category lookup with an Other fallback.",
     ),
-    "GearPageData.HasSingleItem": partial(
+    "GearPageData.HasSingleItem": code(
       "Ammunition and rations packs: a _RelatedElement record pairs the bundle with its single item.",
-      "presentation: legacy hides the package row while the single item is owned and shows the pair's total on the single row; modern lists both holdings with their own quantities (D108)",
+      "sheet-model inventory-packages.ts inventoryPackageGroups: the pair is one inventory row of its total units under the package's name (Equipment workspace, sheet inventory, page-1 equipment, item cards; owner decision 2026-10-28, D108). Legacy hides the package row while singles are owned and totals on the single row; the modern row keeps the package's name either way. Storage keeps both native holdings for .dnd4e export",
+      test(INVENTORY_PACKAGES, "groups both holdings and counts their units"),
+      test(
+        INVENTORY_PACKAGES,
+        "lists a package pair as one row of its total units",
+      ),
       test(
         EQUIPMENT_UI,
-        "folds single items into full packages and keeps the rest single",
+        "shows a pair as one row of its total units, named for the package",
       ),
     ),
     "CharacterLootItem.IsPackageRelated": code(
       "A gear item with a _RelatedElement of a different lot size is part of a package.",
-      "equipment-ui.ts acquisitionCommands",
+      "sheet-model inventory-packages.ts inventoryPackagePair (native FindRulesElement: by ID, else name)",
       test(
-        EQUIPMENT_UI,
-        "folds single items into full packages and keeps the rest single",
+        INVENTORY_PACKAGES,
+        "pairs a package with its single item by ID or name",
       ),
     ),
-    "CharacterLootItem.PackageCount": partial(
+    "CharacterLootItem.PackageCount": code(
       "Quantity of a packaged item counts both the bundle and the singles.",
-      "equipment-ui.ts acquisitionCommands counts the pair's units when adding; the inventory shows each holding's own quantity (see GearPageData.HasSingleItem)",
-      test(
-        EQUIPMENT_UI,
-        "folds single items into full packages and keeps the rest single",
-      ),
+      "inventory-packages.ts InventoryPackageGroup.units: the combined row's quantity (D108)",
+      test(INVENTORY_PACKAGES, "groups both holdings and counts their units"),
     ),
-    "CharacterLootItem.PackageManipulation": partial(
+    "CharacterLootItem.PackageManipulation": code(
       "Adding or removing packaged items rebalances bundles and singles.",
-      "equipment-ui.ts acquisitionCommands rebalances on Buy/Give (CharacterEditorPage batch); selling one unit sells from the exact holding without breaking a package (D108)",
+      "equipment-ui.ts acquisitionCommands (Buy/Give), packageQuantityCommands (the combined row's −/+ and Remove) and packageSaleCommands (Sell one: one single at the single's price, breaking a package when none are single) rebalance the pair into full packages plus singles (D108). Legacy's Sell on a package-only row removes a whole package; the modern row always sells one unit",
       test(
         EQUIPMENT_UI,
         "folds single items into full packages and keeps the rest single",
       ),
+      test(
+        EQUIPMENT_UI,
+        "sets a package row's units, breaking a package when needed",
+      ),
+      test(
+        EQUIPMENT_UI,
+        "sells one single item from a package row at the single's price",
+      ),
     ),
-    "CharacterLootItem.GetLotSize": generic(
+    "CharacterLootItem.GetLotSize": code(
       "Lot size from the 'count' field, shown as '<name> (<quantity x lot>)'.",
-      "inventory presentation; modern shows the holding quantity",
+      "inventory-packages.ts lotSize feeds the package rebalance; the combined row shows units rather than '<name> (<lot>)'",
+      test(
+        INVENTORY_PACKAGES,
+        "pairs a package with its single item by ID or name",
+      ),
     ),
     "CharacterLootItem.UpdateInternal": generic(
       "Inventory row presentation (slots, _Item_Set_ID, augment flags).",

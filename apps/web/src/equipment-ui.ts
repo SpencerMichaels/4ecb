@@ -20,9 +20,12 @@ import {
   type ItemChoiceSlot,
 } from "@4ecb/rules-engine";
 import {
+  contentReferenceFinder,
   inventoryAlternateSlot,
   inventoryDefinitionIds,
   inventoryForcedTwoHanded,
+  inventoryPackageGroups,
+  inventoryPackagePair,
   inventoryIsVersatile,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
@@ -32,8 +35,12 @@ import {
   legacyLoadoutHints,
   loadoutContext,
   loadoutRingSlotCount,
+  packageSplit,
+  plainHoldingOf,
   resolveLoadoutAssignments,
   RING_SLOT_IDS,
+  type InventoryPackageGroup,
+  type InventoryPackagePair,
   type LoadoutContext,
   type LoadoutSlotContext,
 } from "@4ecb/sheet-model";
@@ -1346,28 +1353,48 @@ export function inventoryEntryForEntity(
   };
 }
 
-/** Legacy CharacterLootItem.GetLotSize: the item's "count" field, else 1. */
-function lotSize(entity: ContentEntity): number {
-  const count = Number.parseInt(
-    contentSpecificValue(entity, "count") ?? "",
-    10,
-  );
-  return Number.isFinite(count) ? count : 1;
+/** The record a plain holding holds (no enchantment, custom name or choices). */
+function plainHoldingRecord(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): ContentEntity | undefined {
+  const element = entry.elements.length === 1 ? entry.elements[0] : undefined;
+  return element?.definitionId === undefined ||
+    entry.name !== undefined ||
+    (element.children?.length ?? 0) > 0
+    ? undefined
+    : byId.get(element.definitionId.toLocaleLowerCase());
 }
 
-/** The plain holding of one record (no enchantment, name or choices). */
-function plainHolding(
-  inventory: readonly BuildInventoryEntry[],
-  entity: ContentEntity,
-): BuildInventoryEntry | undefined {
-  const id = entity.id.toLocaleLowerCase();
-  return inventory.find(
-    (entry) =>
-      entry.name === undefined &&
-      entry.elements.length === 1 &&
-      entry.elements[0]!.definitionId?.toLocaleLowerCase() === id &&
-      (entry.elements[0]!.children?.length ?? 0) === 0,
-  );
+/**
+ * The commands that leave a package pair's two holdings at `units` in all,
+ * as legacy CharacterLootItem.PackageManipulation does: as many full
+ * packages as fit, the rest as singles. A member not yet owned is created
+ * at `acquiredLevel` (a put of quantity 0 adds nothing).
+ */
+function packageRebalanceCommands(
+  pair: InventoryPackagePair,
+  packHolding: BuildInventoryEntry | undefined,
+  singleHolding: BuildInventoryEntry | undefined,
+  units: number,
+  acquiredLevel: number,
+): CharacterCommand[] {
+  const { packs, singles } = packageSplit(pair, units);
+  const put = (
+    holding: BuildInventoryEntry | undefined,
+    entity: ContentEntity,
+    quantity: number,
+  ): CharacterCommand => ({
+    kind: "put-inventory",
+    entry: inventoryEntryWithQuantity(
+      holding ?? inventoryEntryForEntity(entity, acquiredLevel),
+      quantity,
+    ),
+  });
+  return [
+    put(packHolding, pair.pack, packs),
+    put(singleHolding, pair.single, singles),
+  ];
 }
 
 /**
@@ -1389,56 +1416,104 @@ export function acquisitionCommands(
     entry,
     priceCopper,
   };
-  const element = entry.elements.length === 1 ? entry.elements[0] : undefined;
-  const added =
-    element?.definitionId === undefined ||
-    entry.name !== undefined ||
-    (element.children?.length ?? 0) > 0
-      ? undefined
-      : byId.get(element.definitionId.toLocaleLowerCase());
-  const relatedRef =
+  const added = plainHoldingRecord(entry, byId);
+  const pair =
     added === undefined
       ? undefined
-      : contentSpecificValue(added, "_RelatedElement")?.trim();
-  // Native FindRulesElement: by internal ID (as the content names it) or name.
-  const related =
-    relatedRef === undefined || relatedRef === ""
-      ? undefined
-      : (byId.get(relatedRef.toLocaleLowerCase()) ??
-        [...byId.values()].find(
-          ({ name }) =>
-            name.toLocaleLowerCase() === relatedRef.toLocaleLowerCase(),
-        ));
-  // Legacy IsPackageRelated: a related record, and one of them a package.
-  if (
-    added === undefined ||
-    related === undefined ||
-    (lotSize(added) === 1 && lotSize(related) === 1)
-  )
-    return [purchase];
-  const addedHolding = plainHolding(inventory, added);
-  const relatedHolding = plainHolding(inventory, related);
+      : inventoryPackagePair(added, contentReferenceFinder(byId));
+  if (added === undefined || pair === undefined) return [purchase];
+  const packHolding = plainHoldingOf(inventory, pair.pack);
+  const singleHolding = plainHoldingOf(inventory, pair.single);
   const units =
-    ((addedHolding?.quantity ?? 0) + entry.quantity) * lotSize(added) +
-    (relatedHolding?.quantity ?? 0) * lotSize(related);
+    (packHolding?.quantity ?? 0) * pair.packLot +
+    (singleHolding?.quantity ?? 0) * pair.singleLot +
+    entry.quantity * (added === pair.pack ? pair.packLot : pair.singleLot);
   // After the purchase the added record's holding is the owned one (the
   // purchase joins it) or the new entry.
-  const addedAfter = addedHolding ?? entry;
-  const relatedAfter =
-    relatedHolding ?? inventoryEntryForEntity(related, entry.acquiredLevel);
-  const [single, singleLot, pack, packLot] =
-    lotSize(added) > lotSize(related)
-      ? [relatedAfter, lotSize(related), addedAfter, lotSize(added)]
-      : [addedAfter, lotSize(added), relatedAfter, lotSize(related)];
-  const put = (holding: BuildInventoryEntry, quantity: number) =>
-    ({
-      kind: "put-inventory",
-      entry: inventoryEntryWithQuantity(holding, quantity),
-    }) satisfies CharacterCommand;
   return [
     purchase,
-    put(pack, Math.floor(units / packLot)),
-    put(single, Math.floor((units % packLot) / singleLot)),
+    ...packageRebalanceCommands(
+      pair,
+      added === pair.pack ? (packHolding ?? entry) : packHolding,
+      added === pair.single ? (singleHolding ?? entry) : singleHolding,
+      units,
+      entry.acquiredLevel,
+    ),
+  ];
+}
+
+/** The package pair a holding belongs to, as one inventory row. */
+export function inventoryPackageGroupsFor(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlyMap<string, InventoryPackageGroup> {
+  return inventoryPackageGroups(
+    inventory,
+    (id) => byId.get(id.toLocaleLowerCase()),
+    contentReferenceFinder(byId),
+  );
+}
+
+/**
+ * The commands that set a package row to `units` (its quantity control and
+ * Remove): the pair rebalances, so removing one arrow while only packages
+ * remain breaks a package.
+ */
+export function packageQuantityCommands(
+  group: InventoryPackageGroup,
+  units: number,
+): readonly CharacterCommand[] {
+  return packageRebalanceCommands(
+    group.pair,
+    group.packHolding,
+    group.singleHolding,
+    units,
+    group.representative.acquiredLevel,
+  );
+}
+
+/** A package row's sale unit: one single item, at the single's own price. */
+export function packageSalePriceCopper(
+  group: InventoryPackageGroup,
+): number | undefined {
+  return entityCurrencyCopper(group.pair.single);
+}
+
+/**
+ * The commands that sell one unit (one arrow) of a package row at
+ * `percentage` of the single item's price: a package breaks into singles
+ * first when none are owned, then the rest rebalances.
+ */
+export function packageSaleCommands(
+  group: InventoryPackageGroup,
+  percentage: 20 | 50 | 100,
+): readonly CharacterCommand[] {
+  const priceCopper = packageSalePriceCopper(group);
+  if (priceCopper === undefined || group.units < group.pair.singleLot)
+    return [];
+  const { pair, packHolding, singleHolding } = group;
+  const units = group.units - pair.singleLot;
+  // Hold the unit being sold as a single, sell it, then rebalance the rest.
+  const single =
+    singleHolding ??
+    inventoryEntryForEntity(pair.single, group.representative.acquiredLevel);
+  const { packs } = packageSplit(pair, units);
+  const singlesBefore =
+    Math.floor((units - packs * pair.packLot) / pair.singleLot) + 1;
+  return [
+    ...(packHolding === undefined
+      ? []
+      : [
+          {
+            kind: "put-inventory",
+            entry: inventoryEntryWithQuantity(packHolding, packs),
+          } satisfies CharacterCommand,
+        ]),
+    {
+      kind: "put-inventory",
+      entry: inventoryEntryWithQuantity(single, singlesBefore),
+    },
+    { kind: "sell-inventory", entryId: single.id, priceCopper, percentage },
   ];
 }
 

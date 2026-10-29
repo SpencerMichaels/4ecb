@@ -3394,7 +3394,8 @@ Wisdom modifier") stays text. Players need a content republish
 
 ### D108 — Shop loot validity follows native IsValidLoot, with four fixes
 
-Status: accepted (2026-10-28), roadmap queue item 7.
+Status: accepted (2026-10-28), roadmap queue item 7; package presentation
+amended the same day (owner decision: one combined row).
 
 Context: the Shop paired enchantments with bases by its own reading of the
 Weapon/Armor fields. Native `D20Workspace.IsValidLoot`, `IsValidWeapon`,
@@ -3423,10 +3424,19 @@ rebalances the pair into full packages plus singles. Deliberate differences
 - Two content lists native cannot read are corrected in
   `96-content-fixes.part`: Berserk Weapon's plural "Axes, hammers, heavy
   blades" and Soulwarding Armor's "Chain, Scale, or Plate".
-- Presentation: legacy hides the package row while singles are owned and
-  shows the pair's total on the single row, and selling one single breaks a
-  package; the modern inventory lists both holdings with their own
-  quantities and sells from the exact holding.
+- Presentation (owner decision 2026-10-28): a pair is one inventory row of
+  its total units under the package's name ("Arrows" 35), legacy-style, on
+  the Equipment workspace, the sheet's page-1 equipment and inventory
+  reference, and its item card (`sheet-model` `inventory-packages.ts`
+  `inventoryPackageGroups`; the package holding stands for the row, else the
+  singles). Storage keeps the two native holdings, so `.dnd4e` export writes
+  native rows and each holding keeps its own record's price and weight (the
+  row's weight sums them). The row's −/+ and Remove set its units and
+  rebalance (`packageQuantityCommands`); Sell one sells one single item at
+  the single's price (Arrow 4 cp), breaking a package when no singles are
+  owned (`packageSaleCommands`). Legacy names the row for the single item
+  while singles are owned, and its Sell on a package-only row removes a whole
+  package; the modern row always sells one unit.
 
 Consequences: 17 enchantments that offered no base now do (Warsoul, Reckless,
 Tigerclaw, Greater Stonewall Shield…), 38 artifacts and intelligent items

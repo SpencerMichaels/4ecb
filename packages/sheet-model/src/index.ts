@@ -54,6 +54,10 @@ import {
   type SheetEncumbrance,
 } from "./encumbrance";
 import {
+  contentReferenceFinder,
+  inventoryPackageGroups,
+} from "./inventory-packages";
+import {
   withSheetOverview,
   type SheetOverview,
   type OverviewInventory,
@@ -104,6 +108,15 @@ export {
   type LoadoutHolding,
   type ResolvedLoadoutAssignments,
 } from "@4ecb/rules-engine";
+export {
+  contentReferenceFinder,
+  inventoryPackageGroups,
+  inventoryPackagePair,
+  packageSplit,
+  plainHoldingOf,
+  type InventoryPackageGroup,
+  type InventoryPackagePair,
+} from "./inventory-packages";
 export {
   deityDomains,
   deityDomainsText,
@@ -2101,7 +2114,40 @@ export function buildEvaluatedSheetModel(
       ),
     };
   });
-  const itemCards: SheetCard[] = inventoryPresentations.flatMap(
+  // Packaged gear (Arrows and Arrow) lists as one row of the pair's total
+  // units under the package's name; its weight sums each holding's own
+  // (D108). Encumbrance, loadout and item sets keep the native holdings.
+  const packageGroups = inventoryPackageGroups(
+    build.inventory,
+    (id) => entities.get(id.toLocaleLowerCase()),
+    contentReferenceFinder(entities),
+  );
+  type InventoryPresentation = (typeof inventoryPresentations)[number];
+  const inventoryRows = inventoryPresentations.flatMap<
+    InventoryPresentation & {
+      readonly members: readonly InventoryPresentation[] | undefined;
+    }
+  >((presentation) => {
+    const group = packageGroups.get(presentation.entry.id);
+    if (group === undefined) return [{ ...presentation, members: undefined }];
+    if (group.representative.id !== presentation.entry.id) return [];
+    const memberIds = new Set(
+      [group.packHolding, group.singleHolding].flatMap((holding) =>
+        holding === undefined ? [] : [holding.id],
+      ),
+    );
+    return [
+      {
+        ...presentation,
+        name: group.name,
+        entry: { ...presentation.entry, quantity: group.units },
+        members: inventoryPresentations.filter(({ entry }) =>
+          memberIds.has(entry.id),
+        ),
+      },
+    ];
+  });
+  const itemCards: SheetCard[] = inventoryRows.flatMap(
     ({ entry, original, entity, itemEntities, name, referenceKind }) => {
       if (referenceKind !== undefined) return [];
       return [
@@ -2275,23 +2321,22 @@ export function buildEvaluatedSheetModel(
     ]),
     senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
     skills: evaluatedValues(SKILLS),
-    equipment: inventoryPresentations.flatMap(
-      ({ entry, name, referenceKind }) =>
-        referenceKind === undefined
-          ? [
-              {
-                label: name,
-                value: [
-                  `× ${entry.quantity}`,
-                  entry.equippedQuantity > 0
-                    ? `${entry.equippedQuantity} equipped`
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" · "),
-              },
-            ]
-          : [],
+    equipment: inventoryRows.flatMap(({ entry, name, referenceKind }) =>
+      referenceKind === undefined
+        ? [
+            {
+              label: name,
+              value: [
+                `× ${entry.quantity}`,
+                entry.equippedQuantity > 0
+                  ? `${entry.equippedQuantity} equipped`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" · "),
+            },
+          ]
+        : [],
     ),
     features: [...features].map(([group, entries]) => ({ group, entries })),
     proficiencies: sheetProficiencies(active),
@@ -2362,48 +2407,63 @@ export function buildEvaluatedSheetModel(
       type: entity.type,
     })),
     content,
-    inventory: inventoryPresentations
+    inventory: inventoryRows
       .filter(({ referenceKind }) => referenceKind === undefined)
-      .map(({ entry, original, name, entity, itemEntities }) => ({
-        id: entry.id,
-        name,
-        itemType: entity?.type ?? original?.elements.at(-1)?.type,
-        baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
-        ...inventoryCategoryFields(
-          original?.elements ??
-            entry.definitionIds.map((definitionId) => {
-              const entity = entities.get(definitionId.toLocaleLowerCase());
-              return {
-                definitionId,
-                name: entity?.name ?? "",
-                type: entity?.type ?? "",
-              };
-            }),
-          options,
-        ),
-        quantity: entry.quantity,
-        equipped: entry.equippedQuantity,
-        weight: inventoryHoldingWeight({
+      .map((row) => {
+        const { entry, original, name, entity, itemEntities } = row;
+        const weightOf = (quantity: (holding: typeof entry) => number) =>
+          sumWeights(
+            (row.members ?? [row]).map((member) =>
+              inventoryHoldingWeight({
+                quantity: quantity(member.entry),
+                definitions: member.itemEntities,
+                complete:
+                  member.entry.definitionIds.length ===
+                  member.itemEntities.length,
+                override: Object.entries(member.entry.overrides ?? {}).find(
+                  ([label]) => label.toLowerCase() === "weight",
+                )?.[1],
+              }),
+            ),
+          );
+        return {
+          id: entry.id,
+          name,
+          itemType: entity?.type ?? original?.elements.at(-1)?.type,
+          baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
+          ...inventoryCategoryFields(
+            original?.elements ??
+              entry.definitionIds.map((definitionId) => {
+                const entity = entities.get(definitionId.toLocaleLowerCase());
+                return {
+                  definitionId,
+                  name: entity?.name ?? "",
+                  type: entity?.type ?? "",
+                };
+              }),
+            options,
+          ),
           quantity: entry.quantity,
-          definitions: itemEntities,
-          complete: entry.definitionIds.length === itemEntities.length,
-          override: Object.entries(entry.overrides ?? {}).find(
-            ([name]) => name.toLowerCase() === "weight",
-          )?.[1],
-        }),
-        carriedWeight: inventoryHoldingWeight({
-          quantity: Math.max(0, entry.quantity - entry.equippedQuantity),
-          definitions: itemEntities,
-          complete: entry.definitionIds.length === itemEntities.length,
-          override: Object.entries(entry.overrides ?? {}).find(
-            ([name]) => name.toLowerCase() === "weight",
-          )?.[1],
-        }),
-        slots:
-          loadout.assignmentsByEntry
-            .get(entry.id)
-            ?.map((assignment) => assignment.slot) ?? [],
-        fields: itemEntities.flatMap(entityFields),
-      })),
+          equipped: entry.equippedQuantity,
+          // A package row weighs each native holding by its own record.
+          weight: weightOf((holding) => holding.quantity),
+          carriedWeight: weightOf((holding) =>
+            Math.max(0, holding.quantity - holding.equippedQuantity),
+          ),
+          slots:
+            loadout.assignmentsByEntry
+              .get(entry.id)
+              ?.map((assignment) => assignment.slot) ?? [],
+          fields: itemEntities.flatMap(entityFields),
+        };
+      }),
   });
+}
+
+/** Holding weights summed; undefined when no holding lists a weight. */
+function sumWeights(weights: readonly (number | undefined)[]) {
+  const listed = weights.filter((weight) => weight !== undefined);
+  return listed.length === 0
+    ? undefined
+    : listed.reduce((total, weight) => total + weight, 0);
 }
