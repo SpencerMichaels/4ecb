@@ -8,8 +8,8 @@ links, issues and the CSS that decides their look are now checked by code:
 the unit tests named in their commits. Those items are gone from this list.
 The 46 items left are the ones that need your eyes, merged into 41 items
 over 11 passes. Each pass is one character or one page, and you walk it
-once. One item is an automated check that fails today (Pass 1, a bug
-being fixed). Re-check it once the fix lands.
+once. The 45 rows `review:verify` lists for the owner are these items;
+every automated check passes (2026-10-28, after `f22c5fc`).
 
 ## How to use this list
 
@@ -118,13 +118,6 @@ preview and Inventory.
     with "…".
   - **Decide:** "Barbarian Agility" and "Fighter Talents" keep the class name
     because it starts the feature's own name, not a "Level N" slot name. OK?
-- [ ] **Pact weapon named by its artifact.** Automated. **The check fails
-      today:** Inventory reads "Sword of the White Well (WearingPactBlade)",
-      which shows a legacy choice name.
-  - **Where:** `beatrix` → `edit?tab=equipment`, Inventory and the main-hand
-    loadout slot.
-  - **Expect:** "Sword of the White Well", with nothing after it. Re-check
-    once the bug is fixed. The cards are already right.
 
 ## Pass 2: White Well hexblade 25
 
