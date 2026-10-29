@@ -14,6 +14,7 @@ import {
 } from "@4ecb/rules-engine";
 import {
   authoredSheetPowerCard,
+  createEvaluatedPowerTextPersonalizer,
   createSheetPowerCardFinder,
   creatureRecord,
   sheetCreatureCard,
@@ -23,6 +24,7 @@ import {
   type SheetBeastCompanionCard,
   type SheetCard,
   type SheetCreatureCard,
+  type SheetCreatureOrigin,
   type SheetFamiliarCard,
   itemSetOf,
   sheetItemSetCard,
@@ -57,12 +59,13 @@ export interface BuilderCardSettings {
   readonly beastCardFor: (
     entity: ContentEntity,
   ) => SheetBeastCompanionCard | undefined;
-  /** The creature an item's records carry (a mount, D110) as this
-   *  character would have it; undefined for an item without a stat block, or
-   *  an owner-relative one before the character is evaluated. */
+  /** The creature records carry (a mount, D110; a summon power's, D111)
+   *  as this character would have it; undefined for records without a stat
+   *  block, or an owner-relative one before the character is evaluated. */
   readonly creatureCardFor: (
     name: string,
     entities: readonly ContentEntity[],
+    origin?: SheetCreatureOrigin,
   ) => SheetCreatureCard | undefined;
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
@@ -153,6 +156,11 @@ export function evaluatedBuilderCardSettings(
     );
   let contentById: Map<string, ContentEntity> | undefined;
   const paragonPathId = buildParagonPathId(build);
+  const summonPersonalize = createEvaluatedPowerTextPersonalizer(
+    evaluation,
+    entities,
+    preferences.resolveAbilityChoices,
+  );
   return {
     ...(paragonPathId === undefined ? {} : { paragonPathId }),
     itemOverlays: evaluation.overlays,
@@ -162,16 +170,19 @@ export function evaluatedBuilderCardSettings(
         owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
       ),
     familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
-    creatureCardFor: (name, entities) => {
+    creatureCardFor: (name, entities, origin = { kind: "mount" }) => {
       const record = creatureRecord(entities);
       return record === undefined
         ? undefined
         : sheetCreatureCard({
             ...record,
-            origin: { kind: "mount" },
-            name,
+            origin,
+            name: origin.kind === "summon" ? record.block.name : name,
             stats: evaluation.stats,
             level: evaluation.level,
+            ...(origin.kind === "summon"
+              ? { personalize: summonPersonalize }
+              : {}),
           });
     },
     beastCardFor: (entity) => {
@@ -224,13 +235,13 @@ export function authoredBuilderCardSettings(
     beastCardFor: () => undefined,
     // A published block prints its own numbers; an owner-relative one needs
     // the evaluated character.
-    creatureCardFor: (name, entities) => {
+    creatureCardFor: (name, entities, origin = { kind: "mount" }) => {
       const record = creatureRecord(entities);
       return record === undefined || record.block.kind !== "fixed"
         ? undefined
         : sheetCreatureCard({
             ...record,
-            origin: { kind: "mount" },
+            origin,
             name,
             stats: {},
             level: characterLevel,
@@ -346,20 +357,23 @@ export function BuilderItemCard({
   );
 }
 
-/** The creature an item carries (a mount's stat block, D110), as the
- *  sheet prints it, beside the item's own card. */
+/** The creature an item carries (a mount's stat block, D110) or a summon
+ *  power describes (D111), as the sheet prints it, beside the item's or
+ *  power's own card. */
 export function BuilderCreatureCard({
   name,
   entities,
+  origin,
   headingSuffix = "-creature",
 }: {
   readonly name: string;
   readonly entities: readonly ContentEntity[];
+  readonly origin?: SheetCreatureOrigin;
   readonly headingSuffix?: string;
 }) {
   const settings = useContext(BuilderCardContext);
   const showSource = useContext(ShowEntitySourceContext);
-  const card = settings.creatureCardFor(name, entities);
+  const card = settings.creatureCardFor(name, entities, origin);
   const entity = entities.at(-1);
   if (card === undefined || entity === undefined) return null;
   return (

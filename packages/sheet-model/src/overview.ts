@@ -805,9 +805,10 @@ export function withSheetOverview(
   ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId));
   // What page 1's other panes and the companion card show: a reminder they
   // already cover is never offered (never twice on one page).
-  // What gives a creature card: its mount holding, or its providers.
+  // What gives a creature card: its mount holding, or its providers (a
+  // summon power's occurrences, D111).
   const creatureSources = (card: SheetCreatureCard) => [
-    ...(card.origin.holdingId === undefined
+    ...(card.origin.kind !== "mount" || card.origin.holdingId === undefined
       ? []
       : [inventorySourceKey(card.origin.holdingId)]),
     ...card.provenanceIds.flatMap((id) => sourceOf(id)),

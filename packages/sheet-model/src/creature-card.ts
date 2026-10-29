@@ -14,18 +14,25 @@ import {
 
 /**
  * A creature's card (D110): a creature stat block stored on a content record
- * (`_Creature Stat Block`), in the companion card frame. A mount holding's
- * creature today; a summon power's later. A published block's numbers are
+ * (`_Creature Stat Block`), in the companion card frame: a mount holding's
+ * creature, or the creature a summon power describes (D111). A published
+ * block's numbers are
  * printed as stored; an owner-relative block's come from rules-engine
  * `associateStatistics` over the owner's evaluated stats, as an associate's
  * do (D107). The text is the stat block's, never abbreviated or reworded.
  */
-export type SheetCreatureOrigin = {
-  readonly kind: "mount";
-  /** The inventory holding the creature belongs to; absent for a builder
-   *  candidate (Shop, catalog) that no holding owns yet. */
-  readonly holdingId?: string;
-};
+export type SheetCreatureOrigin =
+  | {
+      readonly kind: "mount";
+      /** The inventory holding the creature belongs to; absent for a
+       *  builder candidate (Shop, catalog) that no holding owns yet. */
+      readonly holdingId?: string;
+    }
+  | {
+      readonly kind: "summon";
+      /** The summon power whose record carries the creature (D111). */
+      readonly powerId: string;
+    };
 
 /** A trait or power of the creature, with its numbers worked out. */
 export interface SheetCreatureEntry extends AssociateStatisticsEntry {
@@ -169,6 +176,10 @@ export interface SheetCreatureCardInput {
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly level: number;
   readonly provenanceIds?: readonly string[];
+  /** The power-text personalizer a summon's commands take, as its power
+   *  card's text does ("Intelligence modifier (+5)"): lines whose numbers
+   *  the stat block does not work out itself. */
+  readonly personalize?: (text: string) => string;
 }
 
 const defined = <Value extends object>(value: Value) =>
@@ -248,12 +259,26 @@ export function sheetCreatureCard(
   const identity = [associate.size, associate.creatureType]
     .filter(Boolean)
     .join(" ");
+  const personalize = input.personalize;
+  const personalized = (
+    entries: readonly AssociateStatisticsEntry[],
+  ): SheetCreatureEntry[] =>
+    personalize === undefined
+      ? [...entries]
+      : entries.map((entry) => ({
+          ...entry,
+          lines: entry.lines.map((line) =>
+            line.attackBonus !== undefined || line.damage !== undefined
+              ? line
+              : { ...line, text: personalize(line.text) },
+          ),
+        }));
   return {
     ...common,
     defenses: statistics.defenses,
     hitPoints: statistics.hitPoints,
-    traits: statistics.traits,
-    actions: statistics.powers,
+    traits: personalized(statistics.traits),
+    actions: personalized(statistics.powers),
     ...defined({
       level: associate.level,
       role: associate.role,
@@ -300,6 +325,8 @@ export function sheetCreatureCard(
 /** The deck key of a creature's card (D099 stable provenance keys); the
  *  actions half of a split creature adds {@link CREATURE_ACTIONS_KEY_SUFFIX}. */
 export function sheetCreatureCardKeyBase(card: SheetCreatureCard): string {
+  if (card.origin.kind === "summon")
+    return `creature:summon:${card.origin.powerId.trim().toLocaleLowerCase()}`;
   return card.origin.holdingId === undefined
     ? `creature:${card.origin.kind}:def:${card.id.trim().toLocaleLowerCase()}`
     : `creature:${card.origin.kind}:${card.origin.holdingId}`;
@@ -339,6 +366,23 @@ export function creatureCardText(card: SheetCreatureCard): string {
   ]
     .filter((part): part is string => part !== undefined && part !== "")
     .join(". ");
+}
+
+/** The type bar's label: what kind of creature the card shows. */
+export function creatureCardTypeLabel(card: SheetCreatureCard): string {
+  return card.origin.kind === "summon" ? "Summoned creature" : "Mount";
+}
+
+/**
+ * The fields of a summon power's record that its creature card shows (D111):
+ * the power card leaves them out. Empty for any other record.
+ */
+export function summonCreatureFieldNames(
+  entity: ContentEntity | undefined,
+): ReadonlySet<string> {
+  if (entity === undefined) return new Set();
+  const block = readCreatureStatBlock(entity.specifics);
+  return new Set(block?.kind === "master" ? (block.powerFields ?? []) : []);
 }
 
 /** The card's title: an actions card names itself apart from its stats

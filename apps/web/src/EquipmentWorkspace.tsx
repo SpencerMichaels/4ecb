@@ -366,11 +366,16 @@ export function ItemDetail({
       </div>
       <BuilderCreatureCard name={item.displayName} entities={item.entities} />
       {powers.map((power) => (
-        <BuilderPowerCard
-          entity={power}
-          headingSuffix="-granted"
-          key={power.id}
-        />
+        <Fragment key={power.id}>
+          <BuilderPowerCard entity={power} headingSuffix="-granted" />
+          {/* A summon power's creature (D111). */}
+          <BuilderCreatureCard
+            name={power.name}
+            entities={[power]}
+            origin={{ kind: "summon", powerId: power.id }}
+            headingSuffix="-granted-creature"
+          />
+        </Fragment>
       ))}
       <BuilderItemSetCard
         pieces={item.entities}

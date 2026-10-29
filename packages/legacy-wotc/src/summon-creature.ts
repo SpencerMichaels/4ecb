@@ -344,9 +344,11 @@ function parseStatFields(
  *  "Standard Action (1/encounter)", "Opportunity Attack"). */
 const COMMAND_FIELD =
   /^(standard|standart|minor|move|free|no|opportunity|immediate interrupt|immediate reaction|triggered)\s*(action|acton|attack)?\s*(?:\(([^)]*)\))?$/i;
-/** Creature behavior and per-type details shown with the creature. */
+/** Creature behavior shown with the creature. Summon Elemental Warrior's
+ *  per-type fields (" Water", " Air") stay on the power card: they are
+ *  riders of the attack its Effect describes. */
 const BEHAVIOR_FIELD =
-  /^(instinctive effect|intrinsic nature|symbiosis|special movement\b.*|water|air|fire|earth)$/i;
+  /^(instinctive effect|intrinsic nature|symbiosis|special movement\b.*)$/i;
 
 const COMMAND_ACTIONS: Readonly<Record<string, string>> = {
   standard: "Standard",

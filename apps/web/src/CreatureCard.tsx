@@ -1,5 +1,6 @@
 import {
   creatureCardTitle,
+  creatureCardTypeLabel,
   type SheetCreatureCard,
   type SheetCreatureEntry,
 } from "@4ecb/sheet-model";
@@ -152,8 +153,8 @@ export function creatureNotes(
 }
 
 /**
- * A creature's card (D110), in the companion cards' frame: a mount's (later
- * a summoned creature's) stat block, one format for the printed deck and the
+ * A creature's card (D110), in the companion cards' frame: a mount's or a
+ * summoned creature's (D111) stat block, one format for the printed deck and the
  * builder. A whole card shows everything; a creature too long for one
  * printed card prints as a `stats` card and an `actions` card (the deck
  * decides, by measuring the whole card at the minimum text size). The
@@ -299,7 +300,7 @@ export function CreatureCard({
       )}
       {panel.afterBody}
       <div className="print-card-type">
-        <span>{card.origin.kind === "mount" ? "Mount" : "Creature"}</span>
+        <span>{creatureCardTypeLabel(card)}</span>
       </div>
     </article>
   );

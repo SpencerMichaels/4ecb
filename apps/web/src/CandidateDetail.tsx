@@ -14,6 +14,7 @@ import {
   BuilderCardContext,
   BuilderFamiliarCard,
   BuilderItemCard,
+  BuilderCreatureCard,
   BuilderPowerCard,
 } from "./BuilderCards";
 import {
@@ -375,25 +376,36 @@ export function CandidateDetailCard({
         />
       </div>
     );
-  if (isPower || isItemEntity(entity))
+  // A summon power's creature is its own card after the power's (D111).
+  if (isPower)
     return (
-      <div className="candidate-card-panel">
-        {isPower ? (
+      <>
+        <div className="candidate-card-panel">
           <BuilderPowerCard
             entity={entity}
             headingSuffix={headingSuffix}
             subheading={subheading}
             headerAction={headerAction}
           />
-        ) : (
-          <BuilderItemCard
-            name={entity.name}
-            entities={[entity]}
-            headingSuffix={headingSuffix}
-            subheading={subheading}
-            headerAction={headerAction}
-          />
-        )}
+        </div>
+        <BuilderCreatureCard
+          name={entity.name}
+          entities={[entity]}
+          origin={{ kind: "summon", powerId: entity.id }}
+          headingSuffix={`${headingSuffix}-creature`}
+        />
+      </>
+    );
+  if (isItemEntity(entity))
+    return (
+      <div className="candidate-card-panel">
+        <BuilderItemCard
+          name={entity.name}
+          entities={[entity]}
+          headingSuffix={headingSuffix}
+          subheading={subheading}
+          headerAction={headerAction}
+        />
       </div>
     );
   // Other choices use the printed card's frame: a solid title band, card

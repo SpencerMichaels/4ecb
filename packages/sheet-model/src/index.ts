@@ -12,6 +12,7 @@ import {
 import {
   displayPrerequisites,
   isUserFacingSpecific,
+  readCreatureStatBlock,
   weaponPropertyText,
   type ContentEntity,
   type SpecificField,
@@ -41,6 +42,7 @@ import {
   creatureRecord,
   descriptionRepeatsStatBlock,
   sheetCreatureCard,
+  summonCreatureFieldNames,
   type SheetCreatureCard,
 } from "./creature-card";
 import { universalPowerDefinitionIds } from "./power-reference";
@@ -89,10 +91,12 @@ export {
   CREATURE_ACTIONS_KEY_SUFFIX,
   creatureCardText,
   creatureCardTitle,
+  creatureCardTypeLabel,
   creatureRecord,
   descriptionRepeatsStatBlock,
   sheetCreatureCard,
   sheetCreatureCardKeyBase,
+  summonCreatureFieldNames,
   type SheetCreatureCard,
   type SheetCreatureCardInput,
   type SheetCreatureCardPart,
@@ -1092,6 +1096,8 @@ function evaluatedPowerCards(
       name,
     ]),
   );
+  // A summon's creature is its own card (D111).
+  const creatureFields = summonCreatureFieldNames(entity);
   const commonFields: SheetValue[] = [
     ...(entity === undefined
       ? []
@@ -1099,6 +1105,7 @@ function evaluatedPowerCards(
     )
       .filter(
         ({ label }) =>
+          !creatureFields.has(label) &&
           !irrelevantFeatureClauses.has(featureClauseKey(label)) &&
           !["power usage", "action type", "keywords"].includes(
             label.toLocaleLowerCase(),
@@ -1318,6 +1325,23 @@ export function authoredSheetPowerCard(
 }
 
 /**
+ * A summon power's card without the fields its creature card shows (D111),
+ * where the creature card can be built (an evaluated character).
+ */
+function withoutSummonCreatureFields(
+  card: SheetCard,
+  entity: ContentEntity,
+): SheetCard {
+  const creatureFields = summonCreatureFieldNames(entity);
+  return creatureFields.size === 0
+    ? card
+    : {
+        ...card,
+        fields: card.fields.filter(({ label }) => !creatureFields.has(label)),
+      };
+}
+
+/**
  * Builds printed power cards from a builder evaluation, including powers the
  * character does not own yet when the caller supplies a hypothetical
  * evaluation of that power. Owned powers produce exactly the sheet's card.
@@ -1351,7 +1375,10 @@ export function createSheetPowerCardFinder(
     if (cached !== undefined) return cached;
     const card =
       power === undefined
-        ? authoredSheetPowerCard(entity, personalize, records.lookup)
+        ? withoutSummonCreatureFields(
+            authoredSheetPowerCard(entity, personalize, records.lookup),
+            entity,
+          )
         : evaluatedPowerCards(
             power,
             entity,
@@ -2206,6 +2233,67 @@ export function buildEvaluatedSheetModel(
           ];
     },
   );
+  // A summon power's creature card (D111), after the mounts. Its
+  // provenance is the power's occurrences (and the Internal records that
+  // granted them), so page-1 reminders from them dedup against the card.
+  const summonOccurrences = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  const summonPersonalize = createEvaluatedPowerTextPersonalizer(
+    evaluation,
+    content,
+    options.resolveAbilityChoices === true,
+  );
+  const summonCards: SheetCreatureCard[] = evaluation.powers.flatMap(
+    (power) => {
+      const entity = entities.get(power.definitionId.toLocaleLowerCase());
+      const block =
+        entity === undefined ||
+        entity.type.trim().toLocaleLowerCase() !== "power"
+          ? undefined
+          : readCreatureStatBlock(entity.specifics);
+      if (entity === undefined || block === undefined) return [];
+      const provenanceIds = evaluation.occurrences
+        .filter(
+          (occurrence) =>
+            occurrence.definitionId.toLocaleLowerCase() ===
+            power.definitionId.toLocaleLowerCase(),
+        )
+        .flatMap((occurrence) => {
+          const chain = [occurrence.id];
+          let parent =
+            occurrence.parentId === undefined
+              ? undefined
+              : summonOccurrences.get(occurrence.parentId);
+          while (
+            parent !== undefined &&
+            entities
+              .get(parent.definitionId.toLocaleLowerCase())
+              ?.type.trim()
+              .toLocaleLowerCase() === "internal"
+          ) {
+            chain.push(parent.id);
+            parent =
+              parent.parentId === undefined
+                ? undefined
+                : summonOccurrences.get(parent.parentId);
+          }
+          return chain;
+        });
+      return [
+        sheetCreatureCard({
+          entity,
+          block,
+          origin: { kind: "summon", powerId: entity.id },
+          name: block.name,
+          stats: evaluation.stats,
+          level: evaluation.level,
+          provenanceIds,
+          personalize: summonPersonalize,
+        }),
+      ];
+    },
+  );
   // Known records: the build's learned entries plus what the evaluation
   // grants (`grant type="Ritual"`, `FREEBEE:`), once each, with their source.
   const learnedReferences = knownRecords(build, evaluation, (id) =>
@@ -2383,7 +2471,7 @@ export function buildEvaluatedSheetModel(
     proficiencies: sheetProficiencies(active),
     powers: powerCards,
     items: itemCards,
-    companions: [...companionCards, ...creatureCards],
+    companions: [...companionCards, ...creatureCards, ...summonCards],
     ...(itemSets.length === 0 ? {} : { itemSets }),
     ...(deityEntity === undefined
       ? {}
