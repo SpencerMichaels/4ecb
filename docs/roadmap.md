@@ -1059,10 +1059,18 @@ character before it is fixed, one slice per item.
      native `LootWeight` instead of blanking Weight (`5a7bf5b`); 16 more saves
      mapped to content profiles (see implementation status). Left: oleander_8/9
      Weight (homebrew TIV items we lack).
-  10. `App.GodFragments` — already supported since `c958f77` (registry corrected,
-      `2e4d297`). `MonsterDisplay.Build` (mount stat blocks, 47 mounts, display
-      only, no sample owns one) — awaiting the owner: show the stat block on
-      the mount's item card, a mount companion card, or out of scope.
+  10. `App.GodFragments` — already supported since `c958f77` (registry
+      corrected, `2e4d297`). `MonsterDisplay.Build` (47 mount stat blocks;
+      legacy showed them only in the builder's on-screen panes, never in
+      print) — in progress: a mount card in the companion card frame, stat
+      block parsed into fields at pack build; data split in `fa48eba`.
+  11. Low priority (owner, 2026-10-29): power cards whose text overflows the
+      printed card at the 6.5pt floor, by a font-metric model
+      (`tmp/queue10/powers.mjs`; 11 of 10,713, <1%): Summon Mind Weirds 119%,
+      Nature's Mask 115%, Glyph of Warding 115%, Summon Mind Weirds (Augment 1)
+      111%, Divine Challenge (Hybrid), Simulacrum, Summon Elemental Warrior,
+      Elemental Transmogrification, Bound Soul 107%, Avatars of Chaos, Call
+      Forth the Seven Keys 103%. A generic continuation card would fix them.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
