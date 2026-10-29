@@ -2691,9 +2691,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
 
     // --- CharacterBuilder / CharacterSheetViewer -----------------------
-    "App.GodFragments": notHandled(
+    "App.GodFragments": code(
       "Awaken God Fragment (ID_FMP_FEAT_2269) enables the god-fragment choice.",
-      "God Fragment is a coverage gap (audit:coverage registry)",
+      "the feat's ordinary select offers the deity's fragment (prerequisite-filtered); its statadds evaluate generically, sheet-model god-fragment-card.ts cards its ability and the feat's reference entry carries its Constant Benefits (c958f77). Legacy's list of all 11 fragments inside the feat's detail pane is left out: the choice list covers it",
+      test(
+        "packages/sheet-model/src/sheet-gaps.test.ts",
+        "cards the fragment's ability from its own fields",
+      ),
     ),
     "App.IsCharacterBeastmaster": code(
       "Beast Mastery (ID_FMP_CLASS_FEATURE_1030) shows the companion page.",
