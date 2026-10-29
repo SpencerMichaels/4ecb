@@ -1072,6 +1072,15 @@ character before it is fixed, one slice per item.
       show the usage on the creature card; merge the hexblade community trait
       cards into the creature card at pack build; Bound Soul's damage lines
       corrected.
+  12. Lessons from the new-saves pass (2026-10-29), in progress: three
+      private-corpus checks that would have caught its bugs without the new
+      saves, then a pass over what they report. (a) Record drift: diff each
+      save's saved element rules against the pack's record by ID and count
+      CBLoader-only placeholders, classifying the save's content (stock,
+      partial CBLoader, pack). (b) Unconsumed power text: report tokens in
+      every pack attack/hit line that the power-text parse does not consume.
+      (c) Selection invariant: every saved element of every sample either
+      appears in the projection or has a stated reason.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
