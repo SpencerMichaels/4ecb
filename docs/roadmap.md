@@ -1067,7 +1067,7 @@ character before it is fixed, one slice per item.
   11. ~~Overflowing power cards; summon creature cards~~ — done: 6pt floor
       (`bf4a079`); 118 summon powers print their creature on a creature card
       and keep their own power card (`a662d80`…`83200c5`, D111). Follow-ups
-      (owner, 2026-10-29), in progress: per-command attack/damage numbers on
+      (owner, 2026-10-29), done (`9760b01`…`b05d542`): per-command attack/damage numbers on
       summon creature cards; drop the emptied hexblade pact power cards and
       show the usage on the creature card; merge the hexblade community trait
       cards into the creature card at pack build; Bound Soul's damage lines
