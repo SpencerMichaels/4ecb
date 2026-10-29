@@ -1046,7 +1046,12 @@ character before it is fixed, one slice per item.
      implements, Ritual Cost Modifier, ammunition/journeybread packages,
      Berserk Weapon and Soulwarding Armor content fixes. Left (presentation):
      package rows (`HasSingleItem`, `PackageCount`, `PackageManipulation`).
-  8. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
+  8. New player saves (2026-10-28, 24 added to `sample-chars/` plus 6
+     re-saved) — in progress: triage of the 19 with mismatches or import
+     errors (homebrew vs engine/import bug vs known gap,
+     `tmp/new-saves-triage.md`), then fixes in batches and a baseline
+     `--accept` once every remaining diff is explained.
+  9. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
