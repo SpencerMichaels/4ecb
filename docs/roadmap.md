@@ -1064,13 +1064,14 @@ character before it is fixed, one slice per item.
       legacy showed them only in the builder's on-screen panes, never in
       print) — in progress: a mount card in the companion card frame, stat
       block parsed into fields at pack build; data split in `fa48eba`.
-  11. Low priority (owner, 2026-10-29): power cards whose text overflows the
-      printed card at the 6.5pt floor, by a font-metric model
-      (`tmp/queue10/powers.mjs`; 11 of 10,713, <1%): Summon Mind Weirds 119%,
-      Nature's Mask 115%, Glyph of Warding 115%, Summon Mind Weirds (Augment 1)
-      111%, Divine Challenge (Hybrid), Simulacrum, Summon Elemental Warrior,
-      Elemental Transmogrification, Bound Soul 107%, Avatars of Chaos, Call
-      Forth the Seven Keys 103%. A generic continuation card would fix them.
+  11. Power cards whose text overflows the printed card (11 of 10,713 at the
+      old 6.5pt floor, `tmp/queue10/powers.mjs`; owner, 2026-10-29: no trimming
+      corrections, no continuation card). Lower the floor to 6.0pt (fits all but
+      Summon Mind Weirds, ~119%, borderline — visual check) — with the mount
+      card work. Then split summon powers' embedded creature stat blocks (Summon
+      Mind Weirds, Simulacrum, Summon Elemental Warrior, Bound Soul, Glyph of
+      Warding, D095 summoned-creature powers generally) into a separate creature
+      card, reusing the mount card's generic creature card.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
