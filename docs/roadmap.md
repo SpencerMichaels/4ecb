@@ -1072,27 +1072,22 @@ character before it is fixed, one slice per item.
       show the usage on the creature card; merge the hexblade community trait
       cards into the creature card at pack build; Bound Soul's damage lines
       corrected.
-  12. Lessons from the new-saves pass (2026-10-29), in progress: three
-      private-corpus checks that would have caught its bugs without the new
-      saves, then a pass over what they report. (a) Record drift: diff each
-      save's saved element rules against the pack's record by ID and count
-      CBLoader-only placeholders, classifying the save's content (stock,
-      partial CBLoader, pack). (b) Unconsumed power text: report tokens in
-      every pack attack/hit line that the power-text parse does not consume.
-      (c) Selection invariant: every saved element of every sample either
-      appears in the projection or has a stated reason. Built:
-      `audit:saved-selections` (`fb1990e`: no silent drops; extras are all
-      newer content) and `audit:record-drift` (`383a6c9`: 171793, Alysa
-      Redfield, Piri and Lily look stock but map to full; 24 saves unmapped;
-      Beldin/Erdan/Hunzu/Max Unger/Natan/Trey 11–12 used another CBLoader set;
-      remaining parity diffs are drift or homebrew). `audit:power-text` is on
-      branch `worktree-agent-ace99db8d7efb0a24` (`2c0e5bb`), unmerged until the
-      in-flight `POWER_TEXT_VERSION` 3 change lands; it found nine native
-      parse gaps (flat `+ N` chain terms, abilities without "modifier",
+  12. ~~Lessons from the new-saves pass (2026-10-29)~~ — done: three private
+      checks that would have caught that pass without the new saves.
+      `audit:record-drift` (`383a6c9`) classifies each save's content from its
+      saved records; profiles remapped (171793, Alysa Redfield, Piri to stock;
+      the rest to full) and the baseline re-accepted. `audit:saved-selections`
+      (`fb1990e`) found no silent drops; house-rule picks the content disables
+      now raise a warning (`e187bee`, D043). `audit:power-text` found nine
+      native parse gaps (flat `+ N` chain terms, abilities without "modifier",
       "+ X + Y modifier", "(melee) or (ranged)" clauses, step text without
-      "damage", indented/mid-line "Level 11/21:" steps, "Base + 4" attack
-      lines, abilities after " vs.", theme "Level N" headers read early) and
-      modern over-reads awaiting owner decisions.
+      "damage", indented/mid-line "Level N:" steps, "Base + 4" attack lines,
+      abilities after " vs.", theme "Level N" headers read early), fixed in
+      `1517106` (POWER_TEXT_VERSION 4, cache v97; parity unchanged, no sample
+      owns a changed power); modern over-reads kept as D105 departures. Open
+      (owner): native never reads a summon's "Opportunity Attack" field, which
+      D111 keeps as the power's row; whether Build should show a disabled
+      house-rule pick (visual checklist Pass 14).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
