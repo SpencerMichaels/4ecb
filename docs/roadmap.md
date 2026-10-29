@@ -1059,7 +1059,10 @@ character before it is fixed, one slice per item.
      native `LootWeight` instead of blanking Weight (`5a7bf5b`); 16 more saves
      mapped to content profiles (see implementation status). Left: oleander_8/9
      Weight (homebrew TIV items we lack).
-  10. Probably out of scope: `MonsterDisplay.Build`, `App.GodFragments`.
+  10. `App.GodFragments` — already supported since `c958f77` (registry corrected,
+      `2e4d297`). `MonsterDisplay.Build` (mount stat blocks, 47 mounts, display
+      only, no sample owns one) — awaiting the owner: show the stat block on
+      the mount's item card, a mount companion card, or out of scope.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
