@@ -566,6 +566,45 @@ model (`tmp/queue10b/fit-split.mjs`), and every stats and actions half fits
 at 8 pt. The builder's item detail (Inventory, Loadout, Shop) shows the
 whole creature as a panel card under the item card, description included.
 
+Summon powers (D111): a Power with the Summoning keyword, or a field naming
+a "summoned creature", gets the same `_Creature Stat Block` at pack build
+(`legacy-wotc/src/summon-creature.ts`, field version 2), with
+`powerFields`, the names of the power's own fields the block shows. Two
+spellings carry a creature. Stat fields (`Hit Points`, `Defenses`,
+`Speed`, `Statistics` or `Creature`/`Size`/`Origin`/`Type`, traits and
+action fields; Bound Soul, Earth-friend, Servant of the Staff and the 16
+hexblade and binder pact creatures) are respelled as associate stat blocks.
+Player's Handbook 2 special-command summons (an Effect "You summon a Medium
+blade angel …" then `" Standard action"`, `" Opportunity Attack"`,
+"Instinctive Effect", "Intrinsic Nature", "Symbiosis") take the Summoning
+keyword's hit points (your bloodied value) and defenses (yours, not
+including temporary bonuses; PH2 p. 220) plus the size, speed, defense
+bonuses and resistances the Effect's sentences give the creature; a
+conditional bonus ("against opportunity attacks") stays in the Effect. The
+commands are attacks you make through the creature with your own
+statistics, so their text is kept whole and personalized like the power
+card's ("Wisdom modifier (+4)"). Fields after "Augment", a power's own
+attack (Servant of the Staff) and Summon Elemental Warrior's per-element
+riders stay on the power card. A summon whose creature cannot be placed
+(no "you summon a …" sentence, a defense bonus of another subject) is a
+`summon.stat-block-unparsed` diagnostic and keeps its whole power card.
+On the full pack 118 of 196 summon powers carry a creature; 3 are
+diagnostics (Dancing Weapon and Animate Arbalester throw a weapon, Fleeting
+Thoughts (Augment 1)'s Effect has no summon sentence) plus 3 for Bound
+Soul's damage lines, which print as text; the other 75 have no creature of
+their own (associates with D107 cards, the community trait and attack
+cards, Effect-only summons, Summon Elemental Warrior).
+
+The sheet prints each owned summon power's creature as a creature card
+after the mounts (origin `summon`, key `creature:summon:<power id>`, type
+bar "Summoned creature"), split into stats and actions cards like a mount;
+its provenance is the power's occurrences (and Internal records that
+granted them) for page-1 dedup. The power card keeps the summoning: its
+header, keyword and action bands, Effect, augments, and the evaluated
+attack rows (the engine's legacy-compatible row from the first "X vs. Y"
+command). The builder's power detail and item detail show the creature's
+panel card under the power card.
+
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser
 renderer supplies a conservative desktop/tablet layout modeled on the legacy

@@ -2813,7 +2813,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "SingleRule.SingleRule": generic("Item set rule display (_Item_Set_ID)."),
     "PowerDisplay.Build": generic(
       "Power detail: keywords, usage, display, _ChildPower movement technique.",
-      "detail-pane presentation",
+      "detail-pane presentation; a summon power's creature (its stat fields, " +
+        "special commands and creature behavior) is parsed at pack build " +
+        "into _Creature Stat Block (legacy-wotc summon-creature.ts, D111) and " +
+        "shown as a creature card, the power card keeping the summoning",
     ),
     "MonsterDisplay.Build": code(
       "Mount detail shows the _Monster stat block (47 mounts).",

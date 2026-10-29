@@ -74,6 +74,9 @@ const UPGRADES_27 = [
   upgrade("4ECB", 27, 5),
 ];
 
+/** Summon Blade Angel (invoker attack 9), a special-command summon (D111). */
+const SUMMON_BLADE_ANGEL = "ID_FMP_POWER_2880";
+
 /** Fey Pact of the White Well (hexblade). */
 const WHITE_WELL = "ID_WOG_HEXBLADE_TRAIT_PACKAGE_4";
 
@@ -256,6 +259,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Summoned allies",
             'Mourning Handmaiden\'s Attack "Level+5 vs Ref"; Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each with its number; no "UNKNOWN" on any card.',
+          ],
+          [
+            "Summoned creature cards",
+            "Mourning Handmaiden and Spectral Protector creature cards after Skills (HP your bloodied value, your defenses + 2, speed); the pact cards keep only their header.",
           ],
           [
             "Paired attack and damage effects",
@@ -943,6 +950,8 @@ const reviews: ReviewCharacter[] = [
         "ID_TIV_THEME_DRAGON_MAGAZINE_413-2",
         "ID_FMP_DEITY_1",
         { id: "ID_FMP_FEAT_2269", from: 11 },
+        // A special-command summon (D111): its creature card.
+        { id: SUMMON_BLADE_ANGEL, from: 9 },
       ],
       freeRituals: [{ name: "Make Whole", allowance: "Invoker" }],
       items: [
@@ -957,10 +966,11 @@ const reviews: ReviewCharacter[] = [
         "ID_FMP_DEITY_1",
         "ID_FMP_FEAT_2269",
         "ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2",
+        SUMMON_BLADE_ANGEL,
       ],
     },
     purpose:
-      "Female drow invoker of Avandra, Widow of Arach-Tinilith theme (Spiderling of Lolth), Awaken God Fragment, the Rose Scythe of Chauntea and two of Caelynnvala's Boons (a group set).",
+      "Female drow invoker of Avandra, Widow of Arach-Tinilith theme (Spiderling of Lolth), Awaken God Fragment, the Rose Scythe of Chauntea, two of Caelynnvala's Boons (a group set) and Summon Blade Angel.",
     links: [
       {
         label: "Rituals tab",
@@ -1130,6 +1140,10 @@ const reviews: ReviewCharacter[] = [
             "Rose Scythe of Chauntea",
             "The implement bonus shows in implement power attack lines.",
           ],
+          [
+            "Summoned creature card",
+            'Summon Blade Angel keeps its Effect; a "Blade Angel" card after the familiar, "Summoned creature" in its type bar, with the Minor Action and Opportunity Attack commands.',
+          ],
         ],
       },
       {
@@ -1139,6 +1153,16 @@ const reviews: ReviewCharacter[] = [
           [
             "Awaken God Fragment",
             "The fragment's Encounter power card on screen.",
+          ],
+        ],
+      },
+      {
+        label: "Build, level 9: Powers",
+        path: build(9, "powers"),
+        items: [
+          [
+            "Summoned creature in power detail",
+            "Select Summon Blade Angel: its creature panel card under the power card.",
           ],
         ],
       },

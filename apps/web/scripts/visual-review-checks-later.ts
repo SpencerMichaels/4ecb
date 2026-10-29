@@ -58,6 +58,7 @@ import {
 } from "./visual-review-assert";
 import type { ReviewCharacter, ReviewContext } from "./visual-review-context";
 import {
+  candidateDetailHtml,
   itemDetailHtml,
   printedDeck,
   printedPagesFor,
@@ -1234,5 +1235,156 @@ rule(
     ];
   },
 );
+
+/* ------------------------------------------------------------------ */
+/* Summoned creature cards (D111)                                       */
+/* ------------------------------------------------------------------ */
+
+const SUMMON_BLADE_ANGEL = "ID_FMP_POWER_2880";
+
+function summonCard(
+  c: ReviewCharacter,
+  powerId: string,
+): SheetCreatureCard | undefined {
+  return c.sheet.companions.find(
+    (candidate): candidate is SheetCreatureCard =>
+      candidate.kind === "creature" &&
+      candidate.origin.kind === "summon" &&
+      key(candidate.origin.powerId) === key(powerId),
+  );
+}
+
+/** Your evaluated value of a stat, for the owner-relative numbers. */
+const ownerStat = (c: ReviewCharacter, name: string) =>
+  c.evaluation.stats[name]?.value ?? NaN;
+
+rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
+  const deck = printedDeck(c);
+  const labels = deck.map(({ label }) => label);
+  const creature = deck.find(
+    ({ kind, label }) => kind === "creature" && label === "Blade Angel",
+  );
+  const power = deck.find(
+    ({ kind, label }) => kind === "power" && label === "Summon Blade Angel",
+  );
+  const card = summonCard(c, SUMMON_BLADE_ANGEL);
+  const ac = Number(ownerStat(c, "AC")) + 4;
+  return [
+    truthy("A Blade Angel creature card", creature !== undefined),
+    truthy(
+      "… in the companions run, before Action Point",
+      labels.indexOf("Blade Angel") > labels.indexOf("Skills") &&
+        labels.indexOf("Blade Angel") < labels.indexOf("Action Point"),
+      labels.join(" → "),
+    ),
+    contains("Its type bar", creature?.text ?? "", "Summoned creature"),
+    contains("Its identity", creature?.text ?? "", "Medium blade angel"),
+    inOrder("HP is your bloodied value", creature?.text ?? "", [
+      "HP",
+      String(Math.floor(Number(ownerStat(c, "Hit Points")) / 2)),
+    ]),
+    inOrder("AC is your AC + 4", creature?.text ?? "", ["AC", String(ac)]),
+    contains("Its speed", creature?.text ?? "", "6, fly 6 (hover)"),
+    contains("The Minor Action command", creature?.text ?? "", "Minor Action"),
+    contains(
+      "The Opportunity Attack command",
+      creature?.text ?? "",
+      "Opportunity Attack",
+    ),
+    contains(
+      "A command takes the power card's personalization",
+      creature?.text ?? "",
+      "Wisdom modifier (+",
+    ),
+    equal("Keyed by the power", card?.origin, {
+      kind: "summon",
+      powerId: SUMMON_BLADE_ANGEL,
+    }),
+    contains(
+      "The power card keeps its Effect",
+      power?.text ?? "",
+      "You summon a Medium blade angel",
+    ),
+    lacks(
+      "The power card leaves the commands to the creature card",
+      power?.text ?? "",
+      "slowed until the end of its turn",
+    ),
+  ];
+});
+
+rule(
+  "invoker-drow",
+  "Build, level 9: Powers",
+  "Summoned creature in power detail",
+  (c) => {
+    const entity = c.context.byId.get(key(SUMMON_BLADE_ANGEL));
+    if (entity === undefined)
+      return [truthy("Summon Blade Angel is in the pack", false)];
+    const html = candidateDetailHtml(c, entity);
+    const panel = elementsWithClass(html, "print-creature-card")[0] ?? "";
+    return [
+      truthy("A creature panel card", panel.includes("is-panel")),
+      contains("Its title", textOf(panel), "Blade Angel"),
+      contains("Its type bar", textOf(panel), "Summoned creature"),
+      contains("Its Opportunity Attack", textOf(panel), "Opportunity Attack"),
+      lacks(
+        "The power card above it has no commands",
+        textOf(html.slice(0, html.indexOf(panel))),
+        "slowed until the end of its turn",
+      ),
+    ];
+  },
+);
+
+rule("hexblade-white-well", "Print preview", "Summoned creature cards", (c) => {
+  const deck = printedDeck(c);
+  const creatures = deck.filter(({ kind }) => kind === "creature");
+  const handmaiden = creatures.find(
+    ({ label }) => label === "Mourning Handmaiden",
+  );
+  const protector = creatures.find(
+    ({ label }) => label === "Spectral Protector",
+  );
+  const pact = deck.find(
+    ({ kind, label }) =>
+      kind === "power" && label === "Summoned Creature (White Well)",
+  );
+  const hp = String(Math.floor(Number(ownerStat(c, "Hit Points")) / 2));
+  const ac = String(Number(ownerStat(c, "AC")) + 2);
+  return [
+    equal(
+      "Two summoned creature cards",
+      creatures.map(({ label }) => label),
+      ["Mourning Handmaiden", "Spectral Protector"],
+    ),
+    contains(
+      "The handmaiden's identity",
+      handmaiden?.text ?? "",
+      "Medium fey humanoid (undead)",
+    ),
+    inOrder("Its HP is your bloodied value", handmaiden?.text ?? "", [
+      "HP",
+      hp,
+    ]),
+    inOrder("Its AC is your AC + 2", handmaiden?.text ?? "", ["AC", ac]),
+    contains("Its speed", handmaiden?.text ?? "", "Speed 6"),
+    contains(
+      "The protector's speed",
+      protector?.text ?? "",
+      "7, fly 3 (hover)",
+    ),
+    contains(
+      "Its healing surges",
+      protector?.text ?? "",
+      "None, but you can expend a healing surge for the protector",
+    ),
+    lacks(
+      "The pact card leaves the stat block to the creature card",
+      pact?.text ?? "",
+      "Your bloodied value",
+    ),
+  ];
+});
 
 export const LATER_RULES: readonly Rule[] = rules;

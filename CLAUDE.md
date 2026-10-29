@@ -313,8 +313,10 @@ separate header or level rail.
   (`FamiliarCard.tsx`) and associates (`AssociateCard.tsx`, D107: the stat
   block is parsed at pack build, the numbers come from `associateStatistics`
   in `derived-values.ts`), then creatures (`CreatureCard.tsx`, D110: a held
-  mount's `_Creature Stat Block`, key `creature:mount:<holding id>`; it
-  shares the stat/entry parts with `AssociateCard.tsx`). A creature whose
+  mount's `_Creature Stat Block`, key `creature:mount:<holding id>`; then a
+  summon power's, D111, key `creature:summon:<power id>`, whose power card
+  drops the block's `powerFields`; it shares the stat/entry parts with
+  `AssociateCard.tsx`). A creature whose
   whole card overflows at the 6 pt floor, measured by a hidden
   `print-card-probe` copy, prints as a stats card and a "<name> — Actions"
   card (`applySheetLayout`'s `splitCreatures`; the halves share one

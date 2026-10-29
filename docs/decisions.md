@@ -3646,3 +3646,70 @@ Card layout (owner decisions):
   natural beast (mount) - XP 175" line and "Skills s Athletics"), so the
   full pack builds with no `mount.stat-block-unparsed` diagnostic. The
   parse is unchanged, so the stored version stays 1.
+
+### D111 — Summoned creatures print as creature cards; the power keeps the summoning
+
+Status: accepted (2026-10-29): owner decision (roadmap queue item 11), the
+parse and its field boundaries chosen within it.
+
+Context: summon powers carry their creature in their own fields: Player's
+Handbook 2 special commands (`" Standard action"`, `" Opportunity Attack"`,
+"Instinctive Effect", "Intrinsic Nature", "Symbiosis") after an Effect
+that summons it, or stat fields (`Hit Points`, `Defenses`, `Speed`,
+`Statistics`, `Creature`/`Size`/`Origin`/`Type`, traits and actions: Bound
+Soul, Earth-friend, Servant of the Staff, the hexblade and binder pact
+creatures). The longest overflowed the printed power card at the old
+6.5 pt floor (Summon Mind Weirds 119%, Simulacrum, Summon Elemental
+Warrior and Bound Soul 107%).
+
+Decision:
+
+- **The power keeps its card** (name, usage, keyword and action bands, the
+  Effect, augments, its own attack and the evaluated attack rows); the
+  creature's block moves to a **creature card** (D110's frame and split
+  rule: one card when it fits at the 6 pt floor, else stats and
+  "— Actions" cards, never a continuation; rules text never rewritten).
+  When in doubt a field stays on the power card: fields after "Augment",
+  Servant of the Staff's Attack and Hit, Summon Elemental Warrior's
+  per-element riders of the attack its Effect describes.
+- **Parsed at pack build** into the power's `_Creature Stat Block`
+  (version 2, `master` kind) with `powerFields`, the power's field names
+  the block shows (legacy-wotc `summon-creature.ts`). Stat fields are
+  respelled as associate stat blocks (D107). A special-command summon
+  takes the Summoning keyword's rules (Player's Handbook 2 p. 220: hit
+  points your bloodied value, defenses yours without temporary bonuses)
+  and the size, speed, defense bonuses and resistances the Effect's
+  sentences about the creature give; a conditional bonus stays in the
+  Effect, and a defense bonus of a subject not read as the creature, or no
+  "you summon a …" sentence, is a `summon.stat-block-unparsed` diagnostic
+  that leaves the power card whole. Its commands are attacks you make with
+  your own statistics (D095), so their text is kept whole and personalized
+  like the power card's.
+- **Numbers** come from `associateStatistics` with role "Summoned Creature",
+  so `SUMMON.` creature bonuses (Alien Summoning) reach its defenses and
+  any "your level + N" attack (D095).
+- **Sheet**: origin `{ kind: "summon", powerId }`, deck key
+  `creature:summon:<power id>`, after mounts in the companions run, type
+  bar "Summoned creature". Its provenance is the power's occurrences (and
+  the Internal records that granted them), so page-1 reminders from them
+  dedup by provenance. The builder's power and item details show its panel
+  card under the power card.
+
+Consequences: on the full pack 118 of 196 summon powers carry a creature;
+3 are diagnostics (Dancing Weapon and Animate Arbalester, whose Effect
+throws a weapon; Fleeting Thoughts (Augment 1)) and Bound Soul's damage
+lines ("your intelligence, Wisdom, or Charisma", no "modifier") print as
+text with 3 more; the other 75 have none of their own (associates, the
+community trait and attack cards, Effect-only summons, Summon Elemental
+Warrior). By the font-metric model at 6.5 pt the overflowing power cards
+drop (Simulacrum 107% → 33%, Mind Weirds 119% → 82%, Bound Soul 107% →
+0%); Summon Elemental Warrior keeps its fields (107% at 6.5 pt, 91% at the
+6 pt floor): moving its per-element riders would leave a creature card
+whose stats half alone overflows. 21 of 118 creature cards split, and
+every half fits.
+Open, for the owner: the power card's attack band and weapon table still
+show the summoner's total for the first command (the engine row legacy
+also prints), while the command text is on the creature card; the
+hexblade pact powers now print an empty body and their trait cards
+(auras, special movement) stay separate cards. Glyph of Warding is a trap,
+not a summon, and keeps its card (115% at 6.5 pt, 87% at 6 pt).

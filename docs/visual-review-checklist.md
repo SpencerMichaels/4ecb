@@ -6,8 +6,8 @@ power cards"), and 74 were factual. Their labels, text, order, numbers,
 links, issues and the CSS that decides their look are now checked by code:
 `pnpm review:verify` and `apps/web/src/visual-review-styles.test.ts`, plus
 the unit tests named in their commits. Those items are gone from this list.
-The items left are the ones that need your eyes: 42 items
-over 12 passes. Each pass is one character or one page, and you walk it
+The items left are the ones that need your eyes: 45 items
+over 13 passes. Each pass is one character or one page, and you walk it
 once. Every automated check passes (2026-10-28, after `f22c5fc`).
 
 ## How to use this list
@@ -50,8 +50,8 @@ The characters are named "Review – …" and have the ID
 - `sentinel-bear`: elf sentinel druid 25 with a bear named Bruin.
 - `warlock-fey`: elf fey warlock 11 with an Arcane Wisp familiar.
 - `artificer-ardent`: hybrid artificer/ardent 11 with a Sprite familiar.
-- `invoker-drow`: drow invoker 11 with a Spiderling of Lolth familiar and
-  two Caelynnvala's Boons pieces.
+- `invoker-drow`: drow invoker 11 with a Spiderling of Lolth familiar,
+  two Caelynnvala's Boons pieces and Summon Blade Angel.
 - `fighter-arena`: githzerai arena fighter 11 with a Warhorse and a Silver Dragon Steed.
 - `wizard-gnome`: gnome wizard 5.
 - Player saves and SampleHeroes, imported unchanged: `hystan`, `piri`,
@@ -504,3 +504,51 @@ are yours.
   - **Wrong if:** the panel card overflows the detail pane, the meta text
     ("Melee basic attack · standard, at-will") is unreadable on the dark
     card, or the table is clipped at 140%.
+
+## Pass 13: Summoned creature cards
+
+The creature cards' numbers, commands, order, type bar and what left the
+power cards are checked automatically; fit is measured in the browser, so
+only these are yours.
+
+- [ ] **Summoned creature card (D111).**
+  - **Where:** `invoker-drow` → `?preview=1`, the card after the Spiderling
+    of Lolth familiar, then the Summon Blade Angel power card among the
+    daily powers. Print (or save as PDF) once; look in dark theme and at
+    140% zoom.
+  - **Expect:** a "Blade Angel" card in the companion frame: "Medium blade
+    angel", one row of AC/Fort/Ref/Will and HP/Bloodied tiles, a Speed
+    "6, fly 6 (hover)" line, "Your defenses, not including any temporary
+    bonuses or penalties", then the Minor Action and Opportunity Attack
+    commands, "Summoned creature" in the type bar, no red "Text exceeds
+    card" outline. The Summon Blade Angel power card keeps its keyword and
+    action bands, its "Wis vs Ref" attack band, the Effect and its weapon
+    table, and is visibly shorter than before. The printed cards are light.
+  - **Wrong if:** either card is outlined as overflowing, a command appears
+    on both cards, the attack band on the power card sits over nothing
+    readable, or the creature card's text is unreadable at its size.
+  - **Decide:** whether the power card's attack band and weapon table (the
+    summoner's attack numbers, which the Opportunity Attack command uses)
+    should stay on the power card, or the totals should move to the
+    creature card's commands (needs per-command rows from the rules engine).
+- [ ] **Summoned creature in power detail (D111).**
+  - **Where:** `invoker-drow` → `edit?tab=build&level=9&section=powers`,
+    select Summon Blade Angel. Dark theme, 140% zoom.
+  - **Expect:** under the power card, the creature's panel card (dark card
+    paper on screen) with the same tiles and commands as the print card.
+  - **Wrong if:** the panel card overflows the detail pane, or the command
+    text is unreadable on the dark card.
+- [ ] **Summoned creature cards (D111).**
+  - **Where:** `hexblade-white-well` → `?preview=1`, the cards after
+    Skills, then the "Summoned Creature (White Well)" and "Greater Summon
+    (White Well Pact)" power cards.
+  - **Expect:** "Mourning Handmaiden" and "Spectral Protector" creature
+    cards (tiles, Speed line, healing surges note, "Summoned creature" type
+    bar). The two pact power cards now hold only their name, usage and
+    keyword bands; the handmaiden's and protector's trait cards and attack
+    cards are unchanged.
+  - **Wrong if:** a creature card overflows, or a pact card looks broken.
+  - **Decide:** whether the emptied pact cards should still print (they
+    track the daily use), and whether the trait cards ("Mourning
+    Handmaiden": aura, special movement, opportunity action) should join
+    the creature card instead.

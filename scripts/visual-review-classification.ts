@@ -79,6 +79,10 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'Mourning Handmaiden\'s Attack is headed "Level+5 vs Ref" and Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each evaluated and printed as your level + 5 (+30 at level 25); no printed card or page reads "UNKNOWN", and no attack header falls back to a dash.',
     "How the summoned allies' cards look.",
   ),
+  "hexblade-white-well|2|summoned creature cards (d111)": mixed(
+    "Mourning Handmaiden and Spectral Protector creature cards: fey humanoid (undead) identity, HP your bloodied value, AC your AC + 2, speed, healing surges; the pact power card drops the stat block.",
+    "Whether each card fits one printed card, legibility, light in print.",
+  ),
   // Hystan
   "hystan|0|granted aliases on feature rows": auto(
     '"Dual Heritage: counts as Elf, Human" on the printed feature rows.',
@@ -334,6 +338,14 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   "invoker-drow|11|rose scythe of chauntea": auto(
     "The implement bonus shows in the printed implement attack lines.",
+  ),
+  "invoker-drow|11|summoned creature card (d111)": mixed(
+    'A "Blade Angel" creature card in the companions run with the "Summoned creature" type bar, Medium blade angel, HP your bloodied value, AC your AC + 4, speed 6, fly 6 (hover), its Minor Action and Opportunity Attack commands with personalized modifiers; Summon Blade Angel keeps its Effect and drops the commands.',
+    "Whether the card fits one printed card (measured in the browser), legibility, light in print.",
+  ),
+  "invoker-drow|13|summoned creature in power detail (d111)": mixed(
+    "Summon Blade Angel's detail pane has a creature panel card with its commands; the power card above it has none.",
+    "The panel card in dark theme and at 140% zoom.",
   ),
   "invoker-drow|12|awaken god fragment": auto(
     "The fragment's Encounter power card is on the on-screen sheet.",
