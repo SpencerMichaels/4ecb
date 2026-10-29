@@ -1064,14 +1064,14 @@ character before it is fixed, one slice per item.
       the companion frame (`8d74174`…`b540cfe`, D110): one card when it fits at
       6pt, otherwise a stats card plus an "— Actions" card, decided by measuring
       a hidden print-size copy; no continuation cards, no rewritten rules text.
-  11. Power cards whose text overflows the printed card (11 of 10,713 at the
-      old 6.5pt floor, `tmp/queue10/powers.mjs`; owner, 2026-10-29: no trimming
-      corrections, no continuation card). Lower the floor to 6.0pt (fits all but
-      Summon Mind Weirds, ~119%, borderline — visual check) — with the mount
-      card work. Then split summon powers' embedded creature stat blocks (Summon
-      Mind Weirds, Simulacrum, Summon Elemental Warrior, Bound Soul, Glyph of
-      Warding, D095 summoned-creature powers generally) into a separate creature
-      card, reusing the mount card's generic creature card.
+  11. ~~Overflowing power cards; summon creature cards~~ — done: 6pt floor
+      (`bf4a079`); 118 summon powers print their creature on a creature card
+      and keep their own power card (`a662d80`…`83200c5`, D111). Follow-ups
+      (owner, 2026-10-29), in progress: per-command attack/damage numbers on
+      summon creature cards; drop the emptied hexblade pact power cards and
+      show the usage on the creature card; merge the hexblade community trait
+      cards into the creature card at pack build; Bound Soul's damage lines
+      corrected.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
