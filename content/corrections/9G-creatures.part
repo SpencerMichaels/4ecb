@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Creature stat-block errors (D110): a mount's _Monster text is parsed at
+  pack build into _Creature Stat Block, so a garbled line becomes a
+  mount.stat-block-unparsed diagnostic and a wrong card. Merged after the
+  CBLoader parts by scripts/build-private-content.sh. The owner allows the
+  corrected official block text here (as 9F-associates.part restores
+  associate text from the compendium).
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Cat (Dragon 399, CBLoader 40-gear.part): the block carries a stray
+       "Large natural beast (mount) - XP 175" line above its real "Tiny
+       natural beast - XP 25" line, and the typo "Skills s Athletics". The
+       record's own Full Text has the right block; restore it. -->
+  <RemoveNodes internal-id="ID_D399_GEAR_CAT"><specific name="_Monster" /></RemoveNodes>
+  <AppendNodes internal-id="ID_D399_GEAR_CAT">
+    <specific name="_Monster">Cat - Level 1 Minion Skirmisher
+Tiny  natural beast - XP 25
+Initiative +6 Senses Perception +1; low-light vision
+HP 1; a missed attack never damages a minion.
+AC 15; Fortitude 10, Reflex 14, Will 11
+Speed 7
+
+Cat’s Stealth (Move Action; at-will)
+While within 10 squares of the cat, the cat’s master can move up to half his or her speed without incurring the –5 penalty to Stealth checks for moving more than 2 squares.
+
+Skills Athletics +2, Stealth +9
+Str 4 (-3) ◦ Dex 19 (+4) ◦ Wis 12 (+1)
+Con 11 (+0) ◦ Int 2 (-4) ◦ Cha 11 (0)
+Alignment Unaligned Languages -</specific>
+  </AppendNodes>
+</D20Rules>
