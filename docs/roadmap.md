@@ -1059,11 +1059,11 @@ character before it is fixed, one slice per item.
      native `LootWeight` instead of blanking Weight (`5a7bf5b`); 16 more saves
      mapped to content profiles (see implementation status). Left: oleander_8/9
      Weight (homebrew TIV items we lack).
-  10. `App.GodFragments` — already supported since `c958f77` (registry
-      corrected, `2e4d297`). `MonsterDisplay.Build` (47 mount stat blocks;
-      legacy showed them only in the builder's on-screen panes, never in
-      print) — in progress: a mount card in the companion card frame, stat
-      block parsed into fields at pack build; data split in `fa48eba`.
+  10. ~~God fragments and mount stat blocks~~ — done. God fragments were already
+      supported (`c958f77`; registry `2e4d297`). Mounts print a creature card in
+      the companion frame (`8d74174`…`b540cfe`, D110): one card when it fits at
+      6pt, otherwise a stats card plus an "— Actions" card, decided by measuring
+      a hidden print-size copy; no continuation cards, no rewritten rules text.
   11. Power cards whose text overflows the printed card (11 of 10,713 at the
       old 6.5pt floor, `tmp/queue10/powers.mjs`; owner, 2026-10-29: no trimming
       corrections, no continuation card). Lower the floor to 6.0pt (fits all but
