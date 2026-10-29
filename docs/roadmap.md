@@ -1033,11 +1033,13 @@ character before it is fixed, one slice per item.
      warm, already cached per content set): a stored `_Prerequisite IR` built
      by `content-tool build`, used only for single-pack profiles without local
      entities and stripped on multi-pack composition.
-  6. Legality: hybrid power picks (`CheckHybridPower`, `DisallowClass`,
-     `D20Choice.CheckReplaceElem`; 5 hybrid samples); Dilettante
-     prerequisites (`FindDilettante`, `ImplementDilettante`,
-     `MeleeDilettante`); `CategoryOpt.Build` PowersAsClass (DV's Order Adept
-     feature); `RulesElement.IsPsionicClass`.
+  6. ~~Legality~~ — done (`98dfeba`, D109): hybrid DisallowClass/IsPsionicClass
+     slots and retrainings (reason `hybrid-class`), CheckHybridPower on
+     multiclass/power-replace swaps, PowersAsClass per choice level for powers
+     (all values count, D109), Dilettante melee/implement/CountsAsClass
+     predicates and Adept Dilettante's `[Dilettante]` grant. Left:
+     CheckReplaceElem's multiclass Display 'attack' limit; a saved swap that
+     CheckHybridPower forbids is not flagged.
   7. ~~Shop~~ — done (`418668d`, D108): native IsValidLoot/IsValidWeapon/
      ValidateShield/TransformLoot pairing, masterwork armor needs an
      enchantment without Inherent Bonuses, weapon enchantments on superior

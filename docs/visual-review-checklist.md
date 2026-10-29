@@ -1274,3 +1274,17 @@ groups.
   - **Expect:** each ritual at half price (50 gp → 25 gp); buying deducts that.
   - **Decide:** weapon enchantments are listed under both Weapon and Implement
     enchantments (as legacy); OK?
+
+## Hybrid power picks (2026-10-28, `98dfeba`, D109)
+
+- [ ] **Hybrid slots alternate classes; Order Adept utilities.**
+  - **Where:** `sample-chars/DV.dnd4e` → `edit?tab=build&level=1`, the second
+    "Power At-Will 1" slot, with Show unavailable on; then level 6 → the
+    utility slot.
+  - **Expect:** at level 1 the Warlock at-wills are unavailable with "Must
+    choose a power from your other hybrid class: with two powers of this
+    kind, at least one must come from each hybrid class", and the 8 Swordmage
+    at-wills are available; at level 6, Wizard utility powers (e.g. Levitate)
+    are available.
+  - **Wrong if:** the reason shows as a raw `hybrid-class` key, or Warlock
+    at-wills are offered as legal in that slot.
