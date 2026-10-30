@@ -3275,6 +3275,83 @@ describe("power evaluation", () => {
       expect(power?.commands).toBeUndefined();
     });
 
+    it("works out each command once per implement row", () => {
+      const [power] = evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["HERON"],
+        inventory: [
+          {
+            id: "rod",
+            name: "Synthetic Rod +2",
+            definitionIds: ["ROD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "wand",
+            name: "Synthetic Wand +1",
+            definitionIds: ["WAND"],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: {
+          "Intelligence modifier": stat("Intelligence modifier", 5),
+        },
+        overlays: [],
+        entities: [
+          entity("ROD", "Synthetic Rod +2", "Magic Item", {
+            "Magic Item Type": "Rod",
+            Enhancement: "+2 attack rolls and damage rolls",
+          }),
+          entity("WAND", "Synthetic Wand +1", "Magic Item", {
+            "Magic Item Type": "Wand",
+            Enhancement: "+1 attack rolls and damage rolls",
+          }),
+          entity("HERON", "Summon Glass Heron", "Power", {
+            Keywords: "Arcane, Implement, Summoning",
+            "Action Type": "Minor Action",
+            "Attack Type": "Ranged 5",
+            Effect:
+              "You summon a Medium glass heron in an unoccupied square within range.",
+            " Opportunity Attack":
+              "Melee 1; targets one creature; Intelligence vs. Fortitude; 1d8 + Intelligence modifier damage.",
+            "_Creature Stat Block": creature([
+              {
+                name: "Opportunity Attack",
+                action: "Opportunity",
+                roll: {
+                  attack: "Intelligence vs. Fortitude",
+                  hit: "1d8 + Intelligence modifier damage.",
+                  attackType: "Melee 1",
+                  target: "One creature",
+                },
+              },
+            ]),
+          }),
+        ],
+      });
+      const rows = Object.fromEntries(
+        (power?.variants ?? []).map((variant) => [
+          variant.equipmentName,
+          variant.commands?.map(({ entry, attackBonus, damage }) => ({
+            entry,
+            attackBonus,
+            damage,
+          })),
+        ]),
+      );
+      // Half level 5 + Intelligence 5 + the row's enhancement.
+      expect(rows["Synthetic Rod +2"]).toEqual([
+        { entry: 0, attackBonus: 12, damage: "1d8+7" },
+      ]);
+      expect(rows["Synthetic Wand +1"]).toEqual([
+        { entry: 0, attackBonus: 11, damage: "1d8+6" },
+      ]);
+    });
+
     it("works out a pact creature's merged attack with its card's keyed bonuses and no equipment", () => {
       const [power] = evaluatePowers({
         level: 10,

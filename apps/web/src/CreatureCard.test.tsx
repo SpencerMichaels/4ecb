@@ -139,4 +139,58 @@ describe("CreatureCard", () => {
     );
     expect(html).toContain(">Summoned creature · Daily<");
   });
+
+  it("lists a command's numbers per implement as the power card's weapon rows (D111)", () => {
+    const variant = (
+      id: string,
+      equipped: boolean,
+      attack: string,
+      damage: string,
+    ) => ({
+      id,
+      equipmentName: id,
+      equipped,
+      hand: "main" as const,
+      ability: "Wisdom",
+      attack,
+      damage,
+    });
+    const html = renderToStaticMarkup(
+      <CreatureCard
+        card={{
+          ...card,
+          origin: { kind: "summon", powerId: "ID_TEST_SUMMON" },
+          actions: [
+            {
+              name: "Opportunity Attack",
+              action: "Opportunity",
+              lines: [{ text: "Melee 1; Wisdom vs. Reflex." }],
+              variants: [
+                variant("Staff +1", false, "+10 vs Reflex", "1d8+5"),
+                variant("Rod +3", true, "+12 vs Reflex", "1d8+7"),
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    const start = html.indexOf("Opportunity Attack");
+    const section = html.slice(start, html.indexOf("</section>", start));
+    expect(section).toContain('class="print-card-variant-table"');
+    // Rows only: no column headings under a command.
+    expect(section).not.toContain("<thead>");
+    // The equipped row leads, as on the power card.
+    expect(section.indexOf("Rod\u00a0+3")).toBeGreaterThan(0);
+    expect(section.indexOf("Rod\u00a0+3")).toBeLessThan(
+      section.indexOf("Staff\u00a0+1"),
+    );
+    expect(section).toMatch(
+      /<th scope="row">Staff\u00a0\+1<\/th><td class="print-variant-bonus" aria-label="To hit">\+10<\/td><td aria-label="Damage"><span class="print-variant-expression">1d8\+5<\/span><\/td>/,
+    );
+  });
+
+  it("prints no weapon rows for a creature without them", () => {
+    const html = renderToStaticMarkup(<CreatureCard card={card} />);
+    expect(html).not.toContain("print-card-variant-table");
+  });
 });

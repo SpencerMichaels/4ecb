@@ -14,6 +14,7 @@ import {
   type EvaluatedPower,
   type EvaluatedStat,
   type PowerCommand,
+  type PowerVariant,
 } from "@4ecb/rules-engine";
 
 /**
@@ -47,12 +48,34 @@ export interface SheetCreatureRoll {
   readonly damage?: string;
 }
 
+/**
+ * One implement or weapon row of a summoned creature's command (D111): the
+ * command worked out with that row's equipment, labelled and ordered as the
+ * power card's weapon table (whose rows it reuses).
+ */
+export interface SheetCreatureCommandVariant {
+  /** The power variant's id. */
+  readonly id: string;
+  readonly equipmentName: string;
+  readonly equipped: boolean;
+  readonly hand?: "main" | "off";
+  readonly ability: string;
+  /** "+12 vs Fortitude", as a power card's weapon row. */
+  readonly attack: string;
+  /** "1d8+7". */
+  readonly damage?: string;
+}
+
 /** A trait or power of the creature, with its numbers worked out. */
 export interface SheetCreatureEntry extends AssociateStatisticsEntry {
   /** A published block's power icon: basic melee, melee, ranged, close,
    *  area. */
   readonly attackKind?: CreatureAttackKind;
   readonly roll?: SheetCreatureRoll;
+  /** A command's numbers per implement or weapon (D111), when the summoner
+   *  has more than one row and they differ, in place of `roll`; a
+   *  stat-block line keeps the power card's leading row's numbers. */
+  readonly variants?: readonly SheetCreatureCommandVariant[];
 }
 
 /**
@@ -201,6 +224,10 @@ export interface SheetCreatureCardInput {
    *  ({@link summonCommandRows}, D111): they replace the stat block's own
    *  attack and damage numbers, or print beside a command's text. */
   readonly commands?: readonly PowerCommand[];
+  /** The commands worked out once per implement or weapon row
+   *  ({@link summonCommandVariants}): each command lists them when there
+   *  is more than one row. */
+  readonly commandVariants?: readonly SummonCommandVariant[];
   /** The summon power's usage, for the type bar. */
   readonly usage?: string;
 }
@@ -222,6 +249,78 @@ export function summonCommandRows(
     (variant) => !proficientOnly || variant.proficient,
   );
   return defaultPowerVariant(variants)?.commands ?? power.commands;
+}
+
+/** A summon power's implement or weapon row with its creature's commands
+ *  worked out with that row's equipment (D111). */
+export interface SummonCommandVariant {
+  readonly id: string;
+  readonly equipmentName: string;
+  readonly equipped: boolean;
+  readonly hand?: "main" | "off";
+  readonly commands: readonly PowerCommand[];
+}
+
+/**
+ * Every row of a summon power whose creature has commands, as its power
+ * card's weapon table would list them (`proficientOnly` as the card's
+ * option); `name` is the power card's equipment label for a row.
+ */
+export function summonCommandVariants(
+  power: EvaluatedPower | undefined,
+  proficientOnly = false,
+  name: (variant: PowerVariant) => string = (variant) => variant.equipmentName,
+): SummonCommandVariant[] {
+  if (power === undefined) return [];
+  return power.variants
+    .filter((variant) => !proficientOnly || variant.proficient)
+    .flatMap((variant) =>
+      variant.commands === undefined || variant.commands.length === 0
+        ? []
+        : [
+            {
+              id: variant.id,
+              equipmentName: name(variant),
+              equipped: variant.equipped === true,
+              ...(variant.hand === undefined ? {} : { hand: variant.hand }),
+              commands: variant.commands,
+            },
+          ],
+    );
+}
+
+const commandAttack = (command: PowerCommand) =>
+  `${signedBonus(command.attackBonus)} vs ${command.defense}`;
+
+/** A command's rows per implement or weapon, when there are two or more
+ *  and they do not all give the same numbers. */
+function commandVariantRows(
+  variants: readonly SummonCommandVariant[],
+  entry: number,
+): SheetCreatureCommandVariant[] | undefined {
+  const rows = variants.flatMap((variant): SheetCreatureCommandVariant[] => {
+    const command = variant.commands.find(
+      (candidate) => candidate.entry === entry,
+    );
+    return command === undefined
+      ? []
+      : [
+          {
+            id: variant.id,
+            equipmentName: variant.equipmentName,
+            equipped: variant.equipped,
+            ...(variant.hand === undefined ? {} : { hand: variant.hand }),
+            ability: command.attackStat,
+            attack: commandAttack(command),
+            ...(command.damage === undefined ? {} : { damage: command.damage }),
+          },
+        ];
+  });
+  if (rows.length < 2) return undefined;
+  const same = rows.every(
+    (row) => row.attack === rows[0]!.attack && row.damage === rows[0]!.damage,
+  );
+  return same ? undefined : rows;
 }
 
 /** The row a power card leads with: the equipped main-hand one, else the
@@ -279,47 +378,68 @@ function withCommandRows(
     }[];
   }[],
   commands: readonly PowerCommand[] | undefined,
+  commandVariants: readonly SummonCommandVariant[] = [],
 ): SheetCreatureEntry[] {
-  if (commands === undefined || commands.length === 0) return [...entries];
   return entries.map((entry, index): SheetCreatureEntry => {
-    const row = commands.find((command) => command.entry === index);
-    if (row === undefined) return entry;
-    const damage =
-      row.damage === undefined
-        ? undefined
-        : [row.damage, row.damageType].filter(Boolean).join(" ");
-    const attack = `${signedBonus(row.attackBonus)} vs. ${row.defense}`;
-    const block = blockEntries[index];
-    let placed = false;
-    const lines = entry.lines.map(
-      (line, lineIndex): AssociateStatisticsLine => {
-        const source = block?.lines[lineIndex];
-        if (line.attackBonus !== undefined && source?.attack !== undefined) {
-          placed = true;
-          return {
-            ...line,
-            text: `${source.attack.range}; ${attack}`,
-            attackBonus: row.attackBonus,
-            defense: row.defense,
-          };
-        }
-        if (line.damage !== undefined && damage !== undefined) {
-          return {
-            ...line,
-            text: `${damage} damage${source?.rest ?? ""}`,
-            damage,
-          };
-        }
-        return line;
-      },
+    const variants = commandVariantRows(commandVariants, index);
+    // The rows' leading one is the roll a special command would print
+    // beside its text, which names the defense: print the rows only.
+    const withRow = withCommandRow(
+      entry,
+      index,
+      blockEntries,
+      commands,
+      variants === undefined,
     );
-    return placed
-      ? { ...entry, lines }
+    return variants === undefined ? withRow : { ...withRow, variants };
+  });
+}
+
+/** An entry with the leading row's numbers for its command, if any. */
+function withCommandRow(
+  entry: AssociateStatisticsEntry,
+  index: number,
+  blockEntries: Parameters<typeof withCommandRows>[1],
+  commands: readonly PowerCommand[] | undefined,
+  rollBeside: boolean,
+): SheetCreatureEntry {
+  const row = commands?.find((command) => command.entry === index);
+  if (row === undefined) return entry;
+  const damage =
+    row.damage === undefined
+      ? undefined
+      : [row.damage, row.damageType].filter(Boolean).join(" ");
+  const attack = `${signedBonus(row.attackBonus)} vs. ${row.defense}`;
+  const block = blockEntries[index];
+  let placed = false;
+  const lines = entry.lines.map((line, lineIndex): AssociateStatisticsLine => {
+    const source = block?.lines[lineIndex];
+    if (line.attackBonus !== undefined && source?.attack !== undefined) {
+      placed = true;
+      return {
+        ...line,
+        text: `${source.attack.range}; ${attack}`,
+        attackBonus: row.attackBonus,
+        defense: row.defense,
+      };
+    }
+    if (line.damage !== undefined && damage !== undefined) {
+      return {
+        ...line,
+        text: `${damage} damage${source?.rest ?? ""}`,
+        damage,
+      };
+    }
+    return line;
+  });
+  return placed
+    ? { ...entry, lines }
+    : !rollBeside
+      ? entry
       : {
           ...entry,
           roll: { attack, ...(damage === undefined ? {} : { damage }) },
         };
-  });
 }
 
 const defined = <Value extends object>(value: Value) =>
@@ -422,6 +542,7 @@ export function sheetCreatureCard(
       personalized(statistics.powers),
       associate.powers,
       input.commands,
+      input.commandVariants,
     ),
     ...(input.usage === undefined ? {} : { usage: input.usage }),
     ...defined({
@@ -509,6 +630,11 @@ export function creatureCardText(card: SheetCreatureCard): string {
       entry.roll === undefined
         ? undefined
         : [entry.roll.attack, entry.roll.damage].filter(Boolean).join(" "),
+      ...(entry.variants ?? []).map((variant) =>
+        [variant.equipmentName, variant.attack, variant.damage]
+          .filter(Boolean)
+          .join(" "),
+      ),
     ]),
     ...(card.other ?? []),
   ]

@@ -1018,6 +1018,11 @@
 .print-creature-roll strong {
   color: var(--card-color);
 }
+/* A command's numbers per implement or weapon (D111): the power card's
+   weapon table, kept under its command instead of at the card's foot. */
+.print-associate-entry .print-card-weapon-variants {
+  margin-top: 0;
+}
 .print-card-body .print-creature-description {
   display: grid;
   gap: 0.03in;

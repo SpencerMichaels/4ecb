@@ -112,11 +112,14 @@ export function PrintPowerVariants({
   variants,
   attackOrdinals,
   implementPower = false,
+  columnHeadings = true,
 }: {
   readonly variants: readonly SheetPowerVariant[];
   readonly attackOrdinals: readonly number[];
   /** On implement powers the Unarmed row is the no-implement attack. */
   readonly implementPower?: boolean;
+  /** False for the rows alone, under a creature's command (D111). */
+  readonly columnHeadings?: boolean;
 }) {
   if (variants.length === 0) return null;
   // A beast companion's attack uses none of your weapons: no weapon table,
@@ -167,27 +170,29 @@ export function PrintPowerVariants({
         className="print-card-variant-table"
         aria-label="Weapon calculations by attack"
       >
-        <thead>
-          <tr>
-            <th scope="col">Weapon</th>
-            {shared || splitDamage ? (
-              <>
-                <th scope="col">{splitDamage ? "Attacks" : "Attack"}</th>
-                {displayedOrdinals.map((ordinal) => (
+        {columnHeadings ? (
+          <thead>
+            <tr>
+              <th scope="col">Weapon</th>
+              {shared || splitDamage ? (
+                <>
+                  <th scope="col">{splitDamage ? "Attacks" : "Attack"}</th>
+                  {displayedOrdinals.map((ordinal) => (
+                    <th scope="col" key={ordinal}>
+                      {shared ? "Damage" : `Dmg ${ordinal}`}
+                    </th>
+                  ))}
+                </>
+              ) : (
+                displayedOrdinals.map((ordinal) => (
                   <th scope="col" key={ordinal}>
-                    {shared ? "Damage" : `Dmg ${ordinal}`}
+                    Attack {ordinal}
                   </th>
-                ))}
-              </>
-            ) : (
-              displayedOrdinals.map((ordinal) => (
-                <th scope="col" key={ordinal}>
-                  Attack {ordinal}
-                </th>
-              ))
-            )}
-          </tr>
-        </thead>
+                ))
+              )}
+            </tr>
+          </thead>
+        ) : null}
         <tbody>
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>

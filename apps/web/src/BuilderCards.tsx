@@ -19,6 +19,7 @@ import {
   creatureRecord,
   sheetCreatureCard,
   summonCommandRows,
+  summonCommandVariants,
   sheetBeastCompanionCard,
   sheetFamiliarCard,
   sheetItemCard,
@@ -193,6 +194,10 @@ export function evaluatedBuilderCardSettings(
         level: evaluation.level,
         ...(origin.kind === "summon" ? { personalize: summonPersonalize } : {}),
         ...(commands === undefined ? {} : { commands }),
+        commandVariants: summonCommandVariants(
+          power,
+          preferences.proficientEquipmentOnly,
+        ),
         ...(power?.usage === undefined ? {} : { usage: power.usage }),
       });
     },

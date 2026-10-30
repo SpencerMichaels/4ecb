@@ -12,6 +12,7 @@ import {
   type CardLayout,
   type CardPanelProps,
 } from "./PowerCard";
+import { PrintPowerVariants } from "./PrintPowerVariants";
 import { proseBlocks, ProseBlocks } from "./Prose";
 import { StatGroup } from "./StatTiles";
 import { usePrintCardFit } from "./use-print-card-fit";
@@ -93,6 +94,15 @@ export function CreatureEntrySection({
           {line.text}
         </p>
       ))}
+      {entry.variants === undefined ? null : (
+        // A command per implement or weapon (D111): the power card's
+        // weapon-table rows, without its column headings.
+        <PrintPowerVariants
+          variants={entry.variants}
+          attackOrdinals={[1]}
+          columnHeadings={false}
+        />
+      )}
     </section>
   );
 }

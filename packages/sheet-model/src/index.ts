@@ -33,6 +33,7 @@ import {
   type EvaluatedCharacter,
   type EvaluatedPower,
   type FieldOverlay,
+  type PowerVariant,
 } from "@4ecb/rules-engine";
 
 import {
@@ -45,6 +46,7 @@ import {
   descriptionRepeatsStatBlock,
   sheetCreatureCard,
   summonCommandRows,
+  summonCommandVariants,
   summonCreatureFieldNames,
   summonRowsOnCreature,
   type SheetCreatureCard,
@@ -102,12 +104,15 @@ export {
   sheetCreatureCard,
   sheetCreatureCardKeyBase,
   summonCommandRows,
+  summonCommandVariants,
   summonCreatureFieldNames,
   summonRowsOnCreature,
   type SheetCreatureCard,
   type SheetCreatureCardInput,
   type SheetCreatureCardPart,
+  type SheetCreatureCommandVariant,
   type SheetCreatureRoll,
+  type SummonCommandVariant,
   type SheetCreatureEntry,
   type SheetCreatureOrigin,
 } from "./creature-card";
@@ -1090,6 +1095,27 @@ export function createEvaluatedPowerTextPersonalizer(
     );
 }
 
+/** A power card's label for one of its rows: the holding's name. */
+function powerVariantName(
+  power: EvaluatedPower,
+  inventoryNames: ReadonlyMap<string, string>,
+): (variant: PowerVariant) => string {
+  // Older in-memory evaluations lack equipmentId but retain the exact native
+  // power:inventory variant identity. Never join equipment by its display name.
+  const legacyVariantNames = new Map(
+    [...inventoryNames].map(([id, name]) => [
+      `${power.definitionId}:${id}`,
+      name,
+    ]),
+  );
+  return (variant) =>
+    (variant.equipmentId === undefined
+      ? undefined
+      : inventoryNames.get(variant.equipmentId)) ??
+    legacyVariantNames.get(variant.id) ??
+    variant.equipmentName;
+}
+
 function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
@@ -1103,14 +1129,7 @@ function evaluatedPowerCards(
     readonly spellbookPowerIds: ReadonlySet<string>;
   },
 ): SheetCard[] {
-  // Older in-memory evaluations lack equipmentId but retain the exact native
-  // power:inventory variant identity. Never join equipment by its display name.
-  const legacyVariantNames = new Map(
-    [...inventoryNames].map(([id, name]) => [
-      `${power.definitionId}:${id}`,
-      name,
-    ]),
-  );
+  const variantName = powerVariantName(power, inventoryNames);
   // A summon's creature is its own card (D111).
   const creatureFields = summonCreatureFieldNames(entity);
   const commonFields: SheetValue[] = [
@@ -1135,12 +1154,7 @@ function evaluatedPowerCards(
     .filter((variant) => !proficientEquipmentOnly || variant.proficient)
     .map((variant) => ({
       id: variant.id,
-      equipmentName:
-        (variant.equipmentId === undefined
-          ? undefined
-          : inventoryNames.get(variant.equipmentId)) ??
-        legacyVariantNames.get(variant.id) ??
-        variant.equipmentName,
+      equipmentName: variantName(variant),
       ...(variant.basicAttackTypes === undefined
         ? {}
         : { basicAttackTypes: variant.basicAttackTypes }),
@@ -2354,6 +2368,11 @@ export function buildEvaluatedSheetModel(
           personalize: summonPersonalize,
           ...optionalCommands(
             summonCommandRows(power, options.proficientEquipmentOnly !== false),
+          ),
+          commandVariants: summonCommandVariants(
+            power,
+            options.proficientEquipmentOnly !== false,
+            powerVariantName(power, inventoryNames),
           ),
           ...(power.usage === undefined ? {} : { usage: power.usage }),
         }),

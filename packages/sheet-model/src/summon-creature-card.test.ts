@@ -379,12 +379,62 @@ describe("summoned creature commands (D111)", () => {
   };
 
   it("prints each command's row from the equipped implement on the creature card", () => {
-    const card = creatureOf(modelOf(angel, evaluated));
+    // Rows that agree print as the one row.
+    const card = creatureOf(
+      modelOf(angel, {
+        ...evaluated,
+        variants: [row("staff", false, [command]), row("rod", true, [command])],
+      }),
+    );
     expect(card?.actions[0]?.roll).toEqual({
       attack: "+12 vs. Reflex",
       damage: "1d8+7",
     });
     expect(creatureCardTypeLabel(card!)).toBe("Summoned creature · Daily");
+  });
+
+  it("lists each command once per implement row when there are several", () => {
+    const card = creatureOf(modelOf(angel, evaluated));
+    // The rows replace the roll beside the command's text.
+    expect(card?.actions[0]?.roll).toBeUndefined();
+    expect(card?.actions[0]?.variants).toEqual([
+      {
+        id: "staff",
+        equipmentName: "staff",
+        equipped: false,
+        hand: "main",
+        ability: "Wisdom",
+        attack: "+10 vs Reflex",
+        damage: "1d8+5",
+      },
+      {
+        id: "rod",
+        equipmentName: "rod",
+        equipped: true,
+        hand: "main",
+        ability: "Wisdom",
+        attack: "+12 vs Reflex",
+        damage: "1d8+7",
+      },
+    ]);
+  });
+
+  it("lists no implement rows for one row, or rows that all agree", () => {
+    const single = creatureOf(
+      modelOf(angel, { ...evaluated, variants: [row("rod", true, [command])] }),
+    );
+    expect(single?.actions[0]?.variants).toBeUndefined();
+    const same = creatureOf(
+      modelOf(angel, {
+        ...evaluated,
+        variants: [row("staff", false, [command]), row("rod", true, [command])],
+      }),
+    );
+    expect(same?.actions[0]?.variants).toBeUndefined();
+    expect(same?.actions[0]?.roll).toEqual({
+      attack: "+12 vs. Reflex",
+      damage: "1d8+7",
+    });
   });
 
   it("leaves the power card's attack band and weapon table to the creature", () => {
