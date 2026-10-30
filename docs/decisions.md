@@ -3806,3 +3806,30 @@ Amended (2026-10-29, owner decisions on the open questions):
 Consequences: `pnpm parity:baseline` is unchanged (the legacy rows stay;
 no legacy save prints the community cards' rows). A republish of the
 content is needed for the merged creatures and command rows.
+
+Amended (2026-10-30, owner decision): **per-implement numbers on the
+creature card.** Moving the commands left a summoner with several
+implements or weapons only the leading row's numbers, where the power card
+used to print a weapon table. Each command now lists its engine row per
+implement or weapon (the rows `PowerVariant.commands` already carried;
+sheet-model `summonCommandVariants`, `SheetCreatureEntry.variants`),
+with the power card's weapon-table rows (`PrintPowerVariants`: the same
+labels, equipped main hand first, proficiency filter) under the command.
+Only when there is more than one row and they differ: one row, or rows
+that all give the same numbers ("your level + N" commands, the pact
+creatures with no rows of their own), print exactly as before. Within the
+decision, to keep the actions half at or above the 6 pt floor: the rows
+carry no column-heading row, and a special command's "Attack … · Damage …"
+row is left off when the rows print (it is their leading row, and the
+command text names the defense); a stat-block line keeps the leading
+row's numbers in its text, as a power card's attack band does above its
+table. Fit by the font-metric model (`tmp/summon-variants/fit.mjs`, 90
+creatures with commands, 3 rows per command named "Rod of the Dragonborn
++3"): every stats and actions half fits at the floor, the worst Summon
+Thought Warrior (Augment 1)'s actions at 93% of the card at 6 pt (it
+prints at 6.5 pt); with the heading row and roll kept, 6 actions halves
+overflowed (Thought Warrior 114%). With 4 rows per command 2 overflow
+(Thought Warrior (Augment 1) 105%, Phantasmist Stalker 102%). Rows per
+command push more creatures into the stats/actions split (20 with one
+row, 57 with three). The review character `invoker-drow` carries a rod
+so Summon Blade Angel shows three rows.

@@ -11,6 +11,7 @@ import {
   applySheetLayout,
   sheetCreatureCardKeyBase,
   summonCommandRows,
+  summonCommandVariants,
   type SheetCreatureCard,
 } from "@4ecb/sheet-model";
 import {
@@ -1267,6 +1268,14 @@ function summonCommands(c: ReviewCharacter, powerId: string) {
   return summonCommandRows(power, true);
 }
 
+/** The summon power's rows with its creature's commands (D111). */
+function summonVariants(c: ReviewCharacter, powerId: string) {
+  const power = c.evaluation.powers.find(
+    ({ definitionId }) => key(definitionId) === key(powerId),
+  );
+  return summonCommandVariants(power, true);
+}
+
 /** Your evaluated value of a stat, for the owner-relative numbers. */
 const ownerStat = (c: ReviewCharacter, name: string) =>
   c.evaluation.stats[name]?.value ?? NaN;
@@ -1313,31 +1322,73 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
       creature?.text ?? "",
       "Wisdom modifier (+",
     ),
+    // The scythe (equipped), the carried rod and Unarmed: each command
+    // lists its numbers per implement (D111), in place of the one roll.
     ...(card?.actions ?? []).flatMap((entry, index) => {
       const row = summonCommands(c, SUMMON_BLADE_ANGEL)?.find(
         (command) => command.entry === index,
       );
+      const variants = summonVariants(c, SUMMON_BLADE_ANGEL);
+      const engine = variants.map((variant) => {
+        const command = variant.commands.find(
+          (candidate) => candidate.entry === index,
+        );
+        return [
+          variant.equipmentName,
+          command === undefined
+            ? undefined
+            : `${command.attackBonus < 0 ? "" : "+"}${command.attackBonus} vs ${command.defense}`,
+          command?.damage,
+        ];
+      });
       return [
-        truthy(`${entry.name} has its own row`, entry.roll !== undefined),
         equal(
-          `${entry.name}'s attack is the engine's command row`,
-          entry.roll?.attack,
+          `${entry.name}: one row per implement`,
+          entry.variants?.length,
+          3,
+        ),
+        equal(
+          `${entry.name}: each row is the engine's command for that implement`,
+          entry.variants?.map(({ equipmentName, attack, damage }) => [
+            equipmentName,
+            attack,
+            damage,
+          ]),
+          engine,
+        ),
+        equal(
+          `${entry.name}: the equipped row is the power card's leading row`,
+          entry.variants?.find(({ equipped }) => equipped)?.attack,
           row === undefined
             ? undefined
-            : `${row.attackBonus < 0 ? "" : "+"}${row.attackBonus} vs. ${row.defense}`,
+            : `${row.attackBonus < 0 ? "" : "+"}${row.attackBonus} vs ${row.defense}`,
         ),
-        contains(
-          `${entry.name}'s row prints`,
+        truthy(
+          `${entry.name}: no roll beside the rows`,
+          entry.roll === undefined,
+        ),
+        inOrder(
+          `${entry.name}'s rows print, equipped first`,
           creature?.text ?? "",
-          `Attack ${entry.roll?.attack ?? "?"}`,
+          [
+            entry.name,
+            "Rose Scythe of Chauntea",
+            "rod of Corruption",
+            "Unarmed",
+          ],
         ),
       ];
     }),
     equal(
       "The Minor Action command is Wisdom vs. Fortitude for 1d8 + Wisdom",
-      card?.actions[0]?.roll?.attack.endsWith("vs. Fortitude") === true &&
-        card.actions[0].roll.damage?.startsWith("1d8+") === true,
+      card?.actions[0]?.variants?.[0]?.attack.endsWith("vs Fortitude") ===
+        true && card.actions[0].variants[0].damage?.startsWith("1d8+") === true,
       true,
+    ),
+    lacks(
+      "A command's rows print without the weapon table's headings",
+      creature?.text ?? "",
+      "Weapon",
     ),
     equal("Keyed by the power", card?.origin, {
       kind: "summon",

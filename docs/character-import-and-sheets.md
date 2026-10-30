@@ -611,7 +611,12 @@ a mount; its provenance is the power's occurrences, the Internal records
 that granted them and the merged community cards, for page-1 dedup. Each
 command prints the engine's row for the power card's leading equipment row
 (`summonCommandRows`): a stat-block attack or hit line takes the row's
-numbers, a special command an "Attack … · Damage …" row. The power card
+numbers, a special command an "Attack … · Damage …" row. When the summoner
+has more than one implement or weapon row and they give different numbers,
+each command lists them instead (`summonCommandVariants`, the entry's
+`variants`): the power card's weapon-table rows (`PrintPowerVariants`,
+same labels and order) without its column headings, and a special command
+drops its "Attack …" row, which is the leading one. The power card
 keeps the summoning (header, keyword and action bands, Effect, augments);
 when its commands moved to the creature it prints no attack band or weapon
 table, and a power with nothing left beyond its header (the pact summons,

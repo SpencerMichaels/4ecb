@@ -959,6 +959,9 @@ const reviews: ReviewCharacter[] = [
         { id: "ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2", equip: true },
         { id: "ID_FMP_MAGIC_ITEM_7468", equip: true },
         { id: "ID_FMP_MAGIC_ITEM_7459", equip: true },
+        // A carried implement: Summon Blade Angel's commands print a row
+        // per implement on its creature card (D111).
+        { id: "ID_FMP_MAGIC_ITEM_872" },
       ],
       expectLegal: true,
       required: [

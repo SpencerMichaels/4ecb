@@ -51,7 +51,7 @@ The characters are named "Review – …" and have the ID
 - `warlock-fey`: elf fey warlock 11 with an Arcane Wisp familiar.
 - `artificer-ardent`: hybrid artificer/ardent 11 with a Sprite familiar.
 - `invoker-drow`: drow invoker 11 with a Spiderling of Lolth familiar,
-  two Caelynnvala's Boons pieces and Summon Blade Angel.
+  two Caelynnvala's Boons pieces, Summon Blade Angel and a carried rod.
 - `fighter-arena`: githzerai arena fighter 11 with a Warhorse and a Silver Dragon Steed.
 - `wizard-gnome`: gnome wizard 5.
 - Player saves and SampleHeroes, imported unchanged: `hystan`, `piri`,
@@ -520,22 +520,27 @@ automatically; fit is measured in the browser, so only these are yours.
     angel", one row of AC/Fort/Ref/Will and HP/Bloodied tiles, a Speed
     "6, fly 6 (hover)" line, "Your defenses, not including any temporary
     bonuses or penalties", then the Minor Action and Opportunity Attack
-    commands, each with a bold "Attack +13 vs. … · Damage 1d8+8" row under
-    its name, "Summoned creature · Daily" in the type bar, no red "Text
-    exceeds card" outline. The Summon Blade Angel power card keeps its
+    commands, each followed by three rows from the power card's weapon
+    table, without its column headings: "Rose Scythe of Chauntea +2 | +13 |
+    1d8+8", "Accurate rod of Corruption +2 | +13 | 1d8+8" and "Unarmed |
+    +11 | 1d8+6", the equipped scythe first, then "Summoned creature ·
+    Daily" in the type bar, no red "Text exceeds card" outline (the card
+    may print as a stats card and a "Blade Angel — Actions" card). The Summon Blade Angel power card keeps its
     keyword and action bands and the Effect, with no attack band and no
     weapon table. The printed cards are light.
   - **Wrong if:** either card is outlined as overflowing, a command appears
-    on both cards, the command row reads as part of the command text, or
-    the creature card's text is unreadable at its size.
+    on both cards, the rows read as part of the command text or as
+    belonging to the next command, the rows' stripes or dividers are
+    missing or unlike the power card's weapon table, or the creature
+    card's text is unreadable at its size.
 - [ ] **Summoned creature in power detail (D111).**
   - **Where:** `invoker-drow` → `edit?tab=build&level=9&section=powers`,
     select Summon Blade Angel. Dark theme, 140% zoom.
   - **Expect:** under the power card, the creature's panel card (dark card
-    paper on screen) with the same tiles, commands and command rows as the
-    print card.
+    paper on screen) with the same tiles, commands and per-implement rows
+    as the print card.
   - **Wrong if:** the panel card overflows the detail pane, or the command
-    text or its row is unreadable on the dark card.
+    text or its rows are unreadable on the dark card.
 - [ ] **Summoned creature cards (D111).**
   - **Where:** `hexblade-white-well` → `?preview=1`, the cards after
     Skills (each creature may print as a stats card and a "— Actions"
