@@ -1,5 +1,11 @@
 import type { CharacterBuild } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  ASSOCIATE_STAT_BLOCK_FIELD,
+  CREATURE_STAT_BLOCK_FIELD,
+  POWER_TEXT_FIELD,
+  PREREQUISITE_IR_FIELD,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 import { projectBuildForEvaluation } from "./build-projection";
 import { parseRules } from "./ir";
@@ -158,6 +164,20 @@ function removedSelections(
   return removed;
 }
 
+/**
+ * Fields `content-tool build` derives from a record's own text. The source
+ * fields they parse are already compared, and they also change when a parser
+ * version is bumped or (prerequisites) when any record joins the pack, so
+ * comparing them would report unchanged wording as changed. A re-parse that
+ * changes a number still shows in the evaluated stat and power differences.
+ */
+const DERIVED_SPECIFICS: ReadonlySet<string> = new Set([
+  ASSOCIATE_STAT_BLOCK_FIELD,
+  CREATURE_STAT_BLOCK_FIELD,
+  POWER_TEXT_FIELD,
+  PREREQUISITE_IR_FIELD,
+]);
+
 function entityFingerprint(entity: ContentEntity): string {
   return JSON.stringify({
     id: entity.id,
@@ -168,7 +188,9 @@ function entityFingerprint(entity: ContentEntity): string {
     flavor: entity.flavor,
     prerequisites: entity.prerequisites,
     printPrerequisites: entity.printPrerequisites,
-    specifics: entity.specifics,
+    specifics: entity.specifics.filter(
+      (field) => !DERIVED_SPECIFICS.has(field.name),
+    ),
     rules: entity.rules,
     description: entity.description,
     extensions: entity.extensions,

@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import type { CharacterBuild } from "@4ecb/character-domain";
-import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
+import {
+  POWER_TEXT_FIELD,
+  PREREQUISITE_IR_FIELD,
+  type ContentEntity,
+  type RuleStatement,
+} from "@4ecb/content-domain";
 
 import { previewProfileMigration } from "./profile-migration";
 
@@ -106,6 +111,43 @@ describe("content profile migration preview", () => {
     });
     expect(preview.source).toBeDefined();
     expect(preview.target).toMatchObject({ converged: true });
+  });
+
+  it("ignores pack-build parse fields when listing changed rules", () => {
+    const parsed = (parse: string, hit = "1[W] damage.") => ({
+      ...entity("SELECTED", "+1"),
+      specifics: [
+        { name: "Hit", value: hit, extraAttributes: [], ordinal: 0 },
+        {
+          name: POWER_TEXT_FIELD,
+          value: parse,
+          extraAttributes: [],
+          ordinal: 1,
+        },
+        {
+          name: PREREQUISITE_IR_FIELD,
+          value: parse,
+          extraAttributes: [],
+          ordinal: 2,
+        },
+      ],
+    });
+    const level = entity("LEVEL", "+1");
+
+    expect(
+      previewProfileMigration(
+        build,
+        [level, parsed('{"version":3}')],
+        [level, parsed('{"version":4}')],
+      ).changedDefinitionIds,
+    ).toEqual([]);
+    expect(
+      previewProfileMigration(
+        build,
+        [level, parsed('{"version":3}')],
+        [level, parsed('{"version":4}', "2[W] damage.")],
+      ).changedDefinitionIds,
+    ).toEqual(["SELECTED"]);
   });
 
   it("keeps adoption evidence explicit when the old profile is unavailable", () => {
