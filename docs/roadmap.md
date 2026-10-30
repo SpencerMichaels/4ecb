@@ -1077,17 +1077,17 @@ character before it is fixed, one slice per item.
       `audit:record-drift` (`383a6c9`) classifies each save's content from its
       saved records; profiles remapped (171793, Alysa Redfield, Piri to stock;
       the rest to full) and the baseline re-accepted. `audit:saved-selections`
-      (`fb1990e`) found no silent drops; house-rule picks the content disables
-      now raise a warning (`e187bee`, D043). `audit:power-text` found nine
+      (`fb1990e`) found no silent drops; Erdan's former-class Invoker picks, which
+      legacy still applies, stay dormant and silent (D043, D105). `audit:power-text` found nine
       native parse gaps (flat `+ N` chain terms, abilities without "modifier",
       "+ X + Y modifier", "(melee) or (ranged)" clauses, step text without
       "damage", indented/mid-line "Level N:" steps, "Base + 4" attack lines,
       abilities after " vs.", theme "Level N" headers read early), fixed in
       `1517106` (POWER_TEXT_VERSION 4, cache v97; parity unchanged, no sample
-      owns a changed power); modern over-reads kept as D105 departures. Open
-      (owner): native never reads a summon's "Opportunity Attack" field, which
-      D111 keeps as the power's row; whether Build should show a disabled
-      house-rule pick (visual checklist Pass 14).
+      owns a changed power); modern over-reads kept as D105 departures. Native never reads a
+      summon's "Opportunity Attack" field, which
+      D111 keeps as the power's row (owner: keep it, the creature card
+      shows the attack; the power's row only feeds export).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the

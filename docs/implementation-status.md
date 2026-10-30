@@ -579,9 +579,9 @@ total). Import now:
 - preserves saved picks whose slot a `requires` switches off, silently (D043;
   the "Inactive saved choices" notes of `ace6cb5`, `e8b6ffd` were removed on
   2026-10-25: Erdan 9, Beldin 3, Hu Sheng-Ming's Divine Fortune, KrizDevvon),
-  except a house-rule pick legacy applied, which is a warning with Review and
-  Remove since 2026-10-29 (`e187bee`; Erdan's 7, Beldin's 2; import marks
-  picks absent from `RulesElementTally` `legacyInactive`).
+  including former-class picks the legacy builder still applies (Erdan's seven
+  Invoker powers; owner 2026-10-29, D105; a short-lived warning, `e187bee`,
+  was reverted).
 
 Remaining differences on the new files are classified (triage notes in ignored
 `tmp/triage18/`): one player's homebrew (TIV skills, DOMT items, Lunge, many

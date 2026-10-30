@@ -14,7 +14,6 @@ import {
   contentNotInstalledIssue,
   contentUpdateIssue,
   deityAlignmentIssue,
-  dormantHouseRulePickIssues,
   evaluationFailedIssue,
   missingHoldingContentIssues,
   savedOccurrenceNames,
@@ -1051,123 +1050,6 @@ describe("dormant saved selections", () => {
       abilityScoresHouseRuled: false,
     });
     for (const issues of Object.values(groups)) expect(issues).toEqual([]);
-  });
-
-  const levelThree = (children: BuildOccurrence[]): CharacterBuild =>
-    ({
-      effectiveLevel: 3,
-      levels: [
-        {
-          level: 3,
-          root: {
-            id: "level-3",
-            identity: { name: "3", type: "Level", internalId: "L3" },
-            acquiredLevel: 3,
-            legality: "rules-legal",
-            children,
-            unresolved: false,
-          },
-        },
-      ],
-      grabbag: [],
-      alternates: [],
-      inventory: [],
-    }) as unknown as CharacterBuild;
-  const savedPick = (legality: "rules-legal" | "houserule") =>
-    ({
-      id: "pick",
-      identity: {
-        name: "Lightning's Revelation",
-        type: "Power",
-        internalId: "PICK",
-      },
-      acquiredLevel: 3,
-      legality,
-      children: [],
-      unresolved: false,
-    }) as unknown as BuildOccurrence;
-  const withLegality = (legality: "rules-legal" | "houserule") =>
-    evaluation({
-      ...dormantEvaluation,
-      dormantSelections: dormantEvaluation.dormantSelections!.map(
-        (dormant) => ({
-          ...dormant,
-          occurrence: { ...dormant.occurrence, legality },
-        }),
-      ),
-    });
-
-  it("raise a warning for a house-rule pick the content turns off, naming the pick and why", () => {
-    const issues = dormantHouseRulePickIssues({
-      evaluation: withLegality("houserule"),
-      byId,
-      build: levelThree([savedPick("houserule")]),
-      effectiveLevel: 3,
-    });
-    expect(issues).toEqual([
-      {
-        key: "dormant-house-rule:pick",
-        kind: "warning",
-        title: "Lightning's Revelation",
-        detail:
-          "Lightning's Revelation was chosen as a house rule for the level 3 encounter power slot, which Hunter turns off in the game content in use.",
-        effect:
-          "Lightning's Revelation isn't on the character or its sheet. The pick is kept on export; remove it if it no longer belongs on the character.",
-        target: { kind: "level-section", level: 3, section: "Powers" },
-        removal: { occurrenceId: "pick" },
-      },
-    ]);
-    const groups = withCharacterIssues(
-      builderIssueGroups({ ...common, evaluation: withLegality("houserule") }),
-      issues,
-    );
-    expect(groups.warnings.map(({ title }) => title)).toEqual([
-      "Lightning's Revelation",
-    ]);
-  });
-
-  it("stay silent for a rules-legal dormant pick, a pick above the character's level and a power held anyway", () => {
-    const build = levelThree([savedPick("houserule")]);
-    expect(
-      dormantHouseRulePickIssues({
-        evaluation: withLegality("rules-legal"),
-        byId,
-        build: levelThree([savedPick("rules-legal")]),
-        effectiveLevel: 3,
-      }),
-    ).toEqual([]);
-    expect(
-      dormantHouseRulePickIssues({
-        evaluation: withLegality("houserule"),
-        byId,
-        build,
-        effectiveLevel: 2,
-      }),
-    ).toEqual([]);
-    expect(
-      dormantHouseRulePickIssues({
-        evaluation: evaluation({
-          ...withLegality("houserule"),
-          activeDefinitionIds: ["PICK"],
-        }),
-        byId,
-        build,
-        effectiveLevel: 3,
-      }),
-    ).toEqual([]);
-  });
-
-  it("stay silent for an imported pick the legacy builder didn't apply either (D098)", () => {
-    expect(
-      dormantHouseRulePickIssues({
-        evaluation: withLegality("houserule"),
-        byId,
-        build: levelThree([
-          { ...savedPick("houserule"), legacyInactive: true },
-        ]),
-        effectiveLevel: 3,
-      }),
-    ).toEqual([]);
   });
 });
 

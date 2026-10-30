@@ -177,19 +177,6 @@ ID. Matches are silent in the UI (D098): no toast, badge or Diagnostics note;
 the report and `importedDefinitionId` keep them. Unmatched IDs remain
 missing-content issues as before.
 
-### Picks the legacy builder didn't apply (D043)
-
-When the save has a `RulesElementTally`, the importer marks each saved level
-and grab-bag element the tally lacks (by saved or matched internal ID, else by
-type and name; `legacyTallyHolds`) as `legacyInactive: true` on its
-`BuildOccurrence`. It is import-time evidence that the legacy builder did not
-apply the element, not a calculated source: the rules engine ignores it, and
-the only reader is the dormant house-rule pick issue
-(`dormantHouseRulePickIssues` in `apps/web/src/builder-diagnostics.ts`), which
-skips marked picks as `.dnd4e` storage artifacts. Native picks never carry
-it, and a save without a tally marks nothing. Characters imported before the
-flag existed carry none until re-imported (no backfill).
-
 Native creation starts from the active pack's exact ID/digest and canonical
 `ID_INTERNAL_LEVEL_1` definition. It persists a level-1 root, six base ability
 inputs of 10, empty inventory/history extensions, and a minimal valid 0.07a

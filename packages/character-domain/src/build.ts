@@ -29,14 +29,6 @@ export interface BuildOccurrence {
   readonly replacesId?: string;
   readonly children: readonly BuildOccurrence[];
   readonly unresolved: boolean;
-  /**
-   * Import-time evidence: the save's legacy RulesElementTally lacks this
-   * element, so the legacy builder did not apply it (a storage artifact).
-   * Set only by `.dnd4e` import when the save carries a tally; native picks
-   * never have it. Used only to keep such artifacts out of character issues
-   * (D043/D098), never as a calculated source.
-   */
-  readonly legacyInactive?: true;
 }
 
 /** A content-independent rule statement stored by a native UserEdit. */

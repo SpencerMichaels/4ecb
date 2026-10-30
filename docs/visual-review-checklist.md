@@ -551,22 +551,3 @@ automatically; fit is measured in the browser, so only these are yours.
   - **Wrong if:** a creature card overflows, an entry's heading (name,
     keywords, action and usage) is hard to tell from its lines, or the
     stats and actions halves look unbalanced.
-
-## Pass 14: Disabled house-rule picks
-
-The warnings' titles, text, count, levels and Review targets are checked by
-`builder-diagnostics.test.ts` and the import tests (D043 amendment), so only
-these are yours.
-
-- [ ] **Disabled house-rule pick warnings (D043).**
-  - **Where:** re-import `sample-chars/Erdan 11.dnd4e`, open Diagnostics
-    from the warning badge. Dark theme, 140% zoom.
-  - **Expect:** seven warnings titled after the powers (e.g. "Grasping
-    Chains of the Justiciar"), each saying the slot is one "which Hunter
-    turns off in the game content in use", with Review and Remove.
-  - **Wrong if:** a long title or its detail runs out of the list, or the
-    Review and Remove buttons are pushed out of view.
-  - **Decide:** Review on Lightning's Revelation lands on Build level 3,
-    which has no Powers section, so nothing there mentions the pick. Should
-    the Powers section show a disabled pick as a read-only "turned off by
-    Hunter" row?
