@@ -1088,6 +1088,10 @@ character before it is fixed, one slice per item.
       summon's "Opportunity Attack" field, which
       D111 keeps as the power's row (owner: keep it, the creature card
       shows the attack; the power's row only feeds export).
+      Per-implement command rows on creature cards (`62e707f`, `a8411da`):
+      shown only when numbers differ; known edge case: with 4+ implements, Summon
+      Thought Warrior (Augment 1) and Phantasmist Stalker's actions cards
+      overflow slightly (105%, 102% by the font model).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
