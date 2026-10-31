@@ -570,3 +570,16 @@ automatically; fit is measured in the browser, so only these are yours.
   - **Wrong if:** a creature card overflows, an entry's heading (name,
     keywords, action and usage) is hard to tell from its lines, or the
     stats and actions halves look unbalanced.
+
+## Pass 14: Multiclass swaps of granted powers
+
+- [ ] **Granted at-will as a Paragon Multiclassing target.**
+  - **Where:** a warlock (e.g. Japheth) with Arcane Initiate and, at level
+    11+, Paragon Multiclassing; Build tab at that level, the swap's
+    replacement target table. Dark theme, 140% zoom.
+  - **Expect:** the pact boon's granted at-will attack (Fey Pact's Eyebite)
+    is listed beside the chosen at-wills, looks like the other targets, and
+    choosing it offers wizard at-wills only (no warlock powers). After the
+    swap, Eyebite is gone from the Powers list and the sheet.
+  - **Wrong if:** the granted target looks different or locked, offers no
+    gains, or Eyebite returns after the swap or a reload.

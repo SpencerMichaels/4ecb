@@ -1122,6 +1122,11 @@ character before it is fixed, one slice per item.
       so a weapon-only power's non-proficient ki-focused row drops the ki
       focus enhancement (D105; row kept, implement powers unchanged; cache
       v103; parity unchanged).
+  15. Swap leftovers from the granted-power pass (2026-10-31): native
+      power-replace swaps may also lose granted powers (the same
+      `CheckReplaceElem` block is skipped for power-replace), and retraining
+      and power swaps don't offer unsaved rule defaults as targets (only
+      multiclass swaps do now). No save exercises either.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
