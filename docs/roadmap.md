@@ -1073,9 +1073,13 @@ character before it is fixed, one slice per item.
       cards into the creature card at pack build; Bound Soul's damage lines
       corrected.
       Per-implement command rows on creature cards (`62e707f`, `a8411da`):
-      shown only when numbers differ; known edge case: with 4+ implements, Summon
-      Thought Warrior (Augment 1) and Phantasmist Stalker's actions cards
-      overflow slightly (105%, 102% by the font model).
+      shown only when numbers differ; adjacent commands with the same numbers
+      share one captioned table under the last of them (owner, 2026-10-31),
+      which fits Summon Thought Warrior (Augment 1) and Phantasmist Stalker
+      with 4 implements. Remaining edge case (font model): Summon Emerald
+      Terror's actions card, whose three commands all differ, is at the 6pt
+      limit with 4 implements and overflows (112%) with 5 implements that all
+      give different numbers.
   12. ~~Lessons from the new-saves pass (2026-10-29)~~ — done: three private
       checks that would have caught that pass without the new saves.
       `audit:record-drift` (`383a6c9`) classifies each save's content from its

@@ -189,6 +189,59 @@ describe("CreatureCard", () => {
     );
   });
 
+  it("captions rows that adjacent commands share with those commands (D111)", () => {
+    const rows = [
+      {
+        id: "rod",
+        equipmentName: "Rod +3",
+        equipped: true,
+        hand: "main" as const,
+        ability: "Wisdom",
+        attack: "+12 vs Reflex",
+        damage: "1d8+7",
+      },
+      {
+        id: "staff",
+        equipmentName: "Staff +1",
+        equipped: false,
+        hand: "main" as const,
+        ability: "Wisdom",
+        attack: "+10 vs Reflex",
+        damage: "1d8+5",
+      },
+    ];
+    const html = renderToStaticMarkup(
+      <CreatureCard
+        card={{
+          ...card,
+          origin: { kind: "summon", powerId: "ID_TEST_SUMMON" },
+          actions: [
+            {
+              name: "Standard Action",
+              action: "Standard",
+              lines: [{ text: "Melee 1; Wisdom vs. Reflex." }],
+            },
+            {
+              name: "Opportunity Attack",
+              action: "Opportunity",
+              lines: [{ text: "Melee 1; Wisdom vs. Reflex." }],
+              variants: rows,
+              variantsFor: ["Standard Action", "Opportunity Attack"],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(html.split('class="print-card-variant-table"').length - 1).toBe(1);
+    expect(html).toContain(
+      '<caption class="print-creature-variants-for">Standard Action · Opportunity Attack</caption>',
+    );
+    // The command text is unchanged and the table follows the last command.
+    expect(html.indexOf("print-card-variant-table")).toBeGreaterThan(
+      html.lastIndexOf("Melee 1; Wisdom vs. Reflex."),
+    );
+  });
+
   it("prints no weapon rows for a creature without them", () => {
     const html = renderToStaticMarkup(<CreatureCard card={card} />);
     expect(html).not.toContain("print-card-variant-table");

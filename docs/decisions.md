@@ -3833,3 +3833,22 @@ overflowed (Thought Warrior 114%). With 4 rows per command 2 overflow
 command push more creatures into the stats/actions split (20 with one
 row, 57 with three). The review character `invoker-drow` carries a rod
 so Summon Blade Angel shows three rows.
+
+Amended (2026-10-31, owner decision): **adjacent commands that give the
+same numbers share one table.** With 4 rows per command, Thought Warrior
+(Augment 1)'s three commands and Phantasmist Stalker's melee attack and
+opportunity attack each printed the same rows again. Now a run of
+adjacent commands whose rows agree row for row prints them once, under the
+run's last command (sheet-model `SheetCreatureEntry.variantsFor`: the
+names of the commands they serve), as a table caption naming those
+commands ("Standard Action · Immediate Interrupt · Opportunity Attack");
+the other commands print their text with no rows and no roll. The command
+text and the power card's table format are unchanged, and implements whose
+numbers tie are not merged into one row. By the font model
+(`tmp/summon-variants/fit2.mjs`, `MODE=shared`), with 4 rows per command
+every actions half fits at the floor, Summon Emerald Terror (three
+different commands) at exactly 100%; with 5 rows it overflows (112%), the
+remaining edge case. Considered: inline rows per command (fit through 6
+rows, but drops the power card's table look), one card-level table with a
+column per command (needs new column headings, and commands often share a
+name), merging tied implements (fits nothing on its own).

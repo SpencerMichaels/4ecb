@@ -76,6 +76,11 @@ export interface SheetCreatureEntry extends AssociateStatisticsEntry {
    *  has more than one row and they differ, in place of `roll`; a
    *  stat-block line keeps the power card's leading row's numbers. */
   readonly variants?: readonly SheetCreatureCommandVariant[];
+  /** When adjacent commands give the same numbers per implement, their
+   *  rows print once, on the group's last command: the names of every
+   *  command they serve, for the rows' caption. The others carry no
+   *  rows and no roll. */
+  readonly variantsFor?: readonly string[];
 }
 
 /**
@@ -380,8 +385,11 @@ function withCommandRows(
   commands: readonly PowerCommand[] | undefined,
   commandVariants: readonly SummonCommandVariant[] = [],
 ): SheetCreatureEntry[] {
+  const rows = entries.map((_, index) =>
+    commandVariantRows(commandVariants, index),
+  );
   return entries.map((entry, index): SheetCreatureEntry => {
-    const variants = commandVariantRows(commandVariants, index);
+    const variants = rows[index];
     // The rows' leading one is the roll a special command would print
     // beside its text, which names the defense: print the rows only.
     const withRow = withCommandRow(
@@ -391,8 +399,40 @@ function withCommandRows(
       commands,
       variants === undefined,
     );
-    return variants === undefined ? withRow : { ...withRow, variants };
+    if (variants === undefined) return withRow;
+    // Adjacent commands with the same rows share one table, under the
+    // last of them (D111).
+    if (sameVariantRows(variants, rows[index + 1])) return withRow;
+    let first = index;
+    while (sameVariantRows(variants, rows[first - 1])) first -= 1;
+    return first === index
+      ? { ...withRow, variants }
+      : {
+          ...withRow,
+          variants,
+          variantsFor: entries
+            .slice(first, index + 1)
+            .map((member) => member.name),
+        };
   });
+}
+
+/** Whether two commands' implement rows give the same numbers, row for
+ *  row. */
+function sameVariantRows(
+  left: readonly SheetCreatureCommandVariant[],
+  right: readonly SheetCreatureCommandVariant[] | undefined,
+): boolean {
+  return (
+    right !== undefined &&
+    left.length === right.length &&
+    left.every(
+      (row, index) =>
+        row.id === right[index]!.id &&
+        row.attack === right[index]!.attack &&
+        row.damage === right[index]!.damage,
+    )
+  );
 }
 
 /** An entry with the leading row's numbers for its command, if any. */

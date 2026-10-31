@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import { sheetCardDeck } from "./card-deck";
 import {
+  creatureCardText,
   creatureCardTypeLabel,
   sheetCreatureCardKeyBase,
   summonCreatureFieldNames,
@@ -435,6 +436,115 @@ describe("summoned creature commands (D111)", () => {
       attack: "+12 vs. Reflex",
       damage: "1d8+7",
     });
+  });
+
+  it("prints the rows once for adjacent commands with the same numbers", () => {
+    const melee = {
+      text: "Melee 1; targets one creature; Wisdom vs. Reflex; 1d8 + Wisdom modifier damage.",
+    };
+    const meleeRoll = {
+      attack: "Wisdom vs. Reflex",
+      hit: "1d8 + Wisdom modifier damage.",
+      attackType: "Melee 1",
+      target: "One creature",
+    };
+    const stalker = power("ID_TEST_SUMMON_STALKER", "Summon Glass Stalker", {
+      "Power Usage": "Daily",
+      Keywords: "Implement, Summoning",
+      "Action Type": "Standard Action",
+      "Attack Type": "Ranged 10",
+      Effect: "You summon a Medium glass stalker.",
+      [CREATURE_STAT_BLOCK_FIELD]: JSON.stringify({
+        ...HERON_BLOCK,
+        name: "Glass Stalker",
+        block: {
+          ...HERON_BLOCK.block,
+          traits: [],
+          powers: [
+            {
+              name: "Standard Action",
+              action: "Standard",
+              lines: [
+                {
+                  text: "Close blast 3; Wisdom vs. Will; 1d10 + Wisdom modifier damage.",
+                },
+              ],
+              roll: {
+                attack: "Wisdom vs. Will",
+                hit: "1d10 + Wisdom modifier damage.",
+                attackType: "Close blast 3",
+                target: "Each creature in blast",
+              },
+            },
+            {
+              name: "Standard Action",
+              action: "Standard",
+              lines: [melee],
+              roll: meleeRoll,
+            },
+            {
+              name: "Opportunity Attack",
+              action: "Opportunity",
+              lines: [melee],
+              roll: meleeRoll,
+            },
+            {
+              name: "Minor Action",
+              action: "Minor",
+              lines: [{ text: "As above, and it shifts 1 square." }],
+            },
+          ],
+        },
+      }),
+    });
+    const commands = (bonus: number) => [
+      {
+        ...command,
+        id: "blast",
+        entry: 0,
+        defense: "Will",
+        attackBonus: bonus,
+        damage: `1d10+${bonus - 5}`,
+      },
+      { ...command, id: "melee", entry: 1, attackBonus: bonus },
+      { ...command, id: "oa", entry: 2, attackBonus: bonus },
+    ];
+    const card = creatureOf(
+      modelOf(stalker, {
+        ...evaluated,
+        definitionId: stalker.id,
+        name: stalker.name,
+        variants: [
+          row("staff", false, commands(10)),
+          row("rod", true, commands(12)),
+        ],
+      }),
+    );
+    const [blast, standard, opportunity, minor] = card?.actions ?? [];
+    // A command whose numbers differ from its neighbours' keeps its rows.
+    expect(blast?.variants?.map(({ attack }) => attack)).toEqual([
+      "+10 vs Will",
+      "+12 vs Will",
+    ]);
+    expect(blast?.variantsFor).toBeUndefined();
+    // The melee and opportunity attacks share one set, on the last.
+    expect(standard?.variants).toBeUndefined();
+    expect(standard?.roll).toBeUndefined();
+    expect(opportunity?.variants?.map(({ attack }) => attack)).toEqual([
+      "+10 vs Reflex",
+      "+12 vs Reflex",
+    ]);
+    expect(opportunity?.variantsFor).toEqual([
+      "Standard Action",
+      "Opportunity Attack",
+    ]);
+    expect(minor?.variants).toBeUndefined();
+    // The card's text still names every row once.
+    expect(
+      card === undefined
+        ? 0
+        : creatureCardText(card).split("+12 vs Reflex").length - 1,
+    ).toBe(1);
   });
 
   it("leaves the power card's attack band and weapon table to the creature", () => {

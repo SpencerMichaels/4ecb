@@ -1367,6 +1367,12 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
           `${entry.name}: no roll beside the rows`,
           entry.roll === undefined,
         ),
+        // The two commands roll different numbers, so neither shares the
+        // other's rows (adjacent commands that agree print one table).
+        truthy(
+          `${entry.name}: its rows are its own, with no shared caption`,
+          entry.variantsFor === undefined,
+        ),
         inOrder(
           `${entry.name}'s rows print, equipped first`,
           creature?.text ?? "",

@@ -533,6 +533,20 @@ automatically; fit is measured in the browser, so only these are yours.
     belonging to the next command, the rows' stripes or dividers are
     missing or unlike the power card's weapon table, or the creature
     card's text is unreadable at its size.
+- [ ] **Shared implement rows on a creature card (D111).**
+  - **Where:** a psion of level 15 or higher with Summon Thought Warrior
+    (augmented), carrying two or more implements with different enhancements
+    (e.g. buy an orb +1 and a staff +3 in the Shop) → `?preview=1`, the
+    "Thought Warrior" creature card (or its "— Actions" card). Print once;
+    dark theme and 140% zoom.
+  - **Expect:** the Standard Action and Immediate Interrupt commands print
+    their text only; under the Opportunity Attack one table of rows, captioned
+    in italics "Standard Action · Immediate Interrupt · Opportunity Attack",
+    striped and divided like the power card's weapon table; no red "Text
+    exceeds card" outline.
+  - **Wrong if:** the caption reads as part of the command text or as a
+    heading of the next command, it is not aligned with the rows' left edge,
+    the table looks unlike the other commands' rows, or a card overflows.
 - [ ] **Summoned creature in power detail (D111).**
   - **Where:** `invoker-drow` → `edit?tab=build&level=9&section=powers`,
     select Summon Blade Angel. Dark theme, 140% zoom.

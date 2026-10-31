@@ -1326,6 +1326,19 @@ Visual review pending. 1116 workspace tests pass.
 Verification: pack rebuilt (41 warnings); 1111 workspace tests pass; no sample
 character's legality changed.
 
+## Summoned creature commands share implement rows (D111, 2026-10-31)
+
+Adjacent creature commands whose per-implement rows give the same numbers
+print those rows once, under the last of them, captioned with the commands
+(sheet-model `withCommandRows`/`SheetCreatureEntry.variantsFor`,
+`CreatureCard.tsx`, the `PrintPowerVariants` `caption`). With 4
+implements this fits Summon Thought Warrior (Augment 1) and Phantasmist
+Stalker's actions cards at the 6pt floor (they were 105% and 102% by the font
+model); Summon Emerald Terror stays the edge case (100% with 4 implements, 112%
+with 5 that all differ). Synthetic tests in `summon-creature-card.test.ts` and
+`CreatureCard.test.tsx`; `review:verify` checks Blade Angel's two commands
+keep their own rows.
+
 ## Associates (D107, 2026-10-28)
 
 Associates (54 records) print as associate cards in the companion card frame
