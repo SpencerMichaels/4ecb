@@ -1106,6 +1106,13 @@ character before it is fixed, one slice per item.
       summon's "Opportunity Attack" field, which
       D111 keeps as the power's row (owner: keep it, the creature card
       shows the attack; the power's row only feeds export).
+  13. Ki-focused weapons without weapon proficiency (2026-10-31): a ki-focused
+      weapon the character is not proficient with (e.g. a synthetic "Quick
+      Strike Ki Focused Longsword +1") is marked non-proficient on implement
+      power rows. Native `IsValidImplement` (`-Module-.cs` ~22051) probably
+      accepts it through the ki focus enchantment's implement name
+      (`ImplementProficiency(ImplementName)`). Confirm on a probe, then follow
+      native; affects the D081 proficient-implements filter.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
