@@ -3456,8 +3456,20 @@ export function evaluatePowers(input: {
       // Native CalcBAB/CalcDamage: the wielded item's enhancement is an
       // "Enhancement" bonus, so typed Enhancement stats (Inherent Bonuses)
       // add only what exceeds it.
+      // Deliberate departure (D105): native CalcBAB/CalcDamage add a
+      // ki-focused weapon's ki focus enhancement on every weapon-power row
+      // (`-Module-.cs` ~24032, ~24957; BuildKiList pairs every weapon base
+      // with the ki focus), but PHB3 "Ki Focuses" (p. 203) adds it to weapon
+      // attacks only with a weapon the character is proficient with. An
+      // implement power (also Weapon + Implement) keeps it: the ki focus is
+      // its implement.
+      const kiFocusWithoutProficiency =
+        weaponPower &&
+        !implementPower &&
+        equipment.kiFocusedFrom !== undefined &&
+        !proficientWithWeapon(equipment);
       const enhancementExtra =
-        equipment.enhancement === 0
+        equipment.enhancement === 0 || kiFocusWithoutProficiency
           ? []
           : [
               {

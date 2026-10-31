@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v102-2026-10-31-ki-focus-implement-kind";
+  "evaluated-character-v103-2026-10-31-ki-focus-weapon-proficiency";
 
 export interface CharacterOccurrence {
   readonly id: string;

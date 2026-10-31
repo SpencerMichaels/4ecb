@@ -1113,12 +1113,13 @@ character before it is fixed, one slice per item.
       cause was `implementKind` turning "Ki Focus" into "ki focu"; the ki
       focus enchantment's kind now matches "Implement Proficiency (Ki
       Focuses)" (cache v102; parity unchanged, Jackie Lee 132/132).
-  14. Ki focus enhancement on non-proficient weapon attacks (2026-10-31): a
-      Ki Focused Longsword's Melee Basic Attack row adds the ki focus +1
-      although the character isn't proficient with the Longsword. PHB3 p.203
-      grants the enhancement to weapon attacks only with a proficient weapon.
-      Check whether native gates it (`BuildKiList`, `CalcBAB`), then follow
-      native unless the rules disagree.
+  14. ~~Ki focus enhancement on non-proficient weapon attacks~~
+      (2026-10-31): done. Native does not gate it (`BuildKiList` pairs every
+      weapon base with the ki focus; `CalcBAB`/`CalcDamage` add
+      `EnhancementBonus` without a proficiency check), but PHB3 p.203 does,
+      so a weapon-only power's non-proficient ki-focused row drops the ki
+      focus enhancement (D105; row kept, implement powers unchanged; cache
+      v103; parity unchanged).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the

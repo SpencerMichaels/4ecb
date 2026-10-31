@@ -1020,6 +1020,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         POWERS,
         "adds a ki-focused row per owned weapon base for an equipped ki focus (native BuildKiList)",
       ),
+      test(
+        POWERS,
+        "adds a ki focus's enhancement to weapon attacks only with a proficient weapon (PHB3, D105)",
+      ),
     ),
     "D20Workspace.IsStaff": code(
       "Staff detection: staff implement gear names, Staff magic items, Quarterstaff (ID_FMP_WEAPON_10), staff group.",
@@ -1165,9 +1169,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.EnhancementBonus": code(
-      "Attack/damage enhancement from WeaponEnchant's Enhancement, else the base's.",
-      "powers.ts parseEnhancement",
+      "Attack/damage enhancement from WeaponEnchant's Enhancement, else the base's. CalcBAB (-Module-.cs ~24032) and CalcDamage (~24957) add it whenever a main-hand weapon is set, with no proficiency check: a weapon the character is not proficient with keeps its own enhancement (GetProficiencyBonus alone reads IsProficient), and so does BuildKiList's ki-focused weapon, whose WeaponEnchant is the ki focus.",
+      "powers.ts parseEnhancement; enhancementExtra in variantFor. D105 departure: a weapon-only power's row of a ki-focused weapon the character is not proficient with drops the ki focus enhancement (PHB3 'Ki Focuses' p203: only weapon attacks 'using a weapon with which you have proficiency'); the row stays (BuildKiList), implement powers keep it",
       test(POWERS, "applies an implement enhancement to fixed power dice"),
+      test(
+        POWERS,
+        "adds a ki focus's enhancement to weapon attacks only with a proficient weapon (PHB3, D105)",
+      ),
     ),
     "?A0x7555d940.OffhandEnhancementBonus": code(
       "The off-hand item's enhancement, for Dual Implement Spellcaster.",

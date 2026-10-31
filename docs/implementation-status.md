@@ -1,5 +1,19 @@
 # Implementation status
 
+## Ki focus enhancement on non-proficient weapon attacks (2026-10-31)
+
+A weapon power's row of a ki-focused weapon the character is not proficient
+with ("Quick Strike Ki Focused Longsword +1" on a Melee Basic Attack) no
+longer adds the ki focus's enhancement: PHB3 "Ki Focuses" (p. 203) grants it
+to weapon attacks only with a proficient weapon. Native adds it (`BuildKiList`
+lists every weapon base with the ki focus; `CalcBAB` ~24032 and `CalcDamage`
+~24957 add `EnhancementBonus` without a proficiency check), so this is a D105
+departure; the row stays, implement powers keep the enhancement, and a plain
+non-proficient magic weapon keeps its own (native and rules agree). A Jackie
+Lee probe with a Longsword went from +5 / 1d8+5 to +4 / 1d8+4 on that row
+(the plain Longsword's numbers). `parity:baseline` is unchanged (Jackie Lee
+132/132, Valria 42/42; no sample owns such a row). Evaluation cache v103.
+
 ## Ki-focused weapons as implements (2026-10-31)
 
 A ki-focused weapon the character is not proficient with ("Quick Strike Ki

@@ -3328,6 +3328,20 @@ Kept modern, where native contradicts the text or nullifies the feature:
     distance, not damage.
     Knockdown Assault's by-name ability-only damage is gone: its "Strength
     modifier damage" is the generic flat Strength damage (parity identical).
+- **A ki focus's enhancement needs weapon proficiency on weapon attacks**
+  (PHB3 p. 203 "Ki Focuses": "You can add its enhancement bonus to the
+  attack rolls and the damage rolls of weapon attacks you make using a
+  weapon with which you have proficiency"; added 2026-10-31 with queue item
+  14, cache v103). Native `BuildKiList` (`-Module-.cs` ~22237) pairs every
+  owned weapon base with the equipped ki focus, and `CalcBAB` (~24032) and
+  `CalcDamage` (~24957) add `EnhancementBonus` (the ki focus, through
+  `WeaponEnchant`) with no proficiency check, so a "Ki Focused Longsword +1"
+  Melee Basic Attack row added +1 for a monk without Longsword proficiency.
+  The builder keeps the row but drops the ki focus enhancement on a weapon
+  power that is not also an Implement power. A plain magic weapon the
+  character is not proficient with still adds its own enhancement (the
+  rules gate only the proficiency bonus), as native does. No sample
+  character owns such a row; parity is unchanged.
 - **Former-class picks stay dormant (owner, 2026-10-29).** The legacy builder
   keeps a house-rule pick active after a class change even when its slot is
   switched off and not shown in its power list (Erdan 11: seven Invoker powers

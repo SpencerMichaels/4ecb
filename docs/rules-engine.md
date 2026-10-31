@@ -853,6 +853,14 @@ loot as it accepts any plain weapon (its `ImplementName` is empty, since
 `IsKiFocus` reads only the base); modern keeps D081's stricter test.
 Implement kinds compare singular and plural alike ("Ki Focus" and "Ki
 Focuses", "Rods"), keeping a word ending in "us" or "ss" whole.
+On a weapon power (not also an Implement power), a ki-focused weapon the
+character is not proficient with keeps its row but not the ki focus's
+enhancement: PHB3 "Ki Focuses" (p. 203) adds it to weapon attacks only "using
+a weapon with which you have proficiency". Native `CalcBAB` (`-Module-.cs`
+~24032) and `CalcDamage` (~24957) add `EnhancementBonus` on every row with
+a main-hand weapon, so this is a D105 departure; a plain non-proficient
+magic weapon keeps its own enhancement and loses only the proficiency bonus,
+as in native.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
 Energized, whether those rules live on the base or its training feat. Their prose
 reminders are omitted, while original item rules remain available. Evaluation

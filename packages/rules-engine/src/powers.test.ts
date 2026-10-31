@@ -1160,6 +1160,92 @@ describe("power evaluation", () => {
     );
   });
 
+  it("adds a ki focus's enhancement to weapon attacks only with a proficient weapon (PHB3, D105)", () => {
+    const owned = (id: string, definitionIds: readonly string[]) => ({
+      id,
+      definitionIds,
+      quantity: 1,
+      equippedQuantity: 1,
+      acquiredLevel: 1,
+    });
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["STRIKE", "FIST", "BLADE_PROFICIENCY"],
+      inventory: [
+        owned("ki", ["KI"]),
+        owned("blade", ["BLADE"]),
+        owned("sword", ["SWORD", "WEAPON_ENCHANT"]),
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 2),
+        "Dexterity modifier": stat("Dexterity modifier", 3),
+      },
+      overlays: [],
+      entities: [
+        entity("STRIKE", "Synthetic Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("FIST", "Synthetic Fist", "Power", {
+          Keywords: "Implement, Psionic",
+          "Attack Type": "Melee touch",
+          Attack: "Dexterity vs. AC",
+          Hit: "1d8 + Dexterity modifier damage.",
+        }),
+        entity("KI", "Synthetic Ki Focus +2", "Magic Item", {
+          "Magic Item Type": "Ki Focus",
+          Enhancement: "+2 attack rolls and damage rolls",
+        }),
+        entity("BLADE", "Wrist Blade", "Weapon", {
+          Damage: "1d4",
+          "Proficiency Bonus": "3",
+          Group: "Light Blade",
+          "Weapon Category": "Simple Melee",
+        }),
+        entity("SWORD", "Longsword", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "3",
+          Group: "Heavy Blade",
+          "Weapon Category": "Military Melee",
+        }),
+        entity("WEAPON_ENCHANT", "Magic Weapon +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Enhancement: "+1 attack rolls and damage rolls",
+        }),
+        entity(
+          "BLADE_PROFICIENCY",
+          "Weapon Proficiency (Wrist Blade)",
+          "Proficiency",
+          {},
+        ),
+      ],
+    });
+    const row = (power: string, equipmentName: string) => {
+      const variant = powers
+        .find((entry) => entry.name === power)
+        ?.variants.find((entry) => entry.equipmentName === equipmentName);
+      return [variant?.attackBonus, variant?.damage];
+    };
+    // Proficient: +3 proficiency and the ki focus's +2.
+    expect(
+      row("Synthetic Strike", "Synthetic Ki Focused Wrist Blade +2"),
+    ).toEqual([7, "1d4+4"]);
+    // Not proficient: the row stays (native BuildKiList), without the +2.
+    expect(
+      row("Synthetic Strike", "Synthetic Ki Focused Longsword +2"),
+    ).toEqual([2, "1d8+2"]);
+    // A non-proficient magic weapon keeps its own enhancement (native
+    // CalcBAB), only the proficiency bonus is lost.
+    expect(row("Synthetic Strike", "Longsword +1")).toEqual([3, "1d8+3"]);
+    // An implement power uses the ki focus whatever the weapon.
+    expect(row("Synthetic Fist", "Synthetic Ki Focused Longsword +2")).toEqual([
+      5,
+      "1d8+5",
+    ]);
+  });
+
   it("applies recovered weapon-field ability bonuses only to eligible families", () => {
     const powers = evaluatePowers({
       level: 8,
