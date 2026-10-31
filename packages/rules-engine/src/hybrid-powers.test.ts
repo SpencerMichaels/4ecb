@@ -680,3 +680,232 @@ describe("multiclass swap targets (native ChoiceMatch)", () => {
     );
   });
 });
+
+describe("multiclass swaps of granted powers and their gains (native CheckReplaceElem, UpdateReplacement)", () => {
+  // A warlock-like class: a pact feature grants an at-will attack (Fey Pact
+  // grants Eyebite) and a utility; a CountsAsClass makes Warlord the
+  // multiclass; Paragon Multiclassing swaps an at-will.
+  const withDisplay = (
+    granted: ContentEntity,
+    display: string,
+  ): ContentEntity => ({
+    ...granted,
+    specifics: granted.specifics.map((specific) =>
+      specific.name === "Display" ? { ...specific, value: display } : specific,
+    ),
+  });
+  const PARAGON_MULTICLASSING =
+    "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING";
+  const swapContent = (): ContentEntity[] => [
+    ...content(),
+    entity("FIGHTER_PACT", "Pact", "Class Feature", {
+      rules: [
+        rule("grant", { name: "PACT_AT_WILL", type: "Power" }, 0),
+        rule("grant", { name: "PACT_UTILITY", type: "Power" }, 1),
+      ],
+    }),
+    entity("PACT_DAILY_GRANT", "Pact daily", "Class Feature", {
+      rules: [rule("grant", { name: "PACT_DAILY", type: "Power" }, 0)],
+    }),
+    entity("FIGHTER_POWERS", "Fighter powers", "Class Feature", {
+      rules: [
+        rule(
+          "select",
+          { type: "Power", number: "1", Category: "$$CLASS,at-will,1" },
+          0,
+        ),
+        rule(
+          "select",
+          { type: "Power", number: "1", Category: "$$CLASS,daily,1" },
+          1,
+        ),
+      ],
+    }),
+    entity("ID_INTERNAL_COUNTSASCLASS_WARLORD", "Warlord", "CountsAsClass", {
+      specifics: { _SupportsID: WARLORD },
+    }),
+    entity(PARAGON_MULTICLASSING, "Paragon Multiclassing", "Paragon Path", {
+      rules: [
+        rule(
+          "replace",
+          {
+            name: "at-will paragon multiclassing swap",
+            Level: "11",
+            multiclass: "At-Will",
+            optional: "true",
+          },
+          0,
+        ),
+      ],
+    }),
+    entity("ID_FMP_FEAT_341", "Adept Power", "Feat", {
+      rules: [
+        rule(
+          "replace",
+          {
+            name: "daily swap",
+            Level: "11",
+            multiclass: "Daily",
+            optional: "true",
+          },
+          0,
+        ),
+      ],
+    }),
+    withDisplay(
+      power("PACT_AT_WILL", FIGHTER, "At-Will", 1),
+      " Fighter Attack 1 ",
+    ),
+    withDisplay(
+      power("PACT_UTILITY", FIGHTER, "At-Will", 1, "Utility"),
+      " Fighter Utility 1 ",
+    ),
+    power("PACT_DAILY", FIGHTER, "Daily", 1),
+    power("FIGHTER_DAILY", FIGHTER, "Daily", 1),
+    power("WARLORD_DAILY", WARLORD, "Daily", 1),
+    power("WARLORD_AT_WILL_3", WARLORD, "At-Will", 3),
+    entity("ID_FMP_FEAT_651", "Student of the Plague", "Feat"),
+    entity("ID_FMP_PSEUDO_CLASS_216", "Spellscarred", "Pseudo Class"),
+    power("SPELLSCAR_DAILY", "ID_FMP_PSEUDO_CLASS_216", "Daily", 1),
+  ];
+  const evaluateSwap = (
+    provider: string,
+    extra: readonly CharacterOccurrence[] = [],
+  ) =>
+    evaluateCharacter(
+      {
+        level: 11,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "fighter",
+            definitionId: FIGHTER,
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "pact",
+            definitionId: "FIGHTER_PACT",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "pact-daily",
+            definitionId: "PACT_DAILY_GRANT",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "powers",
+            definitionId: "FIGHTER_POWERS",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          occurrence("at-will", "FIGHTER_AT_WILL", 1, "powers", 0),
+          occurrence("daily", "FIGHTER_DAILY", 1, "powers", 0, {
+            ruleOrdinal: 1,
+          }),
+          {
+            id: "counts-as",
+            definitionId: "ID_INTERNAL_COUNTSASCLASS_WARLORD",
+            acquiredLevel: 2,
+            kind: "grabbag",
+          },
+          {
+            id: "swap",
+            definitionId: provider,
+            acquiredLevel: 11,
+            kind: "grabbag",
+          },
+          ...extra,
+        ],
+        inventory: [],
+      },
+      swapContent(),
+    );
+  const swapChoice = (result: ReturnType<typeof evaluateSwap>) =>
+    result.choices.find((choice) => choice.providerOccurrenceId === "swap");
+  const targets = (result: ReturnType<typeof evaluateSwap>) =>
+    swapChoice(result)?.replacementOptions?.map(
+      ({ replacesOccurrenceId }) => replacesOccurrenceId,
+    );
+  const eligibleGains = (
+    result: ReturnType<typeof evaluateSwap>,
+    lost: string,
+  ) =>
+    swapChoice(result)
+      ?.replacementOptions?.find(({ definitionId }) => definitionId === lost)
+      ?.candidates.filter(({ eligible }) => eligible)
+      .map(({ definitionId }) => definitionId)
+      .sort();
+
+  it("lets an at-will multiclass swap give up a granted at-will attack, not a granted utility", () => {
+    expect(targets(evaluateSwap(PARAGON_MULTICLASSING))).toEqual([
+      "at-will",
+      "pact:grant:0",
+    ]);
+  });
+
+  it("gains a multiclass power of the lost power's level or lower, never one of the character's class", () => {
+    const result = evaluateSwap(PARAGON_MULTICLASSING);
+    // Not FIGHTER_AT_WILL_2 (the character's class), nor WARLORD_AT_WILL_3
+    // (above the lost power's level).
+    expect(eligibleGains(result, "PACT_AT_WILL")).toEqual(["WARLORD_AT_WILL"]);
+    expect(eligibleGains(result, "FIGHTER_AT_WILL")).toEqual([
+      "WARLORD_AT_WILL",
+    ]);
+  });
+
+  it("keeps granted powers out of a multiclass swap that is not an at-will swap", () => {
+    const result = evaluateSwap("ID_FMP_FEAT_341");
+    expect(targets(result)).toEqual(["daily"]);
+    expect(eligibleGains(result, "FIGHTER_DAILY")).toEqual(["WARLORD_DAILY"]);
+  });
+
+  it("counts Spellscarred as a multiclass with Student of the Plague", () => {
+    const result = evaluateSwap("ID_FMP_FEAT_341", [
+      {
+        id: "plague",
+        definitionId: "ID_FMP_FEAT_651",
+        acquiredLevel: 2,
+        kind: "grabbag",
+      },
+    ]);
+    expect(eligibleGains(result, "FIGHTER_DAILY")).toEqual([
+      "SPELLSCAR_DAILY",
+      "WARLORD_DAILY",
+    ]);
+  });
+
+  it("does not grant a swapped-away power again, under its generated or saved ID", () => {
+    const swapped = (replacesId: string) =>
+      occurrence("gain", "WARLORD_AT_WILL", 11, "swap", 0, { replacesId });
+    const generated = evaluateSwap(PARAGON_MULTICLASSING, [
+      swapped("pact:grant:0"),
+    ]);
+    const saved = evaluateSwap(PARAGON_MULTICLASSING, [
+      {
+        id: "saved-pact-at-will",
+        definitionId: "PACT_AT_WILL",
+        acquiredLevel: 1,
+        kind: "grant",
+        parentId: "pact",
+        ruleOrdinal: 0,
+      },
+      swapped("saved-pact-at-will"),
+    ]);
+    for (const result of [generated, saved]) {
+      expect(result.converged).toBe(true);
+      const held = result.occurrences.map(({ definitionId }) => definitionId);
+      expect(held).toContain("WARLORD_AT_WILL");
+      expect(held).not.toContain("PACT_AT_WILL");
+      expect(
+        result.diagnostics.filter(
+          ({ occurrenceId }) => occurrenceId === "gain",
+        ),
+      ).toEqual([]);
+    }
+    expect(swapChoice(saved)?.selectedOccurrenceId).toBe("gain");
+    expect(targets(saved)).toContain("saved-pact-at-will");
+  });
+});

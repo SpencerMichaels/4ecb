@@ -1043,9 +1043,11 @@ character before it is fixed, one slice per item.
      swap's lose category (`$$CLASS,<multiclass>,<level>`, native
      ChoiceMatch) and flagging of saved swaps that break it or
      CheckHybridPower (`targetReasons`, `choice.ineligible`) are also done.
-     Left: native also lets a multiclass "At-Will" swap lose a granted
-     power whose Display contains "attack" (CheckReplaceElem `elem[15]==0`,
-     ~16821); modern offers only chosen powers.
+     The multiclass "At-Will" swap's granted at-will attacks
+     (CheckReplaceElem `elem[15]==0`, ~16821) and the native
+     `$$MULTICLASS,<multiclass>,<lost Level>` gain (UpdateReplacement
+     ~17020) are done too (2026-10-31). Left: power-replace still loses
+     only chosen powers (native also lets it lose granted ones).
   7. ~~Shop~~ — done (`418668d`, D108): native IsValidLoot/IsValidWeapon/
      ValidateShield/TransformLoot pairing, masterwork armor needs an
      enchantment without Inherent Bonuses, weapon enchantments on superior

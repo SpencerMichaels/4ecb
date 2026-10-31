@@ -217,6 +217,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "the level 5 Order Adept feature offers Wizard utility powers in the level-6 utility slot, not the level-2 one",
       ),
       test(EXCEPTIONS, "covers Diverse Study"),
+      test(
+        HYBRID_POWERS,
+        "counts Spellscarred as a multiclass with Student of the Plague",
+      ),
       test(EXCEPTIONS, "covers Seeker and Versatile Master class powers"),
       test(
         EVALUATOR,
@@ -324,7 +328,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Choice.CheckReplaceElem": partial(
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (ChoiceMatch lose category '$$CLASS,<multiclass>,<character level>'; a granted power only for an 'At-Will' swap and a Display containing 'attack'), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses only chosen powers matching its ChoiceMatch category; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); granted powers (the multiclass At-Will Display 'attack' allowance) are not offered",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses chosen powers (stored or rule defaults) matching its ChoiceMatch category, and for an 'At-Will' swap also granted powers whose overlaid Display contains 'attack' (evaluator multiclassLosesGranted); its gain is UpdateReplacement's '$$MULTICLASS,<multiclass>,<lost Level>'; a displaced grant or default is not granted again, and commandForEvaluatedChoice stores a generated target before the swap; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); power-replace still loses chosen powers only (native also allows granted ones)",
       test(CONFORMANCE, "reads a bare level as that level or lower"),
       test(
         CONFORMANCE,
@@ -341,6 +345,26 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         HYBRID_POWERS,
         "flags a saved swap that gave up a power outside its category",
+      ),
+      test(
+        HYBRID_POWERS,
+        "lets an at-will multiclass swap give up a granted at-will attack, not a granted utility",
+      ),
+      test(
+        HYBRID_POWERS,
+        "gains a multiclass power of the lost power's level or lower, never one of the character's class",
+      ),
+      test(
+        HYBRID_POWERS,
+        "keeps granted powers out of a multiclass swap that is not an at-will swap",
+      ),
+      test(
+        HYBRID_POWERS,
+        "does not grant a swapped-away power again, under its generated or saved ID",
+      ),
+      test(
+        BUILD_PROJECTION,
+        "stores a generated grant a multiclass swap gives up, so the swap can name it",
       ),
     ),
     "?A0x7555d940.FromDilettante": code(

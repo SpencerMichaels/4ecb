@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v103-2026-10-31-ki-focus-weapon-proficiency";
+  "evaluated-character-v104-2026-10-31-multiclass-granted-swaps";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -614,6 +614,13 @@ function dynamicCategories(
         .filter(Boolean)
         .forEach((value) => target.add(key(value)));
   }
+  // Native CategoryOpt setup (`-Module-.cs` ~30584): Student of the Plague
+  // makes Spellscarred a multiclass, though no CountsAsClass names it, so a
+  // multiclass swap's "$$MULTICLASS" gain offers spellscarred powers.
+  if (
+    owned.some((entity) => key(entity.id) === key(EXCEPTION_IDS.diverseStudy))
+  )
+    multiclassValues.add(key(EXCEPTION_IDS.diverseStudyClass));
   if (
     owned.some(
       (entity) => key(entity.id) === key(EXCEPTION_IDS.paragonMulticlassing),
@@ -1533,6 +1540,18 @@ function evaluateCharacterInternal(
           : [],
       ),
     );
+    // A grant a live replacement displaced (a granted at-will a Paragon
+    // Multiclassing swap traded away) stays given up: it is not granted
+    // again, under its saved or generated ID.
+    const displacedGrantSlots = new Set(
+      saved.flatMap((candidate) =>
+        candidate.kind === "grant" &&
+        candidate.parentId !== undefined &&
+        displacedIds.has(candidate.id)
+          ? [`${candidate.parentId}\0${candidate.ruleOrdinal}`]
+          : [],
+      ),
+    );
     for (const occurrence of occurrences) {
       const entity = index.get(occurrence.definitionId);
       if (entity === undefined) continue;
@@ -1560,8 +1579,10 @@ function evaluateCharacterInternal(
           const id = `${occurrence.id}:grant:${rule.source.ordinal}`;
           if (
             !passIds.has(id) &&
+            !displacedIds.has(id) &&
             !passDefinitionKeys.has(key(target.id)) &&
-            !passGrantSlots.has(`${occurrence.id}\0${rule.source.ordinal}`)
+            !passGrantSlots.has(`${occurrence.id}\0${rule.source.ordinal}`) &&
+            !displacedGrantSlots.has(`${occurrence.id}\0${rule.source.ordinal}`)
           )
             additions.push({
               id,
@@ -1632,7 +1653,9 @@ function evaluateCharacterInternal(
                 candidate.ruleOrdinal === rule.source.ordinal &&
                 (candidate.choiceIndex ?? 0) === choiceIndex,
             );
+            const defaultId = `${occurrence.id}:default:${rule.source.ordinal}:${choiceIndex}`;
             if (
+              displacedIds.has(defaultId) ||
               occurrences.some(
                 (candidate) =>
                   (candidate.parentId === occurrence.id &&
@@ -1644,7 +1667,7 @@ function evaluateCharacterInternal(
             )
               continue;
             additions.push({
-              id: `${occurrence.id}:default:${rule.source.ordinal}:${choiceIndex}`,
+              id: defaultId,
               definitionId: target.id,
               acquiredLevel: Math.max(
                 occurrence.acquiredLevel,
@@ -2536,6 +2559,37 @@ function evaluateCharacterInternal(
           rulesLegal: false,
           reasons: [...decision.reasons, ...reasons],
         };
+  /** Active grants and rule defaults the build does not store: the
+   *  evaluator materializes them, so they are not in `saved`. */
+  const unsavedGenerated = occurrences.filter(
+    (occurrence) =>
+      !savedById.has(occurrence.id) &&
+      (occurrence.kind === "grant" || occurrence.kind === "choice"),
+  );
+  /**
+   * Native CheckReplaceElem (`-Module-.cs` ~16821-16832): a replacement may
+   * lose a power no choice picked (CharElement [15] 0, a grant) only when
+   * it is a multiclass swap whose category's first entry is "At-Will"
+   * (Paragon Multiclassing) and the power's Display contains "attack"
+   * (stristr): a warlock's granted at-will attack, never a granted utility.
+   * A retraining (choice [24]) and a power swap reject granted powers;
+   * PHB p. 209 lets Paragon Multiclassing replace any of your at-will
+   * powers.
+   */
+  const multiclassLosesGranted = (
+    rule: ReplaceRule,
+    candidate: CharacterOccurrence,
+  ): boolean => {
+    const lost = index.get(candidate.definitionId);
+    return (
+      rule.multiclass !== undefined &&
+      rule.retrain === undefined &&
+      rule.powerReplace === undefined &&
+      key(rule.multiclass.split(",")[0] ?? "") === "at-will" &&
+      lost !== undefined &&
+      /attack/i.test(overlaidField(lost, "Display") ?? "")
+    );
+  };
   /** A Power select matching `category`, for category checks only. */
   const powerCategoryRule = (
     source: ReplaceRule["source"],
@@ -2981,7 +3035,10 @@ function evaluateCharacterInternal(
                   slot,
                   detailedReplacement,
                 )
-              : saved
+              : (rule.multiclass === undefined
+                  ? saved
+                  : [...saved, ...unsavedGenerated]
+                )
                   .filter((candidate) => {
                     const candidateType = key(
                       index.get(candidate.definitionId)?.type ?? "",
@@ -3001,7 +3058,9 @@ function evaluateCharacterInternal(
                     return (
                       held(candidate) &&
                       candidate.acquiredLevel < replacementLevel &&
-                      candidate.kind === "choice" &&
+                      (candidate.kind === "choice" ||
+                        (candidate.kind === "grant" &&
+                          multiclassLosesGranted(rule, candidate))) &&
                       ordinaryRetraining &&
                       (!powerOnly || candidateType === "power")
                     );
@@ -3043,27 +3102,55 @@ function evaluateCharacterInternal(
                                 candidateRule.source.ordinal ===
                                 original.ruleOrdinal,
                             );
-                    if (
+                    const lost = index.get(candidate.definitionId);
+                    // Native UpdateReplacement (~17020): a multiclass swap's
+                    // gain is always its own category with the $$MULTICLASS
+                    // flag (CategoryMatch [527], set through choice [587])
+                    // plus the lost power's Level, never the lost power's
+                    // slot: Eldritch Blast's slot (its class feature's
+                    // select) offers only Eldritch Blast, and a warlock
+                    // at-will slot also offers warlock at-wills. A granted
+                    // power has no slot at all.
+                    const multiclassGain =
+                      rule.multiclass === undefined || lost === undefined
+                        ? undefined
+                        : powerCategoryRule(
+                            rule.source,
+                            [
+                              "$$MULTICLASS",
+                              rule.multiclass,
+                              overlaidField(lost, "Level")?.trim(),
+                            ]
+                              .filter((part) => part)
+                              .join(","),
+                          );
+                    let gainSelect: SelectRule;
+                    let gainProvider: CharacterOccurrence;
+                    if (multiclassGain !== undefined) {
+                      gainSelect = multiclassGain;
+                      gainProvider = occurrence;
+                    } else if (
                       originalProvider === undefined ||
                       originalSelect === undefined
                     )
                       return [];
+                    else if (rule.powerSwap === undefined) {
+                      gainSelect = originalSelect;
+                      gainProvider = originalProvider;
+                    } else {
+                      gainSelect = {
+                        ...originalSelect,
+                        category: rule.powerSwap,
+                      };
+                      gainProvider = occurrence;
+                    }
                     const selectedReplacement =
                       selected?.replacesId === candidate.id
                         ? index.get(selected.definitionId)
                         : undefined;
-                    const gainSelect =
-                      rule.powerSwap === undefined
-                        ? originalSelect
-                        : { ...originalSelect, category: rule.powerSwap };
-                    const gainProvider =
-                      rule.powerSwap === undefined
-                        ? originalProvider
-                        : occurrence;
                     // Native CheckReplaceElem: a power swap can only lose a power
                     // that matches its own category (class, usage, level or
                     // lower), so a level-13 encounter swap never offers a daily.
-                    const lost = index.get(candidate.definitionId);
                     if (
                       rule.powerSwap !== undefined &&
                       candidate.id !== selected?.replacesId &&
@@ -3108,6 +3195,7 @@ function evaluateCharacterInternal(
                     ];
                     if (
                       hybrid !== undefined &&
+                      originalSelect !== undefined &&
                       hybridPowerSlot(originalSelect.name) !== undefined
                     )
                       hybridSlotRequests.set(

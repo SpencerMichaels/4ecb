@@ -218,12 +218,33 @@ here, while native also allows granted ones. The hybrid `CheckHybridPower`
 limit applies (`hybrid-powers.ts`, D109).
 
 A `multiclass` swap (native `ChoiceMatch`, `CheckReplaceElem`) can lose only a
-chosen power matching `$$CLASS,<multiclass>,<character level>`. That is a
-power of the character's class, of the swap's category ("Daily", "encounter|
-Augmentable At-Will"), at the character's level or lower. Native also lets a
-swap whose category starts with exactly "At-Will" (Paragon Multiclassing)
-lose a granted power whose `Display` contains "attack". The builder doesn't
-offer granted powers yet.
+power matching `$$CLASS,<multiclass>,<character level>`. That is a power of
+the character's class, of the swap's category ("Daily", "encounter|
+Augmentable At-Will"), at the character's level or lower. Chosen powers
+qualify, including rule defaults the build never stored (Eldritch Blast from
+its class feature's select). A granted power (native `CharElement[15]` 0,
+`-Module-.cs` ~16821-16832) qualifies only when the swap's category starts
+with exactly "At-Will" (Paragon Multiclassing) and the power's `Display`,
+read through `modify` overlays, contains "attack": a warlock's pact at-will
+such as Fey Pact's Eyebite, never a granted utility. PHB p. 209 agrees
+("replace one of your at-will powers"). Retrainings and power swaps never
+lose granted powers.
+
+The gain of every multiclass swap is native `UpdateReplacement`'s (~17020):
+the swap's own category with the `$$MULTICLASS` flag plus the lost power's
+Level, `$$MULTICLASS,<multiclass>,<lost Level>`, checked against the swap's
+provider. It never reuses the lost power's slot, which offered Eldritch
+Blast's slot only Eldritch Blast and a class slot the character's own class
+powers (GeranHulmaster's Novice Power listed swordmage encounters). The
+multiclass set is every CountsAsClass, plus Spellscarred when the character
+has Student of the Plague (native CategoryOpt setup ~30584).
+
+A swapped-away grant or rule default stays given up: the grant pass does not
+grant it again, under its saved or generated ID. When the builder makes a
+swap whose target exists only in the evaluation (`commandForEvaluatedChoice`),
+it first stores the target beneath its saved ancestor, as legacy saves hold
+granted elements, so the `replaces` link names a stored occurrence and
+survives `.dnd4e` export and re-import.
 
 A target a swap may not give up is left out, unless it is the slot's saved
 target. That one stays listed with `targetReasons` (`category`, or

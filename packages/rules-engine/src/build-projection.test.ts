@@ -737,6 +737,169 @@ describe("build projection", () => {
     expect(completed.complete).toBe(true);
   });
 
+  it("stores a generated grant a multiclass swap gives up, so the swap can name it", () => {
+    // A warlock's pact grants its at-will attack (Fey Pact: Eyebite);
+    // Paragon Multiclassing trades it for a multiclass at-will.
+    const power = (id: string, classId: string, display: string) => ({
+      ...entity(id, id, "Power"),
+      categories: [
+        "ID_INTERNAL_CATEGORY_ATTACK",
+        "ID_INTERNAL_CATEGORY_AT-WILL",
+        classId,
+        "1",
+      ],
+      specifics: [
+        ["Power Usage", " At-Will "],
+        ["Display", display],
+        ["Level", " 1 "],
+        ["Class", ` ${classId} `],
+      ].map(([name, value], ordinal) => ({
+        name: name!,
+        value: value!,
+        extraAttributes: [],
+        ordinal,
+      })),
+    });
+    const content = [
+      entity("ID_INTERNAL_CATEGORY_AT-WILL", "At-Will", "Category"),
+      entity("ID_INTERNAL_CATEGORY_ATTACK", "Attack", "Category"),
+      entity("WARLOCK", "Warlock", "Class", [
+        statement("grant", { name: "PACT", type: "Class Feature" }, 0),
+      ]),
+      entity("WIZARD", "Wizard", "Class"),
+      entity("PACT", "Fey Pact", "Class Feature", [
+        statement("grant", { name: "EYEBITE", type: "Power" }, 0),
+      ]),
+      {
+        ...entity(
+          "ID_INTERNAL_COUNTSASCLASS_WIZARD",
+          "Wizard",
+          "CountsAsClass",
+        ),
+        specifics: [
+          {
+            name: "_SupportsID",
+            value: "WIZARD",
+            extraAttributes: [],
+            ordinal: 0,
+          },
+        ],
+      },
+      entity(
+        "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING",
+        "Paragon Multiclassing",
+        "Paragon Path",
+        [
+          statement(
+            "replace",
+            {
+              name: "at-will paragon multiclassing swap",
+              Level: "11",
+              multiclass: "At-Will",
+              optional: "true",
+            },
+            0,
+          ),
+        ],
+      ),
+      power("EYEBITE", "WARLOCK", " Warlock Attack 1 "),
+      power("MAGIC_MISSILE", "WIZARD", " Wizard Attack 1 "),
+    ];
+    const element = (
+      id: string,
+      definitionId: string,
+      type: string,
+      acquiredLevel: number,
+    ) => ({
+      id,
+      identity: { definitionId, name: definitionId, type },
+      acquiredLevel,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children: [],
+    });
+    const build: CharacterBuild = {
+      formatVersion: 3,
+      known: [],
+      effectiveLevel: 11,
+      levels: [{ level: 1, root: element("warlock", "WARLOCK", "Class", 1) }],
+      grabbag: [
+        element(
+          "counts-as",
+          "ID_INTERNAL_COUNTSASCLASS_WIZARD",
+          "CountsAsClass",
+          2,
+        ),
+        element(
+          "paragon",
+          "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING",
+          "Paragon Path",
+          11,
+        ),
+      ],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const swap = initial.choices.find(({ type }) => type === "Replacement")!;
+    expect(
+      swap.replacementOptions?.map(
+        ({ replacesOccurrenceId }) => replacesOccurrenceId,
+      ),
+    ).toEqual(["warlock:grant:0:grant:0"]);
+    const command = commandForEvaluatedChoice(
+      build,
+      swap,
+      initial.occurrences,
+      content,
+      {
+        ...element("missile", "MAGIC_MISSILE", "Power", 11),
+        replacesId: "warlock:grant:0:grant:0",
+      },
+      (index) => `placeholder:${index}`,
+    );
+    // The pact and its at-will are stored as a legacy save holds them,
+    // then the swap.
+    expect(command).toMatchObject({
+      kind: "batch",
+      commands: [
+        {
+          kind: "choose",
+          parentId: "warlock",
+          occurrence: {
+            id: "warlock:grant:0",
+            children: [{ id: "warlock:grant:0:grant:0" }],
+          },
+        },
+        {
+          kind: "choose",
+          parentId: "paragon",
+          occurrence: {
+            id: "missile",
+            replacesId: "warlock:grant:0:grant:0",
+          },
+        },
+      ],
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(
+      completed.choices.find(({ type }) => type === "Replacement"),
+    ).toMatchObject({ selectedOccurrenceId: "missile" });
+    expect(completed.activeDefinitionIds).toContain("MAGIC_MISSILE");
+    expect(completed.activeDefinitionIds).not.toContain("EYEBITE");
+  });
+
   it("materializes an arbitrarily nested generated grant chain", () => {
     const content = [
       entity("LEVEL", "1", "Level", [

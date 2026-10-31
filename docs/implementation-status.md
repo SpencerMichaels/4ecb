@@ -29,6 +29,27 @@ Lee probe with a Longsword lists the ki-focused Longsword as proficient and
 the plain Longsword not; `parity:baseline` is unchanged (Jackie Lee
 132/132). Evaluation cache v102.
 
+## Multiclass swaps of granted at-wills, and native multiclass gains (2026-10-31)
+
+A multiclass swap whose category starts with "At-Will" (Paragon
+Multiclassing) can now give up a granted power whose `Display` contains
+"attack", as native `CheckReplaceElem` allows (`-Module-.cs` ~16821-16832).
+That covers a warlock's pact at-will. A Japheth probe with Arcane Initiate and
+Paragon Multiclassing now lists Fey Pact's Eyebite, both as his saved grant and
+as a generated one. The swap removes Eyebite for good: the grant pass no
+longer grants a displaced grant or default again. The builder stores a
+generated target before the swap, so the swap survives `.dnd4e` export and
+re-import.
+
+Every multiclass swap now gains native `UpdateReplacement`'s
+`$$MULTICLASS,<multiclass>,<lost Level>` (~17020) instead of the lost power's
+slot. Before, GeranHulmaster's Novice Power offered swordmage (own-class)
+encounters, and in the Japheth probe Eldritch Blast offered nothing. They now
+offer fighter and wizard powers. Student of the Plague makes Spellscarred a
+multiclass (native ~30584), so RaidonKane's saved Acolyte Power gain
+Plaguefire Body is now eligible. `parity:baseline` and
+`audit:saved-selections` are unchanged. Evaluation cache v104.
+
 ## Proficient weapons as implements (2026-10-31)
 
 "Implement Proficiency (Proficient Weapons)" (Monk, Assassin and Hybrid Monk

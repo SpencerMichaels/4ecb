@@ -1,4 +1,5 @@
 import {
+  applyCharacterCommand,
   isRulesInertTextKey,
   type BuildLevelFrame,
   type BuildOccurrence,
@@ -670,6 +671,49 @@ export function commandForEvaluatedChoice(
     }
     return undefined;
   };
+  // A replacement whose target exists only in the evaluator's graph (a
+  // granted at-will a Paragon Multiclassing swap gives up) stores that
+  // target first, beneath its saved ancestor as legacy saves hold it, so the
+  // `replaces` link has an occurrence to name in the build and on export.
+  const replacedTarget =
+    selected.replacesId === undefined
+      ? undefined
+      : evaluatedOccurrences.find(({ id }) => id === selected.replacesId);
+  const replacedEntity =
+    replacedTarget === undefined
+      ? undefined
+      : byId.get(replacedTarget.definitionId.toLocaleLowerCase());
+  if (
+    replacedTarget !== undefined &&
+    replacedEntity !== undefined &&
+    findBuildOccurrence(build, replacedTarget.id) === undefined &&
+    isGeneratedOccurrence(build, replacedTarget)
+  ) {
+    const storeTarget = materializeBeneathSaved(replacedTarget, {
+      id: replacedTarget.id,
+      identity: {
+        definitionId: replacedEntity.id,
+        name: replacedEntity.name,
+        type: replacedEntity.type,
+      },
+      acquiredLevel: replacedTarget.acquiredLevel,
+      legality: "rules-legal",
+      children: [],
+      unresolved: false,
+    });
+    if (storeTarget === undefined) return undefined;
+    const replace = commandForEvaluatedChoice(
+      applyCharacterCommand(build, storeTarget),
+      choice,
+      evaluatedOccurrences,
+      entities,
+      selected,
+      placeholderId,
+    );
+    return replace === undefined
+      ? undefined
+      : { kind: "batch", commands: [storeTarget, replace] };
+  }
   if (
     providerEntity !== undefined &&
     providerRule?.kind === "select" &&
