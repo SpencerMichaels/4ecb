@@ -1020,8 +1020,10 @@ character before it is fixed, one slice per item.
      already native), stat engine (`620774f`, `ad7dfc1`: CalcBAB caps, empty
      type, CalcBeast in the engine) and equipment (`8192120`…`ad50818`: Ring
      Slots, holy symbol slot and `_INTERNAL_EquippedSymbol`, augment-parent
-     field overlays). Left: Additional Slot (one Large-only record); damage
-     `abilmod` cap sharing (no content). Owner-confirmed: Critical on
+     field overlays). No-ops (2026-10-31 triage): Additional Slot (only the
+     Large Spiked Gauntlet, owned by no save; native `SlotManip` would be a
+     small `loadout-slots.ts` change) and damage `abilmod` cap sharing (no
+     content uses the type). Owner-confirmed: Critical on
      WeaponEquiv rows, the D105 parenthetical-damage and worn-symbol bullets (D105).
   5. ~~Move content text parsing out of evaluation into pack generation~~ —
      done: power text and field riders in `_Power Text IR` (`a1477e5`, full
@@ -1042,8 +1044,8 @@ character before it is fixed, one slice per item.
      ValidateShield/TransformLoot pairing, masterwork armor needs an
      enchantment without Inherent Bonuses, weapon enchantments on superior
      implements, Ritual Cost Modifier, ammunition/journeybread packages,
-     Berserk Weapon and Soulwarding Armor content fixes. Left (presentation):
-     package rows (`HasSingleItem`, `PackageCount`, `PackageManipulation`).
+     Berserk Weapon and Soulwarding Armor content fixes; package rows
+     (`HasSingleItem`, `PackageCount`, `PackageManipulation`) in `e5b663b`.
   8. ~~New player saves (2026-10-28)~~ — done. Most diffs were player content:
      15 players ran stock WotC data and 3 partial CBLoader parts, now mapped
      to a stock pack in `parity:baseline` content profiles (`e64f9ec`,
@@ -1057,8 +1059,10 @@ character before it is fixed, one slice per item.
   9. ~~Small follow-ups from the new-saves pass~~ — done: the worker cancel
      test is deterministic (`4ffb07e`); an unresolvable holding weighs 0 like
      native `LootWeight` instead of blanking Weight (`5a7bf5b`); 16 more saves
-     mapped to content profiles (see implementation status). Left: oleander_8/9
-     Weight (homebrew TIV items we lack).
+     mapped to content profiles (see implementation status). Won't fix:
+     oleander_8/9 Weight (legacy 113 lb, modern 70 lb) comes from three
+     homebrew records we lack (`ID_TIV_ARMOR_10000_245`/`_242`,
+     `ID_FMP_GEAR_MMA29893280`), whose weights the save doesn't carry.
   10. ~~God fragments and mount stat blocks~~ — done. God fragments were already
       supported (`c958f77`; registry `2e4d297`). Mounts print a creature card in
       the companion frame (`8d74174`…`b540cfe`, D110): one card when it fits at
@@ -1104,27 +1108,29 @@ character before it is fixed, one slice per item.
   modifies corrected; new characters start with 100 gp; power cards show
   "Encounter (2×)"; augments attach/detach by right-click; locked
   augmentable rows show version 0; Shifter is native code; `.dndcamp` is out
-  of scope; the theme-power reason quotes the Dark Sun rule. Open: the
-  companion display question (associates such as the Fey Beast Tamer blink
-  dog have no data model; beast companions and familiars already print as
-  cards).
+  of scope; the theme-power reason quotes the Dark Sun rule. The companion
+  display question was settled by associate cards (D107, `ac5f3ea`).
 - ~~**From the Swordmage Warding report (2026-10-27)**~~: both done.
   1. Statlinks share the parent stat's type caps (native
      `CalculateStatAddValue`; D103, `9abfdb4`); the Warding content
      correction is retired.
   2. Large-weapon proficiency follows native `IsProficient` /
-     `CanUseLargeWeapons` (`02544d0`). Left (no numbers affected today): the
-     `defensive` selector ignores proficiency, "Implement Proficiency
-     (Proficient Weapons)" and Additional Proficiencies aren't read; native
-     drops zero-gated statadds inside a link and its untyped literal `0`
-     isn't modelled.
-- **Tier 3:** shop pairing for enchantments with unparsed base restrictions,
-  `UniversalClassSkill`, gated resistances, summoning powers whose creature
-  attacks sit in " Standard action"/" Minor Action" fields (86+ powers; no
-  rows in legacy either).
-- **Owner decisions needed:** hybrid power alternation, augment versions
-  inheriting parent overrides, a builder control for binding augments, sheet
-  short descriptions (`_CS_ShortDescription`).
+     `CanUseLargeWeapons` (`02544d0`). The `defensive` selector's
+     proficiency, zero-gated statadds inside a link and the untyped literal
+     `0` followed in `6a2056c` (D104). Left: "Implement Proficiency
+     (Proficient Weapons)" (native `IsValidImplement`: a proficient
+     Weapon-type base counts as an implement; Monk/Assassin/Hybrid Monk
+     Implements, Diversified Study; Jackie Lee still matches today).
+     Additional Proficiencies is a no-op (no record has the field).
+- ~~**Tier 3**~~ (all done, 2026-10-31 triage): shop pairing for
+  enchantments with unparsed base restrictions (D108, `418668d`),
+  `UniversalClassSkill` (`2dc7341`, `f2bb532`), gated resistances (D104,
+  `6a2056c`), summon commands in " Standard action"/" Minor Action" fields
+  (D111, `9257188`).
+- ~~**Owner decisions needed**~~ (all settled): hybrid power alternation
+  (DisallowClass, `98dfeba`), augment versions inheriting parent overrides
+  (`8870df9`), binding augments (right-click Attach/Detach, `81e22d7`,
+  `ac4e11f`), sheet short descriptions (`2ad4731`).
 
 Visual polish and exhaustive interface validation are intentionally not
 continuous speculative workstreams during early implementation. Each milestone
