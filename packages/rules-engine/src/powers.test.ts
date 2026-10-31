@@ -4853,6 +4853,36 @@ describe("implement power equipment", () => {
     ]);
     entities.pop();
   });
+
+  it("uses a proficient weapon as an implement with Implement Proficiency (Proficient Weapons)", () => {
+    // Native IsValidImplement: a Weapon-type base the character is
+    // proficient with, once the proficiency is active (Monk Implements).
+    entities.push(
+      entity(
+        "ANY_WEAPON",
+        "Implement Proficiency (Proficient Weapons)",
+        "Proficiency",
+        {},
+      ),
+      entity("PICK_WEAPON", "Weapon Proficiency (War pick)", "Proficiency", {}),
+      entity("DAGGER_WEAPON", "Weapon Proficiency (Dagger)", "Proficiency", {}),
+    );
+    const pick = (active: readonly string[]) =>
+      variants(["POWER", "SYMBOL_PROFICIENCY", ...active]).find(
+        (variant) => variant.equipmentName === "War Pick",
+      )?.proficient;
+    expect(pick(["ANY_WEAPON", "PICK_WEAPON"])).toBe(true);
+    // Not proficient with the weapon, or without the implement proficiency.
+    expect(pick(["ANY_WEAPON", "DAGGER_WEAPON"])).toBe(false);
+    expect(pick(["PICK_WEAPON"])).toBe(false);
+    // An implement still needs its own implement proficiency.
+    expect(
+      variants(["POWER", "SYMBOL_PROFICIENCY", "ANY_WEAPON", "PICK_WEAPON"])
+        .filter((variant) => variant.proficient)
+        .map((variant) => variant.equipmentName),
+    ).toEqual(["Symbol of Hope +1", "War Pick", "Unarmed"]);
+    entities.splice(-3);
+  });
 });
 
 describe("item implement metadata", () => {

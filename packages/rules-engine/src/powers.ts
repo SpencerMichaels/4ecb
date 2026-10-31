@@ -343,13 +343,28 @@ function implementProficiencies(
   );
 }
 
+/**
+ * Native IsValidImplement (-Module-.cs ~22051): the item's implement
+ * proficiency; then, with "Implement Proficiency (Proficient Weapons)"
+ * (Monk/Assassin/Hybrid Monk Implements, Diversified Study), a Weapon-type
+ * base the character is proficient with (ImplementWeaponEquiv +
+ * IsProficient); then the class and power scopes. `proficientWeapon` is
+ * that middle test, undefined without the proficiency.
+ */
 function usableAsImplement(
   item: Loadout,
   proficiencies: ReadonlySet<string>,
   inScope: (scopes: readonly string[]) => boolean,
+  proficientWeapon?: (item: Loadout) => boolean,
 ): boolean {
   if (item.unarmed || item.universalImplement) return true;
   if (item.implementScopes.length > 0 && inScope(item.implementScopes))
+    return true;
+  if (
+    proficientWeapon !== undefined &&
+    key(item.lootBase?.type ?? "") === "weapon" &&
+    proficientWeapon(item)
+  )
     return true;
   const proficient = item.implementKinds.some((kind) =>
     proficiencies.has(kind),
@@ -3057,6 +3072,14 @@ export function evaluatePowers(input: {
     input.activeDefinitionIds,
     byId,
   );
+  // Native IsValidImplement finds this proficiency by name.
+  const proficientWeaponImplement = input.activeDefinitionIds.some(
+    (id) =>
+      key(byId.get(key(id))?.name ?? "") ===
+      key(EXCEPTION_NAMES.proficientWeaponsImplement),
+  )
+    ? proficientWithWeapon
+    : undefined;
   const entitiesByName = new Map<string, ContentEntity>();
   for (const entity of byId.values())
     if (!entitiesByName.has(key(entity.name)))
@@ -3296,6 +3319,7 @@ export function evaluatePowers(input: {
         item,
         characterImplementProficiencies,
         powerImplementScope,
+        proficientWeaponImplement,
       );
     // Legacy PowerStats retains every legal equipment variant even for prose
     // that names one hand. The saved main-hand selection describes the active

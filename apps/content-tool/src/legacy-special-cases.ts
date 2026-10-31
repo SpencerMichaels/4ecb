@@ -1111,6 +1111,18 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "treats magic staves as both implements and quarterstaff weapons",
       ),
     ),
+    "?A0x7555d940.IsValidImplement": code(
+      "An item is an implement for a power by its implement proficiency (ImplementName/ImplementProficiency); with 'Implement Proficiency (Proficient Weapons)' (Monk, Assassin and Hybrid Monk Implements, Diversified Study), by a Weapon-type base the character is proficient with (ImplementWeaponEquiv + IsProficient); else ForClass/ForPower. ForPower's CheckPower ends in 'return true', so native accepts every item; modern marks the variant's proficiency instead (D081).",
+      "powers.ts usableAsImplement (variant.proficient): EXCEPTION_NAMES.proficientWeaponsImplement turns on the proficient-weapon test, which reuses proficientWithWeapon (native IsProficient, Large weapons included) on a Weapon-type loot base. The record's own per-weapon 'Implement Proficiency (<weapon>)' grants cover only 87 weapons; this branch covers the rest (Dark Sun, MME, pact weapons)",
+      test(
+        POWERS,
+        "uses a proficient weapon as an implement with Implement Proficiency (Proficient Weapons)",
+      ),
+      fixture(
+        "sample-chars/jackie lee 5th.dnd4e",
+        "probe with a Talid and Weapon Proficiency (Talid) added: the Talid variant of every monk implement power is proficient",
+      ),
+    ),
     "?A0x7555d940.WeaponEquiv": code(
       "A superior implement or shield attacks as the weapon its WeaponEquiv names.",
       "powers.ts legacyWeaponEquiv",

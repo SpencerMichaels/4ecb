@@ -1119,11 +1119,11 @@ character before it is fixed, one slice per item.
   2. Large-weapon proficiency follows native `IsProficient` /
      `CanUseLargeWeapons` (`02544d0`). The `defensive` selector's
      proficiency, zero-gated statadds inside a link and the untyped literal
-     `0` followed in `6a2056c` (D104). Left: "Implement Proficiency
-     (Proficient Weapons)" (native `IsValidImplement`: a proficient
-     Weapon-type base counts as an implement; Monk/Assassin/Hybrid Monk
-     Implements, Diversified Study; Jackie Lee still matches today).
-     Additional Proficiencies is a no-op (no record has the field).
+     `0` followed in `6a2056c` (D104). "Implement Proficiency (Proficient
+     Weapons)" follows native `IsValidImplement` (2026-10-31): a Weapon-type
+     base the character is proficient with marks an implement power's
+     variant proficient. Additional Proficiencies is a no-op (no record has
+     the field).
 - ~~**Tier 3**~~ (all done, 2026-10-31 triage): shop pairing for
   enchantments with unparsed base restrictions (D108, `418668d`),
   `UniversalClassSkill` (`2dc7341`, `f2bb532`), gated resistances (D104,

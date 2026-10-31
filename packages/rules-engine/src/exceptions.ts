@@ -109,6 +109,9 @@ export const EXCEPTION_NAMES = {
   stabAndShoot: "Stab and Shoot",
   /** DualImplementSpellcaster looks the feat up by name. */
   dualImplementSpellcaster: "Dual Implement Spellcaster",
+  /** IsValidImplement looks this proficiency up by name: with it, a
+   * Weapon-type base the character is proficient with is an implement. */
+  proficientWeaponsImplement: "Implement Proficiency (Proficient Weapons)",
   /** Prerequisite AnyClassSpecific: counted as class-specific multiclass feats. */
   studentOfThePlague: "Student of the Plague",
   adeptDilettante: "Adept Dilettante",

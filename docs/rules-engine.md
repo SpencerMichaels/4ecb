@@ -824,6 +824,14 @@ first ability with a thrown weapon and the second otherwise, for attack and
 damage alike (D105).
 Equipment's `Weapon` category does not turn an Implement power into a Weapon
 power. Unenchanted Superior Implement bases also appear as implement variants.
+An implement power's variant is `proficient` (the D081 display filter) by the
+item's implement proficiency, class/power scope, or, with "Implement
+Proficiency (Proficient Weapons)" (Monk, Assassin and Hybrid Monk Implements,
+Diversified Study), by a Weapon-type loot base the character is proficient
+with (native `IsValidImplement`'s `ImplementWeaponEquiv` + `IsProficient`
+branch; `usableAsImplement` reuses `proficientWithWeapon`). The record's own
+per-weapon implement grants cover only 87 weapons, so Dark Sun, MME and pact
+weapons depend on this branch.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
 Energized, whether those rules live on the base or its training feat. Their prose
 reminders are omitted, while original item rules remain available. Evaluation

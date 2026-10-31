@@ -1,5 +1,20 @@
 # Implementation status
 
+## Proficient weapons as implements (2026-10-31)
+
+"Implement Proficiency (Proficient Weapons)" (Monk, Assassin and Hybrid Monk
+Implements, Diversified Study) now follows native `IsValidImplement`
+(`-Module-.cs` ~22051): with it, a Weapon-type loot base the character is
+proficient with (`ImplementWeaponEquiv` + `IsProficient`, via the shared
+`proficientWithWeapon`) marks an implement power's variant `proficient`, so
+the D081 "Only show implements you're proficient with" view keeps it. The
+record's own gated per-weapon grants (87 weapons) had hidden the rest: a
+Jackie Lee probe with a Talid and Weapon Proficiency (Talid) listed the
+Talid as non-proficient on every monk power and now lists it; a Longsword
+stays non-proficient. Native's trailing `ForPower`/`CheckPower` still
+accepts any item, so legacy rows and `parity:baseline` are unchanged
+(Jackie Lee 132/132). Evaluation cache v100.
+
 ## Item-limited global reminders on power rows (2026-10-31)
 
 Conditional bonuses on item-limited global stats (`damage(<item>)`,
