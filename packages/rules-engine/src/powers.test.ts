@@ -3226,13 +3226,89 @@ describe("power evaluation", () => {
     ).toMatchObject({ damage: "1d8+12" });
 
     // A "your level + N" attack you make yourself (a transformed form)
-    // keeps your damage bonuses; its attack stays the fixed line.
+    // keeps your damage bonuses and your attack rolls bonus, never the
+    // creature's ALLY. bonus.
     expect(
       evaluate({
         Keywords: "Arcane",
         Hit: "1d8 + your Charisma modifier damage.",
       }),
-    ).toMatchObject({ attackBonus: 15, damage: "1d8+16" });
+    ).toMatchObject({ attackBonus: 17, damage: "1d8+16" });
+  });
+
+  it("gives a your-level attack the character makes its keyword and attack-roll bonuses", () => {
+    const typed = (name: string, value: number, bonusType: string) => {
+      const base = combatStat(name, value);
+      return {
+        ...base,
+        contributions: base.contributions.map((contribution) => ({
+          ...contribution,
+          id: `${contribution.id}:${bonusType}`,
+          bonusType,
+        })),
+      };
+    };
+    const evaluate = (keywords: string, stats: Record<string, EvaluatedStat>) =>
+      evaluatePowers({
+        level: 20,
+        activeDefinitionIds: ["BITE"],
+        inventory: [],
+        stats: { "Charisma modifier": stat("Charisma modifier", 5), ...stats },
+        overlays: [],
+        entities: [
+          entity("BITE", "Wyrm Form Basic Bite Attack", "Power", {
+            "Power Usage": "At-Will",
+            Keywords: keywords,
+            "Action Type": "Standard action",
+            "Attack Type": "Melee reach 2",
+            Attack: "Your level + 7 vs. AC",
+            Hit: "3d10 + Charisma modifier damage",
+          }),
+        ],
+      })[0]?.variants[0]?.attacks?.[0];
+
+    const bite = evaluate("Arcane", {
+      "attack rolls": combatStat("attack rolls", 2),
+      "arcane:attack": combatStat("arcane:attack", 1),
+      "melee:attack": combatStat("melee:attack", 1),
+      "cold:attack": combatStat("cold:attack", 4),
+      "weapon attack rolls": combatStat("weapon attack rolls", 3),
+      "ALLY.attack rolls": stat("ALLY.attack rolls", 1),
+      "Wyrm Form Basic Bite Attack:attack": combatStat(
+        "Wyrm Form Basic Bite Attack:attack",
+        1,
+      ),
+    });
+    // Level 20 + 7, attack rolls, the Arcane and melee keyword bonuses and
+    // the power-keyed bonus once; no Cold, weapon-only or creature bonus,
+    // and no ability modifier or half level.
+    expect(bite).toMatchObject({ attackStat: "Level", attackBonus: 32 });
+    expect(bite?.attackComponents.map(({ label }) => label).sort()).toEqual(
+      [
+        "your level",
+        "power attack bonus",
+        "attack rolls",
+        "arcane:attack",
+        "melee:attack",
+        "Wyrm Form Basic Bite Attack:attack",
+      ].sort(),
+    );
+
+    // Typed bonuses keep one maximum per type.
+    expect(
+      evaluate("Arcane", {
+        "attack rolls": typed("attack rolls", 4, "Enhancement"),
+        "arcane:attack": typed("arcane:attack", 2, "Enhancement"),
+      }),
+    ).toMatchObject({ attackBonus: 31 });
+
+    // A summoned creature's your-level attack still takes none of them.
+    expect(
+      evaluate("Arcane, Summoning", {
+        "attack rolls": combatStat("attack rolls", 2),
+        "arcane:attack": combatStat("arcane:attack", 1),
+      }),
+    ).toMatchObject({ attackBonus: 27 });
   });
 
   describe("summoned creature commands (D111)", () => {

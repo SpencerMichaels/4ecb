@@ -14,6 +14,20 @@ lacks), no other weapon's row does, and the page-1 item reminder becomes an
 off-by-default rider (D099). It is the only `sample-chars/`/SampleHeroes save
 with such a stat; `parity:baseline` is unchanged. Evaluation cache v98.
 
+## "Your level + N" attacks the character makes (2026-10-31)
+
+The five non-summon powers whose attack is "your level + N vs. X" (Wyrm Form
+Basic Bite Attack, Bahamut's Vessel's Dragon Bite and Breath Weapon, Shake
+the Bridge, [Boon] Chasme Gore) printed level + N plus power-keyed bonuses
+only. Native `PowerStats` (`D20Workspace.cs` ~3917–3920) runs `CalcKeywords`
+and `CalcGlobal("attack rolls")` on every row, and Arcane Power's Wyrm Form
+keeps the sorcerer's statistics, so these rows now add keyword stats and
+`attack rolls` (typed maxima; a power-keyed stat counts once). They still take
+no ability, half level, proficiency, weapon/implement enhancement or `weapon
+attack rolls`; fixed-bonus summoned creatures (D095) are unchanged. No sample
+save holds these powers (`parity:baseline` unchanged); on a probe (Max Unger
+12 with all five added) each gains its +3 `attack rolls`. Evaluation cache v99.
+
 ## .dnd4e export and parity skip candidate catalogs (2026-10-29)
 
 The `.dnd4e` export (`character-export.ts`) evaluated in the exhaustive mode

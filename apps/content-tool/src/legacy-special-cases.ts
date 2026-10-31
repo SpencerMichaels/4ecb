@@ -2175,7 +2175,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.PowerStats": code(
       "Per-power stat block: DetermineWeapon/DeterminePower, IsValidPowerCombo, rows only with a Hit line, an EffectPower or the Healing keyword, no weapon for [B] hits, Commander's Strike by name gets no rows; then attack, damage, strikers, keywords, globals, versatile, misc, bonuses, healing, stacking.",
-      "powers.ts evaluatePowers; Commander's Strike gets no rows by name (EXCEPTION_NAMES.commandersStrike; its record has no Hit line anyway, so the earlier 'still gets rows' note was a false positive). D094 divergence: an attack without a Hit line keeps a row and a Healing power gets no placeholder row. D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats. D111 addition (no native counterpart: legacy computes only the row of the first attack field): each command of a summon power's creature (_Creature Stat Block roll texts) gets its own row from the same calculation (PowerVariant.commands; EvaluatedPower.commands with no equipment for a power with no rows), a merged community card's command reading that card's keyed bonuses ('<card id>:damage'); the legacy-compatible row stays for parity",
+      "powers.ts evaluatePowers; Commander's Strike gets no rows by name (EXCEPTION_NAMES.commandersStrike; its record has no Hit line anyway, so the earlier 'still gets rows' note was a false positive). D094 divergence: an attack without a Hit line keeps a row and a Healing power gets no placeholder row. D095 divergence: a fixed-bonus summoned creature ('your level + N' with the Summoning keyword or a Summoned Creature stat block) skips CalcKeywords/CalcGlobal on attack and damage, taking only ALLY./COMPANION./SUMMON. and power-keyed stats; a 'your level + N' attack the character makes itself (Wyrm Form Basic Bite, Dragon Bite, Breath Weapon, Shake the Bridge, Chasme Gore) keeps CalcKeywords and CalcGlobal('attack rolls') like native, without the ability/half-level/proficiency/enhancement parts of CalcBAB. D111 addition (no native counterpart: legacy computes only the row of the first attack field): each command of a summon power's creature (_Creature Stat Block roll texts) gets its own row from the same calculation (PowerVariant.commands; EvaluatedPower.commands with no equipment for a power with no rows), a merged community card's command reading that card's keyed bonuses ('<card id>:damage'); the legacy-compatible row stays for parity",
       test(
         POWERS,
         "calculates no rows for a power with neither an attack nor a Hit line",
@@ -2187,6 +2187,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         POWERS,
         "works out a pact creature's merged attack with its card's keyed bonuses and no equipment",
+      ),
+      test(
+        POWERS,
+        "gives a your-level attack the character makes its keyword and attack-roll bonuses",
       ),
       test(
         POWERS,

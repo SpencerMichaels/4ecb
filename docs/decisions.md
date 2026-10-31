@@ -2633,7 +2633,10 @@ Decision:
   pp.120–121; matches legacy.
 - **Fixed-bonus creatures** ("your level + N": hexblade and binder allies)
   take only creature and power-keyed bonuses, on attack and damage alike, as
-  their description "specifies otherwise".
+  their description "specifies otherwise". This covers creatures only: a
+  "your level + N" attack the character makes itself (Wyrm Form's bite,
+  Bahamut's Vessel, boons) is an ordinary row that keeps keyword and
+  `attack rolls` bonuses, as native does (amended 2026-10-31).
 - **Familiars** can't attack (Arcane Power p.138), so nothing applies.
 
 Consequences: a beastmaster with Inherent Bonuses or Epic Combatant shows

@@ -982,10 +982,10 @@ character before it is fixed, one slice per item.
   7. ~~Target-less `modify` rules over-apply~~: real; `select=` fixed in
      `89590ba`, nameless in `f2bb532` (latent: nameless `drop`, nameless
      `UniversalClassSkill`; no content uses them).
-  8. ~~Fixed-bonus ally damage (D095)~~: fixed `ac996dc`. Open: Wyrm Form /
-     Dragon Bite / Breath Weapon / Chasme Gore attack rows use the fixed-line
-     path without character-wide attack bonuses (D095 doesn't clearly cover
-     them).
+  8. ~~Fixed-bonus ally damage (D095)~~: fixed `ac996dc`; ~~"your level + N"
+     attacks the character makes (Wyrm Form Basic Bite, Dragon Bite, Breath
+     Weapon, Shake the Bridge, Chasme Gore) without keyword and
+     character-wide attack bonuses~~: fixed 2026-10-31.
 - **Tier 2, missing reminders:** done 2026-10-23 (Conditional modifiers pane,
   Play data card lines, stat-tile tooltips, power-card reminders). The last
   gap, item-limited globals (`damage(<item>)`, `attack rolls(<item>)`,

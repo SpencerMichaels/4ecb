@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v98-2026-10-31-item-limited-global-reminders";
+  "evaluated-character-v99-2026-10-31-level-attack-bonuses";
 
 export interface CharacterOccurrence {
   readonly id: string;

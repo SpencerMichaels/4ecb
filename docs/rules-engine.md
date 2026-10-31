@@ -581,8 +581,13 @@ creature under D095: attack and damage add the creature's `ALLY.`,
 for a damage roll) and power-keyed stats, but none of the summoner's weapon,
 implement, keyword or character-wide bonuses. Its damage keeps the dice, the
 named ability modifiers and flat terms. Other "your level + N" powers made by
-the character (Wyrm Form Basic Bite, Breath Weapon, boons) keep ordinary
-damage.
+the character (Wyrm Form Basic Bite, Dragon Bite, Breath Weapon, Shake the
+Bridge, boons) keep ordinary damage, and their attack adds the row's keyword
+stats (`arcane:attack`, `melee:attack`, the power's name) and `attack rolls`
+with typed maxima, as native `PowerStats` runs `CalcKeywords` and
+`CalcGlobal("attack rolls")` on every row; still no ability modifier, half
+level, proficiency, weapon or implement enhancement, or `weapon attack rolls`
+(these are not weapon or implement attacks).
 
 Associates (D107) are creatures the content describes only as a prose stat
 block on an `Associate` record. The legacy-wotc import parses that block once,

@@ -3506,9 +3506,15 @@ export function evaluatePowers(input: {
             attackComponents,
           };
         }
-        // A summoned creature attacks with your level plus a fixed bonus;
-        // no ability, weapon or implement applies, only the creature's own
-        // bonuses and bonuses keyed to this power.
+        // A "your level + N" attack: your level plus a fixed bonus, with no
+        // ability modifier, half level, proficiency or weapon/implement
+        // enhancement. A summoned creature (D095) adds only its own
+        // creature bonuses and bonuses keyed to this power. An attack the
+        // character makes itself (Wyrm Form's bite, Bahamut's Vessel, boons)
+        // also takes the row's keyword and character-wide `attack rolls`
+        // bonuses, as native PowerStats runs CalcKeywords and
+        // CalcGlobal("attack rolls") on every row (Arcane Power: the
+        // sorcerer keeps their statistics in Wyrm Form).
         const levelAttack = authoredLine.levelAttack;
         if (levelAttack !== undefined) {
           const powerBonus = levelAttack.bonus;
@@ -3521,9 +3527,35 @@ export function evaluatePowers(input: {
                   ["attack rolls"],
                   "creature attack bonus",
                 )
-              : []),
-            ...powerSpecificComponents(input.stats, keyedTo, "attack"),
+              : stackTypedComponents(
+                  combatStatEntries(
+                    input.stats,
+                    equipment,
+                    power,
+                    weaponPower ? "weapon" : "implement",
+                    "attack",
+                    phaseAttackType,
+                    {
+                      keywords,
+                      defense: levelAttack.defense,
+                      byId,
+                      basicAttackKind,
+                      globalStats: { weaponRolls },
+                      nativeKeywords,
+                    },
+                  ),
+                )),
           ];
+          // A power-keyed stat the keyword pass already read (the power's
+          // name is one of its keywords) counts once.
+          const counted = new Set(
+            attackComponents.map(({ provenanceId }) => provenanceId),
+          );
+          attackComponents.push(
+            ...powerSpecificComponents(input.stats, keyedTo, "attack").filter(
+              ({ provenanceId }) => !counted.has(provenanceId),
+            ),
+          );
           return {
             id: `${power.id}:attack-${definition.ordinal}`,
             ordinal: definition.ordinal,
