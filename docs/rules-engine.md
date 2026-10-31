@@ -215,8 +215,21 @@ If GAIN names no power, the swap offers nothing. A GAIN starting with `$`
 (Secrets of Belial's `$$NOT_CLASS`) is a choice instead: any power matching
 `GAIN,LOSE` at the lost power's level or lower. Only chosen powers can be lost
 here, while native also allows granted ones. The hybrid `CheckHybridPower`
-limit applies (`hybrid-powers.ts`, D109), but a saved swap it forbids is not
-yet flagged.
+limit applies (`hybrid-powers.ts`, D109).
+
+A `multiclass` swap (native `ChoiceMatch`, `CheckReplaceElem`) can lose only a
+chosen power matching `$$CLASS,<multiclass>,<character level>`. That is a
+power of the character's class, of the swap's category ("Daily", "encounter|
+Augmentable At-Will"), at the character's level or lower. Native also lets a
+swap whose category starts with exactly "At-Will" (Paragon Multiclassing)
+lose a granted power whose `Display` contains "attack". The builder doesn't
+offer granted powers yet.
+
+A target a swap may not give up is left out, unless it is the slot's saved
+target. That one stays listed with `targetReasons` (`category`, or
+`hybrid-class-target` for `CheckHybridPower`). Its entry in the choice's
+candidates is ineligible, and the swap raises `choice.ineligible`, as a gain
+forbidden by `DisallowClass` does.
 
 A power's level for category matching is its Level field, or else, when the
 record has no Level field at all, the bare number in its `<Category>`, which is

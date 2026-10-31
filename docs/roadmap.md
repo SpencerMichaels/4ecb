@@ -1039,9 +1039,13 @@ character before it is fixed, one slice per item.
      slots and retrainings (reason `hybrid-class`), CheckHybridPower on
      multiclass/power-replace swaps, PowersAsClass per choice level for powers
      (all values count, D109), Dilettante melee/implement/CountsAsClass
-     predicates and Adept Dilettante's `[Dilettante]` grant. Left:
-     CheckReplaceElem's multiclass Display 'attack' limit; a saved swap that
-     CheckHybridPower forbids is not flagged.
+     predicates and Adept Dilettante's `[Dilettante]` grant. A multiclass
+     swap's lose category (`$$CLASS,<multiclass>,<level>`, native
+     ChoiceMatch) and flagging of saved swaps that break it or
+     CheckHybridPower (`targetReasons`, `choice.ineligible`) are also done.
+     Left: native also lets a multiclass "At-Will" swap lose a granted
+     power whose Display contains "attack" (CheckReplaceElem `elem[15]==0`,
+     ~16821); modern offers only chosen powers.
   7. ~~Shop~~ — done (`418668d`, D108): native IsValidLoot/IsValidWeapon/
      ValidateShield/TransformLoot pairing, masterwork armor needs an
      enchantment without Inherent Bonuses, weapon enchantments on superior
@@ -1122,8 +1126,11 @@ character before it is fixed, one slice per item.
      `0` followed in `6a2056c` (D104). "Implement Proficiency (Proficient
      Weapons)" follows native `IsValidImplement` (2026-10-31): a Weapon-type
      base the character is proficient with marks an implement power's
-     variant proficient. Additional Proficiencies is a no-op (no record has
-     the field).
+     variant proficient. Open question: a ki-focused weapon the character is not
+     proficient with (e.g. a synthetic "Quick Strike Ki Focused Longsword
+     +1") stays non-proficient; native probably accepts it through the ki
+     focus enchantment's implement name (not investigated). Additional
+     Proficiencies is a no-op (no record has the field).
 - ~~**Tier 3**~~ (all done, 2026-10-31 triage): shop pairing for
   enchantments with unparsed base restrictions (D108, `418668d`),
   `UniversalClassSkill` (`2dc7341`, `f2bb532`), gated resistances (D104,

@@ -234,7 +234,7 @@ describe("native construction conformance", () => {
   it.each([
     ["ordinary", {}],
     ["retrain", { retrain: "true" }],
-    ["multiclass", { multiclass: "Synthetic class" }],
+    ["multiclass", { multiclass: "encounter" }],
     ["power swap", { powerswap: "Synthetic,encounter,1" }],
     ["power replace", { "power-replace": "NEW:Synthetic,encounter,1" }],
   ] as const)(
@@ -256,6 +256,8 @@ describe("native construction conformance", () => {
           ],
         },
         entity("NEW", "New power", "Power"),
+        // A multiclass swap loses only a power of the character's class.
+        entity("Synthetic", "Synthetic", "Class"),
       ];
       const saved = [
         occurrence("source-provider", "SOURCE_PROVIDER", 1, "root"),
@@ -265,6 +267,7 @@ describe("native construction conformance", () => {
           choiceIndex: 0,
         }),
         occurrence("replace-provider", "REPLACE_PROVIDER", 2, "root"),
+        occurrence("class", "Synthetic", 1, "root"),
       ];
 
       const replacement = evaluateCharacter(

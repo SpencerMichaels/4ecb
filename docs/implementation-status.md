@@ -15,6 +15,23 @@ stays non-proficient. Native's trailing `ForPower`/`CheckPower` still
 accepts any item, so legacy rows and `parity:baseline` are unchanged
 (Jackie Lee 132/132). Evaluation cache v100.
 
+## Multiclass swap targets and forbidden saved swaps (2026-10-31)
+
+A multiclass swap (Novice/Acolyte/Adept Power, Paragon Multiclassing,
+Psionic Conventionalist/Dabbler) now offers only powers that match native
+`ChoiceMatch`'s lose category, `$$CLASS,<multiclass>,<character level>`
+(`-Module-.cs` ~16846 and ~16770). Before, it offered any chosen power: a
+Beldin Hammertongue 11 probe with Adept Power (`multiclass="Daily"`) was
+offered his at-wills and encounters. A saved swap whose target breaks that
+rule, or breaks `CheckHybridPower`, keeps its target listed. The target
+carries `targetReasons` (`category` or the new `hybrid-class-target`), its
+row in the target table is marked ineligible, and the swap raises
+`choice.ineligible`, like a gain that `DisallowClass` forbids. Earlier, a
+saved swap that `CheckHybridPower` forbids was not flagged. No
+`sample-chars/` or SampleHeroes save has such a swap, and `parity:baseline`
+is unchanged. Still open: native also lets a multiclass "At-Will" swap lose a
+granted at-will attack power (roadmap queue item 6). Evaluation cache v101.
+
 ## Item-limited global reminders on power rows (2026-10-31)
 
 Conditional bonuses on item-limited global stats (`damage(<item>)`,

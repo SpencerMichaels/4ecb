@@ -288,10 +288,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0xca3c2cf6.CheckHybridPower": code(
       "Hybrid characters (two hybrid classes, three class entries): a replacement that is neither a retraining nor a power swap (multiclass swap, power-replace, plain replace) may give up a hybrid class's power only while another held power of that class has the same Power Type and Power Usage at the replacement's level.",
-      "hybrid-powers.ts hybridPowerReplaceable: the evaluator drops such replacement options (power-replace included) after the rule pass, reading fields through modify overlays; a slot's current target stays listed",
+      "hybrid-powers.ts hybridPowerReplaceable: the evaluator drops such replacement options (power-replace included) after the rule pass, reading fields through modify overlays; a slot's saved target stays listed with targetReasons 'hybrid-class-target' and the swap raises choice.ineligible",
       test(
         HYBRID_POWERS,
         "keeps a power-replace from taking a hybrid class's only power of its kind",
+      ),
+      test(
+        HYBRID_POWERS,
+        "flags a saved power-replace that took a hybrid class's only power of its kind",
       ),
       test(
         HYBRID_POWERS,
@@ -319,8 +323,8 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "D20Choice.CheckReplaceElem": partial(
-      "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (Display 'attack' at-wills), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); the multiclass Display 'attack' limit is not reproduced",
+      "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (ChoiceMatch lose category '$$CLASS,<multiclass>,<character level>'; a granted power only for an 'At-Will' swap and a Display containing 'attack'), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses only chosen powers matching its ChoiceMatch category; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); granted powers (the multiclass At-Will Display 'attack' allowance) are not offered",
       test(CONFORMANCE, "reads a bare level as that level or lower"),
       test(
         CONFORMANCE,
@@ -329,6 +333,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         HYBRID_POWERS,
         "keeps a power-replace from taking a hybrid class's only power of its kind",
+      ),
+      test(
+        HYBRID_POWERS,
+        "offers only the character's class powers of the swap's category",
+      ),
+      test(
+        HYBRID_POWERS,
+        "flags a saved swap that gave up a power outside its category",
       ),
     ),
     "?A0x7555d940.FromDilettante": code(

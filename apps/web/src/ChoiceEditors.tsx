@@ -326,15 +326,17 @@ function PresetReplaceDialog({
 function targetDecision(
   option: NonNullable<EvaluatedChoice["replacementOptions"]>[number],
 ): CandidateDecision {
+  // Only a saved target the swap may not give up carries reasons.
+  const reasons = option.targetReasons ?? [];
   return {
     definitionId: option.definitionId,
-    eligible: true,
+    eligible: reasons.length === 0,
     sourceEntitled: true,
-    rulesLegal: true,
+    rulesLegal: reasons.length === 0,
     activeDefinition: true,
     activeOccurrenceIds: [option.replacesOccurrenceId],
     providerOccurrenceIds: [],
-    reasons: [],
+    reasons,
   };
 }
 

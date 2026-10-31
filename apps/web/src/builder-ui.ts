@@ -1390,6 +1390,8 @@ export function candidateReason(reasons: readonly string[]): string {
       "You cannot choose a theme attack power in place of a class attack power if you have no other class power of that type",
     "hybrid-class":
       "Must choose a power from your other hybrid class: with two powers of this kind, at least one must come from each hybrid class",
+    "hybrid-class-target":
+      "A hybrid character can give up a hybrid class's power only while holding another power of that class with the same type and usage",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }

@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v100-2026-10-31-proficient-weapon-implements";
+  "evaluated-character-v101-2026-10-31-replace-target-legality";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -198,6 +198,12 @@ export interface EvaluatedChoice {
     readonly replacesOccurrenceId: string;
     readonly definitionId: string;
     readonly candidates: readonly CandidateDecision[];
+    /**
+     * Why this target may not be given up (native CheckReplaceElem). Only
+     * the slot's saved target is ever listed with reasons; any other
+     * forbidden target is left out.
+     */
+    readonly targetReasons?: readonly string[];
   }[];
 }
 
@@ -2516,6 +2522,20 @@ function evaluateCharacterInternal(
       )
     );
   };
+  /** A replace target's entry in its choice's candidates, made illegal by
+   *  the reasons it may not be given up for (`targetReasons`). */
+  const withTargetReasons = (
+    decision: CandidateDecision,
+    reasons: readonly string[] | undefined,
+  ): CandidateDecision =>
+    reasons === undefined || reasons.length === 0
+      ? decision
+      : {
+          ...decision,
+          eligible: false,
+          rulesLegal: false,
+          reasons: [...decision.reasons, ...reasons],
+        };
   /** A Power select matching `category`, for category checks only. */
   const powerCategoryRule = (
     source: ReplaceRule["source"],
@@ -3056,6 +3076,32 @@ function evaluateCharacterInternal(
                       ).reasons.includes("category")
                     )
                       return [];
+                    // Native ChoiceMatch (~16846) and CheckReplaceElem
+                    // (~16770): a multiclass swap can only lose a power of
+                    // the character's class matching its category, of the
+                    // character's level or lower ("$$CLASS,<multiclass>,
+                    // <level>"), so Adept Power's daily swap never offers an
+                    // at-will. A saved swap that breaks it keeps its target,
+                    // flagged.
+                    const targetReasons =
+                      rule.multiclass !== undefined &&
+                      lost !== undefined &&
+                      candidateFor(
+                        powerCategoryRule(
+                          rule.source,
+                          `$$CLASS,${rule.multiclass},${input.level}`,
+                        ),
+                        occurrence,
+                        lost,
+                        replacementLevel,
+                      ).reasons.includes("category")
+                        ? ["category"]
+                        : [];
+                    if (
+                      targetReasons.length > 0 &&
+                      candidate.id !== selected?.replacesId
+                    )
+                      return [];
                     const excludedIds = [
                       candidate.id,
                       ...(selected === undefined ? [] : [selected.id]),
@@ -3079,6 +3125,9 @@ function evaluateCharacterInternal(
                       {
                         replacesOccurrenceId: candidate.id,
                         definitionId: candidate.definitionId,
+                        ...(targetReasons.length === 0
+                          ? {}
+                          : { targetReasons }),
                         // Retraining X into X changes nothing, so it isn't offered.
                         candidates: detailedReplacement
                           ? candidatesFor(
@@ -3135,27 +3184,33 @@ function evaluateCharacterInternal(
             ...(selected === undefined
               ? {}
               : { selectedOccurrenceId: selected.id }),
-            candidates: replacementOptions.map((option) => ({
-              definitionId: option.definitionId,
-              eligible:
-                index.get(option.definitionId) === undefined ||
-                isSourceEntitled(index.get(option.definitionId)!),
-              sourceEntitled:
-                index.get(option.definitionId) === undefined ||
-                isSourceEntitled(index.get(option.definitionId)!),
-              rulesLegal: true,
-              activeDefinition: memberships.has(key(option.definitionId)),
-              activeOccurrenceIds:
-                memberships.get(key(option.definitionId))?.occurrenceIds ?? [],
-              providerOccurrenceIds:
-                memberships.get(key(option.definitionId))
-                  ?.providerOccurrenceIds ?? [],
-              reasons:
-                index.get(option.definitionId) !== undefined &&
-                !isSourceEntitled(index.get(option.definitionId)!)
-                  ? ["source-unentitled"]
-                  : [],
-            })),
+            candidates: replacementOptions.map((option) =>
+              withTargetReasons(
+                {
+                  definitionId: option.definitionId,
+                  eligible:
+                    index.get(option.definitionId) === undefined ||
+                    isSourceEntitled(index.get(option.definitionId)!),
+                  sourceEntitled:
+                    index.get(option.definitionId) === undefined ||
+                    isSourceEntitled(index.get(option.definitionId)!),
+                  rulesLegal: true,
+                  activeDefinition: memberships.has(key(option.definitionId)),
+                  activeOccurrenceIds:
+                    memberships.get(key(option.definitionId))?.occurrenceIds ??
+                    [],
+                  providerOccurrenceIds:
+                    memberships.get(key(option.definitionId))
+                      ?.providerOccurrenceIds ?? [],
+                  reasons:
+                    index.get(option.definitionId) !== undefined &&
+                    !isSourceEntitled(index.get(option.definitionId)!)
+                      ? ["source-unentitled"]
+                      : [],
+                },
+                option.targetReasons,
+              ),
+            ),
             replacementOptions,
           });
           break;
@@ -3578,12 +3633,21 @@ function evaluateCharacterInternal(
   if (hybridSlotRequests.size > 0 || hybridReplaceChecks.size > 0)
     choices = choices.map((choice) => {
       const replaceCheck = hybridReplaceChecks.get(choice.id);
-      const kept = (choice.replacementOptions ?? []).map(
+      // A target CheckHybridPower forbids is dropped, unless it is the slot's
+      // saved target: that one stays listed, flagged, so the saved swap is
+      // reported as illegal (like a gain DisallowClass forbids).
+      const forbidden = (choice.replacementOptions ?? []).map(
         (option) =>
-          replaceCheck === undefined ||
-          option.replacesOccurrenceId === replaceCheck.currentTargetId ||
-          hybridReplaceable(option.definitionId, replaceCheck.level),
+          replaceCheck !== undefined &&
+          !hybridReplaceable(option.definitionId, replaceCheck.level),
       );
+      const kept = (choice.replacementOptions ?? []).map(
+        (option, index) =>
+          !forbidden[index] ||
+          option.replacesOccurrenceId === replaceCheck?.currentTargetId,
+      );
+      const flagged = (index: number): readonly string[] =>
+        forbidden[index] === true ? ["hybrid-class-target"] : [];
       return {
         ...choice,
         candidates: [
@@ -3591,14 +3655,32 @@ function evaluateCharacterInternal(
             hybridSlotRequests.get(choice.id),
             choice.replacementOptions === undefined
               ? choice.candidates
-              : choice.candidates.filter((_, index) => kept[index] !== false),
+              : choice.candidates.flatMap((candidate, index) =>
+                  kept[index] === false
+                    ? []
+                    : [withTargetReasons(candidate, flagged(index))],
+                ),
           ),
         ],
         ...(choice.replacementOptions === undefined
           ? {}
           : {
               replacementOptions: choice.replacementOptions
-                .filter((_, index) => kept[index])
+                .flatMap((option, index) =>
+                  kept[index]
+                    ? [
+                        flagged(index).length === 0
+                          ? option
+                          : {
+                              ...option,
+                              targetReasons: [
+                                ...(option.targetReasons ?? []),
+                                ...flagged(index),
+                              ],
+                            },
+                      ]
+                    : [],
+                )
                 .map((option) => ({
                   ...option,
                   candidates: [
@@ -3699,19 +3781,36 @@ function evaluateCharacterInternal(
     );
     // A retraining or swap must still follow the hybrid power rules (PHB3
     // p138 "Retraining"), so a gain DisallowClass forbids is an error.
-    const replacementGain = choice.replacementOptions
-      ?.find(
-        (option) =>
-          option.replacesOccurrenceId === selectedOccurrence.replacesId,
-      )
-      ?.candidates.find(
-        (candidate) => candidate.definitionId === selectedDefinitionId,
-      );
+    const replacementTarget = choice.replacementOptions?.find(
+      (option) => option.replacesOccurrenceId === selectedOccurrence.replacesId,
+    );
+    const replacementGain = replacementTarget?.candidates.find(
+      (candidate) => candidate.definitionId === selectedDefinitionId,
+    );
     if (replacementGain?.reasons.includes("hybrid-class") === true)
       diagnostics.push({
         severity: "error",
         code: "choice.ineligible",
         message: `The selected ${choice.type} is not eligible: hybrid-class.`,
+        occurrenceId: choice.selectedOccurrenceId,
+        ruleOrdinal: choice.ruleOrdinal,
+      });
+    // Native CheckReplaceElem: the swap gave up a power it may not (a
+    // multiclass swap's category, CheckHybridPower).
+    if ((replacementTarget?.targetReasons?.length ?? 0) > 0)
+      diagnostics.push({
+        severity: "error",
+        code: "choice.ineligible",
+        message: `The selected ${choice.type} gives up a power it cannot: ${replacementTarget!
+          .targetReasons!.map(
+            (reason) =>
+              ({
+                category: "it does not match the swap's category",
+                "hybrid-class-target":
+                  "it is its hybrid class's only power of that type and usage",
+              })[reason] ?? reason,
+          )
+          .join("; ")}.`,
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });

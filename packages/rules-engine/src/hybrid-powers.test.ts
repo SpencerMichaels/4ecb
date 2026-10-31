@@ -498,3 +498,185 @@ describe("hybrid power replacement (native CheckHybridPower)", () => {
     ).toBeUndefined();
   });
 });
+
+describe("saved swaps that give up a power they cannot (native CheckReplaceElem)", () => {
+  const swapChoice = (result: ReturnType<typeof evaluate>, provider: string) =>
+    result.choices.find((choice) => choice.providerOccurrenceId === provider);
+
+  it("flags a saved power-replace that took a hybrid class's only power of its kind", () => {
+    const result = evaluate(
+      5,
+      { "level-1": "FIGHTER_ENCOUNTER", "level-3": "WARLORD_ENCOUNTER_3" },
+      {
+        extra: [
+          occurrence("swap", "Swapped In", 5, "level-5", 0, {
+            replacesId: "pick-level-1",
+          }),
+        ],
+      },
+    );
+    const choice = swapChoice(result, "level-5");
+    // The saved target stays listed, flagged; the other forbidden one is
+    // still left out.
+    expect(
+      choice?.replacementOptions?.map(
+        ({ replacesOccurrenceId, targetReasons }) => ({
+          replacesOccurrenceId,
+          targetReasons,
+        }),
+      ),
+    ).toEqual([
+      {
+        replacesOccurrenceId: "pick-level-1",
+        targetReasons: ["hybrid-class-target"],
+      },
+    ]);
+    expect(choice?.candidates).toMatchObject([
+      {
+        definitionId: "FIGHTER_ENCOUNTER",
+        eligible: false,
+        rulesLegal: false,
+        reasons: ["hybrid-class-target"],
+      },
+    ]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: "choice.ineligible",
+        occurrenceId: "swap",
+        message: expect.stringContaining("hybrid class's only power"),
+      }),
+    );
+  });
+
+  it("leaves a saved power-replace the hybrid limit allows unflagged", () => {
+    const result = evaluate(
+      5,
+      { "level-1": "FIGHTER_ENCOUNTER", "level-3": "FIGHTER_ENCOUNTER_3" },
+      {
+        extra: [
+          occurrence("swap", "Swapped In", 5, "level-5", 0, {
+            replacesId: "pick-level-1",
+          }),
+        ],
+      },
+    );
+    expect(
+      swapChoice(result, "level-5")?.replacementOptions?.some(
+        ({ targetReasons }) => targetReasons !== undefined,
+      ),
+    ).toBe(false);
+    expect(
+      result.diagnostics.filter(
+        ({ code, occurrenceId }) =>
+          code === "choice.ineligible" && occurrenceId === "swap",
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("multiclass swap targets (native ChoiceMatch)", () => {
+  // Novice/Acolyte/Adept Power and Paragon Multiclassing: the lost power
+  // must match "$$CLASS,<multiclass>,<character level>".
+  const multiclassContent = (): ContentEntity[] => [
+    ...content(),
+    entity("FIGHTER_ROOT", "Fighter powers", "Class Feature", {
+      rules: [
+        rule(
+          "select",
+          { type: "Power", number: "1", Category: "$$CLASS,at-will,1" },
+          0,
+        ),
+        rule(
+          "select",
+          { type: "Power", number: "1", Category: "$$CLASS,daily,1" },
+          1,
+        ),
+        rule("select", { type: "Power", number: "1" }, 2),
+      ],
+    }),
+    entity("ID_FMP_FEAT_341", "Adept Power", "Feat", {
+      rules: [
+        rule(
+          "replace",
+          {
+            name: "daily swap",
+            Level: "4",
+            multiclass: "Daily",
+            optional: "true",
+          },
+          0,
+        ),
+      ],
+    }),
+    power("FIGHTER_DAILY", FIGHTER, "Daily", 1),
+    power("WARLORD_DAILY", WARLORD, "Daily", 1),
+    power("WARLORD_DAILY_2", WARLORD, "Daily", 1),
+  ];
+  const evaluateMulticlass = (picks: readonly CharacterOccurrence[]) =>
+    evaluateCharacter(
+      {
+        level: 4,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "fighter",
+            definitionId: FIGHTER,
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "fighter-root",
+            definitionId: "FIGHTER_ROOT",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          occurrence("at-will", "FIGHTER_AT_WILL", 1, "fighter-root", 0),
+          occurrence("daily", "FIGHTER_DAILY", 1, "fighter-root", 0, {
+            ruleOrdinal: 1,
+          }),
+          occurrence("other", "WARLORD_DAILY", 1, "fighter-root", 0, {
+            ruleOrdinal: 2,
+          }),
+          {
+            id: "feat",
+            definitionId: "ID_FMP_FEAT_341",
+            acquiredLevel: 4,
+            kind: "grabbag",
+          },
+          ...picks,
+        ],
+        inventory: [],
+      },
+      multiclassContent(),
+    );
+  const targets = (result: ReturnType<typeof evaluateMulticlass>) =>
+    result.choices
+      .find((choice) => choice.providerOccurrenceId === "feat")
+      ?.replacementOptions?.map(({ replacesOccurrenceId, targetReasons }) =>
+        targetReasons === undefined
+          ? replacesOccurrenceId
+          : `${replacesOccurrenceId}: ${targetReasons.join(", ")}`,
+      );
+
+  it("offers only the character's class powers of the swap's category", () => {
+    // Not the at-will, and not the Warlord daily (not of the class).
+    expect(targets(evaluateMulticlass([]))).toEqual(["daily"]);
+  });
+
+  it("flags a saved swap that gave up a power outside its category", () => {
+    const result = evaluateMulticlass([
+      occurrence("swap", "WARLORD_DAILY_2", 4, "feat", 0, {
+        replacesId: "at-will",
+      }),
+    ]);
+    expect(targets(result)).toEqual(["at-will: category", "daily"]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "choice.ineligible",
+        occurrenceId: "swap",
+        message: expect.stringContaining("swap's category"),
+      }),
+    );
+  });
+});
