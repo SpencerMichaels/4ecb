@@ -1,5 +1,19 @@
 # Implementation status
 
+## Item-limited global reminders on power rows (2026-10-31)
+
+Conditional bonuses on item-limited global stats (`damage(<item>)`,
+`attack rolls(<item>)`, `damage rolls(<item>)`; ~40 records such as
+Challenge-Seeking, Frost Fury, Rod of Devilry, Ruinblade, the totems) now
+become reminders on the rows of the matching weapon or implement, as native
+`CalcGlobal` → `LimitKeyword` → `CalcConditionals` does; their numbers already
+applied through the same limiter split. On `corvo attano type 1 5th` every
+Challenge-Seeking Dagger row reads "+1d6 to damage rolls against enemies at
+maximum hit points" (legacy's 8 rows plus Poisoned Strike, which that save
+lacks), no other weapon's row does, and the page-1 item reminder becomes an
+off-by-default rider (D099). It is the only `sample-chars/`/SampleHeroes save
+with such a stat; `parity:baseline` is unchanged. Evaluation cache v98.
+
 ## .dnd4e export and parity skip candidate catalogs (2026-10-29)
 
 The `.dnd4e` export (`character-export.ts`) evaluated in the exhaustive mode

@@ -718,6 +718,90 @@ describe("power evaluation", () => {
       "+3 to damage rolls while flanking - Synthetic feature.",
     ]);
   });
+  it("turns item-limited global conditionals into reminders on that item's rows only (native CalcGlobal/LimitKeyword)", () => {
+    const conditional = (
+      name: string,
+      value: string,
+      condition: string,
+    ): EvaluatedStat => ({
+      name,
+      value: 0,
+      contributions: [
+        {
+          id: `reminder:${name}`,
+          stat: name,
+          value,
+          ...(/^[+-]?\d+$/.test(value) ? { numericValue: Number(value) } : {}),
+          providerId: "ENCHANT",
+          providerName: "Synthetic Seeking Weapon +1",
+          condition,
+          applied: false,
+          reason: "conditional",
+        },
+      ],
+    });
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("DAGGER", "Dagger", "Weapon", { Damage: "1d4" }),
+        entity("SWORD", "Synthetic Sword", "Weapon", { Damage: "1d8" }),
+        entity("ENCHANT", "Synthetic Seeking Weapon +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+        }),
+      ],
+      inventory: [
+        {
+          id: "dagger",
+          definitionIds: ["DAGGER", "ENCHANT"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "sword",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "damage(Synthetic Seeking Weapon +1)": conditional(
+          "damage(Synthetic Seeking Weapon +1)",
+          "+1d6",
+          "against enemies at maximum hit points",
+        ),
+        "attack rolls(Dagger)": conditional(
+          "attack rolls(Dagger)",
+          "2",
+          "against a bloodied target",
+        ),
+        "damage rolls(Other Blade +3)": conditional(
+          "damage rolls(Other Blade +3)",
+          "5",
+          "while flanking",
+        ),
+      },
+    });
+    const effects = (name: string) =>
+      powers[0]?.variants
+        .find((v) => v.equipmentName === name)
+        ?.additionalEffects?.map((effect) => effect.text);
+    expect(effects("Synthetic Seeking Dagger +1")).toEqual([
+      "+1d6 to damage rolls against enemies at maximum hit points - Synthetic Seeking Weapon +1.",
+      "+2 to attack rolls against a bloodied target - Synthetic Seeking Weapon +1.",
+    ]);
+    expect(effects("Synthetic Sword") ?? []).toEqual([]);
+  });
   it("adds a flat hit bonus only from the damage expression (native CalcDamage)", () => {
     const damageFor = (hit: string) =>
       evaluatePowers({

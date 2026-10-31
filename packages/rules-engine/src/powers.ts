@@ -2561,7 +2561,20 @@ function powerAdditionalEffects(input: {
     const qualified = normalized.match(
       /^(.*):(attack|damage|damage-roll|info)(?:\((.*)\))?$/,
     );
-    const kind = globals.get(normalized) ?? qualified?.[2];
+    // Native CalcGlobal also reads each global through LimitKeyword as
+    // `<global>(<weapon base or enchantment name>)` and AugmentLimitKeyword,
+    // and DamageKeyword/AttackKeyword pass that limited stat to
+    // CalcConditionals: split the limiter as keywordComponents does.
+    const global = normalized.match(/^([^:(]*?)(?:\((.*)\))?$/);
+    const globalKind =
+      global === null ? undefined : globals.get(global[1]!.trim());
+    if (
+      globalKind !== undefined &&
+      global?.[2] !== undefined &&
+      !limiterNames(input.equipment, input.byId).has(global[2])
+    )
+      return [];
+    const kind = globalKind ?? qualified?.[2];
     if (kind === undefined || kind === "none") return [];
     if (kind === "attack" && !input.hasAttack) return [];
     if (kind === "damage" && input.damage === undefined) return [];

@@ -987,9 +987,11 @@ character before it is fixed, one slice per item.
      path without character-wide attack bonuses (D095 doesn't clearly cover
      them).
 - **Tier 2, missing reminders:** done 2026-10-23 (Conditional modifiers pane,
-  Play data card lines, stat-tile tooltips, power-card reminders). Left:
-  `damage(<item>)` textstrings (Challenge-Seeking), `ally.melee:damage`
-  (Infernal Pincer), one `check:<other>` example.
+  Play data card lines, stat-tile tooltips, power-card reminders). The last
+  gap, item-limited globals (`damage(<item>)`, `attack rolls(<item>)`,
+  `damage rolls(<item>)`: Challenge-Seeking, Frost Fury, Rod of Devilry…),
+  fixed 2026-10-31: they are reminders on the matching weapon's rows (native
+  `CalcGlobal`/`LimitKeyword`).
 - ~~**From four more player saves (2026-10-23)**~~: all fixed — Villain's
   Menace (`da275bc`), ki-focused weapon rows (`2f9566d`), dice-less damage
   (`095daae`, `fbcaef2`); the Arcane Wisp card was a retired community card

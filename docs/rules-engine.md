@@ -665,6 +665,14 @@ same-profile fixtures swap two unequal implement enhancements and require the
 bonus to follow the hand selection exactly; the private `oleander_9` sample
 matches legacy on every arcane implement row.
 
+Global stats take the same limiter without a keyword: native `CalcGlobal`
+reads `attack rolls`, `damage` and `damage rolls` bare and through
+`LimitKeyword` as `<global>(<weapon base or enchantment name>)` (and
+`AugmentLimitKeyword`), and passes the limited stat to `CalcConditionals`.
+So a conditional `damage(Challenge-Seeking Weapon +1)` is a reminder on that
+weapon's rows only (`powerAdditionalEffects`), as its numbers already were
+(`keywordComponents`).
+
 A parenthesized stat limiter (`implement:damage(<name>)`) matches the row's
 base, its enchantment, or the augment bound to the row's item (native
 `CalcKeywords` + `CharLootAugment`). The binding is the host holding's
