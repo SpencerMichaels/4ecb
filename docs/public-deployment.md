@@ -40,15 +40,15 @@ All project commands, including the Docker client, run from the project-local
 Nix environment. The Docker daemon remains an operator-managed host service.
 
 ```sh
-nix develop path:. --command docker build --target development -t 4ecb-dev .
-nix develop path:. --command docker build -t 4ecb .
+nix develop --command docker build --target development -t 4ecb-dev .
+nix develop --command docker build -t 4ecb .
 ```
 
 Run the production image as its unprivileged user with a read-only root
 filesystem and a writable temporary filesystem:
 
 ```sh
-nix develop path:. --command docker run --rm \
+nix develop --command docker run --rm \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
   -p 8080:8080 4ecb
 ```
@@ -60,7 +60,7 @@ headers when content-hashed; navigation uses `no-cache`; and
 To supply operator configuration, bind-mount a non-secret JSON file read-only:
 
 ```sh
-nix develop path:. --command docker run --rm \
+nix develop --command docker run --rm \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
   -p 8080:8080 \
   --mount type=bind,src="$PWD/runtime-config.json",dst=/app/runtime-config.json,readonly \
@@ -170,7 +170,7 @@ missing file is 404), so no proxy configuration is needed to advertise a pack.
 1. Generate the runtime configuration and a revision-qualified pack copy:
 
    ```sh
-   nix develop path:. --command pnpm content-tool advertise /path/to/pack.4ecp
+   nix develop --command pnpm content-tool advertise /path/to/pack.4ecp
    ```
 
    This validates the pack, writes

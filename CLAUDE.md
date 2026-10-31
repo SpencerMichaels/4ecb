@@ -23,9 +23,13 @@ All installed tools and project commands must run inside the project-local Nix
 shell — never assume global `node`/`pnpm`:
 
 ```sh
-nix develop path:.
+nix develop
 pnpm install --frozen-lockfile
 ```
+
+Do not use `nix develop path:.`: it copies and hashes the entire working tree,
+including the multi-GB `tmp/`, on every invocation (~3 minutes vs ~5 seconds).
+Plain `nix develop` copies only git-tracked files.
 
 ## Common commands
 
@@ -73,7 +77,7 @@ Full public verification gate (run before declaring a milestone/checkpoint
 done — mirrors CI, uses only synthetic content):
 
 ```sh
-nix develop path:. --command bash scripts/check.sh
+nix develop --command bash scripts/check.sh
 ```
 
 CI splits it: `public-checks` runs it with `FOURECB_SKIP_PRINT_CHECK=1` (and gates
@@ -101,8 +105,8 @@ Private-corpus-only commands (require the supplied proprietary data; never
 required by public tests/CI):
 
 ```sh
-nix develop path:. --command bash scripts/build-private-content.sh
-nix develop path:. --command bash scripts/build-private-content.sh --stock   # stock-only parity oracle, tmp/content/stock-local.4ecp
+nix develop --command bash scripts/build-private-content.sh
+nix develop --command bash scripts/build-private-content.sh --stock   # stock-only parity oracle, tmp/content/stock-local.4ecp
 pnpm benchmark:query tmp/content/full-local.4ecp
 pnpm audit:rules
 pnpm audit:native-workflow

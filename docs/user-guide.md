@@ -43,8 +43,8 @@ To run the reference container from this repository, use only the project-local
 Nix environment:
 
 ```sh
-nix develop path:. --command docker build -t 4ecb .
-nix develop path:. --command docker run --rm \
+nix develop --command docker build -t 4ecb .
+nix develop --command docker run --rm \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
   -p 8080:8080 4ecb
 ```
@@ -64,18 +64,18 @@ Repository users with the supplied ignored private inputs can build and verify
 a portable pack locally:
 
 ```sh
-nix develop path:. --command bash scripts/build-private-content.sh
+nix develop --command bash scripts/build-private-content.sh
 ```
 
 For another decrypted rules file, use the content tool:
 
 ```sh
-nix develop path:. --command pnpm content-tool build \
+nix develop --command pnpm content-tool build \
   --input /path/to/merged.dnd40.xml \
   --output /path/to/private.4ecp \
   --id my-private-profile \
   --name "My private content profile"
-nix develop path:. --command pnpm content-tool validate /path/to/private.4ecp
+nix develop --command pnpm content-tool validate /path/to/private.4ecp
 ```
 
 Pack IDs are 1–64 ASCII letters, digits, dots, underscores, colons, or hyphens

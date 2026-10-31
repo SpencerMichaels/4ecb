@@ -1975,7 +1975,7 @@ preview through `#/characters/:id?preview=1`, whose back button returns to the
 previous page. The synthetic dense-card overflow assertion remains in the print
 check as an accepted known boundary, not a closure blocker.
 
-Verification: `nix develop path:. -c pnpm vitest run` (910 tests), workspace
+Verification: `nix develop -c pnpm vitest run` (910 tests), workspace
 typecheck and lint pass. The automated print matrix (`check:print`) was not
 rerun for closure; in this environment Chromium only starts when an inherited
 `LD_LIBRARY_PATH` (alsa-lib built against a newer glibc) is unset.
@@ -2892,7 +2892,7 @@ Unerring, Unstoppable and Energized move from manual reminders to reference-only
 traits because their encoded conditions are now resolved by the calculator.
 Evaluation cache v8 invalidates pre-fix v7 totals.
 
-Verification through `nix develop path:. -c ...`: 273 tests pass across the rules
+Verification through `nix develop -c ...`: 273 tests pass across the rules
 and sheet-model suites plus app-runtime and print-variant tests (`pnpm exec
 vitest run packages/rules-engine/src packages/sheet-model/src
 apps/web/src/app-runtime.test.ts apps/web/src/PrintPowerVariants.test.tsx`).
@@ -3456,7 +3456,7 @@ Channel Divinity grouping requires its explicit keyword. Missing data and
 oversized custom content remain explicit. See D078 and
 `sheet-overview-prototype.md` for heuristics and review boundaries.
 
-Overview verification: `nix develop path:. -c node scripts/check-print.mjs --overview-only`
+Overview verification: `nix develop -c node scripts/check-print.mjs --overview-only`
 passes Chromium Letter/A4 × color/monochrome. The long-note fixture produces 12
 measured pages in each case, all matching the generated PDF page count/dimensions,
 with no overview overflow, tagged/selectable text, blank-HP behavior and the final
@@ -3467,13 +3467,13 @@ actual evaluated print preview confirms no overview page crosses its footer
 reference pages remain available for owner feedback. The accepted physical-card
 overflow blocker is unchanged. M5.6 remains open.
 
-Checkpoint verification: `nix develop path:. -c bash scripts/check.sh` passes
+Checkpoint verification: `nix develop -c bash scripts/check.sh` passes
 formatting, lint, all 696 tests in 83 files, workspace typechecks and the
 production/PWA build. The default print check then stops on the same unchanged
 Synthetic power 01 dense-card assertion (279/256 px at the 6.5 pt floor).
 The fixture, assertion and minimum font remain intact. Later public-check stages
 are not reached; this is not a clean full-gate or milestone completion claim.
-Separately, `nix develop path:. -c node scripts/check-built-pwa.mjs` passes;
+Separately, `nix develop -c node scripts/check-built-pwa.mjs` passes;
 the built web output contains no `.4ecp` or `.dnd4e` artifacts.
 
 Earlier overview prototype (2026-10-14): A separate development entry at
@@ -3510,7 +3510,7 @@ Languages has a dedicated panel beside Skills. Scratchpad surges join
 health, skulls replace death-save dots, the large heading/rest field are removed,
 and the Channel Divinity example retains each power's action icon. Feature cards
 are grouped by category; the power index shows levels or nonlevel origins.
-Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
+Verification: `nix develop -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
 passes 7 focused render/style tests; web typecheck and prototype lint pass at the
 basic-attack checkpoint. In-app browser
 review confirms all four fixture pages stay above their footers with no horizontal
@@ -3528,7 +3528,7 @@ remain ignored; public regression coverage uses synthetic content. Next work is
 the printable sheet's first two reference pages. M5.6 is still open; product
 acceptance of cards does not remove the documented dense-card overflow boundary
 or substitute for the complete milestone exit criteria.
-Checkpoint verification: `nix develop path:. -c bash scripts/check.sh` passes
+Checkpoint verification: `nix develop -c bash scripts/check.sh` passes
 formatting, lint, all 679 tests in 80 files, workspace typechecks and the
 production/PWA build. It then fails the unchanged print-overflow assertion on
 Chromium Letter color Synthetic power 01: body 279/256 px at the 6.5 pt floor.
@@ -3537,7 +3537,7 @@ print matrix. Later checks in the script are not reached. The fixture/assertion
 are preserved; dense-card continuation/overflow presentation remains deferred
 to a separate product decision before M5.6 print-fit acceptance. No claim of
 full public-check or milestone completion is made by this checkpoint.
-Separately, `nix develop path:. -c node scripts/check-built-pwa.mjs` passes;
+Separately, `nix develop -c node scripts/check-built-pwa.mjs` passes;
 the built web output contains no `.4ecp` or `.dnd4e` artifacts.
 
 Card-header refinement (2026-10-14): Long titles now wrap naturally without
@@ -3549,14 +3549,14 @@ icon box to balance the font-based action symbols across app and printed cards.
 Internal horizontal/vertical subheader rules are softened to 35% card color;
 the bottom edge retains the prominent full-color divider. Cards remain fixed-size
 and excess content remains subject to the existing fitting/overflow boundary.
-Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+Verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
 passes 18 focused tests. The full print matrix was not rerun for this style edit.
 Sustain follow-up: authored Sustain action fields add a second action-cell line
 with `step-forward` and the action type, preserving the complete clause in the
 body. Ordinary cards retain their single action line. Distinct sustain types
 remain individually visible; repeated labels are deduplicated in the header.
-Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
-passes 33 tests; `nix develop path:. -c pnpm --filter @4ecb/web typecheck` passes.
+Verification: `nix develop -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
+passes 33 tests; `nix develop -c pnpm --filter @4ecb/web typecheck` passes.
 
 Class-feature clause filtering (2026-10-14): Personalized evaluated View/print
 cards now omit confirmed inactive sibling clauses using the parent Class Feature
@@ -3568,8 +3568,8 @@ Pursuit clause, with Pursuit/Retribution identified as inactive siblings. A loca
 content diagnostic with a selected-Wrath fixture retains Wrath and hides
 Preservation/Malediction clauses. The latter is not a full Fei Zhu import replay
 (only the PDF reference is available), and neither diagnostic is a same-profile
-golden. Verification: `nix develop path:. -c pnpm exec vitest run packages/sheet-model/src/power-feature-clauses.test.ts packages/sheet-model/src/index.test.ts`
-passes 12 tests; `nix develop path:. -c pnpm typecheck` passes workspace checks.
+golden. Verification: `nix develop -c pnpm exec vitest run packages/sheet-model/src/power-feature-clauses.test.ts packages/sheet-model/src/index.test.ts`
+passes 12 tests; `nix develop -c pnpm typecheck` passes workspace checks.
 This presentation change does not close M5.6 or resolve the documented dense-card
 overflow blocker.
 
@@ -3582,13 +3582,13 @@ the historical first-cache fallback. No reminders are pooled across inventory
 alternatives. Populated effects participate in the body's existing fitting;
 empty cards omit the section and its reserved writing area. Fixed geometry and
 the 6.5 pt floor remain.
-Empty-section follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+Empty-section follow-up verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
 passed 16 focused tests; populated effects remain in the fitted body.
 Known effect providers now appear as bold leading `Name:` labels rather than
 trailing parenthetical/hyphenated prose. This is presentation-only: reminder text
 and provenance remain unchanged in the model; unidentified legacy text remains
 verbatim rather than guessing names from parenthetical conditions.
-Provider-label follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-additional-effects.test.ts apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
+Provider-label follow-up verification: `nix develop -c pnpm exec vitest run apps/web/src/print-additional-effects.test.ts apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
 passed 22 focused tests; web typecheck passed.
 See D076 and `character-import-and-sheets.md` for the source/selection boundary.
 The original private Hu sample produces Censure of Unity reminders on all 11
@@ -3599,7 +3599,7 @@ local profile, not a new same-profile golden. Native special Action Point cards,
 dwarf Second Wind reminders and specialized generated keyword families remain
 separate parity work. Verification: 68 tests in the focused rules-power,
 sheet-model, print-layout and runtime-cache suites pass; workspace typecheck and
-production/PWA build pass. `nix develop path:. -c pnpm check:print` verifies the
+production/PWA build pass. `nix develop -c pnpm check:print` verifies the
 new synthetic populated effects before reproducing the existing Chromium Letter
 color Synthetic power 01 overflow (279/222 px at 6.5 pt). Its assertion and dense
 fixture remain intact. This does not close M5.6 or its print overflow blocker.
@@ -3617,7 +3617,7 @@ fixed physical dimensions with a raised 6.5 pt minimum. Saved 6 pt preferences
 are raised to the new minimum. The previous body-only fitting checkpoint passed
 11 focused tests and all eight browser/paper/color print variants.
 Readable-floor follow-up: 50 focused fit/layout/attack/item tests, web typecheck
-and production build pass. The rebuilt `nix develop path:. -c pnpm check:print`
+and production build pass. The rebuilt `nix develop -c pnpm check:print`
 currently fails on the deliberately oversized Synthetic power 01: body 279 px
 in 222 px available on Chromium Letter color at 6.5 pt. Keep that fixture and
 assertion unchanged; do not conceal the overflow by shrinking below the floor.
@@ -3625,7 +3625,7 @@ Screen print preview marks cards that still exceed their fixed geometry. A
 continuation/overflow presentation decision remains necessary before M5.6 exit;
 this is not a completed print-fit acceptance checkpoint.
 Focused card-fit/layout/settings/item/sheet-model tests pass (62 tests in five
-files), web typecheck and production build pass, and `nix develop path:. -c pnpm
+files), web typecheck and production build pass, and `nix develop -c pnpm
 check:print` passes all eight Chromium/Firefox Letter/A4 color/monochrome variants
 with 24 cards, five pages, no measured overflow, and short cards retaining 8 pt.
 Local UI review confirms persistence of a 10 pt preference across reload,
@@ -3693,10 +3693,10 @@ separate projection over the same semantic model.
   Each complete inset item-power subsection has a 1px usage-colored border
   around both heading and padded white rules body, or orange for Consumable;
   monochrome uses a black border. General item rules remain outside the box.
-  Enclosed-power follow-up: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  Enclosed-power follow-up: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
   passed all 11 focused layout tests.
   Usage-color/inline-frequency/aligned-keyword follow-up:
-  `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
   passed 11 focused layout tests; no full-suite rerun for this visual adjustment.
   Icons align to the action's first line when it wraps. Consumable prefixes
   without a colon (Coin of Good Luck) are recognized without losing Effect or
@@ -3704,10 +3704,10 @@ separate projection over the same semantic model.
   bold labels; authored Augment clauses receive a separate labeled row within
   their power rather than being mistaken for passive item properties. Unknown
   activation forms stay intact.
-  Separated-header follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
+  Separated-header follow-up verification: `nix develop -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
   passed 56 focused tests; web typecheck passed. Private Coin of Good Luck
   diagnostic resolves Consumable/Free and preserves both Effect and Special.
-  Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
+  Verification: `nix develop -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
   passed 52 focused tests; web typecheck passed. Private definition diagnostics
   confirm Flowform's Encounter/Augmentable/No Action header with separate
   Trigger, Effect and Augment 1 clauses; Guardian's Whistle resolves its label
@@ -3728,7 +3728,7 @@ separate projection over the same semantic model.
   The local Hunter's Quarry Effect parses as one two-column table with three
   data rows and no accidental heading; original content remains unchanged.
   Table cells remain escaped text; corpus HTML attributes are not rendered.
-  Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/Prose.test.ts apps/web/src/print-layout.test.ts apps/web/src/power-level-text.test.ts apps/web/src/print-item-presentation.test.ts`
+  Verification: `nix develop -c pnpm exec vitest run apps/web/src/Prose.test.ts apps/web/src/print-layout.test.ts apps/web/src/power-level-text.test.ts apps/web/src/print-item-presentation.test.ts`
   passed 50 focused tests; web typecheck passed. Existing dense-card print-fit
   blocker remains separate; no full-suite rerun for these presentation changes.
   Weapon keyword values retain authored casing with regular subheader value
@@ -3738,15 +3738,15 @@ separate projection over the same semantic model.
   cards and weapon metadata. Explicit values and ambiguous/missing evidence stay
   unchanged; raw properties remain context tags. The evaluation cache version
   is bumped for corrected weapon-property metadata.
-  Verification: `nix develop path:. -c pnpm exec vitest run packages/content-domain/src/index.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts apps/web/src/EntityCard.test.ts`
-  passed 79 tests; `nix develop path:. -c pnpm exec vitest run apps/web/src/app-runtime.test.ts packages/rules-engine/src/powers.test.ts`
+  Verification: `nix develop -c pnpm exec vitest run packages/content-domain/src/index.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts apps/web/src/EntityCard.test.ts`
+  passed 79 tests; `nix develop -c pnpm exec vitest run apps/web/src/app-runtime.test.ts packages/rules-engine/src/powers.test.ts`
   passed 52 tests. Workspace typecheck passed. Private gouge diagnostic confirms
   original compact `Brutal` remains unchanged while projection is `Brutal 1`.
   General body rules (Special, Property, Critical riders and unknown notes)
   follow activated powers; only explicit Prerequisite/Requirement fields precede
   them. Authored order is retained within each group and on cards without powers;
   Special/Augment clauses within a power remain associated with that power.
-  General-rule ordering verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts`
+  General-rule ordering verification: `nix develop -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts`
   passed 51 focused tests. Power Jewel's standalone Special field is confirmed
   in the local definition and now follows its activated Power subsection.
   Item-power usage/action headings are compact body subsections, aligned
@@ -3757,12 +3757,12 @@ separate projection over the same semantic model.
   Follow-up verification: focused item-presentation/accessibility tests pass
   (38 tests), web typecheck passes, and local visual review confirms Bracers of
   Archery's passive Property precedes its icon-bearing Daily/Minor header.
-  Grouped-layout checkpoint (2026-10-14): `nix develop path:. -c pnpm exec
+  Grouped-layout checkpoint (2026-10-14): `nix develop -c pnpm exec
 vitest run apps/web/src/print-item-presentation.test.ts
 apps/web/src/print-layout.test.ts apps/web/src/EntityCard.test.ts
 apps/web/src/accessibility-contract.test.ts packages/sheet-model/src/index.test.ts`
   passes 80 tests in five files. Web typecheck, focused ESLint, and production
-  build pass; `nix develop path:. -c pnpm check:print` passes all eight browser /
+  build pass; `nix develop -c pnpm check:print` passes all eight browser /
   paper / color variants. Visual review on Silaqui confirms melee/ranged rows,
   compact armor bonuses, dot-separated right footer details, and no measured
   item-body/footer overflow. Full milestone acceptance remains separate.
@@ -3784,7 +3784,7 @@ apps/web/src/accessibility-contract.test.ts packages/sheet-model/src/index.test.
   consumable, passive, and custom projections; the print matrix still uses
   generic synthetic item descriptions rather than every structured category.
   Product-owner review and M5.6's broader acceptance remain open.
-  Verification: `nix develop path:. -c pnpm exec vitest run
+  Verification: `nix develop -c pnpm exec vitest run
 apps/web/src/print-item-presentation.test.ts apps/web/src/EntityCard.test.ts
 apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   passes 45 tests across four files. Web typecheck, focused ESLint, and production
@@ -3794,7 +3794,7 @@ apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   long values without forcing short values onto a separate line.
   Ammunition uses Lucide `bow-arrow` through the shared item mapping, including
   mundane gear category metadata, across shop, equipment, details, and print.
-  `nix develop path:. -c pnpm check:print` passes all eight Chromium/Firefox
+  `nix develop -c pnpm check:print` passes all eight Chromium/Firefox
   Letter/A4 color/monochrome variants: 24 cards, five pages, no measured card,
   header-band, target, or table overflow. The matrix now covers a long item title
   and checks body boundaries as well as internal scroll overflow. Full milestone
@@ -3808,7 +3808,7 @@ apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   width, measured from their widest intrinsic first cell at each fitted size.
   Reset that width before refitting so smaller preferences do not retain a stale
   split; secondary inset attack sections are unaffected.
-  Shared-column verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  Shared-column verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
   passed 16 focused tests; web typecheck passed.
   Subsequent attack headers use rounded tinted strips inset in the body,
   matching item-power headings without repeating the main subheader's dividers.
@@ -3823,11 +3823,11 @@ apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   for At-Will/Encounter/Daily, with green/red/gray backgrounds and white text.
   The blue-utility option does not alter its usage color; monochrome keeps the
   letter in dark text on white. Titles truncate before displacing the badge.
-  Badge verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  Badge verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
   passed all 10 layout-contract tests; no full-suite rerun for this visual tweak.
   Verification for wrapped separator alignment and authored secondary targets:
-  `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-card-fit.test.ts apps/web/src/print-layout.test.ts`
-  passed 21 tests; `nix develop path:. -c pnpm --filter @4ecb/web typecheck`
+  `nix develop -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-card-fit.test.ts apps/web/src/print-layout.test.ts`
+  passed 21 tests; `nix develop -c pnpm --filter @4ecb/web typecheck`
   passed. The local Assess and Strike definition has only a primary Target field;
   the primary Hit constrains its secondary attack to that same target.
   Authored target fields are omitted from the printed body only when the same
@@ -3844,24 +3844,24 @@ apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   weight. Empty/whitespace-only keywords omit the entire row. There is no
   duplicate body property. Power card grids use five rows when keywords exist and four
   otherwise, with the body as the third flexible row and unchanged dimensions.
-  Bottom-band placement verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  Bottom-band placement verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
   passed 16 focused tests.
-  Key-icon subheader follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  Key-icon subheader follow-up verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
   passed 16 focused tests; web typecheck passed. Full browser print-fit acceptance
   remains a separate checkpoint.
-  Keywords-placement verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  Keywords-placement verification: `nix develop -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
   passed 16 focused tests; web typecheck passed. Full browser print-fit acceptance
   remains separate from this feedback change and its existing dense-card blocker.
   Printed action labels retain No Action (including authored qualifiers); only
   redundant Action suffixes such as Standard Action are abbreviated.
-  Action-label regression verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
+  Action-label regression verification: `nix develop -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
   passed 28 focused tests.
   Action symbol glyphs share a font-relative downward optical adjustment across
   print titles, subheaders, item powers and interactive cards/selection summaries.
   Separate per-surface shifts are removed to avoid inconsistent alignment;
   interactive action-icon boxes align to the heading center rather than baseline.
   Shared alignment and independent Additional Effects regression verification:
-  `nix develop path:. -c pnpm exec vitest run apps/web/src/ActionTypeIcon.test.ts apps/web/src/selection-summary-style.test.ts apps/web/src/print-layout.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts`
+  `nix develop -c pnpm exec vitest run apps/web/src/ActionTypeIcon.test.ts apps/web/src/selection-summary-style.test.ts apps/web/src/print-layout.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts`
   passed 63 tests across five files; no full-suite rerun for this optical tweak.
   Immediate Interrupt uses the octagon-minus icon across print and interactive
   action displays; other action symbols are unchanged.
@@ -3877,7 +3877,7 @@ apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   body labels originate from authored public fields or established prerequisite
   metadata. Additional effects is verified in recovered `PowerCardPower.cs`;
   approved Attack/Damage table and header labels are presentation, not new rules.
-  Verification: `nix develop path:. -c pnpm exec vitest run
+  Verification: `nix develop -c pnpm exec vitest run
 packages/sheet-model/src/index.test.ts apps/web/src/print-layout.test.ts`
   passes 11 tests; web typecheck passes. The synthetic fixture contains recovery
   metadata and unsupported calculations while asserting only authored card
@@ -4012,7 +4012,7 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   a cache comparison, not an exact same-profile multiattack golden.
 - Rendered-fit checkpoint (2026-10-01): `pnpm exec vitest run
 apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
-  and `pnpm check:print` pass through `nix develop path:. -c`. The print fixture
+  and `pnpm check:print` pass through `nix develop -c`. The print fixture
   now includes deliberately crowded prose and checks body overflow, matching
   weapon/body font sizes, and preservation of normal size on a short card.
   Chromium 152 and Firefox 154 pass all eight Letter/A4 color/monochrome cases:
@@ -4125,7 +4125,7 @@ removes a formal accessibility-certification or cross-client support-matrix
 program. The native equipment edge cases retained in D044 and exact rules
 limitations retained by the M5 support contract remain visible compatibility
 work, not hidden M5.5 blockers. The coordinator reran
-`nix develop path:. -c bash scripts/check.sh` on the exact documentation-closure
+`nix develop -c bash scripts/check.sh` on the exact documentation-closure
 tree: all 548 tests, formatting, lint, workspace typechecks, production/PWA
 build, Chromium/Firefox Letter/A4 print checks, deterministic public-pack checks,
 and the query benchmark pass.
@@ -5111,7 +5111,7 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   cancellation, batching, or incremental evaluation was introduced.
 - `builder-evaluation-plan.test.ts` covers every branch of
   `evaluationDispatchOrder`. Web typecheck and the full
-  `nix develop path:. -c bash scripts/check.sh` gate pass. A manual dev-server
+  `nix develop -c bash scripts/check.sh` gate pass. A manual dev-server
   browser check confirmed the header stays pinned to the current effective
   level while browsing an unpopulated future level, and that editing at the
   current level still evaluates and updates the header.
@@ -5151,7 +5151,7 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   were updated to read each assertion from its new file location — the same
   style of check, redirected, not replaced with a different test approach.
 - Full workspace typecheck, lint, the complete 71-file/529-test suite, and
-  `nix develop path:. -c bash scripts/check.sh` all pass with no regressions.
+  `nix develop -c bash scripts/check.sh` all pass with no regressions.
   A live dev-server smoke test (seeded synthetic fixture, raw CDP, no browser
   extension available) exercised every extracted file's real render path —
   Ability Scores, the Feats candidate table, Overview, Character details, and
@@ -5180,7 +5180,7 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   server both before the fix (crash reproduced, and confirmed via `git stash`
   to be present without the unrelated Stage 5 change too) and after (no
   crash, no console errors, URL settles at the correct preferred section).
-  Full `nix develop path:. -c bash scripts/check.sh` passes. No new automated
+  Full `nix develop -c bash scripts/check.sh` passes. No new automated
   test was added — the guard sits inline in tightly-coupled render-time
   derived state, and extracting it would be a larger refactor than this
   quick-aside fix's scope — so the manual browser reproduction is the
@@ -5218,7 +5218,7 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   `query-worker-messages.ts`. The web package typecheck passes, the focused
   `app-runtime.test.ts` suite passes 10/10, the production build no longer
   emits a `query.worker` chunk, and the full
-  `nix develop path:. -c bash scripts/check.sh` gate passes. Stage 5 —
+  `nix develop -c bash scripts/check.sh` gate passes. Stage 5 —
   Evaluation scheduling is next.
 
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
@@ -5576,7 +5576,7 @@ for historical context rather than the current roadmap boundary.
   Ordinary Lucide chip icons and 16.80px detail-header action icons are
   unchanged. The same check confirms visible 3px keyboard focus outlines and
   per-tone top and bottom accents with neutral side borders in the dark theme.
-- Verification: `nix develop path:. -c scripts/check.sh` passes formatting,
+- Verification: `nix develop -c scripts/check.sh` passes formatting,
   lint, all 413 public tests across 58 files, every workspace TypeScript check,
   the production/PWA build, Chromium and Firefox Letter/A4 print checks,
   deterministic synthetic content-pack checks, and the query benchmark. The
@@ -5625,7 +5625,7 @@ for historical context rather than the current roadmap boundary.
   `evaluated-character-v2-2026-09-17`, invalidating persisted browser evaluation
   snapshots created before the prerequisite semantics changed.
 - Verification: the focused prerequisite and evaluator suites pass 47/47 via
-  `nix develop path:. -c pnpm exec vitest run packages/rules-engine/src/prerequisites.test.ts packages/rules-engine/src/evaluator.test.ts`.
+  `nix develop -c pnpm exec vitest run packages/rules-engine/src/prerequisites.test.ts packages/rules-engine/src/evaluator.test.ts`.
 
 ## M5.5 builder identity-header checkpoint (2026-09-17)
 
@@ -5739,7 +5739,7 @@ for historical context rather than the current roadmap boundary.
   values, push/replace deduplication, and modeled Back/Forward restoration.
   Live browser verification opened a real level-8 character and observed the
   canonical Build/Feats, Overview, Equipment/Loadout, and Equipment/Inventory
-  hashes. `nix develop path:. -c scripts/check.sh` passes all 319 tests across
+  hashes. `nix develop -c scripts/check.sh` passes all 319 tests across
   45 files, all workspace TypeScript checks, the production/PWA build,
   Chromium and Firefox print checks, deterministic public-pack checks, and the
   public query benchmark.
@@ -5772,7 +5772,7 @@ for historical context rather than the current roadmap boundary.
   complete states. Native theme radio inputs are unchanged, and the check glyph
   for the non-radio completed-level empty state remains in place.
 - Focused accessibility-contract tests protect both sides of that distinction.
-  The checkpoint command `nix develop path:. -c scripts/check.sh` passes all
+  The checkpoint command `nix develop -c scripts/check.sh` passes all
   298 tests across 44 files, all workspace TypeScript checks, the production/PWA
   build, Chromium and Firefox print checks, deterministic public-pack checks,
   and the public query benchmark.
@@ -5793,7 +5793,7 @@ for historical context rather than the current roadmap boundary.
   [task-clarifications.md](task-clarifications.md).
 
 Focused action-symbol and rendered-accessibility tests pass. The checkpoint
-command `nix develop path:. -c scripts/check.sh` passes all 296 tests across 44
+command `nix develop -c scripts/check.sh` passes all 296 tests across 44
 files, all workspace TypeScript checks, and the production build.
 
 ## M5.5 level-scoped ability totals checkpoint (2026-09-16)
@@ -6012,7 +6012,7 @@ TypeScript checks, and live product-owner verification pass.
 
 Focused public verification passes 29 tests across the equipment UI, character
 domain, and legacy import/export packages. The 2026-09-14 checkpoint command
-`nix develop path:. -c scripts/check.sh` passes all 287 tests across 42 files,
+`nix develop -c scripts/check.sh` passes all 287 tests across 42 files,
 all workspace TypeScript checks, the production/PWA build, Chromium and Firefox
 Letter/A4 print checks, deterministic public-pack rebuild and validation, and
 the public query benchmark. A live Equipment interaction run is not claimed:
@@ -6146,13 +6146,13 @@ Compendium, reused the original completed index without presenting Cancel
 indexing, and logged no warnings or errors. Full browser refresh remains one
 intentional reconstruction from IndexedDB.
 
-Verification for this slice: `nix develop path:. -c pnpm --filter
+Verification for this slice: `nix develop -c pnpm --filter
 @4ecb/character-domain typecheck`, the equivalent `@4ecb/rules-engine` and
-`@4ecb/legacy-dnd4e` typechecks, and `nix develop path:. -c pnpm vitest run
+`@4ecb/legacy-dnd4e` typechecks, and `nix develop -c pnpm vitest run
 packages/character-domain packages/rules-engine packages/legacy-dnd4e` all
 pass. The package run covers 145 passing tests in 16 files.
 
-The final public checkpoint `nix develop path:. -c scripts/check.sh` passes 248
+The final public checkpoint `nix develop -c scripts/check.sh` passes 248
 tests, every workspace typecheck, the production/PWA build, Chromium and Firefox
 print checks, deterministic pack build/diff, and query benchmarks. The ignored
 full-pack diagnostic covers all eight user samples: cached powers match 482/482
@@ -6648,7 +6648,7 @@ candidate.
   Focused Expertise variant absent from the installed pack, plus two unverified
   legacy feat prerequisites; the importer preserves that evidence rather than
   inventing rules for it.
-- `nix develop path:. -c scripts/check.sh` passes 262 tests across 40 files,
+- `nix develop -c scripts/check.sh` passes 262 tests across 40 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.
@@ -7401,8 +7401,8 @@ On 2026-08-31 the following passed in the root Nix environment:
   normalized detail rendering, IndexedDB persistence, and no console errors.
 
 The public CI and repository do not require or contain the private corpus. Run
-`nix develop path:. --command bash scripts/check.sh` for the public suite. With
-the supplied ignored legacy files present, run `nix develop path:. --command
+`nix develop --command bash scripts/check.sh` for the public suite. With
+the supplied ignored legacy files present, run `nix develop --command
 bash scripts/build-private-content.sh` for the ordered full-corpus path. Do not
 feed a previously merged/decrypted CBLoader snapshot back through the parts
 merger; begin from `combined.dnd40.original.xml` as the script does.

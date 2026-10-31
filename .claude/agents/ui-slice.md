@@ -27,7 +27,7 @@ decided scope.
     provenance);
   - the owner does visual checks; you verify facts automatically and hand
     over only true visual checks. Don't fight headless Chromium.
-- Run tools through the project shell: `nix develop path:. -c <command>`.
+- Run tools through the project shell: `nix develop -c <command>`.
 - Coordination: other agents share this working tree. Run `git status` before
   your first edit and before committing; if a file you need has someone
   else's uncommitted changes, stop and report. Stage only your own files.

@@ -1,5 +1,5 @@
 # Small-group deployment. Generate ./deploy first:
-#   nix develop path:. --command pnpm content-tool advertise /path/to/pack.4ecp
+#   nix develop --command pnpm content-tool advertise /path/to/pack.4ecp
 # then: docker compose up -d --build
 services:
   web:

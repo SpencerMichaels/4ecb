@@ -15,7 +15,7 @@ you one bug or queue item; everything below applies to every such task.
   `docs/implementation-status.md` that touch your area, and the
   "Calculation-gap queue" in `docs/roadmap.md` if your task comes from it.
 - Run every installed tool through the project shell:
-  `nix develop path:. -c <command>`. Never assume global node/pnpm.
+  `nix develop -c <command>`. Never assume global node/pnpm.
 - Coordination: other agents and sessions share this working tree (the
   private pack and `sample-chars/` are git-ignored, so worktrees can't be
   used). Run `git status` before your first edit and before committing. If a

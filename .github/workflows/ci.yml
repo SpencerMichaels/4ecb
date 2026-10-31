@@ -17,7 +17,7 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: Run tests and deterministic fixture build
         # The print check runs in print-checks below.
-        run: nix develop path:. --command bash scripts/check.sh
+        run: nix develop --command bash scripts/check.sh
         env:
           FOURECB_SKIP_PRINT_CHECK: "1"
 
@@ -34,7 +34,7 @@ jobs:
           submodules: false
       - uses: cachix/install-nix-action@v31
       - name: Build and run the print check
-        run: nix develop path:. --command bash -c 'pnpm build && pnpm check:print'
+        run: nix develop --command bash -c 'pnpm build && pnpm check:print'
 
   # Publishes the production image to ghcr.io for hosted deployments, only from
   # main and only after the public checks pass (not print-checks; see above). Tags: the full commit SHA and

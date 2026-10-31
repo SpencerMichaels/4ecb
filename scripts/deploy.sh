@@ -81,7 +81,7 @@ if ! $skip_checks; then
   log="$worktree.log"
   trap 'git worktree remove --force "$worktree" >/dev/null 2>&1 || true' EXIT
   git worktree add -q --detach "$worktree" "$commit"
-  if ! (cd "$worktree" && FOURECB_SKIP_PRINT_CHECK=1 nix develop path:. --command bash -c \
+  if ! (cd "$worktree" && FOURECB_SKIP_PRINT_CHECK=1 nix develop --command bash -c \
       'pnpm install --frozen-lockfile && bash scripts/check.sh') >"$log" 2>&1; then
     tail -n 40 "$log" >&2
     die "checks failed; nothing pushed (full log: $log)"

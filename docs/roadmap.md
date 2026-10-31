@@ -63,7 +63,7 @@ corpus into an internal content pack.
 - A pack can be imported, verified, activated, deactivated, and removed in the
   browser without corrupting user records.
 - CI requires no proprietary corpus; a documented local full-corpus test path
-  exists through `nix develop path:./reverse-engineering`.
+  exists through `nix develop ./reverse-engineering`.
 - A development and production Docker image serves the application shell as an
   unprivileged process.
 - The shell demonstrates coherent navigation, responsive structure, and all

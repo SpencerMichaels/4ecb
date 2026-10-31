@@ -30,19 +30,19 @@ from the repository root through the project shell:
 
 ```sh
 mkdir -p tmp/legacy-launch-matrix
-nix develop path:. -c pnpm content-tool build \
+nix develop -c pnpm content-tool build \
   --input fixtures/content/synthetic.dnd40.xml \
   --output tmp/content/synthetic.4ecp \
   --id synthetic --name 'Synthetic development content'
-nix develop path:. -c pnpm regenerate:edited-dnd4e \
+nix develop -c pnpm regenerate:edited-dnd4e \
   reverse-engineering/fixtures/character/minimal-structure.dnd4e \
   tmp/content/synthetic.4ecp \
   tmp/legacy-launch-matrix/public-synthetic-structural-edited.dnd4e
-nix develop path:. -c pnpm regenerate:edited-dnd4e \
+nix develop -c pnpm regenerate:edited-dnd4e \
   'Hu Sheng-Ming Level 8.dnd4e' \
   tmp/content/full-local.4ecp \
   tmp/legacy-launch-matrix/imported-hu-level-8-edited.dnd4e
-nix develop path:. -c pnpm audit:native-workflow \
+nix develop -c pnpm audit:native-workflow \
   tmp/content/full-local.4ecp --max-level=1 \
   --output=tmp/legacy-launch-matrix/native-level-1-edited.dnd4e
 ```

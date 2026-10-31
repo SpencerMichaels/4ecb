@@ -14,7 +14,7 @@ ignored `tmp/<topic>/`.
 
 - Read `AGENTS.md` and `CLAUDE.md`; skim the docs relevant to the question
   (`docs/rules-engine.md`, `docs/decisions.md`, `reverse-engineering/docs/`).
-- Run tools through the project shell: `nix develop path:. -c <command>`.
+- Run tools through the project shell: `nix develop -c <command>`.
 
 ## Progress reporting
 

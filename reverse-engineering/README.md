@@ -12,7 +12,7 @@ Builder distribution. It is intentionally separated into:
 - `tools/`: local analysis tools and wrappers.
 
 The reproducible analysis environment is defined in `flake.nix`. From the
-repository root, enter it with `nix develop path:./reverse-engineering`; no
+repository root, enter it with `nix develop ./reverse-engineering`; no
 host-global packages are required. (`path:` is intentional because the supplied
 directory is not itself a Git checkout.)
 

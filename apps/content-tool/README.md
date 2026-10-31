@@ -4,7 +4,7 @@ The content tool compiles decrypted `D20Rules` XML into the versioned internal
 content-pack format. Run it only through the project-local Nix environment:
 
 ```sh
-nix develop path:. --command pnpm content-tool build \
+nix develop --command pnpm content-tool build \
   --input fixtures/content/synthetic.dnd40.xml \
   --output tmp/content/synthetic.4ecp \
   --id synthetic \
@@ -31,7 +31,7 @@ the recovered reference merge semantics, optionally compares the result with the
 cached merged ruleset, builds the pack, and validates it:
 
 ```sh
-nix develop path:. --command bash scripts/build-private-content.sh
+nix develop --command bash scripts/build-private-content.sh
 ```
 
 Pass an output path as the first argument when desired. Do not apply the parts

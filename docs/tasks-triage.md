@@ -268,7 +268,7 @@ test asserts that classification.
 Verification (project-local Nix):
 
 ```sh
-nix develop path:. -c pnpm vitest run packages/sheet-model/src/feature-choices.test.ts packages/sheet-model/src/overview.test.ts packages/sheet-model/src/universal-action-cards.test.ts apps/web/src/SheetOverview.test.tsx
+nix develop -c pnpm vitest run packages/sheet-model/src/feature-choices.test.ts packages/sheet-model/src/overview.test.ts packages/sheet-model/src/universal-action-cards.test.ts apps/web/src/SheetOverview.test.tsx
 ```
 
 Result: 4 files / 109 tests passed. Release-wide checks and remaining task

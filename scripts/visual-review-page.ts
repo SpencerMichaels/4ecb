@@ -556,14 +556,14 @@ ${summaryHtml}
 <section class="panel" id="before">
 <h2>Before you start</h2>
 <ol class="steps-list">
-<li>Start the dev server if it isn't running: <code>nix develop path:. -c pnpm dev</code> (this page links to the base URL above; change it if Vite chose another port).</li>
+<li>Start the dev server if it isn't running: <code>nix develop -c pnpm dev</code> (this page links to the base URL above; change it if Vite chose another port).</li>
 <li>Optional but cleanest: open the base URL in a <strong>private window</strong>, so the review content and characters don't mix with your own library.</li>
 <li>Open <a data-hash="#/settings" target="_blank" rel="noopener">Settings</a> → Content → <strong>Import content pack…</strong> and choose <code>${escapeHtml(input.packFile)}</code>. It is <code>tmp/content/full-local.4ecp</code> (${escapeHtml(sourcePack.packId)}, digest ${escapeHtml(sourcePack.contentDigest.slice(0, 12))}) under its own pack ID, <code>${escapeHtml(reviewPack.packId)}</code>, so it installs beside any other revision of ${escapeHtml(sourcePack.packId)}.</li>
 <li>In the content table, tick <strong>Use ${escapeHtml(reviewPack.name)}</strong> and untick every other row. The characters are pinned to the content made of that pack alone; with other content on, they show a content-update issue (don't apply it).</li>
 <li>Settings → Backups &amp; storage → <strong>Restore backup</strong>, choose <code>${escapeHtml(input.backupFile)}</code>, then <strong>Restore ${count} characters</strong>. Restore keeps the character IDs, so the links below work; restoring again (after <code>pnpm review:build</code>) resets them. Use Restore, not the library's Import: Import gives an already-present ID a fresh one.</li>
 <li>Check items off as you go (kept in this browser). Afterwards, re-enable your own content and trash the review characters (their titles start with "Review –").</li>
 </ol>
-<p>Generated ${escapeHtml(input.generatedAt)} from <code>docs/visual-review-checklist.md</code> (${checklist.length} items${unmapped.length === 0 ? "" : `, <a href="#unmapped" class="bad">${unmapped.length} not yet mapped</a>`}). Rebuild with <code>nix develop path:. -c pnpm review:build</code>.</p>
+<p>Generated ${escapeHtml(input.generatedAt)} from <code>docs/visual-review-checklist.md</code> (${checklist.length} items${unmapped.length === 0 ? "" : `, <a href="#unmapped" class="bad">${unmapped.length} not yet mapped</a>`}). Rebuild with <code>nix develop -c pnpm review:build</code>.</p>
 <ul class="toc">${toc}<li><a href="#general">General</a></li><li><a href="#coverage">Coverage index</a></li></ul>
 </section>
 

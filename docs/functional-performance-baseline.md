@@ -11,8 +11,8 @@ its screenshots, or commits.
 Build first, then run the browser baseline from the project-local environment:
 
 ```sh
-nix develop path:. -c pnpm build
-nix develop path:. -c pnpm check:functional-baseline -- \
+nix develop -c pnpm build
+nix develop -c pnpm check:functional-baseline -- \
   --runs=3 --output=docs/evidence/functional-baseline-2026-09-23
 ```
 

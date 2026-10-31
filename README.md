@@ -16,9 +16,9 @@ the public source tree.
   legacy character-engine behavior.
 - Contributors and coding agents must follow [`AGENTS.md`](AGENTS.md) and the
   [durable milestone workflow](docs/contributor-workflow.md).
-- Use the project-local environment with `nix develop path:.`; do not install
+- Use the project-local environment with `nix develop`; do not install
   analysis or build dependencies globally. The narrower
-  `nix develop path:./reverse-engineering` environment remains available for
+  `nix develop ./reverse-engineering` environment remains available for
   compatibility research in isolation.
 
 ## Development
@@ -26,7 +26,7 @@ the public source tree.
 Enter the environment and run the web shell:
 
 ```sh
-nix develop path:.
+nix develop
 pnpm install --frozen-lockfile
 pnpm dev
 ```
@@ -34,14 +34,14 @@ pnpm dev
 The public verification suite uses only synthetic content:
 
 ```sh
-nix develop path:. --command bash scripts/check.sh
+nix develop --command bash scripts/check.sh
 ```
 
 Developers who possess the supplied private corpus can reproduce the complete
 merge and pack build with:
 
 ```sh
-nix develop path:. --command bash scripts/build-private-content.sh
+nix develop --command bash scripts/build-private-content.sh
 ```
 
 Import `tmp/content/full-local.4ecp` and activate it under Content settings.
@@ -51,11 +51,11 @@ then query that local corpus without uploading it.
 Measure the query engine against a private pack with:
 
 ```sh
-nix develop path:. --command pnpm benchmark:query tmp/content/full-local.4ecp
+nix develop --command pnpm benchmark:query tmp/content/full-local.4ecp
 ```
 
-Build the unprivileged production container with `nix develop path:. --command
-docker build -t 4ecb .`, or the live development target with `nix develop path:.
+Build the unprivileged production container with `nix develop --command
+docker build -t 4ecb .`, or the live development target with `nix develop
 --command docker build --target development -t 4ecb-dev .`. Neither image
 includes the ignored legacy application or official corpus. The
 [public deployment guide](docs/public-deployment.md) also documents read-only

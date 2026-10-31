@@ -148,9 +148,9 @@ Following the pattern the owner settled on:
 ## Verification
 
 ```sh
-nix develop path:. --command bash -c 'pnpm vitest run packages/sheet-model apps/web && pnpm typecheck && pnpm lint && pnpm format:check'
-nix develop path:. --command bash -c 'FOURECB_SKIP_PRINT_CHECK=1 bash scripts/check.sh'
-nix develop path:. --command pnpm parity:baseline   # private corpus; sheet-model changes
+nix develop --command bash -c 'pnpm vitest run packages/sheet-model apps/web && pnpm typecheck && pnpm lint && pnpm format:check'
+nix develop --command bash -c 'FOURECB_SKIP_PRINT_CHECK=1 bash scripts/check.sh'
+nix develop --command pnpm parity:baseline   # private corpus; sheet-model changes
 ```
 
 Private reminder probes from this session live in `tmp/feat-powers/`

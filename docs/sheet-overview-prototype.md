@@ -175,7 +175,7 @@ design context.
 Run the normal development server through the project Nix environment:
 
 ```sh
-nix develop path:. -c pnpm --filter @4ecb/web dev --host 127.0.0.1 --port 5174
+nix develop -c pnpm --filter @4ecb/web dev --host 127.0.0.1 --port 5174
 ```
 
 Visit `http://127.0.0.1:5174/sheet-prototype.html`. This is a separate Vite

@@ -8,10 +8,10 @@ unknown content would be less compatible than the original parser.
 Validate with the pinned environment:
 
 ```sh
-nix develop path:./reverse-engineering --command \
+nix develop ./reverse-engineering --command \
   xmllint --noout --relaxng reverse-engineering/schemas/d20rules.rng FILE
 
-nix develop path:./reverse-engineering --command \
+nix develop ./reverse-engineering --command \
   xmllint --noout --relaxng reverse-engineering/schemas/d20character.rng FILE
 ```
 

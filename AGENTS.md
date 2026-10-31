@@ -90,8 +90,13 @@ These instructions apply to the entire repository.
 ## Engineering workflow
 
 - Use only the project-local Nix environment for installed tools and project
-  commands: `nix develop path:. -c ...` (or the documented narrower
+  commands: `nix develop -c ...` (or the documented narrower
   reverse-engineering environment).
+- Never use the `path:.` flake reference (`nix develop path:. ...`). It copies
+  and hashes the whole working directory, including the multi-GB `tmp/` and
+  `node_modules/`, on every call: minutes of nix-daemon CPU and a fresh store
+  copy each time. Plain `nix develop` goes through git and copies only tracked
+  files. For a batch of commands, enter the shell once instead of per command.
 - Use `apply_patch` for hand-authored file edits. Preserve unrelated user changes
   and coordinate before editing files another active agent owns.
 - Run focused tests while iterating and `scripts/check.sh` before a milestone or

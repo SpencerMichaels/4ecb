@@ -9,7 +9,7 @@ is evidence only for its stated boundary.
 
 ## Public automated gate
 
-Run `nix develop path:. --command ./scripts/check.sh`. It must pass formatting,
+Run `nix develop --command ./scripts/check.sh`. It must pass formatting,
 lint, all TypeScript projects and public tests, the production/PWA build and
 runtime-config cache assertion, deterministic content-pack build/validation,
 and the query benchmark. Private corpus and character evidence stays ignored and

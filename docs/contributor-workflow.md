@@ -118,7 +118,7 @@ checkpoint:
 3. production build and browser exercise for UI/worker/storage changes;
 4. deterministic public fixtures and benchmarks where applicable;
 5. ignored private-corpus audits or parity reports where applicable; and
-6. `nix develop path:. -c bash scripts/check.sh` before milestone closure.
+6. `nix develop -c bash scripts/check.sh` before milestone closure.
 
 All installed tools and project commands must run from the project-local Nix
 environment. Public CI must remain independent of proprietary application and
