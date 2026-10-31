@@ -167,4 +167,32 @@ describe("saved-selection invariant", () => {
       }),
     ]);
   });
+
+  it("accounts for a saved power an automatic power-replace swap gave up", () => {
+    // The pack's feat now names the power it trades; the save never held
+    // the swap (Lily's Skald Training, saved as a placeholder).
+    const result = audit(
+      content([
+        statement(
+          "replace",
+          { "power-replace": "ID_TEST_POWER_EXTRA:ID_TEST_POWER_STRIKE" },
+          2,
+        ),
+      ]),
+    );
+
+    expect(
+      result.elements.find(({ name }) => name === "Bold Strike"),
+    ).toMatchObject({
+      status: "replaced",
+      detail: "by Newer Strike at level 1",
+      legacyActive: true,
+    });
+    expect(result.extras).toEqual([
+      expect.objectContaining({
+        name: "Newer Strike",
+        cause: "automatic-swap",
+      }),
+    ]);
+  });
 });

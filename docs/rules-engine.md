@@ -213,9 +213,31 @@ level, but not if another multiclass or power-replace swap gained it. The gain
 belongs to the swap's provider; it does not take over the lost power's slot.
 If GAIN names no power, the swap offers nothing. A GAIN starting with `$`
 (Secrets of Belial's `$$NOT_CLASS`) is a choice instead: any power matching
-`GAIN,LOSE` at the lost power's level or lower. Only chosen powers can be lost
-here, while native also allows granted ones. The hybrid `CheckHybridPower`
-limit applies (`hybrid-powers.ts`, D109).
+`GAIN,LOSE` at the lost power's level or lower. Native skips its
+granted-element block for a power-replace (`CheckReplaceElem` ~16821 tests the
+rule's power-replace string), so a granted power can be lost as well as a
+chosen one, saved or generated (Skald Training's Majestic Word, a tiefling's
+Infernal Wrath for Warlock's Wrath, a binder's pact power). The hybrid
+`CheckHybridPower` limit applies (`hybrid-powers.ts`, D109). A named GAIN's
+own prerequisite is not checked: the feat gives the power (Skald's Aura's
+"Skald" prerequisite limits picking it as a class power; D105).
+
+A power-replace whose GAIN and LOSE each name one power swaps on its own
+(`autoPowerReplacement` in `evaluator.ts`). Native `UpdateReplacement`
+(~16994-17015) targets the power LOSE names when the slot has no target and
+that power is in its list, and `PowerReplaceCategory` then Chooses the named
+GAIN (Choose checks only source ownership). The swap is generated, never
+stored: it is the slot's `selectedOccurrenceId`
+(`<provider>:power-replace:<ordinal>`), displaces its target like a saved
+pick, and appears in `replacedSelections` when a later swap trades it away. A
+saved pick in the slot wins. A LOSE that is a category (`utility,6+`) or a
+GAIN starting with `$` stays the player's choice. The binder's pact powers
+chain this way: level 13 trades the level-1 pact power, level 27 the level-13
+one. Native would refuse that second step (no replacement may lose a swap's
+gain, ~16765); Heroes of Shadow says the level-27 power replaces the one
+gained at 13th level, so the automatic swap may take it (D105).
+`audit:saved-selections` reports a saved power an automatic swap gave up as
+`replaced` and its gain as an `automatic-swap` extra.
 
 A `multiclass` swap (native `ChoiceMatch`, `CheckReplaceElem`) can lose only a
 power matching `$$CLASS,<multiclass>,<character level>`. That is a power of
@@ -227,8 +249,19 @@ its class feature's select). A granted power (native `CharElement[15]` 0,
 with exactly "At-Will" (Paragon Multiclassing) and the power's `Display`,
 read through `modify` overlays, contains "attack": a warlock's pact at-will
 such as Fey Pact's Eyebite, never a granted utility. PHB p. 209 agrees
-("replace one of your at-will powers"). Retrainings and power swaps never
-lose granted powers.
+("replace one of your at-will powers").
+
+Retrainings and power swaps never lose granted powers, but they do lose a
+rule default the build never stored (native: a default is a choice's pick,
+`CharElement[15]` set), with its select as the gain, as multiclass swaps do.
+(Native choice `[24]` is the select's `existing` flag, not retraining; the
+retrain flag is the rule's `+1704`.) For every replacement mode native
+`CheckReplaceElem` also refuses two targets, which stay listed only as a
+slot's saved target with `targetReasons`: a power a multiclass or
+power-replace swap gained (~16765, `swap-gained`; a retraining's own gain
+stays retrainable), and a feat held under a class feature (~16769,
+`class-feature-feat`: Bardic Training's or Ritual Casting's Ritual Caster;
+PHB p. 28 retrains feats, powers and skills, never class features).
 
 The gain of every multiclass swap is native `UpdateReplacement`'s (~17020):
 the swap's own category with the `$$MULTICLASS` flag plus the lost power's
@@ -247,9 +280,9 @@ granted elements, so the `replaces` link names a stored occurrence and
 survives `.dnd4e` export and re-import.
 
 A target a swap may not give up is left out, unless it is the slot's saved
-target. That one stays listed with `targetReasons` (`category`, or
-`hybrid-class-target` for `CheckHybridPower`). Its entry in the choice's
-candidates is ineligible, and the swap raises `choice.ineligible`, as a gain
+target. That one stays listed with `targetReasons` (`category`,
+`hybrid-class-target` for `CheckHybridPower`, `swap-gained` or
+`class-feature-feat`). Its entry in the choice's candidates is ineligible, and the swap raises `choice.ineligible`, as a gain
 forbidden by `DisallowClass` does.
 
 A power's level for category matching is its Level field, or else, when the

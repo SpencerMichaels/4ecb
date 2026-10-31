@@ -3342,6 +3342,22 @@ Kept modern, where native contradicts the text or nullifies the feature:
   character is not proficient with still adds its own enhancement (the
   rules gate only the proficiency bonus), as native does. No sample
   character owns such a row; parity is unchanged.
+- **A binder's level-27 pact power replaces the level-13 one** (Heroes of
+  Shadow p75, Level 27 Pact Encounter Power: "This new power replaces the
+  encounter attack power you gained at 13th level"; added 2026-10-31 with
+  queue item 15, cache v105). The level-27 class features name the level-13
+  power as their power-replace LOSE ("ID_FMP_POWER_13911:ID_FMP_POWER_13908"),
+  but native `CheckReplaceElem` (`-Module-.cs` ~16765) keeps any power a
+  power-replace gained out of every replace list, so native never makes the
+  swap. The builder's automatic power-replace swap may take a swap's gain.
+- **A power-replace's named gain skips the power's prerequisite** (Skald
+  Training, "You swap your majestic word for the skald's aura power"; queue
+  item 15, cache v105). Native Chooses the GAIN as the replacement choice's
+  pick, whose legality reads Skald's Aura's "Skald" prerequisite, so a
+  non-skald bard taking the feat would be house-ruled. The feat gives the
+  power; the prerequisite limits picking it as a class power. Lily (a
+  Cunning Bard with Skald Training) is the one sample it touches: her swap
+  raises no prerequisite error.
 - **Former-class picks stay dormant (owner, 2026-10-29).** The legacy builder
   keeps a house-rule pick active after a class change even when its slot is
   switched off and not shown in its power list (Erdan 11: seven Invoker powers

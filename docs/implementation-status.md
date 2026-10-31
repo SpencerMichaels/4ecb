@@ -1,5 +1,44 @@
 # Implementation status
 
+## Swap targets: power-replace grants, automatic swaps, retraining defaults (2026-10-31)
+
+A power-replace can now give up a granted power, as native `CheckReplaceElem`
+skips its granted-element block for one (`-Module-.cs` ~16821). A
+power-replace naming one power on each side ("ID_FMP_POWER_15849:
+ID_FMP_POWER_2339") swaps on its own, as native `UpdateReplacement`
+(~16994-17015) targets the named LOSE and `PowerReplaceCategory` chooses the
+named GAIN: the swap is generated, never stored, and a saved pick wins. It
+covers Skald Training (Majestic Word → Skald's Aura), Warlock's Wrath-style
+racial-power feats, Krinth Heritage and the binder's pact encounter powers:
+a probe binder at 13 holds Haunting Shadow for Hound of Dark Omen, and at 27
+Umbral Swap for Haunting Shadow (D105: native would refuse to lose the
+level-13 swap's gain; Heroes of Shadow says the level-27 power replaces it).
+A named GAIN's own prerequisite is not checked (D105: Skald's Aura requires
+"Skald", but the feat gives it).
+
+Retraining and power swaps now offer unsaved rule defaults (never grants),
+with the default's select as the gain; the builder stores the default before
+the retrain, so it survives `.dnd4e` export and re-import (a Japheth probe
+retraining his generated Eldritch Blast default round-trips equivalent). No
+replacement offers a power a multiclass or power-replace swap gained
+(~16765) or a feat under a class feature (~16769). The Retraining lists
+change accordingly: Ritual Caster under Bardic Training or Ritual Casting
+left 16 saves' lists (13 sample-chars, 3 SampleHeroes), RaidonKane's Student
+of the Plague gain Plaguefire Body left one, and no unsaved defaults appear
+on any save (all store theirs).
+
+Lily now holds Skald's Aura instead of Majestic Word: complete, no new
+errors, and her export re-imports with the swap. That gives her 2 new
+full-pack mismatches (`usage`/`action` Majestic Word: Encounter/Minor ->
+none). They are expected: `audit:record-drift` shows her save holds Skald
+Training as a CBLoader-only houserule placeholder, so the legacy cache was
+made without the record and cannot show the swap the record and the feat
+text ("You swap your majestic word for the skald's aura power") require. She
+stays on the full profile. `audit:saved-selections` reports her Majestic
+Word as `replaced` and Skald's Aura as an `automatic-swap` extra (canonical
+totals: 9043 active, 330 accounted, 0 silent drops, 111 extras, 0
+unexplained). No other `parity:baseline` change. Evaluation cache v105.
+
 ## Ki focus enhancement on non-proficient weapon attacks (2026-10-31)
 
 A weapon power's row of a ki-focused weapon the character is not proficient

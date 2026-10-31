@@ -1122,11 +1122,18 @@ character before it is fixed, one slice per item.
       so a weapon-only power's non-proficient ki-focused row drops the ki
       focus enhancement (D105; row kept, implement powers unchanged; cache
       v103; parity unchanged).
-  15. Swap leftovers from the granted-power pass (2026-10-31): native
-      power-replace swaps may also lose granted powers (the same
-      `CheckReplaceElem` block is skipped for power-replace), and retraining
-      and power swaps don't offer unsaved rule defaults as targets (only
-      multiclass swaps do now). No save exercises either.
+  15. ~~Swap leftovers from the granted-power pass~~ (2026-10-31): done.
+      Power-replace swaps lose granted powers too, and a power-replace
+      naming one power on each side swaps on its own (native
+      `UpdateReplacement` ~16994; Skald Training, binder pact powers, the
+      level-27 one replacing the level-13 gain per D105). Retraining and
+      power swaps offer unsaved rule defaults (never grants); no replacement
+      offers a swap's gain or a class feature's feat (native
+      `CheckReplaceElem` ~16765/~16769: Ritual Caster under Bardic
+      Training/Ritual Casting left 16 saves' retraining lists, RaidonKane's
+      Plaguefire Body one). Cache v105; Lily's 2 new full-pack mismatches are
+      expected (her save holds Skald Training as a CBLoader-only
+      placeholder).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the

@@ -583,3 +583,24 @@ automatically; fit is measured in the browser, so only these are yours.
     swap, Eyebite is gone from the Powers list and the sheet.
   - **Wrong if:** the granted target looks different or locked, offers no
     gains, or Eyebite returns after the swap or a reload.
+
+## Pass 15: Swap targets and automatic power-replace swaps
+
+- [ ] **Retraining lists drop class-feature feats and swap gains.**
+  - **Where:** Lily (bard) and a wizard such as KrizDevvon, Retraining tab
+    at any level; RaidonKane (SampleHeroes), Retraining tab at a level after
+    Student of the Plague's swap. Dark theme, 140% zoom.
+  - **Expect:** Ritual Caster (held under Bardic Training or Ritual
+    Casting) is no longer a retraining target; RaidonKane's Plaguefire Body
+    (gained by the Student of the Plague swap) is not either. Every other
+    feat, power and skill target is still listed as before.
+  - **Wrong if:** another target disappears, or Ritual Caster or Plaguefire
+    Body still appear as retrainable.
+- [ ] **Skald Training swaps Majestic Word on its own.**
+  - **Where:** Lily, Build tab at level 4, Skald Training's replacement;
+    then the Powers list and the print preview.
+  - **Expect:** the replacement shows Majestic Word → Skald's Aura already
+    chosen, with no "unresolved", prerequisite or house-rule badge; Skald's
+    Aura is in the Powers list and on a power card, Majestic Word is not.
+  - **Wrong if:** the replacement looks empty or offers other picks, a new
+    issue badge appears, or Majestic Word still prints.

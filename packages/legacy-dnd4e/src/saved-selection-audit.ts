@@ -16,7 +16,8 @@
  * - active: the occurrence, or another occurrence of its definition, is in
  *   `EvaluatedCharacter.occurrences`;
  * - replaced / retrained: `replacedSelections`, or a later saved element's
- *   `replaces` names it;
+ *   `replaces` names it, or an evaluated swap the save does not store does
+ *   (a power-replace naming one power swaps on its own);
  * - dormant (D043): `dormantSelections`;
  * - diagnostic: an engine diagnostic names it (missing definition,
  *   unslotted, grant target missing…), import name matching left its saved
@@ -85,12 +86,15 @@ export interface ModernExtraResult {
    * the content the save was made with differs from this pack;
    * conditional-grant: a grant whose `requires` modern found met and legacy
    * did not; recovered-selection: a choice build-projection recovered;
+   * automatic-swap: the gain of a swap the evaluator makes on its own (a
+   * power-replace naming one power each side) that the save lacks;
    * under-extra: granted by another extra; unexplained: anything else.
    */
   readonly cause:
     | "content-grant"
     | "conditional-grant"
     | "recovered-selection"
+    | "automatic-swap"
     | "under-extra"
     | "unexplained";
   readonly detail?: string;
@@ -167,6 +171,14 @@ export function auditSavedSelections(
   for (const { occurrence } of nodes)
     if (occurrence.replacesId !== undefined)
       retrainedBy.set(occurrence.replacesId, occurrence);
+  const swappedBy = new Map(
+    [...evaluated.occurrences, ...(evaluated.replacedSelections ?? [])].flatMap(
+      (occurrence) =>
+        occurrence.replacesId === undefined
+          ? []
+          : [[occurrence.replacesId, occurrence] as const],
+    ),
+  );
   const diagnosticsByOccurrence = new Map<string, string[]>();
   for (const diagnostic of evaluated.diagnostics)
     if (diagnostic.occurrenceId !== undefined)
@@ -228,6 +240,13 @@ export function auditSavedSelections(
           ...base,
           status: "retrained",
           detail: `by ${retrain.identity.name} at level ${retrain.acquiredLevel}`,
+        };
+      const swap = swappedBy.get(occurrence.id);
+      if (swap !== undefined)
+        return {
+          ...base,
+          status: "replaced",
+          detail: `by ${byId.get(key(swap.definitionId))?.name ?? swap.definitionId} at level ${swap.acquiredLevel}`,
         };
       const dormancy = dormant.get(occurrence.id);
       if (dormancy !== undefined)
@@ -403,6 +422,14 @@ export function auditSavedSelections(
         return [{ ...base, cause: "under-extra" }];
       if (occurrence?.id.includes(":recovered:"))
         return [{ ...base, cause: "recovered-selection" }];
+      if (occurrence?.replacesId !== undefined)
+        return [
+          {
+            ...base,
+            cause: "automatic-swap",
+            detail: `replaces ${describe(occurrence.replacesId)}`,
+          },
+        ];
       if (occurrence?.kind === "grant" && parent !== undefined) {
         const providerEntity = byId.get(key(parent.definitionId));
         const rule =

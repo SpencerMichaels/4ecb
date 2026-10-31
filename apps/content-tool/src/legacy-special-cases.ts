@@ -196,6 +196,7 @@ const INVENTORY_PACKAGES =
 const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
 const HYBRID_POWERS = "packages/rules-engine/src/hybrid-powers.test.ts";
+const SWAP_TARGETS = "packages/rules-engine/src/swap-targets.test.ts";
 const CLASS_CATEGORIES = "packages/rules-engine/src/class-categories.test.ts";
 
 export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
@@ -328,7 +329,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Choice.CheckReplaceElem": partial(
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (ChoiceMatch lose category '$$CLASS,<multiclass>,<character level>'; a granted power only for an 'At-Will' swap and a Display containing 'attack'), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses chosen powers (stored or rule defaults) matching its ChoiceMatch category, and for an 'At-Will' swap also granted powers whose overlaid Display contains 'attack' (evaluator multiclassLosesGranted); its gain is UpdateReplacement's '$$MULTICLASS,<multiclass>,<lost Level>'; a displaced grant or default is not granted again, and commandForEvaluatedChoice stores a generated target before the swap; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts); power-replace still loses chosen powers only (native also allows granted ones)",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses chosen powers (stored or rule defaults) matching its ChoiceMatch category, and for an 'At-Will' swap also granted powers whose overlaid Display contains 'attack' (evaluator multiclassLosesGranted); its gain is UpdateReplacement's '$$MULTICLASS,<multiclass>,<lost Level>'; a displaced grant or default is not granted again, and commandForEvaluatedChoice stores a generated target before the swap; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts). power-replace also loses granted powers (native skips the granted block for it, ~16821) and, when GAIN and LOSE each name one power, swaps on its own (autoPowerReplacement, native UpdateReplacement ~16994 + PowerReplaceCategory; generated, never stored; D105 lets the binder's level-27 swap take the level-13 gain, and a named gain skips its prerequisite). Retraining and powerswap lose chosen elements including unsaved rule defaults, never grants (choice [24] is the select's 'existing' flag; retrain is rule +1704). No mode loses a multiclass/power-replace gain (~16765, 'swap-gained') or a feat under a class feature (~16769, 'class-feature-feat'). The same-level Prepare check (~16748) is not reproduced",
       test(CONFORMANCE, "reads a bare level as that level or lower"),
       test(
         CONFORMANCE,
@@ -365,6 +366,38 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         BUILD_PROJECTION,
         "stores a generated grant a multiclass swap gives up, so the swap can name it",
+      ),
+      test(
+        SWAP_TARGETS,
+        "lists a granted power for a power-replace (native skips its granted-element block)",
+      ),
+      test(
+        SWAP_TARGETS,
+        "swaps on its own when GAIN and LOSE each name one power",
+      ),
+      test(
+        SWAP_TARGETS,
+        "chains a later swap onto an earlier swap's gain (binder pact powers, D105)",
+      ),
+      test(
+        SWAP_TARGETS,
+        "offers an unsaved rule default, never a grant or a class feature's feat",
+      ),
+      test(
+        SWAP_TARGETS,
+        "stores the generated default a retrain gives up, so the retrain can name it",
+      ),
+      test(
+        SWAP_TARGETS,
+        "never offers a power a power-replace swap gained, and flags a saved retrain of one",
+      ),
+      fixture(
+        "sample-chars/Lily.dnd4e",
+        "Skald Training swaps Majestic Word for Skald's Aura on its own; her save holds the feat as a CBLoader-only placeholder, so the cache keeps Majestic Word (2 expected usage/action mismatches)",
+      ),
+      fixture(
+        "sample-chars/KrizDevvon.dnd4e",
+        "Ritual Caster under Ritual Casting is not a retraining target",
       ),
     ),
     "?A0x7555d940.FromDilettante": code(

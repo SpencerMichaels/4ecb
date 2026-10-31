@@ -1392,6 +1392,10 @@ export function candidateReason(reasons: readonly string[]): string {
       "Must choose a power from your other hybrid class: with two powers of this kind, at least one must come from each hybrid class",
     "hybrid-class-target":
       "A hybrid character can give up a hybrid class's power only while holding another power of that class with the same type and usage",
+    "swap-gained":
+      "A power gained by a multiclass or power-replace swap cannot be given up",
+    "class-feature-feat":
+      "A feat that is part of a class feature cannot be retrained",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }

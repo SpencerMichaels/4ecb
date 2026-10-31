@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v104-2026-10-31-multiclass-granted-swaps";
+  "evaluated-character-v105-2026-10-31-swap-targets";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1484,13 +1484,22 @@ function evaluateCharacterInternal(
     counts: (replacement: CharacterOccurrence) => boolean = () => true,
   ): ReadonlySet<string> => {
     const ids = new Set<string>();
-    for (const replacement of savedReplacements) {
+    for (const replacement of [
+      ...savedReplacements,
+      // A power-replace's automatic swap (autoPowerReplacement).
+      ...active.filter(
+        (candidate) =>
+          candidate.replacesId !== undefined && !savedById.has(candidate.id),
+      ),
+    ]) {
       if (!counts(replacement)) continue;
       if (!activeProviderRule(replacement, active, context)) continue;
       let replacedId = replacement.replacesId;
       while (replacedId !== undefined && !ids.has(replacedId)) {
         ids.add(replacedId);
-        replacedId = savedById.get(replacedId)?.replacesId;
+        replacedId = (
+          savedById.get(replacedId) ?? autoReplacements.get(replacedId)
+        )?.replacesId;
       }
     }
     return ids;
@@ -1499,6 +1508,114 @@ function evaluateCharacterInternal(
     (occurrence) =>
       occurrence.parentId !== undefined && occurrence.ruleOrdinal !== undefined,
   );
+  /**
+   * Native CheckReplaceElem (`-Module-.cs` ~16765): no replacement may lose
+   * an element a multiclass or power-replace swap gained (its CharElement
+   * [15] choice's rule is a replace with `multiclass` or `power-replace`).
+   * A retraining's own gain stays retrainable.
+   */
+  const gainedBySwapUnder = (
+    candidate: CharacterOccurrence,
+    parent: CharacterOccurrence | undefined,
+  ): boolean => {
+    if (candidate.replacesId === undefined) return false;
+    const parentDefinition =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    if (parentDefinition === undefined) return false;
+    const parentRule = parseRules(
+      parentDefinition.id,
+      parentDefinition.rules,
+    ).find((value) => value.source.ordinal === candidate.ruleOrdinal);
+    return (
+      parentRule?.kind === "replace" &&
+      (parentRule.powerReplace !== undefined ||
+        parentRule.multiclass !== undefined)
+    );
+  };
+  /** The one Power a power-replace GAIN or LOSE names (native
+   *  FindRulesElement with the Power type): a name, an ID, or "Name Power". */
+  const powerReplaceNamed = (name: string): ContentEntity | undefined =>
+    index.find(name, "Power") ??
+    (key(index.get(name)?.type ?? "") === "power"
+      ? index.get(name)
+      : undefined) ??
+    index.find(name.replace(/\s+power$/i, ""), "Power");
+  /** Each automatic power-replace swap (autoPowerReplacement) and the
+   *  power it gave up, by swap ID. */
+  const autoReplacements = new Map<string, CharacterOccurrence>();
+  const autoReplacementTargets = new Map<string, CharacterOccurrence>();
+  /**
+   * Native UpdateReplacement (`-Module-.cs` ~16994-17015): a power-replace
+   * with no target targets the power its LOSE names (FindRulesElement after
+   * the ':') when that power is in its replace list, and PowerReplaceCategory
+   * (~17110) then Chooses the power its GAIN names (Choose checks only
+   * source ownership). So "GAIN:LOSE" naming one power each swaps on its
+   * own: Skald Training trades Majestic Word for Skald's Aura, a binder's
+   * Level 13 Gloom Pact Encounter Power its level-1 pact power. The swap is
+   * generated, never stored (a legacy save holds no target either); a saved
+   * pick in the slot wins. A LOSE that is a category ("utility,6+") or a
+   * GAIN starting with `$` stays the player's choice.
+   *
+   * D105: native CheckReplaceElem (~16765) also keeps a power another
+   * power-replace gained out of the list, so the binder's Level 27 Gloom
+   * Pact Encounter Power ("ID_FMP_POWER_13911:ID_FMP_POWER_13908") never
+   * finds the Haunting Shadow its level-13 swap gave. Heroes of Shadow's
+   * binder progression says the level-27 power "replaces the encounter
+   * attack power you gained at 13th level", and a LOSE naming that one
+   * power can mean nothing else, so the automatic swap may take it.
+   */
+  const autoPowerReplacement = (
+    provider: CharacterOccurrence,
+    rule: ReplaceRule,
+    active: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): CharacterOccurrence | undefined => {
+    if (rule.powerReplace === undefined) return undefined;
+    const { gain, lose } = splitPowerReplace(rule.powerReplace);
+    if (gain.startsWith("$") || lose.length === 0) return undefined;
+    if (
+      saved.some(
+        (candidate) =>
+          candidate.parentId === provider.id &&
+          candidate.ruleOrdinal === rule.source.ordinal,
+      )
+    )
+      return undefined;
+    const gained = powerReplaceNamed(gain);
+    const lost = powerReplaceNamed(lose);
+    if (gained === undefined || lost === undefined) return undefined;
+    const id = `${provider.id}:power-replace:${rule.source.ordinal}`;
+    const level = Math.max(provider.acquiredLevel, rule.source.level.minimum);
+    const byId = new Map(active.map((candidate) => [candidate.id, candidate]));
+    // Once displaced, the target is out of `active`; it stays the target
+    // while whatever holds it still does.
+    const known = autoReplacementTargets.get(id);
+    const target =
+      known !== undefined &&
+      (byId.has(known.id) || activeProviderRule(known, active, context))
+        ? known
+        : active.find(
+            (candidate) =>
+              key(candidate.definitionId) === key(lost.id) &&
+              candidate.kind !== "root" &&
+              candidate.kind !== "inventory" &&
+              candidate.acquiredLevel <= level,
+          );
+    if (target === undefined) return undefined;
+    const swap: CharacterOccurrence = {
+      id,
+      definitionId: gained.id,
+      acquiredLevel: level,
+      parentId: provider.id,
+      ruleOrdinal: rule.source.ordinal,
+      choiceIndex: 0,
+      kind: "choice",
+      replacesId: target.id,
+    };
+    autoReplacementTargets.set(id, target);
+    autoReplacements.set(id, swap);
+    return swap;
+  };
 
   for (iterations = 1; iterations <= 30; iterations += 1) {
     const before = occurrences.map((occurrence) => occurrence.id).join("\0");
@@ -1679,6 +1796,22 @@ function evaluateCharacterInternal(
               kind: "choice",
             });
           }
+        } else if (rule.kind === "replace" && rule.powerReplace !== undefined) {
+          const swap = autoPowerReplacement(
+            occurrence,
+            rule,
+            occurrences,
+            context,
+          );
+          const swapId = `${occurrence.id}:power-replace:${rule.source.ordinal}`;
+          if (swap === undefined) {
+            autoReplacementTargets.delete(swapId);
+            autoReplacements.delete(swapId);
+            if (passIds.has(swapId)) dropped.add(swapId);
+          }
+          // A later swap that took this one's gain keeps it given up.
+          else if (!passIds.has(swap.id) && !displacedIds.has(swap.id))
+            additions.push(swap);
         }
         if (rule.kind === "select" && !rule.existing) {
           for (
@@ -1764,6 +1897,10 @@ function evaluateCharacterInternal(
       code: "engine.non-convergent",
       message: "Rule topology did not converge within 30 iterations.",
     });
+  /** An automatic power-replace swap that is held, or that a later swap
+   *  traded away. */
+  const liveAutoReplacement = (swap: CharacterOccurrence): boolean =>
+    displacedIds.has(swap.id) || occurrences.some(({ id }) => id === swap.id);
   // A saved child with a provider but no rule position is one the projection
   // found no current slot for (content changed since it was saved). It stays
   // owned and preserved; say so rather than let it pass unnoticed.
@@ -2060,12 +2197,17 @@ function evaluateCharacterInternal(
     /** Held at `level` but traded away by a later replacement since. */
     readonly heldThenReplaced: readonly CharacterOccurrence[];
   } => {
-    const selected = saved.find(
-      (candidate) =>
-        candidate.parentId === provider.id &&
-        candidate.ruleOrdinal === ruleOrdinal &&
-        candidate.replacesId !== undefined,
-    );
+    const isPick = (candidate: CharacterOccurrence): boolean =>
+      candidate.parentId === provider.id &&
+      candidate.ruleOrdinal === ruleOrdinal &&
+      candidate.replacesId !== undefined;
+    // A saved pick, else the slot's automatic power-replace swap (held, or
+    // traded away by a later swap like a saved pick).
+    const selected =
+      saved.find(isPick) ??
+      [...autoReplacements.values()].find(
+        (candidate) => isPick(candidate) && liveAutoReplacement(candidate),
+      );
     const displaced = displacedBy(
       occurrences,
       expressionContext,
@@ -2465,6 +2607,14 @@ function evaluateCharacterInternal(
     string,
     { readonly level: number; readonly currentTargetId?: string }
   >();
+  /**
+   * Power-replace choices whose GAIN names one power, by choice ID. The feat
+   * gives that power ("You swap your majestic word for the skald's aura
+   * power"), so the power's own prerequisite (Skald's Aura: "Skald") is not
+   * checked; it limits picking the power as a class power. D105: native
+   * Chooses it as a choice pick, whose legality reads the prerequisite.
+   */
+  const namedGainChoiceIds = new Set<string>();
   /** A record field through the character's `modify` overlays. */
   const overlaidField = (
     entity: ContentEntity,
@@ -2566,15 +2716,47 @@ function evaluateCharacterInternal(
       !savedById.has(occurrence.id) &&
       (occurrence.kind === "grant" || occurrence.kind === "choice"),
   );
+  /** Every occurrence a replacement may lose, saved or generated, by ID,
+   *  with the powers automatic power-replace swaps gave up. */
+  const replaceableById = new Map(
+    [
+      ...saved,
+      ...unsavedGenerated,
+      ...[...autoReplacements.values()].flatMap((swap) => {
+        const target = autoReplacementTargets.get(swap.id);
+        return target !== undefined && liveAutoReplacement(swap)
+          ? [swap, target]
+          : [];
+      }),
+    ].map((occurrence) => [occurrence.id, occurrence]),
+  );
+  const gainedBySwap = (candidate: CharacterOccurrence): boolean =>
+    gainedBySwapUnder(candidate, replaceableById.get(candidate.parentId ?? ""));
   /**
-   * Native CheckReplaceElem (`-Module-.cs` ~16821-16832): a replacement may
-   * lose a power no choice picked (CharElement [15] 0, a grant) only when
-   * it is a multiclass swap whose category's first entry is "At-Will"
-   * (Paragon Multiclassing) and the power's Display contains "attack"
-   * (stristr): a warlock's granted at-will attack, never a granted utility.
-   * A retraining (choice [24]) and a power swap reject granted powers;
-   * PHB p. 209 lets Paragon Multiclassing replace any of your at-will
-   * powers.
+   * Native CheckReplaceElem (~16769): no replacement may lose a feat held
+   * under a class feature (Bardic Training's or Ritual Casting's Ritual
+   * Caster): it is part of the class feature, and PHB p. 28 retrains feats,
+   * powers and skills, never class features.
+   */
+  const classFeatureFeat = (candidate: CharacterOccurrence): boolean => {
+    const parent = replaceableById.get(candidate.parentId ?? "");
+    return (
+      key(index.get(candidate.definitionId)?.type ?? "") === "feat" &&
+      parent !== undefined &&
+      key(index.get(parent.definitionId)?.type ?? "") === "class feature"
+    );
+  };
+  /**
+   * Native CheckReplaceElem (`-Module-.cs` ~16821-16832): a replacement
+   * other than a power-replace (rule +1708) may lose an element no choice
+   * picked (CharElement [15] 0, a grant) only when it is a multiclass swap
+   * whose category's first entry is "At-Will" (Paragon Multiclassing) and
+   * the power's Display contains "attack" (stristr): a warlock's granted
+   * at-will attack, never a granted utility. A retraining (rule +1704) and
+   * a power swap reject granted powers but take a rule default, which a
+   * choice picked (choice [24] is the select's `existing` flag, not
+   * retraining). PHB p. 209 lets Paragon Multiclassing replace any of your
+   * at-will powers.
    */
   const multiclassLosesGranted = (
     rule: ReplaceRule,
@@ -2612,8 +2794,11 @@ function evaluateCharacterInternal(
    * held under the swap's provider, not in the lost power's slot. A GAIN
    * starting with `$` (Secrets of Belial's `$$NOT_CLASS`) is instead a
    * choice of a power matching `GAIN,LOSE` of the lost power's level or
-   * lower. Only chosen powers can be lost here; native also allows granted
-   * ones.
+   * lower. Native skips its granted-element block for a power-replace
+   * (CheckReplaceElem ~16821 tests rule +1708), so a granted power (Skald
+   * Training's Majestic Word, a binder's pact power, a tiefling's Infernal
+   * Wrath) can be lost as well as a chosen one, saved or generated;
+   * CheckHybridPower still applies (`hybridReplaceChecks`).
    */
   const powerReplaceOptions = (
     rule: ReplaceRule & { readonly powerReplace: string },
@@ -2624,44 +2809,26 @@ function evaluateCharacterInternal(
   ): NonNullable<EvaluatedChoice["replacementOptions"]> => {
     const { gain, lose } = splitPowerReplace(rule.powerReplace);
     const loseRule = powerCategoryRule(rule.source, lose);
-    const gainedBySwap = (candidate: CharacterOccurrence): boolean => {
-      if (candidate.replacesId === undefined) return false;
-      const parent = savedById.get(candidate.parentId ?? "");
-      const parentDefinition =
-        parent === undefined ? undefined : index.get(parent.definitionId);
-      if (parentDefinition === undefined) return false;
-      const parentRule = parseRules(
-        parentDefinition.id,
-        parentDefinition.rules,
-      ).find((value) => value.source.ordinal === candidate.ruleOrdinal);
-      return (
-        parentRule?.kind === "replace" &&
-        (parentRule.powerReplace !== undefined ||
-          parentRule.multiclass !== undefined)
-      );
-    };
-    const named = gain.startsWith("$")
-      ? undefined
-      : (index.find(gain, "Power") ??
-        (key(index.get(gain)?.type ?? "") === "power"
-          ? index.get(gain)
-          : undefined) ??
-        index.find(gain.replace(/\s+power$/i, ""), "Power"));
+    const named = gain.startsWith("$") ? undefined : powerReplaceNamed(gain);
     if (!gain.startsWith("$") && named === undefined) return [];
     const excluded = (lost: CharacterOccurrence) => [
       lost.id,
       ...(slot.selected === undefined ? [] : [slot.selected.id]),
     ];
-    return saved.flatMap((candidate) => {
+    return [...replaceableById.values()].flatMap((candidate) => {
       const lost = index.get(candidate.definitionId);
       if (
         lost === undefined ||
         key(lost.type) !== "power" ||
-        candidate.kind !== "choice" ||
+        candidate.kind === "root" ||
+        candidate.kind === "inventory" ||
         candidate.id === slot.selected?.id ||
         candidate.acquiredLevel > level ||
         !slot.held(candidate) ||
-        gainedBySwap(candidate) ||
+        // The current target stays (an automatic swap may take a swap's
+        // gain; see autoPowerReplacement).
+        (gainedBySwap(candidate) &&
+          candidate.id !== slot.selected?.replacesId) ||
         candidateFor(loseRule, provider, lost, level).reasons.includes(
           "category",
         )
@@ -3026,6 +3193,11 @@ function evaluateCharacterInternal(
           );
           const { selected, held, heldThenReplaced } = slot;
           const powerReplace = rule.powerReplace;
+          if (
+            powerReplace !== undefined &&
+            !splitPowerReplace(powerReplace).gain.startsWith("$")
+          )
+            namedGainChoiceIds.add(replacementChoiceId);
           const replacementOptions =
             powerReplace !== undefined
               ? powerReplaceOptions(
@@ -3035,10 +3207,7 @@ function evaluateCharacterInternal(
                   slot,
                   detailedReplacement,
                 )
-              : (rule.multiclass === undefined
-                  ? saved
-                  : [...saved, ...unsavedGenerated]
-                )
+              : [...replaceableById.values()]
                   .filter((candidate) => {
                     const candidateType = key(
                       index.get(candidate.definitionId)?.type ?? "",
@@ -3061,6 +3230,10 @@ function evaluateCharacterInternal(
                       (candidate.kind === "choice" ||
                         (candidate.kind === "grant" &&
                           multiclassLosesGranted(rule, candidate))) &&
+                      // A swap's current target stays listed (flagged).
+                      (candidate.id === selected?.replacesId ||
+                        (!gainedBySwap(candidate) &&
+                          !classFeatureFeat(candidate))) &&
                       ordinaryRetraining &&
                       (!powerOnly || candidateType === "power")
                     );
@@ -3073,14 +3246,14 @@ function evaluateCharacterInternal(
                       !visited.has(original.id)
                     ) {
                       visited.add(original.id);
-                      const previous = saved.find(
-                        (value) => value.id === original.replacesId,
-                      );
+                      const previous = replaceableById.get(original.replacesId);
                       if (previous === undefined) break;
                       original = previous;
                     }
-                    const originalProvider = saved.find(
-                      (provider) => provider.id === original.parentId,
+                    // A rule default's provider may itself be generated (a
+                    // granted class feature's select).
+                    const originalProvider = replaceableById.get(
+                      original.parentId ?? "",
                     );
                     const originalDefinition =
                       originalProvider === undefined
@@ -3170,8 +3343,8 @@ function evaluateCharacterInternal(
                     // <level>"), so Adept Power's daily swap never offers an
                     // at-will. A saved swap that breaks it keeps its target,
                     // flagged.
-                    const targetReasons =
-                      rule.multiclass !== undefined &&
+                    const targetReasons = [
+                      ...(rule.multiclass !== undefined &&
                       lost !== undefined &&
                       candidateFor(
                         powerCategoryRule(
@@ -3183,7 +3356,12 @@ function evaluateCharacterInternal(
                         replacementLevel,
                       ).reasons.includes("category")
                         ? ["category"]
-                        : [];
+                        : []),
+                      ...(gainedBySwap(candidate) ? ["swap-gained"] : []),
+                      ...(classFeatureFeat(candidate)
+                        ? ["class-feature-feat"]
+                        : []),
+                    ];
                     if (
                       targetReasons.length > 0 &&
                       candidate.id !== selected?.replacesId
@@ -3796,12 +3974,14 @@ function evaluateCharacterInternal(
             replacementOptions: choice.replacementOptions.map((option) => ({
               ...option,
               candidates: option.candidates.map((candidate) =>
-                withPrerequisites(prerequisiteLevel(choice), candidate, [
-                  option.replacesOccurrenceId,
-                  ...(choice.selectedOccurrenceId === undefined
-                    ? []
-                    : [choice.selectedOccurrenceId]),
-                ]),
+                namedGainChoiceIds.has(choice.id)
+                  ? candidate
+                  : withPrerequisites(prerequisiteLevel(choice), candidate, [
+                      option.replacesOccurrenceId,
+                      ...(choice.selectedOccurrenceId === undefined
+                        ? []
+                        : [choice.selectedOccurrenceId]),
+                    ]),
               ),
             })),
           }),
@@ -3883,19 +4063,22 @@ function evaluateCharacterInternal(
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });
-    // Native CheckReplaceElem: the swap gave up a power it may not (a
-    // multiclass swap's category, CheckHybridPower).
+    // Native CheckReplaceElem: the swap gave up what it may not (a
+    // multiclass swap's category, CheckHybridPower, a swap's gain, a class
+    // feature's feat).
     if ((replacementTarget?.targetReasons?.length ?? 0) > 0)
       diagnostics.push({
         severity: "error",
         code: "choice.ineligible",
-        message: `The selected ${choice.type} gives up a power it cannot: ${replacementTarget!
+        message: `The selected ${choice.type} gives up what it cannot: ${replacementTarget!
           .targetReasons!.map(
             (reason) =>
               ({
                 category: "it does not match the swap's category",
                 "hybrid-class-target":
                   "it is its hybrid class's only power of that type and usage",
+                "swap-gained": "a multiclass or power-replace swap gained it",
+                "class-feature-feat": "it is a class feature's feat",
               })[reason] ?? reason,
           )
           .join("; ")}.`,
@@ -3911,13 +4094,18 @@ function evaluateCharacterInternal(
       selectedEntity.prerequisites.trim().length === 0
         ? prerequisiteScopes.get(String(input.level))!
         : prerequisiteScopeAt(prerequisiteLevel(choice));
-    const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
-      ...withoutOwnedDefinitions(
-        prerequisiteScope.context,
-        selectionSetAside(choice),
-      ),
-      ...(selectedEntity === undefined ? {} : { subject: selectedEntity }),
-    });
+    const prerequisite = evaluatePrerequisite(
+      namedGainChoiceIds.has(choice.id)
+        ? undefined
+        : selectedEntity?.prerequisites,
+      {
+        ...withoutOwnedDefinitions(
+          prerequisiteScope.context,
+          selectionSetAside(choice),
+        ),
+        ...(selectedEntity === undefined ? {} : { subject: selectedEntity }),
+      },
+    );
     const exactOwnedPrerequisite =
       selectedEntity?.prerequisites !== undefined &&
       !/[;,]/.test(selectedEntity.prerequisites) &&
@@ -4065,7 +4253,8 @@ function evaluateCharacterInternal(
       choice.selectedOccurrenceId === undefined ||
       activeOccurrenceIds.has(choice.selectedOccurrenceId)
         ? undefined
-        : savedById.get(choice.selectedOccurrenceId);
+        : (savedById.get(choice.selectedOccurrenceId) ??
+          autoReplacements.get(choice.selectedOccurrenceId));
     return selected === undefined ? [] : [selected];
   });
   const replacedSelectionIds = new Set(replacedSelections.map(({ id }) => id));
