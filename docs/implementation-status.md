@@ -1,5 +1,20 @@
 # Implementation status
 
+## Ki-focused weapons as implements (2026-10-31)
+
+A ki-focused weapon the character is not proficient with ("Quick Strike Ki
+Focused Longsword +1") is now a proficient variant of its implement powers
+when the character has "Implement Proficiency (Ki Focuses)": the ki focus is
+the implement (PHB3 "Ki Focuses"). Native `IsValidImplement` (`-Module-.cs`
+~22051) accepts it because the synthetic `BuildKiList` loot's
+`ImplementName` (~21917) is empty, as for any plain weapon (D081 keeps the
+modern test stricter). The modern cause was `implementKind` in `powers.ts`
+singularizing "Ki Focus" to "ki focu", so the enchantment's kind never
+matched "Ki Focuses"; a word ending in "us"/"ss" now stays whole. A Jackie
+Lee probe with a Longsword lists the ki-focused Longsword as proficient and
+the plain Longsword not; `parity:baseline` is unchanged (Jackie Lee
+132/132). Evaluation cache v102.
+
 ## Proficient weapons as implements (2026-10-31)
 
 "Implement Proficiency (Proficient Weapons)" (Monk, Assassin and Hybrid Monk

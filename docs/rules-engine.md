@@ -844,7 +844,15 @@ Diversified Study), by a Weapon-type loot base the character is proficient
 with (native `IsValidImplement`'s `ImplementWeaponEquiv` + `IsProficient`
 branch; `usableAsImplement` reuses `proficientWithWeapon`). The record's own
 per-weapon implement grants cover only 87 weapons, so Dark Sun, MME and pact
-weapons depend on this branch.
+weapons depend on this branch. A ki-focused weapon (native `BuildKiList`'s
+weapon base + ki focus enchantment) is proficient through the ki focus's
+Magic Item Type against "Implement Proficiency (Ki Focuses)", whatever the
+weapon: PHB3 "Ki Focuses" makes the ki focus the implement and needs weapon
+proficiency only for its enhancement on weapon attacks. Native accepts that
+loot as it accepts any plain weapon (its `ImplementName` is empty, since
+`IsKiFocus` reads only the base); modern keeps D081's stricter test.
+Implement kinds compare singular and plural alike ("Ki Focus" and "Ki
+Focuses", "Rods"), keeping a word ending in "us" or "ss" whole.
 This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
 Energized, whether those rules live on the base or its training feat. Their prose
 reminders are omitted, while original item rules remain available. Evaluation

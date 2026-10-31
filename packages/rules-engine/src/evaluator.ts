@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v101-2026-10-31-replace-target-legality";
+  "evaluated-character-v102-2026-10-31-ki-focus-implement-kind";
 
 export interface CharacterOccurrence {
   readonly id: string;

@@ -1124,15 +1124,19 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       ),
     ),
     "?A0x7555d940.IsValidImplement": code(
-      "An item is an implement for a power by its implement proficiency (ImplementName/ImplementProficiency); with 'Implement Proficiency (Proficient Weapons)' (Monk, Assassin and Hybrid Monk Implements, Diversified Study), by a Weapon-type base the character is proficient with (ImplementWeaponEquiv + IsProficient); else ForClass/ForPower. ForPower's CheckPower ends in 'return true', so native accepts every item; modern marks the variant's proficiency instead (D081).",
-      "powers.ts usableAsImplement (variant.proficient): EXCEPTION_NAMES.proficientWeaponsImplement turns on the proficient-weapon test, which reuses proficientWithWeapon (native IsProficient, Large weapons included) on a Weapon-type loot base. The record's own per-weapon 'Implement Proficiency (<weapon>)' grants cover only 87 weapons; this branch covers the rest (Dark Sun, MME, pact weapons)",
+      "An item is an implement for a power by its implement proficiency (ImplementName/ImplementProficiency); with 'Implement Proficiency (Proficient Weapons)' (Monk, Assassin and Hybrid Monk Implements, Diversified Study), by a Weapon-type base the character is proficient with (ImplementWeaponEquiv + IsProficient); else ForClass/ForPower. An empty ImplementName (any plain weapon, and the synthetic BuildKiList loot of a weapon base + ki focus enchantment, since IsKiFocus reads only the base and ki focus items carry no _ImplementEquiv) returns true first, and ForPower's CheckPower ends in 'return true', so native accepts every item; modern marks the variant's proficiency instead (D081).",
+      "powers.ts usableAsImplement (variant.proficient): EXCEPTION_NAMES.proficientWeaponsImplement turns on the proficient-weapon test, which reuses proficientWithWeapon (native IsProficient, Large weapons included) on a Weapon-type loot base. The record's own per-weapon 'Implement Proficiency (<weapon>)' grants cover only 87 weapons; this branch covers the rest (Dark Sun, MME, pact weapons). A ki-focused weapon's row is proficient through its ki focus enchantment's Magic Item Type (implementKind keeps 'Ki Focus' and 'Ki Focuses' equal), whatever the weapon (PHB3 'Ki Focuses': the ki focus is the implement)",
       test(
         POWERS,
         "uses a proficient weapon as an implement with Implement Proficiency (Proficient Weapons)",
       ),
+      test(
+        POWERS,
+        "uses a ki-focused weapon the character is not proficient with as its ki focus",
+      ),
       fixture(
         "sample-chars/jackie lee 5th.dnd4e",
-        "probe with a Talid and Weapon Proficiency (Talid) added: the Talid variant of every monk implement power is proficient",
+        "probe with a Talid and Weapon Proficiency (Talid) added: the Talid variant of every monk implement power is proficient; probe with a Longsword added: its Quick Strike Ki Focused Longsword +1 variant is proficient, the plain Longsword not",
       ),
     ),
     "?A0x7555d940.WeaponEquiv": code(

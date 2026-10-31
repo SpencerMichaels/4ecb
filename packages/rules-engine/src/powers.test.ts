@@ -4883,6 +4883,55 @@ describe("implement power equipment", () => {
     ).toEqual(["Symbol of Hope +1", "War Pick", "Unarmed"]);
     entities.splice(-3);
   });
+
+  it("uses a ki-focused weapon the character is not proficient with as its ki focus", () => {
+    // PHB3 "Ki Focuses": the ki focus is the implement; weapon proficiency
+    // only gates its enhancement on weapon attacks. Native IsValidImplement
+    // accepts the synthetic ki loot too (its ImplementName is empty).
+    const kiEntities = [
+      ...entities,
+      entity("KI", "Quick Strike Ki Focus +1", "Magic Item", {
+        "Magic Item Type": "Ki Focus",
+        "Item Slot": "Ki Focus",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+      entity(
+        "KI_PROFICIENCY",
+        "Implement Proficiency (Ki Focuses)",
+        "Proficiency",
+        {},
+      ),
+      entity("DAGGER_WEAPON", "Weapon Proficiency (Dagger)", "Proficiency", {}),
+    ];
+    const proficiency = (active: readonly string[]) =>
+      Object.fromEntries(
+        (
+          evaluatePowers({
+            level: 8,
+            activeDefinitionIds: [
+              "POWER",
+              "SYMBOL_PROFICIENCY",
+              "DAGGER_WEAPON",
+              ...active,
+            ],
+            inventory: ["KI", "PICK"].map(owned),
+            stats: { "Wisdom modifier": stat("Wisdom modifier", 5) },
+            overlays: [],
+            entities: kiEntities,
+          })[0]?.variants ?? []
+        ).map((variant) => [variant.equipmentName, variant.proficient]),
+      );
+    expect(proficiency(["KI_PROFICIENCY"])).toMatchObject({
+      "Quick Strike Ki Focus +1": true,
+      "Quick Strike Ki Focused War Pick +1": true,
+      "War Pick": false,
+    });
+    // Without the ki focus proficiency neither is an implement (D081).
+    expect(proficiency([])).toMatchObject({
+      "Quick Strike Ki Focus +1": false,
+      "Quick Strike Ki Focused War Pick +1": false,
+    });
+  });
 });
 
 describe("item implement metadata", () => {

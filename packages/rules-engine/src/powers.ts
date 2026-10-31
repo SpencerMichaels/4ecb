@@ -313,11 +313,18 @@ function key(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
 
-/** "Ki focuses" → "ki focus", "light blade group" → "light blade". */
+/**
+ * "Ki focuses" and "Ki Focus" → "ki focus", "rods" → "rod", "light blade
+ * group" → "light blade". A singular word ending in "s" ("focus", "glass")
+ * is kept whole, so a ki focus enchantment's Magic Item Type matches
+ * "Implement Proficiency (Ki Focuses)" (a ki-focused weapon's implement
+ * row; native ImplementName instead accepts it as an unnamed implement).
+ */
 function implementKind(value: string): string {
   return key(value)
     .replace(/\s+group$/u, "")
-    .replace(/(?<=[a-z])(?:es|s)$/u, "");
+    .replace(/(?<=s)es$/u, "")
+    .replace(/(?<=[a-z])(?<![su])s$/u, "");
 }
 
 const IMPLEMENT_PROFICIENCY =
