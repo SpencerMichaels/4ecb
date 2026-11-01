@@ -663,6 +663,16 @@ dashes and authored rules rather than acquiring inferred totals.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 
+**Status (2026-10-31): in progress; the beta is live.** The hardened image is
+published from `main` and deployed automatically to the product owner's homelab
+(`https://4ecb.spencermichaels.net`, HTTPS behind Caddy, invite-cookie access
+control), and the D&D group uses it. The owner verified the invite gate,
+onboarding and pack install, the character workflow and an image update on the
+real origin. Remaining: the CSP console check, offline reload, backup/restore and
+rollback rehearsal steps, and the owner's approval of the parity-surface cleanup
+(open passes in [`visual-review-checklist.md`](visual-review-checklist.md)).
+Checklist: [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
+
 ### Goal
 
 Complete the final UI cleanup around the parity product and make the existing
