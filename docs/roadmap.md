@@ -1140,9 +1140,15 @@ character before it is fixed, one slice per item.
       `select existing="true" Prepare=` (Prepare is select-only), which no
       record uses; reproduced from the code with synthetic tests
       (`prepare-source`, `prepare-level`). Cache v106; no parity change.
-      Left: `CheckReplaceElem`'s powerswap test that an at-will target be an
-      unlocked augmentable power unless rule +1700 (~16796) is not
-      reproduced (unverified against saves).
+      Moved to item 17: `CheckReplaceElem`'s powerswap at-will test. No-ops
+      (no record uses them): `modify` overlays on Power Type/Usage skewing the
+      in-loop hybrid check, and `AutoThingToLose`'s default pick for
+      `existing`/Prepare selects.
+  17. Powerswap at-will targets must be unlocked augmentable powers
+      (2026-10-31): native `CheckReplaceElem`'s powerswap branch (~16796)
+      requires an at-will target to pass `IsUnlockedAugmentablePower` unless
+      rule +1700 is set (probably a byte in the CategoryMatch block at
+      +1172). Not reproduced; unverified against saves.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
