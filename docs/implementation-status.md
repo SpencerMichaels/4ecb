@@ -1,5 +1,25 @@
 # Implementation status
 
+## Swap leftovers: Prepare selects, hybrid automatic swaps (2026-10-31)
+
+An automatic power-replace swap now respects native `CheckHybridPower`
+(`-Module-.cs` ~16838, which builds the list `UpdateReplacement` targets
+from): a hybrid never automatically gives up its class's only power of that
+Power Type and Power Usage, checked at the swap's level without the swap's
+own gain. With no swap the replacement's list is empty, which native (~16217)
+calls complete, so no error appears.
+
+Native's Prepare check (~16748, with `BuildReplaceList` ~16872) turned out
+to apply only to a `select existing="true" Prepare="X"`: Prepare is a
+select-only attribute (rule +1732, FillStringField flags 32). Such a select
+now lists only powers a same-Prepare select picked (`prepare-source`), and
+none of the Level of a power another same-Prepare, same-Category existing
+select took (`prepare-level`). No shipped or CBLoader record combines the
+two (the 54 Prepare selects are Expanded Spellbook-style spellbook picks), and
+no sample save holds a power-replace record with a hybrid class, so both
+follow the recovered code alone with synthetic tests. `parity:baseline` and
+`audit:saved-selections` are unchanged. Evaluation cache v106.
+
 ## Swap targets: power-replace grants, automatic swaps, retraining defaults (2026-10-31)
 
 A power-replace can now give up a granted power, as native `CheckReplaceElem`

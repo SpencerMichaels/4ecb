@@ -236,6 +236,13 @@ chain this way: level 13 trades the level-1 pact power, level 27 the level-13
 one. Native would refuse that second step (no replacement may lose a swap's
 gain, ~16765); Heroes of Shadow says the level-27 power replaces the one
 gained at 13th level, so the automatic swap may take it (D105).
+`CheckHybridPower` (~16838) also builds the list the automatic swap targets
+from, so a hybrid never automatically gives up its class's only power of
+that Power Type and Power Usage. The check reads what the character holds at
+the swap's level without the swap's own gain (native builds the list before
+choosing it) and the records' own fields, since `modify` overlays are
+collected later. With no swap the list is empty, and native (~16217) calls
+an empty replacement complete, so nothing is flagged.
 `audit:saved-selections` reports a saved power an automatic swap gave up as
 `replaced` and its gain as an `automatic-swap` extra.
 
@@ -262,6 +269,20 @@ power-replace swap gained (~16765, `swap-gained`; a retraining's own gain
 stays retrainable), and a feat held under a class feature (~16769,
 `class-feature-feat`: Bardic Training's or Ritual Casting's Ritual Caster;
 PHB p. 28 retrains feats, powers and skills, never class features).
+
+A `select existing="true"` with `Prepare="X"` follows the same list
+(native `BuildReplaceList` ~16872, `CheckReplaceElem` ~16748; Prepare is
+rule `+1732`, a select-only attribute, so it never applies to a `replace`).
+It offers only powers a select with the same Prepare picked
+(`prepare-source`: a grant or another pick never qualifies). It also never
+offers a power of the Level of one another `existing` select with the same
+Prepare and Category already took (`prepare-level`: one prepared power per
+level). Candidates either rule excludes are left out, except a saved pick,
+which stays listed, ineligible, with `choice.ineligible`
+(`preparedPickReasons` in `evaluator.ts`). No shipped or CBLoader record
+combines Prepare with `existing`; the wizard's spellbook selects
+(Expanded Spellbook) use `spellbook`. So this follows the recovered code
+alone.
 
 The gain of every multiclass swap is native `UpdateReplacement`'s (~17020):
 the swap's own category with the `$$MULTICLASS` flag plus the lost power's

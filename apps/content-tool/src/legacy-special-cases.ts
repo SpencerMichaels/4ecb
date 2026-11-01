@@ -197,6 +197,7 @@ const CONFORMANCE =
   "packages/rules-engine/src/construction-conformance.test.ts";
 const HYBRID_POWERS = "packages/rules-engine/src/hybrid-powers.test.ts";
 const SWAP_TARGETS = "packages/rules-engine/src/swap-targets.test.ts";
+const PREPARE_SELECTS = "packages/rules-engine/src/prepare-selects.test.ts";
 const CLASS_CATEGORIES = "packages/rules-engine/src/class-categories.test.ts";
 
 export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
@@ -329,7 +330,24 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Choice.CheckReplaceElem": partial(
       "Which owned elements a retrain/replace choice may swap: same-level Prepare slots, multiclass power swaps (ChoiceMatch lose category '$$CLASS,<multiclass>,<character level>'; a granted power only for an 'At-Will' swap and a Display containing 'attack'), powerswap categories (unlocked augmentable at-wills), power-replace and the hybrid CheckHybridPower rule.",
-      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses chosen powers (stored or rule defaults) matching its ChoiceMatch category, and for an 'At-Will' swap also granted powers whose overlaid Display contains 'attack' (evaluator multiclassLosesGranted); its gain is UpdateReplacement's '$$MULTICLASS,<multiclass>,<lost Level>'; a displaced grant or default is not granted again, and commandForEvaluatedChoice stores a generated target before the swap; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts). power-replace also loses granted powers (native skips the granted block for it, ~16821) and, when GAIN and LOSE each name one power, swaps on its own (autoPowerReplacement, native UpdateReplacement ~16994 + PowerReplaceCategory; generated, never stored; D105 lets the binder's level-27 swap take the level-13 gain, and a named gain skips its prerequisite). Retraining and powerswap lose chosen elements including unsaved rule defaults, never grants (choice [24] is the select's 'existing' flag; retrain is rule +1704). No mode loses a multiclass/power-replace gain (~16765, 'swap-gained') or a feat under a class feature (~16769, 'class-feature-feat'). The same-level Prepare check (~16748) is not reproduced",
+      "character-domain retrainSelection / replaceSelection cover retraining. evaluator powerReplaceOptions reproduces power-replace (named gain, LOSE category, N = level or lower, N+ = N or higher, no re-swap of a multiclass/power-replace gain) for chosen powers only; a multiclass swap loses chosen powers (stored or rule defaults) matching its ChoiceMatch category, and for an 'At-Will' swap also granted powers whose overlaid Display contains 'attack' (evaluator multiclassLosesGranted); its gain is UpdateReplacement's '$$MULTICLASS,<multiclass>,<lost Level>'; a displaced grant or default is not granted again, and commandForEvaluatedChoice stores a generated target before the swap; a saved target that breaks either rule or CheckHybridPower stays listed with targetReasons and raises choice.ineligible; the hybrid CheckHybridPower limit is applied (hybrid-powers.ts). power-replace also loses granted powers (native skips the granted block for it, ~16821) and, when GAIN and LOSE each name one power, swaps on its own (autoPowerReplacement, native UpdateReplacement ~16994 + PowerReplaceCategory; generated, never stored; D105 lets the binder's level-27 swap take the level-13 gain, and a named gain skips its prerequisite). Retraining and powerswap lose chosen elements including unsaved rule defaults, never grants (choice [24] is the select's 'existing' flag; retrain is rule +1704). No mode loses a multiclass/power-replace gain (~16765, 'swap-gained') or a feat under a class feature (~16769, 'class-feature-feat'). An automatic power-replace swap respects CheckHybridPower (~16838 builds the list UpdateReplacement targets from; evaluator autoTargetHybridReplaceable, without the swap's own gain): no swap, no incomplete choice. The Prepare check (~16748, with BuildReplaceList ~16872) applies only to 'select existing=\"true\" Prepare=' (Prepare is select-only, FillStringField flags 32): evaluator preparedPickReasons lists only what a same-Prepare select picked ('prepare-source') and no power of a Level another same-Prepare/Category existing select took ('prepare-level'); no shipped or CBLoader record has that combination. Not reproduced: the powerswap test that an at-will target be an unlocked augmentable power unless rule +1700 (~16796)",
+      test(
+        HYBRID_POWERS,
+        "does not give up a hybrid class's only power of its kind on its own",
+      ),
+      test(
+        HYBRID_POWERS,
+        "swaps while the class holds another power of that type and usage",
+      ),
+      test(
+        PREPARE_SELECTS,
+        "lists only what a select with the same Prepare picked",
+      ),
+      test(
+        PREPARE_SELECTS,
+        "keeps a second power of a Level another choice prepared out",
+      ),
+      test(PREPARE_SELECTS, "flags a saved pick Prepare rules out"),
       test(CONFORMANCE, "reads a bare level as that level or lower"),
       test(
         CONFORMANCE,

@@ -909,3 +909,68 @@ describe("multiclass swaps of granted powers and their gains (native CheckReplac
     expect(targets(saved)).toContain("saved-pact-at-will");
   });
 });
+
+describe("automatic power-replace swaps of a hybrid (native CheckHybridPower, UpdateReplacement)", () => {
+  // A feat whose power-replace names one power on each side (as Skald
+  // Training's "ID_FMP_POWER_15849:ID_FMP_POWER_2339"); the gain is a Fighter
+  // encounter power too, which native does not hold while building the list.
+  const swapFeat = entity("SWAP_FEAT", "Swap Feat", "Feat", {
+    rules: [
+      rule(
+        "replace",
+        { "power-replace": "FIGHTER_ENCOUNTER_3:FIGHTER_ENCOUNTER" },
+        0,
+      ),
+    ],
+  });
+  const evaluateSwap = (picks: Readonly<Record<string, string>>) =>
+    evaluateCharacter(
+      {
+        level: 5,
+        baseAbilities: {},
+        occurrences: hybridOccurrences(5, picks, [
+          occurrence("swap-feat", "SWAP_FEAT", 5),
+        ]),
+        inventory: [],
+      },
+      [...content(), swapFeat],
+    );
+  const featChoice = (result: ReturnType<typeof evaluate>) =>
+    result.choices.find(
+      (choice) => choice.providerOccurrenceId === "swap-feat",
+    );
+
+  it("does not give up a hybrid class's only power of its kind on its own", () => {
+    const result = evaluateSwap({
+      "level-1": "FIGHTER_ENCOUNTER",
+      "level-3": "WARLORD_ENCOUNTER_3",
+    });
+    expect(
+      result.occurrences.some(({ id }) => id === "swap-feat:power-replace:0"),
+    ).toBe(false);
+    expect(result.activeDefinitionIds).toContain("FIGHTER_ENCOUNTER");
+    // Native's list is empty, so the replacement is neither incomplete nor
+    // flagged.
+    expect(featChoice(result)?.selectedOccurrenceId).toBeUndefined();
+    expect(featChoice(result)?.replacementOptions).toEqual([]);
+    expect(
+      result.diagnostics.filter(
+        ({ severity, occurrenceId }) =>
+          severity === "error" &&
+          (occurrenceId === "swap-feat" ||
+            occurrenceId === "swap-feat:power-replace:0"),
+      ),
+    ).toEqual([]);
+  });
+
+  it("swaps while the class holds another power of that type and usage", () => {
+    const result = evaluateSwap({
+      "level-1": "FIGHTER_ENCOUNTER",
+      "level-3": "FIGHTER_ENCOUNTER_3",
+    });
+    expect(
+      result.occurrences.find(({ id }) => id === "swap-feat:power-replace:0"),
+    ).toMatchObject({ replacesId: "pick-level-1", parentId: "swap-feat" });
+    expect(result.activeDefinitionIds).not.toContain("FIGHTER_ENCOUNTER");
+  });
+});

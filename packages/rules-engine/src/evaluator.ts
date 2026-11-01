@@ -87,7 +87,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v105-2026-10-31-swap-targets";
+  "evaluated-character-v106-2026-10-31-prepare-hybrid-swaps";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1468,6 +1468,30 @@ function evaluateCharacterInternal(
   const savedById = new Map(
     saved.map((occurrence) => [occurrence.id, occurrence]),
   );
+  /** The select that picked an occurrence (native CharElement [15]'s
+   *  choice rule), if a select did. */
+  const pickingSelect = (
+    occurrence: CharacterOccurrence,
+  ): SelectRule | undefined => {
+    if (
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal === undefined
+    )
+      return undefined;
+    const parent =
+      occurrences.find(({ id }) => id === occurrence.parentId) ??
+      savedById.get(occurrence.parentId);
+    const parentEntity =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    if (parentEntity === undefined) return undefined;
+    const rule = parseRules(parentEntity.id, parentEntity.rules).find(
+      (candidate) => candidate.source.ordinal === occurrence.ruleOrdinal,
+    );
+    return rule?.kind === "select" ? rule : undefined;
+  };
+  /** Native IsSpellbook (its select half): a pick of a spellbook select. */
+  const chosenBySpellbook = (occurrence: CharacterOccurrence): boolean =>
+    pickingSelect(occurrence)?.spellbook !== undefined;
   const savedReplacements = saved.filter(
     (occurrence) => occurrence.replacesId !== undefined,
   );
@@ -1564,6 +1588,48 @@ function evaluateCharacterInternal(
    * attack power you gained at 13th level", and a LOSE naming that one
    * power can mean nothing else, so the automatic swap may take it.
    */
+  /**
+   * Native CheckHybridPower (CheckReplaceElem ~16838) also builds a
+   * power-replace's list, and UpdateReplacement targets the LOSE power only
+   * from that list: a hybrid never automatically gives up its class's only
+   * power of that Power Type and Power Usage. The list is then empty, so the
+   * replacement is not incomplete either (~16217 needs a non-empty list).
+   * Checked against what the pass holds at the swap's level without the
+   * swap's own gain (native builds the list before choosing it) and with
+   * the records' own fields: `modify` overlays are not collected yet.
+   */
+  const autoTargetHybridReplaceable = (
+    target: CharacterOccurrence,
+    swapId: string,
+    level: number,
+    active: readonly CharacterOccurrence[],
+  ): boolean => {
+    const find = (nameOrId: string, type?: string) =>
+      index.find(nameOrId, type);
+    const lost = index.get(target.definitionId);
+    const passHybrid = nativeHybridClasses(
+      active.flatMap((occurrence) => {
+        const entity = index.get(occurrence.definitionId);
+        return entity === undefined ? [] : [entity];
+      }),
+      find,
+    );
+    if (passHybrid === undefined || lost === undefined) return true;
+    const held = active.flatMap((occurrence) => {
+      if (
+        occurrence.id === swapId ||
+        occurrence.acquiredLevel > level ||
+        displacedIds.has(occurrence.id) ||
+        chosenBySpellbook(occurrence)
+      )
+        return [];
+      const entity = index.get(occurrence.definitionId);
+      return entity !== undefined && key(entity.type) === "power"
+        ? [entity]
+        : [];
+    });
+    return hybridPowerReplaceable(passHybrid, lost, held, find);
+  };
   const autoPowerReplacement = (
     provider: CharacterOccurrence,
     rule: ReplaceRule,
@@ -1601,7 +1667,11 @@ function evaluateCharacterInternal(
               candidate.kind !== "inventory" &&
               candidate.acquiredLevel <= level,
           );
-    if (target === undefined) return undefined;
+    if (
+      target === undefined ||
+      !autoTargetHybridReplaceable(target, id, level, active)
+    )
+      return undefined;
     const swap: CharacterOccurrence = {
       id,
       definitionId: gained.id,
@@ -2534,23 +2604,53 @@ function evaluateCharacterInternal(
     hybridClassContexts.set(removed, context);
     return context;
   };
-  /** Native IsSpellbook (its select half): a pick of a spellbook select. */
-  const chosenBySpellbook = (occurrence: CharacterOccurrence): boolean => {
-    if (
-      occurrence.parentId === undefined ||
-      occurrence.ruleOrdinal === undefined
-    )
-      return false;
-    const parent =
-      occurrences.find(({ id }) => id === occurrence.parentId) ??
-      savedById.get(occurrence.parentId);
-    const parentEntity =
-      parent === undefined ? undefined : index.get(parent.definitionId);
-    if (parentEntity === undefined) return false;
-    const rule = parseRules(parentEntity.id, parentEntity.rules).find(
-      (candidate) => candidate.source.ordinal === occurrence.ruleOrdinal,
-    );
-    return rule?.kind === "select" && rule.spellbook !== undefined;
+  /**
+   * Native `select existing="true" Prepare="X"` (D20Choice BuildReplaceList
+   * `-Module-.cs` ~16872 and CheckReplaceElem ~16748; Prepare is rule +1732,
+   * `existing` +1729, Category +20). The choice lists only what a select
+   * with the same Prepare picked (`prepare-source`: a grant or another kind
+   * of pick never qualifies), and none of the Level of a power another
+   * `existing` select with the same Prepare and Category already took
+   * (`prepare-level`: one prepared power per level). Prepare is a
+   * select-only attribute (FillStringField flags 32), so it never applies
+   * to a `replace`. No shipped or CBLoader record combines it with
+   * `existing` (the wizard's spellbook selects use `spellbook`), so this
+   * follows the recovered code alone.
+   */
+  const preparedPickReasons = (
+    rule: SelectRule,
+    level: number,
+    selected: CharacterOccurrence | undefined,
+  ): ((definitionId: string) => readonly string[]) | undefined => {
+    const prepare = rule.prepare;
+    if (!rule.existing || prepare === undefined) return undefined;
+    const sources = new Set<string>();
+    const takenLevels = new Set<string>();
+    for (const candidate of occurrences) {
+      if (candidate.acquiredLevel > level || candidate.id === selected?.id)
+        continue;
+      const picker = pickingSelect(candidate);
+      if (picker?.prepare === undefined || key(picker.prepare) !== key(prepare))
+        continue;
+      if (!picker.existing) sources.add(key(candidate.definitionId));
+      else if (key(picker.category ?? "") === key(rule.category ?? "")) {
+        const pickedLevel = index.get(candidate.definitionId);
+        const value =
+          pickedLevel === undefined ? undefined : field(pickedLevel, "Level");
+        if (value !== undefined) takenLevels.add(value.trim());
+      }
+    }
+    return (definitionId) => {
+      const entity = index.get(definitionId);
+      const value =
+        entity === undefined ? undefined : field(entity, "Level")?.trim();
+      return [
+        ...(sources.has(key(definitionId)) ? [] : ["prepare-source"]),
+        ...(value !== undefined && takenLevels.has(value)
+          ? ["prepare-level"]
+          : []),
+      ];
+    };
   };
   const heldPowersCache = new Map<string, readonly ContentEntity[]>();
   /** The powers held at `level` (native ElemAtLevel), without
@@ -3080,6 +3180,11 @@ function evaluateCharacterInternal(
                       )
                   : [];
             let themeRestricted: boolean | undefined;
+            const preparedReasons = preparedPickReasons(
+              rule,
+              choiceLevel,
+              selected,
+            );
             const choiceId = `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`;
             if (
               hybrid !== undefined &&
@@ -3111,6 +3216,14 @@ function evaluateCharacterInternal(
                     eligible: false,
                     rulesLegal: false,
                     reasons: [...candidate.reasons, "theme-power"],
+                  };
+                const prepared = preparedReasons?.(candidate.definitionId);
+                if (prepared !== undefined && prepared.length > 0)
+                  candidate = {
+                    ...candidate,
+                    eligible: false,
+                    rulesLegal: false,
+                    reasons: [...candidate.reasons, ...prepared],
                   };
                 if (
                   rule.existing ||
@@ -3153,6 +3266,16 @@ function evaluateCharacterInternal(
                   candidateDetailLevels === undefined ||
                   candidate.definitionId === selected?.definitionId ||
                   !candidate.reasons.includes("category"),
+              )
+              // Native never lists what Prepare rules out; a saved pick
+              // stays, flagged.
+              .filter(
+                (candidate) =>
+                  candidate.definitionId === selected?.definitionId ||
+                  !candidate.reasons.some(
+                    (reason) =>
+                      reason === "prepare-source" || reason === "prepare-level",
+                  ),
               );
             choices.push({
               id: choiceId,

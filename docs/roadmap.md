@@ -1134,11 +1134,15 @@ character before it is fixed, one slice per item.
       Plaguefire Body one). Cache v105; Lily's 2 new full-pack mismatches are
       expected (her save holds Skald Training as a CBLoader-only
       placeholder).
-  16. Swap leftovers from item 15 (2026-10-31): native `CheckReplaceElem`'s
-      same-level Prepare check (`-Module-.cs` ~16748) isn't reproduced, and
-      an automatic power-replace target ignores `CheckHybridPower` (a hybrid
-      character would see the later legality check flag it instead). No save
-      exercises either.
+  16. ~~Swap leftovers from item 15~~ (2026-10-31): done. An automatic
+      power-replace swap respects `CheckHybridPower` (~16838): no swap, no
+      issue. The Prepare check (~16748) applies only to
+      `select existing="true" Prepare=` (Prepare is select-only), which no
+      record uses; reproduced from the code with synthetic tests
+      (`prepare-source`, `prepare-level`). Cache v106; no parity change.
+      Left: `CheckReplaceElem`'s powerswap test that an at-will target be an
+      unlocked augmentable power unless rule +1700 (~16796) is not
+      reproduced (unverified against saves).
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
