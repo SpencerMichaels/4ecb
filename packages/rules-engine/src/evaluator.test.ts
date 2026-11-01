@@ -4808,6 +4808,219 @@ describe("character evaluator", () => {
     });
   });
 
+  describe("power swap at-will targets (native CheckReplaceElem ~16792)", () => {
+    // Psionic Augmentation's Augment Powers swaps (PHB3 p. 82: "Both powers
+    // must be augmentable and from this class") and the paragon-multiclass
+    // swap of a psionic second class (`$CLASS_OR_MULTICLASS`, rule +1700).
+    const evaluate = (powerswap: string, swap?: CharacterOccurrence) =>
+      evaluateCharacter(
+        {
+          level: 7,
+          baseAbilities: {},
+          occurrences: [
+            {
+              id: "class",
+              definitionId: "ID_FMP_CLASS_437",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "augmentable",
+              definitionId: "AUGMENTABLE_AT_WILL",
+              acquiredLevel: 1,
+              parentId: "class",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+            {
+              id: "plain",
+              definitionId: "PLAIN_AT_WILL",
+              acquiredLevel: 1,
+              parentId: "class",
+              ruleOrdinal: 0,
+              choiceIndex: 1,
+              kind: "choice",
+            },
+            {
+              id: "trait",
+              definitionId: "ID_FMP_RACIAL_TRAIT_643",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "dilettante",
+              definitionId: "DILETTANTE_AT_WILL",
+              acquiredLevel: 1,
+              parentId: "trait",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+            {
+              id: "encounter",
+              definitionId: "CLASS_ENCOUNTER",
+              acquiredLevel: 1,
+              parentId: "class",
+              ruleOrdinal: 1,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+            {
+              id: "augment",
+              definitionId: "ID_INTERNAL_INTERNAL_AUGMENT_POWERS",
+              acquiredLevel: 1,
+              kind: "grant",
+            },
+            ...(swap === undefined ? [] : [swap]),
+          ],
+          inventory: [],
+        },
+        [
+          entity("ID_INTERNAL_CATEGORY_AT-WILL", "At-Will", "Category"),
+          entity("ID_INTERNAL_CATEGORY_ENCOUNTER", "Encounter", "Category"),
+          entity("ID_FMP_CLASS_437", "Psion", "Class", {
+            rules: [
+              rule(
+                "select",
+                { type: "Power", number: "2", Category: "$$CLASS,at-will,1" },
+                0,
+              ),
+              rule(
+                "select",
+                { type: "Power", number: "1", Category: "$$CLASS,encounter,1" },
+                1,
+              ),
+            ],
+          }),
+          entity("ID_FMP_RACIAL_TRAIT_643", "Dilettante", "Racial Trait", {
+            rules: [
+              rule(
+                "select",
+                {
+                  type: "Power",
+                  number: "1",
+                  Category: "ID_FMP_CLASS_437,at-will,1",
+                },
+                0,
+              ),
+            ],
+          }),
+          entity(
+            "ID_INTERNAL_INTERNAL_AUGMENT_POWERS",
+            "Augment Powers",
+            "Internal",
+            {
+              rules: [
+                rule(
+                  "replace",
+                  { name: "Power At-Will 7", Level: "7", powerswap },
+                  0,
+                ),
+              ],
+            },
+          ),
+          ...(
+            [
+              ["AUGMENTABLE_AT_WILL", "Augmentable at-will", true, "1"],
+              ["PLAIN_AT_WILL", "Plain at-will", false, "1"],
+              ["DILETTANTE_AT_WILL", "Dilettante at-will", true, "1"],
+              ["NEW_AT_WILL", "New at-will", true, "7"],
+            ] as const
+          ).map(([id, name, augmentable, level]) =>
+            entity(id, name, "Power", {
+              categories: [
+                "ID_INTERNAL_CATEGORY_AT-WILL",
+                "ID_FMP_CLASS_437",
+                level,
+              ],
+              specifics: {
+                Class: "ID_FMP_CLASS_437",
+                Level: level,
+                "Power Usage": "At-Will",
+                ...(augmentable
+                  ? { _AugmentVersions: `${id}_(AUGMENT_0),${id}_(AUGMENT_1)` }
+                  : {}),
+              },
+            }),
+          ),
+          entity("CLASS_ENCOUNTER", "Class encounter", "Power", {
+            categories: [
+              "ID_INTERNAL_CATEGORY_ENCOUNTER",
+              "ID_FMP_CLASS_437",
+              "1",
+            ],
+            specifics: {
+              Class: "ID_FMP_CLASS_437",
+              Level: "1",
+              "Power Usage": "Encounter",
+            },
+          }),
+        ],
+      );
+    const swapChoice = (result: ReturnType<typeof evaluate>) =>
+      result.choices.find((choice) => choice.type === "Replacement");
+
+    it("offers only unlocked augmentable at-wills as targets", () => {
+      const choice = swapChoice(evaluate("$$CLASS,at-will,7"));
+      expect(
+        choice?.replacementOptions?.map((option) => option.definitionId),
+      ).toEqual(["AUGMENTABLE_AT_WILL"]);
+      expect(choice?.replacementOptions?.[0]?.candidates).toContainEqual(
+        expect.objectContaining({
+          definitionId: "NEW_AT_WILL",
+          eligible: true,
+        }),
+      );
+    });
+
+    it("never tests a non-at-will target", () => {
+      const choice = swapChoice(evaluate("$$CLASS,encounter|at-will,7"));
+      expect(
+        choice?.replacementOptions?.map((option) => option.definitionId),
+      ).toEqual(["AUGMENTABLE_AT_WILL", "CLASS_ENCOUNTER"]);
+    });
+
+    it("skips the test for a $$CLASS_OR_MULTICLASS swap", () => {
+      const choice = swapChoice(evaluate("$$CLASS_OR_MULTICLASS,at-will,7"));
+      expect(
+        choice?.replacementOptions?.map((option) => option.definitionId),
+      ).toEqual(["AUGMENTABLE_AT_WILL", "PLAIN_AT_WILL", "DILETTANTE_AT_WILL"]);
+    });
+
+    it("keeps a saved locked target listed and flags it", () => {
+      const result = evaluate("$$CLASS,at-will,7", {
+        id: "swap",
+        definitionId: "NEW_AT_WILL",
+        acquiredLevel: 7,
+        parentId: "augment",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+        replacesId: "plain",
+        kind: "choice",
+      });
+      const choice = swapChoice(result);
+      expect(choice?.replacementOptions).toContainEqual(
+        expect.objectContaining({
+          replacesOccurrenceId: "plain",
+          targetReasons: ["augment-locked"],
+        }),
+      );
+      expect(
+        choice?.replacementOptions?.map((option) => option.definitionId),
+      ).not.toContain("DILETTANTE_AT_WILL");
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: "choice.ineligible",
+          occurrenceId: "swap",
+          message: expect.stringContaining(
+            "it is not an augmentable at-will power",
+          ),
+        }),
+      );
+    });
+  });
+
   it("re-retrains the active replacement through its original slot", () => {
     const result = evaluateCharacter(
       {

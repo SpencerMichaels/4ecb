@@ -38,6 +38,63 @@ export interface NativePsionics {
 }
 
 /**
+ * Native `IsUnlockedAugmentablePower` (D20Workspace.cs ~1625): the power has
+ * `_AugmentVersions`, no `_SuppressAugments` (read through the
+ * character's `modify` overlays, as native `C_RulesElementField` does), and
+ * was not chosen by a Racial Trait (Dilettante) — read from the first
+ * occurrence of its replacement chain, as native walks to the original
+ * choice. Shared by `nativePsionics` and the power-swap target check
+ * (`CheckReplaceElem` ~16796).
+ */
+export function unlockedAugmentablePowerTest(input: {
+  readonly occurrences: readonly CharacterOccurrence[];
+  readonly saved: readonly CharacterOccurrence[];
+  readonly index: RulesIndex;
+  readonly overlays: readonly FieldOverlay[];
+}): (occurrence: CharacterOccurrence, entity: ContentEntity) => boolean {
+  const { occurrences, saved, index, overlays } = input;
+  const byId = new Map(saved.map((occurrence) => [occurrence.id, occurrence]));
+  for (const occurrence of occurrences) byId.set(occurrence.id, occurrence);
+  const fieldOf = (entity: ContentEntity, name: string) =>
+    overlaidField(entity, name, overlays) ?? "";
+  const chosenByRacialTrait = (occurrence: CharacterOccurrence): boolean => {
+    let original = occurrence;
+    const seen = new Set<string>();
+    while (original.replacesId !== undefined && !seen.has(original.id)) {
+      seen.add(original.id);
+      const replaced = byId.get(original.replacesId);
+      if (replaced === undefined) break;
+      original = replaced;
+    }
+    const parent =
+      original.parentId === undefined ? undefined : byId.get(original.parentId);
+    const provider =
+      parent === undefined ? undefined : index.get(parent.definitionId);
+    return provider !== undefined && key(provider.type) === "racial trait";
+  };
+  return (occurrence, entity) =>
+    fieldOf(entity, "_AugmentVersions").length > 0 &&
+    fieldOf(entity, "_SuppressAugments").length === 0 &&
+    !chosenByRacialTrait(occurrence);
+}
+
+/**
+ * Whether a power's Category names the "At-Will" category record: native
+ * `CheckReplaceElem` (~16798) compares each parsed Category element's name
+ * (RulesElement +52) with "at-will", case-insensitively. Not Power Usage:
+ * Category is parsed once at load, so a `modify` of Power Usage (Disciplined
+ * Talent's Encounter) does not change it.
+ */
+export function hasAtWillCategory(
+  entity: ContentEntity,
+  index: RulesIndex,
+): boolean {
+  return entity.categories.some(
+    (category) => key(index.get(category)?.name ?? "") === "at-will",
+  );
+}
+
+/**
  * Native `Psionics` and `PsionicConventionalist` (D20RulesEngine
  * `-Module-.cs` ~16312–16420, run by `D20Workspace.UpdateInternal` after
  * every element's rules and before the loot). For each owned element:
@@ -59,10 +116,7 @@ export interface NativePsionics {
  * 2/4/6 power points by that power's level, so a power the feat swapped in
  * is counted by its record's own Power Usage.
  *
- * `IsUnlockedAugmentablePower` (D20Workspace.cs ~1625): the power has
- * `_AugmentVersions`, no `_SuppressAugments`, and was not chosen by a
- * Racial Trait (Dilettante) — read from the first occurrence of its
- * replacement chain, as native walks to the original choice. A power its
+ * `unlockedAugmentablePowerTest` decides the lock. A power its
  * Racial Trait locked gets a `_SuppressAugments` overlay, so later readers
  * of the lock see the one condition native IsUnlockedAugmentablePower
  * treats alike: power rows show a locked power's version 0 only, as native
@@ -79,28 +133,7 @@ export function nativePsionics(input: {
   for (const occurrence of occurrences) byId.set(occurrence.id, occurrence);
   const fieldOf = (entity: ContentEntity, name: string) =>
     overlaidField(entity, name, overlays) ?? "";
-  const chosenByRacialTrait = (occurrence: CharacterOccurrence): boolean => {
-    let original = occurrence;
-    const seen = new Set<string>();
-    while (original.replacesId !== undefined && !seen.has(original.id)) {
-      seen.add(original.id);
-      const replaced = byId.get(original.replacesId);
-      if (replaced === undefined) break;
-      original = replaced;
-    }
-    const parent =
-      original.parentId === undefined ? undefined : byId.get(original.parentId);
-    const provider =
-      parent === undefined ? undefined : index.get(parent.definitionId);
-    return provider !== undefined && key(provider.type) === "racial trait";
-  };
-  const unlocked = (
-    occurrence: CharacterOccurrence,
-    entity: ContentEntity,
-  ): boolean =>
-    fieldOf(entity, "_AugmentVersions").length > 0 &&
-    fieldOf(entity, "_SuppressAugments").length === 0 &&
-    !chosenByRacialTrait(occurrence);
+  const unlocked = unlockedAugmentablePowerTest(input);
 
   const dabblerSwap = (occurrence: CharacterOccurrence): boolean => {
     const parent =

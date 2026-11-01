@@ -284,6 +284,27 @@ combines Prepare with `existing`; the wizard's spellbook selects
 (Expanded Spellbook) use `spellbook`. So this follows the recovered code
 alone.
 
+A power swap (`powerswap`) may give up an at-will power only when it is an
+unlocked augmentable power (native `CheckReplaceElem` ~16792-16806). The
+at-will test is the target's Category: an element named "At-Will"
+(`ID_INTERNAL_CATEGORY_AT-WILL`), not its Power Usage. Unlocked is native
+`IsUnlockedAugmentablePower` (D20Workspace.cs ~1625, `psionics.ts`
+`unlockedAugmentablePowerTest`): the power has `_AugmentVersions`, no
+`_SuppressAugments` through `modify` overlays (Disciplined Talent), and was
+not chosen by a Racial Trait (Dilettante). The check runs after every
+`modify` has run. A swap whose category carries `$$CLASS_OR_MULTICLASS`
+skips it. That is native rule +1700, byte 528 of the CategoryMatch at +1172,
+which `CategoryMatch::FromString` (~30855) sets for that prefix
+(`nativeCategoryFlags` in `expressions.ts`). Only SecondNotFirstPsionic's
+Paragon Multiclassing swap carries it. The rules affected are Augment
+Powers' at-will swaps at 7–27 (PHB3: "Both powers must be augmentable and
+from this class"), Hybrid Encounter Power's level-3 swap and Psionic
+Augmentation (Hybrid)'s `encounter|Augmentable At-Will` swaps. A locked
+target is left out of the list. A saved one stays listed with
+`augment-locked` and raises `choice.ineligible`. Native tests only the lost
+power, so the gain list is not checked for augmentability. Every psionic
+class at-will in the pack is augmentable, so the gain list needs no check.
+
 The gain of every multiclass swap is native `UpdateReplacement`'s (~17020):
 the swap's own category with the `$$MULTICLASS` flag plus the lost power's
 Level, `$$MULTICLASS,<multiclass>,<lost Level>`, checked against the swap's

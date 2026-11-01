@@ -100,6 +100,39 @@ export function parseCategoryExpression(value: string): CategoryExpression {
   };
 }
 
+/** The flag prefixes native `CategoryMatch::FromString` (`-Module-.cs`
+ *  ~30814) reads, in the only order it reads them (CategoryMatch bytes
+ *  524–528, then `$$LEVEL`). */
+const NATIVE_CATEGORY_FLAGS = [
+  "$$CLASS",
+  "$$HYBRID",
+  "$$NOT_CLASS",
+  "$$MULTICLASS",
+  "$$CLASS_OR_MULTICLASS",
+  "$$LEVEL",
+] as const;
+
+/**
+ * The flags a category string sets in native `CategoryMatch::FromString`:
+ * each flag is consumed, case-insensitively, only when it is the next whole
+ * comma-separated token at its turn, so a flag out of that order is not one.
+ */
+export function nativeCategoryFlags(value: string): ReadonlySet<string> {
+  const flags = new Set<string>();
+  let rest = value;
+  for (const flag of NATIVE_CATEGORY_FLAGS) {
+    if (
+      rest.slice(0, flag.length).toLocaleUpperCase() === flag &&
+      (rest.length === flag.length || rest[flag.length] === ",")
+    ) {
+      flags.add(flag);
+      rest = rest.slice(flag.length);
+      if (rest.startsWith(",")) rest = rest.slice(1);
+    }
+  }
+  return flags;
+}
+
 export interface ExpressionContext {
   readonly owned: readonly ContentEntity[];
   /**

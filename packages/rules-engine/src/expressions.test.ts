@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   evaluateRequires,
   matchesCategory,
+  nativeCategoryFlags,
   parseCategoryExpression,
   parseRequires,
 } from "./expressions";
@@ -153,5 +154,23 @@ describe("compatibility expressions", () => {
         ]),
       }),
     ).toBe(true);
+  });
+});
+
+describe("nativeCategoryFlags", () => {
+  it("reads native CategoryMatch::FromString's flag prefixes in order", () => {
+    expect([...nativeCategoryFlags("$$CLASS_OR_MULTICLASS,at-will,7")]).toEqual(
+      ["$$CLASS_OR_MULTICLASS"],
+    );
+    expect([...nativeCategoryFlags("$$CLASS,at-will,7")]).toEqual(["$$CLASS"]);
+    expect([...nativeCategoryFlags("$$class,$$multiclass")]).toEqual([
+      "$$CLASS",
+      "$$MULTICLASS",
+    ]);
+    // Out of native order, a flag is just a category token.
+    expect([...nativeCategoryFlags("$$LEVEL,$$CLASS_OR_MULTICLASS")]).toEqual([
+      "$$LEVEL",
+    ]);
+    expect([...nativeCategoryFlags("ID_FMP_CLASS_7,daily,15")]).toEqual([]);
   });
 });

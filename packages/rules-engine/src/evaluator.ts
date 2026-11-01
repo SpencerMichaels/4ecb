@@ -23,6 +23,7 @@ import {
 import {
   evaluateRequires,
   matchesCategory,
+  nativeCategoryFlags,
   parseCategoryExpression,
   parseRequires,
   type ExpressionContext,
@@ -76,7 +77,11 @@ import {
   type LegacyLoadoutState,
   type LoadoutSlotContext,
 } from "./loadout-slots";
-import { nativePsionics } from "./psionics";
+import {
+  hasAtWillCategory,
+  nativePsionics,
+  unlockedAugmentablePowerTest,
+} from "./psionics";
 import {
   disallowedHybridClass,
   hybridPowerReplaceable,
@@ -87,7 +92,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v106-2026-10-31-prepare-hybrid-swaps";
+  "evaluated-character-v107-2026-10-31-powerswap-augmentable-at-wills";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2707,6 +2712,12 @@ function evaluateCharacterInternal(
     string,
     { readonly level: number; readonly currentTargetId?: string }
   >();
+  /** Power swaps whose at-will targets must be unlocked augmentable powers,
+   *  by choice ID, with the slot's current target (always kept). */
+  const augmentableSwapChecks = new Map<
+    string,
+    { readonly currentTargetId?: string }
+  >();
   /**
    * Power-replace choices whose GAIN names one power, by choice ID. The feat
    * gives that power ("You swap your majestic word for the skald's aura
@@ -3561,6 +3572,21 @@ function evaluateCharacterInternal(
                 ? {}
                 : { currentTargetId: selected.replacesId }),
             });
+          // Native CheckReplaceElem's powerswap branch (~16792-16806): an
+          // at-will target must pass IsUnlockedAugmentablePower unless the
+          // swap's category carries `$$CLASS_OR_MULTICLASS` (rule +1700 is
+          // byte 528 of the CategoryMatch at +1172). Checked once every
+          // `modify` has run (Disciplined Talent's `_SuppressAugments`).
+          if (
+            rule.powerSwap !== undefined &&
+            !nativeCategoryFlags(rule.powerSwap).has("$$CLASS_OR_MULTICLASS")
+          )
+            augmentableSwapChecks.set(
+              replacementChoiceId,
+              selected?.replacesId === undefined
+                ? {}
+                : { currentTargetId: selected.replacesId },
+            );
           choices.push({
             id: replacementChoiceId,
             level: replacementLevel,
@@ -4019,24 +4045,55 @@ function evaluateCharacterInternal(
   // holding's projected level 1.
   const prerequisiteLevel = (choice: (typeof choices)[number]) =>
     itemDerived().has(choice.providerOccurrenceId) ? input.level : choice.level;
-  if (hybridSlotRequests.size > 0 || hybridReplaceChecks.size > 0)
+  const unlockedAugmentable = unlockedAugmentablePowerTest({
+    occurrences,
+    saved,
+    index,
+    overlays,
+  });
+  if (
+    hybridSlotRequests.size > 0 ||
+    hybridReplaceChecks.size > 0 ||
+    augmentableSwapChecks.size > 0
+  )
     choices = choices.map((choice) => {
       const replaceCheck = hybridReplaceChecks.get(choice.id);
-      // A target CheckHybridPower forbids is dropped, unless it is the slot's
-      // saved target: that one stays listed, flagged, so the saved swap is
-      // reported as illegal (like a gain DisallowClass forbids).
-      const forbidden = (choice.replacementOptions ?? []).map(
-        (option) =>
-          replaceCheck !== undefined &&
-          !hybridReplaceable(option.definitionId, replaceCheck.level),
-      );
+      const augmentCheck = augmentableSwapChecks.get(choice.id);
+      const augmentLocked = (option: {
+        readonly replacesOccurrenceId: string;
+        readonly definitionId: string;
+      }): boolean => {
+        const target = replaceableById.get(option.replacesOccurrenceId);
+        const power = index.get(option.definitionId);
+        return (
+          target !== undefined &&
+          power !== undefined &&
+          hasAtWillCategory(power, index) &&
+          !unlockedAugmentable(target, power)
+        );
+      };
+      // A target CheckHybridPower or the power-swap at-will test forbids is
+      // dropped, unless it is the slot's saved target: that one stays
+      // listed, flagged, so the saved swap is reported as illegal (like a
+      // gain DisallowClass forbids).
+      const forbidden = (choice.replacementOptions ?? []).map((option) => [
+        ...(replaceCheck !== undefined &&
+        !hybridReplaceable(option.definitionId, replaceCheck.level)
+          ? ["hybrid-class-target"]
+          : []),
+        ...(augmentCheck !== undefined && augmentLocked(option)
+          ? ["augment-locked"]
+          : []),
+      ]);
+      const currentTargetId =
+        replaceCheck?.currentTargetId ?? augmentCheck?.currentTargetId;
       const kept = (choice.replacementOptions ?? []).map(
         (option, index) =>
-          !forbidden[index] ||
-          option.replacesOccurrenceId === replaceCheck?.currentTargetId,
+          forbidden[index]!.length === 0 ||
+          option.replacesOccurrenceId === currentTargetId,
       );
       const flagged = (index: number): readonly string[] =>
-        forbidden[index] === true ? ["hybrid-class-target"] : [];
+        forbidden[index] ?? [];
       return {
         ...choice,
         candidates: [
@@ -4188,7 +4245,7 @@ function evaluateCharacterInternal(
       });
     // Native CheckReplaceElem: the swap gave up what it may not (a
     // multiclass swap's category, CheckHybridPower, a swap's gain, a class
-    // feature's feat).
+    // feature's feat, a power swap's locked at-will).
     if ((replacementTarget?.targetReasons?.length ?? 0) > 0)
       diagnostics.push({
         severity: "error",
@@ -4202,6 +4259,7 @@ function evaluateCharacterInternal(
                   "it is its hybrid class's only power of that type and usage",
                 "swap-gained": "a multiclass or power-replace swap gained it",
                 "class-feature-feat": "it is a class feature's feat",
+                "augment-locked": "it is not an augmentable at-will power",
               })[reason] ?? reason,
           )
           .join("; ")}.`,

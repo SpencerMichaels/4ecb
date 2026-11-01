@@ -1,5 +1,22 @@
 # Implementation status
 
+## Power swaps: augmentable at-will targets (2026-10-31)
+
+A power swap (`powerswap`) now gives up an at-will power only when it is an
+unlocked augmentable power, as native `CheckReplaceElem` requires
+(`-Module-.cs` ~16792-16806). The target counts as at-will when its
+Category names the At-Will category record. It is unlocked when it has
+`_AugmentVersions`, no `_SuppressAugments` and no Racial Trait chose it
+(`IsUnlockedAugmentablePower`, shared with `nativePsionics`). The
+native exemption, rule +1700, decoded as the `$$CLASS_OR_MULTICLASS` flag
+of the swap's category (CategoryMatch byte 528). It applies only to
+SecondNotFirstPsionic's Paragon Multiclassing swap. A locked target is left
+out. A saved one stays listed with `augment-locked` and is reported as
+`choice.ineligible`. The sample saves with powerswap choices keep the
+same swap target lists: Beldin Hammertongue 11's Augment Powers swap, and the
+encounter/daily swaps of Ezio, KrizDevvon and others. `parity:baseline`
+and `audit:saved-selections` are unchanged. Evaluation cache v107.
+
 ## Swap leftovers: Prepare selects, hybrid automatic swaps (2026-10-31)
 
 An automatic power-replace swap now respects native `CheckHybridPower`

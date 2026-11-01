@@ -1396,6 +1396,8 @@ export function candidateReason(reasons: readonly string[]): string {
       "A power gained by a multiclass or power-replace swap cannot be given up",
     "class-feature-feat":
       "A feat that is part of a class feature cannot be retrained",
+    "augment-locked":
+      "Only an augmentable at-will power can be replaced this way",
     "prepare-source": "Not chosen by a select that prepares for this choice",
     "prepare-level": "Another power of this level is already prepared",
   };

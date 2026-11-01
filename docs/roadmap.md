@@ -1144,11 +1144,18 @@ character before it is fixed, one slice per item.
       (no record uses them): `modify` overlays on Power Type/Usage skewing the
       in-loop hybrid check, and `AutoThingToLose`'s default pick for
       `existing`/Prepare selects.
-  17. Powerswap at-will targets must be unlocked augmentable powers
-      (2026-10-31): native `CheckReplaceElem`'s powerswap branch (~16796)
-      requires an at-will target to pass `IsUnlockedAugmentablePower` unless
-      rule +1700 is set (probably a byte in the CategoryMatch block at
-      +1172). Not reproduced; unverified against saves.
+  17. ~~Powerswap at-will targets must be unlocked augmentable powers~~
+      (2026-10-31): done. Rule +1700 is byte 528 of the CategoryMatch at
+      +1172, set by the `$$CLASS_OR_MULTICLASS` prefix
+      (`CategoryMatch::FromString` ~30855; only SecondNotFirstPsionic's
+      Paragon Multiclassing swap). Otherwise a powerswap target whose
+      Category names "At-Will" must pass `IsUnlockedAugmentablePower`:
+      `_AugmentVersions`, no overlaid `_SuppressAugments`, not chosen
+      by a Racial Trait (`augment-locked`). It affects Augment Powers,
+      Hybrid Encounter Power and Psionic Augmentation (Hybrid). No real save
+      changes: Beldin's three targets are augmentable and Azreille is level 6. Cache v107; parity unchanged. No-op left open: native never checks
+      the gain list for augmentability (PHB3 says both powers must be
+      augmentable), but every psionic class at-will in the pack is.
 - ~~**Postmortem parity batch (2026-10-28)**~~: done (see implementation
   status and `reverse-engineering/docs/12-calculation-logic-audit.md`), with
   the owner's decisions of 2026-10-28 applied: `sample-chars/` is the
