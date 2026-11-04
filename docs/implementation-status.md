@@ -22,7 +22,8 @@ backup restores it at once when none of its characters is in the library,
 silently. Otherwise `RestoreBackupDialog.tsx` (the `EmptyTrashDialog` modal
 pattern; focus on Cancel, Esc cancels) names the library's conflicting
 characters ("3 characters in this backup are already in your library: Lily,
-Beatrix and Hu.") and offers Replace them / Keep both / Cancel. Replace is the
+Beatrix and Hu.") and offers Cancel / Keep both / Replace them (the dialog contract order, Replace
+as the danger action). Replace is the
 unchanged `restoreBackup`. Keep both is the new
 `CharacterRepository.restoreBackupKeepingBoth`: one transaction that keeps the
 IDs of non-conflicting records and gives conflicting ones (active or trashed in

@@ -72,14 +72,18 @@ export function RestoreBackupDialog({
         {restoreConflictText(names)}
       </p>
       <footer>
-        <button type="button" onClick={() => finish(onReplace)}>
-          {names.length === 1 ? "Replace it" : "Replace them"}
+        <button ref={cancel} type="button" onClick={() => finish(onCancel)}>
+          Cancel
         </button>
         <button type="button" onClick={() => finish(onKeepBoth)}>
           Keep both
         </button>
-        <button ref={cancel} type="button" onClick={() => finish(onCancel)}>
-          Cancel
+        <button
+          className="danger-button"
+          type="button"
+          onClick={() => finish(onReplace)}
+        >
+          {names.length === 1 ? "Replace it" : "Replace them"}
         </button>
       </footer>
     </dialog>

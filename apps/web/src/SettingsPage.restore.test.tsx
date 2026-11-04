@@ -163,7 +163,7 @@ describe("SettingsPage backup restore", () => {
       [...dialog()!.querySelectorAll("footer button")].map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Replace them", "Keep both", "Cancel"]);
+    ).toEqual(["Cancel", "Keep both", "Replace them"]);
     expect(document.activeElement).toBe(button("Cancel"));
   });
 

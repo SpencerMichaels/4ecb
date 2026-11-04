@@ -658,7 +658,5 @@ automatically; fit is measured in the browser, so only these are yours.
     the name list overflows the dialog or is cut off, Esc also closes
     Settings, or Keep both loses a portrait or brings a trashed copy back
     as active.
-  - **Decide:** the button order follows your sketch (Replace, Keep both,
-    Cancel); the app's other dialogs put Cancel first on the right-hand
-    group ([Cancel] [Primary]). Keep the sketch's order, or match the
-    other dialogs?
+  - The footer follows the dialog contract: Cancel, Keep both, then Replace
+    them as the red (overwriting) action on the right.
