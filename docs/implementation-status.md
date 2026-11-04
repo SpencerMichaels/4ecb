@@ -1236,6 +1236,22 @@ harness false alarm, not a regression of the
 save's complete/incomplete and error-count annotation in `parity:baseline`
 matches between `026d9ef` and today.
 
+Item-choice wording (2026-11-04): an item's open own choice names the item
+and what to choose, never the select's internal type. rules-engine
+`itemChoiceName`/`itemChoiceHeading` (build-projection.ts, re-exported by
+`item-choice-pages.ts`) are the one wording for the Shop picker, the
+Equipment right-click menu and the issue: the authored label ("Choose
+Resistance Type") or "Choose <type>", and an unlabeled "Class Feature"
+select (Armor of Adaptable Resistance, Harper Pin) reads "Option"/"Choose an
+option" instead of "class feature". Zilvra's issue is "Leather Armor of
+Resistance +2: Resistance Type" with the detail "Choose Resistance Type for
+Leather Armor of Resistance +2: right-click the item on the Equipment tab."
+(was "This item's required choice has not been made…"), checked by
+`review:verify`. The engine's `choice.required` diagnostic (not shown in the
+app, which builds its own issue) says "Choose Resistance Type for Armor of
+Resistance +2." for an item-owned choice (was "Required Class Feature choice
+is unresolved."); other choices keep their message. Cache v108.
+
 ## Beast companion card (companion proposal, slice 2; 2026-10-21)
 
 Commits `36c0188`, `1df9924`, `a31f505`. The matrix and audit script

@@ -168,7 +168,58 @@ describe("builder issue groups", () => {
     expect(result.unresolved).toEqual([
       expect.objectContaining({
         title: "Armor of Resistance +2: Resistance Type",
+        detail:
+          "Choose Resistance Type for Armor of Resistance +2: right-click the item on the Equipment tab.",
         target: { kind: "inventory", entryId: "legacy:loot:11" },
+      }),
+    ]);
+    // An unlabeled item select never shows its internal "Class Feature" type.
+    const unlabeled: ContentEntity = {
+      ...armor,
+      rules: armor.rules.map((rule) => ({ ...rule, text: "" })),
+    };
+    const plain = builderIssueGroups({
+      ...common,
+      byId: new Map([[armor.id.toLocaleLowerCase(), unlabeled]]),
+      build: {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [],
+        inventory: [entry],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      },
+      evaluation: evaluation({
+        occurrences: [
+          {
+            id: "legacy:loot:11:definition:0",
+            definitionId: armor.id,
+            acquiredLevel: 1,
+            kind: "inventory",
+          },
+        ],
+        choices: [
+          {
+            id: "armor-choice",
+            level: 1,
+            providerOccurrenceId: "legacy:loot:11:definition:0",
+            ruleOrdinal: 0,
+            index: 0,
+            type: "Class Feature",
+            optional: false,
+            candidates: [],
+          },
+        ],
+      }),
+    });
+    expect(plain.unresolved).toEqual([
+      expect.objectContaining({
+        title: "Armor of Resistance +2: Option",
+        detail:
+          "Choose an option for Armor of Resistance +2: right-click the item on the Equipment tab.",
       }),
     ]);
   });

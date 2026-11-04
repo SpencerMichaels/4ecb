@@ -68,6 +68,7 @@ import {
   overlaidFields,
   type LootSlotContext,
 } from "./item-fields";
+import { itemChoiceRequiredMessage } from "./build-projection";
 import { legacyKeywordList } from "./weapon-groups";
 import { legacyProficiencyWeaponName } from "./power-requirements";
 import { traceCondition, traceEvaluationState } from "./condition-trace";
@@ -92,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v107-2026-10-31-powerswap-augmentable-at-wills";
+  "evaluated-character-v108-2026-11-04-item-choice-required-message";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -4171,43 +4172,67 @@ function evaluateCharacterInternal(
     choices = choices.map((choice) =>
       key(choice.type) === "deity" ? { ...choice, optional: false } : choice,
     );
-  for (const choice of choices)
+  for (const choice of choices) {
     if (
-      !choice.optional &&
-      choice.selectedOccurrenceId === undefined &&
-      !(() => {
-        const provider = occurrences.find(
-          ({ id }) => id === choice.providerOccurrenceId,
-        );
-        const definition =
-          provider === undefined ? undefined : index.get(provider.definitionId);
-        const rule =
-          definition === undefined
-            ? undefined
-            : parseRules(definition.id, definition.rules).find(
-                (candidate) => candidate.source.ordinal === choice.ruleOrdinal,
-              );
-        return (
-          rule?.kind === "select" &&
-          rule.existing &&
-          !choice.candidates.some(
-            (candidate) =>
-              candidate.activeDefinition && candidate.sourceEntitled,
-          )
-        );
-      })() &&
-      !(
-        choice.type === "Replacement" &&
-        (choice.replacementOptions?.length ?? 0) === 0
+      choice.optional ||
+      choice.selectedOccurrenceId !== undefined ||
+      (choice.type === "Replacement" &&
+        (choice.replacementOptions?.length ?? 0) === 0)
+    )
+      continue;
+    const provider = occurrences.find(
+      ({ id }) => id === choice.providerOccurrenceId,
+    );
+    const definition =
+      provider === undefined ? undefined : index.get(provider.definitionId);
+    const rule =
+      definition === undefined
+        ? undefined
+        : parseRules(definition.id, definition.rules).find(
+            (candidate) => candidate.source.ordinal === choice.ruleOrdinal,
+          );
+    if (
+      rule?.kind === "select" &&
+      rule.existing &&
+      !choice.candidates.some(
+        (candidate) => candidate.activeDefinition && candidate.sourceEntitled,
       )
     )
-      diagnostics.push({
-        severity: "error",
-        code: "choice.required",
-        message: `Required ${choice.type} choice is unresolved.`,
-        occurrenceId: choice.providerOccurrenceId,
-        ruleOrdinal: choice.ruleOrdinal,
-      });
+      continue;
+    // An item's own choice (directly, or through a chosen candidate's further
+    // choice) names the item and what it asks for, never the select's
+    // internal type ("Class Feature").
+    let holder = provider;
+    for (
+      let depth = 0;
+      holder !== undefined && holder.kind !== "inventory" && depth < 16;
+      depth += 1
+    )
+      holder =
+        holder.parentId === undefined
+          ? undefined
+          : occurrences.find(({ id }) => id === holder!.parentId);
+    const itemName =
+      holder === undefined ? undefined : index.get(holder.definitionId)?.name;
+    diagnostics.push({
+      severity: "error",
+      code: "choice.required",
+      message:
+        itemName === undefined
+          ? `Required ${choice.type} choice is unresolved.`
+          : itemChoiceRequiredMessage(
+              {
+                type: choice.type,
+                ...(rule?.kind === "select" && rule.label !== undefined
+                  ? { label: rule.label }
+                  : {}),
+              },
+              itemName,
+            ),
+      occurrenceId: choice.providerOccurrenceId,
+      ruleOrdinal: choice.ruleOrdinal,
+    });
+  }
   // House-ruled selections that the live checks below now find legal.
   const nowLegalOccurrenceIds = new Set<string>();
   for (const choice of choices) {

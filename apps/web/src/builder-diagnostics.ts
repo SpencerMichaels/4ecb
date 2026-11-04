@@ -27,7 +27,7 @@ import {
   missingInventoryElements,
   type LoadoutSlotContext,
 } from "./equipment-ui";
-import { itemChoiceHeading } from "./item-choice-pages";
+import { itemChoiceHeading, itemChoiceName } from "./item-choice-pages";
 
 export type BuilderIssueKind =
   "unresolved" | "warning" | "error" | "house-rule" | "update";
@@ -162,8 +162,9 @@ function choiceLabel(
 
 /**
  * The holding whose own rules make `choice` (directly, or through a chosen
- * candidate's further choice): its entry, display name and the choice's
- * heading as the Shop's item-choice pages word it.
+ * candidate's further choice): its entry, display name, and the choice's
+ * name and heading as the Shop's item-choice pages and the Equipment tab's
+ * right-click menu word it.
  */
 function inventoryChoiceHolding(
   choice: EvaluatedChoice,
@@ -171,7 +172,12 @@ function inventoryChoiceHolding(
   build: CharacterBuild | undefined,
   byId: ReadonlyMap<string, ContentEntity>,
 ):
-  | { readonly entryId: string; readonly name: string; readonly choice: string }
+  | {
+      readonly entryId: string;
+      readonly name: string;
+      readonly choice: string;
+      readonly heading: string;
+    }
   | undefined {
   if (build === undefined) return undefined;
   const byOccurrenceId = new Map(
@@ -205,13 +211,15 @@ function inventoryChoiceHolding(
           ({ ruleOrdinal, choiceIndex }) =>
             ruleOrdinal === choice.ruleOrdinal && choiceIndex === choice.index,
         );
+  const wording = slot ?? {
+    type: choice.type,
+    ...(choice.name === undefined ? {} : { label: choice.name }),
+  };
   return {
     entryId: entry.id,
     name: inventoryDisplayName(entry, byId),
-    choice:
-      slot === undefined
-        ? (choice.name ?? choice.type)
-        : itemChoiceHeading(slot),
+    choice: itemChoiceName(wording),
+    heading: itemChoiceHeading(wording),
   };
 }
 
@@ -491,11 +499,11 @@ export function builderIssueGroups({
           title:
             holding === undefined
               ? label(choice)
-              : `${holding.name}: ${holding.choice.replace(/^choose\s+/i, "")}`,
+              : `${holding.name}: ${holding.choice}`,
           detail:
             holding === undefined
               ? "This required choice has not been selected."
-              : "This item's required choice has not been made. Right-click the item on the Equipment tab to make it.",
+              : `${holding.heading} for ${holding.name}: right-click the item on the Equipment tab.`,
           effect:
             "The character is incomplete, and no benefits from this selection apply until it is resolved.",
           target:

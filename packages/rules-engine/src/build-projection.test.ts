@@ -10,6 +10,8 @@ import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 import {
   canMaterializeEvaluatedChoiceProvider,
   commandForEvaluatedChoice,
+  itemChoiceHeading,
+  itemChoiceName,
   itemChoiceSlots,
   projectBuildForEvaluation,
   userEditName,
@@ -2015,6 +2017,93 @@ describe("build projection", () => {
         { ruleOrdinal: 0, choiceIndex: 0, type: "Class Feature" },
       ]);
       expect(itemChoiceSlots(plainItem)).toEqual([]);
+    });
+
+    it("words a slot from its label, never the internal Class Feature type", () => {
+      const labeled = {
+        type: "Class Feature",
+        label: "Choose Resistance Type",
+      };
+      expect(itemChoiceName(labeled)).toBe("Resistance Type");
+      expect(itemChoiceHeading(labeled)).toBe("Choose Resistance Type");
+      expect(itemChoiceName({ type: "Class Feature" })).toBe("Option");
+      expect(itemChoiceHeading({ type: "Class Feature" })).toBe(
+        "Choose an option",
+      );
+      expect(itemChoiceName({ type: "Language" })).toBe("Language");
+      expect(itemChoiceHeading({ type: "Language" })).toBe("Choose language");
+    });
+
+    it("names the item and what to choose when its own choice is open", () => {
+      const select = statement(
+        "select",
+        { type: "Class Feature", number: "1" },
+        0,
+      );
+      const content = [
+        entity("ITEM", "Armor of Resistance +2", "Magic Item", [
+          { ...select, text: "Choose Resistance Type " },
+        ]),
+        entity("FEAT", "Plain Feat", "Feat", [
+          statement("select", { type: "Class Feature", number: "1" }, 0),
+        ]),
+      ];
+      const build: CharacterBuild = {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [
+          {
+            id: "feat",
+            identity: {
+              definitionId: "FEAT",
+              name: "Plain Feat",
+              type: "Feat",
+            },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            children: [],
+            unresolved: false,
+          },
+        ],
+        inventory: [
+          {
+            id: "loot",
+            acquiredLevel: 1,
+            quantity: 1,
+            equippedQuantity: 1,
+            elements: [
+              {
+                definitionId: "ITEM",
+                name: "Armor of Resistance +2",
+                type: "Magic Item",
+              },
+            ],
+            overrides: {},
+            legality: "rules-legal",
+          },
+        ],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      };
+      const evaluated = evaluateCharacter(
+        projectBuildForEvaluation(build, content),
+        content,
+      );
+      const messages = evaluated.diagnostics
+        .filter(({ code }) => code === "choice.required")
+        .map(({ occurrenceId, message }) => [occurrenceId, message]);
+      expect(messages).toEqual(
+        expect.arrayContaining([
+          [
+            "loot:definition:0",
+            "Choose Resistance Type for Armor of Resistance +2.",
+          ],
+          ["feat", "Required Class Feature choice is unresolved."],
+        ]),
+      );
     });
   });
 });

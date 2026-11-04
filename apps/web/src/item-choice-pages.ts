@@ -109,11 +109,8 @@ export function isComplexItemChoice(
   );
 }
 
-/** A slot's heading and menu wording: its authored label ("Choose
- * Resistance Type") or "Choose <type>". */
-export function itemChoiceHeading(slot: ItemChoiceSlot): string {
-  return slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`;
-}
+/** A slot's heading and menu wording (single source in rules-engine). */
+export { itemChoiceHeading, itemChoiceName } from "@4ecb/rules-engine";
 
 /** `selections` with `path` set to `candidateId`, dropping the choices made
  * beneath the candidate it previously held (a granted power's own "which

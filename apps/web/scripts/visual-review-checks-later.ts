@@ -762,6 +762,16 @@ rule("zilvra", "Equipment", "Armor of Resistance's damage type", (c) => {
       issue?.title,
       "Leather Armor of Resistance +2: Resistance Type",
     ),
+    equal(
+      "The issue says what to choose and where",
+      issue?.detail,
+      "Choose Resistance Type for Leather Armor of Resistance +2: right-click the item on the Equipment tab.",
+    ),
+    lacks(
+      "No internal Class Feature type",
+      issue?.detail ?? "",
+      "Class Feature",
+    ),
     equal("Review opens the Equipment tab", issue?.target?.kind, "inventory"),
   ];
 });

@@ -111,6 +111,46 @@ export function itemChoiceSlots(
   });
 }
 
+/**
+ * What an item-owned choice asks for, as the player reads it: the select's
+ * authored label without its leading "Choose" ("Resistance Type"), else its
+ * select type. "Class Feature" is only the content's internal category for
+ * an item's own options (Armor of Adaptable Resistance, Harper Pin), so an
+ * unlabeled one reads "Option".
+ */
+export function itemChoiceName(
+  slot: Pick<ItemChoiceSlot, "type" | "label">,
+): string {
+  const label = slot.label?.trim().replace(/^choose\s+/i, "");
+  if (label !== undefined && label !== "") return label;
+  return slot.type.trim().toLocaleLowerCase() === "class feature"
+    ? "Option"
+    : slot.type.trim();
+}
+
+/** A slot's heading and menu wording: its authored label ("Choose
+ * Resistance Type") or "Choose <type>" ("Choose an option" for an unlabeled
+ * Class Feature select). */
+export function itemChoiceHeading(
+  slot: Pick<ItemChoiceSlot, "type" | "label">,
+): string {
+  const label = slot.label?.trim();
+  if (label !== undefined && label !== "") return label;
+  const name = itemChoiceName(slot);
+  return name === "Option"
+    ? "Choose an option"
+    : `Choose ${name.toLocaleLowerCase()}`;
+}
+
+/** The player-facing message for an item's unresolved own choice:
+ * "Choose Resistance Type for Armor of Resistance +2." */
+export function itemChoiceRequiredMessage(
+  slot: Pick<ItemChoiceSlot, "type" | "label">,
+  itemName: string,
+): string {
+  return `${itemChoiceHeading(slot)} for ${itemName}.`;
+}
+
 interface ChildAssignment {
   /** The rule slot each saved child fills, by child index. */
   readonly slots: readonly (ChildSlot | undefined)[];
