@@ -1,10 +1,19 @@
 import { execSync } from "node:child_process";
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+import { themeBackgrounds } from "./src/theme-tokens";
+
+/** Page backgrounds from the theme definitions, the one source for the
+ *  browser/installed-app chrome colors (theme.ts keeps them in sync at run
+ *  time). */
+const backgrounds = themeBackgrounds(
+  readFileSync(join(import.meta.dirname, "src/styles/01-base.css"), "utf8"),
+);
 
 /** The build's short commit hash: FOURECB_COMMIT (Docker builds have no
  *  .git), else git's, marked "-dirty" for uncommitted changes. */
@@ -77,6 +86,21 @@ export default defineConfig({
         );
       },
     },
+    {
+      // The first paint's title/status bar, before the app's own theme
+      // setting runs (theme.ts syncThemeColor takes over from there).
+      name: "theme-color-meta",
+      transformIndexHtml: () =>
+        (["light", "dark"] as const).map((scheme) => ({
+          tag: "meta",
+          attrs: {
+            name: "theme-color",
+            media: `(prefers-color-scheme: ${scheme})`,
+            content: backgrounds[scheme],
+          },
+          injectTo: "head" as const,
+        })),
+    },
     developmentDeployDirectory(),
     react(),
     VitePWA({
@@ -86,8 +110,10 @@ export default defineConfig({
         name: "4E Character Builder",
         short_name: "4E Builder",
         description: "Offline-first D&D 4E character builder",
-        theme_color: "#f4f1e8",
-        background_color: "#f4f1e8",
+        // Manifest colors cannot follow the theme: light is the default, and
+        // the page's theme-color meta overrides it once loaded.
+        theme_color: backgrounds.light,
+        background_color: backgrounds.light,
         display: "standalone",
         icons: [
           {

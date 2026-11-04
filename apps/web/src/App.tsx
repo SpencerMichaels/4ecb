@@ -51,6 +51,7 @@ import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME } from "./content-profile-ui";
 import {
   applyThemePreference,
   parseThemePreference,
+  syncThemeColor,
   THEME_STORAGE_KEY,
   type ThemePreference,
 } from "./theme";
@@ -291,12 +292,22 @@ export function App() {
   }, []);
   useEffect(() => {
     applyThemePreference(document.documentElement, theme);
+    syncThemeColor(document);
     try {
       if (theme === "system") localStorage.removeItem(THEME_STORAGE_KEY);
       else localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
       // The visual preference still applies for this session.
     }
+  }, [theme]);
+  useEffect(() => {
+    // Under the system setting the page follows prefers-color-scheme, so the
+    // app chrome must follow its changes too.
+    if (theme !== "system" || typeof window.matchMedia !== "function") return;
+    const scheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => syncThemeColor(document);
+    scheme.addEventListener("change", sync);
+    return () => scheme.removeEventListener("change", sync);
   }, [theme]);
   useEffect(() => {
     try {

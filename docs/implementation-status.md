@@ -10,6 +10,20 @@ update on the real origin, and CSP on 2026-11-04 (console reports came only from
 extension-injected code). The offline reload, backup/restore and rollback steps and the parity-surface approval remain; see
 [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
 
+## Installed app title bar follows the theme (2026-11-04)
+
+The installed PWA's title/status bar was always light (manifest `theme_color`
+`#f4f1e8`). The built `index.html` now carries one `<meta name="theme-color">`
+per `prefers-color-scheme`, so the first paint is right before scripts run, and
+the app (`syncThemeColor` in `theme.ts`, from `App.tsx`) collapses them into one
+that tracks the effective theme: the Display setting, and system preference
+changes under System. The colors are the page background token `--background`:
+`vite.config.ts` reads the light and dark values from `styles/01-base.css`
+(`theme-tokens.ts`) for the metas and the manifest's `theme_color` and
+`background_color`, and the runtime reads the resolved token, so there is no
+second copy. `scripts/check-built-pwa.mjs` checks the built metas against the
+manifest. Visual check: Pass 16 in `visual-review-checklist.md`.
+
 ## Power swaps: augmentable at-will targets (2026-10-31)
 
 A power swap (`powerswap`) now gives up an at-will power only when it is an

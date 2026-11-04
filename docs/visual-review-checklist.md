@@ -604,3 +604,16 @@ automatically; fit is measured in the browser, so only these are yours.
     Aura is in the Powers list and on a power card, Majestic Word is not.
   - **Wrong if:** the replacement looks empty or offers other picks, a new
     issue badge appears, or Majestic Word still prints.
+
+## Pass 16: Installed app (Chrome on macOS)
+
+- [ ] **Title bar follows the theme.**
+  - **Where:** uninstall and reinstall the PWA from Chrome on macOS (address
+    bar install icon), open it; Settings → Display → theme System, Light and
+    Dark in turn, and under System switch macOS between Light and Dark.
+  - **Expect:** the window's title bar matches the page background: dark
+    navy in dark mode, light grey-blue in light mode, switching at once with
+    the app's setting and, under System, with the macOS appearance. Opening
+    the app in dark mode shows a dark title bar from the first frame.
+  - **Wrong if:** the title bar stays white/cream in dark mode, lags a
+    reload behind the setting, or ignores the macOS switch under System.
