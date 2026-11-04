@@ -420,7 +420,9 @@ only when every waiting caller has aborted. `CharacterEditorPage` aborts the
 previous edit's evaluations one microtask after the next set is requested, so
 identical requests stay shared. A running evaluation still finishes. Covered
 by `rules.worker.test.ts`, `rules-client.test.ts` and `app-runtime.test.ts`.
-No evaluation semantics changed, so no cache bump.
+No evaluation semantics changed, so no cache bump. `rules.worker.test.ts`
+mocks the rules engine and library summary whole: importing the real engine
+took 3-4 s of the 5 s test timeout, so it timed out under full-suite load.
 
 A persistent-cache hit on opening a character left the worker's per-level
 prerequisite snapshots cold, so the first edit paid a full evaluation (~5 s

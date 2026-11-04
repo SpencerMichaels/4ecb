@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type * as RulesEngine from "@4ecb/rules-engine";
 import type { EvaluationInput } from "@4ecb/rules-engine";
 
 import type {
@@ -21,12 +20,25 @@ vi.mock("@4ecb/browser-storage", () => ({
   },
 }));
 
-vi.mock("@4ecb/rules-engine", async (importOriginal) => ({
-  ...(await importOriginal<typeof RulesEngine>()),
+// The rules engine is mocked whole and the library-summary chain (sheet
+// model, builder UI) cut off: transforming the real engine on import took
+// 3-4 s of the 5 s test timeout, so the test timed out under full-suite load.
+// Only the queue and its cancel handling run here.
+const unused = vi.hoisted(() => () => {
+  throw new Error("Not used by the evaluation queue test");
+});
+
+vi.mock("@4ecb/rules-engine", () => ({
   evaluateCharacter: (input: EvaluationInput) => {
     evaluated.push(input.level);
     return { level: input.level };
   },
+  previewProfileMigration: unused,
+}));
+
+vi.mock("./library-summary", () => ({
+  libraryCharacterSummary: unused,
+  libraryEvaluationInput: unused,
 }));
 
 describe("rules worker evaluation queue", () => {
