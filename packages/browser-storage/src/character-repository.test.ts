@@ -773,6 +773,58 @@ describe("CharacterRepository", () => {
     expect(fresh?.id).toBe("kept");
   });
 
+  it("names conflicts and restores alongside them when keeping both", async () => {
+    const source = repository();
+    await source.put({ ...character("shared"), portrait });
+    await source.put(character("trashed"));
+    await source.moveToTrash("trashed");
+    await source.put(character("new"));
+    const backup = await source.exportBackup();
+
+    const destination = repository();
+    await destination.put({
+      ...character("shared"),
+      title: "Library Lily",
+    });
+    await destination.put({ ...character("trashed"), title: "Library Hu" });
+    await expect(destination.inspectBackup(backup)).resolves.toMatchObject({
+      characterCount: 3,
+      conflictingIds: ["shared", "trashed"],
+      conflictingTitles: ["Library Lily", "Library Hu"],
+    });
+
+    await expect(destination.restoreBackupKeepingBoth(backup)).resolves.toBe(3);
+    const { active, deleted } = await destination.listMetadataPartitioned();
+    // The library's own records are untouched.
+    await expect(destination.get("shared")).resolves.toMatchObject({
+      title: "Library Lily",
+    });
+    await expect(destination.get("trashed")).resolves.toMatchObject({
+      title: "Library Hu",
+    });
+    await expect(destination.get("trashed")).resolves.not.toHaveProperty(
+      "deletedAt",
+    );
+    // A non-conflicting character keeps its ID.
+    await expect(destination.get("new")).resolves.toEqual(character("new"));
+    // Conflicting copies get fresh IDs and keep their backup state.
+    const sharedCopy = active.find(
+      ({ id }) => !["shared", "trashed", "new"].includes(id),
+    );
+    expect(active.map(({ id }) => id)).toEqual(
+      expect.arrayContaining(["shared", "trashed", "new"]),
+    );
+    expect(active).toHaveLength(4);
+    expect(sharedCopy?.renderedPortraitDataUrl).toBe(portrait.renderedDataUrl);
+    await expect(destination.get(sharedCopy?.id ?? "")).resolves.toEqual({
+      ...character("shared"),
+      id: sharedCopy?.id,
+      portrait,
+    });
+    expect(deleted).toHaveLength(1);
+    expect(deleted[0]?.id).not.toBe("trashed");
+  });
+
   it("rejects a modified checksummed backup before writing", async () => {
     const source = repository();
     await source.put(character());

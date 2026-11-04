@@ -91,12 +91,14 @@ backup is a versioned JSON object containing every active and trashed record,
 including the complete envelope, build, profile references, and settings.
 
 New native backups use format version 2 with a character count and SHA-256
-payload digest. Restore first presents a non-mutating inspection of active,
-trashed, and conflicting records, then verifies the payload again before its
-single write transaction. The checksum detects payload corruption; it is not an
+payload digest. Restore first runs a non-mutating inspection; a backup with no
+character already in the library restores at once, otherwise the player
+chooses Replace (overwrite the stored records), Keep both (the conflicting
+records are added under fresh IDs, keeping their backup trashed state) or
+Cancel. Either way the payload is verified again before its single write
+transaction. The checksum detects payload corruption; it is not an
 authenticity claim, and every nested character record is independently decoded
-before storage. Version-1 backups remain importable with an explicit warning
-that they predate checksums. IndexedDB schema 3 journals the untouched schema-1
+before storage. Version-1 backups, which predate checksums, remain importable. IndexedDB schema 3 journals the untouched schema-1
 record before lazy conversion and recovers that record if migration is
 interrupted before commit. Automated durability fixtures reconstruct a
 repository over the same database, and upgrade the historical database version

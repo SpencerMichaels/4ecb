@@ -6,9 +6,33 @@ The invited beta is live at `https://4ecb.spencermichaels.net`: CI-published
 image, automatic homelab deployment, HTTPS behind Caddy and invite-cookie access
 control (403 without it, `/private-packs/` included). The product owner verified
 the invite gate, onboarding and pack install, the character workflow and an image
-update on the real origin, and CSP on 2026-11-04 (console reports came only from
-extension-injected code). The offline reload, backup/restore and rollback steps and the parity-surface approval remain; see
-[`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
+update on the real origin, and on 2026-11-04 CSP (console reports came only from
+extension-injected code), offline reload and backup/restore (restore dialog
+simplified per owner feedback, below). Rollback is not rehearsed by owner
+decision: it isn't expected in normal operation, the procedure stays in the
+homenet README, and restoring an older build over data a newer one wrote is
+untested. Only "Record and close" remains, with the owner's approval of the
+parity-surface cleanup; see [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
+
+## Backup restore asks only on conflict (2026-11-04)
+
+Settings → Backups & storage no longer shows a "Restore preview" (format,
+checksum, active/trashed counts, replaced IDs, no-checksum warning). Picking a
+backup restores it at once when none of its characters is in the library,
+silently. Otherwise `RestoreBackupDialog.tsx` (the `EmptyTrashDialog` modal
+pattern; focus on Cancel, Esc cancels) names the library's conflicting
+characters ("3 characters in this backup are already in your library: Lily,
+Beatrix and Hu.") and offers Replace them / Keep both / Cancel. Replace is the
+unchanged `restoreBackup`. Keep both is the new
+`CharacterRepository.restoreBackupKeepingBoth`: one transaction that keeps the
+IDs of non-conflicting records and gives conflicting ones (active or trashed in
+the library) fresh IDs, every record keeping its backup state (trashed stays
+trashed) and portrait. `inspectBackup` adds `conflictingTitles`. An
+unreadable, invalid or tampered file still shows its error toast and writes
+nothing. Tests: `character-repository.test.ts` (names, keep-both IDs, state,
+portraits), `SettingsPage.restore.test.tsx` (jsdom: no-conflict restore with
+no dialog or notice, dialog text and buttons, Replace, Keep both, Cancel/Esc,
+error paths). Visual check: Pass 17.
 
 ## Installed app icons (2026-11-04)
 

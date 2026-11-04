@@ -238,8 +238,7 @@
   margin: 0;
 }
 
-.settings-section > div:first-child > :first-child,
-.backup-preview > :first-child {
+.settings-section > div:first-child > :first-child {
   margin-top: 0;
 }
 
@@ -319,11 +318,6 @@
 .settings-section > div:first-child p {
   color: var(--muted, #5d554a);
   margin-bottom: 0;
-}
-
-.backup-preview {
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
 }
 
 .file-button {

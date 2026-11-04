@@ -633,3 +633,32 @@ automatically; fit is measured in the browser, so only these are yours.
   - **Wrong if:** a generic letter/globe icon or a blank square, a blurry
     icon, glyphs cut off by the macOS mask, or a white square around the
     blue tile.
+
+## Pass 17: Backup restore
+
+- [ ] **Restore asks only when a character would be replaced.**
+  - **Where:** Settings → Backups & storage. Choose **Back up library**,
+    then **Restore backup** with that same file (every character conflicts).
+    Then, in a clean browser profile or after moving every character to the
+    trash and emptying it, restore the file again. Light and dark theme,
+    140% zoom.
+  - **Expect:** with conflicts, a modal "Restore backup" dialog with one
+    sentence naming every conflicting character ("N characters in this
+    backup are already in your library: A, B and C.") and **Replace
+    them**, **Keep both**, **Cancel** on one row (wrapping cleanly if the
+    window is narrow); focus starts on Cancel. **Keep both** adds a second
+    copy of each character to the library (trashed ones into the trash),
+    portraits included; **Replace them** leaves the library as it was
+    (same characters, backup's copies); **Cancel** and Esc change nothing
+    and leave Settings open. With no conflicts, nothing appears at all:
+    the characters are simply in the library afterwards. The old "Restore
+    preview" block (Format, Checksum, Active, Trashed, Existing IDs
+    replaced) is gone.
+  - **Wrong if:** a dialog or notice appears for a conflict-free restore,
+    the name list overflows the dialog or is cut off, Esc also closes
+    Settings, or Keep both loses a portrait or brings a trashed copy back
+    as active.
+  - **Decide:** the button order follows your sketch (Replace, Keep both,
+    Cancel); the app's other dialogs put Cancel first on the right-hand
+    group ([Cancel] [Primary]). Keep the sketch's order, or match the
+    other dialogs?

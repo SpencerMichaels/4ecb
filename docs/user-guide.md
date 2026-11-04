@@ -222,8 +222,8 @@ Open the export icon on a character card and choose one of three formats:
 - **.4ecb** creates a checksummed, versioned native package containing the
   complete current character record, including its portrait. Import it from
   the character library's **Import** button (adds a copy, never overwrites), or
-  restore it from **Settings → Character library** like a full-library JSON
-  backup (replaces a character with the same ID).
+  restore it from **Settings → Backups & storage** like a full-library JSON
+  backup (asks before replacing a character already in the library).
 - **.dnd4e** always evaluates and regenerates the current edited state for
   Legacy Character Builder 0.07a. It re-imports the result and blocks download
   if the semantic round trip differs. The imported original XML remains
@@ -328,17 +328,22 @@ characters, authoritative builds, preserved compatibility XML, profile
 references, and sheet settings. It does not include content packs; retain the
 matching `.4ecp` files separately.
 
-To restore:
+To restore, choose **Restore backup** and select the JSON file (maximum
+100 MiB). When none of its characters is already in your library, it restores
+at once: the characters (and any trashed ones, into the trash) appear in the
+library. When some are, a short dialog names them and asks:
 
-1. Choose **Restore backup** and select the JSON file (maximum 100 MiB).
-2. Review the non-mutating preview: format version, checksum status, active and
-   trashed counts, and IDs that will replace existing records.
-3. Choose **Restore _n_ record(s)** only when the preview is correct.
+- **Replace them** overwrites those library characters with the backup's
+  copies.
+- **Keep both** keeps the library's characters and adds the backup's copies
+  alongside as separate characters.
+- **Cancel** (or Esc) changes nothing.
 
 Version-2 backups verify a SHA-256 payload checksum for integrity and fully
-decode every nested record before one storage transaction. The checksum is not
-proof of authenticity; restore only files you intended to use. Version-1
-backups remain accepted with an explicit no-checksum warning.
+decode every nested record before one storage transaction; a damaged or
+invalid file is refused with an error and nothing is written. The checksum is
+not proof of authenticity; restore only files you intended to use. Version-1
+backups (which predate checksums) remain accepted.
 
 ## Updates, offline use, and recovery
 

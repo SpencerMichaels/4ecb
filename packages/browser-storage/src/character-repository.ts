@@ -193,6 +193,8 @@ export interface CharacterBackupInspection {
   readonly activeCount: number;
   readonly trashedCount: number;
   readonly conflictingIds: readonly string[];
+  /** The library's titles for `conflictingIds`, in the same order. */
+  readonly conflictingTitles: readonly string[];
 }
 
 function bytesToHex(bytes: Uint8Array): string {
@@ -733,9 +735,15 @@ export class CharacterRepository {
   async inspectBackup(backup: unknown): Promise<CharacterBackupInspection> {
     const supported = await validateBackup(backup);
     const current = await this.listMetadataPartitioned();
-    const currentIds = new Set(
-      [...current.active, ...current.deleted].map((character) => character.id),
+    const currentTitles = new Map(
+      [...current.active, ...current.deleted].map((character) => [
+        character.id,
+        character.title,
+      ]),
     );
+    const conflictingIds = supported.characters
+      .filter((character) => currentTitles.has(character.id))
+      .map((character) => character.id);
     return {
       version: supported.version,
       checksumVerified: supported.version === 2,
@@ -746,9 +754,8 @@ export class CharacterRepository {
       trashedCount: supported.characters.filter(
         (character) => character.deletedAt !== undefined,
       ).length,
-      conflictingIds: supported.characters
-        .filter((character) => currentIds.has(character.id))
-        .map((character) => character.id),
+      conflictingIds,
+      conflictingTitles: conflictingIds.map((id) => currentTitles.get(id)!),
     };
   }
 
@@ -761,6 +768,39 @@ export class CharacterRepository {
         ["characters", "characterMetadata", "characterPortraits"],
         "readwrite",
       );
+      await Promise.all(
+        characters.map((character) =>
+          writeStoredCharacter(transaction, character),
+        ),
+      );
+      await transaction.done;
+      return characters.length;
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Restores a backup without replacing anything: a character whose ID is
+   *  already stored (active or trashed) is added alongside under a fresh ID,
+   *  the rest keep theirs. Every record keeps its backup state, trashed
+   *  included, and all are written in one transaction. Returns the count. */
+  async restoreBackupKeepingBoth(backup: unknown): Promise<number> {
+    const supported = await validateBackup(backup);
+    const db = await database(this.#databaseName);
+    try {
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
+      const existing = new Set(
+        await transaction.objectStore("characters").getAllKeys(),
+      );
+      const characters = supported.characters.map((stored) => {
+        const record = upgradeRecord(stored);
+        const id = existing.has(record.id) ? crypto.randomUUID() : record.id;
+        existing.add(id);
+        return { ...record, id };
+      });
       await Promise.all(
         characters.map((character) =>
           writeStoredCharacter(transaction, character),

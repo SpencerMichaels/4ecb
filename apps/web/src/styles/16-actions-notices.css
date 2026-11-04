@@ -338,6 +338,22 @@ button.toast-dismiss:not(:disabled):hover {
   padding-inline-start: 1.2rem;
 }
 
+/* Restore backup: which library characters the backup would replace. */
+.restore-backup-dialog {
+  overflow: auto;
+  width: 30rem;
+}
+
+.restore-backup-body {
+  margin: 0;
+  overflow-wrap: anywhere;
+  padding: 1rem;
+}
+
+.restore-backup-dialog > footer {
+  flex-wrap: wrap;
+}
+
 /* Retraining tab: the levels that can retrain (one retrain per level), then
    the selected level's skill / feat / power accordion. */
 .retraining-levels {

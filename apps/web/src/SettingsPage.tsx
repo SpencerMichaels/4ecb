@@ -10,7 +10,6 @@ import {
 import {
   CharacterRepository,
   ContentPackRepository,
-  type CharacterBackupInspection,
   type ContentProfileDefinition,
   type InstalledContentPack,
 } from "@4ecb/browser-storage";
@@ -32,6 +31,7 @@ import {
 import { downloadCharacterBackup } from "./download";
 import type { ContentDownloadState } from "./App";
 import { Icon } from "./Icon";
+import { RestoreBackupDialog } from "./RestoreBackupDialog";
 import type { PaperSize } from "./paper-size";
 import { SegmentedControl } from "./SegmentedControl";
 import { ToastRegion, useToasts } from "./Toasts";
@@ -210,9 +210,11 @@ export function SettingsPage({
   const [announcement, setAnnouncement] = useState("");
   const toasts = useToasts();
   const pushToast = toasts.push;
+  // A picked backup that would replace library characters, awaiting the
+  // player's choice; one without conflicts restores at once.
   const [pendingBackup, setPendingBackup] = useState<{
     readonly value: unknown;
-    readonly inspection: CharacterBackupInspection;
+    readonly names: readonly string[];
   }>();
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<PersistenceStatus>();
@@ -447,18 +449,29 @@ export function SettingsPage({
     });
   }
 
-  async function inspectBackupFile(file: File): Promise<void> {
+  /** Restores a picked backup at once, unless it holds characters already in
+   *  the library: then the player chooses (RestoreBackupDialog). */
+  async function restoreBackupFile(file: File): Promise<void> {
     if (file.size > 100 * 1024 * 1024)
       throw new Error("Backup exceeds the 100 MiB inspection limit");
     const value: unknown = JSON.parse(await file.text());
     const inspection = await characterRepository.inspectBackup(value);
-    setPendingBackup({ value, inspection });
+    if (inspection.conflictingIds.length === 0)
+      await characterRepository.restoreBackup(value);
+    else setPendingBackup({ value, names: inspection.conflictingTitles });
   }
 
-  async function restoreInspectedBackup(): Promise<void> {
+  function finishPendingBackup(keepBoth: boolean): void {
     if (pendingBackup === undefined) return;
-    await characterRepository.restoreBackup(pendingBackup.value);
+    const { value } = pendingBackup;
     setPendingBackup(undefined);
+    void (
+      keepBoth
+        ? characterRepository.restoreBackupKeepingBoth(value)
+        : characterRepository.restoreBackup(value)
+    ).catch((reason: unknown) =>
+      showError(reason, "Couldn't restore the backup"),
+    );
   }
 
   // Esc closes Settings, unless something on the page handles it first: an
@@ -481,16 +494,12 @@ export function SettingsPage({
         setPendingRemove(undefined);
         return;
       }
-      if (pendingBackup !== undefined) {
-        setPendingBackup(undefined);
-        return;
-      }
       if (importing) return;
       window.location.hash = closeHref;
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [closeHref, importing, pendingBackup, pendingRemove]);
+  }, [closeHref, importing, pendingRemove]);
 
   const focusFirstButton = useCallback((node: HTMLDivElement | null) => {
     if (node === null) return;
@@ -724,7 +733,7 @@ export function SettingsPage({
                   onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
                     if (file !== undefined)
-                      void inspectBackupFile(file).catch((reason: unknown) =>
+                      void restoreBackupFile(file).catch((reason: unknown) =>
                         showError(reason, `Couldn't read ${file.name}`),
                       );
                     event.currentTarget.value = "";
@@ -733,66 +742,12 @@ export function SettingsPage({
               </label>
             </div>
             {pendingBackup === undefined ? null : (
-              <div
-                className="backup-preview"
-                aria-label="Backup restore preview"
-              >
-                <h4>Restore preview</h4>
-                <dl className="report-facts">
-                  <div>
-                    <dt>Format</dt>
-                    <dd>Version {pendingBackup.inspection.version}</dd>
-                  </div>
-                  <div>
-                    <dt>Checksum</dt>
-                    <dd>
-                      {pendingBackup.inspection.checksumVerified
-                        ? "Verified"
-                        : "Unavailable in legacy backup"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Active</dt>
-                    <dd>{pendingBackup.inspection.activeCount}</dd>
-                  </div>
-                  <div>
-                    <dt>Trashed</dt>
-                    <dd>{pendingBackup.inspection.trashedCount}</dd>
-                  </div>
-                  <div>
-                    <dt>Existing IDs replaced</dt>
-                    <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
-                  </div>
-                </dl>
-                {!pendingBackup.inspection.checksumVerified ? (
-                  <p className="profile-warning">
-                    This older backup has no checksum. Its records are
-                    structurally valid, but payload integrity cannot be
-                    verified.
-                  </p>
-                ) : null}
-                <div className="inline-actions">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void restoreInspectedBackup().catch((reason: unknown) =>
-                        showError(reason, "Couldn't restore the backup"),
-                      )
-                    }
-                  >
-                    Restore {pendingBackup.inspection.characterCount}{" "}
-                    {pendingBackup.inspection.characterCount === 1
-                      ? "character"
-                      : "characters"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPendingBackup(undefined)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <RestoreBackupDialog
+                names={pendingBackup.names}
+                onCancel={() => setPendingBackup(undefined)}
+                onKeepBoth={() => finishPendingBackup(true)}
+                onReplace={() => finishPendingBackup(false)}
+              />
             )}
           </section>
         </div>
