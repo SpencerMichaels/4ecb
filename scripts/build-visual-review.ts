@@ -152,6 +152,11 @@ export interface ImportSpec {
   readonly items?: readonly ItemSpec[];
   /** Imported legality, reported but not enforced (legacy content). */
   readonly expectLegal?: boolean;
+  /**
+   * False when the review needs the import's open choice on this pack (a
+   * select the save's older content lacked). Default true.
+   */
+  readonly expectComplete?: boolean;
   readonly required: readonly string[];
 }
 
@@ -286,6 +291,8 @@ export interface CharacterFacts {
   readonly complete: boolean;
   readonly legal: boolean;
   readonly expectLegal: boolean | undefined;
+  /** Absent in facts cached before the field existed: expect complete. */
+  readonly expectComplete?: boolean;
   readonly diagnostics: readonly string[];
   /** Required definitions, with whether the build has each. */
   readonly required: readonly { id: string; name: string; present: boolean }[];
@@ -825,6 +832,8 @@ function finish(
     complete: evaluation.complete,
     legal: evaluation.legal,
     expectLegal: spec.expectLegal,
+    expectComplete:
+      spec.kind === "import" ? (spec.expectComplete ?? true) : true,
     diagnostics: evaluation.diagnostics
       .filter(({ severity }) => severity !== "info")
       .map(({ severity, code, message }) => `${severity} ${code}: ${message}`),
@@ -988,10 +997,22 @@ async function main(): Promise<void> {
         ? ""
         : ` (expected ${facts.expectLegal ? "legal" : "not legal"})`;
     const missing = facts.required.filter(({ present }) => !present);
+    const expectComplete = facts.expectComplete ?? true;
+    const completeness = facts.complete
+      ? expectComplete
+        ? "complete"
+        : "COMPLETE (expected incomplete)"
+      : expectComplete
+        ? "INCOMPLETE"
+        : "incomplete (intended)";
     process.stdout.write(
-      `${slug}: level ${facts.level}, ${facts.complete ? "complete" : "INCOMPLETE"}, ${facts.legal ? "legal" : "not legal"}${legalNote}${missing.length > 0 ? `; MISSING ${missing.map(({ name }) => name).join(", ")}` : ""}\n`,
+      `${slug}: level ${facts.level}, ${completeness}, ${facts.legal ? "legal" : "not legal"}${legalNote}${missing.length > 0 ? `; MISSING ${missing.map(({ name }) => name).join(", ")}` : ""}\n`,
     );
-    if (!facts.complete || legalNote !== "" || missing.length > 0) {
+    if (
+      facts.complete !== expectComplete ||
+      legalNote !== "" ||
+      missing.length > 0
+    ) {
       failures += 1;
       facts.diagnostics
         .slice(0, 8)

@@ -352,7 +352,7 @@ export function renderReviewPage(input: ReviewPageInput): {
           `<dt>${escapeHtml(label.replace(/([a-z])([A-Z])/g, "$1 $2"))}</dt><dd>${escapeHtml(value)}</dd>`,
       )
       .join("");
-    const status = `${facts.complete ? "complete" : '<strong class="bad">incomplete</strong>'}, ${facts.legal ? "legal" : facts.expectLegal === false ? "not legal (intended)" : '<strong class="bad">not legal</strong>'}`;
+    const status = `${facts.complete ? "complete" : facts.expectComplete === false ? "incomplete (intended)" : '<strong class="bad">incomplete</strong>'}, ${facts.legal ? "legal" : facts.expectLegal === false ? "not legal (intended)" : '<strong class="bad">not legal</strong>'}`;
     const missing = facts.required.filter(({ present }) => !present);
     const rows = [
       `<dt>Level</dt><dd>${facts.level}</dd>`,

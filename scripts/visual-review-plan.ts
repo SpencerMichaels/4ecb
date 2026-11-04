@@ -1512,8 +1512,11 @@ const reviews: ReviewCharacter[] = [
       },
       {
         slug: "zilvra",
-        title: "Review – Zilvra (L8, older content)",
+        title: "Review – Zilvra (L9, older content)",
         source: "sample-chars/Zilvra at 8th.dnd4e",
+        // Saved on stock content (complete there); the full pack's Armor of
+        // Resistance adds the damage-type select the review needs open.
+        expectComplete: false,
         purpose:
           "Player save made on older content: an armor's missing damage type and a level-7 manual edit.",
         links: [
@@ -1624,10 +1627,19 @@ const reviews: ReviewCharacter[] = [
         ],
       },
     ] as const
-  ).map(({ slug, title, source, purpose, links }): ReviewCharacter => ({
-    spec: { kind: "import", slug, title, source, required: [] },
-    purpose,
-    links,
+  ).map((entry): ReviewCharacter => ({
+    spec: {
+      kind: "import",
+      slug: entry.slug,
+      title: entry.title,
+      source: entry.source,
+      ...("expectComplete" in entry
+        ? { expectComplete: entry.expectComplete }
+        : {}),
+      required: [],
+    },
+    purpose: entry.purpose,
+    links: entry.links,
   })),
 ];
 

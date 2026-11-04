@@ -1225,6 +1225,17 @@ Open (external library code): the library table's Class column likely reads
 "Hybrid" for hybrids. `characterMetadata` in `character-repository.ts`
 takes the first Class element; it could use `characterClassName`.
 
+Intended incompleteness (2026-11-04): an import spec may set
+`expectComplete: false`; `review:build` then prints "incomplete (intended)"
+and counts it a failure only if it comes out complete. Zilvra uses it: the
+save (level 9, made on stock content and complete on its stock profile)
+never answered the full pack's Armor of Resistance +2 damage-type select,
+the open choice its review item checks. Its INCOMPLETE report was a
+harness false alarm, not a regression of the
+2026-11-04 swap work: the save evaluates identically at `026d9ef`, and every
+save's complete/incomplete and error-count annotation in `parity:baseline`
+matches between `026d9ef` and today.
+
 ## Beast companion card (companion proposal, slice 2; 2026-10-21)
 
 Commits `36c0188`, `1df9924`, `a31f505`. The matrix and audit script
