@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="4E Builder">
-  <rect width="128" height="128" rx="18" fill="#243238"/>
-  <path d="M26 22h58v50h18v20H84v14H62V92H20V74l42-52h22L48 72h14V48h22v24H26z" fill="#f4f1e8"/>
+  <rect width="128" height="128" rx="24" fill="#1d3d5d"/>
+  <path d="M52.8 28.1 64.5 32V73.5H74V86.5H64.5V98H51.5V86.5H22L16.8 76.1ZM51.5 51.5 35 73.5H51.5Z" fill="#f4f1e8"/>
+  <path d="M75 47H104V57H85V70H100V80H85V93H104V103H75Z" fill="#7eaed2"/>
 </svg>

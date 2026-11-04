@@ -10,6 +10,24 @@ update on the real origin, and CSP on 2026-11-04 (console reports came only from
 extension-injected code). The offline reload, backup/restore and rollback steps and the parity-surface approval remain; see
 [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
 
+## Installed app icons (2026-11-04)
+
+The installed PWA had no icon in Chrome on macOS: the manifest listed only the
+SVG favicon, and Chrome desktop needs PNGs. The favicon `public/icon.svg` is
+now the owner-approved "4E" monogram (cream 4, light-accent E on the
+`#1d3d5d` tile), its strokes outlined to filled paths. The manifest
+(`src/pwa-icons.ts`) adds `/icons/icon-192.png` and `/icons/icon-512.png`
+(`any`) and `/icons/icon-maskable-512.png` (`maskable`: the glyphs scaled
+about the tile centre into the 80% safe circle on a full-bleed tile), and
+`index.html` links `/icons/apple-touch-icon-180.png` (full-bleed). The PNGs are
+committed; `apps/web/scripts/render-pwa-icons.mjs` regenerates them from
+`icon.svg` with no dependencies (it accepts only the rect-and-filled-path
+subset the icon uses). Workbox precaches `png`, and `includeManifestIcons` is
+off so no icon is listed twice. `pwa-icons.test.ts` checks the list, the PNG
+sizes and the full-bleed corners; `check-built-pwa.mjs` checks the built
+manifest, that every icon ships and is precached. A reverse-proxy gate must
+exempt the manifest and icons (`public-deployment.md`). Visual check: Pass 16.
+
 ## Installed app title bar follows the theme (2026-11-04)
 
 The installed PWA's title/status bar was always light (manifest `theme_color`

@@ -202,7 +202,10 @@ missing file is 404), so no proxy configuration is needed to advertise a pack.
    control (for example Caddy `basic_auth`) before advertising a private pack:
    the pack URL is downloadable by anyone who can reach the site. Same-origin
    credentials are sent with the pack download, so proxy authentication covers
-   it.
+   it. The gate must let `/manifest.webmanifest`, `/icon.svg` and `/icons/*`
+   through without credentials: browsers fetch the manifest and the app icons
+   without cookies or other credentials, and an install from a gated manifest or
+   icon ends up with no icon or no install at all.
 
 **Updates.** Ask testers to back up their libraries before significant changes,
 then rebuild with a new tag as in step 2. Testers see **Reload and update**;

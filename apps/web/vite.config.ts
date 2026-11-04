@@ -6,6 +6,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+import { PWA_ICONS } from "./src/pwa-icons";
 import { themeBackgrounds } from "./src/theme-tokens";
 
 /** Page backgrounds from the theme definitions, the one source for the
@@ -106,6 +107,9 @@ export default defineConfig({
     VitePWA({
       injectRegister: "auto",
       registerType: "prompt",
+      // globPatterns already precaches public/icons/ and icon.svg; the plugin's
+      // own manifest-icon entries would list them twice.
+      includeManifestIcons: false,
       manifest: {
         name: "4E Character Builder",
         short_name: "4E Builder",
@@ -115,14 +119,7 @@ export default defineConfig({
         theme_color: backgrounds.light,
         background_color: backgrounds.light,
         display: "standalone",
-        icons: [
-          {
-            src: "/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
-        ],
+        icons: [...PWA_ICONS],
       },
       workbox: {
         // Routing lives in the hash, so "/" is the app's only document URL. Serve
@@ -130,7 +127,7 @@ export default defineConfig({
         // /enter/<invite> link, which sets a cookie and redirects to "/") must reach
         // the server, or the app would boot at that path and keep it in the URL.
         navigateFallbackAllowlist: [/^\/$/],
-        globPatterns: ["**/*.{css,html,js,json,svg,woff2}"],
+        globPatterns: ["**/*.{css,html,js,json,png,svg,woff2}"],
         globIgnores: ["runtime-config.json"],
         runtimeCaching: [
           {

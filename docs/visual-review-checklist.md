@@ -617,3 +617,19 @@ automatically; fit is measured in the browser, so only these are yours.
     the app in dark mode shows a dark title bar from the first frame.
   - **Wrong if:** the title bar stays white/cream in dark mode, lags a
     reload behind the setting, or ignores the macOS switch under System.
+- [ ] **Favicon reads as "4E" in a tab.**
+  - **Where:** the app in a normal Chrome tab (not installed), with the tab
+    strip light (macOS Light) and dark (macOS Dark); hard-reload once
+    (Cmd-Shift-R) so the new favicon replaces the cached one.
+  - **Expect:** the blue rounded tile with a cream 4 and a light-blue E, both
+    legible at tab size on either tab strip.
+  - **Wrong if:** the old single-glyph icon still shows, the E is lost, or the
+    tile blurs into the dark tab strip.
+- [ ] **Installed app icon in the Dock and Launchpad.**
+  - **Where:** after reinstalling the PWA (above), the Dock while it runs,
+    Launchpad, and Cmd-Tab.
+  - **Expect:** the "4E" tile, sharp and of the same size as other app icons,
+    not cropped (the 4's left corner and the E's right edge both visible).
+  - **Wrong if:** a generic letter/globe icon or a blank square, a blurry
+    icon, glyphs cut off by the macOS mask, or a white square around the
+    blue tile.
