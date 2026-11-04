@@ -668,7 +668,7 @@ published from `main` and deployed automatically to the product owner's homelab
 (`https://4ecb.spencermichaels.net`, HTTPS behind Caddy, invite-cookie access
 control), and the D&D group uses it. The owner verified the invite gate,
 onboarding and pack install, the character workflow and an image update on the
-real origin. Remaining: the CSP console check, offline reload, backup/restore and
+real origin. CSP checked on 2026-11-04. Remaining: the offline reload, backup/restore and
 rollback rehearsal steps, and the owner's approval of the parity-surface cleanup
 (open passes in [`visual-review-checklist.md`](visual-review-checklist.md)).
 Checklist: [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).

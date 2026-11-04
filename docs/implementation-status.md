@@ -6,8 +6,8 @@ The invited beta is live at `https://4ecb.spencermichaels.net`: CI-published
 image, automatic homelab deployment, HTTPS behind Caddy and invite-cookie access
 control (403 without it, `/private-packs/` included). The product owner verified
 the invite gate, onboarding and pack install, the character workflow and an image
-update on the real origin. The CSP console check, offline reload, backup/restore
-and rollback steps and the parity-surface approval remain; see
+update on the real origin, and CSP on 2026-11-04 (console reports came only from
+extension-injected code). The offline reload, backup/restore and rollback steps and the parity-surface approval remain; see
 [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
 
 ## Power swaps: augmentable at-will targets (2026-10-31)
