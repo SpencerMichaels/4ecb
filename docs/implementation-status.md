@@ -448,6 +448,12 @@ by `rules.worker.test.ts`, `rules-client.test.ts` and `app-runtime.test.ts`.
 No evaluation semantics changed, so no cache bump. `rules.worker.test.ts`
 mocks the rules engine and library summary whole: importing the real engine
 took 3-4 s of the 5 s test timeout, so it timed out under full-suite load.
+`CharacterSheetPage.editing.test.tsx` runs with a 30 s test timeout. Each
+test renders the whole print preview (about 1,500 elements over ~6
+development-mode React commits): 0.1-0.5 s idle, up to about 2 s under
+three concurrent suites. A test that timed out kept running into the next
+one through overlapping `act()` calls, so one timeout failed all 17 later
+tests. The assertions are unchanged.
 
 A persistent-cache hit on opening a character left the worker's per-level
 prerequisite snapshots cold, so the first edit paid a full evaluation (~5 s

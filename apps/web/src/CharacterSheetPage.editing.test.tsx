@@ -244,7 +244,15 @@ async function renderSheet(sheetEditing: boolean) {
   await settle();
 }
 
-describe("character sheet Edit mode", () => {
+// Each test renders the whole print preview (page 1, its measuring probes,
+// scratchpad, card pages: about 1,500 elements over ~6 commits of
+// development-mode React) and re-renders it on every toggle: 0.1-0.5 s each
+// on an idle machine, 4-10x that under parallel test load, which crossed the
+// 5 s default. A test that times out keeps running into the next one
+// (overlapping act() calls, a replaced container), so one timeout failed all
+// the tests after it. The work is the sheet under test, so the budget is
+// raised instead of the sheet being mocked away.
+describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   it("never puts an item card flag into the evaluation input", () => {
     const { build } = record();
     const flagged = (showPowerCard: boolean) =>
