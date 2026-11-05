@@ -232,6 +232,16 @@ live site.
   - **Wrong if:** the Party pieces label and box wrap apart or overflow the
     card, the hint is unreadable on the dark card, the augment note is
     warning-coloured, the columns shift, or a menu is clipped.
+- [ ] **Drow invoker: Rose Scythe properties.**
+  - **Where:** `edit?tab=inventory`, select the Rose Scythe of Chauntea;
+    then `?preview=1`, its item card.
+  - **Expect:** the header rows hold only the scythe's short stats; its
+    "Properties: See Below" text is in the card body with its two bullets
+    as a list, in the body's normal text size, on both surfaces. The
+    printed card still fits.
+  - **Wrong if:** the bullets print in the header rows, the list runs
+    together as one paragraph, the body text is a different size from the
+    card's other rules, or the printed card overflows.
 - [ ] **Drow invoker: Blade Angel in power detail.**
   - **Where:** `edit?tab=build&level=9&section=powers`, select Summon Blade
     Angel.

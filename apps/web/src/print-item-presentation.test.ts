@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SheetCard } from "@4ecb/sheet-model";
 import {
+  isHeaderPropertyValue,
   nameWithBoundEnhancement,
   printItemPresentation,
   printItemPower,
@@ -203,6 +204,36 @@ describe("printed item presentation", () => {
     ]);
     expect(view.rules.map(({ label }) => label)).toEqual(["Power", "Property"]);
     expect(view.description).toBeUndefined();
+  });
+  it("keeps a weapon's keyword Properties in the header and its prose Properties in the body", () => {
+    const listed =
+      "See Below:\n* Functions as a staff implement.\n* Another benefit.";
+    const power = "Power (Daily): Minor Action. Activate the item.";
+    // A magic weapon card carries its base weapon's and its own Properties.
+    const view = printItemPresentation({
+      ...card("Weapon", {}),
+      fields: [
+        { label: "Properties", value: "High Crit" },
+        { label: "Power", value: power },
+        { label: "Properties", value: listed },
+      ],
+    });
+    expect(view.weaponProperties.map(({ value }) => value)).toEqual([
+      "High Crit",
+    ]);
+    expect(view.rules).toEqual([
+      { label: "Power", value: power },
+      { label: "Properties", value: listed },
+    ]);
+    expect(isHeaderPropertyValue("Heavy Thrown, Off-hand")).toBe(true);
+    expect(isHeaderPropertyValue("Distant, Energized (radiant)")).toBe(true);
+    expect(isHeaderPropertyValue("")).toBe(true);
+    expect(
+      isHeaderPropertyValue("Your number of healing surges increases by one."),
+    ).toBe(false);
+    expect(isHeaderPropertyValue("See below: a benefit")).toBe(false);
+    expect(isHeaderPropertyValue("One line.\nA second line.")).toBe(false);
+    expect(isHeaderPropertyValue("• You cannot be deafened.")).toBe(false);
   });
   it("places passive properties below item actions regardless of authored field order", () => {
     const view = printItemPresentation(

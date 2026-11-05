@@ -3334,7 +3334,32 @@ function roseScythe(c: ReviewCharacter, where: "builder" | "print"): Check[] {
       ({ definitionId }) => definitionId === power?.definitionId,
     )?.variants?.[0]?.attackBonus;
   const card = c.sheet.powers.find(({ id }) => id === power?.definitionId);
+  // Its bulleted Properties are rules text: in the card body, not the
+  // header's label/value rows.
+  const itemHtml =
+    where === "builder"
+      ? inventoryDetail(c, /Rose Scythe/)
+      : (printedDeck(c).find(
+          ({ kind, label }) => kind === "item" && /Rose Scythe/.test(label),
+        )?.html ?? "");
+  const [beforeBody = "", body = ""] = itemHtml.split("print-item-body");
+  const header = beforeBody.split("print-item-subheader")[1] ?? "";
   return [
+    truthy(
+      `The ${where} Rose Scythe item card`,
+      itemHtml.includes("print-item-card"),
+    ),
+    truthy(
+      "… keeps its listed Properties out of the header rows",
+      !/staff implement/.test(textOf(header)),
+      textOf(header) || "no header rows",
+    ),
+    contains(
+      "… and shows them in the body under Properties",
+      textOf(body),
+      "Properties: See Below",
+    ),
+    contains("… as a real list", body, "<li>"),
     truthy(
       "The Rose Scythe's implement attack bonus applies",
       rose?.applied === true,

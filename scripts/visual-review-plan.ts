@@ -1165,7 +1165,11 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Rose Scythe of Chauntea",
-            "Equipped Rose Scythe; its implement bonus applies to invoker implement powers (compare the attack numbers with it unequipped).",
+            "Equipped Rose Scythe; its implement bonus applies to invoker implement powers (compare the attack numbers with it unequipped). Its bulleted Properties are in the item card's body as a list, not its header rows.",
+          ],
+          [
+            "Drow invoker: Rose Scythe properties",
+            'Select the Rose Scythe: "Properties: See Below" and its two bullets in the card body, not the header rows.',
           ],
         ],
       },
@@ -1213,7 +1217,11 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Rose Scythe of Chauntea",
-            "The implement bonus shows in implement power attack lines.",
+            "The implement bonus shows in implement power attack lines; the scythe's item card has its bulleted Properties in the body.",
+          ],
+          [
+            "Drow invoker: Rose Scythe properties",
+            "The scythe's item card: Properties and its bullets in the body, the card still fits.",
           ],
           [
             "Summoned creature card",

@@ -1,5 +1,6 @@
 import type { SheetCard, SheetValue } from "@4ecb/sheet-model";
 import { itemCategoryIcon } from "./item-icons";
+import { proseBlocks } from "./Prose";
 
 /** Keeps a trailing enhancement bonus ("Defensive Warhammer +2") on the line
  * of the word before it, so a wrapped name never orphans "+2". */
@@ -227,10 +228,14 @@ export function printItemPresentation(card: SheetCard) {
     "granted powers",
   ]);
   if (criticalFormula) excluded.add("critical");
+  // A weapon's keyword properties ("Heavy Thrown, High Crit") read as one
+  // header row; authored property prose with several lines or a list
+  // ("See Below:" plus bullets) is rules text and stays in the body.
   const weaponProperties = card.fields.filter(
     (entry) =>
       baseType === "Weapon" &&
-      entry.label.trim().toLowerCase() === "properties",
+      entry.label.trim().toLowerCase() === "properties" &&
+      isHeaderPropertyValue(entry.value),
   );
   const bodyFields = card.fields.filter(
     (entry) =>
@@ -318,6 +323,18 @@ export function printItemPresentation(card: SheetCard) {
       gearCategory: field("Gear Category", "Category"),
     }),
   };
+}
+
+/** A keyword list ("Heavy Thrown, Energized (fire)") fits an item card's
+ *  header row. Rules prose belongs in the body: several lines, any list, or
+ *  sentence punctuation (".", "!", "?", ";" or ":" ending a clause). */
+export function isHeaderPropertyValue(value: string): boolean {
+  const blocks = proseBlocks(value);
+  return (
+    blocks.length <= 1 &&
+    blocks.every(({ kind }) => kind === "paragraph") &&
+    !/[.!?;:](?:\s|$)/u.test(value.trim())
+  );
 }
 
 /** Only remove a recognized usage/action prefix; unknown authored prose stays intact. */
