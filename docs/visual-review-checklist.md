@@ -117,6 +117,17 @@ live site.
     and usage) stands out from its lines.
   - **Wrong if:** a card overflows, an entry heading is hard to tell from its
     lines, or the stats and actions halves look unbalanced.
+- [ ] **White Well hexblade: level 25 gains.**
+  - **Where:** `edit?tab=build&level=25` (no section tabs at this level).
+  - **Expect:** the "No choices need attention at level 25" state, and under
+    it a "Gained at this level" list: "Level 25 Greater Summon Warlock's Ally
+    (White Well)" (Class Feature, "Can summon spectral protector") with
+    "Greater Summon (White Well Pact)" (Daily power) indented beneath it.
+    Readable at 140% zoom and in dark theme. Level 13 shows the empty state
+    alone.
+  - **Wrong if:** the page is blank, the list crowds or overlaps the empty
+    state, internal entries (Spectral Protector's Attack, Aura…) are listed,
+    or level 13 shows an empty "Gained" heading.
 
 ## Pass 3: Gnome wizard 5 (`wizard-gnome`)
 

@@ -71,6 +71,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "hexblade-white-well|1|other detail stacks": auto(
     "Legendary Hexblade's stack lists its features and powers.",
   ),
+  "hexblade-white-well|3|gained at this level": auto(
+    "Build level 25 has no section tabs (its only choice is the optional retrain) and lists the White Well's level 25 feature with its Greater Summon power under it; level 13 shows the empty state with nothing gained.",
+  ),
   "hexblade-white-well|2|summoned allies": auto(
     'Mourning Handmaiden\'s Attack is headed "Level+5 vs Ref" and Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each evaluated and printed as your level + 5 (+30 at level 25); no printed card or page reads "UNKNOWN", and no attack header falls back to a dash.',
   ),

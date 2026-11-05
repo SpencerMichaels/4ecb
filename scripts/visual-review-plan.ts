@@ -225,6 +225,8 @@ const reviews: ReviewCharacter[] = [
         "ID_FMP_CLASS_793",
         WHITE_WELL,
         "ID_FMP_PARAGON_PATH_796",
+        // Destined Scion: Heroes of the Forgotten Kingdoms' hexblade destiny.
+        "ID_FMP_EPIC_DESTINY_797",
       ],
       expectLegal: true,
       required: [
@@ -282,6 +284,20 @@ const reviews: ReviewCharacter[] = [
           [
             "Paired attack and damage effects",
             "Melee Basic Attack: one Back to the Wall line for attack and damage.",
+          ],
+        ],
+      },
+      {
+        label: "Build, level 25",
+        path: build(25),
+        items: [
+          [
+            "White Well hexblade: level 25 gains",
+            "The empty state, then the Gained at this level list under it.",
+          ],
+          [
+            "Gained at this level",
+            "No section tabs (only the optional retrain, which is on Retraining); the list names the White Well's level 25 feature and, under it, its Greater Summon power.",
           ],
         ],
       },

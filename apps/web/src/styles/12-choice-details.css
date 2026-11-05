@@ -832,6 +832,57 @@
   inline-size: 2.5rem;
 }
 
+/* The empty level page: the empty state, then what the level grants. It
+   fills the layout's pane row and scrolls there. */
+.level-choice-empty {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* What an empty level grants on its own, under its empty state. */
+.level-gains {
+  margin: -2rem auto 4rem;
+  max-width: 30rem;
+  padding: 0 1rem;
+}
+
+.level-gains > h4 {
+  margin: 0 0 0.5rem;
+}
+
+.level-gains ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.level-gains li {
+  margin: 0.4rem 0;
+}
+
+.level-gains li > ul {
+  border-inline-start: 2px solid var(--border);
+  margin-inline-start: 0.25rem;
+  padding-inline-start: 0.75rem;
+}
+
+.level-gain-name {
+  font-weight: 600;
+}
+
+.level-gain-type,
+.level-gain-note {
+  color: var(--muted);
+}
+
+.level-gain-type {
+  font-size: 0.9em;
+}
+
+.level-gain-note {
+  margin: 0.1rem 0 0;
+}
+
 .standalone-workspace-pane > header {
   background: var(--legacy-neutral);
   border-bottom: 1px solid var(--border);

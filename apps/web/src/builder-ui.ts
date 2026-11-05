@@ -478,6 +478,35 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
+/**
+ * The level's choices that get Build-tab section tabs: not character
+ * details (Details tab), the optional retrain (Retraining tab) or a build
+ * preset (shown inside the Class section).
+ */
+export function primaryLevelBuildChoices(
+  choices: readonly EvaluatedChoice[],
+): readonly EvaluatedChoice[] {
+  return choices.filter(
+    (choice) =>
+      !isCharacterDetailChoice(choice) &&
+      !isOptionalRetrainingChoice(choice) &&
+      !isBuildPresetChoice(choice),
+  );
+}
+
+/**
+ * Whether the Build tab shows "No choices need attention" for a level:
+ * nothing would be displayed as a section tab. Level 1 always has its
+ * Ability Scores tab. Decided from the displayed sections, never from the
+ * raw choice list, which carries the optional retrain at every level ≥ 2.
+ */
+export function showsLevelChoiceEmptyState(
+  level: number,
+  displayedSections: readonly unknown[],
+): boolean {
+  return level !== 1 && displayedSections.length === 0;
+}
+
 export type ChoiceSelectionTableKind =
   | "feat"
   | "power"

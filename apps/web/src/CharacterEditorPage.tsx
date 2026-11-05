@@ -87,6 +87,8 @@ import {
   isCandidateSelectable,
   isCharacterDetailChoice,
   isBuildPresetChoice,
+  primaryLevelBuildChoices,
+  showsLevelChoiceEmptyState,
   isAbilityIncreaseChoiceType,
   isOptionalRetrainingChoice,
   isRequiredClassDeityChoice,
@@ -116,6 +118,8 @@ import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
 import { UpdateButton } from "./PwaUpdate";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
+import { LevelGainsList } from "./LevelGainsList";
+import { levelGains } from "./level-gains";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
 import { LoadingPane, LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
@@ -870,12 +874,8 @@ export function CharacterEditorPage({
     [mechanicalLevelChoices],
   );
   const primaryLevelChoices = useMemo(
-    () =>
-      mechanicalLevelChoices.filter(
-        (choice) =>
-          !isOptionalRetrainingChoice(choice) && !isBuildPresetChoice(choice),
-      ),
-    [mechanicalLevelChoices],
+    () => primaryLevelBuildChoices(levelChoices),
+    [levelChoices],
   );
   const evaluatedLevelOneAbilityChoices = useMemo(
     () =>
@@ -1022,6 +1022,18 @@ export function CharacterEditorPage({
         ];
   const levelSectionTabs: readonly LevelChoiceTab[] =
     displayedChoiceSections.map(({ section }) => section);
+  const levelChoiceEmptyState = showsLevelChoiceEmptyState(
+    selectedLevel,
+    displayedChoiceSections,
+  );
+  // What the level grants on its own, listed under its empty state.
+  const emptyLevelGains = useMemo(
+    () =>
+      !levelChoiceEmptyState || planningEvaluation === undefined
+        ? []
+        : levelGains(planningEvaluation, selectedLevel, byId),
+    [byId, levelChoiceEmptyState, planningEvaluation, selectedLevel],
+  );
   const selectedChoice = primaryLevelChoices.find(
     (choice) => choice.id === selectedChoiceId,
   );
@@ -2499,18 +2511,21 @@ export function CharacterEditorPage({
                       }
                     />
                   </div>
-                ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
+                ) : levelChoiceEmptyState ? (
                   <div className="level-choice-tabs-layout">
                     <div className="level-choice-tab-bar">{levelPicker}</div>
-                    <div className="choice-empty-state">
-                      <Icon name="check" />
-                      <h4>
-                        No choices need attention at level {selectedLevel}
-                      </h4>
-                      <p>
-                        Choose another level from the Level {selectedLevel} menu
-                        above.
-                      </p>
+                    <div className="level-choice-empty">
+                      <div className="choice-empty-state">
+                        <Icon name="check" />
+                        <h4>
+                          No choices need attention at level {selectedLevel}
+                        </h4>
+                        <p>
+                          Choose another level from the Level {selectedLevel}{" "}
+                          menu above.
+                        </p>
+                      </div>
+                      <LevelGainsList gains={emptyLevelGains} />
                     </div>
                   </div>
                 ) : (

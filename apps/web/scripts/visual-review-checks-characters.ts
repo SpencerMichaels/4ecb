@@ -45,10 +45,14 @@ import {
   choiceSelectionTableKind,
   choiceTableSummary,
   contentSpecificValue,
+  groupChoicesByLegacyWorkflow,
   isCandidateVisible,
   isOptionalRetrainingChoice,
   legacyChoiceSection,
+  primaryLevelBuildChoices,
+  presentLevelChoices,
   retrainingCategory,
+  showsLevelChoiceEmptyState,
   themePowerGroups,
 } from "../src/builder-ui";
 import { candidateReferenceIndex } from "../src/CandidateSelectionTable";
@@ -72,6 +76,7 @@ import { freebeeGiftCommand } from "../src/freebee-gifts";
 import { HideFlavortextContext } from "../src/HideFlavortextContext";
 import { ItemCard } from "../src/ItemCard";
 import { ItemSetCard } from "../src/ItemSetCard";
+import { levelGains } from "../src/level-gains";
 import { PowerCard } from "../src/PowerCard";
 import {
   RetrainingWorkspace,
@@ -927,6 +932,47 @@ rule(HEXBLADE_25, "Build, level 1: Class", "Benefits by level", (c) => {
 rule(HEXBLADE_25, "Build, level 11", "Other detail stacks", (c) =>
   detailStack(c, c.context.named("Legendary Hexblade", "Paragon Path")),
 );
+
+// A level whose only choice is the optional retrain shows the empty state
+// and what it grants on its own.
+rule(HEXBLADE_25, "Build, level 25", "Gained at this level", (c) => {
+  const atLevel = (level: number) => {
+    const evaluation = c.atLevels([level]);
+    const sections = groupChoicesByLegacyWorkflow(
+      presentLevelChoices(
+        primaryLevelBuildChoices(choicesAt(c, level, evaluation)),
+      ).presentationChoices,
+    );
+    return {
+      sections: sections.map(({ section }) => section),
+      empty: showsLevelChoiceEmptyState(level, sections),
+      gains: levelGains(evaluation, level, c.context.byId).map(
+        ({ name, children }) => [name, children.map((child) => child.name)],
+      ),
+    };
+  };
+  const level25 = atLevel(25);
+  const level13 = atLevel(13);
+  return [
+    truthy(
+      "Level 25 shows the empty state",
+      level25.empty,
+      level25.sections.join(", "),
+    ),
+    equal("Gained at level 25", level25.gains, [
+      [
+        "Level 25 Greater Summon Warlock's Ally (White Well)",
+        ["Greater Summon (White Well Pact)"],
+      ],
+    ]),
+    truthy(
+      "Level 13 shows the empty state",
+      level13.empty,
+      level13.sections.join(", "),
+    ),
+    equal("Gained at level 13", level13.gains, []),
+  ];
+});
 
 rule(HEXBLADE_25, "Print preview", "Summoned allies", (c) => {
   const deck = printedDeck(c);
