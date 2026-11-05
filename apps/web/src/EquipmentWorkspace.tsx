@@ -295,6 +295,28 @@ export function catalogItemDetail(
       };
 }
 
+const itemDetailReferenceCache = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  ReadonlyMap<string, ContentEntity>
+>();
+
+/** The content's records by id, then by name: what an item's detail looks
+ * up the powers it names in. Built once per content's id map, not on every
+ * render of the detail (each Shop keystroke re-renders it). */
+export function itemDetailReferences(
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlyMap<string, ContentEntity> {
+  const cached = itemDetailReferenceCache.get(byId);
+  if (cached !== undefined) return cached;
+  const references = new Map(byId);
+  for (const candidate of byId.values()) {
+    const name = candidate.name.trim().toLocaleLowerCase();
+    if (!references.has(name)) references.set(name, candidate);
+  }
+  itemDetailReferenceCache.set(byId, references);
+  return references;
+}
+
 export function ItemDetail({
   item,
   byId,
@@ -324,11 +346,7 @@ export function ItemDetail({
         </p>
       </aside>
     );
-  const references = new Map(byId);
-  for (const candidate of byId.values()) {
-    const name = candidate.name.trim().toLocaleLowerCase();
-    if (!references.has(name)) references.set(name, candidate);
-  }
+  const references = itemDetailReferences(byId);
   // Powers any component grants or names (an artifact's, a wand's), and an
   // item-owned choice resolved to a power (e.g. the Power picked for a Genasi
   // Soul Armor), are sibling cards.

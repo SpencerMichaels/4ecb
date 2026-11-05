@@ -10,6 +10,7 @@ import {
   catalogItemDetail,
   inventoryEquippedStatus,
   inventoryItemDetail,
+  itemDetailReferences,
   consolidatedWallet,
   shownWalletCoins,
   walletWithCoinCount,
@@ -650,5 +651,17 @@ describe("equipment item details", () => {
     );
 
     expect(markup).not.toContain("print-power-card");
+  });
+});
+
+describe("item detail references", () => {
+  it("are built once per content's id map, then found by id or name", () => {
+    const wand = entity("ID_WAND", "Wand of Sparks", "Magic Item", "Test", {});
+    const byId = new Map([["id_wand", wand]]);
+    const references = itemDetailReferences(byId);
+    // Every render of a detail (each Shop keystroke) reuses them.
+    expect(itemDetailReferences(byId)).toBe(references);
+    expect(references.get("id_wand")).toBe(wand);
+    expect(references.get("wand of sparks")).toBe(wand);
   });
 });
