@@ -3546,6 +3546,18 @@ comparable). Rider prose inside a hit line ("damage equal to 10 + your
 Wisdom modifier") stays text. Players need a content republish
 (`scripts/publish-content.sh`) for the cards to appear.
 
+Amended 2026-11-05 (product owner asked why associate cards never show a
+description, under the goal "flavor text must be consistent across card
+types"): they have none to show. The 54 Associate records have no Flavor
+field, and their description is the stat block itself (title line, HP,
+defenses, traits, powers, abilities; the long lines are rules: the
+command defaults "If you haven't given the … any commands", the elemental
+companions' "You gain a +2 power bonus …"). The pack build parses every
+line into `_Associate Stat Block` with no unparsed lines, and the card
+shows all of it as tiles, traits and powers, so the card has no flavor
+band. The powers that give an associate keep their own Flavor on their
+power cards (D110 amendment, 2026-11-05).
+
 ### D108 — Shop loot validity follows native IsValidLoot, with four fixes
 
 Status: accepted (2026-10-28), roadmap queue item 7; package presentation
