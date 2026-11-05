@@ -2905,6 +2905,56 @@ function legacyRequirementContext(input: {
   };
 }
 
+interface PowerContentIndexes {
+  readonly entities: readonly ContentEntity[];
+  readonly byId: Map<string, ContentEntity>;
+  readonly byName: Map<string, ContentEntity[]>;
+  /** The first record of each name, in id order. */
+  readonly entitiesByName: Map<string, ContentEntity>;
+}
+
+const powerContentIndexCache = new WeakMap<
+  readonly ContentEntity[],
+  WeakMap<readonly FieldOverlay[], PowerContentIndexes>
+>();
+
+/**
+ * The content lookups every powers evaluation starts from, built once per
+ * content and overlay set (both immutable) instead of once per call: a
+ * builder pane evaluates each power the character doesn't own on its own,
+ * over the whole pack. Read-only once built.
+ */
+function powerContentIndexes(
+  contentEntities: readonly ContentEntity[],
+  overlays: readonly FieldOverlay[],
+): PowerContentIndexes {
+  let byOverlays = powerContentIndexCache.get(contentEntities);
+  if (byOverlays === undefined) {
+    byOverlays = new WeakMap();
+    powerContentIndexCache.set(contentEntities, byOverlays);
+  }
+  const cached = byOverlays.get(overlays);
+  if (cached !== undefined) return cached;
+  // Loot records as native C_RulesElementField reads them: with the
+  // character's `modify` overlays (Reaper's Blade's High Crit scythe, a
+  // Heartwood Spear's heavy thrown base spear).
+  const entities = withOverlaidItems(contentEntities, overlays);
+  const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
+  const byName = new Map<string, ContentEntity[]>();
+  for (const entity of entities) {
+    const named = byName.get(key(entity.name));
+    if (named === undefined) byName.set(key(entity.name), [entity]);
+    else named.push(entity);
+  }
+  const entitiesByName = new Map<string, ContentEntity>();
+  for (const entity of byId.values())
+    if (!entitiesByName.has(key(entity.name)))
+      entitiesByName.set(key(entity.name), entity);
+  const indexes = { entities, byId, byName, entitiesByName };
+  byOverlays.set(overlays, indexes);
+  return indexes;
+}
+
 export function evaluatePowers(input: {
   readonly level: number;
   readonly activeDefinitionIds: readonly string[];
@@ -2924,19 +2974,15 @@ export function evaluatePowers(input: {
   /** The character's occurrences, for where each power came from. */
   readonly occurrences?: readonly CharacterOccurrence[];
   readonly beastCompanion?: BeastCompanionStatistics;
+  /** Evaluate only these of the active powers (a builder card's one
+   *  hypothetical power); the rest still count as owned. */
+  readonly onlyDefinitionIds?: readonly string[];
 }): readonly EvaluatedPower[] {
   const beast = input.beastCompanion;
-  // Loot records as native C_RulesElementField reads them: with the
-  // character's `modify` overlays (Reaper's Blade's High Crit scythe, a
-  // Heartwood Spear's heavy thrown base spear).
-  const entities = withOverlaidItems(input.entities, input.overlays);
-  const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
-  const byName = new Map<string, ContentEntity[]>();
-  for (const entity of entities) {
-    const named = byName.get(key(entity.name));
-    if (named === undefined) byName.set(key(entity.name), [entity]);
-    else named.push(entity);
-  }
+  const { entities, byId, byName, entitiesByName } = powerContentIndexes(
+    input.entities,
+    input.overlays,
+  );
   // The evaluator's resolved loadout; a direct call resolves its own.
   const loadoutState =
     input.equipment?.loadout ??
@@ -3087,10 +3133,6 @@ export function evaluatePowers(input: {
   )
     ? proficientWithWeapon
     : undefined;
-  const entitiesByName = new Map<string, ContentEntity>();
-  for (const entity of byId.values())
-    if (!entitiesByName.has(key(entity.name)))
-      entitiesByName.set(key(entity.name), entity);
   const origins = powerOrigins(input.occurrences ?? [], byId);
   const requirementContext = legacyRequirementContext({
     equipped,
@@ -3102,9 +3144,14 @@ export function evaluatePowers(input: {
     byName,
     unarmedBase: unarmedWeaponBase,
   });
+  const only =
+    input.onlyDefinitionIds === undefined
+      ? undefined
+      : new Set(input.onlyDefinitionIds.map(key));
   const activePowerIds = [
     ...new Set(
       input.activeDefinitionIds.flatMap((definitionId) => {
+        if (only !== undefined && !only.has(key(definitionId))) return [];
         const power = byId.get(key(definitionId));
         const versions = field(power ?? emptyEntity, "_AugmentVersions")
           ?.split(",")

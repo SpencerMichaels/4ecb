@@ -126,8 +126,25 @@ export function evaluatedBuilderCardSettings(
     projectBuildForLegacyExport(build),
     entities,
   );
-  const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
-  const powersFor = (activeDefinitionIds: readonly string[]) =>
+  // The content array itself unless the build adds records (user edits), so
+  // the rules engine's per-content indexes are built once per pack, not per
+  // character state.
+  const evaluationEntities =
+    (input.localEntities ?? []).length === 0
+      ? entities
+      : [...entities, ...(input.localEntities ?? [])];
+  // Built only for a companion's card: every detail card asks for one.
+  let rulesIndex: ReturnType<typeof sharedRulesIndex> | undefined;
+  const content = () => (rulesIndex ??= sharedRulesIndex(evaluationEntities));
+  const companionContent = {
+    get: (id: string) => content().get(id),
+    find: (nameOrId: string, type?: string) => content().find(nameOrId, type),
+    type: (type: string) => content().type(type),
+  };
+  const powersFor = (
+    activeDefinitionIds: readonly string[],
+    onlyDefinitionIds?: readonly string[],
+  ) =>
     evaluatePowers({
       level: evaluation.level,
       activeDefinitionIds,
@@ -138,6 +155,7 @@ export function evaluatedBuilderCardSettings(
         ? {}
         : { textStrings: input.textStrings }),
       entities: evaluationEntities,
+      ...(onlyDefinitionIds === undefined ? {} : { onlyDefinitionIds }),
     });
   const powers = powersFor(evaluation.activeDefinitionIds);
   const cardFor = createSheetPowerCardFinder(
@@ -151,17 +169,17 @@ export function evaluatedBuilderCardSettings(
   const owned = new Map(
     powers.map((power) => [power.definitionId.toLocaleLowerCase(), power]),
   );
-  // A power the character doesn't own is evaluated as though active: a full
-  // powers evaluation each, so each is done once per character state (these
-  // settings), not on every mount of a detail pane that shows it.
+  // A power the character doesn't own is evaluated alone, as though active,
+  // once per character state (these settings), not on every mount of a
+  // detail pane that shows it.
   const hypotheticalPowers = new Map<string, EvaluatedPower | undefined>();
   const hypotheticalPower = (entity: ContentEntity) => {
     const id = entity.id.toLocaleLowerCase();
     if (hypotheticalPowers.has(id)) return hypotheticalPowers.get(id);
-    const power = powersFor([
-      ...evaluation.activeDefinitionIds,
-      entity.id,
-    ]).find((candidate) => candidate.definitionId.toLocaleLowerCase() === id);
+    const power = powersFor(
+      [...evaluation.activeDefinitionIds, entity.id],
+      [entity.id],
+    ).find((candidate) => candidate.definitionId.toLocaleLowerCase() === id);
     hypotheticalPowers.set(id, power);
     return power;
   };
@@ -226,7 +244,7 @@ export function evaluatedBuilderCardSettings(
           ? {}
           : { chosen: evaluation.beastCompanion }),
         fieldsOf: (record) => applyFieldOverlays(record, evaluation.overlays),
-        content: sharedRulesIndex(evaluationEntities),
+        content: companionContent,
       });
       return beast === undefined
         ? undefined
