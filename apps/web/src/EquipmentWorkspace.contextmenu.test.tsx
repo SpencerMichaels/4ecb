@@ -151,7 +151,7 @@ describe("Equipment item right-click actions (D101)", () => {
 });
 
 describe("Equipment loadout size rules (D102)", () => {
-  it("keeps Wield two-handed checked and inert for a Small character's versatile weapon", () => {
+  it("offers no Wield two-handed for a Small character's versatile weapon", () => {
     const onSetWielding = vi.fn();
     act(() =>
       root.render(
@@ -190,27 +190,20 @@ describe("Equipment loadout size rules (D102)", () => {
     const row = [...container.querySelectorAll("tr")].find((candidate) =>
       candidate.textContent?.includes("Bastard blade"),
     )!;
-    act(() => {
-      row.dispatchEvent(
-        new MouseEvent("contextmenu", {
-          bubbles: true,
-          cancelable: true,
-          clientX: 40,
-          clientY: 50,
-        }),
-      );
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: 40,
+      clientY: 50,
     });
-    const item = container.querySelector<HTMLElement>(
-      '[role="menu"] [role="menuitemcheckbox"]',
-    );
-    expect(item?.textContent).toBe("Wield two-handed");
-    expect(item?.getAttribute("aria-checked")).toBe("true");
-    expect(item?.getAttribute("aria-disabled")).toBe("true");
-    expect(item?.getAttribute("title")).toMatch(/Small characters/);
-    act(() => item!.click());
+    act(() => {
+      row.dispatchEvent(event);
+    });
+    // Size forces both hands, so there is no choice to offer: the weapon is
+    // wielded as usual, like a plain one (the browser's own menu stays).
+    expect(event.defaultPrevented).toBe(false);
+    expect(container.querySelector('[role="menu"]')).toBeNull();
     expect(onSetWielding).not.toHaveBeenCalled();
-    // The menu stays open: the click changed nothing.
-    expect(container.querySelector('[role="menu"]')).not.toBeNull();
   });
 });
 

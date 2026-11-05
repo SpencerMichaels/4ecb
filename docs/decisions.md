@@ -3124,9 +3124,9 @@ Decision:
   durable build changes only on the next loadout edit.
 - Staff-as-off-hand and Ambidextrous only rename the slot `SLOT:` compares;
   loadout placement ignores them.
-- The right-click "Wield two-handed" item stays on a versatile weapon whose
-  two-handed use the character's size forces, checked and inert, with the
-  reason as its tooltip.
+- The right-click "Wield two-handed" item is offered only where the player
+  chooses (amended 2026-11-04, below): a versatile weapon whose two-handed
+  use the character's size forces has no such item.
 - Unlike native, a weapon the character can't wield may still be placed
   (owner decision: allow with an issue). It fills the hands its record
   names, and the builder raises one house-rule character issue per equipped
@@ -3137,6 +3137,17 @@ Follow-up (2026-10-27, cache v65): power rows now apply native
 `IsProficient`'s size rule too. A Large weapon has no proficiency without
 `CanUseLargeWeapons`, and with it the weapon is matched by its normalized
 name (no " (large)").
+
+Amended 2026-11-04 (owner, visual review): the checked, inert "Wield
+two-handed" item on a weapon the character's size forces into both hands
+is dropped. Owner: "We don't need a special 'wield two handed' version of
+the right click popup. It can just be 'wield' as usual. We're not asking the
+user to choose between wield 2 handed and wield 1 handed." When size forces
+the hands (`inventoryForcedTwoHanded`: a Small character's non-small
+versatile weapon), the weapon gets no two-handed menu item and is wielded
+like any other; One Size Larger's two-handed weapon in one hand is not
+versatile and never had one. A Medium character's versatile weapon keeps
+the checkable item.
 
 ### D103 — A statlink shares its parent stat's type caps
 

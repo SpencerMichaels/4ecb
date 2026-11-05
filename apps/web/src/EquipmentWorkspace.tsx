@@ -1182,21 +1182,19 @@ export function EquipmentWorkspace({
     entry: BuildInventoryEntry,
   ): readonly ItemContextMenuItem[] => {
     if (inventoryIsAugment(entry, byId)) return augmentActions(entry);
-    if (!inventoryIsVersatile(entry, byId)) return [];
+    // Only a choice the player makes: a weapon the character's size forces
+    // into both hands (a Small character's versatile weapon) is wielded as
+    // usual, like any other weapon (D102, amended 2026-11-04).
+    if (
+      !inventoryIsVersatile(entry, byId) ||
+      inventoryForcedTwoHanded(entry, byId, loadoutHints)
+    )
+      return [];
     const twoHanded = inventoryWieldsTwoHanded(entry, byId, loadoutHints);
-    // A Small character holds a non-small versatile weapon in both hands:
-    // the choice stays in the menu, checked and inert.
-    const forced = inventoryForcedTwoHanded(entry, byId, loadoutHints);
     return [
       {
         label: "Wield two-handed",
         checked: twoHanded,
-        ...(forced
-          ? {
-              disabledReason:
-                "Small characters wield this weapon in both hands.",
-            }
-          : {}),
         onSelect: () => onSetWielding(entry.id, !twoHanded),
       },
     ];

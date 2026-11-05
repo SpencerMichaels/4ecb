@@ -15,6 +15,8 @@ import {
   type SheetCreatureCard,
 } from "@4ecb/sheet-model";
 import {
+  inventoryForcedTwoHanded,
+  inventoryIsVersatile,
   loadoutContext,
   resolveLoadoutAssignments,
   ritualCostPercent,
@@ -583,6 +585,38 @@ rule("dv", "Build, level 1", "Hybrid slots alternate classes", (c) => {
     ),
   ];
 });
+
+rule(
+  "wizard-gnome",
+  "Equipment",
+  "Gnome wizard: Wield when Small",
+  (c, context) => {
+    const longsword = inventoryEntryForEntity(
+      context.named("Longsword", "Weapon"),
+      c.build.effectiveLevel,
+    );
+    const slotContext = c.evaluation.loadoutSlotContext;
+    const forced = (small: boolean) =>
+      inventoryForcedTwoHanded(
+        longsword,
+        c.context.byId,
+        loadoutContext(c.build.textStrings, { ...slotContext, small }),
+      );
+    return [
+      truthy("The gnome is Small", slotContext.small),
+      truthy(
+        "A Longsword is versatile",
+        inventoryIsVersatile(longsword, c.context.byId),
+      ),
+      // The right-click menu offers Wield two-handed only when this is false.
+      truthy(
+        "Small: size forces both hands (no Wield two-handed)",
+        forced(true),
+      ),
+      truthy("Medium: the player chooses (Wield two-handed)", !forced(false)),
+    ];
+  },
+);
 
 /* ------------------------------------------------------------------ */
 /* Loadout: holy symbol slot, wrist razors                              */

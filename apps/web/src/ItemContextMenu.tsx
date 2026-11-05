@@ -8,8 +8,8 @@ export interface ItemContextMenuItem {
   /** A checkable action's state; undefined for a plain command. */
   readonly checked?: boolean;
   /**
-   * Why the action can't be changed (a Small character's versatile weapon
-   * is always two-handed): the item stays in the menu, shown but inert.
+   * Why the action can't be taken (the content offers nothing to choose):
+   * the item stays in the menu, shown but inert.
    */
   readonly disabledReason?: string;
   readonly onSelect: () => void;

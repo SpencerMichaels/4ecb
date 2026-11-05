@@ -126,12 +126,14 @@ live site.
     link sits at the left under the text.
   - **Wrong if:** More… floats right or overlaps the text, or the gaps are
     uneven.
-- [ ] **Gnome wizard: Wield two-handed when Small.**
+- [ ] **Gnome wizard: Wield when Small.**
   - **Where:** Shop → buy a Longsword; then Inventory (`edit?tab=equipment`)
     and right-click it.
-  - **Expect:** a muted, checked "Wield two-handed" item that reads well.
-  - **Wrong if:** the menu is clipped, or the muted item is unreadable in dark
-    theme.
+  - **Expect:** no "Wield two-handed" item: the Longsword behaves like any
+    other weapon (the browser's own menu opens), and wielding it fills both
+    hands in the loadout.
+  - **Wrong if:** a "Wield two-handed" item appears (muted or not), or the
+    Longsword takes only the main hand.
 
 ## Pass 4: Fey warlock 11 (`warlock-fey`)
 

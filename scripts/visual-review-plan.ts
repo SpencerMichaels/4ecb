@@ -669,8 +669,8 @@ const reviews: ReviewCharacter[] = [
         path: "tab=equipment",
         items: [
           [
-            "Gnome wizard: Wield two-handed when Small",
-            "Buy a Longsword, right-click it: the muted, checked Wield two-handed item.",
+            "Gnome wizard: Wield when Small",
+            "Buy a Longsword, right-click it: no Wield two-handed item; wielded, it fills both hands.",
           ],
           [
             "A free item appears",

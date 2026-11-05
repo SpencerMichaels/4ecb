@@ -1510,7 +1510,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x0bed2cbe.SmallWithNonSmallWeapon": code(
       "Small characters wield non-small weapons two-handed unless One Size Larger.",
-      "item-fields.ts legacySmallWithNonSmallWeapon, shared by power-requirements.ts versatile two-handed use and powers.ts versatile damage, which withholds the +1 (VersatileUsedTwoHanded; EXCEPTION_NAMES.smallSize/oneSizeLarger); the loadout holds the weapon in both hands and the Wield two-handed menu item is checked and inert (loadout-slots.ts inventoryForcedTwoHanded, D102)",
+      "item-fields.ts legacySmallWithNonSmallWeapon, shared by power-requirements.ts versatile two-handed use and powers.ts versatile damage, which withholds the +1 (VersatileUsedTwoHanded; EXCEPTION_NAMES.smallSize/oneSizeLarger); the loadout holds the weapon in both hands and the right-click menu offers no Wield two-handed item (loadout-slots.ts inventoryForcedTwoHanded, D102)",
       test(
         REQUIREMENTS,
         "uses a versatile weapon two-handed for a Small character",

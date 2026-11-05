@@ -293,7 +293,8 @@ separate header or level rail.
   symbol slot is native `_INTERNAL_EquippedSymbol`, outside the equip count
   (`legacyEquipCount`, `wornSymbol`). Equipment-tab
   per-item actions are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield
-  two-handed" (checked and inert when size forces it) and, on a dragonshard
+  two-handed" (only where the player chooses: absent when size forces both
+  hands) and, on a dragonshard
   augment, "Attach to <item>"/"Detach" (`set-inventory-augment`; the host's
   `augmentEntryId`, resolved by `boundAugmentHolding`, else the imported loot
   `augment` CharLootID).
