@@ -1022,10 +1022,6 @@
 .print-familiar-section :is(p, ul) {
   margin: 0;
 }
-.print-familiar-description {
-  font-style: italic;
-  margin: 0;
-}
 /* Beast companion: the familiar card's frame with a full stat block. The
    printed card's notes shrink with its body text like a power card's, and
    a condensed card closes up its blocks, so the stat block fits one card. */

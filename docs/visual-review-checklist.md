@@ -158,9 +158,13 @@ live site.
     Defense, HP and Speed tiles dark tinted (green, purple, teal) with light
     numbers; HP and Speed side by side on one row; the italic rules note ("A
     missed attack never damages it…") as large as the benefit text below it.
+    The description ("Fey pact warlocks and others…") sits just under the
+    title band, above the tiles, in the italic tinted flavor band of a power
+    card's flavor text; with Settings' flavor text off it is gone.
   - **Wrong if:** the card stays white in dark theme, a tile is bright or its
-    number hard to read, HP sits above Speed, or the rules note is smaller
-    than the benefit text.
+    number hard to read, HP sits above Speed, the rules note is smaller than
+    the benefit text, or the description sits at the bottom of the card or
+    looks unlike a power card's flavor text.
 - [ ] **Fey warlock: printed Arcane Wisp card.**
   - **Where:** `?preview=1`, first card page, the 3rd card.
   - **Expect:** the Defense tiles on one row and HP and Speed side by side
@@ -197,9 +201,12 @@ live site.
     tiles, Speed, Claw attack, Trained skills, the Guardian Companion aura
     and the italic command line, all inside the card at a readable size
     (about 7.5 pt). No "Brown bears…" description; the builder's Companion
-    pane still shows it.
+    pane still shows it, as flavor text: the italic tinted band just under
+    the title, above the tiles, like a power card's flavor (gone with
+    Settings' flavor text off).
   - **Wrong if:** any line runs past the bottom or under the "Beast
-    Companion" band, the description prints, or Bruin prints as two cards.
+    Companion" band, the description prints, Bruin prints as two cards, or
+    the pane's description sits at the bottom of the card.
   - **Split cards (no review character has one):** on a copy of the
     ranger-beast character choose the Horse (or Simian) at Build, level 1:
     Companion, then open `?preview=1`: a stats card then "Horse — Notes"

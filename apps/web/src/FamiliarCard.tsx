@@ -29,7 +29,8 @@ export function familiarCardTitle(card: SheetFamiliarCard): string {
  * The familiar card (legacy Familiar panel), in the Play data card's frame:
  * one format for the printed deck and the builder's familiar detail pane.
  * The printed card is mechanics only, as a beast's (owner, 2026-11-04:
- * "Same as beasts"); the builder pane also shows the description (D110).
+ * "Same as beasts"); the builder pane shows the description as flavor text
+ * under the header (D110).
  */
 export function FamiliarCard({
   card,
@@ -87,6 +88,11 @@ export function FamiliarCard({
         </div>
         {panel.headerAction}
       </header>
+      {/* The builder pane's description is flavor text, as a power card's
+          (owner, 2026-11-04); the printed card is mechanics only. */}
+      {!isPanel || card.description === undefined || hideFlavortext ? null : (
+        <p className="print-card-flavor">{card.description}</p>
+      )}
       <CardPanelSubheading subheading={panel.subheading} />
       <div className="print-card-body print-play-body">
         {showStats ? (
@@ -133,9 +139,6 @@ export function FamiliarCard({
               />
             </section>
           ),
-        )}
-        {!isPanel || card.description === undefined || hideFlavortext ? null : (
-          <p className="print-familiar-description">{card.description}</p>
         )}
       </div>
       {panel.source === undefined ? null : (

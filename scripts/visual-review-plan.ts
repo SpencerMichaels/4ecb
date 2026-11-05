@@ -765,7 +765,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Fey warlock: Arcane Wisp in the builder",
-            "Arcane Familiar's Arcane Wisp card: dark navy in dark theme, dark tinted tiles, HP and Speed on one row, the rules note at body size.",
+            "Arcane Familiar's Arcane Wisp card: dark navy in dark theme, dark tinted tiles, HP and Speed on one row, the rules note at body size, the description as flavor text under the header.",
           ],
           [
             "Other detail stacks",

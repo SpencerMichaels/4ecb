@@ -36,7 +36,7 @@ export function beastCompanionTitle(card: SheetBeastCompanionCard): string {
  * deck and the builder's companion detail pane. Every number comes from the
  * evaluated beast companion statistics. The printed card is mechanics only
  * (owner, 2026-11-04: "Keep the cards mechanics-only"); the builder pane
- * also shows the record's description, as a creature card's does (D110).
+ * shows the record's description as flavor text under the header (D110).
  */
 export function BeastCompanionCard({
   card,
@@ -106,6 +106,11 @@ export function BeastCompanionCard({
         </div>
         {panel.headerAction}
       </header>
+      {/* The builder pane's description is flavor text, as a power card's
+          (owner, 2026-11-04); the printed card is mechanics only. */}
+      {!isPanel || card.description === undefined || hideFlavortext ? null : (
+        <p className="print-card-flavor">{card.description}</p>
+      )}
       <CardPanelSubheading subheading={panel.subheading} />
       <div className="print-card-body print-play-body">
         {showStats ? (
@@ -202,11 +207,6 @@ export function BeastCompanionCard({
             <p className="print-play-note print-familiar-rules">
               {card.commands}
             </p>
-            {!isPanel ||
-            card.description === undefined ||
-            hideFlavortext ? null : (
-              <p className="print-familiar-description">{card.description}</p>
-            )}
           </>
         ) : null}
       </div>

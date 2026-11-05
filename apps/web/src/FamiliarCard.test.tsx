@@ -42,9 +42,19 @@ describe("familiar card", () => {
     expect(renderToStaticMarkup(<FamiliarCard card={card} />)).not.toContain(
       "A helpful spirit.",
     );
-    expect(
-      renderToStaticMarkup(<FamiliarCard card={card} layout="panel" />),
-    ).toContain("A helpful spirit.");
+    // As flavor text, under the header and above the defense tiles.
+    const pane = renderToStaticMarkup(
+      <FamiliarCard card={card} layout="panel" />,
+    );
+    expect(pane).toContain(
+      '<p class="print-card-flavor">A helpful spirit.</p>',
+    );
+    expect(pane.indexOf("print-card-flavor")).toBeGreaterThan(
+      pane.indexOf("</header>"),
+    );
+    expect(pane.indexOf("print-card-flavor")).toBeLessThan(
+      pane.indexOf('aria-label="Defenses"'),
+    );
   });
 
   it("hides the builder pane's description with flavor text", () => {

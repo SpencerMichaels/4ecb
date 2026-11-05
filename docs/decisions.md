@@ -3835,6 +3835,13 @@ card's defense and hit point tiles now really share one row (the card
 body's inline flow for its direct `div`s had stacked them); in the review
 characters, the Warhorse, Silver Dragon Steed and both Thought Warriors
 now fit one card.
+Same day (owner): in the builder pane, a familiar's and a beast's
+description is flavor text: it shows just under the card header, above the
+defense tiles, as a power card's flavor (`print-card-flavor`), and hides
+with the flavor text preference (`HideFlavortextContext`); printed cards
+stay mechanics only. Associates show no description; a creature's pane
+keeps its whole description in the body, because it carries rules tables
+(a mount's load table) as well as prose.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

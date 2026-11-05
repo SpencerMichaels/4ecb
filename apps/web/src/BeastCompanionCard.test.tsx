@@ -117,11 +117,17 @@ describe("beast companion card", () => {
     );
   });
 
-  it("shows the description in the builder pane only", () => {
+  it("shows the description in the builder pane only, as flavor text under the header", () => {
     const html = renderToStaticMarkup(
       <BeastCompanionCard card={card} layout="panel" />,
     );
-    expect(html).toContain("A loyal hunter.");
+    expect(html).toContain('<p class="print-card-flavor">A loyal hunter.</p>');
+    expect(html.indexOf("print-card-flavor")).toBeGreaterThan(
+      html.indexOf("</header>"),
+    );
+    expect(html.indexOf("print-card-flavor")).toBeLessThan(
+      html.indexOf('aria-label="Defenses"'),
+    );
   });
 
   it("prints a split beast as a stats card and a notes card", () => {

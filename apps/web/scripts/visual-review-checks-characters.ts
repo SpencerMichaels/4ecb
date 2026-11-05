@@ -2552,6 +2552,11 @@ rule("warlock-fey", "Print preview", "Familiar card", (c) => {
         !textOf(pane(true)).includes(lead),
       familiar?.description?.slice(0, 60) ?? "no description",
     ),
+    inOrder("… as flavor text under the header, above the tiles", pane(false), [
+      "</header>",
+      '<p class="print-card-flavor">',
+      'aria-label="Defenses"',
+    ]),
   ];
 });
 
