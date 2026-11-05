@@ -2039,6 +2039,12 @@ rule("sentinel-bear", "Print preview", "Printed beast card", (c) => {
       beast?.text ?? "",
       "Surges Yours",
     ),
+    // Mechanics only (D110 amendment, 2026-11-04): no record description.
+    lacks(
+      "It prints no description",
+      beast?.text ?? "",
+      "Brown bears and similar creatures",
+    ),
   ];
 });
 rule("sentinel-bear", "Print preview", "Beast power cards", (c) =>
@@ -2081,12 +2087,6 @@ function detailStack(
       missing.length === 0
         ? `${entries.length} rendered`
         : `missing: ${missing.map(({ entity: part }) => part.name).join(", ")}`,
-    ),
-    // Mechanics only (D110 amendment, 2026-11-04): no record description.
-    lacks(
-      "It prints no description",
-      beast?.text ?? "",
-      "Brown bears and similar creatures",
     ),
   ];
 }
