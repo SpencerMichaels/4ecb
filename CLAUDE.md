@@ -66,11 +66,10 @@ Content tool CLI (legacy import/merge/compile/inspect):
 pnpm content-tool <args>          # tsx apps/content-tool/src/main.ts
 ```
 
-Print/PDF and PWA build checks:
+Print/PDF check:
 
 ```sh
 pnpm check:print                  # scripts/check-print.mjs (Chromium+Firefox+Poppler)
-pnpm check:functional-baseline    # scripts/check-functional-baseline.mjs
 ```
 
 Full public verification gate (run before declaring a milestone/checkpoint

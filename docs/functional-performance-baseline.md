@@ -1,5 +1,13 @@
 # Functional and performance baseline
 
+> **Historical (2026-11-04).** The browser harness this document describes
+> (`scripts/check-functional-baseline.mjs`, `pnpm check:functional-baseline`)
+> was removed by owner decision: it broke when the builder's Overview tab
+> went away (D080), nothing ran it after 2026-09-23, and repeated-work
+> regressions are now caught by deterministic content-scan guard tests in CI
+> (`scanCountingContent`, docs/architecture.md "Rules engine"). The
+> measurements and evidence below stay as the September record.
+
 This document defines the public, repeatable Stage 0 baseline used by the
 [functional refactor plan](functional-refactor-plan.md). It measures the
 production application with synthetic content only. Private packs and
