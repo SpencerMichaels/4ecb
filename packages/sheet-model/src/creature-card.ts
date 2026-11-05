@@ -139,8 +139,9 @@ export interface SheetCreatureCard {
   readonly other?: readonly string[];
   /**
    * The record's description, unless it repeats the stat block (the
-   * Celestial steeds): flavor and a load table. The builder shows it whole;
-   * the printed card keeps only its tables (D110).
+   * Celestial steeds): flavor and a load table. The builder pane shows its
+   * paragraphs as flavor text and its tables in the body; the printed card
+   * keeps only its tables (D110).
    */
   readonly description?: string;
   readonly source: string;

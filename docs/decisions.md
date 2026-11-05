@@ -3851,6 +3851,28 @@ Horse). With the extra lines, 98 familiars fit one card at 6–8 pt (the
 Arcane Wisp at 7.5 pt) and Wrab joins the five that split, every half
 still fitting.
 
+Amended 2026-11-05 (product owner): "flavor text must be consistent across
+card types". In the builder pane the flavor band (`print-card-flavor`,
+just under the card header, hidden with `HideFlavortextContext`) holds only
+purely descriptive text, and creature cards now follow it: a creature
+description's paragraphs are its flavor, its tables (a mount's load or
+travel table) stay in the body. Surveyed on the full pack
+(`tmp/creature-flavor/`): of 165 creature blocks (47 mounts, 118 summon
+powers) 12 records have a description: 5 only repeat the block and stay
+hidden (the Celestial steeds, Silver Dragon Steed), 2 are a load table
+alone (Riding Horse, Warhorse), 4 are one descriptive paragraph and a
+travel/load table (the Dark Sun Erdlu, Inix, Kank, Mekillot), and 1 is a
+descriptive paragraph alone (the Writhing Henge summon, whose power card
+shows no description because it has rules). No paragraph carries rules, so
+the split is by block structure (`proseBlocks` paragraphs vs tables), with
+no new parse or stored field. The printed creature card is unchanged (its
+tables only). The summon's power keeps its own Flavor on its power card;
+the creature card never repeats it. Associates (D107) have no flavor:
+their 54 records have no Flavor field and their description is the stat
+block itself, every line of which the pack build parses into the card's
+tiles, traits and powers (no unparsed lines); the card has never shown the
+description, because the card _is_ that description.
+
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 
 Status: accepted (2026-10-29): owner decision (roadmap queue item 11), the

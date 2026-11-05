@@ -1191,6 +1191,7 @@ export function swapPresentationChecks(c: ReviewCharacter): Check[] {
 
 const WARHORSE = "ID_FMP_GEAR_77";
 const SILVER_DRAGON_STEED = "ID_FMP_GEAR_100004";
+const KANK = "ID_FMP_GEAR_133";
 
 function mountHolding(c: ReviewCharacter, id: string) {
   return c.build.inventory.find((entry) =>
@@ -1353,12 +1354,78 @@ rule(
     const html = itemDetailHtml(c, detail);
     const panel = elementsWithClass(html, "print-creature-card")[0] ?? "";
     const numbers = steedNumbers(c);
+    // The Warhorse's description is only its load table: rules material,
+    // so it stays in the body and the pane has no flavor band (D110,
+    // 2026-11-05).
+    const warhorse = mountHolding(c, WARHORSE);
+    const warhorseDetail =
+      warhorse === undefined
+        ? undefined
+        : inventoryItemDetail(warhorse, c.context.byId);
+    const warhorsePanel =
+      warhorseDetail === undefined
+        ? ""
+        : (elementsWithClass(
+            itemDetailHtml(c, warhorseDetail),
+            "print-creature-card",
+          )[0] ?? "");
+    // A Kank in the Shop: its descriptive paragraph is the pane's flavor
+    // text, under the header and above the tiles; its table stays in the
+    // body.
+    const kank = c.context.byId.get(key(KANK));
+    const kankPanel =
+      kank === undefined
+        ? ""
+        : (elementsWithClass(
+            itemDetailHtml(c, {
+              entities: [kank],
+              displayName: kank.name,
+              effectiveLevel: c.build.effectiveLevel,
+            }),
+            "print-creature-card",
+          )[0] ?? "");
     return [
       truthy("A creature panel card", panel.includes("is-panel")),
       contains("Its title", textOf(panel), "Silver Dragon Steed"),
       inOrder("Its HP", textOf(panel), ["HP", String(numbers.hitPoints)]),
       contains("Its Bite", textOf(panel), `+${numbers.bite} vs. AC`),
       contains("Its New Vigor", textOf(panel), "New Vigor"),
+      lacks(
+        "No flavor band: its description only repeats the block",
+        panel,
+        "print-card-flavor",
+      ),
+      truthy("A Warhorse panel card", warhorsePanel.includes("is-panel")),
+      lacks(
+        "The Warhorse pane has no flavor band",
+        warhorsePanel,
+        "print-card-flavor",
+      ),
+      inOrder("The Warhorse's load table stays in the body", warhorsePanel, [
+        "print-card-body",
+        "print-creature-description",
+        "1,312 lb.",
+      ]),
+      truthy("A Kank panel card", kankPanel.includes("is-panel")),
+      inOrder(
+        "The Kank's paragraph is flavor text under the header",
+        kankPanel,
+        [
+          "</header>",
+          '<p class="print-card-flavor">Kanks are docile insects',
+          'aria-label="Defenses"',
+        ],
+      ),
+      inOrder("The Kank's table stays in the body", kankPanel, [
+        "print-card-body",
+        "print-creature-description",
+        "Speed per Hour",
+      ]),
+      lacks(
+        "The Kank's paragraph is not repeated in the body",
+        kankPanel.slice(kankPanel.indexOf("print-card-body")),
+        "Kanks are docile insects",
+      ),
     ];
   },
 );
@@ -1587,6 +1654,11 @@ rule(
       contains("Its title", textOf(panel), "Blade Angel"),
       contains("Its type bar", textOf(panel), "Summoned creature"),
       contains("Its Opportunity Attack", textOf(panel), "Opportunity Attack"),
+      lacks(
+        "No flavor band: the power has no description (its flavor is the power card's)",
+        panel,
+        "print-card-flavor",
+      ),
       lacks(
         "The power card above it has no commands",
         textOf(html.slice(0, html.indexOf(panel))),

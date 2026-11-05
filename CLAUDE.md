@@ -333,9 +333,15 @@ separate header or level rail.
   `print-card-probe` copy, prints as a stats card and a "<name> — Actions"
   card (`applySheetLayout`'s `splitCompanions`; the halves share one
   `layoutKey`), never a continuation card. The printed beast and familiar
-  cards are mechanics only (no description; the builder pane keeps it) and
-  split the same way into stats and "<name> — Notes" cards only when their
-  rules overflow at the floor (D110 amendment, 2026-11-04).
+  cards are mechanics only (no description) and split the same way into
+  stats and "<name> — Notes" cards only when their rules overflow at the
+  floor (D110 amendment, 2026-11-04). Flavor text is one rule on every card
+  type: in the builder pane purely descriptive text sits in the flavor band
+  (`print-card-flavor`, under the header, hidden by `HideFlavortextContext`)
+  — the Flavor field of power/item/reference cards, a familiar's or beast's
+  description, a creature description's paragraphs (its tables stay in the
+  body, and are all a printed creature card keeps); associates have none
+  (their description is the stat block) (D110 amendment, 2026-11-05).
 - **One card format (D079).** Every power/item card on every surface (print,
   screen sheet, builder detail panes) is `PowerCard`/`ItemCard` rendering a
   `SheetCard`: `layout="print"` is fixed-size and fitted, `layout="panel"` is

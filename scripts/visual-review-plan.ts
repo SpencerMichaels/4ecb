@@ -1291,7 +1291,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Arena fighter: mounts in item detail",
-            "The Silver Dragon Steed and Warhorse panel cards; a Kank in the Shop.",
+            "The Silver Dragon Steed and Warhorse panel cards (no flavor band); a Kank in the Shop, its paragraph as flavor text under the header and its load table at the bottom.",
           ],
           [
             "Equipment and Shop item detail",

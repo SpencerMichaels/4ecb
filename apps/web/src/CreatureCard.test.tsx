@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SheetCreatureCard } from "@4ecb/sheet-model";
 
 import { CreatureCard } from "./CreatureCard";
+import { HideFlavortextContext } from "./HideFlavortextContext";
 
 const card: SheetCreatureCard = {
   kind: "creature",
@@ -98,7 +99,7 @@ describe("CreatureCard", () => {
     expect(actions).not.toMatch(/continued/i);
   });
 
-  it("shows the whole description in the builder pane", () => {
+  it("shows the description's prose as flavor text and its tables in the builder pane's body", () => {
     const html = renderToStaticMarkup(
       <CreatureCard
         card={card}
@@ -107,9 +108,48 @@ describe("CreatureCard", () => {
       />,
     );
     expect(html).toContain("is-panel");
-    expect(html).toContain("Ponies are small horses.");
-    expect(html).toContain("Max.Drag");
+    // The prose is flavor text: under the header, above the defense tiles.
+    expect(html).toContain(
+      '<p class="print-card-flavor">Ponies are small horses.</p>',
+    );
+    expect(html.indexOf("print-card-flavor")).toBeGreaterThan(
+      html.indexOf("</header>"),
+    );
+    expect(html.indexOf("print-card-flavor")).toBeLessThan(
+      html.indexOf('aria-label="Defenses"'),
+    );
+    // The load table stays in the body, after the stat block.
+    const body = html.slice(html.indexOf("print-card-body"));
+    expect(body).not.toContain("Ponies are small horses.");
+    expect(body).toContain("Max.Drag");
     expect(html).toContain("Source: Test");
+  });
+
+  it("hides the builder pane's flavor text with the preference, keeping the tables", () => {
+    const html = renderToStaticMarkup(
+      <HideFlavortextContext.Provider value={true}>
+        <CreatureCard card={card} layout="panel" />
+      </HideFlavortextContext.Provider>,
+    );
+    expect(html).not.toContain("print-card-flavor");
+    expect(html).not.toContain("Ponies are small horses.");
+    expect(html).toContain("Max.Drag");
+  });
+
+  it("shows a prose-only description as flavor text alone", () => {
+    const html = renderToStaticMarkup(
+      <CreatureCard
+        card={{ ...card, description: "An ancient spirit." }}
+        layout="panel"
+      />,
+    );
+    expect(html).toContain(
+      '<p class="print-card-flavor">An ancient spirit.</p>',
+    );
+    expect(html).not.toContain("print-creature-description");
+    expect(renderToStaticMarkup(<CreatureCard card={card} />)).not.toContain(
+      "print-card-flavor",
+    );
   });
 
   it("prints a summoned creature's command row and the power's usage (D111)", () => {

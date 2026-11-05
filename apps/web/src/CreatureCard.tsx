@@ -1,3 +1,4 @@
+import { Fragment, useContext } from "react";
 import {
   creatureCardTitle,
   creatureCardTypeLabel,
@@ -6,6 +7,7 @@ import {
 } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
+import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
   CardPanelSubheading,
@@ -183,8 +185,10 @@ export function creatureNotes(
  * builder. A whole card shows everything; a creature too long for one
  * printed card prints as a `stats` card and an `actions` card (the deck
  * decides, by measuring the whole card at the minimum text size). The
- * printed card keeps only its description's tables (a load table); the
- * builder pane shows the whole description.
+ * printed card keeps only its description's tables (a load table). The
+ * builder pane shows the description's paragraphs as flavor text under the
+ * header, as a familiar's and a beast's (every creature paragraph in the
+ * content is purely descriptive), and its tables in the body (D110).
  */
 export function CreatureCard({
   card,
@@ -200,6 +204,7 @@ export function CreatureCard({
   readonly onFit?: (fits: boolean) => void;
 }) {
   const cardRef = usePrintCardFit(layout === "print", onFit);
+  const hideFlavortext = useContext(HideFlavortextContext);
   const isPanel = layout === "panel";
   const showStats = card.part !== "actions";
   const showActions = card.part !== "stats";
@@ -230,12 +235,23 @@ export function CreatureCard({
       .join(" · "),
     ...(card.other ?? []),
   ].filter((note) => note !== "");
-  const description =
+  // Split by block structure: paragraphs are the description's flavor,
+  // shown only in the builder pane and with the flavor text preference;
+  // tables stay in the body on both surfaces, and any other structure in
+  // the pane's body.
+  const blocks =
     card.description === undefined || !showStats
       ? []
-      : proseBlocks(card.description).filter(
-          (block) => isPanel || block.kind === "table",
+      : proseBlocks(card.description);
+  const flavor =
+    !isPanel || hideFlavortext
+      ? []
+      : blocks.flatMap((block) =>
+          block.kind === "paragraph" ? [block.text] : [],
         );
+  const description = blocks.filter((block) =>
+    isPanel ? block.kind !== "paragraph" : block.kind === "table",
+  );
   return (
     <article
       ref={cardRef}
@@ -268,6 +284,16 @@ export function CreatureCard({
         </div>
         {panel.headerAction}
       </header>
+      {flavor.length === 0 ? null : (
+        <p className="print-card-flavor">
+          {flavor.map((text, index) => (
+            <Fragment key={index}>
+              {index === 0 ? null : <br />}
+              {text}
+            </Fragment>
+          ))}
+        </p>
+      )}
       <CardPanelSubheading subheading={panel.subheading} />
       <div className="print-card-body print-play-body">
         {showStats ? (
