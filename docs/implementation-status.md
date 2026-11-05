@@ -1292,11 +1292,15 @@ changes landed in the orchestrator's `15f4992` (shared staging area).
 - **Card.** `BeastCompanionCard.tsx` in the familiar/Play data frame. It
   shows defenses, health tiles (a sentinel's surges read "Yours"), abilities,
   speed and vision, the attack line, saves, resistances, trained skill totals,
-  situational notes, traits, the command line and the description. It prints
-  after Skills and before the familiar, and is the Companion choice's builder
-  detail card. Candidates are previewed with `previewBeastCompanion`.
+  situational notes, traits and the command line; the description shows only
+  in the builder pane (the printed card is mechanics-only and splits into
+  stats and "<name> — Notes" cards when its rules overflow, D110 amended
+  2026-11-04). It prints after Skills and before the familiar, and is the
+  Companion choice's builder detail card. Candidates are previewed with
+  `previewBeastCompanion`.
 - **Name and appearance** inputs (`CompanionNameFields.tsx`) edit
-  `_COMPANION_NAME`/`_COMPANION_APPEARANCE`.
+  `_COMPANION_NAME`/`_COMPANION_APPEARANCE`: Name is a short inline field,
+  Appearance a multi-line box like the Details tab's (2026-11-04).
 - **Retraining.** A "Retrain a companion" option in the Retraining tab,
   mutually exclusive with feat, power and skill (Martial Power p. 42).
 - **Beast power cards.** Headed "Beast +N vs AC". All-beast powers collapse
