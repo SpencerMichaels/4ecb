@@ -1477,6 +1477,10 @@ const reviews: ReviewCharacter[] = [
                 "Imported Hybrid Talent stays editable",
                 "Hybrid Talent's step 2 has Bard Armor Proficiency picked.",
               ],
+              [
+                "Hybrid Talent's open choice wording",
+                'Headed "Hybrid Talent", never "Class Feature"; left open, its issue says what to choose.',
+              ],
             ],
           },
         ],
@@ -1742,6 +1746,10 @@ const general: GeneralSection[] = [
       ],
       ["Starting gold", "A new character's Carried Money."],
       ["Theme-power reason", "The theme-power restriction's reason text."],
+      [
+        "Item choices named from their options",
+        "Armor of Adaptable Resistance asks for a damage type, Harper Pin for a power.",
+      ],
     ],
   },
 ];

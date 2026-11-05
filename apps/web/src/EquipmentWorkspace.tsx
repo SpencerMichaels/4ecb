@@ -1155,12 +1155,16 @@ export function EquipmentWorkspace({
       const slot =
         entity === undefined ? undefined : itemChoiceSlots(entity)[0];
       if (entity === undefined || slot === undefined) return [];
-      const empty =
-        itemChoiceCandidates(slot, entities, build.effectiveLevel).length === 0;
+      const candidates = itemChoiceCandidates(
+        slot,
+        entities,
+        build.effectiveLevel,
+      );
+      const empty = candidates.length === 0;
       return [
         {
           key: `choose:${elementIndex}`,
-          label: `${itemChoiceHeading(slot)}…`,
+          label: `${itemChoiceHeading(slot, candidates)}…`,
           ...(empty
             ? { disabledReason: "The content in use offers nothing to choose." }
             : {}),

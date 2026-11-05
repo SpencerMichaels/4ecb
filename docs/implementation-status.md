@@ -1252,6 +1252,35 @@ app, which builds its own issue) says "Choose Resistance Type for Armor of
 Resistance +2." for an item-owned choice (was "Required Class Feature choice
 is unresolved."); other choices keep their message. Cache v108.
 
+Choices named from their candidates (2026-11-04, follow-up): one wording
+source, rules-engine `choice-wording.ts` (`choiceName`/`choiceHeading`;
+`itemChoiceName`/`itemChoiceHeading` delegate to it), names a choice of an
+internal container type (Class Feature, Racial Trait, Trait Package,
+CountsAsRace) without an authored label from what its candidates share, at
+runtime with no pack field: names that differ only by an ability ("Ability
+Score"), a damage type ("Damage Type") or a defense ("Defense"), else every
+candidate's only rule granting one power, feat or proficiency; otherwise
+"Option". Full pack, unlabeled selects of those types: items — Armor of
+Adaptable Resistance +1…+6 (6) "Option" → "Damage Type", Harper Pin (heroic
+tier) (3) "Option" → "Power"; non-item Class Feature — Ability Score 60,
+Damage Type 15, Defense 21, Power 10, Feat 2, Proficiency 2, Option 162;
+Racial Trait — Ability Score 9, Damage Type 4, Defense 1, Power 1, Option
+24; Trait Package — Option 11. The engine's item `choice.required` message
+uses the candidates too ("Choose a damage type for Armor of Adaptable
+Resistance +1."); cache v109. Non-item open choices: the issue title uses
+the Build tab's heading (`contextualChoiceName`, which now also covers
+Racial Trait and CountsAsRace selects and falls back to the providing
+feat/power/race; else the presented type, so "Power Daily 1" reads "Daily
+Power"), and the detail reads "Choose an option for Fighting Style." /
+"Choose a language for Linguist." / "Choose a feat." (`choiceWording` in
+builder-ui.ts) instead of "This required choice has not been selected.".
+The Build tab's option-table name column and choice-flow step headings use
+the same name ("Option", "Damage Type") instead of "Class Feature". Across
+the sample and SampleHeroes saves with every choice treated as open:
+internal-type Build headings 114 → 0, issue titles showing an internal or
+raw type 832 → 0, generic details 3299 → 0. `review:verify` checks
+Sylestine's Hybrid Talent wording and the two items' headings.
+
 ## Beast companion card (companion proposal, slice 2; 2026-10-21)
 
 Commits `36c0188`, `1df9924`, `a31f505`. The matrix and audit script

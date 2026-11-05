@@ -2,6 +2,7 @@ export * from "./ability-scores";
 export * from "./associates";
 export * from "./beast-companion";
 export * from "./build-projection";
+export * from "./choice-wording";
 export * from "./condition-trace";
 export * from "./equipment";
 export * from "./evaluator";

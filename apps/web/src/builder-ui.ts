@@ -9,8 +9,11 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { classifyPowerEntity, powerActionLabel } from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
+  choiceHeading,
+  choiceName,
   commandForEvaluatedChoice,
   findBuildChildIndex,
+  isInternalChoiceType,
   matchingDeityAlignmentClasses,
   parseRules,
   pointBuyCostToRaise,
@@ -749,44 +752,77 @@ export function classTableMetadata(entity: ContentEntity): {
   };
 }
 
-/** Choice types named after the class feature that offers them: a nested
- *  feature select, or a trait package (a hexblade's Pact Choice). */
-const FEATURE_NAMED_CHOICE_TYPES = new Set(["class feature", "trait package"]);
+/** Feature types whose name heads the internal-type choices they offer. */
+const CHOICE_FEATURE_TYPES = new Set(["class feature", "racial trait"]);
+
+/** Provider types that are build structure, not something the player
+ *  picked or recognizes ("Level 4", the level-1 rules). */
+const STRUCTURAL_PROVIDER_TYPES = new Set(["level", "level1rules"]);
+
+/** The player-recognizable element whose rules make `choice` (a feat, a
+ *  power, a race), never a level or the level-1 rules. */
+export function choiceProviderName(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  resolveEntity: (reference: string) => ContentEntity | undefined,
+): string | undefined {
+  const provider = evaluation.occurrences.find(
+    (occurrence) => occurrence.id === choice.providerOccurrenceId,
+  );
+  const entity =
+    provider === undefined ? undefined : resolveEntity(provider.definitionId);
+  return entity === undefined ||
+    STRUCTURAL_PROVIDER_TYPES.has(entity.type.trim().toLocaleLowerCase())
+    ? undefined
+    : entity.name;
+}
 
 /**
  * Recovers the authored parent feature behind a generic nested select. The
  * evaluator keeps the provider occurrence, while shared candidate categories
- * provide a fallback for unresolved or partially materialized legacy builds.
+ * provide a fallback for unresolved or partially materialized legacy builds;
+ * failing both, the element that makes the choice (a feat, a power) names
+ * it, so its internal type ("Class Feature") never shows.
  */
 export function contextualChoiceName(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
   resolveEntity: (reference: string) => ContentEntity | undefined,
 ): string | undefined {
-  if (!FEATURE_NAMED_CHOICE_TYPES.has(choice.type.trim().toLocaleLowerCase()))
-    return undefined;
-  const type = "class feature";
+  // Internal container types (a nested feature select, a hexblade's Pact
+  // Choice trait package, a breath power's racial-trait ability) take their
+  // feature's name.
+  if (!isInternalChoiceType(choice.type)) return undefined;
+  const isFeature = (
+    entity: ContentEntity | undefined,
+  ): entity is ContentEntity =>
+    entity !== undefined &&
+    CHOICE_FEATURE_TYPES.has(entity.type.trim().toLocaleLowerCase());
 
   const provider = evaluation.occurrences.find(
     (occurrence) => occurrence.id === choice.providerOccurrenceId,
   );
   const providerEntity =
     provider === undefined ? undefined : resolveEntity(provider.definitionId);
-  if (providerEntity?.type.trim().toLocaleLowerCase() === type)
-    return providerEntity.name;
+  if (isFeature(providerEntity)) return providerEntity.name;
 
   const candidateEntities = choice.candidates.flatMap((candidate) => {
     const entity = resolveEntity(candidate.definitionId);
     return entity === undefined ? [] : [entity];
   });
   const first = candidateEntities[0];
-  if (first === undefined) return undefined;
-  const sharedCategories = first.categories.filter((category) =>
-    candidateEntities.every((entity) => entity.categories.includes(category)),
+  const sharedCategories =
+    first === undefined
+      ? []
+      : first.categories.filter((category) =>
+          candidateEntities.every((entity) =>
+            entity.categories.includes(category),
+          ),
+        );
+  return (
+    sharedCategories.map(resolveEntity).find(isFeature)?.name ??
+    choiceProviderName(choice, evaluation, resolveEntity)
   );
-  return sharedCategories
-    .map(resolveEntity)
-    .find((entity) => entity?.type.trim().toLocaleLowerCase() === type)?.name;
 }
 
 export interface CandidateTableTypeGroup {
@@ -2090,6 +2126,85 @@ export function choiceTitle(choice: EvaluatedChoice): string {
   if (spellbook !== null)
     return `${spellbook[1]![0]!.toLocaleUpperCase()}${spellbook[1]!.slice(1).toLocaleLowerCase()} Spell`;
   return choicePresentationLabel(choice.name || choice.type);
+}
+
+/** A choice's offered candidates as content records, without the ones the
+ *  evaluator lists only as category mismatches. */
+export function choiceCandidateEntities(
+  choice: EvaluatedChoice,
+  byId: ReadonlyMap<string, ContentEntity>,
+): ContentEntity[] {
+  return choice.candidates.flatMap((candidate) => {
+    if (candidate.reasons.includes("category")) return [];
+    const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+    return entity === undefined ? [] : [entity];
+  });
+}
+
+/** How a Build-tab choice asks for its pick, from the same single source as
+ *  item choices (`choiceName`/`choiceHeading` in rules-engine). */
+export interface ChoiceWording {
+  /** What the choice asks for: "Damage Type", "Option", "Language". */
+  readonly name: string;
+  /** "Choose a damage type", "Choose an option", "Choose a language". */
+  readonly heading: string;
+  /** The feature or element that makes the choice, as the Build tab heads
+   *  it ("Fighting Style", "Linguist"); undefined for a level's own pick. */
+  readonly feature?: string;
+}
+
+/** A presented usage noun ("Daily Power", "Utility Spell"). */
+const CHOICE_USAGE_NOUN =
+  /^(?:At-Will|Encounter|Daily|Utility) (?:Power|Spell)$/;
+
+export function choiceWording(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): ChoiceWording {
+  const resolve = (reference: string) =>
+    byId.get(reference.trim().toLocaleLowerCase());
+  // An authored "Choose …" label is the instruction itself, as is any label
+  // on an internal container type ("Elemental Specialty"); another label is
+  // a section title ("Human Bonus At-Will", "Power Daily 1"), so the choice
+  // asks for its type, or the usage the title presents ("Daily Power").
+  const label = choice.name?.trim() ?? "";
+  const title = choiceTitle(choice);
+  const slot =
+    /^choose\s/i.test(label) ||
+    (label !== "" && isInternalChoiceType(choice.type))
+      ? { type: choice.type, label }
+      : {
+          type: CHOICE_USAGE_NOUN.test(title)
+            ? title
+            : choicePresentationLabel(choice.type),
+        };
+  const candidates = choiceCandidateEntities(choice, byId);
+  const feature =
+    contextualChoiceName(choice, evaluation, resolve) ??
+    choiceProviderName(choice, evaluation, resolve);
+  return {
+    name: choiceName(slot, candidates),
+    heading: choiceHeading(slot, candidates),
+    ...(feature === undefined ? {} : { feature }),
+  };
+}
+
+/** What a choice-flow step or an option table's name column is headed:
+ *  `presented` (the type or title as the Build tab shows it), or — for an
+ *  internal container type ("Class Feature") — what the choice asks for
+ *  ("Damage Type", "Option"). */
+export function choiceStepName(
+  choice: EvaluatedChoice,
+  byId: ReadonlyMap<string, ContentEntity>,
+  presented: string,
+): string {
+  if (!isInternalChoiceType(choice.type)) return presented;
+  const label = choice.name?.trim() ?? "";
+  return choiceName(
+    label === "" ? { type: choice.type } : { type: choice.type, label },
+    choiceCandidateEntities(choice, byId),
+  );
 }
 
 /** How a level-progression power swap reads in the builder. */

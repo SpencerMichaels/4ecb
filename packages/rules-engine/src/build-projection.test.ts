@@ -2031,7 +2031,7 @@ describe("build projection", () => {
         "Choose an option",
       );
       expect(itemChoiceName({ type: "Language" })).toBe("Language");
-      expect(itemChoiceHeading({ type: "Language" })).toBe("Choose language");
+      expect(itemChoiceHeading({ type: "Language" })).toBe("Choose a language");
     });
 
     it("names the item and what to choose when its own choice is open", () => {
@@ -2103,6 +2103,86 @@ describe("build projection", () => {
           ],
           ["feat", "Required Class Feature choice is unresolved."],
         ]),
+      );
+    });
+
+    it("names an unlabeled item choice from what its options share", () => {
+      // Armor of Adaptable Resistance +1, spelled as the pack spells it: an
+      // unlabeled Class Feature select whose category is the item's name.
+      const item = entity(
+        "ID_FMP_MAGIC_ITEM_9570",
+        "Armor of Adaptable Resistance +1",
+        "Magic Item",
+        [
+          statement(
+            "select",
+            {
+              type: "Class Feature",
+              number: "1",
+              Category: "Armor of Adaptable Resistance +1",
+            },
+            0,
+          ),
+        ],
+      );
+      const options = ["Acid", "Fire"].map((damage) => ({
+        ...entity(
+          `ID_INTERNAL_CLASS_FEATURE_ARMOR_OF_ADAPTABLE_RESISTANCE_+1_(${damage.toUpperCase()})`,
+          `Armor of Adaptable Resistance +1 (${damage})`,
+          "Class Feature",
+          [
+            statement(
+              "statadd",
+              {
+                name: `resist:${damage.toLowerCase()}`,
+                value: "+5",
+                type: "resist",
+              },
+              0,
+            ),
+          ],
+        ),
+        categories: ["ID_FMP_MAGIC_ITEM_9570"],
+      }));
+      const content = [item, ...options];
+      const build: CharacterBuild = {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [],
+        inventory: [
+          {
+            id: "loot",
+            acquiredLevel: 1,
+            quantity: 1,
+            equippedQuantity: 1,
+            elements: [
+              {
+                definitionId: item.id,
+                name: item.name,
+                type: "Magic Item",
+              },
+            ],
+            overrides: {},
+            legality: "rules-legal",
+          },
+        ],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      };
+      const evaluated = evaluateCharacter(
+        projectBuildForEvaluation(build, content),
+        content,
+      );
+      expect(
+        evaluated.diagnostics
+          .filter(({ code }) => code === "choice.required")
+          .map(({ message }) => message),
+      ).toEqual(["Choose a damage type for Armor of Adaptable Resistance +1."]);
+      expect(itemChoiceHeading(itemChoiceSlots(item)[0]!, options)).toBe(
+        "Choose a damage type",
       );
     });
   });

@@ -93,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v108-2026-11-04-item-choice-required-message";
+  "evaluated-character-v109-2026-11-04-choice-named-from-candidates";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -4228,6 +4228,12 @@ function evaluateCharacterInternal(
                   : {}),
               },
               itemName,
+              choice.candidates.flatMap(({ definitionId, reasons }) => {
+                const candidate = reasons.includes("category")
+                  ? undefined
+                  : index.get(definitionId);
+                return candidate === undefined ? [] : [candidate];
+              }),
             ),
       occurrenceId: choice.providerOccurrenceId,
       ruleOrdinal: choice.ruleOrdinal,

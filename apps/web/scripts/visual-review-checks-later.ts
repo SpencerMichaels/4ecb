@@ -29,6 +29,7 @@ import { builderIssueGroups } from "../src/builder-diagnostics";
 import {
   candidateReason,
   choicesAtLevel,
+  contextualChoiceTitle,
   powerSwapPresentation,
 } from "../src/builder-ui";
 import {
@@ -46,6 +47,7 @@ import {
   shopBrowseCategory,
 } from "../src/equipment-ui";
 import { inventoryItemDetail } from "../src/EquipmentWorkspace";
+import { itemChoiceHeading, itemChoicePages } from "../src/item-choice-pages";
 
 import {
   contains,
@@ -775,6 +777,84 @@ rule("zilvra", "Equipment", "Armor of Resistance's damage type", (c) => {
     equal("Review opens the Equipment tab", issue?.target?.kind, "inventory"),
   ];
 });
+general(
+  "Shop and new characters",
+  "Item choices named from their options",
+  (context) =>
+    [
+      ["Armor of Adaptable Resistance +1", "Choose a damage type"],
+      ["Harper Pin (heroic tier)", "Choose a power"],
+    ].map(([name, expected]) => {
+      const item = context.entities.find(
+        (entity) => entity.name === name && /item/i.test(entity.type),
+      );
+      const page =
+        item === undefined
+          ? undefined
+          : itemChoicePages(item, context.entities, 10, new Map())[0];
+      return equal(
+        `${name}'s choice heading`,
+        page === undefined
+          ? undefined
+          : itemChoiceHeading(page.slot, page.candidates),
+        expected,
+      );
+    }),
+);
+rule(
+  "sylestine",
+  "Build, level 4: Feats",
+  "Hybrid Talent's open choice wording",
+  (c) => {
+    // Hybrid Talent's feature select, as an open choice would read.
+    const choice = c.evaluation.choices.find((candidate) => {
+      const provider = c.evaluation.occurrences.find(
+        ({ id }) => id === candidate.providerOccurrenceId,
+      );
+      return (
+        provider !== undefined &&
+        c.context.byId.get(provider.definitionId.toLocaleLowerCase())?.name ===
+          "Hybrid Talent"
+      );
+    });
+    const open =
+      choice === undefined
+        ? undefined
+        : builderIssueGroups({
+            evaluation: {
+              ...c.evaluation,
+              choices: [
+                { ...choice, selectedOccurrenceId: undefined, optional: false },
+              ],
+            },
+            byId: c.context.byId,
+            effectiveLevel: c.build.effectiveLevel,
+            planningHorizon: c.build.effectiveLevel,
+            abilityScoresIncomplete: false,
+            abilityScoresHouseRuled: false,
+            build: c.build,
+          }).unresolved[0];
+    return [
+      equal(
+        "The Build tab heads it after the feat",
+        choice === undefined
+          ? undefined
+          : contextualChoiceTitle(choice, c.evaluation, c.context.byId),
+        "Hybrid Talent",
+      ),
+      equal(
+        "The issue's title",
+        open?.title,
+        `Level ${choice?.level ?? "?"} Hybrid Talent`,
+      ),
+      equal(
+        "The issue says what to choose",
+        open?.detail,
+        "Choose an option for Hybrid Talent.",
+      ),
+    ];
+  },
+);
 rule("zilvra", "House rules", "User edit named in House rules", (c) => {
   const all = issues(c);
   const edit = all.find(({ title }) => /manual edits/i.test(title));

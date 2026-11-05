@@ -35,7 +35,7 @@ export function ItemChoicePicker({
   const selectedId = selections.get(pathKey) ?? "";
   const picker = (
     <CompactChoiceButtons
-      label={itemChoiceHeading(page.slot)}
+      label={itemChoiceHeading(page.slot, page.candidates)}
       hideLabel
       options={page.candidates.map((candidate) => ({
         id: candidate.id,
@@ -98,7 +98,7 @@ export function ItemChoiceDialog({
   const lastPage = pageIndex >= pages.length - 1;
   return (
     <dialog
-      aria-label={`${itemName}: ${page === undefined ? "choices" : itemChoiceHeading(page.slot)}`}
+      aria-label={`${itemName}: ${page === undefined ? "choices" : itemChoiceHeading(page.slot, page.candidates)}`}
       className={`shop-physical-dialog dialog-shell dialog-shell--wide${
         page !== undefined && isComplexItemChoice(page.candidates)
           ? " shop-physical-dialog--detail"
@@ -131,7 +131,9 @@ export function ItemChoiceDialog({
         <header>
           <div>
             <h2>
-              {page === undefined ? itemName : itemChoiceHeading(page.slot)}
+              {page === undefined
+                ? itemName
+                : itemChoiceHeading(page.slot, page.candidates)}
             </h2>
           </div>
           <button

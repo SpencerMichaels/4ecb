@@ -24,6 +24,7 @@ import {
   choicePresentationLabel,
   choiceSectionId,
   choiceSelectionTableKind,
+  choiceStepName,
   choiceTitle,
   conventionalOptionOrder,
   contextualChoiceName,
@@ -911,7 +912,13 @@ export function ChoiceEditor({
             evaluation={evaluation}
             kind={selectionTableKind}
             {...(selectionTableKind === "option"
-              ? { nameColumnLabel: choiceTitle(choice) }
+              ? {
+                  nameColumnLabel: choiceStepName(
+                    choice,
+                    byId,
+                    choiceTitle(choice),
+                  ),
+                }
               : {})}
             candidates={visibleCandidates}
             featGroups={selectionTableKind === "feat" ? presentationGroups : []}
@@ -1015,7 +1022,11 @@ export function ChoiceEditor({
           </>
         ) : (
           <CompactChoiceButtons
-            label={hideSelectionLabel ? choiceTitle(choice) : selectionLabel}
+            label={
+              hideSelectionLabel
+                ? choiceStepName(choice, byId, choiceTitle(choice))
+                : selectionLabel
+            }
             options={conventionalOptionOrder(
               choice.type,
               visibleCandidates,
@@ -1134,7 +1145,11 @@ export function ChoiceFlowSection({
                 id={`${choiceSectionId(choice.id)}-step-heading`}
               >
                 {index === 0
-                  ? choicePresentationLabel(choice.type)
+                  ? choiceStepName(
+                      choice,
+                      byId,
+                      choicePresentationLabel(choice.type),
+                    )
                   : contextualChoiceTitle(choice, evaluation, byId)}
               </h5>
             </div>

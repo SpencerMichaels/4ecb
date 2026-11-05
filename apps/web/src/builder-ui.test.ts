@@ -34,6 +34,8 @@ import {
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
+  choiceStepName,
+  choiceWording,
   contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
@@ -1062,6 +1064,50 @@ describe("builder planning UI", () => {
             : undefined,
       ),
     ).toBe("Pact Choice");
+
+    // A feat's own feature select, whose options share no feature category,
+    // takes the feat's name; its option column says what it asks for.
+    const feat = {
+      ...level(0),
+      id: "FEAT_TALENT",
+      name: "Hybrid Talent",
+      type: "Feat",
+    };
+    const featChoice = {
+      ...choice,
+      providerOccurrenceId: "feat-provider",
+      candidates: [candidate(anonymousOption.id)],
+    };
+    const featEvaluation = {
+      occurrences: [
+        {
+          id: "feat-provider",
+          definitionId: feat.id,
+          acquiredLevel: 1,
+          kind: "grant",
+        },
+      ],
+    } as unknown as EvaluatedCharacter;
+    const featIds = new Map(
+      [feat, anonymousOption].map(
+        (entity) => [entity.id.toLocaleLowerCase(), entity] as const,
+      ),
+    );
+    expect(
+      contextualChoiceName(featChoice, featEvaluation, (id) =>
+        featIds.get(id.toLocaleLowerCase()),
+      ),
+    ).toBe("Hybrid Talent");
+    expect(choiceStepName(featChoice, featIds, "Class Feature")).toBe("Option");
+    expect(choiceWording(featChoice, featEvaluation, featIds)).toEqual({
+      name: "Option",
+      heading: "Choose an option",
+      feature: "Hybrid Talent",
+    });
+    // A player-facing type keeps the Build tab's presentation.
+    expect(
+      choiceStepName({ ...featChoice, type: "Language" }, featIds, "Language"),
+    ).toBe("Language");
   });
 
   it("applies a Build preset only to matching unresolved choices", () => {

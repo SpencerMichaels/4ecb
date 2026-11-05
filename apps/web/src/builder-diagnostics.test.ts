@@ -224,6 +224,109 @@ describe("builder issue groups", () => {
     ]);
   });
 
+  it("names a nested open choice after the feature that offers it", () => {
+    const record = (
+      id: string,
+      name: string,
+      type: string,
+      categories: string[] = [],
+    ): ContentEntity => ({
+      id,
+      name,
+      type,
+      source: "Public test fixture",
+      sources: ["Public test fixture"],
+      attributes: [],
+      categories,
+      specifics: [],
+      rules: [],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "diagnostics-test", sourceOrdinal: 0 },
+    });
+    const style = record(
+      "ID_FMP_CLASS_FEATURE_321",
+      "Fighting Style",
+      "Class Feature",
+    );
+    const styles = ["Two-Blade Style", "Defender Style"].map((name, index) =>
+      record(`ID_FMP_CLASS_FEATURE_${900 + index}`, name, "Class Feature", [
+        style.id,
+      ]),
+    );
+    const breath = record("ID_FMP_POWER_1", "Dragon Breath", "Power");
+    const abilities = ["Strength", "Constitution"].map((ability, index) =>
+      record(
+        `ID_FMP_RACIAL_TRAIT_${800 + index}`,
+        `Dragon Breath ${ability}`,
+        "Racial Trait",
+      ),
+    );
+    const linguist = record("ID_FMP_FEAT_1", "Linguist", "Feat");
+    const level = record("ID_INTERNAL_LEVEL_4", "4", "Level");
+    const byId = new Map(
+      [style, ...styles, breath, ...abilities, linguist, level].map(
+        (entity) => [entity.id.toLocaleLowerCase(), entity] as const,
+      ),
+    );
+    const candidates = (options: readonly ContentEntity[]) =>
+      options.map(
+        ({ id }) =>
+          ({
+            definitionId: id,
+            eligible: true,
+            reasons: [],
+          }) as unknown as EvaluatedChoice["candidates"][number],
+      );
+    const open = (
+      id: string,
+      providerOccurrenceId: string,
+      type: string,
+      options: readonly ContentEntity[] = [],
+    ): EvaluatedChoice => ({
+      id,
+      level: 1,
+      providerOccurrenceId,
+      ruleOrdinal: 0,
+      index: 0,
+      type,
+      optional: false,
+      candidates: candidates(options),
+    });
+    const result = builderIssueGroups({
+      ...common,
+      byId,
+      evaluation: evaluation({
+        occurrences: [
+          [style, "style-occurrence"],
+          [breath, "breath-occurrence"],
+          [linguist, "linguist-occurrence"],
+          [level, "level-occurrence"],
+        ].map(([entity, id]) => ({
+          id: id as string,
+          definitionId: (entity as ContentEntity).id,
+          acquiredLevel: 1,
+          kind: "grant",
+        })) as unknown as EvaluatedCharacter["occurrences"],
+        choices: [
+          open("style", "style-occurrence", "Class Feature", styles),
+          open("breath", "breath-occurrence", "Racial Trait", abilities),
+          open("language", "linguist-occurrence", "Language"),
+          open("feat", "level-occurrence", "Feat"),
+        ],
+      }),
+    });
+    expect(
+      result.unresolved.map(({ title, detail }) => [title, detail]),
+    ).toEqual([
+      // Never the internal "Class Feature" or "Racial Trait" type.
+      ["Level 1 Fighting Style", "Choose an option for Fighting Style."],
+      ["Level 1 Dragon Breath", "Choose an ability score for Dragon Breath."],
+      ["Level 1 Language", "Choose a language for Linguist."],
+      ["Level 1 Feat", "Choose a feat."],
+    ]);
+  });
+
   it("lists an equipped item's unmet requirement as a house rule", () => {
     const result = builderIssueGroups({
       ...common,

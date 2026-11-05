@@ -13,6 +13,10 @@ import {
 } from "@4ecb/rules-engine";
 import {
   candidateReason,
+  choiceCandidateEntities,
+  choiceTitle,
+  choiceWording,
+  contextualChoiceName,
   isBuildPresetChoice,
   legacyChoiceSection,
   powerSwapPresentation,
@@ -151,9 +155,13 @@ function choiceLabel(
     selected === undefined ? undefined : savedNames.get(selected.id),
   );
   const swap = powerSwapPresentation(choice, evaluation, byId);
+  // The Build tab's heading for the choice: its feature ("Fighting
+  // Style"), never an internal type ("Class Feature").
   const kind =
     swap === undefined
-      ? (choice.name ?? choice.type)
+      ? (contextualChoiceName(choice, evaluation, (reference) =>
+          byId.get(reference.trim().toLocaleLowerCase()),
+        ) ?? choiceTitle(choice))
       : `${swap.kind} power swap`;
   return selectedName === undefined
     ? `Level ${choice.level} ${kind}`
@@ -215,11 +223,12 @@ function inventoryChoiceHolding(
     type: choice.type,
     ...(choice.name === undefined ? {} : { label: choice.name }),
   };
+  const candidates = choiceCandidateEntities(choice, byId);
   return {
     entryId: entry.id,
     name: inventoryDisplayName(entry, byId),
-    choice: itemChoiceName(wording),
-    heading: itemChoiceHeading(wording),
+    choice: itemChoiceName(wording, candidates),
+    heading: itemChoiceHeading(wording, candidates),
   };
 }
 
@@ -468,6 +477,13 @@ export function builderIssueGroups({
   const savedNames = savedOccurrenceNames(build);
   const label = (choice: EvaluatedChoice): string =>
     choiceLabel(choice, evaluation, byId, savedNames);
+  // "Choose an option for Fighting Style.", "Choose a feat."
+  const openChoiceDetail = (choice: EvaluatedChoice): string => {
+    const swap = powerSwapPresentation(choice, evaluation, byId);
+    if (swap !== undefined) return `${swap.title}.`;
+    const { heading, feature } = choiceWording(choice, evaluation, byId);
+    return feature === undefined ? `${heading}.` : `${heading} for ${feature}.`;
+  };
   const occurrenceName = (
     occurrence:
       { readonly id: string; readonly definitionId: string } | undefined,
@@ -502,7 +518,7 @@ export function builderIssueGroups({
               : `${holding.name}: ${holding.choice}`,
           detail:
             holding === undefined
-              ? "This required choice has not been selected."
+              ? openChoiceDetail(choice)
               : `${holding.heading} for ${holding.name}: right-click the item on the Equipment tab.`,
           effect:
             "The character is incomplete, and no benefits from this selection apply until it is resolved.",

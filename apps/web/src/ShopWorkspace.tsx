@@ -814,7 +814,10 @@ export function ShopWorkspace({
   const currentItemChoiceHeading =
     currentItemChoicePage === undefined
       ? undefined
-      : itemChoiceHeading(currentItemChoicePage.slot);
+      : itemChoiceHeading(
+          currentItemChoicePage.slot,
+          currentItemChoicePage.candidates,
+        );
 
   const renderRow = (
     entity: ContentEntity,

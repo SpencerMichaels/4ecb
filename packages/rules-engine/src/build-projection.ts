@@ -20,6 +20,11 @@ import type {
   EvaluatedChoice,
   EvaluationInput,
 } from "./evaluator";
+import {
+  choiceHeading,
+  choiceName,
+  type ChoiceWordingCandidate,
+} from "./choice-wording";
 import { parseRules } from "./ir";
 import {
   inventoryWornSymbolEntryId,
@@ -111,35 +116,22 @@ export function itemChoiceSlots(
   });
 }
 
-/**
- * What an item-owned choice asks for, as the player reads it: the select's
- * authored label without its leading "Choose" ("Resistance Type"), else its
- * select type. "Class Feature" is only the content's internal category for
- * an item's own options (Armor of Adaptable Resistance, Harper Pin), so an
- * unlabeled one reads "Option".
- */
+/** What an item-owned choice asks for ("Resistance Type", "Damage Type",
+ * "Option"): `choiceName` over the slot and its candidates. */
 export function itemChoiceName(
   slot: Pick<ItemChoiceSlot, "type" | "label">,
+  candidates: readonly ChoiceWordingCandidate[] = [],
 ): string {
-  const label = slot.label?.trim().replace(/^choose\s+/i, "");
-  if (label !== undefined && label !== "") return label;
-  return slot.type.trim().toLocaleLowerCase() === "class feature"
-    ? "Option"
-    : slot.type.trim();
+  return choiceName(slot, candidates);
 }
 
-/** A slot's heading and menu wording: its authored label ("Choose
- * Resistance Type") or "Choose <type>" ("Choose an option" for an unlabeled
- * Class Feature select). */
+/** A slot's heading and menu wording ("Choose Resistance Type", "Choose a
+ * damage type", "Choose an option"): `choiceHeading`. */
 export function itemChoiceHeading(
   slot: Pick<ItemChoiceSlot, "type" | "label">,
+  candidates: readonly ChoiceWordingCandidate[] = [],
 ): string {
-  const label = slot.label?.trim();
-  if (label !== undefined && label !== "") return label;
-  const name = itemChoiceName(slot);
-  return name === "Option"
-    ? "Choose an option"
-    : `Choose ${name.toLocaleLowerCase()}`;
+  return choiceHeading(slot, candidates);
 }
 
 /** The player-facing message for an item's unresolved own choice:
@@ -147,8 +139,9 @@ export function itemChoiceHeading(
 export function itemChoiceRequiredMessage(
   slot: Pick<ItemChoiceSlot, "type" | "label">,
   itemName: string,
+  candidates: readonly ChoiceWordingCandidate[] = [],
 ): string {
-  return `${itemChoiceHeading(slot)} for ${itemName}.`;
+  return `${choiceHeading(slot, candidates)} for ${itemName}.`;
 }
 
 interface ChildAssignment {

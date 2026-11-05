@@ -473,6 +473,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "dv|1|wrist razors on the arms (d101)": auto(
     "DV's loadout has the wrist razors in Arms and the longsword in Main hand.",
   ),
+  "sylestine|1|hybrid talent's open choice wording": auto(
+    "The Build tab heads the feat's feature choice “Hybrid Talent”; opened, its issue is “Level 4 Hybrid Talent” — “Choose an option for Hybrid Talent.”",
+  ),
   "zilvra|0|armor of resistance's damage type from the equipment tab": auto(
     'The "Leather Armor of Resistance +2: Resistance Type" issue reviews to the Equipment tab.',
   ),
@@ -513,6 +516,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "Ritual cost is 100% without the feat and 50% with Secret Formularies.",
   ),
   "general|2|starting gold": auto("A new native character carries 100 gp."),
+  "general|2|item choices named from their options": auto(
+    "Armor of Adaptable Resistance +1's choice reads “Choose a damage type” and Harper Pin (heroic tier)'s “Choose a power” (Shop pages and Equipment menu wording).",
+  ),
   "general|2|theme-power reason": auto(
     "The theme-power restriction's reason sentence.",
   ),

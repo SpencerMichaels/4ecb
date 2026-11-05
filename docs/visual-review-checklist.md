@@ -660,3 +660,31 @@ automatically; fit is measured in the browser, so only these are yours.
     as active.
   - The footer follows the dialog contract: Cancel, Keep both, then Replace
     them as the red (overwriting) action on the right.
+
+## Pass 18: Open-choice wording
+
+The wording itself (issue titles and details, Build headings, the Shop and
+Equipment headings for Armor of Adaptable Resistance and Harper Pin) is
+checked by `review:verify` and unit tests. Only fit and legibility are left.
+
+- [ ] **Issue rows and Build headings name the feature, not "Class Feature".**
+  - **Where:** a new fighter at level 1, Build tab, with Fighting Style
+    left open; then its status badge's issue list. Also `sylestine` →
+    `edit?tab=build&level=4&section=feats` (Hybrid Talent). Light and dark
+    theme, 100% and 140% zoom.
+  - **Expect:** the section and its option table are headed by the
+    feature ("Hybrid Talent", "Fighting Style"), the option column by
+    what is chosen ("Option", "Damage Type", "Ability Score"), and the
+    issue reads "Level N Fighting Style" with "Choose an option for
+    Fighting Style." under it, wrapping cleanly.
+  - **Wrong if:** any heading, column or issue still says "Class Feature",
+    "Racial Trait" or "CountsAsRace", or a longer detail line is clipped or
+    overflows its row.
+- [ ] **Item choice headings.**
+  - **Where:** Shop, buy Armor of Adaptable Resistance +1 and a Harper Pin
+    (heroic tier); then in Inventory right-click each.
+  - **Expect:** the Shop's choice page is headed "Choose a damage type" /
+    "Choose a power"; the right-click menu offers "Choose a damage type…" /
+    "Choose a power…"; both fit at 140% zoom and read in dark theme.
+  - **Wrong if:** "Choose an option" or "class feature" appears, or the
+    menu item is clipped.
