@@ -66,6 +66,21 @@ describe("familiar card", () => {
     expect(html).not.toContain("A helpful spirit.");
   });
 
+  it("renders each benefit paragraph as its own paragraph", () => {
+    const html = renderToStaticMarkup(
+      <FamiliarCard
+        card={{
+          ...card,
+          activeBenefits:
+            "Independent Spirit: No range limit.\nSilent Predator: +5 to Stealth.",
+        }}
+      />,
+    );
+    expect(html).toContain(
+      '<p class="prose-paragraph">Independent Spirit: No range limit.</p><p class="prose-paragraph">Silent Predator: +5 to Stealth.</p>',
+    );
+  });
+
   it("prints a split familiar as a stats card and a notes card", () => {
     const stats = renderToStaticMarkup(
       <FamiliarCard card={{ ...card, part: "stats" }} />,

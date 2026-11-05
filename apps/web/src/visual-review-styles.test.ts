@@ -112,6 +112,21 @@ describe("visual-review facts decided by CSS", () => {
     ).toContain("content: none");
   });
 
+  it("sets each paragraph of a familiar or beast section on its own line", () => {
+    // Outranks `.print-card-body .prose-blocks, … .prose-paragraph` (0,2,0),
+    // whose inline flow ran the Cat's two benefits together.
+    expect(
+      declarations(
+        ".print-familiar-card .print-familiar-section .prose-blocks",
+      ),
+    ).toContain("display: grid");
+    expect(
+      declarations(
+        ".print-familiar-card .print-familiar-section .prose-paragraph",
+      ),
+    ).toContain("display: block");
+  });
+
   it("sizes a familiar card's notes and tiles from its body text size", () => {
     expect(declarations(".print-familiar-card .print-play-note")).toContain(
       "font-size: var(--print-card-body-size, 8pt)",

@@ -3842,6 +3842,14 @@ with the flavor text preference (`HideFlavortextContext`); printed cards
 stay mechanics only. Associates show no description; a creature's pane
 keeps its whole description in the body, because it carries rules tables
 (a mount's load table) as well as prose.
+Same day (owner report, the Cat familiar): each paragraph of a familiar's
+benefit or a beast's trait ("Independent Spirit: …" then "Silent Predator:
+…", stored one per line in the record) is its own line on both surfaces;
+the card body's inline flow for power text had run them together. 81 of
+the 104 familiars have such multi-paragraph benefits, and one beast (the
+Horse). With the extra lines, 98 familiars fit one card at 6–8 pt (the
+Arcane Wisp at 7.5 pt) and Wrab joins the five that split, every half
+still fitting.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

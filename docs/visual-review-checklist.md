@@ -170,7 +170,8 @@ live site.
   - **Expect:** the Defense tiles on one row and HP and Speed side by side
     beneath them, Speed about three times as wide; the tiles, rules note and
     benefits shrunk together to fit; benefit headings in the card colour;
-    no description (mechanics only, D110); everything inside the card, with
+    each benefit paragraph on its own line ("Wisp's Escape: …" never runs
+    into the next sentence); no description (mechanics only, D110); everything inside the card, with
     no red "Text exceeds card" outline. No review character has a familiar
     long enough to split; to see one, pick Hurrum (Dark Sun) as a familiar:
     it prints as "Hurrum" (tiles, senses, rules line) then "Hurrum — Notes"

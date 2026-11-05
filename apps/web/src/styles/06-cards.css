@@ -1022,6 +1022,18 @@
 .print-familiar-section :is(p, ul) {
   margin: 0;
 }
+/* Each paragraph of a section's text (a familiar's "Independent Spirit: …"
+   then "Silent Predator: …", a beast's traits) is its own line on both
+   surfaces: the card body's inline flow for power text would run them
+   together. */
+.print-familiar-card .print-familiar-section .prose-blocks {
+  display: grid;
+  gap: 0;
+}
+.print-familiar-card .print-familiar-section .prose-paragraph {
+  display: block;
+  text-indent: 0;
+}
 /* Beast companion: the familiar card's frame with a full stat block. The
    printed card's notes shrink with its body text like a power card's, and
    a condensed card closes up its blocks, so the stat block fits one card. */
