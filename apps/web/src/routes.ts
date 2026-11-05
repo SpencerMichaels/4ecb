@@ -124,12 +124,27 @@ function includesValue<T extends string>(
   return value !== null && values.some((candidate) => candidate === value);
 }
 
+/**
+ * The `tab=` slug a workspace shows in the URL: the visible tab name. The
+ * equipment workspace is two tabs, Inventory and Loadout.
+ */
+function builderTabSlug(navigation: BuilderNavigation): string {
+  if (navigation.workspace === "equipment")
+    return navigation.loadout === true ? "loadout" : "inventory";
+  return navigation.workspace;
+}
+
 function parseBuilderNavigation(query: string): BuilderNavigation {
   const parameters = new URLSearchParams(query);
   const requestedWorkspace = parameters.get("tab");
+  if (requestedWorkspace === "inventory") return { workspace: "equipment" };
+  if (requestedWorkspace === "loadout")
+    return { workspace: "equipment", loadout: true };
   const workspace = includesValue(BUILDER_WORKSPACES, requestedWorkspace)
     ? requestedWorkspace
     : "build";
+  // `tab=equipment` (optionally `loadout=1` or an old `section`) is the URL
+  // from before the Inventory/Loadout slugs; it canonicalizes to them.
   if (workspace === "equipment") {
     const section = parameters.get("section");
     if (section === "shop") return { workspace: "shop", category: "items" };
@@ -224,7 +239,7 @@ export function characterEditorHash(
   characterId: string,
   navigation: BuilderNavigation,
 ): string {
-  const parameters = new URLSearchParams({ tab: navigation.workspace });
+  const parameters = new URLSearchParams({ tab: builderTabSlug(navigation) });
   if (navigation.workspace === "build") {
     if (navigation.level !== undefined)
       parameters.set("level", String(navigation.level));
@@ -233,8 +248,6 @@ export function characterEditorHash(
   } else if (navigation.workspace === "retraining") {
     if (navigation.level !== undefined)
       parameters.set("level", String(navigation.level));
-  } else if (navigation.workspace === "equipment") {
-    if (navigation.loadout === true) parameters.set("loadout", "1");
   } else if (
     navigation.workspace === "shop" ||
     navigation.workspace === "rituals"

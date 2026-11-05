@@ -68,8 +68,8 @@ A path such as `beatrix` → `edit?tab=build&level=1&section=class` means
 `#/characters/visual-review-beatrix/edit?tab=build&level=1&section=class`;
 `beatrix` → `?preview=1` is its print preview, and `beatrix` → `sheet` is
 `#/characters/visual-review-beatrix`. Builder tabs, left to right: Build,
-Details, Loadout, Inventory (route `tab=equipment`), Shop, Rituals,
-Retraining. The theme is Settings → Display → Color theme.
+Details, Loadout, Inventory, Shop, Rituals, Retraining (each `tab=` slug is
+the tab name in lower case). The theme is Settings → Display → Color theme.
 
 The passes run the native review characters first, then the imported player
 saves (one print preview each), then the library, new characters, and the
@@ -141,7 +141,7 @@ live site.
   - **Wrong if:** More… floats right or overlaps the text, or the gaps are
     uneven.
 - [ ] **Gnome wizard: Wield when Small.**
-  - **Where:** Shop → buy a Longsword; then Inventory (`edit?tab=equipment`)
+  - **Where:** Shop → buy a Longsword; then Inventory (`edit?tab=inventory`)
     and right-click it.
   - **Expect:** no "Wield two-handed" item: the Longsword behaves like any
     other weapon (the browser's own menu opens), and wielding it fills both
@@ -197,7 +197,7 @@ live site.
 ## Pass 7: Drow invoker 11 (`invoker-drow`)
 
 - [ ] **Drow invoker: Equipment and Shop.**
-  - **Where:** `edit?tab=equipment`, select the Scarf of Reconciliation +2
+  - **Where:** `edit?tab=inventory`, select the Scarf of Reconciliation +2
     and look at its Caelynnvala's Boons card. Then in the Shop buy a
     Siberys Shard of Merciless Cold (heroic tier), a Longsword, Armor of
     Adaptable Resistance +1 and a Harper Pin (heroic tier), looking at the
@@ -247,7 +247,7 @@ live site.
     band, the table opens a row or two off, or a paged list opens on a page
     without the pick.
 - [ ] **Arena fighter: mounts in item detail.**
-  - **Where:** `edit?tab=equipment`, select the Silver Dragon Steed, then the
+  - **Where:** `edit?tab=inventory`, select the Silver Dragon Steed, then the
     Warhorse; then in the Shop select a Kank (a Dark Sun mount).
   - **Expect:** under each item card, the creature's dark panel card with the
     print card's tiles and entries, the Warhorse's load table, the Kank's

@@ -155,7 +155,7 @@ const reviews: ReviewCharacter[] = [
       },
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "Superior implements",
@@ -393,7 +393,7 @@ const reviews: ReviewCharacter[] = [
       },
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "Holy symbol slot",
@@ -686,7 +686,7 @@ const reviews: ReviewCharacter[] = [
       },
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "Gnome wizard: Wield when Small",
@@ -851,7 +851,7 @@ const reviews: ReviewCharacter[] = [
       })),
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [["A free item appears", "Poison doses (Poison Use gift)."]],
       },
       {
@@ -1145,7 +1145,7 @@ const reviews: ReviewCharacter[] = [
       },
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "Drow invoker: Equipment and Shop",
@@ -1287,7 +1287,7 @@ const reviews: ReviewCharacter[] = [
     links: [
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "Arena fighter: mounts in item detail",
@@ -1475,7 +1475,7 @@ const reviews: ReviewCharacter[] = [
       },
       {
         label: "Equipment",
-        path: "tab=equipment",
+        path: "tab=inventory",
         items: [
           [
             "A free item appears",
@@ -1644,7 +1644,7 @@ const reviews: ReviewCharacter[] = [
           },
           {
             label: "Equipment",
-            path: "tab=equipment",
+            path: "tab=inventory",
             items: [
               [
                 "Wrist razors on the arms",
@@ -1666,7 +1666,7 @@ const reviews: ReviewCharacter[] = [
         links: [
           {
             label: "Equipment",
-            path: "tab=equipment",
+            path: "tab=inventory",
             items: [
               [
                 "Armor of Resistance's damage type",
@@ -1695,7 +1695,7 @@ const reviews: ReviewCharacter[] = [
         links: [
           {
             label: "Equipment",
-            path: "tab=equipment",
+            path: "tab=inventory",
             items: [
               [
                 "Holy symbol slot",
@@ -1812,7 +1812,7 @@ const reviews: ReviewCharacter[] = [
         links: [
           {
             label: "Equipment",
-            path: "tab=equipment",
+            path: "tab=inventory",
             items: [
               ["Wallet at a lowered level", "The wallet reads 1 pp; 48 gp."],
             ],
@@ -1827,7 +1827,7 @@ const reviews: ReviewCharacter[] = [
         links: [
           {
             label: "Equipment",
-            path: "tab=equipment",
+            path: "tab=inventory",
             items: [["Wallet at a lowered level", "The wallet reads 786 gp."]],
           },
         ],

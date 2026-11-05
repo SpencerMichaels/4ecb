@@ -370,10 +370,10 @@ async function runScenario(client, origin, fixture, outputDirectory, runIndex) {
     client,
     `document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Overview") && document.querySelector(".build-overview")`,
   );
-  await setHash(client, `#/characters/${id}/edit?tab=equipment`);
+  await setHash(client, `#/characters/${id}/edit?tab=inventory`);
   await waitForExpression(
     client,
-    `document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Equipment") && document.querySelector(".inventory-table")`,
+    `document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Inventory") && document.querySelector(".inventory-table")`,
   );
   if (runIndex === 0) {
     await screenshot(client, join(outputDirectory, "inventory.png"));
@@ -420,10 +420,10 @@ async function runScenario(client, origin, fixture, outputDirectory, runIndex) {
     client,
     `location.hash.includes("tab=overview") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Overview")`,
   );
-  await setHash(client, `#/characters/${id}/edit?tab=equipment`);
+  await setHash(client, `#/characters/${id}/edit?tab=inventory`);
   await waitForExpression(
     client,
-    `location.hash.includes("tab=equipment") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Equipment")`,
+    `location.hash.includes("tab=inventory") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Inventory")`,
   );
   await evaluate(client, `history.back()`);
   await waitForExpression(
@@ -433,7 +433,7 @@ async function runScenario(client, origin, fixture, outputDirectory, runIndex) {
   await evaluate(client, `history.forward()`);
   await waitForExpression(
     client,
-    `location.hash.includes("tab=equipment") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Equipment")`,
+    `location.hash.includes("tab=inventory") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Inventory")`,
   );
 
   if (runIndex === 0) {

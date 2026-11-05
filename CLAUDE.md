@@ -253,7 +253,7 @@ build`), and is stored as normalized fields or IR in the pack; the app and
 
 Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 `#/characters` (library), `#/characters/:id/edit?…` (builder workspaces:
-build/retraining/details/equipment[+loadout]/shop/diagnostics/house-rules via query;
+`tab=` build/details/loadout/inventory/shop/rituals/retraining/diagnostics/house-rules, each slug the visible tab name; old `tab=equipment[&loadout=1]` canonicalizes to inventory/loadout;
 Diagnostics and House rules open from the status badges, Overview is gone), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
 for the per-character sheet layout: right-click hide/show and drag-to-reorder on cards

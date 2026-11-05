@@ -154,6 +154,46 @@ describe("hash routes", () => {
     });
   });
 
+  it("names each builder tab's URL slug after the visible tab", () => {
+    const slugs = [
+      [{ workspace: "build" as const }, "build"],
+      [{ workspace: "details" as const }, "details"],
+      [{ workspace: "equipment" as const, loadout: true }, "loadout"],
+      [{ workspace: "equipment" as const }, "inventory"],
+      [{ workspace: "shop" as const }, "shop"],
+      [{ workspace: "rituals" as const }, "rituals"],
+      [{ workspace: "retraining" as const }, "retraining"],
+      [{ workspace: "diagnostics" as const }, "diagnostics"],
+      [{ workspace: "house-rules" as const }, "house-rules"],
+    ] as const;
+    for (const [navigation, slug] of slugs)
+      expect(characterEditorHash("one", navigation)).toBe(
+        `#/characters/one/edit?tab=${slug}`,
+      );
+    expect(parseHashRoute("#/characters/one/edit?tab=inventory")).toEqual({
+      page: "characters",
+      characterId: "one",
+      mode: "edit",
+      builder: { workspace: "equipment" },
+    });
+    expect(parseHashRoute("#/characters/one/edit?tab=loadout")).toMatchObject({
+      builder: { workspace: "equipment", loadout: true },
+    });
+    // Bookmarks from before the slugs were renamed still open the right tab.
+    expect(canonicalHashRedirect("#/characters/one/edit?tab=equipment")).toBe(
+      "#/characters/one/edit?tab=inventory",
+    );
+    expect(
+      canonicalHashRedirect("#/characters/one/edit?tab=equipment&loadout=1"),
+    ).toBe("#/characters/one/edit?tab=loadout");
+    expect(
+      canonicalHashRedirect("#/characters/one/edit?tab=loadout"),
+    ).toBeUndefined();
+    expect(
+      canonicalHashRedirect("#/characters/one/edit?tab=inventory&loadout=1"),
+    ).toBe("#/characters/one/edit?tab=inventory");
+  });
+
   it("falls back safely from invalid and inapplicable editor values", () => {
     expect(
       parseHashRoute(
@@ -169,7 +209,7 @@ describe("hash routes", () => {
       canonicalHashRedirect(
         "#/characters/one/edit?tab=equipment&section=unknown",
       ),
-    ).toBe("#/characters/one/edit?tab=equipment");
+    ).toBe("#/characters/one/edit?tab=inventory");
     expect(
       parseHashRoute("#/characters/one/edit?tab=equipment&section=practices"),
     ).toMatchObject({
@@ -190,12 +230,12 @@ describe("hash routes", () => {
       canonicalHashRedirect(
         "#/characters/one/edit?tab=equipment&section=inventory",
       ),
-    ).toBe("#/characters/one/edit?tab=equipment");
+    ).toBe("#/characters/one/edit?tab=inventory");
     expect(
       canonicalHashRedirect(
         "#/characters/one/edit?tab=equipment&section=loadout",
       ),
-    ).toBe("#/characters/one/edit?tab=equipment&loadout=1");
+    ).toBe("#/characters/one/edit?tab=loadout");
   });
 
   it("pushes major destinations, restores them Back/Forward, and deduplicates synchronization", () => {
