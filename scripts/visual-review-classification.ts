@@ -176,6 +176,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "wizard-gnome|6|learn x free dialog": auto(
     "The wizard's Spellbook is one allowance (no dialog); with a psion's allowance beside it, Tenser's Floating Disk fits both, so Learn free asks.",
   ),
+  "wizard-gnome|7|gnome wizard: wield when small": auto(
+    'A Small character\'s versatile Longsword has no "Wield two-handed" menu item and fills both hands; a Medium character keeps the toggle.',
+  ),
   "wizard-gnome|7|a free item appears": auto(
     "The Spellbook gift is in the inventory and has a sheet item card.",
   ),
