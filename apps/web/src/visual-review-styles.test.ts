@@ -84,10 +84,48 @@ describe("visual-review facts decided by CSS", () => {
     );
   });
 
-  it("gives a familiar card's Speed tile three times the HP tile's width", () => {
-    expect(declarations(".print-familiar-row")).toContain(
-      "grid-template-columns: 1fr 3fr",
+  it("puts a familiar card's HP and Speed tiles on one row, Speed three times wider", () => {
+    // Must outrank `.print-card-body > div:not(…):not(…)` (0,3,1), which
+    // flows a card body's direct divs inline and would stack the tiles.
+    const row = declarations(
+      ".print-familiar-card .print-card-body > div.print-familiar-row",
     );
+    expect(row).toContain("display: grid");
+    expect(row).toContain("grid-template-columns: 1fr 3fr");
+    expect(
+      declarations(
+        ".print-familiar-card .print-card-body > div.print-familiar-row::after",
+      ),
+    ).toContain("content: none");
+  });
+
+  it("sizes a familiar card's notes and tiles from its body text size", () => {
+    expect(declarations(".print-familiar-card .print-play-note")).toContain(
+      "font-size: var(--print-card-body-size, 8pt)",
+    );
+    expect(
+      declarations(".print-familiar-card .print-play-body .stat-group"),
+    ).toContain("font-size: calc(var(--print-card-body-size, 8pt) * 0.75)");
+  });
+
+  it("tints panel cards' stat tiles over the dark card paper in dark theme", () => {
+    for (const root of [
+      ':root[data-theme="dark"]',
+      ":root:not([data-theme])",
+    ]) {
+      const group = declarations(
+        `${root} .print-reference-card.is-panel .stat-group`,
+      );
+      expect(group).toContain(
+        "--stat-tint: color-mix(in srgb, var(--stat-hue) 24%, var(--card-paper))",
+      );
+      expect(group).toContain(
+        "--stat-edge: color-mix(in srgb, var(--stat-hue) 60%, var(--card-paper))",
+      );
+      expect(
+        declarations(`${root} .print-reference-card.is-panel .stat-tile dd`),
+      ).toContain("color: var(--card-ink)");
+    }
   });
 
   it("sizes the Party pieces box about five characters wide beside its label", () => {

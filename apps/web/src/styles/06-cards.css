@@ -747,6 +747,17 @@
     tr:nth-child(even) {
     background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   }
+  /* Stat tiles (familiar, beast, associate, creature) take each group's
+     tint and edge from its hue over the dark card paper, like the builder
+     sidebar's tiles, with light values. */
+  :root[data-theme="dark"] .print-reference-card.is-panel .stat-group {
+    --stat-accent: color-mix(in srgb, var(--stat-hue) 45%, white);
+    --stat-edge: color-mix(in srgb, var(--stat-hue) 60%, var(--card-paper));
+    --stat-tint: color-mix(in srgb, var(--stat-hue) 24%, var(--card-paper));
+  }
+  :root[data-theme="dark"] .print-reference-card.is-panel .stat-tile dd {
+    color: var(--card-ink);
+  }
 }
 @media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme]) .print-reference-card.is-panel {
@@ -787,6 +798,17 @@
     tbody
     tr:nth-child(even) {
     background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
+  }
+  /* Stat tiles (familiar, beast, associate, creature) take each group's
+     tint and edge from its hue over the dark card paper, like the builder
+     sidebar's tiles, with light values. */
+  :root:not([data-theme]) .print-reference-card.is-panel .stat-group {
+    --stat-accent: color-mix(in srgb, var(--stat-hue) 45%, white);
+    --stat-edge: color-mix(in srgb, var(--stat-hue) 60%, var(--card-paper));
+    --stat-tint: color-mix(in srgb, var(--stat-hue) 24%, var(--card-paper));
+  }
+  :root:not([data-theme]) .print-reference-card.is-panel .stat-tile dd {
+    color: var(--card-ink);
   }
 }
 
@@ -964,10 +986,30 @@
   display: flex;
   gap: 0.04in;
 }
-.print-familiar-row {
+/* HP and Speed share one row on both surfaces. The selector outranks the
+   card body's inline text flow for its direct divs (and their line-break
+   ::after), which would otherwise stack the two tiles. */
+.print-familiar-card .print-card-body > div.print-familiar-row {
   display: grid;
   gap: 0.045in;
   grid-template-columns: 1fr 3fr;
+}
+.print-familiar-card .print-card-body > div.print-familiar-row::after {
+  content: none;
+}
+/* The rules note and senses read at the card's body size, and shrink with
+   it when a printed card is fitted. */
+.print-familiar-card .print-play-note {
+  font-size: var(--print-card-body-size, 8pt);
+}
+/* Its tiles scale with the body text too (6pt at the 8pt default), so a
+   fitted printed card shrinks them along with its benefits; a condensed
+   card closes up its blocks like the beast card. */
+.print-familiar-card .print-play-body .stat-group {
+  font-size: calc(var(--print-card-body-size, 8pt) * 0.75);
+}
+.print-familiar-card.is-condensed .print-play-body {
+  gap: 0.025in;
 }
 .print-familiar-rules {
   font-style: italic;

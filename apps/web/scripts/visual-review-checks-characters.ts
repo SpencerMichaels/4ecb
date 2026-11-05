@@ -2530,6 +2530,13 @@ rule("warlock-fey", "Print preview", "Familiar card", (c) => {
   return [
     ...checks,
     contains('Speed "fly 8 (hover)"', card?.text ?? "", "fly 8 (hover)"),
+    truthy(
+      "HP and Speed tiles share one row",
+      /<div class="print-familiar-row"><section aria-label="Health"[^]*?<\/section><section aria-label="Speed"[^]*?<\/section><\/div>/.test(
+        card?.html ?? "",
+      ),
+      "print-familiar-row: Health, Speed",
+    ),
     contains("The rules line", card?.text ?? "", FAMILIAR_RULES_REMINDER),
     truthy(
       "Hide flavor text drops the description",

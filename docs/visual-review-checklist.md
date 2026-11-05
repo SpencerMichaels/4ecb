@@ -29,8 +29,8 @@ reports 38 owner rows. What moved to code:
   `CandidateDetail.test.ts`; the pre-scroll arithmetic by
   `CandidateSelectionTable.prescroll.test.tsx`; the creature split's shared
   layout key by `creature-card.test.ts`; the CSS facts (selected-row bar,
-  square count tag, role placeholder, familiar tile widths, Party pieces
-  box) by `visual-review-styles.test.ts`.
+  square count tag, role placeholder, familiar tile row and sizes,
+  panel tiles' dark tints, Party pieces box) by `visual-review-styles.test.ts`.
 - Dropped: the White Well summoned allies' "Unarmed row / Back to the Wall"
   question (their attacks now print on creature cards, D111, with neither),
   the Sprite familiar's two checks (same component and colours as the
@@ -154,14 +154,22 @@ live site.
 - [ ] **Fey warlock: Arcane Wisp in the builder.**
   - **Where:** `edit?tab=build&level=11&section=feats`, Arcane Familiar's
     familiar row (Arcane Wisp).
-  - **Expect:** in dark theme a dark navy card with light text.
-  - **Wrong if:** the card stays white in dark theme, or text is unreadable.
+  - **Expect:** in dark theme a dark navy card with light text; the
+    Defense, HP and Speed tiles dark tinted (green, purple, teal) with light
+    numbers; HP and Speed side by side on one row; the italic rules note ("A
+    missed attack never damages it…") as large as the benefit text below it.
+  - **Wrong if:** the card stays white in dark theme, a tile is bright or its
+    number hard to read, HP sits above Speed, or the rules note is smaller
+    than the benefit text.
 - [ ] **Fey warlock: printed Arcane Wisp card.**
   - **Where:** `?preview=1`, first card page, the 3rd card.
-  - **Expect:** the Defense, HP and Speed tiles side by side; benefit
-    headings in the card colour; everything inside the card.
-  - **Wrong if:** text runs past the card's bottom, the text is much smaller
-    than on the neighbouring cards, or a tile overflows.
+  - **Expect:** the Defense tiles on one row and HP and Speed side by side
+    beneath them, Speed about three times as wide; the tiles, rules note and
+    benefits shrunk together to fit; benefit headings in the card colour;
+    everything inside the card, with no red "Text exceeds card" outline.
+  - **Wrong if:** text runs past the card's bottom, HP sits above Speed, the
+    text is much smaller than on the neighbouring cards, or a tile's number
+    is cut off.
 
 ## Pass 5: Beast Mastery ranger 11 (`ranger-beast`)
 
