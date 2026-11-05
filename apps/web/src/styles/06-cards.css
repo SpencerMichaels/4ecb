@@ -498,6 +498,10 @@
   > div {
   padding: 0.25rem 0.55rem;
 }
+/* The item stat rows share the bands' panel-scale inset (0.035in in print). */
+.print-reference-card.is-panel .print-item-stat-row {
+  padding: 0.25rem 0.55rem;
+}
 .print-reference-card.is-panel .print-card-combat-band:not(.is-secondary) {
   margin: 0 -0.55rem;
 }

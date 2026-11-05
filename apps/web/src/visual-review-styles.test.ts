@@ -178,4 +178,14 @@ describe("visual-review facts decided by CSS", () => {
       ),
     ).toContain("-webkit-appearance: none");
   });
+
+  it("insets panel item stat rows like the panel's other bands", () => {
+    const band = declarations(
+      ".print-reference-card.is-panel .print-card-keyword-band, .print-reference-card.is-panel .print-card-action-band > span, .print-reference-card.is-panel .print-card-combat-band:not(.is-secondary) > div",
+    );
+    expect(band).toContain("padding: 0.25rem 0.55rem");
+    expect(
+      declarations(".print-reference-card.is-panel .print-item-stat-row"),
+    ).toContain("padding: 0.25rem 0.55rem");
+  });
 });
