@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
   applyFieldOverlays,
+  contentWithLocalEntities,
   evaluatePowers,
   previewBeastCompanion,
   projectBuildForEvaluation,
@@ -126,13 +127,13 @@ export function evaluatedBuilderCardSettings(
     projectBuildForLegacyExport(build),
     entities,
   );
-  // The content array itself unless the build adds records (user edits), so
-  // the rules engine's per-content indexes are built once per pack, not per
-  // character state.
-  const evaluationEntities =
-    (input.localEntities ?? []).length === 0
-      ? entities
-      : [...entities, ...(input.localEntities ?? [])];
+  // The content array itself, or the same combined array while the build's
+  // records (user edits) are unchanged, so the rules engine's per-content
+  // indexes are built once per content, not per character state.
+  const evaluationEntities = contentWithLocalEntities(
+    entities,
+    input.localEntities ?? [],
+  );
   // Built only for a companion's card: every detail card asks for one.
   let rulesIndex: ReturnType<typeof sharedRulesIndex> | undefined;
   const content = () => (rulesIndex ??= sharedRulesIndex(evaluationEntities));

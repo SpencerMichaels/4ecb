@@ -1,5 +1,5 @@
 import type { EquipmentSlotAssignment } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentCache, type ContentEntity } from "@4ecb/content-domain";
 
 import {
   equipmentPredicate,
@@ -428,6 +428,37 @@ export function sharedRulesIndex(
   const created = new RulesIndex(entities);
   sharedRulesIndexCache.set(entities, created);
   return created;
+}
+
+/** Combined content arrays kept per content: a session edits one or two
+ * characters with user edits at a time. */
+const LOCAL_CONTENT_KEPT = 4;
+
+const localContentArrays = contentCache(
+  "content-with-local-records",
+  () => new Map<string, readonly ContentEntity[]>(),
+);
+
+/**
+ * The content plus a character's local records (its user edits): the same
+ * array for the same records, so the per-content caches (rules index,
+ * powers lookups) hold across that character's evaluations instead of
+ * being rebuilt over the whole pack for each one.
+ */
+export function contentWithLocalEntities(
+  entities: readonly ContentEntity[],
+  localEntities: readonly ContentEntity[],
+): readonly ContentEntity[] {
+  if (localEntities.length === 0) return entities;
+  const kept = localContentArrays(entities);
+  const signature = JSON.stringify(localEntities);
+  let combined = kept.get(signature);
+  if (combined === undefined) {
+    combined = [...entities, ...localEntities];
+    kept.set(signature, combined);
+    if (kept.size > LOCAL_CONTENT_KEPT) kept.delete(kept.keys().next().value!);
+  }
+  return combined;
 }
 
 const prerequisiteSnapshotCaches = new WeakMap<
@@ -1144,12 +1175,8 @@ function evaluateCharacterInternal(
   const localEntities = input.localEntities ?? [];
   const evaluationEntities =
     prepared?.evaluationEntities ??
-    (localEntities.length === 0 ? entities : [...entities, ...localEntities]);
-  const index =
-    prepared?.index ??
-    (localEntities.length === 0
-      ? sharedRulesIndex(entities)
-      : new RulesIndex(evaluationEntities));
+    contentWithLocalEntities(entities, localEntities);
+  const index = prepared?.index ?? sharedRulesIndex(evaluationEntities);
   const isSourceEntitled = sourceEntitlementChecker(
     input.sourceEntitlements,
     index,
