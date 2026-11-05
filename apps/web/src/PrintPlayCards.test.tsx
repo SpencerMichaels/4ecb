@@ -4,6 +4,7 @@ import type { CharacterPortrait } from "@4ecb/character-domain";
 import type { CharacterSheetModel } from "@4ecb/sheet-model";
 
 import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
+import { appStyles } from "./test-styles";
 
 const value = (label: string, v: string) => ({ label, value: v });
 const model = {
@@ -88,5 +89,20 @@ describe("printed play-data cards", () => {
     expect(html).toContain(
       '<td class="print-play-skill-ability">CHA</td><td class="print-play-skill-bonus">+7</td>',
     );
+  });
+
+  it("keeps a long name on one line, cut off with its full text as the title", () => {
+    const name = "Pirimelliandra Thistledown of the Seven Hills";
+    const html = renderToStaticMarkup(
+      <PrintCharacterCard model={model} name={name} portrait={undefined} />,
+    );
+    expect(html).toContain(`<h3 title="${name}"><span>${name}</span></h3>`);
+    const rule =
+      /\.print-play-character \.print-play-heading h3 \{([^}]*)\}/.exec(
+        appStyles,
+      )?.[1] ?? "";
+    expect(rule).toMatch(/white-space:\s*nowrap/);
+    expect(rule).toMatch(/text-overflow:\s*ellipsis/);
+    expect(rule).toMatch(/overflow:\s*hidden/);
   });
 });

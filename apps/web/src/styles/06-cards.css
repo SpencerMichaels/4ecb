@@ -862,6 +862,12 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
+  /* One line, cut off with an ellipsis: a long name never pushes the stats
+     off the card. The heading's title keeps the full name. */
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .print-play-identity {
   color: #444;

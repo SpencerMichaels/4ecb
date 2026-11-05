@@ -55,7 +55,7 @@ export function PrintCharacterCard({
             />
           ) : null}
           <div className="print-play-heading">
-            <h3>
+            <h3 title={name}>
               <span>{name}</span>
             </h3>
             {summary ? <p className="print-play-identity">{summary}</p> : null}
