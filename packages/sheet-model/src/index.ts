@@ -117,6 +117,11 @@ export {
   type SheetCreatureEntry,
   type SheetCreatureOrigin,
 } from "./creature-card";
+import { powerVariantLabel } from "./power-variant-label";
+export {
+  NO_IMPLEMENT_ROW_LABEL,
+  powerVariantLabel,
+} from "./power-variant-label";
 export {
   POWER_CARD_BODY_EXCLUDES,
   movementTechniqueOf,
@@ -1098,7 +1103,9 @@ export function createEvaluatedPowerTextPersonalizer(
     );
 }
 
-/** A power card's label for one of its rows: the holding's name. */
+/** A power card's label for one of its rows: the holding's name (an
+ *  implement power's Unarmed row reads "No implement",
+ *  {@link powerVariantLabel}). */
 function powerVariantName(
   power: EvaluatedPower,
   inventoryNames: ReadonlyMap<string, string>,
@@ -1112,11 +1119,15 @@ function powerVariantName(
     ]),
   );
   return (variant) =>
-    (variant.equipmentId === undefined
-      ? undefined
-      : inventoryNames.get(variant.equipmentId)) ??
-    legacyVariantNames.get(variant.id) ??
-    variant.equipmentName;
+    powerVariantLabel(
+      power,
+      variant,
+      (variant.equipmentId === undefined
+        ? undefined
+        : inventoryNames.get(variant.equipmentId)) ??
+        legacyVariantNames.get(variant.id) ??
+        variant.equipmentName,
+    );
 }
 
 function evaluatedPowerCards(
@@ -1555,10 +1566,21 @@ function powerCard(
   const authoredAttack =
     field(entity, "Attack") || field(entity, "Primary Attack");
   const powerBonus = Number(authoredAttack.match(/\+\s*(\d+)/)?.[1] ?? 0);
+  // The legacy cache names its no-weapon row "Unarmed" (D111, 2026-11-04).
+  const keywords = {
+    keywords: (field(entity, "Keywords") || (power.keywords ?? "")).split(","),
+  };
   const variants: readonly SheetPowerVariant[] = power.weapons.map(
     (candidate, index) => ({
       id: `${power.id ?? power.name}:weapon-${index}`,
-      equipmentName: candidate.name,
+      equipmentName: powerVariantLabel(
+        keywords,
+        normalize(candidate.name) === "unarmed" &&
+          (candidate.definitionIds?.length ?? 0) === 0
+          ? { id: "", equipmentId: "unarmed" }
+          : { id: "" },
+        candidate.name,
+      ),
       equipped: equippedWeapon(candidate) || candidate === weapon,
       ...(candidate === weapon ? { hand: "main" as const } : {}),
       ...(candidate.attackStat === undefined

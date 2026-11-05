@@ -3984,3 +3984,28 @@ remaining edge case. Considered: inline rows per command (fit through 6
 rows, but drops the power card's table look), one card-level table with a
 column per command (needs new column headings, and commands often share a
 name), merging tied implements (fits nothing on its own).
+
+Amended (2026-11-04, owner decision): **an implement power's no-implement
+row reads "No implement".** The owner's visual review of the Blade Angel
+card: "I'm seeing weapon tables listed for its attacks; but its attacks
+have a fixed damage expression and don't seem to have anything to do with
+the character's weapons." The rows were right: Summon Blade Angel has the
+Implement keyword, you make the attack through the creature (Player's
+Handbook 2, Summoning: "you make an attack through the creature"), the
+Rose Scythe of Chauntea "functions as a staff implement" for a divine
+class, and the damage ("1d8 + Wisdom modifier") takes the implement's
+enhancement. Legacy prints the same rows on implement powers, its last one
+"Unarmed" (Natan 12: "Aversion Accurate staff +3" +18, "Unarmed" +12).
+The owner chose to rename only: "On powers with the Implement keyword
+(summon creature cards and ordinary implement power cards alike), the
+no-implement row reads 'No implement' instead of 'Unarmed'. Weapon-keyword
+powers keep 'Unarmed'", with no "Implement" caption ("the card's keywords
+already have 'implement'"; captions add noise to cluttered cards).
+Presentation only: the engine's row stays "Unarmed" (legacy's name, used
+for parity); sheet-model `powerVariantLabel` relabels it on power cards,
+creature-card command rows, builder panel cards and the legacy-cache sheet,
+and the print table's no-implement tooltip keys on that label. Within the
+decision: a power with both the Weapon and Implement keywords (19 on the
+full pack, e.g. Freezing Swordburst, Soul Cutter, Moonfire Blade) keeps
+"Unarmed", since that row is an unarmed weapon attack. 89 summon powers
+with commands have the Implement keyword, none the Weapon keyword.

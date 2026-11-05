@@ -420,6 +420,63 @@ describe("summoned creature commands (D111)", () => {
     ]);
   });
 
+  it('labels the no-implement row "No implement" (D111, 2026-11-04)', () => {
+    const unarmed = {
+      ...row(`${angel.id}:unarmed`, false, [
+        { ...command, attackBonus: 8, damage: "1d8+4" },
+      ]),
+      equipmentId: "unarmed",
+      equipmentName: "Unarmed",
+    };
+    const card = creatureOf(
+      modelOf(angel, {
+        ...evaluated,
+        variants: [row("rod", true, [command]), unarmed],
+      }),
+    );
+    expect(
+      card?.actions[0]?.variants?.map((variant) => variant.equipmentName),
+    ).toEqual(["rod", "No implement"]);
+  });
+
+  it("labels an implement power card's no-implement row \"No implement\", not a weapon power's", () => {
+    const unarmed = {
+      ...row("ID_TEST_BOLT:unarmed", false, []),
+      equipmentId: "unarmed",
+      equipmentName: "Unarmed",
+    };
+    const labels = (keywords: string) => {
+      const bolt = power("ID_TEST_BOLT", "Synthetic Bolt", {
+        "Power Usage": "At-Will",
+        Keywords: keywords,
+        "Action Type": "Standard Action",
+        "Attack Type": "Ranged 10",
+        Attack: "Wisdom vs. Reflex",
+        Hit: "1d6 + Wisdom modifier damage.",
+      });
+      return modelOf(bolt, {
+        ...evaluated,
+        definitionId: bolt.id,
+        name: bolt.name,
+        keywords: keywords.split(", "),
+        variants: [row("ID_TEST_BOLT:rod", true, []), unarmed],
+      })
+        .powers.find(({ name }) => name === bolt.name)
+        ?.variants?.map((variant) => variant.equipmentName);
+    };
+    expect(labels("Divine, Implement")).toEqual([
+      "ID_TEST_BOLT:rod",
+      "No implement",
+    ]);
+    // A power with the Weapon keyword (alone or with Implement) keeps the
+    // unarmed weapon attack's name.
+    expect(labels("Weapon")).toEqual(["ID_TEST_BOLT:rod", "Unarmed"]);
+    expect(labels("Arcane, Implement, Weapon")).toEqual([
+      "ID_TEST_BOLT:rod",
+      "Unarmed",
+    ]);
+  });
+
   it("lists no implement rows for one row, or rows that all agree", () => {
     const single = creatureOf(
       modelOf(angel, { ...evaluated, variants: [row("rod", true, [command])] }),

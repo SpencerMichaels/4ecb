@@ -1447,7 +1447,7 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
       creature?.text ?? "",
       "Wisdom modifier (+",
     ),
-    // The scythe (equipped), the carried rod and Unarmed: each command
+    // The scythe (equipped), the carried rod and no implement: each command
     // lists its numbers per implement (D111), in place of the one roll.
     ...(card?.actions ?? []).flatMap((entry, index) => {
       const row = summonCommands(c, SUMMON_BLADE_ANGEL)?.find(
@@ -1505,7 +1505,7 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
             entry.name,
             "Rose Scythe of Chauntea",
             "rod of Corruption",
-            "Unarmed",
+            "No implement",
           ],
         ),
       ];
@@ -1516,6 +1516,35 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
         true && card.actions[0].variants[0].damage?.startsWith("1d8+") === true,
       true,
     ),
+    // An Implement power's no-implement row reads "No implement" (D111,
+    // 2026-11-04): on the creature card, on an ordinary implement power's
+    // card, and not on a Weapon power's.
+    lacks(
+      "The creature's rows print no Unarmed row",
+      creature?.text ?? "",
+      "Unarmed",
+    ),
+    ...(() => {
+      const avenging = deck.find(
+        ({ kind, label }) => kind === "power" && label === "Avenging Light",
+      );
+      const basic = deck.find(
+        ({ kind, label }) => kind === "power" && label === "Melee Basic Attack",
+      );
+      return [
+        contains(
+          "Avenging Light (Implement) prints a No implement row",
+          avenging?.text ?? "",
+          "No implement",
+        ),
+        lacks("… and no Unarmed row", avenging?.text ?? "", "Unarmed"),
+        contains(
+          "Melee Basic Attack (Weapon) keeps its Unarmed row",
+          basic?.text ?? "",
+          "Unarmed",
+        ),
+      ];
+    })(),
     lacks(
       "A command's rows print without the weapon table's headings",
       creature?.text ?? "",
@@ -1810,7 +1839,7 @@ rule(
           caption,
           "Accurate orb of Inevitable Continuance +1",
           "Accurate staff of the War Mage +3",
-          "Unarmed",
+          "No implement",
         ],
       ),
       equal(

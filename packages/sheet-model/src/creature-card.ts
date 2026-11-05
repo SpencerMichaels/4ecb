@@ -16,6 +16,7 @@ import {
   type PowerCommand,
   type PowerVariant,
 } from "@4ecb/rules-engine";
+import { powerVariantLabel } from "./power-variant-label";
 
 /**
  * A creature's card (D110): a creature stat block stored on a content record
@@ -285,7 +286,7 @@ export function summonCommandVariants(
         : [
             {
               id: variant.id,
-              equipmentName: name(variant),
+              equipmentName: powerVariantLabel(power, variant, name(variant)),
               equipped: variant.equipped === true,
               ...(variant.hand === undefined ? {} : { hand: variant.hand }),
               commands: variant.commands,

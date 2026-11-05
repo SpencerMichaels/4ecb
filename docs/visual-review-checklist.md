@@ -232,13 +232,16 @@ live site.
     Angel creature card after it, and the Summon Blade Angel power card
     among the daily powers.
   - **Expect:** the familiar card fits like the Arcane Wisp's. On the Blade
-    Angel card each command is followed by its three implement rows,
+    Angel card each command is followed by its three implement rows (Rose
+    Scythe of Chauntea +2, Accurate rod of Corruption +2, No implement),
     without column headings, striped and divided like a power card's weapon
     table. The power card keeps its keyword and action bands and the
-    Effect.
+    Effect. Avenging Light's table also ends in "No implement"; the page-1
+    Melee Basic Attack keeps "Unarmed".
   - **Wrong if:** a card overflows, the rows read as part of the command
     text or as belonging to the next command, the stripes or dividers are
-    missing, or the creature card's text is unreadable at its size.
+    missing, an implement power prints an "Unarmed" row, or the creature
+    card's text is unreadable at its size.
 
 ## Pass 8: Arena fighter 11 (`fighter-arena`)
 

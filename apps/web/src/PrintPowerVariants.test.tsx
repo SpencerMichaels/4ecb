@@ -244,31 +244,31 @@ describe("printed weapon calculation summaries", () => {
   });
 });
 
-describe("implement power Unarmed row", () => {
-  it("explains that Unarmed is the no-implement attack", () => {
-    const variants = [
-      {
-        id: "power:unarmed",
-        equipmentName: "Unarmed",
-        equipped: false,
-        attack: "+9 vs Will",
-        ability: "Wisdom",
-        powerBonus: 0,
-      },
-    ];
+describe("implement power no-implement row", () => {
+  it("explains the No implement row sheet-model labels", () => {
+    const row = {
+      id: "power:unarmed",
+      equipped: false,
+      attack: "+9 vs Will",
+      ability: "Wisdom",
+      powerBonus: 0,
+    };
     const implement = renderToStaticMarkup(
       createElement(PrintPowerVariants, {
-        variants,
+        variants: [{ ...row, equipmentName: "No implement" }],
         attackOrdinals: [1],
-        implementPower: true,
       }),
     );
     expect(implement).toContain('title="No implement:');
-    expect(implement).toContain(">Unarmed</th>");
+    expect(implement).toContain(">No implement</th>");
     const weapon = renderToStaticMarkup(
-      createElement(PrintPowerVariants, { variants, attackOrdinals: [1] }),
+      createElement(PrintPowerVariants, {
+        variants: [{ ...row, equipmentName: "Unarmed" }],
+        attackOrdinals: [1],
+      }),
     );
     expect(weapon).not.toContain("No implement");
+    expect(weapon).toContain(">Unarmed</th>");
   });
 });
 

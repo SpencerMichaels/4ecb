@@ -1,4 +1,8 @@
-import type { SheetPowerAttack, SheetPowerVariant } from "@4ecb/sheet-model";
+import {
+  NO_IMPLEMENT_ROW_LABEL,
+  type SheetPowerAttack,
+  type SheetPowerVariant,
+} from "@4ecb/sheet-model";
 
 import { nameWithBoundEnhancement } from "./print-item-presentation";
 
@@ -104,21 +108,14 @@ function BeastDamage({ variant }: { readonly variant: SheetPowerVariant }) {
   );
 }
 
-const isUnarmed = (variant: SheetPowerVariant) =>
-  variant.id.endsWith(":unarmed") ||
-  variant.equipmentName.trim().toLocaleLowerCase() === "unarmed";
-
 export function PrintPowerVariants({
   variants,
   attackOrdinals,
-  implementPower = false,
   columnHeadings = true,
   caption,
 }: {
   readonly variants: readonly SheetPowerVariant[];
   readonly attackOrdinals: readonly number[];
-  /** On implement powers the Unarmed row is the no-implement attack. */
-  readonly implementPower?: boolean;
   /** False for the rows alone, under a creature's command (D111). */
   readonly columnHeadings?: boolean;
   /** The commands a creature's shared rows serve (D111). */
@@ -204,7 +201,9 @@ export function PrintPowerVariants({
             <tr key={variant.id}>
               <th
                 scope="row"
-                {...(implementPower && isUnarmed(variant)
+                // An implement power's no-implement row (sheet-model
+                // `powerVariantLabel`, D111 2026-11-04).
+                {...(variant.equipmentName === NO_IMPLEMENT_ROW_LABEL
                   ? {
                       title:
                         "No implement: the attack uses none of an implement's bonuses or properties",

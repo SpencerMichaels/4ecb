@@ -1189,7 +1189,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Drow invoker: printed familiar and Blade Angel",
-            "Spiderling of Lolth, Blade Angel and Summon Blade Angel cards: fit, implement rows.",
+            'Spiderling of Lolth, Blade Angel and Summon Blade Angel cards: fit, implement rows (the last "No implement").',
           ],
           [
             "Printed Deity entry",
