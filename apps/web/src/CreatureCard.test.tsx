@@ -11,6 +11,7 @@ import {
 } from "./BuilderCards";
 import { CreatureCard } from "./CreatureCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { ItemCard } from "./ItemCard";
 
 const card: SheetCreatureCard = {
   kind: "creature",
@@ -347,6 +348,23 @@ describe("a mount's item card beside its creature card (D110)", () => {
     const html = pane(true, true);
     expect(html).not.toContain("Ponies are small horses.");
     expect(count(html, "1,000 lb.")).toBe(1);
+  });
+
+  it("prints the item card without the creature's description", () => {
+    const html = renderToStaticMarkup(
+      <ItemCard
+        card={{
+          kind: "item",
+          name: "Test Pony",
+          fields: [],
+          description: card.description!,
+          descriptionOnCreatureCard: true,
+        }}
+      />,
+    );
+    expect(html).toContain("print-item-card");
+    expect(html).not.toContain("Ponies are small horses.");
+    expect(html).not.toContain("1,000 lb.");
   });
 
   it("keeps the item card's description where no creature card is beside it", () => {

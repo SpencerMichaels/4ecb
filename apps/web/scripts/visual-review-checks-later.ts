@@ -1331,10 +1331,27 @@ rule("fighter-arena", "Print preview", "Mount creature cards", (c) => {
       itemText("Silver Dragon Steed"),
       "HP your bloodied value",
     ),
-    contains(
-      "The warhorse's item card keeps its load",
+    // The item is "you get the following creature": its description, the
+    // load table, prints once, on the creature card (owner, 2026-11-05).
+    lacks(
+      "The warhorse's item card has no creature text",
+      itemText("Warhorse"),
+      "Normal Load",
+    ),
+    lacks(
+      "The warhorse's item card leaves its load table to the creature card",
       itemText("Warhorse"),
       "1,312 lb.",
+    ),
+    contains(
+      "The warhorse's item card keeps its price",
+      itemText("Warhorse"),
+      "680 gp",
+    ),
+    equal(
+      "The warhorse's load table prints once",
+      deck.filter(({ text }) => text.includes("1,312 lb.")).length,
+      1,
     ),
   ];
 });
@@ -1445,6 +1462,11 @@ rule(
         "The Kank's item card keeps its price",
         textOf(elementsWithClass(kankPane, "print-item-card")[0] ?? ""),
         "840 gp",
+      ),
+      lacks(
+        "The Kank's item card has no creature text",
+        textOf(elementsWithClass(kankPane, "print-item-card")[0] ?? ""),
+        "Speed per Hour",
       ),
     ];
   },

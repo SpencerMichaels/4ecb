@@ -13,10 +13,10 @@ import type {
   EvaluatedChoice,
 } from "@4ecb/rules-engine";
 import {
+  applySheetLayout,
   creatureCardTitle,
   featureChoiceText,
   isSheetPlayCard,
-  sheetCardDeck,
   type CharacterSheetModel,
   type SheetDeckCard,
 } from "@4ecb/sheet-model";
@@ -138,9 +138,9 @@ export function printedDeck(
   if (result === undefined) {
     const level = sheetLevel(model, c.build.effectiveLevel);
     const name = characterName(c);
-    result = (
-      entries ?? sheetCardDeck(model).filter(({ defaultShown }) => defaultShown)
-    ).map(({ card }) => {
+    // As the print preview lays out the default deck.
+    const deck = entries ?? applySheetLayout(model, undefined).deck;
+    result = deck.map(({ card }) => {
       const html = render(printCardElement(card, model, name, level));
       return {
         card,

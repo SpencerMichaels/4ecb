@@ -200,12 +200,14 @@ export function descriptionRepeatsStatBlock(entity: ContentEntity): boolean {
 }
 
 /**
- * An item card shown beside its creature's card (a mount, D110): when the
- * creature card shows the same description, the item card is marked to
- * leave out what the creature card shows of it (all of it in a builder
- * pane: paragraphs as flavor, tables in the body; its tables in print), so
- * each part shows once. A description of the item's own (a composed item
- * whose last record is not the creature's) stays.
+ * An item card shown beside its creature's card (a mount, D110): the item
+ * is "you get the following creature", so when the creature card shows the
+ * same description the item card is marked to leave it out on every
+ * surface (the creature card shows it all in a builder pane: paragraphs as
+ * flavor, tables in the body; in print, its tables). The item card keeps
+ * its item parts (name, category, price, its own Flavor). A description of
+ * the item's own (a composed item whose last record is not the creature's)
+ * stays.
  */
 export function itemCardBesideCreature<
   Card extends {

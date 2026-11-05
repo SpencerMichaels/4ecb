@@ -3783,7 +3783,10 @@ Card layout (owner decisions):
   description's flavor prose stay off the printed card; its tables (the
   load table) stay. The builder's panel card shows the whole description.
   Rules text is never abbreviated or reworded. The mount's item card keeps
-  its price and load, not the block.
+  its price and load, not the block (superseded 2026-11-05: the item card
+  keeps only its item parts and the description, load table included, is
+  the creature card's; see the amendment "you get the following
+  creature").
 - **Split by measurement, not a stored hint.** The print preview renders
   each creature's whole card at print size in a hidden probe copy
   (`print-card-probe`), as page 1 measures its panes, and the fit hook's
@@ -3892,8 +3895,32 @@ as the creature card's flavor (hidden with the flavor text preference),
 and a load or travel table once, in the creature card's body. An item
 whose description differs from its creature's, or with no creature card
 beside it (a Build-tab candidate, a mount without a stat block), keeps its
-own. Printed cards are unchanged: a held mount's item card still prints
-its description beside the creature card's tables.
+own.
+Same day (owner, on both surfaces): for an item that grants a creature,
+"the 'item' part of it is essentially just 'you get the following
+creature'". The item card keeps only the parts every item has (name,
+category line, price, weight, its own Flavor field) and everything about
+the creature is the creature card's alone. Field audit of the 47 mount
+records with a stat block (`tmp/mount-dup/`): their item card's fields are
+only `Category` ("Mount", 47), `Gold` (42; not the Celestial steeds and
+Silver Dragon Steed) and the hidden legacy `Full Text`; none has a Flavor
+field, weight, properties, item powers or rider text, so the description
+is the only creature text on the item card, and the creature card already
+holds it (its description is the same record's): 6 records had it twice
+(the load table: Riding Horse, Warhorse; the descriptive paragraph and the
+travel/load table: Erdlu, Inix, Kank, Mekillot), and the 5 that only
+repeat the stat block were already hidden. Nothing moves; nothing is
+lost. So while the creature card is shown with the item (a builder pane
+always; in print, while the held mount's creature card prints, which
+`applySheetLayout` decides), the item card is marked with
+`itemCardBesideCreature` and shows no description on either surface: the
+pane's creature card shows the paragraph as flavor and the table in its
+body; the printed creature card, mechanics only, prints the table and not
+the paragraph. A creature card hidden in sheet Edit mode leaves the item
+card its full description. After the change every one of the 47 mount
+item cards reads name, "Mount", price (when it has one) and the Gear type
+bar on both surfaces. The printed item card only loses text and the
+creature card is unchanged, so both still fit.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

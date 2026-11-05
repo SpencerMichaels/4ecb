@@ -294,13 +294,17 @@ live site.
     Warhorse and the Silver Dragon Steed.
   - **Expect:** the reminder wraps clear of its "Level N" tag. The Warhorse
     is one card with one row of defense and HP tiles and its load table at
-    the bottom. Now that its defense and HP tiles share one row, the Steed
-    measures as one card at about the 6 pt floor (Firefox); if your browser
+    the bottom; the Warhorse item card (with the other item cards) is
+    short: name, "Mount", price and type bar, with no load table. Now that
+    its defense and HP tiles share one row, the Steed measures as one card
+    at about the 6 pt floor (Firefox); if your browser
     still finds it overflowing, it is two adjacent cards, "Silver Dragon
     Steed" and "Silver Dragon Steed — Actions".
   - **Wrong if:** the tag overlaps the reminder, a card overflows, the
     Steed prints as one clipped card or with a "(continued)" card, the
-    tiles wrap onto two rows, or text is unreadable at the reduced size.
+    tiles wrap onto two rows, text is unreadable at the reduced size, the
+    load table prints on both Warhorse cards, or the Warhorse item card
+    looks broken without it (an empty body band).
 
 ## Pass 9: Psion 15 (`psion-thought-warrior`)
 

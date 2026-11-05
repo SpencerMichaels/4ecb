@@ -31,12 +31,10 @@ export function ItemCard({
   const isPanel = layout === "panel";
   const textPresentation = panel.textPresentation;
   const item = printItemPresentation(card);
-  // Beside its creature's card (a mount, D110), which shows the
-  // description in a builder pane.
+  // Beside its creature's card (a mount, D110) the description is the
+  // creature's: its card shows it (in print, its tables only).
   const description =
-    card.descriptionOnCreatureCard === true && isPanel
-      ? undefined
-      : item.description;
+    card.descriptionOnCreatureCard === true ? undefined : item.description;
   const hasSubheader =
     item.statRows.length > 0 || item.weaponProperties.length > 0;
   return (

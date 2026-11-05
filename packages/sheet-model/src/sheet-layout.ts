@@ -19,6 +19,7 @@ import {
 } from "./familiar-card";
 import {
   CREATURE_ACTIONS_KEY_SUFFIX,
+  itemCardBesideCreature,
   type SheetCreatureCard,
 } from "./creature-card";
 import type { CharacterSheetModel, SheetCard } from "./index";
@@ -106,11 +107,30 @@ export function applySheetLayout(
       : shownCards.has(entry.key);
   };
   const defaultCards = sheetCardDeck(model, shown);
+  // A held mount's description is its creature's (D110): while the
+  // creature card prints, the item card leaves it out.
+  const printedCreatures = new Map(
+    defaultCards.flatMap((entry) =>
+      entry.card.kind === "creature" &&
+      entry.card.origin.kind === "mount" &&
+      entry.card.origin.holdingId !== undefined &&
+      shown(entry)
+        ? [[entry.card.origin.holdingId, entry.card] as const]
+        : [],
+    ),
+  );
   const cards = orderedCards(defaultCards, layout?.cardOrder ?? []).flatMap(
     (entry): SheetLayoutCard[] => {
       const holdingId = holdingOf(entry);
+      const creature =
+        holdingId === undefined ? undefined : printedCreatures.get(holdingId);
       const card: SheetLayoutCard = {
         ...entry,
+        ...(creature === undefined
+          ? {}
+          : {
+              card: itemCardBesideCreature(entry.card as SheetCard, creature),
+            }),
         shown: shown(entry),
         ...(holdingId === undefined ? {} : { holdingId }),
       };

@@ -426,6 +426,39 @@ describe("split creature cards", () => {
   });
 });
 
+describe("a held mount's printed item card (D110)", () => {
+  const ponyItem = sheetItemCard({
+    holdingId: "h-pony",
+    name: "Test Pony",
+    entities: [pony],
+  });
+  const model = {
+    powers: [],
+    items: [ponyItem],
+    companions: [mountCard(pony, "h-pony")],
+  };
+  const printedItem = (resolved: ReturnType<typeof applySheetLayout>) =>
+    resolved.cards.find(({ card }) => card.kind === "item")?.card;
+
+  it("leaves the description to the creature card printed with it", () => {
+    expect(printedItem(applySheetLayout(model, undefined))).toEqual({
+      ...ponyItem,
+      descriptionOnCreatureCard: true,
+    });
+  });
+
+  it("keeps it when the creature card is hidden", () => {
+    expect(
+      printedItem(
+        applySheetLayout(model, {
+          version: 1,
+          hiddenCards: ["creature:mount:h-pony"],
+        }),
+      ),
+    ).toBe(ponyItem);
+  });
+});
+
 describe("creature card page-1 reminders", () => {
   it("drops the reminders of the features that only give the creature", () => {
     const summoner = {

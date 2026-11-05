@@ -332,10 +332,10 @@ export interface SheetCard {
   readonly prerequisites?: string;
   readonly description?: string;
   /**
-   * An item card shown beside its creature's card (a mount, D110), which
-   * shows this description as it shows its own: all of it in a builder
-   * pane, its tables in print. The item card leaves those parts out
-   * (`itemCardBesideCreature`).
+   * An item card shown beside its creature's card (a mount, D110): the
+   * description is the creature's, so only the creature card shows it (all
+   * of it in a builder pane, its tables in print) and the item card keeps
+   * its item parts (`itemCardBesideCreature`).
    */
   readonly descriptionOnCreatureCard?: true;
   readonly source?: string;

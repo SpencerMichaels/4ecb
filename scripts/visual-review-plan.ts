@@ -1309,7 +1309,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Arena fighter: print preview",
-            "The Arena Training reminder, the Warhorse card and the Steed's two cards.",
+            "The Arena Training reminder, the Warhorse card and the Steed's two cards; the Warhorse item card without the load table.",
           ],
           [
             "Sub-choices on feature rows",
