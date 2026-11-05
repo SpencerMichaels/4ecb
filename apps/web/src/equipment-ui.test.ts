@@ -6,7 +6,7 @@ import {
   type CharacterBuild,
   type CharacterCommand,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { scanCountingContent, type ContentEntity } from "@4ecb/content-domain";
 
 import {
   acquisitionCommands,
@@ -40,6 +40,8 @@ import {
   shopAcquireBlockedReason,
   shopAlsoImplementEnchantment,
   shopBrowseCategory,
+  shopCatalog,
+  SHOP_BROWSE_CATEGORIES,
   shopDisplayName,
   shopSlot,
   shopSubtype,
@@ -1881,5 +1883,63 @@ describe("packaged gear (legacy CharacterLootItem.PackageManipulation)", () => {
       acquisitionCommands([], inventoryEntryForEntity(rope, 1), 0, byId),
     ).toHaveLength(1);
     expect(acquire([], rope)).toEqual(["Hempen Rope (50 ft.) x1"]);
+  });
+});
+
+describe("shop catalog caching", () => {
+  // The Shop sorts the whole pack into its catalog and regroups families on
+  // every keystroke: per-content and per-catalog setup is built once, so a
+  // remount or a new search scans neither again.
+  const sword = entity("SWORD", "Longsword", "Weapon", {
+    "Weapon Category": "Military Melee",
+  });
+  const staff = entity("STAFF", "Accurate Staff", "Superior Implement", {
+    Group: "Staff",
+    WeaponEquiv: "Quarterstaff",
+  });
+  const flaming = [1, 2].map((plus) =>
+    entity(`FLAMING_${plus}`, `Flaming Weapon +${plus}`, "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Weapon: "Any",
+      Level: String(plus * 5),
+    }),
+  );
+  const records = [sword, staff, ...flaming, entity("FEAT", "Feat", "Feat")];
+
+  it("builds the catalog once per content", () => {
+    const { content, scans } = scanCountingContent(records);
+    const catalog = shopCatalog(content, SHOP_BROWSE_CATEGORIES);
+    expect(catalog.map(({ id }) => id)).toEqual([
+      "SWORD",
+      "STAFF",
+      "FLAMING_1",
+      "FLAMING_2",
+    ]);
+    const warm = scans();
+    expect(shopCatalog(content, SHOP_BROWSE_CATEGORIES)).toBe(catalog);
+    expect(scans()).toBe(warm);
+  });
+
+  it("groups families and finds bases without rescanning the catalog", () => {
+    const { content: catalog, scans } = scanCountingContent(
+      records.slice(0, 4),
+    );
+    const families = () =>
+      groupMagicItemFamilies(flaming, catalog).map(({ key, entities }) => [
+        key,
+        entities.map(({ id }) => id),
+      ]);
+    const bases = (item: ContentEntity) =>
+      compatibleBaseItems(item, catalog).map(({ id }) => id);
+    const first = families();
+    expect(first).toHaveLength(1);
+    bases(flaming[0]!);
+    shopAlsoImplementEnchantment(flaming[0]!, catalog);
+    const warm = scans();
+    // The next keystroke, and the next enchantment's bases.
+    expect(families()).toEqual(first);
+    bases(flaming[1]!);
+    shopAlsoImplementEnchantment(flaming[1]!, catalog);
+    expect(scans()).toBe(warm);
   });
 });

@@ -643,9 +643,49 @@ const CANONICAL_SHOP_SUBTYPES = new Map([
 ]);
 
 /** Classifies catalog records from authored fields, never name fragments. */
+// Records are immutable, so a record's shop category and family key are
+// found once: the Shop sorts the whole pack into its catalog and regroups
+// families on every search keystroke.
+const browseCategories = new WeakMap<ContentEntity, ShopBrowseId | null>();
+
 export function shopBrowseCategory(
   entity: ContentEntity,
 ): ShopBrowseId | undefined {
+  const cached = browseCategories.get(entity);
+  if (cached !== undefined) return cached ?? undefined;
+  const category = browseCategoryOf(entity);
+  browseCategories.set(entity, category ?? null);
+  return category;
+}
+
+const shopCatalogs = new WeakMap<
+  readonly ContentEntity[],
+  Map<readonly { readonly id: ShopBrowseId }[], readonly ContentEntity[]>
+>();
+
+/** The records the Shop (or the Rituals catalog) offers under these browse
+ * categories, in content order: once per content and category list. */
+export function shopCatalog(
+  entities: readonly ContentEntity[],
+  categories: readonly { readonly id: ShopBrowseId }[],
+): readonly ContentEntity[] {
+  let byCategories = shopCatalogs.get(entities);
+  if (byCategories === undefined) {
+    byCategories = new Map();
+    shopCatalogs.set(entities, byCategories);
+  }
+  const cached = byCategories.get(categories);
+  if (cached !== undefined) return cached;
+  const offered = new Set(categories.map(({ id }) => id));
+  const catalog = entities.filter((entity) => {
+    const category = shopBrowseCategory(entity);
+    return category !== undefined && offered.has(category);
+  });
+  byCategories.set(categories, catalog);
+  return catalog;
+}
+
+function browseCategoryOf(entity: ContentEntity): ShopBrowseId | undefined {
   const practice = practiceKind(entity);
   if (practice === "ritual") return "rituals";
   if (practice === "alchemical-formula") return "alchemical-formulas";
@@ -867,7 +907,17 @@ export function alchemicalFormulaItems(
     );
 }
 
+const familyKeys = new WeakMap<ContentEntity, string | null>();
+
 export function magicItemFamilyKey(entity: ContentEntity): string | undefined {
+  const cached = familyKeys.get(entity);
+  if (cached !== undefined) return cached ?? undefined;
+  const familyKey = familyKeyOf(entity);
+  familyKeys.set(entity, familyKey ?? null);
+  return familyKey;
+}
+
+function familyKeyOf(entity: ContentEntity): string | undefined {
   if (entity.type.trim().toLocaleLowerCase() !== "magic item") return undefined;
   const match = entity.name.trim().match(/^(.*?)\s+\+(\d+)$/);
   if (match === null) return undefined;
@@ -883,14 +933,7 @@ export function groupMagicItemFamilies(
   visible: readonly ContentEntity[],
   catalog: readonly ContentEntity[],
 ): readonly MagicItemFamily[] {
-  const completeFamilies = new Map<string, ContentEntity[]>();
-  for (const entity of catalog) {
-    const key = magicItemFamilyKey(entity);
-    if (key === undefined) continue;
-    const family = completeFamilies.get(key) ?? [];
-    family.push(entity);
-    completeFamilies.set(key, family);
-  }
+  const completeFamilies = catalogFamilies(catalog);
   const visibleByFamily = new Map<string, ContentEntity[]>();
   for (const entity of visible) {
     const key = magicItemFamilyKey(entity);
@@ -919,6 +962,29 @@ export function groupMagicItemFamilies(
       },
     ];
   });
+}
+
+const catalogFamilyCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlyMap<string, readonly ContentEntity[]>
+>();
+
+/** The catalog's complete magic item families, once per catalog. */
+function catalogFamilies(
+  catalog: readonly ContentEntity[],
+): ReadonlyMap<string, readonly ContentEntity[]> {
+  const cached = catalogFamilyCache.get(catalog);
+  if (cached !== undefined) return cached;
+  const families = new Map<string, ContentEntity[]>();
+  for (const entity of catalog) {
+    const key = magicItemFamilyKey(entity);
+    if (key === undefined) continue;
+    const family = families.get(key) ?? [];
+    family.push(entity);
+    families.set(key, family);
+  }
+  catalogFamilyCache.set(catalog, families);
+  return families;
 }
 
 /**
@@ -1256,17 +1322,9 @@ export function compatibleBaseItems(
     isLegacyEnchantment(item) ||
     shopBrowseCategory(item) === "implement-enchantments"
   ) {
-    compatible = catalog
-      .filter((base) => BASE_ITEM_TYPES.has(normalized(base.type)))
-      // Barding is its own shop category in legacy (ArmorItem.CategoryName),
-      // never a base the magic armor picker lists.
-      .filter(
-        (base) =>
-          normalized(base.type) !== "armor" ||
-          !normalized(base.name).includes("barding"),
-      )
-      .filter((base) => isValidLoot(base, item, find))
-      .sort((left, right) => left.name.localeCompare(right.name));
+    compatible = baseItemCandidates(catalog).filter((base) =>
+      isValidLoot(base, item, find),
+    );
   } else {
     // D091: native TransformLoot keeps a base the pair cannot use and then
     // refuses the item; the item is kept on its own instead.
@@ -1280,6 +1338,32 @@ export function compatibleBaseItems(
 
 const BASE_ITEM_TYPES = new Set(["weapon", "armor", "superior implement"]);
 
+const baseItemCandidateCache = new WeakMap<
+  readonly ContentEntity[],
+  readonly ContentEntity[]
+>();
+
+/** The catalog's base items an enchantment may go on, by name: once per
+ * catalog, then each enchantment tests only these. */
+function baseItemCandidates(
+  catalog: readonly ContentEntity[],
+): readonly ContentEntity[] {
+  const cached = baseItemCandidateCache.get(catalog);
+  if (cached !== undefined) return cached;
+  const candidates = catalog
+    .filter((base) => BASE_ITEM_TYPES.has(normalized(base.type)))
+    // Barding is its own shop category in legacy (ArmorItem.CategoryName),
+    // never a base the magic armor picker lists.
+    .filter(
+      (base) =>
+        normalized(base.type) !== "armor" ||
+        !normalized(base.name).includes("barding"),
+    )
+    .sort((left, right) => left.name.localeCompare(right.name));
+  baseItemCandidateCache.set(catalog, candidates);
+  return candidates;
+}
+
 /**
  * Weapon enchantments that also fit a superior implement (a staff as a
  * Quarterstaff, a dagger as its WeaponEquiv) list with the implement
@@ -1291,11 +1375,44 @@ export function shopAlsoImplementEnchantment(
   catalog: readonly ContentEntity[],
   entities: readonly ContentEntity[] = catalog,
 ): boolean {
-  return (
-    shopBrowseCategory(item) === "weapon-enchantments" &&
-    compatibleBaseItems(item, catalog, entities).some(
-      (base) => normalized(base.type) === "superior implement",
-    )
+  if (shopBrowseCategory(item) !== "weapon-enchantments") return false;
+  let byEntities = alsoImplementCache.get(catalog);
+  if (byEntities === undefined) {
+    byEntities = new WeakMap();
+    alsoImplementCache.set(catalog, byEntities);
+  }
+  let results = byEntities.get(entities);
+  if (results === undefined) {
+    results = new Map();
+    byEntities.set(entities, results);
+  }
+  let result = results.get(item.id);
+  if (result === undefined) {
+    result = fitsSuperiorImplement(item, catalog, entities);
+    results.set(item.id, result);
+  }
+  return result;
+}
+
+const alsoImplementCache = new WeakMap<
+  readonly ContentEntity[],
+  WeakMap<readonly ContentEntity[], Map<string, boolean>>
+>();
+
+function fitsSuperiorImplement(
+  item: ContentEntity,
+  catalog: readonly ContentEntity[],
+  entities: readonly ContentEntity[],
+): boolean {
+  const superiorImplement = (base: ContentEntity) =>
+    normalized(base.type) === "superior implement";
+  if (!isLegacyEnchantment(item))
+    return compatibleBaseItems(item, catalog, entities).some(superiorImplement);
+  // Only the superior implements among its bases matter: testing every
+  // weapon and armor for each weapon enchantment took seconds.
+  const find = lootFinder(entities);
+  return baseItemCandidates(catalog).some(
+    (base) => superiorImplement(base) && isValidLoot(base, item, find),
   );
 }
 

@@ -26,6 +26,7 @@ import {
   shopAcquireBlockedReason,
   shopAlsoImplementEnchantment,
   shopBrowseCategory,
+  shopCatalog,
   shopDisplayName,
   shopItemLevel,
   shopSlot,
@@ -289,6 +290,28 @@ function legacyCategory(entity: ContentEntity): string {
   return magicType || entity.type;
 }
 
+const searchTexts = new WeakMap<ContentEntity, string>();
+
+/** What the Shop's search matches in a record, lower-cased: once per
+ * (immutable) record, not on every keystroke. */
+function shopSearchText(entity: ContentEntity): string {
+  let text = searchTexts.get(entity);
+  if (text === undefined) {
+    text = [
+      entity.name,
+      shopDisplayName(entity),
+      entity.type,
+      shopSubtype(entity) ?? "",
+      shopSlot(entity) ?? "",
+      legacyCategory(entity),
+    ]
+      .join(" ")
+      .toLocaleLowerCase();
+    searchTexts.set(entity, text);
+  }
+  return text;
+}
+
 function itemSource(entity: ContentEntity): string {
   return entity.source.trim();
 }
@@ -463,13 +486,10 @@ export function ShopWorkspace({
     mode,
   ]);
 
-  const catalog = useMemo(() => {
-    const offered = new Set(categories.map(({ id }) => id));
-    return entities.filter((entity) => {
-      const category = shopBrowseCategory(entity);
-      return category !== undefined && offered.has(category);
-    });
-  }, [categories, entities]);
+  const catalog = useMemo(
+    () => shopCatalog(entities, categories),
+    [categories, entities],
+  );
   const byId = useMemo(
     () =>
       new Map(
@@ -522,20 +542,7 @@ export function ShopWorkspace({
   const searchRecords = useMemo(() => {
     const needle = normalized(search);
     return advancedRecords.filter((entity) => {
-      if (
-        needle !== "" &&
-        ![
-          entity.name,
-          shopDisplayName(entity),
-          entity.type,
-          shopSubtype(entity) ?? "",
-          shopSlot(entity) ?? "",
-          legacyCategory(entity),
-        ]
-          .join(" ")
-          .toLocaleLowerCase()
-          .includes(needle)
-      )
+      if (needle !== "" && !shopSearchText(entity).includes(needle))
         return false;
       const price = priceOf(entity);
       if (
