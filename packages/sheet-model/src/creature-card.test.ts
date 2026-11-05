@@ -12,6 +12,7 @@ import { sheetCardDeck } from "./card-deck";
 import {
   creatureCardText,
   creatureRecord,
+  itemCardBesideCreature,
   sheetCreatureCard,
   type SheetCreatureCard,
 } from "./creature-card";
@@ -301,6 +302,36 @@ describe("creature card (D110)", () => {
     expect(
       sheetItemCard({ name: "Test Steed", entities: [steed] }).description,
     ).toBeUndefined();
+  });
+
+  it("leaves the description to the creature card beside the item card", () => {
+    // A Dark Sun mount: a descriptive paragraph, then its load table.
+    const described = gear(
+      "ID_TEST_KANK",
+      "Test Kank",
+      {
+        Category: "Mount",
+        _Monster: PONY_MONSTER,
+        [CREATURE_STAT_BLOCK_FIELD]: JSON.stringify(PONY_BLOCK),
+      },
+      `Test kanks are docile insects.\n${LOAD_TABLE}`,
+    );
+    for (const entity of [pony, described]) {
+      const item = sheetItemCard({ name: entity.name, entities: [entity] });
+      const creature = mountCard(entity);
+      expect(creature.description).toBe(entity.description);
+      expect(itemCardBesideCreature(item, creature)).toEqual({
+        ...item,
+        descriptionOnCreatureCard: true,
+      });
+    }
+    // No creature card, or one with another description: the item card
+    // keeps its own.
+    const item = sheetItemCard({ name: "Test Pony", entities: [pony] });
+    expect(itemCardBesideCreature(item, undefined)).toBe(item);
+    expect(
+      itemCardBesideCreature(item, { description: "Something else." }),
+    ).toBe(item);
   });
 
   it("has no creature for a mount without a stat block (Crodlu)", () => {

@@ -19,6 +19,7 @@ import {
   createEvaluatedPowerTextPersonalizer,
   createSheetPowerCardFinder,
   creatureRecord,
+  itemCardBesideCreature,
   sheetCreatureCard,
   summonCommandRows,
   summonCommandVariants,
@@ -384,12 +385,16 @@ export function BuilderItemCard({
   headingSuffix,
   subheading,
   headerAction,
+  withCreatureCard = false,
 }: {
   readonly name: string;
   readonly entities: readonly ContentEntity[];
   readonly headingSuffix?: string;
   readonly subheading?: ReactNode;
   readonly headerAction?: ReactNode;
+  /** The pane shows the item's creature card (`BuilderCreatureCard`)
+   *  right after it, which then shows the description (D110). */
+  readonly withCreatureCard?: boolean;
 }) {
   const settings = useContext(BuilderCardContext);
   const hideFlavortext = useContext(HideFlavortextContext);
@@ -398,11 +403,14 @@ export function BuilderItemCard({
   if (entity === undefined) return null;
   // A composed item (e.g. a magic armor on a base armor) cites each source.
   const sources = [...new Set(entities.map(entityCardSource))];
-  const card = sheetItemCard({
+  const itemCard = sheetItemCard({
     name,
     entities,
     overlays: settings.itemOverlays,
   });
+  const card = withCreatureCard
+    ? itemCardBesideCreature(itemCard, settings.creatureCardFor(name, entities))
+    : itemCard;
   return (
     <ItemCard
       card={card}

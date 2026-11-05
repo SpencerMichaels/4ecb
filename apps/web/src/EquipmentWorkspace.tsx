@@ -375,6 +375,7 @@ export function ItemDetail({
         <BuilderItemCard
           name={item.displayName}
           entities={item.entities}
+          withCreatureCard
           {...(note === undefined
             ? {}
             : {

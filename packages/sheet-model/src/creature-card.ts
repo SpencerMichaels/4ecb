@@ -199,6 +199,26 @@ export function descriptionRepeatsStatBlock(entity: ContentEntity): boolean {
   return comparable(description) === comparable(body);
 }
 
+/**
+ * An item card shown beside its creature's card (a mount, D110): when the
+ * creature card shows the same description, the item card is marked to
+ * leave out what the creature card shows of it (all of it in a builder
+ * pane: paragraphs as flavor, tables in the body; its tables in print), so
+ * each part shows once. A description of the item's own (a composed item
+ * whose last record is not the creature's) stays.
+ */
+export function itemCardBesideCreature<
+  Card extends {
+    readonly description?: string;
+    readonly descriptionOnCreatureCard?: true;
+  },
+>(card: Card, creature: { readonly description?: string } | undefined): Card {
+  return creature?.description === undefined ||
+    card.description?.trim() !== creature.description
+    ? card
+    : { ...card, descriptionOnCreatureCard: true };
+}
+
 /** The stat block of the last of an item's records that carries one. */
 export function creatureRecord(
   entities: readonly (ContentEntity | undefined)[],

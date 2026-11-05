@@ -1362,28 +1362,28 @@ rule(
       warhorse === undefined
         ? undefined
         : inventoryItemDetail(warhorse, c.context.byId);
+    const warhorsePane =
+      warhorseDetail === undefined ? "" : itemDetailHtml(c, warhorseDetail);
     const warhorsePanel =
-      warhorseDetail === undefined
-        ? ""
-        : (elementsWithClass(
-            itemDetailHtml(c, warhorseDetail),
-            "print-creature-card",
-          )[0] ?? "");
+      elementsWithClass(warhorsePane, "print-creature-card")[0] ?? "";
     // A Kank in the Shop: its descriptive paragraph is the pane's flavor
     // text, under the header and above the tiles; its table stays in the
     // body.
     const kank = c.context.byId.get(key(KANK));
-    const kankPanel =
+    const kankPane =
       kank === undefined
         ? ""
-        : (elementsWithClass(
-            itemDetailHtml(c, {
-              entities: [kank],
-              displayName: kank.name,
-              effectiveLevel: c.build.effectiveLevel,
-            }),
-            "print-creature-card",
-          )[0] ?? "");
+        : itemDetailHtml(c, {
+            entities: [kank],
+            displayName: kank.name,
+            effectiveLevel: c.build.effectiveLevel,
+          });
+    const kankPanel =
+      elementsWithClass(kankPane, "print-creature-card")[0] ?? "";
+    // Each part of the description shows once in the pane: the item card
+    // leaves it to the creature card beside it (D110, 2026-11-05).
+    const occurrences = (html: string, needle: string) =>
+      textOf(html).split(needle).length - 1;
     return [
       truthy("A creature panel card", panel.includes("is-panel")),
       contains("Its title", textOf(panel), "Silver Dragon Steed"),
@@ -1425,6 +1425,26 @@ rule(
         "The Kank's paragraph is not repeated in the body",
         kankPanel.slice(kankPanel.indexOf("print-card-body")),
         "Kanks are docile insects",
+      ),
+      equal(
+        "The Kank's paragraph shows once in the pane",
+        occurrences(kankPane, "Kanks are docile insects"),
+        1,
+      ),
+      equal(
+        "The Kank's table shows once in the pane",
+        occurrences(kankPane, "Speed per Hour"),
+        1,
+      ),
+      equal(
+        "The Warhorse's load table shows once in the pane",
+        occurrences(warhorsePane, "1,312 lb."),
+        1,
+      ),
+      contains(
+        "The Kank's item card keeps its price",
+        textOf(elementsWithClass(kankPane, "print-item-card")[0] ?? ""),
+        "840 gp",
       ),
     ];
   },

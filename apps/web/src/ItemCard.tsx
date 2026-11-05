@@ -31,6 +31,12 @@ export function ItemCard({
   const isPanel = layout === "panel";
   const textPresentation = panel.textPresentation;
   const item = printItemPresentation(card);
+  // Beside its creature's card (a mount, D110), which shows the
+  // description in a builder pane.
+  const description =
+    card.descriptionOnCreatureCard === true && isPanel
+      ? undefined
+      : item.description;
   const hasSubheader =
     item.statRows.length > 0 || item.weaponProperties.length > 0;
   return (
@@ -100,11 +106,8 @@ export function ItemCard({
         </div>
       )}
       <div className="print-card-body print-item-body">
-        {item.description ? (
-          <CardText
-            value={item.description}
-            textPresentation={textPresentation}
-          />
+        {description ? (
+          <CardText value={description} textPresentation={textPresentation} />
         ) : null}
         {item.rules.map((field, index) => {
           const power = printItemPower(field);

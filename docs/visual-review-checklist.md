@@ -273,17 +273,21 @@ live site.
   - **Where:** `edit?tab=inventory`, select the Silver Dragon Steed, then the
     Warhorse; then in the Shop select a Kank (a Dark Sun mount).
   - **Expect:** under each item card, the creature's dark panel card with the
-    print card's tiles and entries. The Warhorse's load table at the bottom
-    of its card, with no flavor band. The Kank's paragraph ("Kanks are
+    print card's tiles and entries. The item card above it is short: name,
+    price and the Mount type bar, with no description of its own (the
+    creature card shows it). The Warhorse's load table at the bottom of its
+    creature card, with no flavor band. The Kank's paragraph ("Kanks are
     docile insects…") as flavor text: the italic tinted band just under the
-    title, above the defense tiles, like a power card's flavor; its speed
-    and load table stays at the bottom. With Settings' flavor text off the
-    Kank's paragraph is gone and its table stays.
+    creature card's title, above the defense tiles, like a power card's
+    flavor; its speed and load table stays at the bottom. With Settings'
+    flavor text off the Kank's paragraph is gone from the whole pane and its
+    table stays.
   - **Wrong if:** the panel card overflows the detail pane, the meta text
     ("Melee basic attack · standard, at-will") is unreadable on the dark
     card, the table is clipped, the Kank's paragraph sits at the bottom or
-    looks unlike a power card's flavor, or the Warhorse shows an empty
-    flavor band.
+    looks unlike a power card's flavor, the Warhorse shows an empty flavor
+    band, the short item card looks broken (an empty body band), or the
+    paragraph or a table shows on both cards.
 - [ ] **Arena fighter: print preview.**
   - **Where:** `?preview=1`: page 1's reminder "Arena Training: Arena Weapon
     (Glaive), Arena Weapon (Spear)", then the cards after Skills: the

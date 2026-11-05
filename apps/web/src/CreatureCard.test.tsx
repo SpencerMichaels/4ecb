@@ -1,7 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type { ContentEntity } from "@4ecb/content-domain";
 import type { SheetCreatureCard } from "@4ecb/sheet-model";
 
+import {
+  authoredBuilderCardSettings,
+  BuilderCardContext,
+  BuilderCreatureCard,
+  BuilderItemCard,
+} from "./BuilderCards";
 import { CreatureCard } from "./CreatureCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 
@@ -285,5 +292,67 @@ describe("CreatureCard", () => {
   it("prints no weapon rows for a creature without them", () => {
     const html = renderToStaticMarkup(<CreatureCard card={card} />);
     expect(html).not.toContain("print-card-variant-table");
+  });
+});
+
+describe("a mount's item card beside its creature card (D110)", () => {
+  const pony: ContentEntity = {
+    id: "ID_TEST_PONY",
+    name: "Test Pony",
+    type: "Gear",
+    source: "Test",
+    sources: ["Test"],
+    attributes: [],
+    categories: [],
+    specifics: [
+      { name: "Category", value: "Mount", extraAttributes: [], ordinal: 0 },
+      { name: "Gold", value: "75", extraAttributes: [], ordinal: 1 },
+    ],
+    rules: [],
+    description: card.description ?? "",
+    extensions: [],
+    provenance: { sourceKey: "test", sourceOrdinal: 0 },
+  };
+  const pane = (withCreatureCard: boolean, hideFlavortext = false) =>
+    renderToStaticMarkup(
+      <BuilderCardContext.Provider
+        value={{
+          ...authoredBuilderCardSettings(2),
+          creatureCardFor: () => card,
+        }}
+      >
+        <HideFlavortextContext.Provider value={hideFlavortext}>
+          <BuilderItemCard
+            name="Test Pony"
+            entities={[pony]}
+            withCreatureCard={withCreatureCard}
+          />
+          <BuilderCreatureCard name="Test Pony" entities={[pony]} />
+        </HideFlavortextContext.Provider>
+      </BuilderCardContext.Provider>,
+    );
+  const count = (html: string, needle: string) => html.split(needle).length - 1;
+
+  it("shows the description's paragraph and table once, on the creature card", () => {
+    const html = pane(true);
+    expect(count(html, "Ponies are small horses.")).toBe(1);
+    expect(count(html, "1,000 lb.")).toBe(1);
+    const itemCard = html.slice(0, html.indexOf("print-creature-card"));
+    expect(itemCard).toContain("print-item-card");
+    expect(itemCard).not.toContain("Ponies are small horses.");
+    expect(itemCard).not.toContain("1,000 lb.");
+  });
+
+  it("hides the paragraph everywhere with the flavor text preference", () => {
+    const html = pane(true, true);
+    expect(html).not.toContain("Ponies are small horses.");
+    expect(count(html, "1,000 lb.")).toBe(1);
+  });
+
+  it("keeps the item card's description where no creature card is beside it", () => {
+    const html = pane(false);
+    const itemCard = html.slice(0, html.indexOf("print-creature-card"));
+    expect(itemCard).toContain("Ponies are small horses.");
+    expect(itemCard).toContain("1,000 lb.");
   });
 });

@@ -3884,6 +3884,16 @@ their 54 records have no Flavor field and their description is the stat
 block itself, every line of which the pack build parses into the card's
 tiles, traits and powers (no unparsed lines); the card has never shown the
 description, because the card _is_ that description.
+Same day (owner: a mount's description showed twice in the item pane): an
+item card shown beside its creature card in a builder pane (Equipment and
+Shop item detail) leaves out the description the creature card shows
+(sheet-model `itemCardBesideCreature`), so the Kank's paragraph shows once,
+as the creature card's flavor (hidden with the flavor text preference),
+and a load or travel table once, in the creature card's body. An item
+whose description differs from its creature's, or with no creature card
+beside it (a Build-tab candidate, a mount without a stat block), keeps its
+own. Printed cards are unchanged: a held mount's item card still prints
+its description beside the creature card's tables.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

@@ -102,6 +102,7 @@ export {
   creatureRecord,
   defaultPowerVariant,
   descriptionRepeatsStatBlock,
+  itemCardBesideCreature,
   sheetCreatureCard,
   sheetCreatureCardKeyBase,
   summonCommandRows,
@@ -330,6 +331,13 @@ export interface SheetCard {
   readonly flavor?: string;
   readonly prerequisites?: string;
   readonly description?: string;
+  /**
+   * An item card shown beside its creature's card (a mount, D110), which
+   * shows this description as it shows its own: all of it in a builder
+   * pane, its tables in print. The item card leaves those parts out
+   * (`itemCardBesideCreature`).
+   */
+  readonly descriptionOnCreatureCard?: true;
   readonly source?: string;
   readonly variants?: readonly SheetPowerVariant[];
   /** Calculation diagnostics, never authored rules or physical-card sections. */
