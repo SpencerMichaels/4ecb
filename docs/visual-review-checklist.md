@@ -88,10 +88,13 @@ live site.
     0.75rem apart. Even gaps on every card: "**Prerequisite:** Hexblade"
     and "**Level:** 1" each on one line, paragraphs flush left, a trait
     name closer to its own text than to the next trait, equal space above
-    and below a table, divider or lore heading.
+    and below a table, divider or lore heading. Folded again, the Race
+    row reads "Revenant · Language: Elven" in grey on one line beside its
+    title (at 140% zoom a long summary ends in "…" before the check mark).
   - **Wrong if:** headings clip or overlap, the focus ring is invisible in
     dark theme, a big gap sits at a card's bottom, a heading is glued to
-    the text above it, or space around a divider or table is uneven.
+    the text above it, space around a divider or table is uneven, or a
+    folded summary wraps or pushes its status icon off the row.
 - [ ] **Beatrix: reference feature rows.**
   - **Where:** `?preview=1`, the Character Reference pages: Past life and the
     two Guardian Feature rows.

@@ -97,6 +97,7 @@ import {
   presentLevelChoices,
   presentedChoiceSection,
   presentationUnitRoot,
+  accordionPicksSummary,
   dependentFlowStepIds,
   openedFlowStepId,
   isPrimaryBuildChoice,
@@ -1722,22 +1723,21 @@ export function CharacterEditorPage({
     if (element === null || planningEvaluation === undefined) return element;
     const unit = accordionUnits.find((candidate) => candidate.includes(choice));
     if (unit === undefined) return element;
-    const picks = unit.flatMap((item) => {
-      // A swap folds to what it traded: "Press of Steel → Hurricane Strike".
-      if (item.type === "Replacement") {
-        const summary = replacementPickSummary(
-          item,
-          planningEvaluation,
-          byId,
-          build,
-        );
-        return summary === undefined ? [] : [summary];
-      }
-      const definitionId = selectedDefinitionId(item, planningEvaluation);
-      return definitionId === undefined
-        ? []
-        : [byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId];
-    });
+    const picks = accordionPicksSummary(
+      unit,
+      levelChoicePresentation,
+      (item) => {
+        // A swap folds to what it traded: "Press of Steel → Hurricane Strike".
+        if (item.type === "Replacement")
+          return replacementPickSummary(item, planningEvaluation, byId, build);
+        const definitionId = selectedDefinitionId(item, planningEvaluation);
+        return definitionId === undefined
+          ? undefined
+          : (byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId);
+      },
+      // Each step's heading in the open flow (ChoiceFlowSection).
+      (item) => contextualChoiceTitle(item, planningEvaluation, byId),
+    );
     return renderAccordionItem({
       key: unit[0]!.id,
       title:
@@ -1746,14 +1746,14 @@ export function CharacterEditorPage({
           : repeatedGroupByChoiceId.has(unit[0]!.id)
             ? repeatedChoiceGroupTitle(unit, byId)
             : contextualChoiceTitle(unit[0]!, planningEvaluation, byId),
-      picks: picks.length === 0 ? "none chosen" : picks.join(", "),
+      picks: picks ?? "none chosen",
       status: unit.some((item) =>
         selectedChoiceIsHouseRule(item, planningEvaluation),
       )
         ? "house-rule"
         : unitUnresolved(unit)
           ? "unresolved"
-          : picks.length > 0
+          : picks !== undefined
             ? "complete"
             : undefined,
       onToggle: () => toggleAccordion(unit[0]!.id, unit[0]!.id),

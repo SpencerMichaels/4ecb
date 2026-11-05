@@ -41,13 +41,16 @@ import { beastCompanionTitle } from "../src/BeastCompanionCard";
 import { parsePartyPieces } from "../src/BuilderItemSetCard";
 import { builderIssueGroups } from "../src/builder-diagnostics";
 import {
+  accordionPicksSummary,
   candidateReason,
   choiceSelectionTableKind,
   choiceTableSummary,
   contentSpecificValue,
+  contextualChoiceTitle,
   groupChoicesByLegacyWorkflow,
   isCandidateVisible,
   isOptionalRetrainingChoice,
+  isPrimaryBuildChoice,
   legacyChoiceSection,
   primaryLevelBuildChoices,
   presentLevelChoices,
@@ -650,6 +653,56 @@ rule("beatrix", "Build, level 1: Race", 'Revenant "Past life"', (c) => {
     ),
   ];
 });
+
+/** A level-1 unit's folded accordion summary, as the Build tab builds it. */
+function foldedSummary(c: ReviewCharacter, type: string) {
+  const evaluation = c.atLevels([1]);
+  const primary = choicesAt(c, 1, evaluation).filter(isPrimaryBuildChoice);
+  const presentation = presentLevelChoices(primary);
+  const choice = primary.find((item) => key(item.type) === type);
+  if (choice === undefined) return { steps: 0, text: undefined };
+  const unit = presentation.dependentFlowByChoiceId.get(choice.id) ?? [choice];
+  return {
+    steps: unit.length,
+    text: accordionPicksSummary(
+      unit,
+      presentation,
+      (item) => selectedDefinition(c, item, evaluation)?.name,
+      (item) => contextualChoiceTitle(item, evaluation, c.context.byId),
+    ),
+  };
+}
+
+// A folded section reads as its main pick, then each filled sub-choice
+// under its slot heading: "Revenant · Language: Elven", never "Revenant,
+// Elven" (which reads as an Elven Revenant).
+rule(
+  "beatrix",
+  "Build, level 1: Race",
+  "Folded section summaries",
+  (c, context) => {
+    const race = foldedSummary(c, "race");
+    const druid = foldedSummary(context.character("piri"), "class");
+    return [
+      truthy(
+        "Beatrix's Race unit holds the language step",
+        race.steps > 1,
+        `${race.steps} steps`,
+      ),
+      equal("Beatrix's folded Race", race.text, "Revenant · Language: Elven"),
+      equal(
+        "Beatrix's folded Class",
+        foldedSummary(c, "class").text,
+        "Hexblade",
+      ),
+      equal(
+        "Piri's folded Class (three at-will steps)",
+        druid.text,
+        "Druid · Power: Pounce · Power: Call of the Beast · Power: Savage Rend",
+      ),
+    ];
+  },
+);
 
 rule("beatrix", "Retraining", "Essentials power swaps", (c) => {
   const levels = Array.from(

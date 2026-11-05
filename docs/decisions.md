@@ -643,6 +643,19 @@ or below `effectiveLevel`. At the final category of the effective level it
 remains visible but disabled, making the current-character boundary explicit
 without growing the planning horizon.
 
+Folded section summaries (2026-11-04). Each table unit of a category folds to
+an accordion heading naming its picks (`accordionPicksSummary`). A dependent
+flow reads as its main pick, then each filled sub-choice under the heading the
+step has when open, joined with " · ": "Revenant · Language: Elven", "Druid ·
+Power: Pounce · Power: Call of the Beast · Power: Savage Rend". A bare
+"Revenant, Elven" read as an Elven Revenant. Unfilled steps are left out (the
+status icon flags them) and the grouping is unchanged, so Past life and a
+hexblade's Pact Choice keep their own headings. Units of equal standing with
+no main pick (repeated slots of one rule, backgrounds, skill training) still
+list their picks with commas. The summary stays one line and ellipsizes;
+across the content a flow holds at most three filled sub-choices in practice
+(Druid's at-wills), mostly none or one (a race's language).
+
 ### D040 — Planning is level navigation, not a separate overview setting
 
 The builder header is the single compact character summary: portrait and name

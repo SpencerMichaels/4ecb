@@ -390,6 +390,39 @@ export function defaultAccordionUnit<Unit extends readonly EvaluatedChoice[]>(
 }
 
 /**
+ * What a folded accordion item says it holds, or undefined when nothing is
+ * picked. A dependent flow reads as its main pick followed by each filled
+ * later step under the heading that step has when open ("Revenant ·
+ * Language: Elven", "Druid · Power: Pounce · …"), so a sub-choice never
+ * reads as part of the main pick's name; unfilled steps are left out (the
+ * item's status flags them). Slots of equal standing (a repeated group's
+ * feats or powers, backgrounds, skill training) have no main pick and list
+ * every pick: "Toughness, Weapon Focus".
+ */
+export function accordionPicksSummary(
+  unit: readonly EvaluatedChoice[],
+  presentation: LevelChoicePresentation,
+  pickOf: (choice: EvaluatedChoice) => string | undefined,
+  stepLabel: (choice: EvaluatedChoice) => string,
+): string | undefined {
+  const [root, ...steps] = unit;
+  if (root === undefined) return undefined;
+  if (presentation.dependentFlowByChoiceId.get(root.id) !== unit) {
+    const picks = unit.flatMap((choice) => pickOf(choice) ?? []);
+    return picks.length === 0 ? undefined : picks.join(", ");
+  }
+  const main = pickOf(root);
+  if (main === undefined) return undefined;
+  return [
+    main,
+    ...steps.flatMap((step) => {
+      const pick = pickOf(step);
+      return pick === undefined ? [] : [`${stepLabel(step)}: ${pick}`];
+    }),
+  ].join(" · ");
+}
+
+/**
  * The accordion item the user opened, kept only while they stay on its
  * level tab: on any other tab it is dropped, so returning to the tab (by
  * whatever route) arrives with its filled slots folded again.

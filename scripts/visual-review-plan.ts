@@ -137,6 +137,10 @@ const reviews: ReviewCharacter[] = [
             'Revenant "Past life"',
             "The Past life choice (Eladrin) sits under Race, not Other.",
           ],
+          [
+            "Folded section summaries",
+            'Folded, the Race item reads "Revenant · Language: Elven" and the Class item "Hexblade" (the pact is its own row).',
+          ],
         ],
       },
       {

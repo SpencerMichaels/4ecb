@@ -10,6 +10,7 @@ import {
   projectBuildForEvaluation,
   type CandidateDecision,
   type EvaluatedCharacter,
+  type EvaluatedChoice,
 } from "@4ecb/rules-engine";
 
 import {
@@ -17,6 +18,7 @@ import {
   buildPresetPlan,
   abilityScoreAdjustment,
   accordionOverrideForTab,
+  accordionPicksSummary,
   arrivalChoiceId,
   defaultAccordionUnit,
   dependentFlowStepIds,
@@ -2265,6 +2267,36 @@ describe("builder planning UI", () => {
     });
     for (const slot of twofoldSlots)
       expect(presentedChoiceSection(slot, presentation)).toBe("Class");
+    // Folded, the feat's flow names the feat, then each filled step under
+    // its heading; an unfilled step is left out. The repeated slots of one
+    // rule (no main pick) list each pick.
+    const flow = presentation.dependentFlowByChoiceId.get(granted!.id)!;
+    expect(flow).toHaveLength(2);
+    const label = (choice: EvaluatedChoice) => `Slot ${choice.id}`;
+    const picks = new Map<string, string>([[flow[0]!.id, "Hybrid Talent"]]);
+    const pickOf = (choice: EvaluatedChoice) => picks.get(choice.id);
+    expect(accordionPicksSummary(flow, presentation, pickOf, label)).toBe(
+      "Hybrid Talent",
+    );
+    picks.set(flow[1]!.id, "Arcane Fire");
+    expect(accordionPicksSummary(flow, presentation, pickOf, label)).toBe(
+      `Hybrid Talent · Slot ${flow[1]!.id}: Arcane Fire`,
+    );
+    picks.delete(flow[0]!.id);
+    expect(
+      accordionPicksSummary(flow, presentation, pickOf, label),
+    ).toBeUndefined();
+    const repeated = presentation.repeatedGroupByChoiceId.get(
+      twofoldSlots[0]!.id,
+    )!;
+    expect(accordionPicksSummary(repeated, presentation, pickOf, label)).toBe(
+      undefined,
+    );
+    picks.set(repeated[0]!.id, "Toughness");
+    picks.set(repeated[1]!.id, "Weapon Focus");
+    expect(accordionPicksSummary(repeated, presentation, pickOf, label)).toBe(
+      "Toughness, Weapon Focus",
+    );
     // Picking the feat opened its step: the page brings it into view once.
     expect(dependentFlowStepIds(presentation)).toEqual(new Set([granted!.id]));
     expect(openedFlowStepId(new Set(), presentation)).toBe(granted!.id);

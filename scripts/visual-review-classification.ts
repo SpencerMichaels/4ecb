@@ -37,6 +37,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "beatrix|1|revenant past life": auto(
     "The Past life (CountsAsRace) choice is in the Race section, picked as Eladrin.",
   ),
+  "beatrix|1|folded section summaries": auto(
+    'Folded summaries: the main pick, then each filled sub-choice as "Slot: pick" ("Revenant · Language: Elven"; Hexblade; Piri\'s "Druid · Power: Pounce · Power: Call of the Beast · Power: Savage Rend").',
+  ),
   "beatrix|2|essentials power swaps": auto(
     "The Retraining tab lists the replacement levels and their options match the power kind.",
   ),
