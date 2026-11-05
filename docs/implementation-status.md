@@ -513,10 +513,10 @@ D102 (part 2 of the Equipment-tab slot work, `cb945bd`). The evaluator
 exposes `EvaluatedCharacter.loadoutSlotContext` (Small, Oversized, One Size
 Larger, Ambidextrous) and the one loadout resolver applies native
 `ItemSlot` size rules through `legacyItemSlot`: a Small character's
-non-small versatile weapon fills both hands (amended 2026-11-04: its menu
-shows the plain "Wield", no "Wield two-handed" item), One Size Larger holds
-a two-handed weapon in one hand. A weapon the character can't wield (Small with a two-handed
-weapon, a Large weapon without Oversized/One Size Larger) can still be
+non-small versatile weapon fills both hands (amended 2026-11-04: it has no
+"Wield two-handed" item and is wielded like any other weapon), One Size
+Larger holds a two-handed weapon in one hand. A weapon the character can't
+wield (Small with a two-handed weapon, a Large weapon without Oversized/One Size Larger) can still be
 equipped and raises a house-rule character issue naming the weapon and why
 (`unwieldableWeaponIssues` in `builder-diagnostics.ts`); its attack rows
 stay, as native `BuildWeaponsList` lists every owned weapon. Staff and
