@@ -31,7 +31,7 @@ import {
 import { downloadCharacterBackup } from "./download";
 import type { ContentDownloadState } from "./App";
 import { Icon } from "./Icon";
-import { RestoreBackupDialog } from "./RestoreBackupDialog";
+import { RestoreBackupDialog, restoreSuccessText } from "./RestoreBackupDialog";
 import type { PaperSize } from "./paper-size";
 import { SegmentedControl } from "./SegmentedControl";
 import { ToastRegion, useToasts } from "./Toasts";
@@ -215,7 +215,11 @@ export function SettingsPage({
   const [pendingBackup, setPendingBackup] = useState<{
     readonly value: unknown;
     readonly names: readonly string[];
+    readonly trashed: number;
   }>();
+  // The last restore's confirmation: its characters land in the library, not
+  // on Settings, so success is stated here (with a link) and announced.
+  const [restored, setRestored] = useState<string>();
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<PersistenceStatus>();
   const [requestingPersistence, setRequestingPersistence] = useState(false);
@@ -457,21 +461,37 @@ export function SettingsPage({
     const value: unknown = JSON.parse(await file.text());
     const inspection = await characterRepository.inspectBackup(value);
     if (inspection.conflictingIds.length === 0)
-      await characterRepository.restoreBackup(value);
-    else setPendingBackup({ value, names: inspection.conflictingTitles });
+      confirmRestored(
+        await characterRepository.restoreBackup(value),
+        inspection.trashedCount,
+      );
+    else
+      setPendingBackup({
+        value,
+        names: inspection.conflictingTitles,
+        trashed: inspection.trashedCount,
+      });
+  }
+
+  function confirmRestored(count: number, trashed: number): void {
+    const text = restoreSuccessText(count, trashed);
+    setRestored(text);
+    setAnnouncement(text);
   }
 
   function finishPendingBackup(keepBoth: boolean): void {
     if (pendingBackup === undefined) return;
-    const { value } = pendingBackup;
+    const { value, trashed } = pendingBackup;
     setPendingBackup(undefined);
     void (
       keepBoth
         ? characterRepository.restoreBackupKeepingBoth(value)
         : characterRepository.restoreBackup(value)
-    ).catch((reason: unknown) =>
-      showError(reason, "Couldn't restore the backup"),
-    );
+    )
+      .then((count) => confirmRestored(count, trashed))
+      .catch((reason: unknown) =>
+        showError(reason, "Couldn't restore the backup"),
+      );
   }
 
   // Esc closes Settings, unless something on the page handles it first: an
@@ -732,6 +752,8 @@ export function SettingsPage({
                   accept=".json,.4ecb,application/json"
                   onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
+                    setRestored(undefined);
+                    setAnnouncement("");
                     if (file !== undefined)
                       void restoreBackupFile(file).catch((reason: unknown) =>
                         showError(reason, `Couldn't read ${file.name}`),
@@ -741,6 +763,11 @@ export function SettingsPage({
                 />
               </label>
             </div>
+            {restored === undefined ? null : (
+              <p className="status">
+                {restored} <a href="#/characters">Open library</a>
+              </p>
+            )}
             {pendingBackup === undefined ? null : (
               <RestoreBackupDialog
                 names={pendingBackup.names}

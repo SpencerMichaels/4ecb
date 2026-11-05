@@ -122,6 +122,17 @@ export function librarySelection(
     : library[0]?.id;
 }
 
+/** After an import, the row to select and scroll to: the topmost imported
+ *  row in the current sort, so the rest follow it below. */
+export function firstImportedRow<T extends LibraryRow>(
+  library: readonly T[],
+  sort: LibrarySort,
+  importedIds: readonly string[],
+): string | undefined {
+  const imported = new Set(importedIds);
+  return sortLibrary(library, sort).find(({ id }) => imported.has(id))?.id;
+}
+
 export const LIBRARY_VIEW_STORAGE_KEY = "4ecb.libraryView.v1";
 
 export interface LibraryView {

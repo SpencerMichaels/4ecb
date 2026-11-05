@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from "react";
 
 import type { CharacterLibraryEntry } from "@4ecb/browser-storage";
 
@@ -62,6 +62,18 @@ export function CharacterLibraryTable({
   const focusId = characters.some(({ id }) => id === selectedId)
     ? selectedId
     : characters[0]?.id;
+
+  // Keep the selected row in view when the selection changes from outside
+  // the table: an imported or duplicated character, or a remembered one on
+  // load. "nearest" leaves a row that is already visible where it is.
+  useEffect(() => {
+    if (selectedId === undefined) return;
+    body.current
+      ?.querySelector<HTMLElement>(
+        `[data-library-row="${CSS.escape(selectedId)}"]`,
+      )
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedId]);
 
   const moveSelection = (event: KeyboardEvent, index: number): void => {
     const target =

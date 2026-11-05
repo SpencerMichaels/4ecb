@@ -3,7 +3,11 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { naturalList, restoreConflictText } from "./RestoreBackupDialog";
+import {
+  naturalList,
+  restoreConflictText,
+  restoreSuccessText,
+} from "./RestoreBackupDialog";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -138,7 +142,17 @@ describe("SettingsPage backup restore", () => {
     });
   }
 
-  it("restores at once, with no dialog or notice, when nothing conflicts", async () => {
+  function confirmation(): HTMLParagraphElement | undefined {
+    return [
+      ...container.querySelectorAll<HTMLParagraphElement>("p.status"),
+    ].find((candidate) => candidate.textContent?.startsWith("Restored"));
+  }
+
+  function announced(): string | null | undefined {
+    return container.querySelector("main > p[aria-live=polite]")?.textContent;
+  }
+
+  it("restores at once, with no dialog, when nothing conflicts, and confirms it", async () => {
     storage.inspectBackup.mockResolvedValue(inspection([]));
     await pick(JSON.stringify(backup));
     expect(storage.inspectBackup).toHaveBeenCalledWith(backup);
@@ -146,6 +160,28 @@ describe("SettingsPage backup restore", () => {
     expect(dialog()).toBeNull();
     expect(container.querySelector(".toast-region")?.textContent).toBe("");
     expect(container.textContent).not.toContain("Restore preview");
+    // The characters land in the library, not here, so success is stated.
+    expect(confirmation()?.textContent).toBe(
+      "Restored 4 characters. Open library",
+    );
+    expect(confirmation()?.querySelector("a")?.getAttribute("href")).toBe(
+      "#/characters",
+    );
+    expect(announced()).toBe("Restored 4 characters.");
+  });
+
+  it("confirms a restore after the player chooses, and clears it on the next pick", async () => {
+    storage.inspectBackup.mockResolvedValue(inspection(["Lily"]));
+    storage.restoreBackupKeepingBoth.mockResolvedValue(1);
+    await pick(JSON.stringify(backup));
+    expect(confirmation()).toBeUndefined();
+    await click(button("Keep both"));
+    expect(confirmation()?.textContent).toBe(
+      "Restored 1 character. Open library",
+    );
+    await pick(JSON.stringify(backup));
+    expect(confirmation()).toBeUndefined();
+    expect(announced()).toBe("");
   });
 
   it("names the library's conflicting characters and offers three choices", async () => {
@@ -225,6 +261,7 @@ describe("SettingsPage backup restore", () => {
     expect(container.querySelector(".toast-region")?.textContent).toContain(
       "Couldn't restore the backup",
     );
+    expect(confirmation()).toBeUndefined();
   });
 });
 
@@ -234,6 +271,14 @@ describe("restore conflict text", () => {
     expect(naturalList(["Lily", "Hu"])).toBe("Lily and Hu");
     expect(restoreConflictText(["Lily"])).toBe(
       "1 character in this backup is already in your library: Lily.",
+    );
+  });
+
+  it("states how many characters were restored, and how many to the trash", () => {
+    expect(restoreSuccessText(1)).toBe("Restored 1 character.");
+    expect(restoreSuccessText(23)).toBe("Restored 23 characters.");
+    expect(restoreSuccessText(23, 3)).toBe(
+      "Restored 23 characters (3 to the trash).",
     );
   });
 });

@@ -16,6 +16,16 @@ export function restoreConflictText(names: readonly string[]): string {
     : `${names.length} characters in this backup are already in your library: ${naturalList(names)}.`;
 }
 
+/** The confirmation after a restore, which lands in the library rather than
+ *  on Settings: "Restored 23 characters." Characters the backup held in the
+ *  trash are restored there, so they are counted separately. */
+export function restoreSuccessText(count: number, trashed = 0): string {
+  const characters = count === 1 ? "1 character" : `${count} characters`;
+  return trashed === 0
+    ? `Restored ${characters}.`
+    : `Restored ${characters} (${trashed} to the trash).`;
+}
+
 /** Asks what to do when a backup holds characters already in the library:
  *  replace them, keep both (the backup's copies are added alongside), or
  *  cancel. Only shown when there is a conflict; focus starts on Cancel and

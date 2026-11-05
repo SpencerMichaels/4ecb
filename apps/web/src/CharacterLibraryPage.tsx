@@ -19,6 +19,7 @@ import { createNativeCharacter } from "./new-character";
 import { holdCharacterDraft } from "./character-drafts";
 import {
   characterCount,
+  firstImportedRow,
   librarySelection,
   nextLibrarySort,
   readLibraryView,
@@ -114,7 +115,21 @@ export function CharacterLibraryPage({
     const { active, deleted } = await repository.listMetadataPartitioned();
     setCharacters(active);
     setTrash(deleted);
+    return active;
   }, []);
+
+  /** An import's rows can land anywhere in the sorted table, possibly
+   *  scrolled out of view: select the topmost one, which the table scrolls
+   *  to (imports are otherwise silent, so this is their confirmation). */
+  async function refreshRevealing(
+    importedIds: readonly string[],
+  ): Promise<void> {
+    const active = await refresh();
+    updateView((current) => {
+      const selectedId = firstImportedRow(active, current.sort, importedIds);
+      return selectedId === undefined ? current : { ...current, selectedId };
+    });
+  }
 
   useEffect(() => {
     void refresh().catch((reason: unknown) =>
@@ -154,7 +169,7 @@ export function CharacterLibraryPage({
       },
     );
     await repository.put(character);
-    await refresh();
+    await refreshRevealing([character.id]);
     const toast = importReportToast(character.title, imported.report);
     if (toast !== undefined) pushToast(toast);
   }
@@ -170,8 +185,8 @@ export function CharacterLibraryPage({
     } catch {
       throw new Error("Not a valid .4ecb character package");
     }
-    await repository.importCharacters(value);
-    await refresh();
+    const imported = await repository.importCharacters(value);
+    await refreshRevealing(imported.map(({ id }) => id));
   }
 
   async function createCharacter(): Promise<void> {

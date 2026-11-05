@@ -7,6 +7,7 @@ import {
   LIBRARY_VIEW_STORAGE_KEY,
   characterCount,
   characterIdentity,
+  firstImportedRow,
   librarySelection,
   nextLibrarySort,
   readLibraryView,
@@ -265,6 +266,22 @@ describe("library table helpers", () => {
     expect(librarySelection(rows, "gone")).toBe("a");
     expect(librarySelection(rows, undefined)).toBe("a");
     expect(librarySelection([], "gone")).toBeUndefined();
+  });
+
+  it("selects the topmost imported row in the current sort", () => {
+    expect(firstImportedRow(rows, DEFAULT_LIBRARY_SORT, ["c", "a"])).toBe("a");
+    expect(
+      firstImportedRow(rows, { column: "level", direction: "ascending" }, [
+        "a",
+        "b",
+      ]),
+    ).toBe("a");
+    expect(firstImportedRow(rows, DEFAULT_LIBRARY_SORT, [])).toBeUndefined();
+    // The page selects it after an import; the table scrolls a selection
+    // into view, leaving an already visible row where it is.
+    expect(library).toContain("refreshRevealing([character.id])");
+    expect(library).toContain("refreshRevealing(imported.map(({ id }) => id))");
+    expect(table).toContain('scrollIntoView?.({ block: "nearest" })');
   });
 
   it("remembers sort and selection, tolerating bad or blocked storage", () => {
