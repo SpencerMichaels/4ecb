@@ -733,7 +733,10 @@ no longer shows "Inactive saved choices" or "Matched by name on import"
 (Diagnostics groups and their status badges), the import toast appears only
 for warnings, applying a build preset no longer says "N choices applied", and
 the sheet drops its "Authoritative rules evaluation" notice. The evaluator and
-import report keep that data.
+import report keep that data. Amended 2026-11-04: success is silent only when
+its result is visible where the player is; Restore backup now confirms
+"Restored N characters." on Settings, and a library import selects and scrolls
+to the first imported row.
 
 Action Point benefits now remain in "Remember in play" as well as on their
 card. This owner-approved exception applies to self, ally and beast-companion

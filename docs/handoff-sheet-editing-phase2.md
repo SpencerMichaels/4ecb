@@ -113,8 +113,9 @@ Following the pattern the owner settled on:
   like the legacy builder; **no per-item ⋮ buttons** (too noisy). Keep
   invisible keyboard access.
 - **No menu for a single action;** right-click acts directly.
-- **No non-actionable or success notices** (D098): silent saves; only
-  failures show an actionable error.
+- **No non-actionable notices; success silent when visible** (D098, amended
+  2026-11-04): silent saves; a success whose result isn't on screen is
+  confirmed or scrolled into view.
 - **No speculative guards or locks** (e.g. "nothing to print" disabling,
   "always printed" page 1). Don't add restrictions the owner didn't ask for.
 - **Controls always present,** empty states inside; no "Not now" labels.
