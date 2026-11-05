@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
 
 export const EXCEPTION_IDS = {
   diverseStudy: "ID_FMP_FEAT_651",
@@ -274,12 +274,7 @@ export function matchingDeityAlignmentClasses(
   activeDefinitions: readonly ContentEntity[],
   definitions: readonly ContentEntity[],
 ): readonly ContentEntity[] {
-  const byId = new Map(
-    definitions.map((definition) => [
-      definition.id.trim().toLocaleLowerCase(),
-      definition,
-    ]),
-  );
+  const byId = contentEntitiesById(definitions);
   return activeDefinitions.filter((definition) => {
     if (!shouldChooseDeity([definition])) return false;
     if (requiresMatchingDeityAlignment(definition)) return true;

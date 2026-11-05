@@ -5,7 +5,7 @@ import {
   type CharacterRecord,
   type BuildOccurrence,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
 import { classifyPowerEntity, powerActionLabel } from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
@@ -1210,9 +1210,9 @@ export function deityAlignmentConstraint(
   evaluation: EvaluatedCharacter,
   entities: readonly ContentEntity[],
 ): DeityAlignmentConstraint | undefined {
-  const byId = new Map(
-    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
-  );
+  // The content's id map is built once per content: this runs on every
+  // planning evaluation.
+  const byId = contentEntitiesById(entities);
   const activeDefinitions = evaluation.occurrences.flatMap((occurrence) => {
     const definition = byId.get(occurrence.definitionId.toLocaleLowerCase());
     return definition === undefined ? [] : [definition];
