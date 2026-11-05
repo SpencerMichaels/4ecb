@@ -99,6 +99,19 @@ describe("visual-review facts decided by CSS", () => {
     ).toContain("content: none");
   });
 
+  it("puts a creature card's defense and hit point tiles on one row", () => {
+    const row = declarations(
+      ".print-creature-card .print-card-body > div.print-creature-vitals",
+    );
+    expect(row).toContain("display: grid");
+    expect(row).toContain("grid-template-columns: 2fr 1fr");
+    expect(
+      declarations(
+        ".print-creature-card .print-card-body > div.print-creature-vitals::after",
+      ),
+    ).toContain("content: none");
+  });
+
   it("sizes a familiar card's notes and tiles from its body text size", () => {
     expect(declarations(".print-familiar-card .print-play-note")).toContain(
       "font-size: var(--print-card-body-size, 8pt)",

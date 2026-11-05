@@ -1049,11 +1049,16 @@
 }
 /* Creature (D110): the associate card's frame, compacted so most stat blocks
    fit one printed card: defense and hit point tiles share one row, and the
-   notes shrink with the body text. */
-.print-creature-vitals {
+   notes shrink with the body text. The row's selector outranks the card
+   body's inline text flow for its direct divs (and their line-break
+   ::after), as the familiar's HP and Speed row does. */
+.print-creature-card .print-card-body > div.print-creature-vitals {
   display: grid;
   gap: 0.045in;
   grid-template-columns: 2fr 1fr;
+}
+.print-creature-card .print-card-body > div.print-creature-vitals::after {
+  content: none;
 }
 .print-creature-card
   .print-creature-vitals
