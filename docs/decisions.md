@@ -2773,6 +2773,30 @@ Implemented in `apps/web/src/builder-diagnostics.ts`,
 `apps/web/src/CharacterEditorPage.tsx`, `apps/web/src/import-report.ts`,
 `apps/web/src/ChoiceEditors.tsx` and `apps/web/src/CharacterSheetPage.tsx`.
 
+Amendment (2026-11-04, product owner): success is silent only when the
+result is visible where the player is. The owner's clarification: success
+is silent only when the operation's result is inherently obvious on screen
+(importing a content pack adds a visible row to the content table); an
+operation whose result is not visible where the user is needs a separate
+success confirmation; when the result lands somewhere off-screen in the
+current view (e.g. an imported character added to a part of the library
+table that is scrolled out of view), bring it into view instead, e.g.
+scroll the table to the new item.
+
+- Settings → Restore backup puts its characters in the library, not on
+  Settings, so it confirms with a plain status line under its buttons,
+  "Restored N characters." ("(M to the trash)" when the backup held
+  trashed ones) and an "Open library" link, also announced through the
+  page's polite live region (`restoreSuccessText` in
+  `apps/web/src/RestoreBackupDialog.tsx`, `SettingsPage.tsx`). It has no
+  dismiss button and clears on the next restore.
+- The library's Import selects the topmost imported row in the current
+  sort (`firstImportedRow`, `character-library-ui.ts`), and the table
+  scrolls a changed selection into view (`block: "nearest"`, so a visible
+  row stays put; `CharacterLibraryTable.tsx`). No notice is shown.
+- Everything else in this decision stands: no confirmation for a result
+  already visible, and no non-actionable notices.
+
 ### D099 — The printed sheet has an editable, per-character layout
 
 Status: accepted (2026-10-25), phases 0–3 implemented (phase 2, reminders,

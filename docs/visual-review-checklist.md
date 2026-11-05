@@ -386,8 +386,12 @@ Open `#/characters` with the review characters restored.
     below 60rem the pane sits under the full-width table. The empty library
     reads "No characters yet." centred inside the table. Use the keyboard
     on the table: there is a visible focus ring and the selection moves,
-    not the page.
-  - **Wrong if:** the labels wrap, the count tag is round or misaligned, the
+    not the page. With the default sort (Edited, newest first), scroll to
+    the bottom of the table and Import any `sample-chars/*.dnd4e`: the
+    page scrolls up just enough to show the new row at the top, selected
+    (trash it afterwards).
+  - **Wrong if:** after an import no new row is in view or selected, the
+    labels wrap, the count tag is round or misaligned, the
     borders don't line up, a horizontal scrollbar appears, or the pane
     overlaps the table.
 - [ ] **Library: detail pane.**
@@ -475,15 +479,19 @@ These need the deployed app, an installed PWA, or your own content.
     legible at tab size on either strip.
   - **Wrong if:** the old single-glyph icon shows, the E is lost, or the tile
     blurs into the dark strip.
-- [ ] **Settings: Restore backup dialog.**
+- [ ] **Settings: Restore backup dialog and confirmation.**
   - **Where:** Settings → Backups & storage: **Back up library**, then
     **Restore backup** with that file, in a window narrow enough to wrap
-    the buttons.
+    the buttons; choose Keep both (or Replace them).
   - **Expect:** a modal dialog whose one sentence names every conflicting
     character, and Cancel, Keep both and a red Replace them on one row,
-    wrapping cleanly when narrow.
-  - **Wrong if:** the name list overflows or is cut off, or the buttons wrap
-    raggedly.
+    wrapping cleanly when narrow. After the choice, a grey line under the
+    Back up library / Restore backup buttons reads "Restored N characters."
+    (with "(M to the trash)" when the backup holds trashed ones) and an
+    "Open library" link that goes to `#/characters`.
+  - **Wrong if:** the name list overflows or is cut off, the buttons wrap
+    raggedly, the confirmation line is missing, crowds the buttons, or its
+    link is unreadable in dark theme.
 - [ ] **Erdan: feature notes on your own content.**
   - **Where:** the review pack lacks Erdan's Disruptive Shot features, so
     import `sample-chars/Erdan 11.dnd4e` with your own content, then

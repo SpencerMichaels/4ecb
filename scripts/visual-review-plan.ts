@@ -1837,7 +1837,7 @@ const general: GeneralSection[] = [
     items: [
       [
         "Library: header and table",
-        "Header, table, the 36rem and 60rem narrow layouts, the empty state (a private window before restoring) and keyboard focus.",
+        "Header, table, the 36rem and 60rem narrow layouts, the empty state (a private window before restoring), keyboard focus, and Import scrolling to the topmost imported row.",
       ],
       [
         "Library: detail pane",
@@ -1940,8 +1940,8 @@ const general: GeneralSection[] = [
         "Light and dark tab strips after a hard reload.",
       ],
       [
-        "Settings: Restore backup dialog",
-        "Back up library, then restore that file: the conflict dialog's layout.",
+        "Settings: Restore backup dialog and confirmation",
+        'Back up library, then restore that file: the conflict dialog\'s layout, then the "Restored N characters." line with its Open library link.',
       ],
       [
         "Erdan: feature notes on your own content",
