@@ -2586,6 +2586,33 @@ Consequences:
 - The card still prints the Requirement line, so the player sees the
   condition. The rule lives in `power-requirements.ts` (`isPowerRestricted`).
 
+Amendment (2026-11-04, product owner): "hide the rows a power's requirement
+rules out." A Requirement of the form "You must use this power with your
+<item>." names the one item the power is used with, so the power keeps only
+that item's rows. This departs from legacy `PowerStats`, which lists every
+other implement and Unarmed too: a hexblade's rod on Moonfire Blade printed
+damage "5", its 1[W] dropped by native `ParseWeaponDmg` for an item without
+weapon dice, a row the power's own text forbids.
+
+- The pack stores the named item at build (`_Power Text IR` v5
+  `requiredItem`, `requiredPowerItem` in content-domain `power-text.ts`). In
+  the 2026-11-04 pack, 12 powers name an item (the six hexblade pact blades'
+  powers: Blade of Winter's Mourning, Blade of Annihilation, Starshadow
+  Blade, Sword of the White Well, Scourge of Exquisite Agony, Blade of
+  Chaos) and Soul Cutter says "your pact weapon".
+- The engine (`requiredItemRows` in `powers.ts`) keeps the rows of the held
+  item of that name (the holding or its base or enchantment record). For a
+  phrase no held item has, it keeps the free items (`FREEBEE:<id>` stats)
+  that an element whose name contains the phrase's words grants. The owner
+  ruled that "your pact weapon" is the item the character's own pact grants
+  (the "Fey Pact of the White Well Weapon" feature gives the Sword of the
+  White Well).
+- A requirement that resolves to no row leaves every row. The other hand
+  (Dual Implement Spellcaster's off-hand enhancement) still comes from every
+  eligible item.
+- `pnpm parity:baseline` lists the dropped legacy rows as
+  `requirementExcludedRows`, not as mismatches.
+
 ### D094 — Healing powers without a Hit line get no attack row
 
 Status: accepted (2026-10-22). A deliberate divergence from legacy

@@ -7,6 +7,7 @@ import {
   parseRecoveries,
   powerAttackSlots,
   readPowerTextStore,
+  requiredPowerItem,
   type AttackFieldIr,
   type ContentEntity,
   type HitFieldIr,
@@ -64,6 +65,8 @@ export interface PowerTexts {
   readonly summonedCreature: boolean;
   /** Its native field riders. */
   readonly fieldBonuses: PowerFieldBonuses;
+  /** The item its Requirement says it must be used with. */
+  readonly requiredItem: string | undefined;
   attack(text: string): AttackFieldIr;
   hit(text: string): HitFieldIr;
   recoveries(text: string): readonly PowerRecoveryIr[];
@@ -99,6 +102,8 @@ export function powerTexts(
       own === undefined
         ? parsePowerFieldBonuses(power.specifics)
         : (own.fieldBonuses ?? {}),
+    requiredItem:
+      own === undefined ? requiredPowerItem(power.specifics) : own.requiredItem,
     attack: (text) =>
       stored(text, "attack") ??
       memo(attackFallback, text, () => parseAttackField(text)),

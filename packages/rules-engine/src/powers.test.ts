@@ -455,6 +455,116 @@ describe("power evaluation", () => {
     ).toBe("1d8+5");
   });
 
+  describe("a Requirement naming the item to use (D093 amendment)", () => {
+    const pactPower = (requirement: string) =>
+      entity("POWER", "Synthetic pact blade spell", "Power", {
+        Keywords: "Arcane, Implement, Radiant, Weapon",
+        "Attack Type": "Melee weapon",
+        Requirement: requirement,
+        Attack: "Charisma vs. Reflex",
+        Hit: "1[W] + Charisma modifier radiant damage.",
+      });
+    const rowsFor = (
+      requirement: string,
+      stats: Record<string, EvaluatedStat> = {},
+    ) => {
+      const [power] = evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        overlays: [],
+        entities: [
+          pactPower(requirement),
+          entity("ROD", "Synthetic Rod +2", "Magic Item", {
+            "Magic Item Type": "Rod",
+            Enhancement: "+2 attack rolls and damage rolls",
+          }),
+          entity("BLADE_BASE", "Longsword", "Weapon", {
+            Damage: "1d8",
+            "Weapon Category": "Military Melee",
+            Group: "Heavy Blade",
+          }),
+          entity("BLADE", "Sword of the Synthetic Well", "Magic Item", {
+            "Magic Item Type": "Weapon",
+            Enhancement: "+1 attack rolls and damage rolls",
+          }),
+        ],
+        inventory: [
+          {
+            id: "rod",
+            definitionIds: ["ROD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "blade",
+            definitionIds: ["BLADE_BASE", "BLADE"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Charisma modifier": stat("Charisma modifier", 5), ...stats },
+      });
+      return power;
+    };
+
+    it("keeps only the rows of the named item", () => {
+      const power = rowsFor(
+        "You must use this power with your Sword of the Synthetic Well.",
+      );
+      expect(power?.variants.map((variant) => variant.equipmentId)).toEqual([
+        "blade",
+      ]);
+      expect(power?.requiredEquipment).toBe("Sword of the Synthetic Well");
+    });
+
+    it("matches the name in any case", () => {
+      const power = rowsFor(
+        "You must use this power with your sword of the synthetic well.",
+      );
+      expect(power?.variants.map((variant) => variant.equipmentId)).toEqual([
+        "blade",
+      ]);
+    });
+
+    it('reads "your pact weapon" as the item the pact weapon feature grants', () => {
+      // Hexblade content: "Fey Pact of the White Well Weapon" grants the
+      // pact blade with `statadd name="FREEBEE:<item ID>"`.
+      const freebee = (target: string, provider: string): EvaluatedStat => ({
+        name: `FREEBEE:${target}`,
+        value: 1,
+        contributions: [
+          {
+            id: `grant:${target}`,
+            stat: `FREEBEE:${target}`,
+            value: "+1",
+            providerId: provider,
+            providerName: provider,
+            numericValue: 1,
+            applied: true,
+          },
+        ],
+      });
+      const power = rowsFor("You must use this power with your pact weapon", {
+        "FREEBEE:BLADE": freebee("BLADE", "Synthetic Pact of the Well Weapon"),
+        "FREEBEE:ROD": freebee("ROD", "Synthetic Wand Bequest"),
+      });
+      expect(power?.variants.map((variant) => variant.equipmentId)).toEqual([
+        "blade",
+      ]);
+      expect(power?.requiredEquipment).toBe("pact weapon");
+    });
+
+    it("leaves every row when no held item has the name", () => {
+      const power = rowsFor("You must use this power with your pact weapon");
+      expect(power?.requiredEquipment).toBeUndefined();
+      expect(
+        power?.variants.map((variant) => variant.equipmentId).sort(),
+      ).toEqual(["blade", "rod", "unarmed"]);
+    });
+  });
+
   it("applies defense-keyed damage bonuses to powers that target that defense", () => {
     // Legacy Resplendent Gloves: `will:damage +2` adds to Hold Foe's damage.
     const powers = evaluatePowers({

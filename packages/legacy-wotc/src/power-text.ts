@@ -8,6 +8,7 @@ import {
   parsePowerFieldBonuses,
   parsePowerText,
   powerAttackSlots,
+  requiredPowerItem,
   readCreatureStatBlock,
   type PowerTextEntry,
   type PowerTextStore,
@@ -147,6 +148,7 @@ export function powerTextField(
     if (power) issues.push(...issuesOf(text, entry));
   }
   const fieldBonuses = power ? parsePowerFieldBonuses(specifics) : undefined;
+  const requiredItem = power ? requiredPowerItem(specifics) : undefined;
   const store: PowerTextStore = {
     version: POWER_TEXT_VERSION,
     ...(slots.length === 0 ? {} : { slots }),
@@ -157,6 +159,7 @@ export function powerTextField(
     (fieldBonuses.weapon === undefined && fieldBonuses.riders === undefined)
       ? {}
       : { fieldBonuses }),
+    ...(requiredItem === undefined ? {} : { requiredItem }),
     texts,
   };
   return {

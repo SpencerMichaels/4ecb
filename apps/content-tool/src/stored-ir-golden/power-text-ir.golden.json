@@ -1,9 +1,9 @@
 {
-  "version": 4,
-  "fixture": "b9437d65aa8c12564f621dfcc0447d5c667b20c356e1ccc31aa299f498f10af9",
+  "version": 5,
+  "fixture": "4ca90e266cd36e1c744905a32c67f092152b334f813c0498783e6bf55de32803",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -114,8 +114,82 @@
         }
       }
     },
+    "ID_GOLDEN_POWER_PACT_BLADE": {
+      "version": 5,
+      "slots": [
+        [
+          3,
+          "attack-type",
+          1
+        ],
+        [
+          5,
+          "attack",
+          1
+        ],
+        [
+          6,
+          "hit",
+          1
+        ]
+      ],
+      "requiredItem": "Golden Sword of the Well",
+      "texts": {
+        "1[W] + Charisma modifier radiant damage.": {
+          "hit": {
+            "steps": [
+              {
+                "line": {
+                  "damage": true,
+                  "other": {
+                    "clauses": [
+                      {
+                        "weaponTerms": [
+                          {
+                            "count": 1
+                          }
+                        ],
+                        "modifierAbilities": [
+                          "Charisma"
+                        ],
+                        "listedAbilities": [
+                          "Charisma"
+                        ],
+                        "damageType": "radiant",
+                        "beast": {
+                          "ownAbilities": [
+                            "Charisma"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "Charisma vs. Reflex": {
+          "attack": {
+            "isAttack": true,
+            "defenses": [
+              "Reflex"
+            ],
+            "other": {
+              "line": {
+                "defense": "Reflex",
+                "abilities": [
+                  "Charisma"
+                ],
+                "bonus": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "ID_GOLDEN_POWER_HIGHEST": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -185,7 +259,7 @@
       }
     },
     "ID_GOLDEN_POWER_TWO_WEAPON": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -342,7 +416,7 @@
       }
     },
     "ID_GOLDEN_POWER_MELEE_RANGED": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -523,7 +597,7 @@
       }
     },
     "ID_GOLDEN_POWER_IMPLEMENT": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -655,7 +729,7 @@
       }
     },
     "ID_GOLDEN_POWER_BEAST": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -729,7 +803,7 @@
       }
     },
     "ID_GOLDEN_POWER_SUMMON": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -803,7 +877,7 @@
       }
     },
     "ID_GOLDEN_FEAT_MODIFY": {
-      "version": 4,
+      "version": 5,
       "texts": {
         "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
           "hit": {
@@ -886,7 +960,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 4,
+      "version": 5,
       "slots": [
         [
           3,
@@ -975,7 +1049,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 4,
+      "version": 5,
       "summonedCreature": true,
       "texts": {
         "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.": {
@@ -1064,7 +1138,7 @@
       }
     },
     "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
-      "version": 4,
+      "version": 5,
       "summonedCreature": true,
       "texts": {
         "2d8 + your Charisma modifier radiant damage.": {

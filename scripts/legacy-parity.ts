@@ -181,6 +181,14 @@ export function compareCharacterParity(
   // and Defense "Unknown", newer ones an empty AttackStat and Defense
   // "unknown". A real attack row always has a " vs " defense and a stat.
   const legacyPlaceholderRows: { power: string; equipment: string }[] = [];
+  // D093 amendment (2026-11-04): a power whose Requirement names the item it
+  // must be used with keeps only that item's rows; legacy's other rows are
+  // deliberately absent, not mismatches.
+  const requirementExcludedRows: {
+    power: string;
+    equipment: string;
+    requiredEquipment: string;
+  }[] = [];
   const powerComparisons = imported.snapshot.powers.flatMap((cachedPower) => {
     const definitionId = evaluatedPowerId(cachedPower);
     const power =
@@ -202,6 +210,14 @@ export function compareCharacterParity(
         legacyPlaceholderRows.push({
           power: cachedPower.name,
           equipment: cachedWeapon.name,
+        });
+        return [];
+      }
+      if (variant === undefined && power?.requiredEquipment !== undefined) {
+        requirementExcludedRows.push({
+          power: cachedPower.name,
+          equipment: cachedWeapon.name,
+          requiredEquipment: power.requiredEquipment,
         });
         return [];
       }
@@ -355,6 +371,7 @@ export function compareCharacterParity(
       ).length,
       mismatches: powerComparisons.filter((comparison) => !comparison.matches),
       legacyPlaceholderRows,
+      requirementExcludedRows,
       mainHand: {
         comparable: handComparisons.length,
         matching: handComparisons.filter((comparison) => comparison.matches)

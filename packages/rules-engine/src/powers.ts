@@ -190,6 +190,9 @@ export interface EvaluatedPower {
    *  its creature's commands, worked out without equipment (D111). A power
    *  with rows carries them on each variant. */
   readonly commands?: readonly PowerCommand[];
+  /** The item its Requirement names, when only that item's rows are kept
+   *  (D093 amendment): legacy's other rows are deliberately absent. */
+  readonly requiredEquipment?: string;
   readonly unsupported: readonly string[];
 }
 
@@ -2813,6 +2816,56 @@ function weaponFitsPowerRange(item: Loadout, range: PowerRange): boolean {
   return (melee && range.melee) || (ranged && range.ranged);
 }
 
+const FREEBEE_STAT = /^freebee:(.+)$/iu;
+const words = (value: string) =>
+  value.toLocaleLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+
+/**
+ * The rows a Requirement's "with your <item>" leaves (D093 amendment):
+ * the items of that name (the holding's name or the name of its base or
+ * enchantment record: "Sword of the White Well"); else, for a phrase no
+ * item has ("pact weapon"), the free items (`FREEBEE:<id>` stats) an
+ * element whose name has the phrase's words grants (a hexblade's "Fey Pact
+ * of the White Well Weapon" gives the Sword of the White Well). None when
+ * neither resolves to a row.
+ */
+function requiredItemRows(
+  candidates: readonly Loadout[],
+  requiredItem: string,
+  byId: ReadonlyMap<string, ContentEntity>,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): Loadout[] {
+  const held = candidates.filter((item) => !item.unarmed);
+  const wanted = key(requiredItem);
+  const named = held.filter(
+    (item) =>
+      key(item.name) === wanted ||
+      item.definitionIds.some(
+        (id) => key(byId.get(key(id))?.name ?? "") === wanted,
+      ),
+  );
+  if (named.length > 0) return named;
+  const phrase = words(requiredItem);
+  const granted = new Set<string>();
+  for (const stat of Object.values(stats)) {
+    const target = FREEBEE_STAT.exec(stat.name.trim())?.[1]?.trim();
+    if (target === undefined || !(Number(stat.value) > 0)) continue;
+    if (
+      stat.contributions.some((contribution) => {
+        if (!contribution.applied) return false;
+        const provider = new Set(words(contribution.providerName));
+        return phrase.every((word) => provider.has(word));
+      })
+    )
+      granted.add(key(target));
+  }
+  return granted.size === 0
+    ? []
+    : held.filter((item) =>
+        item.definitionIds.some((id) => granted.has(key(id))),
+      );
+}
+
 /**
  * Legacy DetermineOffhand, for a row that attacks with `item`: the same item
  * when two are equipped, else the first other equipped weapon or non-ki-focus
@@ -3378,7 +3431,25 @@ export function evaluatePowers(input: {
     // Legacy PowerStats retains every legal equipment variant even for prose
     // that names one hand. The saved main-hand selection describes the active
     // pairing; it must not erase the alternate variants a user can select.
-    const handCandidates = candidates;
+    // Deliberate departure (D093 amendment, 2026-11-04): a power whose
+    // Requirement reads "You must use this power with your <item>" (a
+    // hexblade's pact blade powers) keeps only the rows of a held item of
+    // that name. Legacy PowerStats also lists every other implement and
+    // Unarmed, rows the rules text rules out (a rod on Moonfire Blade, its
+    // [W] dropped to the ability modifier). "Your pact weapon" is the item
+    // the character's pact weapon feature grants; a requirement that
+    // resolves to no row leaves every row.
+    const requiredItem = texts.requiredItem;
+    const requiredRows =
+      requiredItem === undefined
+        ? []
+        : requiredItemRows(candidates, requiredItem, byId, input.stats);
+    const requiredEquipment =
+      requiredRows.length > 0 && requiredRows.length < candidates.length
+        ? requiredItem
+        : undefined;
+    const handCandidates =
+      requiredEquipment === undefined ? candidates : requiredRows;
     const hasDualImplementSpellcaster = input.activeDefinitionIds.some((id) => {
       const entity = byId.get(key(id));
       return (
@@ -4049,7 +4120,7 @@ export function evaluatePowers(input: {
         damageComponents.push(...riderDamage);
         const riderOnly =
           !hasDamage && specialDamage === undefined && riderDamage.length > 0;
-        const offHandImplements = handCandidates.filter(
+        const offHandImplements = candidates.filter(
           (candidate) =>
             candidate.hand === "off" &&
             candidate.equipped &&
@@ -4061,8 +4132,9 @@ export function evaluatePowers(input: {
         // Weapons). With a saved main-hand selection, the main-hand row pairs
         // with the one equipped off-hand implement (none when ambiguous) and
         // an off-hand row with the main-hand item; without one, the other
-        // hand is native DetermineOffhand's.
-        const mainHandItem = handCandidates.find(
+        // hand is native DetermineOffhand's. The hands come from every
+        // eligible item, also one a Requirement drops the row of.
+        const mainHandItem = candidates.find(
           (candidate) => candidate.hand === "main",
         );
         const otherHand =
@@ -4516,6 +4588,7 @@ export function evaluatePowers(input: {
         ...(healing === undefined ? {} : { healing }),
         ...(extraDamage === undefined ? {} : { extraDamage }),
         ...(commands === undefined ? {} : { commands }),
+        ...(requiredEquipment === undefined ? {} : { requiredEquipment }),
         unsupported,
       },
     ];

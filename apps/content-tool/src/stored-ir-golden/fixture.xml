@@ -77,6 +77,15 @@
 Level 21: 2[W] + Strength modifier damage.</specific>
     <specific name="Weapon">If you're wielding an axe, a hammer, or a mace, you gain a bonus to the damage roll equal to your Constitution modifier.</specific>
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_PACT_BLADE" name="Golden Moonlit Edge" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+    <specific name="Keywords">Arcane, Implement, Radiant, Weapon</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee weapon</specific>
+    <specific name="Requirement">You must use this power with your Golden Sword of the Well.</specific>
+    <specific name="Attack">Charisma vs. Reflex</specific>
+    <specific name="Hit">1[W] + Charisma modifier radiant damage.</specific>
+  </RulesElement>
   <RulesElement internal-id="ID_GOLDEN_POWER_HIGHEST" name="Golden Mind Lash" type="Power" source="Synthetic">
     <specific name="Power Usage">Encounter</specific>
     <specific name="Keywords">Psionic, Implement, Psychic</specific>

@@ -24,8 +24,9 @@ export const POWER_TEXT_FIELD = "_Power Text IR";
 /** Bump when the stored shape or any parse changes; an older pack's field
  *  is then ignored and the engine parses the text itself. 3: a summoned
  *  creature's command rolls (D111). 4: native CalcDamage's "+" chain,
- *  level lines anywhere, level header fields. */
-export const POWER_TEXT_VERSION = 4;
+ *  level lines anywhere, level header fields. 5: the item a Requirement
+ *  names ({@link requiredPowerItem}). */
+export const POWER_TEXT_VERSION = 5;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",
@@ -244,6 +245,9 @@ export interface PowerTextStore {
   readonly summonedCreature?: true;
   /** Its native field riders (CalcMisc, CalcBeast, CalcBonuses). */
   readonly fieldBonuses?: PowerFieldBonuses;
+  /** The item its Requirement says the power must be used with
+   *  ({@link requiredPowerItem}). */
+  readonly requiredItem?: string;
   readonly texts: Readonly<Record<string, PowerTextEntry>>;
 }
 
@@ -365,6 +369,29 @@ export function namesSummonedCreature(
       specific.name !== PREREQUISITE_IR_FIELD &&
       /\bsummoned creature\b/i.test(specific.value),
   );
+}
+
+/** "You must use this power with your <item>." */
+const REQUIRED_ITEM =
+  /^\s*You must use this power with your\s+(.+?)\s*\.?\s*$/iu;
+
+/**
+ * The item a power's Requirement says it must be used with: "You must use
+ * this power with your Sword of the White Well." (a hexblade's pact blade
+ * powers) names "Sword of the White Well"; "… with your pact weapon" (Soul
+ * Cutter) names "pact weapon". The engine keeps only the rows of the held
+ * item it names, or of the item a feature of that name grants (D093
+ * amendment, 2026-11-04).
+ */
+export function requiredPowerItem(
+  specifics: readonly { readonly name: string; readonly value: string }[],
+): string | undefined {
+  for (const specific of specifics) {
+    if (specific.name.trim().toLocaleLowerCase() !== "requirement") continue;
+    const item = REQUIRED_ITEM.exec(specific.value)?.[1];
+    if (item !== undefined && item !== "") return item;
+  }
+  return undefined;
 }
 
 /* --------------------------------------------------------- attack lines */

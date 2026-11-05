@@ -11,6 +11,7 @@ import {
   parseRecoveries,
   powerAttackSlots,
   readPowerTextStore,
+  requiredPowerItem,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
 } from "./index";
@@ -428,6 +429,40 @@ describe("the stored field", () => {
       ),
     ).toBeUndefined();
     expect(readPowerTextStore([])).toBeUndefined();
+  });
+});
+
+describe("a power's required item", () => {
+  const requirement = (value: string) => [{ name: "Requirement", value }];
+  it("names the item a Requirement says to use the power with", () => {
+    expect(
+      requiredPowerItem(
+        requirement(
+          "You must use this power with your Sword of the White Well.",
+        ),
+      ),
+    ).toBe("Sword of the White Well");
+    expect(
+      requiredPowerItem(
+        requirement("You must use this power with your pact weapon"),
+      ),
+    ).toBe("pact weapon");
+  });
+  it("ignores other requirements and fields", () => {
+    expect(
+      requiredPowerItem(requirement("You must be wielding a light blade.")),
+    ).toBeUndefined();
+    expect(
+      requiredPowerItem(requirement("You must wield your staff.")),
+    ).toBeUndefined();
+    expect(
+      requiredPowerItem([
+        {
+          name: "Special",
+          value: "You must use this power with your Sword of the White Well.",
+        },
+      ]),
+    ).toBeUndefined();
   });
 });
 
