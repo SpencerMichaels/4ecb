@@ -10,6 +10,7 @@ import {
   projectBuildForEvaluation,
   sharedRulesIndex,
   type EvaluatedCharacter,
+  type EvaluatedPower,
   type FieldOverlay,
 } from "@4ecb/rules-engine";
 import {
@@ -150,12 +151,21 @@ export function evaluatedBuilderCardSettings(
   const owned = new Map(
     powers.map((power) => [power.definitionId.toLocaleLowerCase(), power]),
   );
-  const hypotheticalPower = (entity: ContentEntity) =>
-    powersFor([...evaluation.activeDefinitionIds, entity.id]).find(
-      (power) =>
-        power.definitionId.toLocaleLowerCase() ===
-        entity.id.toLocaleLowerCase(),
-    );
+  // A power the character doesn't own is evaluated as though active: a full
+  // powers evaluation each, so each is done once per character state (these
+  // settings), not on every mount of a detail pane that shows it.
+  const hypotheticalPowers = new Map<string, EvaluatedPower | undefined>();
+  const hypotheticalPower = (entity: ContentEntity) => {
+    const id = entity.id.toLocaleLowerCase();
+    if (hypotheticalPowers.has(id)) return hypotheticalPowers.get(id);
+    const power = powersFor([
+      ...evaluation.activeDefinitionIds,
+      entity.id,
+    ]).find((candidate) => candidate.definitionId.toLocaleLowerCase() === id);
+    hypotheticalPowers.set(id, power);
+    return power;
+  };
+  const powerCards = new WeakMap<ContentEntity, SheetCard>();
   let contentById: Map<string, ContentEntity> | undefined;
   const paragonPathId = buildParagonPathId(build);
   const summonPersonalize = createEvaluatedPowerTextPersonalizer(
@@ -166,11 +176,17 @@ export function evaluatedBuilderCardSettings(
   return {
     ...(paragonPathId === undefined ? {} : { paragonPathId }),
     itemOverlays: evaluation.overlays,
-    powerCardFor: (entity) =>
-      cardFor(
-        entity,
-        owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
-      ),
+    powerCardFor: (entity) => {
+      let card = powerCards.get(entity);
+      if (card === undefined) {
+        card = cardFor(
+          entity,
+          owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
+        );
+        powerCards.set(entity, card);
+      }
+      return card;
+    },
     familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
     creatureCardFor: (name, entities, origin = { kind: "mount" }) => {
       const record = creatureRecord(entities);
