@@ -227,15 +227,15 @@ live site.
 - [ ] **Drow invoker: Rose Scythe properties.**
   - **Where:** `edit?tab=inventory`, select the Rose Scythe of Chauntea;
     then `?preview=1`, its item card.
-  - **Expect:** the header rows hold only the scythe's short stats; its
-    "Properties: See Below" text is in the card body with its two bullets
-    as a list, in the body's normal text size, on both surfaces. The
-    printed card still fits. The stat rows' text sits as far from the
-    card's left edge as the keyword band and body text.
-  - **Wrong if:** the bullets print in the header rows, the list runs
-    together as one paragraph, the body text is a different size from the
-    card's other rules, the printed card overflows, or the stat rows' text
-    is squeezed against the left border.
+  - **Expect:** the header rows hold only the scythe's short stats; the
+    card body reads "Properties:" followed directly by its two bullets as a
+    list (no "See Below" lead), in the body's normal text size, on both
+    surfaces. The printed card still fits. The stat rows' text sits as far
+    from the card's left edge as the keyword band and body text.
+  - **Wrong if:** "See Below" still leads the list, the bullets print in
+    the header rows, the list runs together as one paragraph, the body text
+    is a different size from the card's other rules, the printed card
+    overflows, or the stat rows' text is squeezed against the left border.
 - [ ] **Drow invoker: Blade Angel in power detail.**
   - **Where:** `edit?tab=build&level=9&section=powers`, select Summon Blade
     Angel.

@@ -3357,9 +3357,14 @@ function roseScythe(c: ReviewCharacter, where: "builder" | "print"): Check[] {
     contains(
       "… and shows them in the body under Properties",
       textOf(body),
-      "Properties: See Below",
+      "Properties:",
     ),
     contains("… as a real list", body, "<li>"),
+    truthy(
+      "… without the books' redundant See Below lead",
+      !/see below/i.test(textOf(body)),
+      textOf(body),
+    ),
     truthy(
       "The Rose Scythe's implement attack bonus applies",
       rose?.applied === true,

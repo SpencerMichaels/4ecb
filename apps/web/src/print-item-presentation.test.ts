@@ -6,6 +6,7 @@ import {
   printItemPresentation,
   printItemPower,
   printItemPowerClauses,
+  withoutSeeBelowLead,
 } from "./print-item-presentation";
 
 function card(
@@ -223,7 +224,10 @@ describe("printed item presentation", () => {
     ]);
     expect(view.rules).toEqual([
       { label: "Power", value: power },
-      { label: "Properties", value: listed },
+      {
+        label: "Properties",
+        value: "* Functions as a staff implement.\n* Another benefit.",
+      },
     ]);
     expect(isHeaderPropertyValue("Heavy Thrown, Off-hand")).toBe(true);
     expect(isHeaderPropertyValue("Distant, Energized (radiant)")).toBe(true);
@@ -234,6 +238,43 @@ describe("printed item presentation", () => {
     expect(isHeaderPropertyValue("See below: a benefit")).toBe(false);
     expect(isHeaderPropertyValue("One line.\nA second line.")).toBe(false);
     expect(isHeaderPropertyValue("• You cannot be deafened.")).toBe(false);
+  });
+  it("drops a See Below lead line only when a list follows it", () => {
+    const list = "* You gain darkvision.\n* You cannot be blinded.";
+    for (const lead of [
+      "See Below:",
+      "See below:",
+      "See Below: ",
+      "See below.",
+      "See Below",
+      "  see below :",
+    ])
+      expect(withoutSeeBelowLead(`${lead}\n${list}`)).toBe(list);
+    expect(withoutSeeBelowLead(`See Below:\r\n• One.\r\n• Two.`)).toBe(
+      "• One.\r\n• Two.",
+    );
+    for (const unchanged of [
+      "See below",
+      "See below.",
+      "See below: a benefit",
+      "See Below:\nA paragraph, not a list.",
+      "1 hour (see below)",
+      `Lead text.\nSee Below:\n${list}`,
+    ])
+      expect(withoutSeeBelowLead(unchanged)).toBe(unchanged);
+    const view = printItemPresentation(
+      card("Magic Item", {
+        Property: `See Below:\n${list}`,
+        Power: "Power (Daily): Minor Action. See below:\n* Kept.",
+      }),
+    );
+    expect(view.rules).toEqual([
+      {
+        label: "Power",
+        value: "Power (Daily): Minor Action. See below:\n* Kept.",
+      },
+      { label: "Property", value: list },
+    ]);
   });
   it("places passive properties below item actions regardless of authored field order", () => {
     const view = printItemPresentation(
