@@ -10,6 +10,10 @@ import {
 
 import { sheetCardDeck, type SheetDeckEntry } from "./card-deck";
 import {
+  BEAST_NOTES_KEY_SUFFIX,
+  type SheetBeastCompanionCard,
+} from "./beast-companion-card";
+import {
   CREATURE_ACTIONS_KEY_SUFFIX,
   type SheetCreatureCard,
 } from "./creature-card";
@@ -76,10 +80,11 @@ export function applySheetLayout(
   layout: SheetLayout | undefined,
   options: {
     readonly itemCardsShown?: ReadonlyMap<string, boolean>;
-    /** Creature cards (by deck key) whose whole card overflows the printed
-     *  card at the minimum text size: each prints as a stats card and an
-     *  actions card (D110). */
-    readonly splitCreatures?: ReadonlySet<string>;
+    /** Companion cards (by deck key) whose whole card overflows the
+     *  printed card at the minimum text size: a creature prints as a stats
+     *  card and an actions card, a beast as a stats card and a notes card
+     *  (D110). */
+    readonly splitCompanions?: ReadonlySet<string>;
   } = {},
 ): ResolvedSheetLayout {
   const hiddenCards = new Set(layout?.hiddenCards ?? []);
@@ -105,10 +110,11 @@ export function applySheetLayout(
         shown: shown(entry),
         ...(holdingId === undefined ? {} : { holdingId }),
       };
-      return entry.card.kind === "creature" &&
-        options.splitCreatures?.has(entry.key) === true
-        ? splitCreatureCard(card, entry.card)
-        : [card];
+      if (options.splitCompanions?.has(entry.key) !== true) return [card];
+      if (entry.card.kind === "creature")
+        return splitCreatureCard(card, entry.card);
+      if (entry.card.kind === "beast") return splitBeastCard(card, entry.card);
+      return [card];
     },
   );
   const hiddenSections = new Set(
@@ -204,6 +210,22 @@ function splitCreatureCard(
       key: `${entry.key}${CREATURE_ACTIONS_KEY_SUFFIX}`,
       layoutKey: entry.key,
       card: { ...card, part: "actions" },
+    },
+  ];
+}
+
+/** A beast's stats card then its notes card, kept together the same way. */
+function splitBeastCard(
+  entry: SheetLayoutCard,
+  card: SheetBeastCompanionCard,
+): SheetLayoutCard[] {
+  return [
+    { ...entry, card: { ...card, part: "stats" } },
+    {
+      ...entry,
+      key: `${entry.key}${BEAST_NOTES_KEY_SUFFIX}`,
+      layoutKey: entry.key,
+      card: { ...card, part: "notes" },
     },
   ];
 }

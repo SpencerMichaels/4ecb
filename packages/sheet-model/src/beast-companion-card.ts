@@ -15,6 +15,7 @@ export interface SheetBeastCompanionCard {
   readonly kind: "beast";
   readonly id: string;
   readonly occurrenceId: string;
+  readonly part?: SheetBeastCompanionCardPart;
   /** The player's name for the beast (`_COMPANION_NAME`), else the category. */
   readonly name: string;
   /** `_COMPANION_APPEARANCE`, the legacy panel's species line. */
@@ -75,6 +76,18 @@ export interface SheetBeastCompanionCard {
   /** Companion Ability Increase records whose picks the abilities include. */
   readonly abilityIncreaseIds: readonly string[];
 }
+
+/**
+ * When a beast's rules overflow the printed card at the minimum text size,
+ * print shows it as two cards (D110, amended 2026-11-04): `stats` (identity,
+ * defenses, hit points, abilities, speed, attack, skills) and `notes` (its
+ * situational notes, special rules and command line). A card with no `part`
+ * is the whole beast.
+ */
+export type SheetBeastCompanionCardPart = "stats" | "notes";
+
+/** The deck key suffix of a split beast's notes card. */
+export const BEAST_NOTES_KEY_SUFFIX = ":notes";
 
 /** Martial Power p. 41, in brief. */
 export const BEAST_COMPANION_COMMANDS =

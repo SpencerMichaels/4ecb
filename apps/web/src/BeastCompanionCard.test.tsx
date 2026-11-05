@@ -123,6 +123,28 @@ describe("beast companion card", () => {
     expect(html).toContain("A loyal hunter.");
   });
 
+  it("prints a split beast as a stats card and a notes card", () => {
+    const stats = renderToStaticMarkup(
+      <BeastCompanionCard card={{ ...card, part: "stats" }} />,
+    );
+    expect(stats).toContain("Ash — timber wolf");
+    expect(stats).toContain("<dt>AC</dt><dd>22</dd>");
+    expect(stats).toContain("<strong>Skills</strong> Stealth +6");
+    expect(stats).not.toContain("Situational");
+    expect(stats).not.toContain("Combat Advantage");
+    expect(stats).not.toContain("Attack or defend");
+    const notes = renderToStaticMarkup(
+      <BeastCompanionCard card={{ ...card, part: "notes" }} />,
+    );
+    expect(notes).toContain("Ash — Notes");
+    expect(notes).toContain('data-beast-part="notes"');
+    expect(notes).not.toContain("<dt>AC</dt>");
+    expect(notes).not.toContain("<strong>Bite</strong>");
+    expect(notes).toContain("+2 AC against opportunity attacks.");
+    expect(notes).toContain("Combat Advantage");
+    expect(notes).toContain("Attack or defend: standard action.");
+  });
+
   it("titles an unnamed beast by its category", () => {
     const unnamed = { ...card, name: "Wolf" };
     delete (unnamed as { appearance?: string }).appearance;

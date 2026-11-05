@@ -170,6 +170,7 @@ export {
   isSheetPlayCard,
   SHEET_DECK_GROUPS,
   sheetCardDeck,
+  sheetCompanionCardKeyBase,
   sheetItemCardKeyBase,
   sheetPowerCardKeyBase,
   deckPowerCards,
@@ -232,9 +233,11 @@ export {
 } from "./familiar-card";
 export {
   BEAST_COMPANION_COMMANDS,
+  BEAST_NOTES_KEY_SUFFIX,
   SENTINEL_COMPANION_COMMANDS,
   sheetBeastCompanionCard,
   type SheetBeastCompanionCard,
+  type SheetBeastCompanionCardPart,
 } from "./beast-companion-card";
 export { sheetAssociateCard, type SheetAssociateCard } from "./associate-card";
 export type {

@@ -36,7 +36,7 @@ import {
   featureChoiceText,
   isSheetPlayCard,
   deckPowerCards,
-  sheetCreatureCardKeyBase,
+  sheetCompanionCardKeyBase,
   sheetLayoutCardKey,
   type CharacterSheetModel,
   type SheetDeckCard,
@@ -433,14 +433,14 @@ export function CharacterSheetPage({
       ),
     });
   }, [savePresentation]);
-  // Creatures whose whole card overflows the printed card at the minimum
-  // text size, as their measuring copies report: each prints as a stats card
-  // and an actions card (D110).
-  const [splitCreatures, setSplitCreatures] = useState<ReadonlySet<string>>(
+  // Creatures and beasts whose whole card overflows the printed card at the
+  // minimum text size, as their measuring copies report: each prints as a
+  // stats card and an actions (creature) or notes (beast) card (D110).
+  const [splitCompanions, setSplitCompanions] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const reportCreatureFit = useCallback((key: string, fits: boolean) => {
-    setSplitCreatures((current) => {
+  const reportCompanionFit = useCallback((key: string, fits: boolean) => {
+    setSplitCompanions((current) => {
       if (current.has(key) === !fits) return current;
       const next = new Set(current);
       if (fits) next.delete(key);
@@ -454,9 +454,9 @@ export function CharacterSheetPage({
         ? undefined
         : applySheetLayout(model, sheetLayout, {
             itemCardsShown,
-            splitCreatures,
+            splitCompanions,
           }),
-    [model, sheetLayout, itemCardsShown, splitCreatures],
+    [model, sheetLayout, itemCardsShown, splitCompanions],
   );
   // Page 1's reminder rows: Edit mode (never while printing) lists hidden
   // rows too, in place; View mode and print only the shown ones.
@@ -1024,21 +1024,23 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      {/* Each creature's whole card, measured at print size: one that
-          overflows at the minimum text size prints as its stats and actions
-          cards (D110). Never printed or seen. */}
-      {model.companions.some((card) => card.kind === "creature") ? (
+      {/* Each creature's and beast's whole card, measured at print size:
+          one that overflows at the minimum text size prints as two cards
+          (D110). Never printed or seen. */}
+      {model.companions.some(
+        (card) => card.kind === "creature" || card.kind === "beast",
+      ) ? (
         <div className="print-card-probe print-excluded" aria-hidden="true">
           {model.companions.flatMap((card) => {
-            if (card.kind !== "creature") return [];
-            const key = sheetCreatureCardKeyBase(card);
-            return [
-              <CreatureCard
-                card={card}
-                key={key}
-                onFit={(fits) => reportCreatureFit(key, fits)}
-              />,
-            ];
+            const key = sheetCompanionCardKeyBase(card);
+            const onFit = (fits: boolean) => reportCompanionFit(key, fits);
+            if (card.kind === "creature")
+              return [<CreatureCard card={card} key={key} onFit={onFit} />];
+            if (card.kind === "beast")
+              return [
+                <BeastCompanionCard card={card} key={key} onFit={onFit} />,
+              ];
+            return [];
           })}
         </div>
       ) : null}

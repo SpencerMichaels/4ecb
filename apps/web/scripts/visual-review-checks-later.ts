@@ -1231,7 +1231,7 @@ rule("fighter-arena", "Print preview", "Mount creature cards", (c) => {
           c,
           c.sheet,
           applySheetLayout(c.sheet, undefined, {
-            splitCreatures: new Set([sheetCreatureCardKeyBase(steedCard)]),
+            splitCompanions: new Set([sheetCreatureCardKeyBase(steedCard)]),
           }).deck,
         );
   const labels = split.map(({ label }) => label);

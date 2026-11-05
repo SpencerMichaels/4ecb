@@ -74,6 +74,13 @@ export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
 
 const keyPart = (value: string) => value.trim().toLocaleLowerCase();
 
+/** The deck key of a companion's card (D099 stable provenance keys); a
+ *  split creature's or beast's second card adds its part's suffix. */
+export const sheetCompanionCardKeyBase = (card: SheetCompanionCard) =>
+  card.kind === "creature"
+    ? sheetCreatureCardKeyBase(card)
+    : `companion:${keyPart(card.id)}`;
+
 /**
  * The power cards the deck prints, in `sortedPowerCards` order: a movement
  * technique a full discipline's card already prints (`movementTechnique`)
@@ -152,11 +159,7 @@ export function sheetCardDeck(
 ): SheetDeckEntry[] {
   const powerKeys = keyed(model.powers, sheetPowerCardKeyBase);
   const itemKeys = keyed(model.items, sheetItemCardKeyBase);
-  const companionKeys = keyed(model.companions, (card) =>
-    card.kind === "creature"
-      ? sheetCreatureCardKeyBase(card)
-      : `companion:${keyPart(card.id)}`,
-  );
+  const companionKeys = keyed(model.companions, sheetCompanionCardKeyBase);
   const setKeys = keyed(
     model.itemSets ?? [],
     (card) => `item-set:${keyPart(card.id)}`,

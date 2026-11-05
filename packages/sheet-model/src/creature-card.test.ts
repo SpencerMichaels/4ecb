@@ -349,7 +349,7 @@ describe("split creature cards", () => {
 
   it("prints a split creature as stats then actions, under one layout key", () => {
     const resolved = applySheetLayout(model, undefined, {
-      splitCreatures: new Set(["creature:mount:h-steed"]),
+      splitCompanions: new Set(["creature:mount:h-steed"]),
     });
     expect(parts(resolved.deck.slice(2))).toEqual([
       "Test Pony:whole",
@@ -368,7 +368,7 @@ describe("split creature cards", () => {
     const hidden = applySheetLayout(
       model,
       { version: 1, hiddenCards: ["creature:mount:h-steed"] },
-      { splitCreatures: split },
+      { splitCompanions: split },
     );
     expect(parts(hidden.deck.slice(2))).toEqual(["Test Pony:whole"]);
     expect(
@@ -385,7 +385,7 @@ describe("split creature cards", () => {
           "creature:mount:h-pony",
         ],
       },
-      { splitCreatures: split },
+      { splitCompanions: split },
     );
     expect(parts(moved.deck.slice(2))).toEqual([
       "Test Steed:stats",

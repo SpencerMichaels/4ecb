@@ -8,9 +8,13 @@ import {
 
 import {
   BEAST_COMPANION_COMMANDS,
+  BEAST_NOTES_KEY_SUFFIX,
   SENTINEL_COMPANION_COMMANDS,
   sheetBeastCompanionCard,
+  type SheetBeastCompanionCard,
 } from "./beast-companion-card";
+import { sheetCompanionCardKeyBase } from "./card-deck";
+import { applySheetLayout, sheetLayoutCardKey } from "./sheet-layout";
 
 const fields: Record<string, string> = {
   Strength: "14",
@@ -298,5 +302,42 @@ describe("beast companion card", () => {
     expect(card.sharesHealingSurges).toBe(true);
     expect(card).not.toHaveProperty("healingSurges");
     expect(card.commands).toBe(SENTINEL_COMPANION_COMMANDS);
+  });
+});
+
+describe("split beast companion cards (D110)", () => {
+  const model = {
+    powers: [],
+    items: [],
+    companions: [sheetBeastCompanionCard(wolf(), beast())],
+  };
+  const parts = (cards: readonly { readonly card: unknown }[]) =>
+    cards
+      .slice(2)
+      .map(({ card }) => (card as SheetBeastCompanionCard).part ?? "whole");
+
+  it("prints one whole card unless measured as overflowing", () => {
+    expect(sheetCompanionCardKeyBase(model.companions[0]!)).toBe(
+      "companion:wolf",
+    );
+    expect(parts(applySheetLayout(model, undefined).deck)).toEqual(["whole"]);
+  });
+
+  it("prints a split beast as stats then notes, under one layout key", () => {
+    const split = new Set(["companion:wolf"]);
+    const resolved = applySheetLayout(model, undefined, {
+      splitCompanions: split,
+    });
+    expect(parts(resolved.deck)).toEqual(["stats", "notes"]);
+    const notes = resolved.cards.at(-1)!;
+    expect(notes.key).toBe(`companion:wolf${BEAST_NOTES_KEY_SUFFIX}`);
+    expect(sheetLayoutCardKey(notes)).toBe("companion:wolf");
+    expect(resolved.defaultCardOrder).not.toContain(notes.key);
+    const hidden = applySheetLayout(
+      model,
+      { version: 1, hiddenCards: ["companion:wolf"] },
+      { splitCompanions: split },
+    );
+    expect(parts(hidden.deck)).toEqual([]);
   });
 });
