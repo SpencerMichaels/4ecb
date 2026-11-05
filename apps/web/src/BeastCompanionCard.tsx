@@ -1,9 +1,6 @@
-import { useContext } from "react";
-
 import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
-import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
   CardPanelSubheading,
@@ -31,7 +28,9 @@ export function beastCompanionTitle(card: SheetBeastCompanionCard): string {
  * The beast companion card (legacy Companion panel, docs/companion-card-
  * proposal.md), in the Play data card's frame: one format for the printed
  * deck and the builder's companion detail pane. Every number comes from the
- * evaluated beast companion statistics.
+ * evaluated beast companion statistics. The card is mechanics only (owner,
+ * 2026-11-04: "Keep the cards mechanics-only"): the record's description
+ * stays in the sheet model but is never printed or shown.
  */
 export function BeastCompanionCard({
   card,
@@ -43,7 +42,6 @@ export function BeastCompanionCard({
   readonly panel?: CardPanelProps;
 }) {
   const cardRef = usePrintCardFit(layout === "print");
-  const hideFlavortext = useContext(HideFlavortextContext);
   const isPanel = layout === "panel";
   const title = beastCompanionTitle(card);
   const identity = [
@@ -183,9 +181,6 @@ export function BeastCompanionCard({
           </section>
         ))}
         <p className="print-play-note print-familiar-rules">{card.commands}</p>
-        {card.description === undefined || hideFlavortext ? null : (
-          <p className="print-familiar-description">{card.description}</p>
-        )}
       </div>
       {panel.source === undefined ? null : (
         <footer className="print-item-footer">

@@ -984,7 +984,15 @@
   font-style: italic;
   margin: 0;
 }
-/* Beast companion: the familiar card's frame with a full stat block. */
+/* Beast companion: the familiar card's frame with a full stat block. The
+   printed card's notes shrink with its body text like a power card's, and
+   a condensed card closes up its blocks, so the stat block fits one card. */
+.print-beast-card:not(.is-panel) .print-play-note {
+  font-size: var(--print-card-body-size, 7pt);
+}
+.print-beast-card.is-condensed .print-play-body {
+  gap: 0.025in;
+}
 .print-beast-notes p {
   margin: 0;
 }

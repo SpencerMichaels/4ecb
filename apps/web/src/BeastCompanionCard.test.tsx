@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 
 import { BeastCompanionCard, beastCompanionTitle } from "./BeastCompanionCard";
-import { HideFlavortextContext } from "./HideFlavortextContext";
+import { appStyles } from "./test-styles";
 
 const card: SheetBeastCompanionCard = {
   kind: "beast",
@@ -80,11 +80,11 @@ describe("beast companion card", () => {
       html.indexOf("Combat Advantage"),
     );
     expect(html).toContain("Attack or defend: standard action.");
-    expect(html).toContain("A loyal hunter.");
+    expect(html).not.toContain("A loyal hunter.");
     expect(html).toContain("<span>Beast Companion</span>");
   });
 
-  it("shows a sentinel's shared surges and hides the flavor text", () => {
+  it("shows a sentinel's shared surges, mechanics only in a panel too", () => {
     const sentinel: SheetBeastCompanionCard = {
       ...card,
       sharesHealingSurges: true,
@@ -93,9 +93,7 @@ describe("beast companion card", () => {
     };
     delete (sentinel as { healingSurges?: number }).healingSurges;
     const html = renderToStaticMarkup(
-      <HideFlavortextContext.Provider value={true}>
-        <BeastCompanionCard card={sentinel} layout="panel" />
-      </HideFlavortextContext.Provider>,
+      <BeastCompanionCard card={sentinel} layout="panel" />,
     );
     expect(html).toContain("is-panel");
     expect(html).toContain(
@@ -104,6 +102,15 @@ describe("beast companion card", () => {
     expect(html).toContain('<dd title="Your bloodied value">78</dd>');
     expect(html).not.toContain("Situational");
     expect(html).not.toContain("A loyal hunter.");
+  });
+
+  it("shrinks the printed card's notes and gaps with its body text", () => {
+    expect(appStyles).toMatch(
+      /\.print-beast-card:not\(\.is-panel\) \.print-play-note \{\s*font-size: var\(--print-card-body-size, 7pt\);/,
+    );
+    expect(appStyles).toMatch(
+      /\.print-beast-card\.is-condensed \.print-play-body \{\s*gap: 0\.025in;/,
+    );
   });
 
   it("titles an unnamed beast by its category", () => {
