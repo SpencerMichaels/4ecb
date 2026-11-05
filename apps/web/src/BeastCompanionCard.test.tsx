@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 
 import { BeastCompanionCard, beastCompanionTitle } from "./BeastCompanionCard";
+import { HideFlavortextContext } from "./HideFlavortextContext";
 import { appStyles } from "./test-styles";
 
 const card: SheetBeastCompanionCard = {
@@ -84,7 +85,7 @@ describe("beast companion card", () => {
     expect(html).toContain("<span>Beast Companion</span>");
   });
 
-  it("shows a sentinel's shared surges, mechanics only in a panel too", () => {
+  it("shows a sentinel's shared surges and hides the flavor text", () => {
     const sentinel: SheetBeastCompanionCard = {
       ...card,
       sharesHealingSurges: true,
@@ -93,7 +94,9 @@ describe("beast companion card", () => {
     };
     delete (sentinel as { healingSurges?: number }).healingSurges;
     const html = renderToStaticMarkup(
-      <BeastCompanionCard card={sentinel} layout="panel" />,
+      <HideFlavortextContext.Provider value={true}>
+        <BeastCompanionCard card={sentinel} layout="panel" />
+      </HideFlavortextContext.Provider>,
     );
     expect(html).toContain("is-panel");
     expect(html).toContain(
@@ -111,6 +114,13 @@ describe("beast companion card", () => {
     expect(appStyles).toMatch(
       /\.print-beast-card\.is-condensed \.print-play-body \{\s*gap: 0\.025in;/,
     );
+  });
+
+  it("shows the description in the builder pane only", () => {
+    const html = renderToStaticMarkup(
+      <BeastCompanionCard card={card} layout="panel" />,
+    );
+    expect(html).toContain("A loyal hunter.");
   });
 
   it("titles an unnamed beast by its category", () => {
