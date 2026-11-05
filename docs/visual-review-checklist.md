@@ -166,7 +166,11 @@ live site.
   - **Expect:** the Defense tiles on one row and HP and Speed side by side
     beneath them, Speed about three times as wide; the tiles, rules note and
     benefits shrunk together to fit; benefit headings in the card colour;
-    everything inside the card, with no red "Text exceeds card" outline.
+    no description (mechanics only, D110); everything inside the card, with
+    no red "Text exceeds card" outline. No review character has a familiar
+    long enough to split; to see one, pick Hurrum (Dark Sun) as a familiar:
+    it prints as "Hurrum" (tiles, senses, rules line) then "Hurrum — Notes"
+    (benefits, quirks), side by side in the deck.
   - **Wrong if:** text runs past the card's bottom, HP sits above Speed, the
     text is much smaller than on the neighbouring cards, or a tile's number
     is cut off.
@@ -272,8 +276,10 @@ live site.
     Warhorse and the Silver Dragon Steed.
   - **Expect:** the reminder wraps clear of its "Level N" tag. The Warhorse
     is one card with one row of defense and HP tiles and its load table at
-    the bottom. The Steed is two adjacent cards, "Silver Dragon Steed" and
-    "Silver Dragon Steed — Actions".
+    the bottom. Now that its defense and HP tiles share one row, the Steed
+    measures as one card at about the 6 pt floor (Firefox); if your browser
+    still finds it overflowing, it is two adjacent cards, "Silver Dragon
+    Steed" and "Silver Dragon Steed — Actions".
   - **Wrong if:** the tag overlaps the reminder, a card overflows, the
     Steed prints as one clipped card or with a "(continued)" card, the
     tiles wrap onto two rows, or text is unreadable at the reduced size.

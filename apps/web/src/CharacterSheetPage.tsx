@@ -433,9 +433,10 @@ export function CharacterSheetPage({
       ),
     });
   }, [savePresentation]);
-  // Creatures and beasts whose whole card overflows the printed card at the
-  // minimum text size, as their measuring copies report: each prints as a
-  // stats card and an actions (creature) or notes (beast) card (D110).
+  // Creatures, beasts and familiars whose whole card overflows the printed
+  // card at the minimum text size, as their measuring copies report: each
+  // prints as a stats card and an actions (creature) or notes (beast,
+  // familiar) card (D110).
   const [splitCompanions, setSplitCompanions] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -1024,12 +1025,10 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      {/* Each creature's and beast's whole card, measured at print size:
-          one that overflows at the minimum text size prints as two cards
-          (D110). Never printed or seen. */}
-      {model.companions.some(
-        (card) => card.kind === "creature" || card.kind === "beast",
-      ) ? (
+      {/* Each creature's, beast's and familiar's whole card, measured at
+          print size: one that overflows at the minimum text size prints as
+          two cards (D110). Never printed or seen. */}
+      {model.companions.some((card) => card.kind !== "associate") ? (
         <div className="print-card-probe print-excluded" aria-hidden="true">
           {model.companions.flatMap((card) => {
             const key = sheetCompanionCardKeyBase(card);
@@ -1040,6 +1039,8 @@ export function CharacterSheetPage({
               return [
                 <BeastCompanionCard card={card} key={key} onFit={onFit} />,
               ];
+            if (card.kind === "familiar")
+              return [<FamiliarCard card={card} key={key} onFit={onFit} />];
             return [];
           })}
         </div>

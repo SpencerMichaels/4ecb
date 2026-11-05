@@ -199,7 +199,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The familiar choice's detail pane is the Arcane Wisp familiar card in panel layout.",
   ),
   "warlock-fey|2|familiar card": auto(
-    'Arcane Wisp card after Skills, speed "fly 8 (hover)", HP and Speed tiles in one row, the rules line, no "Familiar: X" power card, Hide flavor text drops the description.',
+    'Arcane Wisp card after Skills, speed "fly 8 (hover)", HP and Speed tiles in one row, the rules line, no "Familiar: X" power card, no description on the printed card, Hide flavor text drops the builder pane description.',
   ),
   // Hybrid executioner/fighter
   "executioner-fighter|0|assassin's strike (hybrid)": auto(

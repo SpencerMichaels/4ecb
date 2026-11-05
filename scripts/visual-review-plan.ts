@@ -787,7 +787,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Familiar card",
-            'Arcane Wisp after the Skills card: speed "fly 8 (hover)"; no "Familiar: X" power card. Check fit, the defense/HP/speed tiles, the rules line and Hide flavor text.',
+            'Arcane Wisp after the Skills card: speed "fly 8 (hover)"; no "Familiar: X" power card; mechanics only (no description). Check fit, the defense/HP/speed tiles, the rules line and Hide flavor text.',
           ],
         ],
       },
@@ -1330,7 +1330,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Mount creature cards",
-            'After Skills: the Warhorse on one card, the Silver Dragon Steed as a stats card and a "— Actions" card.',
+            'After Skills: the Warhorse on one card, the Silver Dragon Steed on one card at about 6 pt (or, if it overflows there, a stats card and a "— Actions" card).',
           ],
         ],
       },

@@ -18,6 +18,7 @@ import type { SheetCreatureCard } from "./creature-card";
 export interface SheetFamiliarCard {
   readonly kind: "familiar";
   readonly id: string;
+  readonly part?: SheetFamiliarCardPart;
   readonly name: string;
   readonly size: string;
   readonly tier?: string;
@@ -37,6 +38,18 @@ export interface SheetFamiliarCard {
   readonly description?: string;
   readonly source: string;
 }
+
+/**
+ * When a familiar's rules overflow the printed card at the minimum text
+ * size, print shows it as two cards, as a beast's (D110, amended
+ * 2026-11-04): `stats` (identity, defenses, hit points, speed, senses and
+ * the familiar rules) and `notes` (its constant and active benefits and
+ * quirks). A card with no `part` is the whole familiar.
+ */
+export type SheetFamiliarCardPart = "stats" | "notes";
+
+/** The deck key suffix of a split familiar's notes card. */
+export const FAMILIAR_NOTES_KEY_SUFFIX = ":notes";
 
 /** Cards for creatures that accompany the character: beast, familiars,
  *  associates (D107), then creatures such as mounts (D110). */

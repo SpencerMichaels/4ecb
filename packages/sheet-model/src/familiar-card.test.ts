@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { sheetFamiliarCard } from "./familiar-card";
+import { sheetCompanionCardKeyBase } from "./card-deck";
+import {
+  FAMILIAR_NOTES_KEY_SUFFIX,
+  sheetFamiliarCard,
+  type SheetFamiliarCard,
+} from "./familiar-card";
+import { applySheetLayout, sheetLayoutCardKey } from "./sheet-layout";
 
 function familiar(specifics: Readonly<Record<string, string>>): ContentEntity {
   return {
@@ -94,5 +100,44 @@ describe("familiar card", () => {
     expect(card.defenses).toEqual({});
     expect(card).not.toHaveProperty("speed");
     expect(card).not.toHaveProperty("quirks");
+  });
+});
+
+describe("split familiar cards (D110)", () => {
+  const model = {
+    powers: [],
+    items: [],
+    companions: [sheetFamiliarCard(familiar({ Speed: "6" }), stats)],
+  };
+  const parts = (cards: readonly { readonly card: unknown }[]) =>
+    cards
+      .slice(2)
+      .map(({ card }) => (card as SheetFamiliarCard).part ?? "whole");
+
+  it("prints one whole card unless measured as overflowing", () => {
+    expect(sheetCompanionCardKeyBase(model.companions[0]!)).toBe(
+      "companion:familiar_test",
+    );
+    expect(parts(applySheetLayout(model, undefined).deck)).toEqual(["whole"]);
+  });
+
+  it("prints a split familiar as stats then notes, under one layout key", () => {
+    const split = new Set(["companion:familiar_test"]);
+    const resolved = applySheetLayout(model, undefined, {
+      splitCompanions: split,
+    });
+    expect(parts(resolved.deck)).toEqual(["stats", "notes"]);
+    const notes = resolved.cards.at(-1)!;
+    expect(notes.key).toBe(
+      `companion:familiar_test${FAMILIAR_NOTES_KEY_SUFFIX}`,
+    );
+    expect(sheetLayoutCardKey(notes)).toBe("companion:familiar_test");
+    expect(resolved.defaultCardOrder).not.toContain(notes.key);
+    const hidden = applySheetLayout(
+      model,
+      { version: 1, hiddenCards: ["companion:familiar_test"] },
+      { splitCompanions: split },
+    );
+    expect(parts(hidden.deck)).toEqual([]);
   });
 });

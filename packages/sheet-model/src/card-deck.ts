@@ -75,7 +75,7 @@ export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
 const keyPart = (value: string) => value.trim().toLocaleLowerCase();
 
 /** The deck key of a companion's card (D099 stable provenance keys); a
- *  split creature's or beast's second card adds its part's suffix. */
+ *  split creature's, beast's or familiar's second card adds its part's suffix. */
 export const sheetCompanionCardKeyBase = (card: SheetCompanionCard) =>
   card.kind === "creature"
     ? sheetCreatureCardKeyBase(card)

@@ -332,10 +332,10 @@ separate header or level rail.
   whole card overflows at the 6 pt floor, measured by a hidden
   `print-card-probe` copy, prints as a stats card and a "<name> — Actions"
   card (`applySheetLayout`'s `splitCompanions`; the halves share one
-  `layoutKey`), never a continuation card. The printed beast card is
-  mechanics only (no description; the builder pane keeps it) and splits
-  the same way into stats and "<name> — Notes" cards only when its rules
-  overflow at the floor (D110 amendment, 2026-11-04).
+  `layoutKey`), never a continuation card. The printed beast and familiar
+  cards are mechanics only (no description; the builder pane keeps it) and
+  split the same way into stats and "<name> — Notes" cards only when their
+  rules overflow at the floor (D110 amendment, 2026-11-04).
 - **One card format (D079).** Every power/item card on every surface (print,
   screen sheet, builder detail panes) is `PowerCard`/`ItemCard` rendering a
   `SheetCard`: `layout="print"` is fixed-size and fitted, `layout="panel"` is

@@ -14,6 +14,10 @@ import {
   type SheetBeastCompanionCard,
 } from "./beast-companion-card";
 import {
+  FAMILIAR_NOTES_KEY_SUFFIX,
+  type SheetFamiliarCard,
+} from "./familiar-card";
+import {
   CREATURE_ACTIONS_KEY_SUFFIX,
   type SheetCreatureCard,
 } from "./creature-card";
@@ -82,8 +86,8 @@ export function applySheetLayout(
     readonly itemCardsShown?: ReadonlyMap<string, boolean>;
     /** Companion cards (by deck key) whose whole card overflows the
      *  printed card at the minimum text size: a creature prints as a stats
-     *  card and an actions card, a beast as a stats card and a notes card
-     *  (D110). */
+     *  card and an actions card, a beast or familiar as a stats card and a notes
+     *  card (D110). */
     readonly splitCompanions?: ReadonlySet<string>;
   } = {},
 ): ResolvedSheetLayout {
@@ -114,6 +118,8 @@ export function applySheetLayout(
       if (entry.card.kind === "creature")
         return splitCreatureCard(card, entry.card);
       if (entry.card.kind === "beast") return splitBeastCard(card, entry.card);
+      if (entry.card.kind === "familiar")
+        return splitFamiliarCard(card, entry.card);
       return [card];
     },
   );
@@ -224,6 +230,23 @@ function splitBeastCard(
     {
       ...entry,
       key: `${entry.key}${BEAST_NOTES_KEY_SUFFIX}`,
+      layoutKey: entry.key,
+      card: { ...card, part: "notes" },
+    },
+  ];
+}
+
+/** A familiar's stats card then its notes card, kept together the same
+ *  way. */
+function splitFamiliarCard(
+  entry: SheetLayoutCard,
+  card: SheetFamiliarCard,
+): SheetLayoutCard[] {
+  return [
+    { ...entry, card: { ...card, part: "stats" } },
+    {
+      ...entry,
+      key: `${entry.key}${FAMILIAR_NOTES_KEY_SUFFIX}`,
       layoutKey: entry.key,
       card: { ...card, part: "notes" },
     },

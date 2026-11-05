@@ -3819,6 +3819,22 @@ Same day (Pass 5 "One-line Appearance"): the beast card's title is
 "<name> — <kind>" ("Ash — Wolf") on every surface, never the player's
 `_COMPANION_APPEARANCE` (the legacy panel's species line), which is now a
 freeform multi-line box shown only in the Build tab's Companion section.
+Same day (Pass 4 "Fey warlock: printed Arcane Wisp card"): familiars,
+"Same as beasts". The printed familiar card is mechanics only (its
+description shows only in the builder pane), and a familiar whose rules
+still overflow at the 6 pt floor prints as a **stats** card (identity,
+defense tiles, HP and Speed, senses, the familiar rules line) and a
+"<name> — Notes" card (constant and active benefits, quirks), through the
+same probe copy and `splitCompanions`, keyed `companion:<id>` and
+`companion:<id>:notes` with one `layoutKey`. Its HP and Speed tiles share
+one row, and its notes and tiles scale with the fitted body text. Measured
+in Firefox on all 104 familiar records (`tmp/familiar-card/`): 99 fit one
+card at 6–8 pt (the Arcane Wisp at 8 pt); Gibbering Pet, Floating Polyp,
+Hurrum, Jank and Sitak split, both halves fitting at 7–8 pt. The creature
+card's defense and hit point tiles now really share one row (the card
+body's inline flow for its direct `div`s had stacked them); in the review
+characters, the Warhorse, Silver Dragon Steed and both Thought Warriors
+now fit one card.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

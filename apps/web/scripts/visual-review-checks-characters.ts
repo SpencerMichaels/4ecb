@@ -2517,16 +2517,18 @@ function printedFamiliar(
 rule("warlock-fey", "Print preview", "Familiar card", (c) => {
   const { checks, card } = printedFamiliar(c, "Arcane Wisp");
   const familiar = card?.card.kind === "familiar" ? card.card : undefined;
-  const hidden =
+  // The builder pane's card, with and without flavor text.
+  const pane = (hide: boolean) =>
     familiar === undefined
       ? ""
       : markup(
           createElement(
             HideFlavortextContext.Provider,
-            { value: true },
-            createElement(FamiliarCard, { card: familiar }),
+            { value: hide },
+            createElement(FamiliarCard, { card: familiar, layout: "panel" }),
           ),
         );
+  const lead = familiar?.description?.slice(0, 30) ?? "";
   return [
     ...checks,
     contains('Speed "fly 8 (hover)"', card?.text ?? "", "fly 8 (hover)"),
@@ -2539,10 +2541,15 @@ rule("warlock-fey", "Print preview", "Familiar card", (c) => {
     ),
     contains("The rules line", card?.text ?? "", FAMILIAR_RULES_REMINDER),
     truthy(
-      "Hide flavor text drops the description",
-      familiar?.description !== undefined &&
-        textOf(card?.html ?? "").includes(familiar.description.slice(0, 30)) &&
-        !textOf(hidden).includes(familiar.description.slice(0, 30)),
+      "The printed card is mechanics only: no description (D110)",
+      lead !== "" && !textOf(card?.html ?? "").includes(lead),
+      familiar?.description?.slice(0, 60) ?? "no description",
+    ),
+    truthy(
+      "The builder pane shows the description; Hide flavor text drops it",
+      lead !== "" &&
+        textOf(pane(false)).includes(lead) &&
+        !textOf(pane(true)).includes(lead),
       familiar?.description?.slice(0, 60) ?? "no description",
     ),
   ];
