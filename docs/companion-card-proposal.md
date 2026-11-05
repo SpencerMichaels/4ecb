@@ -219,7 +219,9 @@ There are no legacy samples with a companion. None of `sample-chars/*.dnd4e`,
   beast is chosen this equals legacy.
 - **Name and appearance** are the legacy textstrings `_COMPANION_NAME` and
   `_COMPANION_APPEARANCE`, edited with the existing `set-text` command, so they
-  round-trip with imported `.dnd4e` files.
+  round-trip with imported `.dnd4e` files. Appearance is a freeform
+  multi-line box shown only in the Build tab; the card never prints it
+  (owner, 2026-11-04; D110's amendment).
 
 ### Card layout
 
@@ -232,8 +234,8 @@ summary attack line repeats the same derived numbers.
 
 ```
 ┌──────────────────────────────────────────┐
-│ Ash — timber wolf                        │  name — appearance (else category)
-│ Level 8 Medium beast · Wolf              │  identity: level, size, category
+│ Ash — Wolf                               │  name — category
+│ Level 8 Medium beast                     │  identity: level, size
 ├──────────────────────────────────────────┤
 │ AC 22  Fort 20  Ref 20  Will 21          │  defense tiles
 │ HP 78  Bloodied 39  Surge 19  Surges 2   │  health tiles

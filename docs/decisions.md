@@ -3815,6 +3815,10 @@ with one `layoutKey`; `applySheetLayout`'s option is now
 card at 6.5–8 pt (Bruin at 7.5 pt), and the Horse (Mount Companion) and the
 Simian (its Manipulate Items rule, which the card had left out) split, both
 halves fitting at 7–8 pt.
+Same day (Pass 5 "One-line Appearance"): the beast card's title is
+"<name> — <kind>" ("Ash — Wolf") on every surface, never the player's
+`_COMPANION_APPEARANCE` (the legacy panel's species line), which is now a
+freeform multi-line box shown only in the Build tab's Companion section.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

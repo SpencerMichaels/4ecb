@@ -19,15 +19,15 @@ const signed = (value: number) => (value >= 0 ? `+${value}` : String(value));
 /** "1d8+3" as cards print damage: no spaces around the plus. */
 const damageText = (damage: string) => damage.replace(/\s*\+\s*/g, "+");
 
-/** The card's title: the beast's name, then its appearance or category; a
+/** The card's title: the beast's name, then its kind ("Ash — Wolf"; never
+ *  the player's Appearance text, which only the Build tab shows); a
  *  split beast's notes card names itself apart from its stats card
  *  ("Bruin — Notes", D110), never as a continuation. */
 export function beastCompanionTitle(card: SheetBeastCompanionCard): string {
   if (card.part === "notes") return `${card.name} — Notes`;
-  const detail = card.appearance ?? card.category;
-  return detail.toLocaleLowerCase() === card.name.toLocaleLowerCase()
+  return card.category.toLocaleLowerCase() === card.name.toLocaleLowerCase()
     ? card.name
-    : `${card.name} — ${detail}`;
+    : `${card.name} — ${card.category}`;
 }
 
 /**
@@ -57,13 +57,9 @@ export function BeastCompanionCard({
   const isPanel = layout === "panel";
   const hideFlavortext = useContext(HideFlavortextContext);
   const title = beastCompanionTitle(card);
-  const identity = [
-    [`Level ${card.level}`, card.size, "beast"].filter(Boolean).join(" "),
-    // The title names the category unless an appearance replaces it.
-    card.appearance === undefined ? undefined : card.category,
-  ]
+  const identity = [`Level ${card.level}`, card.size, "beast"]
     .filter(Boolean)
-    .join(" · ");
+    .join(" ");
   const trained = card.skills.filter((skill) => skill.trained);
   const otherSkills = card.skills.filter((skill) => !skill.trained);
   const skillList = (skills: typeof card.skills) =>

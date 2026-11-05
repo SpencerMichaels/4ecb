@@ -11,7 +11,6 @@ const card: SheetBeastCompanionCard = {
   id: "WOLF",
   occurrenceId: "own-WOLF",
   name: "Ash",
-  appearance: "timber wolf",
   category: "Wolf",
   level: 8,
   size: "Medium",
@@ -59,8 +58,10 @@ describe("beast companion card", () => {
     expect(html).toContain(
       "print-play-card print-familiar-card print-beast-card",
     );
-    expect(html).toContain("Ash — timber wolf");
-    expect(html).toContain("Level 8 Medium beast · Wolf");
+    expect(html).toContain("Ash — Wolf");
+    expect(html).toContain(
+      '<p class="print-play-identity">Level 8 Medium beast</p>',
+    );
     expect(html).toContain("<dt>AC</dt><dd>22</dd>");
     expect(html).toContain("<dt>Will</dt><dd>21</dd>");
     expect(html).toContain("<dt>HP</dt><dd>78</dd>");
@@ -127,7 +128,7 @@ describe("beast companion card", () => {
     const stats = renderToStaticMarkup(
       <BeastCompanionCard card={{ ...card, part: "stats" }} />,
     );
-    expect(stats).toContain("Ash — timber wolf");
+    expect(stats).toContain("Ash — Wolf");
     expect(stats).toContain("<dt>AC</dt><dd>22</dd>");
     expect(stats).toContain("<strong>Skills</strong> Stealth +6");
     expect(stats).not.toContain("Situational");
@@ -147,7 +148,6 @@ describe("beast companion card", () => {
 
   it("titles an unnamed beast by its category", () => {
     const unnamed = { ...card, name: "Wolf" };
-    delete (unnamed as { appearance?: string }).appearance;
     expect(beastCompanionTitle(unnamed)).toBe("Wolf");
     expect(beastCompanionTitle({ ...unnamed, name: "Ash" })).toBe("Ash — Wolf");
     const html = renderToStaticMarkup(<BeastCompanionCard card={unnamed} />);

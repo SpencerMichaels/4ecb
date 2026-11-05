@@ -170,12 +170,12 @@ live site.
   - **Expect:** under the companion row, the short Name field (Ash), as wide
     as the Details tab's Player field, and beneath it a full-width
     multi-line Appearance box like the Details tab's Appearance note that
-    grows as you type several lines. On the printed beast card
-    (`?preview=1`) the title reads "Ash — <your text>" with the lines
-    joined by spaces, as before.
+    grows as you type several lines. The beast card, printed
+    (`?preview=1`) and in the Companion pane, stays titled "Ash — Wolf"
+    whatever you type.
   - **Wrong if:** the fields overlap the table, Appearance is a one-line field
-    or sits beside Name, the box doesn't grow, or the card title breaks onto
-    separate lines where you pressed Enter.
+    or sits beside Name, the box doesn't grow, or the Appearance text shows
+    on either card.
 
 ## Pass 6: Sentinel druid 25 (`sentinel-bear`)
 

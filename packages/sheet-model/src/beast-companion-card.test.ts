@@ -131,7 +131,6 @@ describe("beast companion card", () => {
       id: "WOLF",
       occurrenceId: "own-WOLF",
       name: "Ash",
-      appearance: "timber wolf",
       category: "Wolf",
       level: 8,
       size: "Medium",
@@ -168,16 +167,16 @@ describe("beast companion card", () => {
     expect(card).not.toHaveProperty("resistances");
   });
 
-  it("joins a multi-line appearance into the title's one line", () => {
+  it("leaves the player's appearance off the card", () => {
+    // Owner, 2026-11-04: the title is "<name> — <kind>"; the freeform
+    // Appearance shows only in the Build tab.
     const card = sheetBeastCompanionCard(wolf(), beast(), {
       textStrings: {
-        _COMPANION_APPEARANCE:
-          "  Grey timber wolf,\r\ntorn left ear\r\n\r\n \n\nwith a whistle\n",
+        _COMPANION_NAME: "Ash",
+        _COMPANION_APPEARANCE: "Grey timber wolf,\ntorn left ear",
       },
     });
-    expect(card.appearance).toBe(
-      "Grey timber wolf, torn left ear with a whistle",
-    );
+    expect(JSON.stringify(card)).not.toContain("timber");
   });
 
   it("falls back to the record name and reads the granted attack power", () => {
