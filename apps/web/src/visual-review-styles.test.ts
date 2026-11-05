@@ -69,6 +69,39 @@ describe("visual-review facts decided by CSS", () => {
     expect(stacked?.[2]).toContain("aspect-ratio: auto");
   });
 
+  it("draws the library's selected row bar, square count tag and role placeholder", () => {
+    expect(
+      declarations(
+        ".library-table tbody tr.selection-row-selected > td:first-child",
+      ),
+    ).toContain("box-shadow: inset 6px 0 var(--selected)");
+    expect(declarations(".page-action-count")).toContain("border-radius: 2px");
+    const wait = declarations(".library-detail-role-wait");
+    expect(wait).toContain("width: 9rem");
+    expect(wait).toContain("background: rgb(255 255 255 / 25%)");
+    expect(declarations(".library-detail-portrait")).toContain(
+      "border: 3px solid rgb(255 255 255 / 85%)",
+    );
+  });
+
+  it("gives a familiar card's Speed tile three times the HP tile's width", () => {
+    expect(declarations(".print-familiar-row")).toContain(
+      "grid-template-columns: 1fr 3fr",
+    );
+  });
+
+  it("sizes the Party pieces box about five characters wide beside its label", () => {
+    expect(declarations(".item-set-party-pieces input")).toContain(
+      "width: 5em",
+    );
+    expect(declarations(".item-set-party-pieces label")).toContain(
+      "display: flex",
+    );
+    expect(declarations(".item-set-party-pieces-hint")).toContain(
+      "color: var(--muted)",
+    );
+  });
+
   it("hides the Sections menu copies field's spin arrows", () => {
     expect(declarations(".sheet-sections-copies > input")).toContain(
       "appearance: textfield",

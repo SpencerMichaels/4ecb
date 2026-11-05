@@ -1,30 +1,57 @@
 # Visual review checklist
 
-**Summary (2026-10-29 pare-down).** The list had 121 open items. One was
-obsolete (the old "Beast Mastery ranger" card check, which repeated "Beast
-power cards"), and 74 were factual. Their labels, text, order, numbers,
-links, issues and the CSS that decides their look are now checked by code:
-`pnpm review:verify` and `apps/web/src/visual-review-styles.test.ts`, plus
-the unit tests named in their commits. Those items are gone from this list.
-The items left are the ones that need your eyes: 45 items
-over 13 passes. Each pass is one character or one page, and you walk it
-once. Every automated check passes (2026-10-28, after `f22c5fc`).
+**Summary (2026-11-04 compression).** Since the 2026-10-29 pare-down (121
+items to 45 over 13 passes) the list had grown back to 55 items over 18
+passes, 60 owner rows on the review page. Now it is 38 walk-through entries
+over 23 passes, one entry per page you open, and `pnpm review:build`
+reports 38 owner rows. What moved to code:
+
+- Every "mixed" row's factual half is an automatic `review:verify` row, and
+  the visual half is folded into that page's walk-through entry.
+- The swap checks of the old Passes 14 and 15 are verified on new review
+  characters: Lily (Skald Training's automatic Majestic Word → Skald's Aura
+  swap; Ritual Caster under Bardic Training is no retraining target) and
+  Raidon Kane (Plaguefire Body is no retraining target). The Paragon
+  Multiclassing granted-target check is covered by the unit tests of
+  `0aaa305` (`hybrid-powers.test.ts`, `build-projection.test.ts`).
+- The psion's shared implement table is verified on a new review character,
+  "Review – Psion L15 (Summon Thought Warrior)".
+- The library's behaviour (labels and order, sort and selection memory,
+  keys, the 36rem and 60rem breakpoints, the pane's lines, the role-line
+  states, the trash order and wording) is checked by
+  `character-library-ui.test.ts`, `CharacterLibraryDetail.test.tsx` and
+  `TrashDialog.test.tsx`; the Empty-trash dialog's focus on Cancel and its
+  Esc by `EmptyTrashDialog.focus.test.tsx`; the restore dialog's text,
+  buttons, focus and outcomes by `SettingsPage.restore.test.tsx`; the
+  Sheet Edit-mode toolbar, Sections menu and right-click by
+  `CharacterSheetPage.editing.test.tsx`; the benefits-by-level heading
+  being one button (click anywhere, Enter, Space) by
+  `CandidateDetail.test.ts`; the pre-scroll arithmetic by
+  `CandidateSelectionTable.prescroll.test.tsx`; the creature split's shared
+  layout key by `creature-card.test.ts`; the CSS facts (selected-row bar,
+  square count tag, role placeholder, familiar tile widths, Party pieces
+  box) by `visual-review-styles.test.ts`.
+- Dropped: the White Well summoned allies' "Unarmed row / Back to the Wall"
+  question (their attacks now print on creature cards, D111, with neither),
+  the Sprite familiar's two checks (same component and colours as the
+  Arcane Wisp), and the beast card's "Ash for comparison".
+
+Every automated check passes (2026-11-04).
 
 ## How to use this list
 
-Each item says:
+**Check every entry in light and dark theme, at 100% and 140% zoom.** For
+an entry on a print preview, also open the browser's print preview
+(Ctrl+P) once: printed cards and pages are light, with no focus rings and
+no red "Text exceeds card" outline. Only layout, legibility, colour, fit
+and "does this look right" are left here; labels, text, order, numbers,
+routes and issue titles are checked by `pnpm review:verify`, whose results
+are in `tmp/visual-review/index.html`. A failed check there is a bug, not
+something to eyeball.
 
-- **Where:** the character, the page or tab, the level, and what to click.
-- **Expect:** what you should see when it's right.
-- **Wrong if:** the signs that it's broken.
-- **Decide:** (some items) a judgement call for you, not a pass/fail check.
-
-Only layout, legibility, colour and dark theme, fit at 140% zoom, print fit
-and "does this look right" are left here. Labels, text, counts, order,
-numbers on cards, routes, issue titles and the CSS rules behind them are
-checked by `pnpm review:verify`. It renders the review characters' pages in
-code and checks the facts. Its results are in `tmp/visual-review/index.html`.
-A failed check there is a bug, not something to eyeball.
+Each entry gives one **Where** (the page to open and what to click), then
+**Expect** and **Wrong if**. Open questions are collected under
+[Decisions](#decisions) at the end.
 
 **Test characters.** Run `pnpm review:build` (it needs the private pack
 `tmp/content/full-local.4ecp` and also runs `review:verify`), then in the app:
@@ -35,656 +62,461 @@ A failed check there is a bug, not something to eyeball.
    `tmp/visual-review/review-characters.4ecb`. Use Restore, not the library's
    Import, so the IDs stay fixed.
 
-`tmp/visual-review/index-visual.html` links each remaining item to its page.
-The characters are named "Review – …" and have the ID
-`visual-review-<slug>`. In this list, a path such as `beatrix` →
-`edit?tab=build&level=1&section=class` means
-`#/characters/visual-review-beatrix/edit?tab=build&level=1&section=class`.
+`tmp/visual-review/index-visual.html` links each entry to its page. The
+characters are named "Review – …" and have the ID `visual-review-<slug>`.
+A path such as `beatrix` → `edit?tab=build&level=1&section=class` means
+`#/characters/visual-review-beatrix/edit?tab=build&level=1&section=class`;
 `beatrix` → `?preview=1` is its print preview, and `beatrix` → `sheet` is
-`#/characters/visual-review-beatrix`. The slugs used below are:
+`#/characters/visual-review-beatrix`. Builder tabs, left to right: Build,
+Details, Loadout, Inventory (route `tab=equipment`), Shop, Rituals,
+Retraining. The theme is Settings → Display → Color theme.
 
-- `beatrix`: Beatrix, revenant hexblade 8 (Fey Pact of the White Well).
-- `hexblade-white-well`: human White Well hexblade 25 with Legendary Hexblade.
-- `hu`: the sample Hu Sheng-Ming (avenger 8, six backgrounds).
-- `ranger-beast`: Beast Mastery ranger 11 with a wolf named Ash.
-- `sentinel-bear`: elf sentinel druid 25 with a bear named Bruin.
-- `warlock-fey`: elf fey warlock 11 with an Arcane Wisp familiar.
-- `artificer-ardent`: hybrid artificer/ardent 11 with a Sprite familiar.
-- `invoker-drow`: drow invoker 11 with a Spiderling of Lolth familiar,
-  two Caelynnvala's Boons pieces, Summon Blade Angel and a carried rod.
-- `fighter-arena`: githzerai arena fighter 11 with a Warhorse and a Silver Dragon Steed.
-- `wizard-gnome`: gnome wizard 5.
-- Player saves and SampleHeroes, imported unchanged: `hystan`, `piri`,
-  `beldin`, `flint`, `raidon` (Raidon Kane), `jim` (Jim Darkmagic),
-  `sylestine`, `trey` (Trey Spectre), `natan`, `dv`, `zilvra`.
-- The library copies "Review – Update waiting" and "Review – Missing
-  content" (runepriest).
+The passes run the native review characters first, then the imported player
+saves (one print preview each), then the library, new characters, and the
+live site.
 
-Builder tabs, left to right: Build, Details, Loadout, Inventory (route
-`tab=equipment`), Shop, Rituals, Retraining. The print preview runs page 1,
-Scratchpad, the Character Reference pages, the card pages (nine cards each)
-and Session Notes. The theme is Settings → Display → Color theme. Check each
-pass in light and dark theme and at 100% and 140% zoom unless the item says
-otherwise.
+## Pass 1: Beatrix (`beatrix`, revenant hexblade 8)
 
-## Pass 1: Beatrix
-
-Open `beatrix` → `edit?tab=build&level=1&section=class`, open the Pact
-Choice row and click Fey Pact of the White Well. Then go to her print
-preview and Inventory.
-
-- [ ] **Trait package benefits.**
-  - **Where:** the pact's detail pane, with every level section open.
-  - **Expect:** the stack reads cleanly. Each benefit card is followed by the
-    power cards it grants. The cards sit about 0.75rem apart.
-  - **Decide:** a power under a sub-feature (Soul Step under the Boon) looks
-    like a sibling of it. Would indenting, or a "from …Boon" label, help? Is
-    the 0.75rem gap right?
-- [ ] **Benefits by level** (pacts, themes, paragon paths, epic destinies).
-  - **Where:** the same pane. Then `hexblade-white-well` →
-    `edit?tab=build&level=1&section=class`, same pact (only its Legendary
-    Hexblade section). Dark theme and 140% zoom too.
-  - **Expect:** each heading shows a chevron, a bold title and a grey count.
-    A click anywhere on the heading opens it, and so do Enter and Space when
-    it has focus. The chevron turns and the bullet list gives way to cards.
-  - **Wrong if:** a click on the count or a bullet does nothing, headings
-    clip or overlap at 140%, or the focus ring is invisible in dark theme.
-- [ ] **Choice card rhythm.**
-  - **Where:** the pact card and its Boon, Reward and Weapon cards. Then the
-    Race section → Revenant, the Class section → Hexblade and Cleric (its
-    About section has a table), and `wizard-gnome` →
-    `edit?tab=build&level=1&section=theme` → Order Adept → "More…".
-  - **Expect:** even gaps. "**Prerequisite:** Hexblade" sits on one line and
-    "**Level:** 1" on one line. Paragraphs start flush left. A trait name sits
-    closer to its own text than to the next trait. A table, a divider or a
-    lore heading has equal space above and below. The More… link sits at the
-    left under the text. The spacing rules are checked in
-    `detail-card-spacing.test.ts`; this item is about how they look.
-  - **Wrong if:** a big gap at the bottom of a card, a heading glued to the
-    text above it, or uneven space around a divider or table.
-  - **Decide:** with a gap between paragraphs, is the small first-line indent
-    on a following paragraph still wanted, or should card paragraphs never
-    indent? Keep the thin flavor divider on every choice card, or drop it
-    everywhere?
-- [ ] **Sub-choices on feature rows.**
-  - **Where:** `beatrix` → `?preview=1`, Character Reference pages (Past
-    life, the two Guardian Feature rows). `fighter-arena` → `?preview=1`,
-    page 1 reminders ("Arena Training: Arena Weapon (Glaive), Arena Weapon
-    (Spear)").
+- [ ] **Beatrix: pact, race and class cards.**
+  - **Where:** `edit?tab=build&level=1&section=class`. Click the Pact Choice
+    row's Fey Pact of the White Well and open every level section. Then
+    click the Class rows Hexblade and Cleric (its About section has a
+    table), and in the Race section Revenant.
+  - **Expect:** each level heading shows a chevron, a bold title and a grey
+    count; opened, the chevron turns and the bullets give way to cards.
+    Each benefit card is followed by the power cards it grants, about
+    0.75rem apart. Even gaps on every card: "**Prerequisite:** Hexblade"
+    and "**Level:** 1" each on one line, paragraphs flush left, a trait
+    name closer to its own text than to the next trait, equal space above
+    and below a table, divider or lore heading.
+  - **Wrong if:** headings clip or overlap, the focus ring is invisible in
+    dark theme, a big gap sits at a card's bottom, a heading is glued to
+    the text above it, or space around a divider or table is uneven.
+- [ ] **Beatrix: reference feature rows.**
+  - **Where:** `?preview=1`, the Character Reference pages: Past life and the
+    two Guardian Feature rows.
   - **Expect:** a long heading wraps onto a second line, clear of the
     "Level N" tag at the right.
-  - **Wrong if:** the tag overlaps or pushes the text, or a heading is cut off
-    with "…".
-  - **Decide:** "Barbarian Agility" and "Fighter Talents" keep the class name
-    because it starts the feature's own name, not a "Level N" slot name. OK?
+  - **Wrong if:** the tag overlaps or pushes the text, or a heading is cut
+    off with "…".
 
-## Pass 2: White Well hexblade 25
+## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 
-- [ ] **Summoned allies**
-  - **Where:** `hexblade-white-well` → `?preview=1`, the first card page:
-    Mourning Handmaiden's Attack, Spectral Protector's Attack and Spectral
-    Protector's Opportunity. The numbers and headers are checked
-    automatically.
-  - **Decide:** each weapon row is labelled "Unarmed", and your own Back to
-    the Wall line appears under Additional effects. Is that fine for a
-    summoned ally? Legacy CharTracker prints the native engine's conditions
-    for each power, so the recovered viewer code doesn't settle it.
+- [ ] **White Well hexblade: the Legendary Hexblade section.**
+  - **Where:** `edit?tab=build&level=1&section=class`, the Pact Choice row's
+    Fey Pact of the White Well; open its Legendary Hexblade section.
+  - **Expect:** the section's Level 11 / 12 / 16 / 20 subheadings and cards
+    read like Beatrix's sections.
+  - **Wrong if:** a subheading clips, or its cards sit unevenly.
+- [ ] **White Well hexblade: summoned creature cards.**
+  - **Where:** `?preview=1`, the cards after Skills: Mourning Handmaiden and
+    Spectral Protector (each may print as a stats card and a "— Actions"
+    card).
+  - **Expect:** tiles, Speed line and notes with the stats; the attacks and
+    actions with the actions. Each entry's heading (name, keywords, action
+    and usage) stands out from its lines.
+  - **Wrong if:** a card overflows, an entry heading is hard to tell from its
+    lines, or the stats and actions halves look unbalanced.
 
-## Pass 3: Familiars
+## Pass 3: Gnome wizard 5 (`wizard-gnome`)
 
-- [ ] **Familiar choice:**
-  - **Where:** `warlock-fey` → `edit?tab=build&level=11&section=feats`, Arcane
-    Familiar's familiar row (Arcane Wisp). `artificer-ardent` (Sprite) works
-    the same way. Check it in dark theme.
-  - **Expect:** in dark theme, a dark navy card with light text. The print
-    preview stays white.
+- [ ] **Gnome wizard: Order Adept card.**
+  - **Where:** `edit?tab=build&level=1&section=theme`, Order Adept → "More…".
+  - **Expect:** the card's rhythm matches Beatrix's cards, and the More…
+    link sits at the left under the text.
+  - **Wrong if:** More… floats right or overlaps the text, or the gaps are
+    uneven.
+- [ ] **Gnome wizard: Wield two-handed when Small.**
+  - **Where:** Shop → buy a Longsword; then Inventory (`edit?tab=equipment`)
+    and right-click it.
+  - **Expect:** a muted, checked "Wield two-handed" item that reads well.
+  - **Wrong if:** the menu is clipped, or the muted item is unreadable in dark
+    theme.
+
+## Pass 4: Fey warlock 11 (`warlock-fey`)
+
+- [ ] **Fey warlock: Arcane Wisp in the builder.**
+  - **Where:** `edit?tab=build&level=11&section=feats`, Arcane Familiar's
+    familiar row (Arcane Wisp).
+  - **Expect:** in dark theme a dark navy card with light text.
   - **Wrong if:** the card stays white in dark theme, or text is unreadable.
-  - **Decide:** in dark theme the header turns the generic dark green panel
-    colour instead of the teal used in print. Keep it, or keep teal?
-- [ ] **Familiar card**
-  - **Where:** `warlock-fey` → `?preview=1`, first card page, the 3rd card.
-    Then `artificer-ardent` and `invoker-drow`, same place.
-  - **Expect:** the Defense, HP and Speed tiles sit side by side, with Speed
-    about three times as wide. Benefit headings are in the card colour.
-    Everything fits inside the card.
+- [ ] **Fey warlock: printed Arcane Wisp card.**
+  - **Where:** `?preview=1`, first card page, the 3rd card.
+  - **Expect:** the Defense, HP and Speed tiles side by side; benefit
+    headings in the card colour; everything inside the card.
   - **Wrong if:** text runs past the card's bottom, the text is much smaller
     than on the neighbouring cards, or a tile overflows.
 
-## Pass 4: Beast companions
+## Pass 5: Beast Mastery ranger 11 (`ranger-beast`)
 
-- [ ] **Printed beast card**
-  - **Where:** `sentinel-bear` → `?preview=1`, first card page, 3rd card
-    (Bruin). `ranger-beast` (Ash) for comparison.
-  - **Expect:** Bruin's level-25 stat block, traits and Guardian Companion
-    aura fit on one card at the same text size as its neighbours.
+- [ ] **Beast ranger: Name and Appearance fields.**
+  - **Where:** `edit?tab=build&level=1&section=companion`.
+  - **Expect:** the Name (Ash) and Appearance single-line fields side by side
+    under the companion row, laid out like the Details tab's inline fields.
+  - **Wrong if:** the fields overlap the table or wrap badly.
+
+## Pass 6: Sentinel druid 25 (`sentinel-bear`)
+
+- [ ] **Sentinel druid: Bruin's printed card.**
+  - **Where:** `?preview=1`, first card page, the 3rd card (Bruin).
+  - **Expect:** the level-25 stat block, traits and Guardian Companion aura
+    fit on one card at the same text size as its neighbours.
   - **Wrong if:** text runs past the bottom, or it's far smaller than the
     cards beside it.
-  - **Decide:** the sentinel also prints "Bear Companion Notes (1)" and "(2)"
-    power cards, content powers that repeat the beast card's aura and notes.
-    Keep them?
-- [ ] **Name and Appearance**
-  - **Where:** `ranger-beast` → `edit?tab=build&level=1&section=companion`.
-  - **Expect:** the "Name" (Ash) and "Appearance" single-line fields sit side
-    by side under the companion row, laid out like the Details tab's inline
-    fields.
-  - **Wrong if:** the fields overlap the table or wrap badly at 140%.
-  - **Decide:** is a one-line Appearance field enough?
 
-## Pass 5: Drow invoker's item set
+## Pass 7: Drow invoker 11 (`invoker-drow`)
 
-- [ ] **Party pieces field**
-  - **Where:** `invoker-drow` → `edit?tab=equipment` → Scarf of
-    Reconciliation +2, the Caelynnvala's Boons card. Dark theme, 140% zoom.
-    The values, dimming and validation are checked automatically.
-  - **Expect:** under "Item set", the "Party pieces" label sits beside a small
-    number box about 5 characters wide, with the grey hint below.
-  - **Wrong if:** the label and box wrap apart or overflow the card at 140%,
-    or the hint is unreadable on the dark card.
+- [ ] **Drow invoker: Equipment and Shop.**
+  - **Where:** `edit?tab=equipment`, select the Scarf of Reconciliation +2
+    and look at its Caelynnvala's Boons card. Then in the Shop buy a
+    Siberys Shard of Merciless Cold (heroic tier), a Longsword, Armor of
+    Adaptable Resistance +1 and a Harper Pin (heroic tier), looking at the
+    Shop's choice pages for the last two. Back in Inventory right-click the
+    shard → Attach to → Rose Scythe of Chauntea, then right-click the
+    Longsword, the armor and the pin.
+  - **Expect:** "Party pieces" beside a small number box, the grey hint
+    below; the scythe's "Augment: …" note muted with the row's columns
+    aligned; the shard's menu with the scythe ticked, then Detach; the
+    checkable "Wield two-handed" item; "Choose a damage type…" and "Choose
+    a power…" menu items; every menu readable and unclipped.
+  - **Wrong if:** the Party pieces label and box wrap apart or overflow the
+    card, the hint is unreadable on the dark card, the augment note is
+    warning-coloured, the columns shift, or a menu is clipped.
+- [ ] **Drow invoker: Blade Angel in power detail.**
+  - **Where:** `edit?tab=build&level=9&section=powers`, select Summon Blade
+    Angel.
+  - **Expect:** under the power card, the creature's dark panel card with the
+    same tiles, commands and per-implement rows as the print card.
+  - **Wrong if:** the panel card overflows the detail pane, or the commands
+    or their rows are unreadable on the dark card.
+- [ ] **Drow invoker: printed familiar and Blade Angel.**
+  - **Where:** `?preview=1`: the Spiderling of Lolth familiar card, the Blade
+    Angel creature card after it, and the Summon Blade Angel power card
+    among the daily powers.
+  - **Expect:** the familiar card fits like the Arcane Wisp's. On the Blade
+    Angel card each command is followed by its three implement rows,
+    without column headings, striped and divided like a power card's weapon
+    table. The power card keeps its keyword and action bands and the
+    Effect.
+  - **Wrong if:** a card overflows, the rows read as part of the command
+    text or as belonging to the next command, the stripes or dividers are
+    missing, or the creature card's text is unreadable at its size.
 
-## Pass 6: Character library and trash
+## Pass 8: Arena fighter 11 (`fighter-arena`)
 
-Open `#/characters` with the review characters restored. The role-line
-wording and the trash dialog's singular and plural text are checked
-automatically.
+- [ ] **Arena fighter: opening a filled choice.**
+  - **Where:** `edit?tab=build&level=3&section=powers`, click the folded
+    Steel Serpent Strike heading; then with the level picker level 6 Feats
+    (Melee Training) and level 1 Powers (Bristling Defense, Spinning
+    Sweep).
+  - **Expect:** the table opens scrolled so the highlighted pick is the first
+    row under the sticky column headers and the type band; a pick among
+    the last rows sits as high as the list allows; a pick in the first few
+    rows leaves the table at the top.
+  - **Wrong if:** the pick sits at the table's bottom edge or behind the
+    band, the table opens a row or two off, or a paged list opens on a page
+    without the pick.
+- [ ] **Arena fighter: mounts in item detail.**
+  - **Where:** `edit?tab=equipment`, select the Silver Dragon Steed, then the
+    Warhorse; then in the Shop select a Kank (a Dark Sun mount).
+  - **Expect:** under each item card, the creature's dark panel card with the
+    print card's tiles and entries, the Warhorse's load table, the Kank's
+    flavor paragraph.
+  - **Wrong if:** the panel card overflows the detail pane, the meta text
+    ("Melee basic attack · standard, at-will") is unreadable on the dark
+    card, or the table is clipped.
+- [ ] **Arena fighter: print preview.**
+  - **Where:** `?preview=1`: page 1's reminder "Arena Training: Arena Weapon
+    (Glaive), Arena Weapon (Spear)", then the cards after Skills: the
+    Warhorse and the Silver Dragon Steed.
+  - **Expect:** the reminder wraps clear of its "Level N" tag. The Warhorse
+    is one card with one row of defense and HP tiles and its load table at
+    the bottom. The Steed is two adjacent cards, "Silver Dragon Steed" and
+    "Silver Dragon Steed — Actions".
+  - **Wrong if:** the tag overlaps the reminder, a card overflows, the
+    Steed prints as one clipped card or with a "(continued)" card, the
+    tiles wrap onto two rows, or text is unreadable at the reduced size.
 
-- [ ] **Header:**
-  - **Where:** the top of `#/characters`. Narrow the window for the
-    phone-width labels. To see New disabled, turn every pack off in Settings
-    → Content.
-  - **Expect:** "4E Character Builder" and the version on the left. On the
-    right: New, Import, Trash with a small square-cornered count tag, a thin
-    divider, then Settings, each with a one-word label. Update shows only
-    when a new app version is waiting. Below 36rem (a window of about 800px
-    at 140%) only the icons remain. New, disabled, shows the tooltip "Turn on
-    game content in Settings to create a character".
-  - **Wrong if:** the labels wrap, the count tag is round or misaligned, or
-    New's tooltip doesn't show.
-- [ ] **Table:**
-  - **Where:** `#/characters`. For the empty state, open the app in a private
-    window before restoring anything.
-  - **Expect:** an uppercase header row. The sorted column has a chevron, and
-    a click flips it. Rows are striped and tint on hover. The selected row is
-    tinted, with a thick accent bar on its left edge. Portraits are about
-    36px. The table's top border lines up with the top of the navy pane. An
-    empty library reads "No characters yet." centred inside the table.
-  - **Wrong if:** a filter box appears, the borders don't line up, or the
-    empty text is outside the table.
-- [ ] **Keyboard and mouse:**
-  - **Where:** click any row, then use the keyboard.
-  - **Expect:** Arrow Up and Down move one row, and Home and End jump to the
-    first and last, with the pane following. Enter or a double-click opens
-    the builder. Middle-click on a name opens it in a new tab. Sort by Level,
-    select a row and reload: both are kept.
-  - **Wrong if:** the page scrolls instead of the selection moving, there's
-    no focus ring, or the sort resets on reload.
-- [ ] **Pane band:**
-  - **Where:** select "Review – Summer Sentinel Druid L25 (Bear)", then
-    "Review – Fey Warlock L11", then "Review – Hybrid Executioner/Fighter
-    L27".
-  - **Expect:** a navy band. The portrait has a white border and is about a
-    third of the pane wide. The name is in the large display font, then the
-    identity line, then the bold white role line, then the paler paragon,
-    epic and "Edited today" lines (with the exact-time tooltip). The five
-    action buttons close the band, with nothing below it.
-  - **Wrong if:** stat tiles or a content-update badge appear, or the lines
-    are out of this order.
-- [ ] **Action row:**
-  - **Where:** select any character and use the five buttons under the band.
-  - **Expect:** five equal-width buttons, each an icon over a word, in one row
-    at any width. A long word truncates with "…". Hover lightens a button and
-    adds a light-blue bottom line. Export opens a small menu (.4ecb, .dnd4e)
-    below the pane, and .dnd4e shows a spinner until the download starts.
-    Trash turns its label pink, and the first click turns the button dark
-    red, reading "Confirm".
+## Pass 9: Psion 15 (`psion-thought-warrior`)
+
+- [ ] **Psion: the Thought Warrior's shared implement rows.**
+  - **Where:** `?preview=1`, the two "Thought Warrior" creature cards after
+    Skills.
+  - **Expect:** under the Opportunity Attack, the italic caption "Standard
+    Action · Immediate Interrupt · Opportunity Attack" aligned with the
+    rows' left edge, then the rows, striped and divided like a power card's
+    weapon table.
+  - **Wrong if:** the caption reads as part of the command text or as a
+    heading of the next command, it isn't aligned with the rows, or a card
+    overflows.
+
+## Pass 10: Hu's sheet editing (`hu`)
+
+- [ ] **Hu: sheet Edit mode.**
+  - **Where:** `?preview=1`. Toggle View | Edit a few times. In Edit,
+    open **Sections**: untick Play scratchpad and Session notes, drag Power
+    & item cards to the top by its grip, click + on Play scratchpad twice
+    and type 3 into Session notes' field. Right-click a power card and an
+    item card. Then the browser's print preview.
+  - **Expect:** Back and View | Edit stay put; Sections and Reset appear after
+    them, Print stays at the right end, and cards look as in View. The
+    Sections panel sits right under its button in the app's colours, each
+    row with a faint grip, and pages go or move at once. While dragging,
+    the row dims and a thin focus-coloured line marks where it will drop.
+    The − [n] + steppers fit their rows. A hidden card keeps its header,
+    type bar and border at full strength, its body blank with a large faint
+    "Hidden". Unnumbered copy pages keep the footer's title and identity
+    in place. The printout has no hidden cards and no gaps.
+  - **Wrong if:** View | Edit jumps sideways, the toolbar wraps or scrolls
+    sideways, the panel is clipped, overflows the window or sits behind the
+    paper, a placeholder strip is left where a section was, the drop line is
+    invisible or misplaced, the browser opens or searches the dragged text,
+    a stepper crowds its label, a hidden card is hard to tell from a shown
+    one, or a footer looks lopsided.
+
+## Pass 11: Natan (`natan`)
+
+- [ ] **Natan: page 1 and the Play data card.**
+  - **Where:** `?preview=1`: page 1's Conditional modifiers pane
+    (resistances plus three combined defense rows), then the Play data card
+    (first card page).
+  - **Expect:** striping alternates continuously across groups; long effects
+    wrap inside the Effect column and the Source column stays readable;
+    reminders below fill the remaining space and overflow to page 2 with
+    the "N more reminders" caption. The Play data card's note lines
+    (Defenses, Saves, Resistances…, Other, Initiative, Speed, Allies) sit
+    inside the card at its 7pt note size.
+  - **Wrong if:** the pane pushes reminders off the page without a caption,
+    rows overlap the footer, the Source column is crushed, or the notes
+    overflow or clip.
+
+## Pass 12: Trey Spectre (`trey`)
+
+- [ ] **Trey: page 1 Conditional modifiers pane.**
+  - **Where:** `?preview=1`, page 1's pane of five rows.
+  - **Expect and wrong if:** as for Natan's pane.
+
+## Pass 13: Idon Tkare (`idon`)
+
+- [ ] **Idon: page 1 and the Play data card.**
+  - **Where:** `?preview=1`: the Conditional modifiers pane (Speed and
+    Skills & checks rows), then the Play data card.
+  - **Expect and wrong if:** as for Natan.
+
+## Pass 14: Skye (`skye`)
+
+- [ ] **Skye: page 1 Conditional modifiers pane.**
+  - **Where:** `?preview=1`, page 1's pane (saves only).
+  - **Expect and wrong if:** as for Natan's pane.
+
+## Pass 15: Piri (`piri`)
+
+- [ ] **Piri: Play data card.**
+  - **Where:** `?preview=1`, the Play data card.
+  - **Expect and wrong if:** as for Natan's Play data card.
+
+## Pass 16: Hystan (`hystan`)
+
+- [ ] **Hystan: type bars and the Play data card.**
+  - **Where:** `?preview=1`: Twin Strike, Master Diplomat, Mighty Sprint and
+    the Play data card. Then `edit?tab=build&level=1&section=powers`, the
+    power cards in dark theme.
+  - **Expect:** the type label on the left and "Ranger · Level 1" (and so
+    on) on the right with a clear gap; the Play data notes inside the card.
+  - **Wrong if:** the right-hand text collides with the type label, clips
+    or overflows, or the notes overflow.
+
+## Pass 17: Beldin (`beldin`)
+
+- [ ] **Beldin: Ardent Surge's type bar.**
+  - **Where:** `?preview=1`, Ardent Surge; then its card at
+    `edit?tab=build&level=1&section=powers`.
+  - **Expect:** "ENCOUNTER (2×) … POWER" on one line with the class block at
+    the right; the card fits its print slot.
+  - **Wrong if:** the bar wraps or the right-hand text is pushed off.
+
+## Pass 18: Raidon Kane (`raidon`)
+
+- [ ] **Raidon: type bar and movement technique.**
+  - **Where:** `?preview=1`: Destined for Greatness, Five Storms and Dragon's
+    Tail; then the Build tab with Five Storms selected.
+  - **Expect:** Destined for Greatness's class block clear of its type label.
+    On the discipline cards, after the attack and Hit lines, a thin rule,
+    "MOVEMENT TECHNIQUE" and a band ("Move" + "Personal"), all inside the
+    card.
+  - **Wrong if:** text collides or clips, or the technique's band runs past
+    the card edge.
+
+## Pass 19: Jim Darkmagic (`jim`)
+
+- [ ] **Jim: Spellbook subtitle.**
+  - **Where:** `?preview=1`: Expeditious Retreat and Freezing Cloud; then
+    their panel cards on the Build tab.
+  - **Expect:** a small uppercase "SPELLBOOK" at the right of the title band.
+  - **Wrong if:** it wraps under the name or pushes the name off.
+
+## Pass 20: Sylestine (`sylestine`)
+
+- [ ] **Sylestine: Blink Dog card and Hybrid Talent.**
+  - **Where:** `?preview=1`, the Trained Blink Dog card after Skills and the
+    Arcane Wisp. Then `edit?tab=build&level=4&section=feats`, Hybrid
+    Talent, and leave its option open to see its issue in the status
+    badge's list.
+  - **Expect:** the Blink Dog card fits, and its "Standard · At-Will" meta
+    text is readable in dark theme. The Hybrid Talent section, its table
+    headings and the issue row ("Level 4 Hybrid Talent", "Choose an option
+    for Hybrid Talent.") wrap cleanly.
+  - **Wrong if:** the card clips or overflows, or a heading or issue detail
+    is clipped or overflows its row.
+
+## Pass 21: Character library
+
+Open `#/characters` with the review characters restored.
+
+- [ ] **Library: header and table.**
+  - **Where:** the top of `#/characters` and its table; narrow the window
+    below 36rem (about 800px at 140%) and below 60rem (about 1344px at
+    140%). For the empty state, open the app in a private window before
+    restoring anything.
+  - **Expect:** title and version on the left; New, Import, Trash with its
+    small square count tag, a thin divider, then Settings, on one line.
+    Rows striped and tinted on hover, the selected row tinted with a thick
+    accent bar on its left; portraits about 36px; the table's top border
+    level with the top of the navy pane. Below 36rem only the icons remain;
+    below 60rem the pane sits under the full-width table. The empty library
+    reads "No characters yet." centred inside the table. Use the keyboard
+    on the table: there is a visible focus ring and the selection moves,
+    not the page.
+  - **Wrong if:** the labels wrap, the count tag is round or misaligned, the
+    borders don't line up, a horizontal scrollbar appears, or the pane
+    overlaps the table.
+- [ ] **Library: detail pane.**
+  - **Where:** select "Review – Summer Sentinel Druid L25 (Bear)", "Review –
+    Fey Warlock L11" and "Review – Hybrid Executioner/Fighter L27"; hover
+    and use the five buttons. Duplicate a character and select the copy;
+    edit `beatrix`'s name, wait 2 seconds and come back; select "Review –
+    Missing content (Runepriest copy)".
+  - **Expect:** a navy band: a white-bordered portrait about a third of the
+    pane wide, the name in the large display font, then the identity, bold
+    white role, and paler paragon, epic and Edited lines. Five equal
+    buttons, each an icon over a word, in one row at any width; hover
+    lightens a button and adds a light-blue bottom line; Export's menu
+    opens below the pane with a spinner on .dnd4e; Trash turns pink, then
+    dark red "Confirm". The copy shows a faint bar about 9rem wide where the
+    role line goes, then the text, with no other line moving; the edited
+    character shows no bar; the Missing content copy shows no role line.
   - **Wrong if:** a button wraps to two lines, the menu is clipped by the
-    pane, or Trash deletes on one click.
-- [ ] **Role line loading:**
-  - **Where:** Duplicate any review character, then select the copy.
-  - **Expect:** for a moment, a faint translucent bar about 9rem wide where
-    the role line goes, then the role text. The other lines don't shift.
-    Holding Arrow Down through the table doesn't stall.
-  - **Wrong if:** a spinner, the text "Calculating…", lines jumping, or a
-    sluggish selection.
-- [ ] **Saved role line:**
-  - **Where:** open `beatrix` in the builder, change any text (e.g. Details →
-    Name), wait about 2 seconds, and go back to `#/characters`.
-  - **Expect:** no placeholder bar flashes on that character.
-- [ ] **Role line error:**
-  - **Where:** select "Review – Missing content (Runepriest copy)".
-  - **Expect:** name, identity and Edited lines but no role line, and all
-    five buttons work.
-  - **Wrong if:** a placeholder bar stays, an error text appears in the band,
-    or the buttons are disabled.
-- [ ] **Narrow (< 60rem, about a 1344px window at 140% zoom):**
-  - **Where:** `#/characters` at 140% zoom, with the window narrowed below
-    about 1344px.
-  - **Expect:** the table is full width with Name, Level and Class, and the
-    navy pane sits under it.
-  - **Wrong if:** a horizontal scrollbar appears, or the pane overlaps the
-    table.
-- [ ] **Trash dialog:**
-  - **Where:** trash "Review – Update waiting", then "Review – Missing
-    content", and click Trash in the header.
-  - **Expect:** a dialog titled "Trash (2)" with striped rows, most recently
-    trashed first. Each row has a portrait or placeholder, a bold name, and
-    "Race Class N · Trashed today" (hover for the exact time), then Restore
-    and Delete permanently (which arms to a warning icon). The footer has the
-    Restore hint on the left and a red "Empty trash…" on the right.
-  - **Wrong if:** the footer items swap sides or wrap, or Empty trash… is
-    enabled with nothing in the trash.
-- [ ] **Empty trash confirmation:**
-  - **Where:** restore one of the two, then click Empty trash….
-  - **Expect:** the "Empty trash?" dialog opens over the trash dialog, with
-    Cancel focused. Esc closes only the confirmation. After deleting, the
-    trash reads "The trash is empty." and the header tag reads 0.
-  - **Wrong if:** focus starts on Delete, or Esc closes both dialogs.
+    pane, lines jump while the role line loads, holding Arrow Down through
+    the table feels sluggish, or a bar stays.
+- [ ] **Library: trash.**
+  - **Where:** trash "Review – Update waiting" and "Review – Missing
+    content", click Trash in the header, restore one, then click Empty
+    trash….
+  - **Expect:** a dialog of striped rows, each with a portrait or
+    placeholder, a bold name and a grey "Race Class N · Trashed today"
+    line, then Restore and Delete permanently. The footer has the Restore
+    hint on the left and a red "Empty trash…" on the right. The "Empty
+    trash?" dialog sits over the trash dialog.
+  - **Wrong if:** the footer items swap sides or wrap, or the confirmation
+    opens behind or beside the trash dialog.
 
-## Pass 7: Arena fighter's Build tab
+## Pass 22: New characters
 
-- [ ] **Opening a filled choice scrolls to its pick.**
-  - **Where:** `fighter-arena` → `edit?tab=build&level=3&section=powers`,
-    then use the level picker for level 6 Feats and level 1 Powers. Click the
-    folded heading: Steel Serpent Strike (3), Melee Training (6), then
-    Bristling Defense and Spinning Sweep (1). Folding on arrival is checked
-    automatically.
-  - **Expect:** the table opens already scrolled so the highlighted pick is
-    the first row under the sticky column headers and the type band. A pick
-    among the last rows sits as high as the list allows. A pick in the first
-    few rows leaves the table at the top.
-  - **Wrong if:** the table opens at the top with the pick at its bottom
-    edge, the pick sits behind the band, the table opens one or two rows
-    off, or a paged list opens on a page without the pick.
+Library → New; each entry needs a fresh character.
 
-## Pass 8: New characters
-
-Library → New. These need a fresh character each.
-
-- [ ] **"Learn X free" dialog**
-  - **Where:** a psion: New, pick the Psion class at level 1, then Rituals →
-    Learn rituals, search "Tenser", and click the gift (Learn free) button.
-    Which allowances apply is checked automatically.
+- [ ] **New psion: Learn free dialog.**
+  - **Where:** pick the Psion class at level 1, then Rituals → Learn rituals,
+    search "Tenser", and click the gift (Learn free) button.
   - **Expect:** a tidy dialog titled "Learn Tenser's Floating Disk free",
-    with one radio button per allowance plus "None (a gift)", and Cancel and
-    Learn free buttons. The part of each option after "·" is grey.
+    one radio button per allowance plus "None (a gift)", Cancel and Learn
+    free; the part of each option after "·" grey.
   - **Wrong if:** the options crowd or wrap badly, or the grey detail is
     unreadable in dark theme.
-- [ ] **A pick that opens a step scrolls to it.**
-  - **Where:** a new hybrid character (e.g. Hybrid Barbarian/Cleric), level
-    1, Feats tab, Feat item. Double-click Hybrid Talent. Then, before picking
-    the feature, use the unresolved-choices badge → Review on "Level 1 Class
-    Feature". Also pick Toughness on another character. Check at 140% zoom
-    too.
+- [ ] **New hybrid: a pick that opens a step.**
+  - **Where:** a Hybrid Barbarian/Cleric at level 1, Feats, Feat item:
+    double-click Hybrid Talent; before picking the feature, use the
+    unresolved-choices badge → Review on "Level 1 Class Feature". Also pick
+    Toughness on another character.
   - **Expect:** the page jumps, with no animation, so the "2 Class Feature"
-    heading sits near the top with a small margin. Review lands the same
+    heading sits near the top with a small margin; Review lands the same
     way. Picking the feature doesn't scroll again, and Toughness doesn't
     scroll at all.
   - **Wrong if:** step 2 stays below the feat table or off-screen, or a pick
     that opens nothing scrolls the page.
+- [ ] **New fighter: open-choice issue rows.**
+  - **Where:** a fighter at level 1, Build tab, with Fighting Style left
+    open; then its status badge's issue list.
+  - **Expect:** the "Fighting Style" section, its option table, and the issue
+    "Level 1 Fighting Style" / "Choose an option for Fighting Style."
+    wrap cleanly.
+  - **Wrong if:** a longer detail line is clipped or overflows its row.
 
-## Pass 9: Hu's sheet editing
+## Pass 23: Live site and manual steps
 
-Open `hu` → `?preview=1`, the print preview of Hu Sheng-Ming. Labels,
-keyboard toggles, Alt+Arrow moves, copy counts, focus behaviour,
-drag-and-drop order, saving, page numbering and print omission are checked
-by tests. These items cover only layout and feel.
+These need the deployed app, an installed PWA, or your own content.
 
-- [ ] **Edit toolbar.**
-  - **Where:** click **View** and **Edit** in the toolbar's "Sheet" control
-    several times.
-  - **Expect:** Back and View | Edit stay exactly where they are in both
-    modes. Edit adds **Sections** and **Reset** after them, with Reset greyed
-    while nothing has changed. Print stays at the right end. Cards and pages
-    look exactly as in View.
-  - **Wrong if:** View | Edit jumps sideways, the toolbar wraps badly or
-    scrolls sideways at 140%, or Reset's label is long.
-- [ ] **Sections menu: show and hide.**
-  - **Where:** Edit mode → **Sections**. Untick Play scratchpad and Session
-    notes, then Overview. Press Escape, reopen, and click on the paper.
-  - **Expect:** a small panel right under the button, in the app's theme
-    colours, with nine rows. Each row has a faint grip and an ordinary
-    checkbox. Unticking removes those pages at once, and the panel stays
-    open.
-  - **Wrong if:** the panel is clipped, overflows the window at 140%, is
-    unreadable in dark theme, sits behind the paper, or a placeholder strip
-    is left where a section was.
-- [ ] **Sections menu: reorder.**
-  - **Where:** drag Power & item cards by its grip to the top, then drag
-    Session notes between Overview and Play scratchpad.
-  - **Expect:** a grab hand over the grip. While dragging, the row dims and a
-    thin focus-coloured line shows on the top or bottom edge of the row under
-    the pointer, matching where it drops. On drop the pages move at once.
-  - **Wrong if:** the drop line is invisible in dark theme or doesn't match
-    where the row lands, or the browser opens or searches the dragged text.
-- [ ] **Sections menu: copies.**
-  - **Where:** click + on Play scratchpad twice and type 3 into Session
-    notes' field. Then open the browser's print preview (Ctrl+P).
-  - **Expect:** each of those rows ends with a compact − [n] + group that
-    fits on the row. Unnumbered copy pages keep the footer's title and
-    identity where they were, with the right end simply empty.
-  - **Wrong if:** the stepper wraps or crowds the label, the number field is
-    unreadable in dark theme, or the footer looks lopsided.
-- [ ] **Card right-click feel.**
-  - **Where:** right-click a power card and an item card. Left-click a card.
-    Tab to a card and press Enter. Then the browser's print preview (Ctrl+P).
-  - **Expect:** right-click hides a card at once, with no menu. It stays in
-    place with its header and type bar at full strength and its border kept.
-    The body is blank with a large faint "Hidden". The browser's print
-    preview has no hidden cards and no focus ring.
-  - **Wrong if:** a hidden card is hard to tell from a shown one, its header
-    is faded or covered, body text shows through, or the printout has gaps.
-- [ ] **Alias wording**
-  - **Where:** `hu` → `sheet`, Battle Awareness.
-  - **Decide:** its body reads "Choices: Athletics; counts as Fighter". Does
-    that read well?
-
-## Pass 10: Player saves' print previews
-
-Each is one character's `?preview=1`. Their text and numbers are checked
-automatically. Look only at fit and legibility.
-
-- [ ] **Page 1 Conditional modifiers pane.**
-  - **Where:** `natan` (resistances plus three combined defense rows) and
-    `trey` (five rows). Then import `sample-chars/idon tkare at 6th.dnd4e`
-    (Speed and Skills & checks rows) and `Skye.dnd4e` (saves only) from the
-    library.
-  - **Expect:** striping alternates continuously across groups. Long effects
-    wrap inside the Effect column, and the Source column stays readable.
-    Reminders below still fill the remaining space and overflow to page 2
-    with the "N more reminders" caption.
-  - **Wrong if:** the pane pushes reminders off the page without a caption,
-    rows overlap the footer, or the Source column is crushed.
-- [ ] **Play data card lines.**
-  - **Where:** the Play data card (first card page) of `natan`, `piri` and
-    `hystan`, and of Idon if imported.
-  - **Expect:** the note lines (Defenses, Saves, Resistances…, Other,
-    Initiative, Speed, Allies) sit at the card's 7pt note size, all inside
-    the card.
-  - **Wrong if:** the notes overflow the card's bottom edge or clip.
-- [ ] **Uses per encounter on power cards.**
-  - **Where:** `beldin` → `?preview=1`, Ardent Surge. Then its card on the
-    Build tab, in dark theme.
-  - **Expect:** the type bar "ENCOUNTER (2×) … POWER" stays on one line with
-    the class block at the right, and the card fits its print slot in the
-    browser's print preview.
-  - **Wrong if:** the bar wraps or the right-hand text is pushed off.
-- [ ] **Class block in the card type bar.**
-  - **Where:** `hystan` → `?preview=1`: Twin Strike, Master Diplomat, Mighty
-    Sprint. `raidon` → `?preview=1`: Destined for Greatness. Then Hystan's
-    Build tab power cards in dark theme.
-  - **Expect:** the type label on the left and "Ranger · Level 1" (and so on)
-    on the right, with a clear gap between them.
-  - **Wrong if:** the right-hand text collides with the type label, clips or
-    overflows.
-- [ ] **Monk movement technique on the discipline card.**
-  - **Where:** `raidon` → `?preview=1`: Five Storms and Dragon's Tail. Then
-    its Build tab with Five Storms selected.
-  - **Expect:** after the attack and Hit lines, a thin rule, "MOVEMENT
-    TECHNIQUE", and a band ("Move" + "Personal"), all inside the card.
-  - **Wrong if:** the section is clipped or its band runs past the card edge.
-- [ ] **Spellbook subtitle.**
-  - **Where:** `jim` → `?preview=1`: Expeditious Retreat and Freezing Cloud.
-    Their panel cards in dark theme too.
-  - **Expect:** a small uppercase "SPELLBOOK" at the right of the title band,
-    light in print.
-  - **Wrong if:** it wraps under the name or pushes the name off.
-- [ ] **Associate card (D107).**
-  - **Where:** `sylestine` → `?preview=1`, the Trained Blink Dog card after
-    Skills and her Arcane Wisp. Then Edit mode.
-  - **Expect:** the card fits at 140% zoom and is light in print. The
-    "Standard · At-Will" meta text is readable in dark theme. In Edit mode it
-    hides and shows by right-click and reorders by drag.
-  - **Wrong if:** the card clips or overflows.
-- [ ] **Erdan's feature notes.** The local content pack lacks Erdan's
-      Disruptive Shot features, so this can't be checked in code. Flint's
-      half of this check is automated.
-  - **Where:** import `sample-chars/Erdan 11.dnd4e` with your own content,
-    then `?preview=1`, page 1 class features.
+- [ ] **Installed app: title bar and icon.**
+  - **Where:** in Chrome on macOS, uninstall and reinstall the PWA (address
+    bar install icon) and open it. Settings → Display → theme System, Light
+    and Dark in turn, and under System switch macOS between Light and Dark.
+    Then the Dock while it runs, Launchpad and Cmd-Tab.
+  - **Expect:** the title bar matches the page background (dark navy in
+    dark mode, light grey-blue in light), switching at once, dark from the
+    first frame when opened in dark mode. The "4E" tile sharp, the size of
+    other app icons, with the 4's left corner and the E's right edge
+    visible.
+  - **Wrong if:** the title bar stays white or cream in dark mode, lags a
+    reload behind, or ignores the macOS switch; the icon is generic, blank,
+    blurry, cropped by the macOS mask, or sits in a white square.
+- [ ] **Browser tab: favicon.**
+  - **Where:** the app in a normal Chrome tab with the tab strip light (macOS
+    Light) and dark (macOS Dark); hard-reload once (Cmd-Shift-R).
+  - **Expect:** the blue rounded tile with a cream 4 and a light-blue E, both
+    legible at tab size on either strip.
+  - **Wrong if:** the old single-glyph icon shows, the E is lost, or the tile
+    blurs into the dark strip.
+- [ ] **Settings: Restore backup dialog.**
+  - **Where:** Settings → Backups & storage: **Back up library**, then
+    **Restore backup** with that file, in a window narrow enough to wrap
+    the buttons.
+  - **Expect:** a modal dialog whose one sentence names every conflicting
+    character, and Cancel, Keep both and a red Replace them on one row,
+    wrapping cleanly when narrow.
+  - **Wrong if:** the name list overflows or is cut off, or the buttons wrap
+    raggedly.
+- [ ] **Erdan: feature notes on your own content.**
+  - **Where:** the review pack lacks Erdan's Disruptive Shot features, so
+    import `sample-chars/Erdan 11.dnd4e` with your own content, then
+    `?preview=1`, page 1 class features.
   - **Expect:** "Weapon Mastery — Gain +1 to damage rolls of weapon attacks"
     and "Level 7 Improved Disruptive Shot — Use three times per encounter".
   - **Wrong if:** "Disruptive Shot" or "Level 3 Improved Disruptive Shot"
     rows show, or a note ends in "@…".
 
-## Pass 11: Equipment-tab menus
+## Decisions
 
-- [ ] **Augments attach/detach.**
-  - **Where:** `invoker-drow` → `edit?tab=shop`, buy a Siberys Shard of
-    Merciless Cold (heroic tier). In Inventory, right-click the shard →
-    Attach to → the Rose Scythe of Chauntea. The notes' text and the hosts
-    offered are checked automatically. (Flint's own shard was saved with
-    count 0, so, as in legacy, it isn't owned and shows no binding.)
-  - **Expect:** the scythe's "Augment: …" note is muted and the row's columns
-    stay aligned. Right-clicking the shard opens a menu with the scythe
-    ticked, then "Detach". The menu is readable at 140% zoom and in dark
-    theme.
-  - **Wrong if:** a warning-coloured note, misaligned columns, or a clipped
-    menu.
-- [ ] **Wield two-handed (D101/D102).**
-  - **Where:** right-click a Longsword (an Inventory row or loadout slot) on
-    a medium character, then on a halfling or gnome. The menu's states,
-    tooltip and effects are checked by tests.
-  - **Expect:** the checkable "Wield two-handed" item, and the Small
-    character's muted, checked version, both read well.
-  - **Wrong if:** the menu is clipped at 140% zoom or unreadable in dark
-    theme.
+Open judgement calls, not pass/fail checks. Look while you are on the
+pass named.
 
-## Pass 12: Mount creature cards
-
-The cards' numbers, text, order and the split's card pair are checked
-automatically; whether a card fits is measured in the browser, so only these
-are yours.
-
-- [ ] **Mount creature cards (D110).**
-  - **Where:** `fighter-arena` → `?preview=1`, the cards after Skills: the
-    Warhorse, then the Silver Dragon Steed. Then Edit mode. Print (or save as
-    PDF) once, and look at the preview in dark theme and at 140% zoom.
-  - **Expect:** the Warhorse is one card: name, "Level 3 Brute · Large
-    natural beast (mount)", one row of AC/Fort/Ref/Will and HP/Bloodied
-    tiles, the ability tiles, an Initiative · Perception · Speed line, Kick,
-    Trample, Charger, and the Normal/Heavy Load/Max.Drag table at the
-    bottom, with no red "Text exceeds card" outline. The Silver Dragon Steed
-    is two adjacent cards: "Silver Dragon Steed" (tiles, notes, resist cold,
-    Draconic Power) and "Silver Dragon Steed — Actions" (Bite, Breath
-    Weapon, New Vigor, Tail Slam), neither outlined. In Edit mode,
-    right-clicking either half hides or shows both, and dragging either
-    moves the pair. The printed cards are light.
-  - **Wrong if:** a card is outlined as overflowing, the steed prints as one
-    clipped card, a "(continued)" card appears, the halves separate after a
-    drag, the tiles wrap onto two rows, or text is unreadable at the reduced
-    size.
-  - **Decide:** whether the one-row tiles and the load table at the bottom
-    read well, or want another arrangement.
-- [ ] **Mount creature card in item detail (D110).**
-  - **Where:** `fighter-arena` → `edit?tab=equipment`, select the Silver
-    Dragon Steed, then the Warhorse; also open one mount in the Shop. Dark
-    theme, 140% zoom.
-  - **Expect:** under the item card, the creature's panel card (dark card
-    paper on screen) with the same tiles and entries as the print card, and
-    the Warhorse's load table. A Dark Sun mount (Kank, in the Shop) also
-    shows its flavor paragraph here.
-  - **Wrong if:** the panel card overflows the detail pane, the meta text
-    ("Melee basic attack · standard, at-will") is unreadable on the dark
-    card, or the table is clipped at 140%.
-
-## Pass 13: Summoned creature cards
-
-The creature cards' numbers (each command's engine row), commands, order,
-type bar, merged community cards and what left the power cards are checked
-automatically; fit is measured in the browser, so only these are yours.
-
-- [ ] **Summoned creature card (D111).**
-  - **Where:** `invoker-drow` → `?preview=1`, the card after the Spiderling
-    of Lolth familiar, then the Summon Blade Angel power card among the
-    daily powers. Print (or save as PDF) once; look in dark theme and at
-    140% zoom.
-  - **Expect:** a "Blade Angel" card in the companion frame: "Medium blade
-    angel", one row of AC/Fort/Ref/Will and HP/Bloodied tiles, a Speed
-    "6, fly 6 (hover)" line, "Your defenses, not including any temporary
-    bonuses or penalties", then the Minor Action and Opportunity Attack
-    commands, each followed by three rows from the power card's weapon
-    table, without its column headings: "Rose Scythe of Chauntea +2 | +13 |
-    1d8+8", "Accurate rod of Corruption +2 | +13 | 1d8+8" and "Unarmed |
-    +11 | 1d8+6", the equipped scythe first, then "Summoned creature ·
-    Daily" in the type bar, no red "Text exceeds card" outline (the card
-    may print as a stats card and a "Blade Angel — Actions" card). The Summon Blade Angel power card keeps its
-    keyword and action bands and the Effect, with no attack band and no
-    weapon table. The printed cards are light.
-  - **Wrong if:** either card is outlined as overflowing, a command appears
-    on both cards, the rows read as part of the command text or as
-    belonging to the next command, the rows' stripes or dividers are
-    missing or unlike the power card's weapon table, or the creature
-    card's text is unreadable at its size.
-- [ ] **Shared implement rows on a creature card (D111).**
-  - **Where:** a psion of level 15 or higher with Summon Thought Warrior
-    (augmented), carrying two or more implements with different enhancements
-    (e.g. buy an orb +1 and a staff +3 in the Shop) → `?preview=1`, the
-    "Thought Warrior" creature card (or its "— Actions" card). Print once;
-    dark theme and 140% zoom.
-  - **Expect:** the Standard Action and Immediate Interrupt commands print
-    their text only; under the Opportunity Attack one table of rows, captioned
-    in italics "Standard Action · Immediate Interrupt · Opportunity Attack",
-    striped and divided like the power card's weapon table; no red "Text
-    exceeds card" outline.
-  - **Wrong if:** the caption reads as part of the command text or as a
-    heading of the next command, it is not aligned with the rows' left edge,
-    the table looks unlike the other commands' rows, or a card overflows.
-- [ ] **Summoned creature in power detail (D111).**
-  - **Where:** `invoker-drow` → `edit?tab=build&level=9&section=powers`,
-    select Summon Blade Angel. Dark theme, 140% zoom.
-  - **Expect:** under the power card, the creature's panel card (dark card
-    paper on screen) with the same tiles, commands and per-implement rows
-    as the print card.
-  - **Wrong if:** the panel card overflows the detail pane, or the command
-    text or its rows are unreadable on the dark card.
-- [ ] **Summoned creature cards (D111).**
-  - **Where:** `hexblade-white-well` → `?preview=1`, the cards after
-    Skills (each creature may print as a stats card and a "— Actions"
-    card).
-  - **Expect:** "Mourning Handmaiden" and "Spectral Protector" creature
-    cards (tiles, Speed line, healing surges note, "Summoned creature ·
-    Daily" type bar). The aura (Shining Presence) sits with the stats; Special
-    Movement, the opportunity action and the attacks ("Mourning
-    Handmaiden's Attack": "Attack: Melee 1; +30 vs. Reflex", "Hit: 2d8+21
-    radiant damage …") sit with the actions, and "The creature lacks
-    actions of its own …" prints once in the notes. No pact power cards and
-    no separate trait, attack, aura or opportunity cards.
-  - **Wrong if:** a creature card overflows, an entry's heading (name,
-    keywords, action and usage) is hard to tell from its lines, or the
-    stats and actions halves look unbalanced.
-
-## Pass 14: Multiclass swaps of granted powers
-
-- [ ] **Granted at-will as a Paragon Multiclassing target.**
-  - **Where:** a warlock (e.g. Japheth) with Arcane Initiate and, at level
-    11+, Paragon Multiclassing; Build tab at that level, the swap's
-    replacement target table. Dark theme, 140% zoom.
-  - **Expect:** the pact boon's granted at-will attack (Fey Pact's Eyebite)
-    is listed beside the chosen at-wills, looks like the other targets, and
-    choosing it offers wizard at-wills only (no warlock powers). After the
-    swap, Eyebite is gone from the Powers list and the sheet.
-  - **Wrong if:** the granted target looks different or locked, offers no
-    gains, or Eyebite returns after the swap or a reload.
-
-## Pass 15: Swap targets and automatic power-replace swaps
-
-- [ ] **Retraining lists drop class-feature feats and swap gains.**
-  - **Where:** Lily (bard) and a wizard such as KrizDevvon, Retraining tab
-    at any level; RaidonKane (SampleHeroes), Retraining tab at a level after
-    Student of the Plague's swap. Dark theme, 140% zoom.
-  - **Expect:** Ritual Caster (held under Bardic Training or Ritual
-    Casting) is no longer a retraining target; RaidonKane's Plaguefire Body
-    (gained by the Student of the Plague swap) is not either. Every other
-    feat, power and skill target is still listed as before.
-  - **Wrong if:** another target disappears, or Ritual Caster or Plaguefire
-    Body still appear as retrainable.
-- [ ] **Skald Training swaps Majestic Word on its own.**
-  - **Where:** Lily, Build tab at level 4, Skald Training's replacement;
-    then the Powers list and the print preview.
-  - **Expect:** the replacement shows Majestic Word → Skald's Aura already
-    chosen, with no "unresolved", prerequisite or house-rule badge; Skald's
-    Aura is in the Powers list and on a power card, Majestic Word is not.
-  - **Wrong if:** the replacement looks empty or offers other picks, a new
-    issue badge appears, or Majestic Word still prints.
-
-## Pass 16: Installed app (Chrome on macOS)
-
-- [ ] **Title bar follows the theme.**
-  - **Where:** uninstall and reinstall the PWA from Chrome on macOS (address
-    bar install icon), open it; Settings → Display → theme System, Light and
-    Dark in turn, and under System switch macOS between Light and Dark.
-  - **Expect:** the window's title bar matches the page background: dark
-    navy in dark mode, light grey-blue in light mode, switching at once with
-    the app's setting and, under System, with the macOS appearance. Opening
-    the app in dark mode shows a dark title bar from the first frame.
-  - **Wrong if:** the title bar stays white/cream in dark mode, lags a
-    reload behind the setting, or ignores the macOS switch under System.
-- [ ] **Favicon reads as "4E" in a tab.**
-  - **Where:** the app in a normal Chrome tab (not installed), with the tab
-    strip light (macOS Light) and dark (macOS Dark); hard-reload once
-    (Cmd-Shift-R) so the new favicon replaces the cached one.
-  - **Expect:** the blue rounded tile with a cream 4 and a light-blue E, both
-    legible at tab size on either tab strip.
-  - **Wrong if:** the old single-glyph icon still shows, the E is lost, or the
-    tile blurs into the dark tab strip.
-- [ ] **Installed app icon in the Dock and Launchpad.**
-  - **Where:** after reinstalling the PWA (above), the Dock while it runs,
-    Launchpad, and Cmd-Tab.
-  - **Expect:** the "4E" tile, sharp and of the same size as other app icons,
-    not cropped (the 4's left corner and the E's right edge both visible).
-  - **Wrong if:** a generic letter/globe icon or a blank square, a blurry
-    icon, glyphs cut off by the macOS mask, or a white square around the
-    blue tile.
-
-## Pass 17: Backup restore
-
-- [ ] **Restore asks only when a character would be replaced.**
-  - **Where:** Settings → Backups & storage. Choose **Back up library**,
-    then **Restore backup** with that same file (every character conflicts).
-    Then, in a clean browser profile or after moving every character to the
-    trash and emptying it, restore the file again. Light and dark theme,
-    140% zoom.
-  - **Expect:** with conflicts, a modal "Restore backup" dialog with one
-    sentence naming every conflicting character ("N characters in this
-    backup are already in your library: A, B and C.") and **Replace
-    them**, **Keep both**, **Cancel** on one row (wrapping cleanly if the
-    window is narrow); focus starts on Cancel. **Keep both** adds a second
-    copy of each character to the library (trashed ones into the trash),
-    portraits included; **Replace them** leaves the library as it was
-    (same characters, backup's copies); **Cancel** and Esc change nothing
-    and leave Settings open. With no conflicts, nothing appears at all:
-    the characters are simply in the library afterwards. The old "Restore
-    preview" block (Format, Checksum, Active, Trashed, Existing IDs
-    replaced) is gone.
-  - **Wrong if:** a dialog or notice appears for a conflict-free restore,
-    the name list overflows the dialog or is cut off, Esc also closes
-    Settings, or Keep both loses a portrait or brings a trashed copy back
-    as active.
-  - The footer follows the dialog contract: Cancel, Keep both, then Replace
-    them as the red (overwriting) action on the right.
-
-## Pass 18: Open-choice wording
-
-The wording itself (issue titles and details, Build headings, the Shop and
-Equipment headings for Armor of Adaptable Resistance and Harper Pin) is
-checked by `review:verify` and unit tests. Only fit and legibility are left.
-
-- [ ] **Issue rows and Build headings name the feature, not "Class Feature".**
-  - **Where:** a new fighter at level 1, Build tab, with Fighting Style
-    left open; then its status badge's issue list. Also `sylestine` →
-    `edit?tab=build&level=4&section=feats` (Hybrid Talent). Light and dark
-    theme, 100% and 140% zoom.
-  - **Expect:** the section and its option table are headed by the
-    feature ("Hybrid Talent", "Fighting Style"), the option column by
-    what is chosen ("Option", "Damage Type", "Ability Score"), and the
-    issue reads "Level N Fighting Style" with "Choose an option for
-    Fighting Style." under it, wrapping cleanly.
-  - **Wrong if:** any heading, column or issue still says "Class Feature",
-    "Racial Trait" or "CountsAsRace", or a longer detail line is clipped or
-    overflows its row.
-- [ ] **Item choice headings.**
-  - **Where:** Shop, buy Armor of Adaptable Resistance +1 and a Harper Pin
-    (heroic tier); then in Inventory right-click each.
-  - **Expect:** the Shop's choice page is headed "Choose a damage type" /
-    "Choose a power"; the right-click menu offers "Choose a damage type…" /
-    "Choose a power…"; both fit at 140% zoom and read in dark theme.
-  - **Wrong if:** "Choose an option" or "class feature" appears, or the
-    menu item is clipped.
+1. **Nested granted powers** (Pass 1): a power under a sub-feature (Soul Step
+   under the Boon) looks like a sibling of it. Indent it, or add a "from
+   …Boon" label? Is the 0.75rem gap right?
+2. **Card paragraphs and dividers** (Pass 1): with a gap between paragraphs,
+   keep the small first-line indent on a following paragraph, or never
+   indent card paragraphs? Keep the thin flavor divider on every choice
+   card, or drop it everywhere?
+3. **Class name in feature rows** (Pass 1): "Barbarian Agility" and "Fighter
+   Talents" keep the class name because it starts the feature's own name,
+   not a "Level N" slot name. OK?
+4. **Familiar header colour** (Pass 4): in dark theme the builder card's
+   header turns the generic dark green panel colour instead of the teal
+   used in print. Keep it, or keep teal?
+5. **One-line Appearance** (Pass 5): is a single-line Appearance field
+   enough for a beast companion?
+6. **Bear Companion Notes cards** (Pass 6): the sentinel also prints "Bear
+   Companion Notes (1)" and "(2)" power cards, content powers that repeat
+   the beast card's aura and notes. Keep them?
+7. **Mount card arrangement** (Pass 8): do the one-row tiles and the load
+   table at the bottom read well, or want another arrangement?
+8. **Alias wording** (`hu` → `sheet`, Battle Awareness): its body reads
+   "Choices: Athletics; counts as Fighter". Does that read well?

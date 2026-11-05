@@ -30,6 +30,7 @@ import {
   candidateReason,
   choicesAtLevel,
   contextualChoiceTitle,
+  isOptionalRetrainingChoice,
   powerSwapPresentation,
 } from "../src/builder-ui";
 import {
@@ -1656,5 +1657,135 @@ rule("hexblade-white-well", "Print preview", "Summoned creature cards", (c) => {
     ),
   ];
 });
+
+/* ------------------------------------------------------------------ */
+/* Swap targets (native CheckReplaceElem) and shared implement rows     */
+/* ------------------------------------------------------------------ */
+
+const definitionName = (c: ReviewCharacter, id: string) =>
+  c.context.byId.get(key(id))?.name ?? id;
+
+/** A held feat or power no retraining offers to give up: a class
+ *  feature's feat (Ritual Caster under Bardic Training) or a swap's gain
+ *  (Plaguefire Body from Student of the Plague). */
+function notRetrainable(c: ReviewCharacter, name: string): Check[] {
+  const evaluation = c.atLevels([c.build.effectiveLevel]);
+  const held = evaluation.occurrences.some(
+    ({ definitionId }) => definitionName(c, definitionId) === name,
+  );
+  const targets = new Set(
+    evaluation.choices
+      .filter(isOptionalRetrainingChoice)
+      .flatMap(({ replacementOptions }) =>
+        (replacementOptions ?? []).map(({ definitionId }) =>
+          definitionName(c, definitionId),
+        ),
+      ),
+  );
+  return [
+    truthy(`${name} is held`, held),
+    truthy(
+      `${name} is not a retraining target`,
+      !targets.has(name),
+      [...targets].join(", "),
+    ),
+    truthy(
+      "Other feats and powers are still offered",
+      targets.size > 0,
+      `${targets.size} targets`,
+    ),
+  ];
+}
+
+rule(
+  "lily",
+  "Retraining",
+  "Retraining drops class-feature feats and swap gains",
+  (c) => notRetrainable(c, "Ritual Caster"),
+);
+
+rule(
+  "raidon",
+  "Retraining",
+  "Retraining drops class-feature feats and swap gains",
+  (c) => notRetrainable(c, "Plaguefire Body"),
+);
+
+rule(
+  "lily",
+  "Build, level 4",
+  "Skald Training swaps Majestic Word on its own",
+  (c) => {
+    const evaluation = c.atLevels([4]);
+    const swap = evaluation.choices.find(
+      (choice) =>
+        choice.level === 4 &&
+        choice.type === "Replacement" &&
+        !isOptionalRetrainingChoice(choice),
+    );
+    const gained = evaluation.occurrences.find(
+      ({ id }) => id === swap?.selectedOccurrenceId,
+    );
+    return [
+      equal(
+        "The level-4 replacement gives up Majestic Word",
+        (swap?.replacementOptions ?? []).map(({ definitionId }) =>
+          definitionName(c, definitionId),
+        ),
+        ["Majestic Word"],
+      ),
+      equal(
+        "… and is filled with Skald's Aura",
+        gained === undefined
+          ? undefined
+          : definitionName(c, gained.definitionId),
+        "Skald's Aura",
+      ),
+      equal("No issue on the character", evaluation.diagnostics.length, 0),
+      cardPresent(c, "Skald's Aura"),
+      truthy("No Majestic Word card", card(c, "Majestic Word") === undefined),
+    ];
+  },
+);
+
+rule(
+  "psion-thought-warrior",
+  "Print preview",
+  "Shared implement table (D111)",
+  (c) => {
+    const caption =
+      "Standard Action · Immediate Interrupt · Opportunity Attack";
+    const creatures = printedDeck(c).filter(
+      ({ kind, label }) => kind === "creature" && label === "Thought Warrior",
+    );
+    const first = creatures[0]?.text ?? "";
+    return [
+      truthy(
+        "Thought Warrior creature cards (one per augment)",
+        creatures.length === 2,
+        `${creatures.length}`,
+      ),
+      equal("One shared caption", count(first, caption), 1),
+      inOrder(
+        "The commands, then the caption and one row per implement",
+        first,
+        [
+          "Standard Action",
+          "Immediate Interrupt",
+          "Opportunity Attack",
+          caption,
+          "Accurate orb of Inevitable Continuance +1",
+          "Accurate staff of the War Mage +3",
+          "Unarmed",
+        ],
+      ),
+      equal(
+        "The orb's row is printed once",
+        count(first, "Accurate orb of Inevitable Continuance +1"),
+        1,
+      ),
+    ];
+  },
+);
 
 export const LATER_RULES: readonly Rule[] = rules;

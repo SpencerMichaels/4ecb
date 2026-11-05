@@ -76,6 +76,8 @@ const UPGRADES_27 = [
 
 /** Summon Blade Angel (invoker attack 9), a special-command summon (D111). */
 const SUMMON_BLADE_ANGEL = "ID_FMP_POWER_2880";
+/** Summon Thought Warrior (psion attack 15), augmentable (D111). */
+const SUMMON_THOUGHT_WARRIOR = "ID_FMP_POWER_13352";
 
 /** Fey Pact of the White Well (hexblade). */
 const WHITE_WELL = "ID_WOG_HEXBLADE_TRAIT_PACKAGE_4";
@@ -102,6 +104,10 @@ const reviews: ReviewCharacter[] = [
         path: build(1, "class"),
         items: [
           [
+            "Beatrix: pact, race and class cards",
+            "The White Well pact's stack and level sections, the Hexblade and Cleric class cards, the Revenant race card: rhythm, headings, focus ring.",
+          ],
+          [
             "Trait package benefits",
             'Select the Pact choice row (Fey Pact of the White Well): pact card, each benefit\'s card, each followed by its "Granted power" cards (~38 cards).',
           ],
@@ -112,10 +118,6 @@ const reviews: ReviewCharacter[] = [
           [
             "Essentials power swaps",
             "Hexblade swaps: open each required replacement in the Build replacement editor; only powers of the matching kind are offered to lose.",
-          ],
-          [
-            "Choice card rhythm",
-            "The White Well pact's card and its benefit cards: even gaps, the Prerequisite line, flush-left paragraphs, the flavor divider.",
           ],
           [
             "Benefits by level",
@@ -169,6 +171,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "Beatrix: reference feature rows",
+            'Past life and the two Guardian Feature rows wrap clear of the "Level N" tag.',
+          ],
           [
             "Sub-choices on feature rows",
             'Reference headings "Past life: Eladrin" and two "Guardian Feature" rows; check wrapping next to "Level N".',
@@ -238,6 +244,10 @@ const reviews: ReviewCharacter[] = [
         path: build(1, "class"),
         items: [
           [
+            "White Well hexblade: the Legendary Hexblade section",
+            "The pact's Legendary Hexblade section opened: subheadings and cards.",
+          ],
+          [
             "Benefits by level",
             "The White Well pact's level sections with Legendary Hexblade chosen: only its path section (the White Well's own features at levels 11, 12, 16 and 20). The pact choice is only on Build level 1, so only Level 1 starts open; click the others open.",
           ],
@@ -257,6 +267,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "White Well hexblade: summoned creature cards",
+            "Mourning Handmaiden and Spectral Protector creature cards: fit, entry headings, balanced halves.",
+          ],
           [
             "Summoned allies",
             'On the creature cards: Mourning Handmaiden\'s Attack "+30 vs. Reflex"; Spectral Protector\'s Attack and Opportunity "+30 vs. Will", each your level + 5; no "UNKNOWN" on any card.',
@@ -287,6 +301,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "Hystan: type bars and the Play data card",
+            "Twin Strike, Master Diplomat, Mighty Sprint and the Play data card; then the Build tab's power cards in dark theme.",
+          ],
           [
             "Granted aliases on feature rows",
             '"Dual Heritage: counts as Elf, Human".',
@@ -330,6 +348,10 @@ const reviews: ReviewCharacter[] = [
         path: preview,
         items: [
           [
+            "Hu: sheet Edit mode",
+            "View | Edit, the Sections menu (hide, reorder, copies), right-click hiding, then the browser's print preview.",
+          ],
+          [
             "Background benefit card",
             'Six background cards, then "Background benefit: …" with its Benefit text.',
           ],
@@ -337,11 +359,6 @@ const reviews: ReviewCharacter[] = [
             "Granted aliases on feature rows",
             'The heading is "Battle Awareness"; the reference body retains "Choices: Athletics; counts as Fighter".',
           ],
-          ["Edit toolbar", "View | Edit, Sections, Reset, Print."],
-          ["Sections menu: show and hide", "The Sections panel."],
-          ["Sections menu: reorder", "Drag rows by their grip."],
-          ["Sections menu: copies", "The − [n] + steppers."],
-          ["Card right-click feel", "Right-click cards in Edit mode."],
         ],
       },
       {
@@ -351,10 +368,6 @@ const reviews: ReviewCharacter[] = [
           [
             "Granted aliases on feature rows",
             'The feature label is "Battle Awareness"; its body retains "Choices: Athletics; counts as Fighter".',
-          ],
-          [
-            "Alias wording",
-            'Decide whether "Choices: Athletics; counts as Fighter" reads well.',
           ],
         ],
       },
@@ -400,6 +413,10 @@ const reviews: ReviewCharacter[] = [
         path: preview,
         items: [
           [
+            "Piri: Play data card",
+            "The Play data card's note lines fit inside the card.",
+          ],
+          [
             "Printed reference pages",
             'Granted ritual entries show "Granted by: Druid".',
           ],
@@ -437,6 +454,10 @@ const reviews: ReviewCharacter[] = [
         label: "Build, level 1: Companion",
         path: build(1, "companion"),
         items: [
+          [
+            "Beast ranger: Name and Appearance fields",
+            "The Name and Appearance fields' layout.",
+          ],
           [
             "Builder Companion pane",
             "The chosen wolf's card; select another beast for a candidate preview.",
@@ -529,6 +550,10 @@ const reviews: ReviewCharacter[] = [
         path: preview,
         items: [
           [
+            "Sentinel druid: Bruin's printed card",
+            "Bruin's level-25 card fits at its neighbours' text size.",
+          ],
+          [
             "Printed beast card",
             'Does the full stat block fit one card at level 25 with several traits? Surges tile reads "Yours".',
           ],
@@ -583,7 +608,13 @@ const reviews: ReviewCharacter[] = [
       {
         label: "Build, level 1: Theme",
         path: build(1, "theme"),
-        items: [["Other detail stacks", "Theme list: select Alchemist."]],
+        items: [
+          [
+            "Gnome wizard: Order Adept card",
+            "Order Adept → More…: card rhythm, More… at the left.",
+          ],
+          ["Other detail stacks", "Theme list: select Alchemist."],
+        ],
       },
       {
         label: "Build, level 1: Spellbook",
@@ -637,6 +668,10 @@ const reviews: ReviewCharacter[] = [
         label: "Equipment",
         path: "tab=equipment",
         items: [
+          [
+            "Gnome wizard: Wield two-handed when Small",
+            "Buy a Longsword, right-click it: the muted, checked Wield two-handed item.",
+          ],
           [
             "A free item appears",
             "The Spellbook gift is in the inventory (and on the sheet as an item card).",
@@ -709,6 +744,10 @@ const reviews: ReviewCharacter[] = [
         path: build(11),
         items: [
           [
+            "Fey warlock: Arcane Wisp in the builder",
+            "Arcane Familiar's Arcane Wisp card: dark navy in dark theme.",
+          ],
+          [
             "Other detail stacks",
             "Paragon path: the Feytouched stack. Its powers aren't nested under sub-options.",
           ],
@@ -722,6 +761,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "Fey warlock: printed Arcane Wisp card",
+            "The familiar card's tiles and fit.",
+          ],
           [
             "Familiar card",
             'Arcane Wisp after the Skills card: speed "fly 8 (hover)"; no "Familiar: X" power card. Check fit, the defense/HP/speed tiles, the rules line and Hide flavor text.',
@@ -1085,6 +1128,10 @@ const reviews: ReviewCharacter[] = [
         path: "tab=equipment",
         items: [
           [
+            "Drow invoker: Equipment and Shop",
+            "Party pieces field; buy a shard, a Longsword, Armor of Adaptable Resistance +1 and a Harper Pin; the right-click menus.",
+          ],
+          [
             "Equipment and Shop item detail",
             "Select the Scarf of Reconciliation: an Item Set panel card under it.",
           ],
@@ -1120,6 +1167,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "Drow invoker: printed familiar and Blade Angel",
+            "Spiderling of Lolth, Blade Angel and Summon Blade Angel cards: fit, implement rows.",
+          ],
           [
             "Printed Deity entry",
             "Avandra after Background (church icon): Domains line, then the description with its bullets.",
@@ -1164,6 +1215,10 @@ const reviews: ReviewCharacter[] = [
         label: "Build, level 9: Powers",
         path: build(9, "powers"),
         items: [
+          [
+            "Drow invoker: Blade Angel in power detail",
+            "Summon Blade Angel's dark creature panel card.",
+          ],
           [
             "Summoned creature in power detail",
             "Select Summon Blade Angel: its creature panel card under the power card.",
@@ -1215,6 +1270,10 @@ const reviews: ReviewCharacter[] = [
         path: "tab=equipment",
         items: [
           [
+            "Arena fighter: mounts in item detail",
+            "The Silver Dragon Steed and Warhorse panel cards; a Kank in the Shop.",
+          ],
+          [
             "Equipment and Shop item detail",
             "Select the Clear-Blood Baldric: an Item Set panel card under it.",
           ],
@@ -1228,6 +1287,10 @@ const reviews: ReviewCharacter[] = [
         label: "Print preview",
         path: preview,
         items: [
+          [
+            "Arena fighter: print preview",
+            "The Arena Training reminder, the Warhorse card and the Steed's two cards.",
+          ],
           [
             "Sub-choices on feature rows",
             "Page-1 reminder labels with a choice: the Fighter Weapon Talent row shows Arena Training.",
@@ -1256,8 +1319,49 @@ const reviews: ReviewCharacter[] = [
         path: build(3, "powers"),
         items: [
           [
-            "Opening a filled choice scrolls to its pick",
+            "Arena fighter: opening a filled choice",
             "Open the folded Steel Serpent Strike heading; then level 6 Feats and level 1 Powers with the level picker.",
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    spec: {
+      kind: "native",
+      slug: "psion-thought-warrior",
+      title: "Review – Psion L15 (Summon Thought Warrior)",
+      level: 15,
+      classes: ["ID_FMP_CLASS_437"],
+      preferred: [
+        "ID_FMP_RACE_7",
+        "ID_FMP_CLASS_437",
+        // Augmentable summon whose adjacent commands share one implement
+        // table on the creature card (D111).
+        { id: SUMMON_THOUGHT_WARRIOR, from: 15 },
+      ],
+      // Two implements with different enhancements: per-implement rows.
+      items: [
+        { id: "ID_FMP_MAGIC_ITEM_845", equip: true },
+        { id: "ID_FMP_MAGIC_ITEM_924" },
+      ],
+      expectLegal: true,
+      required: [SUMMON_THOUGHT_WARRIOR],
+    },
+    purpose:
+      "Human psion with Summon Thought Warrior and two implements (an orb +1 and a staff +3): one shared implement table under adjacent creature commands.",
+    links: [
+      {
+        label: "Print preview",
+        path: preview,
+        items: [
+          [
+            "Shared implement table (D111)",
+            'Thought Warrior: the Standard Action and Immediate Interrupt commands print text only, then one table under the Opportunity Attack captioned "Standard Action · Immediate Interrupt · Opportunity Attack", one row per implement.',
+          ],
+          [
+            "Psion: the Thought Warrior's shared implement rows",
+            'The "Thought Warrior" creature card (or its "— Actions" card).',
           ],
         ],
       },
@@ -1376,18 +1480,12 @@ const reviews: ReviewCharacter[] = [
             path: preview,
             items: [
               [
-                "Uses per encounter on power cards",
-                'Ardent Surge\'s type bar: "Encounter (2×)" on one line with the level at the right.',
+                "Beldin: Ardent Surge's type bar",
+                "Ardent Surge's bar on one line; then its Build tab card.",
               ],
-            ],
-          },
-          {
-            label: "Build, level 1: Powers",
-            path: build(1, "powers"),
-            items: [
               [
                 "Uses per encounter on power cards",
-                "Ardent Surge's builder card: the same bar, in dark theme too.",
+                'Ardent Surge\'s type bar: "Encounter (2×)" on one line with the level at the right.',
               ],
             ],
           },
@@ -1423,12 +1521,26 @@ const reviews: ReviewCharacter[] = [
             path: preview,
             items: [
               [
+                "Raidon: type bar and movement technique",
+                "Destined for Greatness, Five Storms and Dragon's Tail; then the Build tab with Five Storms selected.",
+              ],
+              [
                 "Class block in the card type bar",
                 'Destined for Greatness: "Adroit Explorer · Level 11" at the right of the type bar.',
               ],
               [
                 "Monk movement technique on the discipline card",
                 "Five Storms and Dragon's Tail: the Movement Technique section inside the card.",
+              ],
+            ],
+          },
+          {
+            label: "Retraining",
+            path: "tab=retraining",
+            items: [
+              [
+                "Retraining drops class-feature feats and swap gains",
+                "Plaguefire Body (gained by the Student of the Plague swap) is not a retraining target.",
               ],
             ],
           },
@@ -1444,6 +1556,10 @@ const reviews: ReviewCharacter[] = [
             label: "Print preview",
             path: preview,
             items: [
+              [
+                "Jim: Spellbook subtitle",
+                "Expeditious Retreat and Freezing Cloud; then their panel cards.",
+              ],
               [
                 "Spellbook subtitle",
                 'Expeditious Retreat and Freezing Cloud: "Spellbook" at the right of the title band; not on Sleep.',
@@ -1463,6 +1579,10 @@ const reviews: ReviewCharacter[] = [
             label: "Print preview",
             path: preview,
             items: [
+              [
+                "Sylestine: Blink Dog card and Hybrid Talent",
+                "The Trained Blink Dog card; then Build level 4 Feats, Hybrid Talent and its issue row.",
+              ],
               [
                 "Associate card",
                 "The Trained Blink Dog card after Skills and the Arcane Wisp.",
@@ -1568,12 +1688,12 @@ const reviews: ReviewCharacter[] = [
             path: preview,
             items: [
               [
-                "Holy symbol slot",
-                "Abjure Undead, Radiant Vengeance, Divine Rage: Beacon of Erathis +1 rows.",
+                "Trey: page 1 Conditional modifiers pane",
+                "Five conditional rows: wrapping, striping and fit.",
               ],
               [
-                "Page 1 Conditional modifiers pane",
-                "Five conditional rows: layout and fit at 100% and 140%.",
+                "Holy symbol slot",
+                "Abjure Undead, Radiant Vengeance, Divine Rage: Beacon of Erathis +1 rows.",
               ],
             ],
           },
@@ -1591,12 +1711,74 @@ const reviews: ReviewCharacter[] = [
             path: preview,
             items: [
               [
-                "Page 1 Conditional modifiers pane",
-                "Resistances plus three combined defense rows: wrapping, striping and fit.",
+                "Natan: page 1 and the Play data card",
+                "The Conditional modifiers pane and the Play data card's note lines.",
               ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "idon",
+        title: "Review – Idon Tkare (L6)",
+        source: "sample-chars/idon tkare at 6th.dnd4e",
+        purpose:
+          "Player save: Speed and Skills & checks rows in the Conditional modifiers pane.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
               [
-                "Play data card lines",
-                "The Play data card's note lines fit inside the card.",
+                "Idon: page 1 and the Play data card",
+                "Conditional modifiers pane and the Play data card's note lines.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "skye",
+        title: "Review – Skye",
+        source: "sample-chars/Skye.dnd4e",
+        purpose: "Player save: a Conditional modifiers pane of saves only.",
+        links: [
+          {
+            label: "Print preview",
+            path: preview,
+            items: [
+              [
+                "Skye: page 1 Conditional modifiers pane",
+                "A pane of saving-throw rows only.",
+              ],
+            ],
+          },
+        ],
+      },
+      {
+        slug: "lily",
+        title: "Review – Lily (Bard, Skald Training)",
+        source: "sample-chars/Lily.dnd4e",
+        purpose:
+          "Player save: Skald Training's automatic Majestic Word → Skald's Aura swap, and Ritual Caster under Bardic Training kept out of retraining.",
+        links: [
+          {
+            label: "Build, level 4",
+            path: build(4),
+            items: [
+              [
+                "Skald Training swaps Majestic Word on its own",
+                "The replacement shows Majestic Word → Skald's Aura, filled, with no issue.",
+              ],
+            ],
+          },
+          {
+            label: "Retraining",
+            path: "tab=retraining",
+            items: [
+              [
+                "Retraining drops class-feature feats and swap gains",
+                "Ritual Caster (under Bardic Training) is not a retraining target.",
               ],
             ],
           },
@@ -1651,47 +1833,20 @@ const general: GeneralSection[] = [
   {
     title: "Character library",
     steps:
-      "Open #/characters. Check in light and dark themes and at 140% zoom. The review characters give a populated table; the Missing content copy exercises the role line error. (The header's Update button is the app's own update and appears only when a new app version is waiting; no review copy makes it show.)",
+      "Open #/characters with the review characters restored. The Missing content copy exercises the role line error. (The header's Update button is the app's own update and appears only when a new app version is waiting; no review copy makes it show.)",
     items: [
       [
-        "Header",
-        "New, Import, Trash + count, divider, Update (only when a new app version is waiting), Settings; labels collapse at phone width; New's disabled tooltip (turn content off in Settings to see it).",
+        "Library: header and table",
+        "Header, table, the 36rem and 60rem narrow layouts, the empty state (a private window before restoring) and keyboard focus.",
       ],
       [
-        "Table",
-        "Uppercase header, sort chevrons, striping, hover/selected tints, 2.25rem portraits, Edited tooltip. An empty library: use a private window before restoring.",
+        "Library: detail pane",
+        "The navy band for the Sentinel L25, Fey Warlock L11 and a hybrid; the five buttons; the role line while loading, after an edit and on the Missing content copy.",
       ],
-      [
-        "Keyboard and mouse",
-        "Arrow Up/Down, Home/End, Enter, double-click, middle-click a name; sort and selection survive a reload.",
-      ],
+      ["Library: trash", "The trash dialog and the Empty trash? confirmation."],
       [
         "Pane band",
         'Select e.g. the Sentinel L25 (epic lines), the Fey Warlock L11 (paragon) and a hybrid ("X / Y" role line).',
-      ],
-      [
-        "Action row",
-        "Five equal buttons; Export menu below the sticky pane with the .dnd4e spinner; Trash arms to a red Confirm.",
-      ],
-      [
-        "Role line loading",
-        "Duplicate a review character (or Import a .dnd4e) and select it.",
-      ],
-      [
-        "Saved role line",
-        "Edit a review character in the builder, wait ~2s, return to the library.",
-      ],
-      [
-        "Role line error",
-        'Select "Review – Missing content": no role line or placeholder; the rest of the pane works.',
-      ],
-      [
-        "Narrow",
-        "Below 60rem (~1344px window at 140%): pane under the table, Race and Edited hidden, no sideways scroll.",
-      ],
-      [
-        "Trash dialog",
-        "Trash a couple of the review copies (e.g. Update waiting, then Missing content) and open Trash.",
       ],
       [
         "Empty trash confirmation",
@@ -1749,6 +1904,48 @@ const general: GeneralSection[] = [
       [
         "Item choices named from their options",
         "Armor of Adaptable Resistance asks for a damage type, Harper Pin for a power.",
+      ],
+    ],
+  },
+  {
+    title: "New characters",
+    steps:
+      "Open #/characters → New; each check needs a fresh character, so no review character covers it.",
+    items: [
+      [
+        "New psion: Learn free dialog",
+        "Psion at level 1, Rituals → Learn rituals, search Tenser, click Learn free.",
+      ],
+      [
+        "New hybrid: a pick that opens a step",
+        "Hybrid Barbarian/Cleric, level 1 Feats: double-click Hybrid Talent; then Review on its issue; Toughness elsewhere.",
+      ],
+      [
+        "New fighter: open-choice issue rows",
+        "Fighter at level 1 with Fighting Style left open: the section and its issue row.",
+      ],
+    ],
+  },
+  {
+    title: "Live site and manual steps",
+    steps:
+      "These need an installed PWA (Chrome on macOS), a normal browser tab, Settings' own restore, or your own content for Erdan; see the checklist for the exact steps.",
+    items: [
+      [
+        "Installed app: title bar and icon",
+        "Reinstall the PWA; the title bar under each theme; the Dock, Launchpad and Cmd-Tab icon.",
+      ],
+      [
+        "Browser tab: favicon",
+        "Light and dark tab strips after a hard reload.",
+      ],
+      [
+        "Settings: Restore backup dialog",
+        "Back up library, then restore that file: the conflict dialog's layout.",
+      ],
+      [
+        "Erdan: feature notes on your own content",
+        "Import sample-chars/Erdan 11.dnd4e with your own content; page 1 class features.",
       ],
     ],
   },
