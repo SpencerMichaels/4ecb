@@ -158,18 +158,31 @@ export function evaluatedBuilderCardSettings(
       entities: evaluationEntities,
       ...(onlyDefinitionIds === undefined ? {} : { onlyDefinitionIds }),
     });
-  const powers = powersFor(evaluation.activeDefinitionIds);
-  const cardFor = createSheetPowerCardFinder(
-    { ...evaluation, powers },
-    entities,
-    {
-      resolveAbilityChoices: preferences.resolveAbilityChoices,
-      proficientEquipmentOnly: preferences.proficientEquipmentOnly,
-    },
-  );
-  const owned = new Map(
-    powers.map((power) => [power.definitionId.toLocaleLowerCase(), power]),
-  );
+  // The owned powers are evaluated when a pane first shows a card, not for
+  // every character state: the Build tab and Equipment each keep settings,
+  // and most states show no power card.
+  let ownedPowers:
+    | {
+        readonly powers: readonly EvaluatedPower[];
+        readonly owned: ReadonlyMap<string, EvaluatedPower>;
+        readonly cardFor: ReturnType<typeof createSheetPowerCardFinder>;
+      }
+    | undefined;
+  const ownedState = () => {
+    if (ownedPowers !== undefined) return ownedPowers;
+    const powers = powersFor(evaluation.activeDefinitionIds);
+    ownedPowers = {
+      powers,
+      owned: new Map(
+        powers.map((power) => [power.definitionId.toLocaleLowerCase(), power]),
+      ),
+      cardFor: createSheetPowerCardFinder({ ...evaluation, powers }, entities, {
+        resolveAbilityChoices: preferences.resolveAbilityChoices,
+        proficientEquipmentOnly: preferences.proficientEquipmentOnly,
+      }),
+    };
+    return ownedPowers;
+  };
   // A power the character doesn't own is evaluated alone, as though active,
   // once per character state (these settings), not on every mount of a
   // detail pane that shows it.
@@ -187,17 +200,21 @@ export function evaluatedBuilderCardSettings(
   const powerCards = new WeakMap<ContentEntity, SheetCard>();
   let contentById: Map<string, ContentEntity> | undefined;
   const paragonPathId = buildParagonPathId(build);
-  const summonPersonalize = createEvaluatedPowerTextPersonalizer(
-    evaluation,
-    entities,
-    preferences.resolveAbilityChoices,
-  );
+  let summonPersonalizer:
+    ReturnType<typeof createEvaluatedPowerTextPersonalizer> | undefined;
+  const summonPersonalize = () =>
+    (summonPersonalizer ??= createEvaluatedPowerTextPersonalizer(
+      evaluation,
+      entities,
+      preferences.resolveAbilityChoices,
+    ));
   return {
     ...(paragonPathId === undefined ? {} : { paragonPathId }),
     itemOverlays: evaluation.overlays,
     powerCardFor: (entity) => {
       let card = powerCards.get(entity);
       if (card === undefined) {
+        const { cardFor, owned } = ownedState();
         card = cardFor(
           entity,
           owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
@@ -214,7 +231,7 @@ export function evaluatedBuilderCardSettings(
       // creature card does (D111).
       const power =
         origin.kind === "summon"
-          ? (owned.get(record.entity.id.toLocaleLowerCase()) ??
+          ? (ownedState().owned.get(record.entity.id.toLocaleLowerCase()) ??
             hypotheticalPower(record.entity))
           : undefined;
       const commands = summonCommandRows(
@@ -227,7 +244,9 @@ export function evaluatedBuilderCardSettings(
         name: origin.kind === "summon" ? record.block.name : name,
         stats: evaluation.stats,
         level: evaluation.level,
-        ...(origin.kind === "summon" ? { personalize: summonPersonalize } : {}),
+        ...(origin.kind === "summon"
+          ? { personalize: summonPersonalize() }
+          : {}),
         ...(commands === undefined ? {} : { commands }),
         commandVariants: summonCommandVariants(
           power,
@@ -254,7 +273,7 @@ export function evaluatedBuilderCardSettings(
               ...evaluation.textStrings,
               ...input.textStrings,
             },
-            powers,
+            powers: ownedState().powers,
           });
     },
     characterLevel: evaluation.level,

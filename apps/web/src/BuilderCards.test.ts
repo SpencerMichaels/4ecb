@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { BuildOccurrence, CharacterBuild } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { scanCountingContent, type ContentEntity } from "@4ecb/content-domain";
 import * as rules from "@4ecb/rules-engine";
 
 import {
@@ -119,24 +119,56 @@ const build: CharacterBuild = {
   textStrings: {},
 };
 
+const preferences = {
+  resolveAbilityChoices: true,
+  proficientEquipmentOnly: false,
+  abbreviateAbilityValues: false,
+};
+
 describe("builder card settings", () => {
   it("evaluates a power the character doesn't own once per character state", () => {
     const evaluation = rules.evaluateCharacter(
       rules.projectBuildForEvaluation(build, content),
       content,
     );
-    const settings = evaluatedBuilderCardSettings(build, evaluation, content, {
-      resolveAbilityChoices: true,
-      proficientEquipmentOnly: false,
-      abbreviateAbilityValues: false,
-    });
     const evaluatePowers = vi.mocked(rules.evaluatePowers);
     evaluatePowers.mockClear();
-    // A detail pane mounting, folding away and mounting again.
+    const settings = evaluatedBuilderCardSettings(
+      build,
+      evaluation,
+      content,
+      preferences,
+    );
+    // Nothing is evaluated until a pane shows a card.
+    expect(evaluatePowers).not.toHaveBeenCalled();
+    // A detail pane mounting, folding away and mounting again: the owned
+    // powers once, the hypothetical power once.
     const first = settings.powerCardFor(power);
     const again = settings.powerCardFor(power);
     expect(again).toBe(first);
     expect(first.name).toBe("LATER_POWER");
-    expect(evaluatePowers).toHaveBeenCalledTimes(1);
+    expect(evaluatePowers).toHaveBeenCalledTimes(2);
+  });
+
+  it("scans the content once per content, not per character state", () => {
+    const { content: counted, scans } = scanCountingContent(content);
+    const settingsFor = () => {
+      const evaluation = rules.evaluateCharacter(
+        rules.projectBuildForEvaluation(build, counted),
+        counted,
+      );
+      const settings = evaluatedBuilderCardSettings(
+        build,
+        evaluation,
+        counted,
+        preferences,
+      );
+      settings.powerCardFor(power);
+    };
+    settingsFor();
+    const warm = scans();
+    // The next edit: a new evaluation and new card settings.
+    settingsFor();
+    expect(scans()).toBe(warm);
   });
 });
