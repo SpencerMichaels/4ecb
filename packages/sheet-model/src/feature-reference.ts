@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterOccurrence } from "@4ecb/rules-engine";
 
@@ -23,9 +23,7 @@ export function featureReferenceMetadata(input: {
   selections: readonly LegacyRuleElement[];
   occurrences?: readonly CharacterOccurrence[];
 }): ReadonlyMap<string, { referenceGroup: string; level?: number }> {
-  const definitions = new Map(
-    input.content.map((entity) => [key(entity.id), entity]),
-  );
+  const definitions = contentEntitiesById(input.content);
   const owned = new Set(
     input.selections.flatMap((entry) => (entry.id ? [key(entry.id)] : [])),
   );

@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentCache, type ContentEntity } from "@4ecb/content-domain";
 import type { SheetValue } from "./index";
 import type { OverviewInventory } from "./overview";
 
@@ -100,15 +100,21 @@ function propertyReminderPolicy(name: string): "show" | "hide" | undefined {
   return undefined;
 }
 
+const weaponPropertiesByName = contentCache(
+  "weapon-properties",
+  (content): ReadonlyMap<string, ContentEntity> =>
+    new Map(
+      content
+        .filter((entity) => entity.type.toLowerCase() === "weapon property")
+        .map((entity) => [entity.name.trim().toLowerCase(), entity]),
+    ),
+);
+
 export function equippedItemPropertyReminders(
   inventory: readonly OverviewInventory[],
   content: readonly ContentEntity[],
 ): ItemPropertyReminder[] {
-  const definitions = new Map(
-    content
-      .filter((entity) => entity.type.toLowerCase() === "weapon property")
-      .map((entity) => [entity.name.trim().toLowerCase(), entity]),
-  );
+  const definitions = weaponPropertiesByName(content);
   const grouped = new Map<string, string[]>();
   const sourceIds = new Map<string, string>();
   const seen = new Set<string>();

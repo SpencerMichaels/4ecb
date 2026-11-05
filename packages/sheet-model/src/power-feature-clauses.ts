@@ -1,9 +1,40 @@
-import { getAttribute, type ContentEntity } from "@4ecb/content-domain";
+import {
+  contentCache,
+  getAttribute,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
 export function featureClauseKey(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
+
+/** The content's class features, by id, name and category: built once per
+ * content, since every sheet and builder card set asks. */
+const classFeatureIndex = contentCache("feature-clauses", (content) => {
+  const definitions = new Map(
+    content.map((entity) => [featureClauseKey(entity.id), entity]),
+  );
+  const features = content.filter(
+    (entity) => featureClauseKey(entity.type) === "class feature",
+  );
+  const nameCounts = new Map<string, number>();
+  const byCategory = new Map<string, ContentEntity[]>();
+  for (const feature of features) {
+    const name = featureClauseKey(feature.name);
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    for (const tag of new Set(feature.categories.map(featureClauseKey))) {
+      const family = byCategory.get(tag);
+      if (family === undefined) byCategory.set(tag, [feature]);
+      else family.push(feature);
+    }
+  }
+  return {
+    definitions: definitions as ReadonlyMap<string, ContentEntity>,
+    nameCounts: nameCounts as ReadonlyMap<string, number>,
+    byCategory: byCategory as ReadonlyMap<string, readonly ContentEntity[]>,
+  };
+});
 
 /** Hide only proven unselected siblings of a resolved single-choice feature.
  * Do not use presentation-scoped candidate lists as the complete option family. */
@@ -13,21 +44,11 @@ export function irrelevantFeatureClauseNames(
 ): ReadonlySet<string> {
   const hidden = new Set<string>();
   if (!evaluation.converged) return hidden;
-  const definitions = new Map(
-    content.map((entity) => [featureClauseKey(entity.id), entity]),
-  );
+  const { definitions, nameCounts, byCategory } = classFeatureIndex(content);
   const occurrences = new Map(
     evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
   );
   const active = new Set(evaluation.activeDefinitionIds.map(featureClauseKey));
-  const features = content.filter(
-    (entity) => featureClauseKey(entity.type) === "class feature",
-  );
-  const nameCounts = new Map<string, number>();
-  for (const feature of features) {
-    const name = featureClauseKey(feature.name);
-    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
-  }
   for (const choice of evaluation.choices) {
     if (
       featureClauseKey(choice.type) !== "class feature" ||
@@ -73,11 +94,7 @@ export function irrelevantFeatureClauseNames(
         ) === featureClauseKey(parent.id),
     );
     if (slots.length !== 1) continue;
-    const family = features.filter((feature) =>
-      feature.categories.some(
-        (tag) => featureClauseKey(tag) === featureClauseKey(category),
-      ),
-    );
+    const family = byCategory.get(featureClauseKey(category)) ?? [];
     const owned = family.filter((feature) =>
       active.has(featureClauseKey(feature.id)),
     );

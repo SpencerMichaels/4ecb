@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 
 const key = (value: string) => value.trim().toLowerCase();
@@ -9,7 +9,7 @@ export function overviewSenses(
   content: readonly ContentEntity[],
   stats: Readonly<Record<string, string>>,
 ): string {
-  const byId = new Map(content.map((entity) => [key(entity.id), entity]));
+  const byId = contentEntitiesById(content);
   const active = selections.flatMap((selection) => {
     const entity = selection.id ? byId.get(key(selection.id)) : undefined;
     return entity ? [entity] : [];

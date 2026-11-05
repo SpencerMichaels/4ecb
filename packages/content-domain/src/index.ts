@@ -230,3 +230,4 @@ export * from "./creature-stat-block";
 export * from "./power-text";
 export * from "./power-field-bonuses";
 export * from "./prerequisite-ir";
+export * from "./content-cache";

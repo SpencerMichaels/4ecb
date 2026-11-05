@@ -10,6 +10,7 @@ import {
   type LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
 import {
+  contentEntitiesById,
   displayPrerequisites,
   isUserFacingSpecific,
   powerAttackSlots,
@@ -599,12 +600,11 @@ function values(
   );
 }
 
+/** The content's records by id, built once per content. */
 function entityMap(
   entities: readonly ContentEntity[],
-): Map<string, ContentEntity> {
-  return new Map(
-    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
-  );
+): ReadonlyMap<string, ContentEntity> {
+  return contentEntitiesById(entities);
 }
 
 function entityFields(entity: ContentEntity | undefined): SheetValue[] {
@@ -1511,7 +1511,7 @@ export function sheetItemCard(input: {
 
 function powerCard(
   power: LegacyPowerSnapshot,
-  entities: Map<string, ContentEntity>,
+  entities: ReadonlyMap<string, ContentEntity>,
   snapshot: LegacyCharacterSnapshot,
   keyAbilities: readonly string[],
   options: SheetModelOptions,

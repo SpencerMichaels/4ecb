@@ -1,14 +1,22 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  contentCache,
+  contentEntitiesById,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 const key = (value: string) => value.trim().toLowerCase();
 
-/** Only unconditional starting-rule grants establish universal availability. */
-export function universalPowerDefinitionIds(
+/** Only unconditional starting-rule grants establish universal availability.
+ * Depends on the content alone, so it is found once per content. */
+export const universalPowerDefinitionIds = contentCache(
+  "universal-powers",
+  universalPowers,
+);
+
+function universalPowers(
   content: readonly ContentEntity[],
 ): ReadonlySet<string> {
-  const definitions = new Map(
-    content.map((entity) => [key(entity.id), entity]),
-  );
+  const definitions = contentEntitiesById(content);
   const result = new Set<string>();
   const seen = new Set<string>();
   const visit = (entity: ContentEntity) => {

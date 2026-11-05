@@ -1,4 +1,8 @@
-import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
+import {
+  contentEntitiesById,
+  type ContentEntity,
+  type RuleStatement,
+} from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterOccurrence } from "@4ecb/rules-engine";
 import type { SheetCard } from "./index";
@@ -30,7 +34,7 @@ export function corePowerReminders(input: {
   readonly occurrences?: readonly CharacterOccurrence[];
   readonly className?: string | undefined;
 }): readonly CorePowerReminder[] {
-  const byId = new Map(input.content.map((e) => [key(e.id), e]));
+  const byId = contentEntitiesById(input.content);
   const selected = new Set(
     input.selections.flatMap((s) => (s.id ? [key(s.id)] : [])),
   );

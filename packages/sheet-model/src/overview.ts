@@ -1,6 +1,7 @@
 import { associateCardText } from "./associate-card";
 import { creatureCardText, type SheetCreatureCard } from "./creature-card";
 import {
+  contentEntitiesById,
   displayPrerequisites,
   getAttribute,
   isUserFacingSpecific,
@@ -347,9 +348,7 @@ export function withSheetOverview(
     s !== undefined && /^[-+]?\d+(?:\.\d+)?$/.test(s.trim())
       ? Number(s)
       : undefined;
-  const definitions = new Map(
-    input.content.map((entity) => [key(entity.id), entity]),
-  );
+  const definitions = contentEntitiesById(input.content);
   const features: OverviewFeature[] = [];
   const cardedPowers = new Map(
     model.powers.flatMap((power) =>
