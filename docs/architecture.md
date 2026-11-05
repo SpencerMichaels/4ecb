@@ -365,6 +365,26 @@ a Web Worker. Initial implementation may recalculate broadly; incremental
 dependency invalidation should be introduced only after profiling proves which
 work dominates.
 
+Caching rule (applies to the engine, sheet-model and the web app alike):
+
+- **Per-content setup is cached by immutable content identity.** Anything
+  derived from the content alone (id and name maps, the rules index, powers
+  lookups, class-feature families, the Shop catalog, a record's browse
+  category or search text) is built once per content array or record, via
+  `contentCache`/`contentEntitiesById` (`content-domain/src/content-cache.ts`)
+  or a `WeakMap` on the array or record. Content arrays are never mutated; a
+  character's own records (user edits) share one combined array per record
+  set (`contentWithLocalEntities`), and item `modify` overlays key the powers
+  lookups by value, so every evaluation of one character reuses them.
+- **Per-character work is memoized by character state** (an evaluation, a
+  build): builder card settings evaluate a hypothetical power once per state
+  and only when a pane first shows it.
+- **Never in render loops.** Nothing pack-wide runs per row, card, candidate
+  or render; a component calls the cached helper. Guard tests prove it with
+  call counts, not timings: `scanCountingContent` wraps the content so a
+  repeated sheet build, evaluation, card set or Shop search over the same
+  content must scan none of it.
+
 Every result exposes its components. A defense total, for example, is not just
 `24`; it is a total plus base formula, ability contribution, class, armor, feat,
 enhancement, item, conditional, play-effect, and manual modifiers with source
@@ -624,10 +644,12 @@ isolated by the rules client for the exact pack ID/content digest. Hits refresh
 recency before the 32-entry LRU bound is enforced. The separate bounded
 IndexedDB evaluation cache remains disposable and version/profile keyed.
 
-Editor navigation is a typed projection of the character edit hash. Workspace
-tabs push one browser-history entry; Build routes may also encode level and the
-active choice section, and Equipment routes may encode its active section.
-Overview deep links construct the final Build destination atomically. Route
+Editor navigation is a typed projection of the character edit hash. Each tab's
+`tab=` slug is its visible name (`inventory`, `loadout`, `shop`, ...; an old
+`tab=equipment[&loadout=1]` canonicalizes to them), and workspace tabs push one
+browser-history entry; Build routes may also encode level and the
+active choice section, and Shop and Rituals routes may encode a category.
+Deep links construct the final Build destination atomically. Route
 parsing removes state that does not apply to the selected workspace, while
 runtime availability checks replace an unavailable Build section with its
 deterministic current fallback. Replacement canonicalization and same-hash

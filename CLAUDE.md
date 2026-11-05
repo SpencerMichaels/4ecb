@@ -279,6 +279,11 @@ separate header or level rail.
 - **Evaluation cache.** Evaluations persist in IndexedDB keyed by
   `RULES_EVALUATION_CACHE_VERSION` (`rules-engine/src/evaluator.ts`); bump it
   whenever `EvaluatedCharacter`'s shape or semantics change.
+- **Caching rule.** Per-content setup (id maps, indexes, catalogs) is cached
+  by immutable content identity (`contentCache`/`contentEntitiesById` in
+  `content-domain`); per-character work by character state; nothing
+  pack-wide runs per row, card or render. Guard tests use
+  `scanCountingContent` (`docs/architecture.md`, Rules engine).
 - **Loadout slots.** `rules-engine/src/loadout-slots.ts` is the one loadout
   resolver (evaluator, Equipment tab, sheet; sheet-model and `equipment-ui.ts`
   re-export it). The evaluator takes the main hand, alternate-slot wear and
