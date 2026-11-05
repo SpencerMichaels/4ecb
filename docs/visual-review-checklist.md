@@ -506,25 +506,22 @@ These need the deployed app, an installed PWA, or your own content.
 Open judgement calls, not pass/fail checks. Look while you are on the
 pass named.
 
-1. **Nested granted powers** (Pass 1): a power under a sub-feature (Soul Step
-   under the Boon) looks like a sibling of it. Indent it, or add a "from
-   …Boon" label? Is the 0.75rem gap right?
-2. **Card paragraphs and dividers** (Pass 1): with a gap between paragraphs,
+1. **Card paragraphs and dividers** (Pass 1): with a gap between paragraphs,
    keep the small first-line indent on a following paragraph, or never
    indent card paragraphs? Keep the thin flavor divider on every choice
    card, or drop it everywhere?
-3. **Class name in feature rows** (Pass 1): "Barbarian Agility" and "Fighter
+2. **Class name in feature rows** (Pass 1): "Barbarian Agility" and "Fighter
    Talents" keep the class name because it starts the feature's own name,
    not a "Level N" slot name. OK?
-4. **Familiar header colour** (Pass 4): in dark theme the builder card's
+3. **Familiar header colour** (Pass 4): in dark theme the builder card's
    header turns the generic dark green panel colour instead of the teal
    used in print. Keep it, or keep teal?
-5. **One-line Appearance** (Pass 5): is a single-line Appearance field
+4. **One-line Appearance** (Pass 5): is a single-line Appearance field
    enough for a beast companion?
-6. **Bear Companion Notes cards** (Pass 6): the sentinel also prints "Bear
+5. **Bear Companion Notes cards** (Pass 6): the sentinel also prints "Bear
    Companion Notes (1)" and "(2)" power cards, content powers that repeat
    the beast card's aura and notes. Keep them?
-7. **Mount card arrangement** (Pass 8): do the one-row tiles and the load
+6. **Mount card arrangement** (Pass 8): do the one-row tiles and the load
    table at the bottom read well, or want another arrangement?
-8. **Alias wording** (`hu` → `sheet`, Battle Awareness): its body reads
+7. **Alias wording** (`hu` → `sheet`, Battle Awareness): its body reads
    "Choices: Athletics; counts as Fighter". Does that read well?
