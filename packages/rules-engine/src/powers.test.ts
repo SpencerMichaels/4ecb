@@ -4997,7 +4997,9 @@ describe("implement power equipment", () => {
       inventory: ["SYMBOL", "ORB", "PICK"].map(owned),
       stats: { "Wisdom modifier": stat("Wisdom modifier", 5) },
       overlays: [],
-      entities,
+      // Content is immutable and its lookups cached per array; these cases
+      // edit the fixture between calls, so each call gets its own array.
+      entities: [...entities],
     })[0]?.variants ?? [];
   // The D081 view: variants the character is proficient with.
   const names = (activeDefinitionIds: readonly string[]) =>

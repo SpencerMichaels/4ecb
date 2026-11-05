@@ -1,5 +1,6 @@
 import {
   authoredAttackLine,
+  contentCache,
   hitLineAt,
   levelHeaderText,
   parseHitLine,
@@ -2966,32 +2967,53 @@ interface PowerContentIndexes {
   readonly entitiesByName: Map<string, ContentEntity>;
 }
 
-const powerContentIndexCache = new WeakMap<
-  readonly ContentEntity[],
-  WeakMap<readonly FieldOverlay[], PowerContentIndexes>
->();
+/** Overlaid item sets kept per content: a character's overlays rarely
+ * change between edits, and a session edits one or two characters. */
+const OVERLAID_INDEXES_KEPT = 8;
+
+const overlaidPowerContentIndexes = contentCache(
+  "power-content-indexes-overlaid",
+  () => new Map<string, PowerContentIndexes>(),
+);
+
+const basePowerContentIndexes = contentCache(
+  "power-content-indexes",
+  indexPowerContent,
+);
 
 /**
  * The content lookups every powers evaluation starts from, built once per
- * content and overlay set (both immutable) instead of once per call: a
- * builder pane evaluates each power the character doesn't own on its own,
- * over the whole pack. Read-only once built.
+ * content (immutable) instead of once per call: a builder pane evaluates
+ * each power the character doesn't own on its own, over the whole pack, and
+ * every evaluation's overlays are a new array. Characters whose `modify`
+ * overlays change item records get their own lookups, kept by the overlays'
+ * value. Read-only once built.
  */
 function powerContentIndexes(
   contentEntities: readonly ContentEntity[],
   overlays: readonly FieldOverlay[],
 ): PowerContentIndexes {
-  let byOverlays = powerContentIndexCache.get(contentEntities);
-  if (byOverlays === undefined) {
-    byOverlays = new WeakMap();
-    powerContentIndexCache.set(contentEntities, byOverlays);
-  }
-  const cached = byOverlays.get(overlays);
+  if (overlays.length === 0) return basePowerContentIndexes(contentEntities);
+  const kept = overlaidPowerContentIndexes(contentEntities);
+  const signature = JSON.stringify(overlays);
+  const cached = kept.get(signature);
   if (cached !== undefined) return cached;
   // Loot records as native C_RulesElementField reads them: with the
   // character's `modify` overlays (Reaper's Blade's High Crit scythe, a
   // Heartwood Spear's heavy thrown base spear).
   const entities = withOverlaidItems(contentEntities, overlays);
+  const indexes =
+    entities === contentEntities
+      ? basePowerContentIndexes(contentEntities)
+      : indexPowerContent(entities);
+  kept.set(signature, indexes);
+  if (kept.size > OVERLAID_INDEXES_KEPT) kept.delete(kept.keys().next().value!);
+  return indexes;
+}
+
+function indexPowerContent(
+  entities: readonly ContentEntity[],
+): PowerContentIndexes {
   const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
   const byName = new Map<string, ContentEntity[]>();
   for (const entity of entities) {
@@ -3003,9 +3025,7 @@ function powerContentIndexes(
   for (const entity of byId.values())
     if (!entitiesByName.has(key(entity.name)))
       entitiesByName.set(key(entity.name), entity);
-  const indexes = { entities, byId, byName, entitiesByName };
-  byOverlays.set(overlays, indexes);
-  return indexes;
+  return { entities, byId, byName, entitiesByName };
 }
 
 export function evaluatePowers(input: {

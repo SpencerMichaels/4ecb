@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity } from "@4ecb/content-domain";
+import { scanCountingContent, type ContentEntity } from "@4ecb/content-domain";
 
 import { evaluatePowers } from "./powers";
 import type { EvaluatedStat } from "./stats";
@@ -90,5 +90,42 @@ describe("evaluating only some powers", () => {
     expect(run(["STRIKE"])).toEqual(
       full.filter(({ definitionId }) => definitionId === "STRIKE"),
     );
+  });
+});
+
+describe("powers evaluation content lookups", () => {
+  it("are built once per content, not per evaluation's overlays", () => {
+    const { content, scans } = scanCountingContent(entities);
+    // Every evaluation hands over a new overlays array; equal overlays
+    // reuse the lookups, with the overlaid item records.
+    const overlays = () => [
+      {
+        providerOccurrenceId: "feat",
+        targetDefinitionIds: ["LONGSWORD"],
+        field: "Damage",
+        value: "1d10",
+      },
+    ];
+    const withOverlays = () =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["STRIKE", "BLAST"],
+        entities: content,
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["LONGSWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats,
+        overlays: overlays(),
+      });
+    const first = withOverlays();
+    const warm = scans();
+    expect(withOverlays()).toEqual(first);
+    expect(scans()).toBe(warm);
   });
 });
