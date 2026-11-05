@@ -20,7 +20,7 @@ const auto = (text: string): RowClass => ({ kind: "auto", auto: text });
 export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   // Beatrix
   "beatrix|0|trait package benefits": auto(
-    'The pact\'s detail stack: the pact card, then each benefit card, each followed by its "Granted power" cards; the card count; "Granted …" labels on choice options.',
+    'The pact\'s detail stack: the pact card, then each benefit card, each followed by the cards it grants, with no "Granted power" label; the card count; choice options (Arcanist Cantrips) as granted cards.',
   ),
   "beatrix|0|white well pact summary": auto(
     'The pact table row summary text is "You have the Fey pact of the White Well."',

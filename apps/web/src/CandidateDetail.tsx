@@ -167,9 +167,7 @@ function DetailStackCard({ entry }: { readonly entry: DetailStackEntry }) {
   return (
     <CandidateDetailCard
       entity={entry.entity}
-      {...(entry.relationship === undefined
-        ? {}
-        : { relationship: entry.relationship })}
+      granted={entry.granted === true}
     />
   );
 }
@@ -304,13 +302,15 @@ function FavoriteToggle({ entity }: { readonly entity: ContentEntity }) {
 export function CandidateDetailCard({
   candidate,
   entity,
-  relationship,
+  granted = false,
   favoritable = false,
   references,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
-  readonly relationship?: string;
+  /** A card the inspected option grants (its own heading id, never a
+   * favorite). */
+  readonly granted?: boolean;
   readonly favoritable?: boolean;
   /** Content by id and name; lets race/class cards list their traits and
    * features inside the card (StructuredEntityBody). */
@@ -319,7 +319,7 @@ export function CandidateDetailCard({
   const hideFlavortext = useContext(HideFlavortextContext);
   const showSource = useContext(ShowEntitySourceContext);
   const builderCards = useContext(BuilderCardContext);
-  const headingSuffix = relationship === undefined ? "" : "-granted";
+  const headingSuffix = granted ? "-granted" : "";
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${headingSuffix}`;
   const isThemeCandidate =
     candidate !== undefined &&
@@ -331,27 +331,17 @@ export function CandidateDetailCard({
   // Only an option picked from a table (not a card it grants, nor a button
   // choice like Gender) can be favorited.
   const headerAction =
-    candidate === undefined ||
-    relationship !== undefined ||
-    !favoritable ? undefined : (
+    candidate === undefined || granted || !favoritable ? undefined : (
       <FavoriteToggle entity={entity} />
     );
-  const subheading =
-    relationship === undefined && !isUnavailable ? undefined : (
-      <>
-        {relationship === undefined ? null : (
-          <p className="candidate-relationship">{relationship}</p>
-        )}
-        {isUnavailable ? (
-          <>
-            <span className="candidate-unavailable">Unavailable</span>
-            <p className="candidate-reason">
-              {candidateReason(candidate.reasons)}
-            </p>
-          </>
-        ) : null}
-      </>
-    );
+  // A granted card needs no "Granted power" label: it sits under the
+  // option it comes with.
+  const subheading = !isUnavailable ? undefined : (
+    <>
+      <span className="candidate-unavailable">Unavailable</span>
+      <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
+    </>
+  );
   const beastCard = builderCards.beastCardFor(entity);
   if (beastCard !== undefined)
     return (

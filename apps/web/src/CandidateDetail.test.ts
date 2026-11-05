@@ -150,7 +150,8 @@ describe("trait package detail", () => {
     expect(features.indexOf("Soul Step")).toBeLessThan(
       features.indexOf("Test Pact Reward"),
     );
-    expect(features).toContain("Granted power");
+    expect(features).not.toContain("Granted power");
+    expect(features).not.toContain("candidate-relationship");
     expect(features).toContain("You teleport 3 squares.");
     expect(features.indexOf("Test Pact Reward")).toBeLessThan(
       features.indexOf("Moonlit Escape"),

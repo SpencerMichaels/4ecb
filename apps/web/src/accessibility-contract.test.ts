@@ -447,9 +447,10 @@ describe("release accessibility contract", () => {
 
   it("balances entity headers without dropping meaningful status labels", () => {
     expect(candidateDetail).toContain(
-      "relationship === undefined && !isUnavailable ? undefined",
+      "const subheading = !isUnavailable ? undefined",
     );
-    expect(candidateDetail).toContain('className="candidate-relationship"');
+    // Granted cards sit under their option and need no label.
+    expect(candidateDetail).not.toContain('className="candidate-relationship"');
     expect(candidateDetail).toContain('className="candidate-unavailable"');
     expect(styles).toMatch(/\.entity-kind\s*\{[^}]*margin-bottom: 0;/);
   });

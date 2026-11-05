@@ -143,8 +143,9 @@ export function offeredDetailEntities(
 
 export interface DetailStackEntry {
   readonly entity: ContentEntity;
-  /** "Granted power"; parts of the option have none. */
-  readonly relationship?: string;
+  /** What a part or the option offers (powers, feats, items), as opposed
+   * to the option's own parts; shown unlabelled. */
+  readonly granted?: true;
   /** 0 for what the option itself lists, 1 for what that offers… */
   readonly depth: number;
   /** The level the option grants it at (its benefit's level for what a
@@ -279,7 +280,7 @@ export function detailStackEntries(
       ...partDetailEntities(owner, references).map((entity) => ({ entity })),
       ...offeredDetailEntities(owner, references).map((entity) => ({
         entity,
-        relationship: `Granted ${entity.type.trim().toLocaleLowerCase()}`,
+        granted: true as const,
       })),
     ];
     for (const child of children) {

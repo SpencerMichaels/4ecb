@@ -109,7 +109,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Trait package benefits",
-            'Select the Pact choice row (Fey Pact of the White Well): pact card, each benefit\'s card, each followed by its "Granted power" cards (~38 cards).',
+            "Select the Pact choice row (Fey Pact of the White Well): pact card, each benefit's card, each followed by the power cards it grants, unlabelled (~38 cards).",
           ],
           [
             "White Well pact summary",

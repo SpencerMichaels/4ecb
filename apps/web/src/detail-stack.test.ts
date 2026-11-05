@@ -60,8 +60,8 @@ const summary = (
   exclude?: readonly string[],
 ) =>
   detailStackEntries(root, references, exclude).map(
-    ({ entity: shown, relationship }) =>
-      relationship === undefined ? shown.id : `${shown.id} (${relationship})`,
+    ({ entity: shown, granted }) =>
+      granted === true ? `${shown.id} (granted)` : shown.id,
   );
 
 describe("detail stack", () => {
@@ -86,10 +86,10 @@ describe("detail stack", () => {
       summary(path, index(path, wake, wakePower, favor, utility, daily)),
     ).toEqual([
       "WAKE",
-      "WAKE_POWER (Granted power)",
+      "WAKE_POWER (granted)",
       "FAVOR",
-      "UTILITY (Granted power)",
-      "DAILY (Granted power)",
+      "UTILITY (granted)",
+      "DAILY (granted)",
     ]);
   });
 
@@ -108,7 +108,7 @@ describe("detail stack", () => {
     });
     expect(
       summary(manifestation, index(manifestation, fire, firePower, earth)),
-    ).toEqual(["FIRE", "FIRE_POWER (Granted power)", "EARTH"]);
+    ).toEqual(["FIRE", "FIRE_POWER (granted)", "EARTH"]);
 
     const child = entity("CHILD", "Class Feature");
     const magic = entity("MAGIC", "Class Feature", {
@@ -127,7 +127,7 @@ describe("detail stack", () => {
     });
     expect(
       summary(theme, index(theme, level1, feat, power), ["THEME_POWER"]),
-    ).toEqual(["LEVEL_1", "THEME_FEAT (Granted feat)"]);
+    ).toEqual(["LEVEL_1", "THEME_FEAT (granted)"]);
   });
 
   it("shows each card once, stops loops and bounds the depth", () => {
@@ -144,7 +144,7 @@ describe("detail stack", () => {
       Powers: "POWER",
     });
     expect(summary(owner, index(owner, feature, power, deep, deepest))).toEqual(
-      ["FEATURE", "POWER (Granted power)", "DEEP (Granted power)"],
+      ["FEATURE", "POWER (granted)", "DEEP (granted)"],
     );
   });
 

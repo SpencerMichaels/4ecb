@@ -331,46 +331,35 @@ rule("beatrix", "Build, level 1: Class", "Trait package benefits", (c) => {
   const pact = c.context.entity(WHITE_WELL);
   const references = candidateReferenceIndex(c.context.byId);
   const entries = detailStackEntries(pact, references);
-  const parts = entries.filter(
-    ({ relationship }) => relationship === undefined,
-  );
-  const granted = entries.filter(
-    ({ relationship }) => relationship !== undefined,
-  );
+  const parts = entries.filter(({ granted }) => granted === undefined);
+  const grantedCards = entries.filter(({ granted }) => granted === true);
   // Each part is followed by what it grants: no granted card comes before
   // the first part.
-  const firstPart = entries.findIndex(
-    ({ relationship }) => relationship === undefined,
-  );
+  const firstPart = entries.findIndex(({ granted }) => granted === undefined);
   const cantrips = c.context.entity("ID_FMP_CLASS_FEATURE_130");
   const cantripEntries = detailStackEntries(cantrips, references);
   return [
     truthy(
       "The stack has about 38 cards after the pact card",
       entries.length >= 30 && entries.length <= 46,
-      `${entries.length} cards: ${parts.length} benefits, ${granted.length} granted`,
+      `${entries.length} cards: ${parts.length} benefits, ${grantedCards.length} granted`,
     ),
     equal("The stack starts with a benefit card", firstPart, 0),
     truthy(
-      'Granted cards are labelled "Granted <type>"',
-      granted.every(({ relationship }) => /^Granted [a-z]/.test(relationship!)),
-      [...new Set(granted.map(({ relationship }) => relationship))].join(", "),
+      "Granted cards follow their benefits unlabelled",
+      !/Granted (power|feat|item|class feature)|candidate-relationship/.test(
+        candidateDetailHtml(c, pact),
+      ),
+      `${grantedCards.length} granted cards`,
     ),
     truthy(
-      'Granted powers say "Granted power"',
-      granted.some(({ relationship }) => relationship === "Granted power"),
-      `${granted.filter(({ relationship }) => relationship === "Granted power").length} granted powers`,
-    ),
-    truthy(
-      'Choice options (Arcanist Cantrips) are labelled "Granted power"',
+      "Choice options (Arcanist Cantrips) are granted cards",
       cantripEntries.length > 0 &&
-        cantripEntries.every(
-          ({ relationship }) => relationship === "Granted power",
-        ),
+        cantripEntries.every(({ granted }) => granted === true),
       cantripEntries
         .map(
-          ({ entity, relationship }) =>
-            `${entity.name} (${relationship ?? "part"})`,
+          ({ entity, granted }) =>
+            `${entity.name} (${granted === true ? "granted" : "part"})`,
         )
         .join(", "),
     ),
@@ -1977,7 +1966,7 @@ function detailStack(
       expected === undefined
         ? entries.length + themePowers.length > 0
         : entries.length >= expected.min && entries.length <= expected.max,
-      `${entries.length} cards (${entries.filter(({ relationship }) => relationship === undefined).length} parts, ${entries.filter(({ relationship }) => relationship !== undefined).length} granted)${themePowers.length === 0 ? "" : ` + ${themePowers.length} theme powers`}: ${entries
+      `${entries.length} cards (${entries.filter(({ granted }) => granted === undefined).length} parts, ${entries.filter(({ granted }) => granted === true).length} granted)${themePowers.length === 0 ? "" : ` + ${themePowers.length} theme powers`}: ${entries
         .slice(0, 12)
         .map(({ entity: part }) => part.name)
         .join(", ")}${entries.length > 12 ? ", …" : ""}`,
@@ -2015,7 +2004,8 @@ rule("wizard-gnome", "Build, level 1: Class", "Other detail stacks", (c) => {
     channel === undefined
       ? []
       : detailStackEntries(channel, references).filter(
-          ({ relationship }) => relationship === "Granted power",
+          ({ entity, granted }) =>
+            granted === true && entity.type.trim().toLowerCase() === "power",
         );
   return [
     ...(presence === undefined
