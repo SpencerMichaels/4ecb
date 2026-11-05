@@ -136,7 +136,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "sentinel-bear|1|other detail stacks": auto(
     "Archmage's detail stack lists its features and powers.",
   ),
-  "sentinel-bear|2|printed beast card": auto('The Surges tile reads "Yours".'),
+  "sentinel-bear|2|printed beast card": auto(
+    'The Surges tile reads "Yours"; no description prints.',
+  ),
   "sentinel-bear|2|beast power cards": auto(
     '"Beast +N vs AC" header and "Beast damage" lines on the companion powers.',
   ),

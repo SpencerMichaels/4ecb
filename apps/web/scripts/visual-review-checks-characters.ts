@@ -2024,6 +2024,12 @@ function detailStack(
         ? `${entries.length} rendered`
         : `missing: ${missing.map(({ entity: part }) => part.name).join(", ")}`,
     ),
+    // Mechanics only (D110 amendment, 2026-11-04): no record description.
+    lacks(
+      "It prints no description",
+      beast?.text ?? "",
+      "Brown bears and similar creatures",
+    ),
   ];
 }
 

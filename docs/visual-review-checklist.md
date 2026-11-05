@@ -172,10 +172,18 @@ live site.
 
 - [ ] **Sentinel druid: Bruin's printed card.**
   - **Where:** `?preview=1`, first card page, the 3rd card (Bruin).
-  - **Expect:** the level-25 stat block, traits and Guardian Companion aura
-    fit on one card at the same text size as its neighbours.
-  - **Wrong if:** text runs past the bottom, or it's far smaller than the
-    cards beside it.
+  - **Expect:** one card, mechanics only (D110 amendment, 2026-11-04): the
+    tiles, Speed, Claw attack, Trained skills, the Guardian Companion aura
+    and the italic command line, all inside the card at a readable size
+    (about 7.5 pt). No "Brown bears…" description; the builder's Companion
+    pane still shows it.
+  - **Wrong if:** any line runs past the bottom or under the "Beast
+    Companion" band, the description prints, or Bruin prints as two cards.
+  - **Split cards (no review character has one):** on a copy of the
+    ranger-beast character choose the Horse (or Simian) at Build, level 1:
+    Companion, then open `?preview=1`: a stats card then "Horse — Notes"
+    (Mount Companion, command line), side by side; Edit mode hides or drags
+    both together.
 
 ## Pass 7: Drow invoker 11 (`invoker-drow`)
 

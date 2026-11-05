@@ -567,7 +567,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Sentinel druid: Bruin's printed card",
-            "Bruin's level-25 card fits at its neighbours' text size.",
+            "Bruin's level-25 card is mechanics only (no description) and fits one card. Split cards: choose a Horse to see stats + Notes.",
           ],
           [
             "Printed beast card",

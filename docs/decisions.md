@@ -3763,7 +3763,7 @@ Card layout (owner decisions):
   each creature's whole card at print size in a hidden probe copy
   (`print-card-probe`), as page 1 measures its panes, and the fit hook's
   `onFit` reports whether it fits at the floor; `applySheetLayout`'s
-  `splitCreatures` then puts the stats and actions cards in the creature's
+  `splitCreatures` (now `splitCompanions`) then puts the stats and actions cards in the creature's
   deck place. Measuring in the browser follows the real fonts, the reader's
   preferred card text size and future CSS changes, which a pack-build
   font-metric hint would not; the metric model
@@ -3782,6 +3782,26 @@ Card layout (owner decisions):
   natural beast (mount) - XP 175" line and "Skills s Athletics"), so the
   full pack builds with no `mount.stat-block-unparsed` diagnostic. The
   parse is unchanged, so the stored version stays 1.
+
+Amended 2026-11-04 (product owner, visual review Pass 6 "Sentinel druid:
+Bruin's printed card"): beast companion cards. "Keep the cards
+mechanics-only": the printed beast card never prints the record's
+description (flavor, and the Vadalis-bred Griffon's paragon-path note with
+it); the builder's Companion pane still shows it, as a creature's pane
+shows its whole description. The printed card shrinks like a power card:
+its play notes (speed, attack, saves and resistances, skills, commands)
+take the fitted body text size and a condensed card closes up its blocks.
+It splits only when the rules can't fit: a beast whose whole card still
+overflows at the 6 pt floor prints as a **stats** card (identity, defense,
+health and ability tiles, speed, attack, skills) and a "<name> — Notes"
+card (situational notes, special rules, command line), measured by the
+same hidden probe copy, keyed `companion:<id>` and `companion:<id>:notes`
+with one `layoutKey`; `applySheetLayout`'s option is now
+`splitCompanions`. Measured in Firefox on every beast record (L11 and L25,
+`tmp/beast-fit/`): before, all 13 overflowed at the floor; now 11 fit one
+card at 6.5–8 pt (Bruin at 7.5 pt), and the Horse (Mount Companion) and the
+Simian (its Manipulate Items rule, which the card had left out) split, both
+halves fitting at 7–8 pt.
 
 ### D111 — Summoned creatures print as creature cards; the power keeps the summoning
 

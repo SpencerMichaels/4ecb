@@ -560,13 +560,21 @@ hidden probe copy (`print-card-probe`, the fit hook's `onFit`). A card
 that overflows at the 6 pt floor prints as two cards instead: a **stats**
 card (identity, tiles, notes, traits, load table) and an **actions** card
 titled "<creature> — Actions" (its attacks and other actions), never a
-"(continued)" card. `applySheetLayout`'s `splitCreatures` puts the pair in
+"(continued)" card. `applySheetLayout`'s `splitCompanions` puts the pair in
 the creature's deck place; the actions card (key `…:actions`, `layoutKey`
 the creature's) is hidden, shown and moved with the stats card in Edit mode.
 On the full pack 13 of 47 blocks overflow as one card by the font-metric
 model (`tmp/queue10b/fit-split.mjs`), and every stats and actions half fits
 at 8 pt. The builder's item detail (Inventory, Loadout, Shop) shows the
 whole creature as a panel card under the item card, description included.
+
+A beast companion's printed card is mechanics only (D110 amendment,
+2026-11-04): it never prints the record's description, which the builder's
+Companion pane still shows, and its play notes shrink with the fitted body
+text. The same probe measures it: a beast whose rules overflow at the floor
+(the Horse's Mount Companion, the Simian's Manipulate Items) prints as a
+stats card and a "<name> — Notes" card (situational notes, special rules,
+command line), key `companion:<id>:notes` with the beast's `layoutKey`.
 
 Summon powers (D111): a Power with the Summoning keyword, or a field naming
 a "summoned creature", gets the same `_Creature Stat Block` at pack build
