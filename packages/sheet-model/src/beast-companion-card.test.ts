@@ -259,6 +259,32 @@ describe("beast companion card", () => {
     expect(card.abilityIncreaseIds).toEqual(["CAI_4_STR"]);
   });
 
+  it("lists the record's special rules, Manipulate Items included", () => {
+    const entity = wolf();
+    const card = sheetBeastCompanionCard(
+      {
+        ...entity,
+        specifics: [
+          ...entity.specifics,
+          {
+            name: "Manipulate Items",
+            value: "Once per round it can pick up an item.",
+            extraAttributes: [],
+            ordinal: entity.specifics.length,
+          },
+        ],
+      },
+      beast(),
+    );
+    expect(card.traits).toEqual([
+      { label: "Combat Advantage", text: "The target is knocked prone." },
+      {
+        label: "Manipulate Items",
+        text: "Once per round it can pick up an item.",
+      },
+    ]);
+  });
+
   it("uses the sentinel's shared surges and command line", () => {
     const card = sheetBeastCompanionCard(
       wolf(),

@@ -94,6 +94,8 @@ const TRAIT_FIELDS = [
   "Power",
   "Companion Power",
   "Mount Companion",
+  // The simian (Dragon 392): a free action to have it use an item.
+  "Manipulate Items",
   "Quirks",
 ] as const;
 
