@@ -62,7 +62,7 @@ Each entry gives one **Where** (the page to open and what to click), then
    `tmp/visual-review/review-characters.4ecb`. Use Restore, not the library's
    Import, so the IDs stay fixed.
 
-`tmp/visual-review/index-visual.html` links each entry to its page. The
+`tmp/visual-review/index.html` links each entry to its page. The
 characters are named "Review – …" and have the ID `visual-review-<slug>`.
 A path such as `beatrix` → `edit?tab=build&level=1&section=class` means
 `#/characters/visual-review-beatrix/edit?tab=build&level=1&section=class`;

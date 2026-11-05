@@ -5,12 +5,11 @@
  * Both the build and the verifier (apps/web/scripts/verify-visual-review.ts)
  * call it, so the pages always show the latest verification.
  *
- *   index.html         every row; verified rows show their result
- *   index-visual.html  only what the owner still has to look at
+ *   index.html         only what the owner still has to look at
  *   classification.json  row key -> auto / mixed (unlisted rows are visual)
  */
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import type { ContentPackManifest } from "@4ecb/content-pack";
@@ -131,14 +130,9 @@ export async function writeReviewPages(outDir: string): Promise<WrittenPages> {
     classification: ROW_CLASSIFICATION,
     ...(verification === undefined ? {} : { verification }),
   };
-  const full = renderReviewPage({ ...common, otherPage: "index-visual.html" });
-  const visual = renderReviewPage({
-    ...common,
-    visualOnly: true,
-    otherPage: "index.html",
-  });
+  const full = renderReviewPage(common);
   await writeFile(resolve(outDir, "index.html"), full.html);
-  await writeFile(resolve(outDir, "index-visual.html"), visual.html);
+  await rm(resolve(outDir, "index-visual.html"), { force: true });
   await writeFile(
     resolve(outDir, "classification.json"),
     `${JSON.stringify(

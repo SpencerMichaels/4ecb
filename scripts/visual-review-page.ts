@@ -4,10 +4,11 @@
  * grouped by review character, with links into the running app and a
  * checkbox per checklist item per page (kept in localStorage).
  *
- * Rows that code verifies (scripts/visual-review-classification.ts) show
- * the verifier's result (apps/web/scripts/verify-visual-review.ts, its
- * verify.json) instead of a checkbox; mixed rows keep their checkbox for the
- * visual part. The visual-only page leaves verified rows out.
+ * The page shows only what the owner looks at. Rows that code verifies
+ * (scripts/visual-review-classification.ts) are left out and mixed rows show
+ * only their visual part; the verifier's outcomes
+ * (apps/web/scripts/verify-visual-review.ts, its verify.json) go to the
+ * build's console report through the returned summary.
  */
 import type { ContentPackManifest } from "@4ecb/content-pack";
 
@@ -196,10 +197,6 @@ export interface ReviewPageInput {
   /** Rows code verifies, by row key; unlisted rows are visual. */
   readonly classification?: Readonly<Record<string, RowClass>>;
   readonly verification?: Verification;
-  /** Leave verified rows (and their auto parts) out entirely. */
-  readonly visualOnly?: boolean;
-  /** The companion page's file name, linked from the summary. */
-  readonly otherPage?: string;
 }
 
 export interface ReviewPageSummary {
@@ -222,8 +219,7 @@ export function renderReviewPage(input: ReviewPageInput): {
 } {
   const { plan, built, checklist } = input;
   const classification = input.classification ?? {};
-  const visualOnly = input.visualOnly === true;
-  const used = new Map<ChecklistItem, string[]>();
+  const used = new Set<ChecklistItem>();
   const unknownKeys = new Set<string>();
   const seenRows = new Set<string>();
   const rowKinds = new Map<string, "auto" | "mixed" | "visual">();
@@ -236,37 +232,17 @@ export function renderReviewPage(input: ReviewPageInput): {
     built.map((character) => [character.slug, character]),
   );
 
-  /** The verifier's lines for a row, and whether they all passed. */
-  const autoHtml = (key: string, what: string, where: string) => {
+  /** Counts a row's verifier outcome for the console report. */
+  const countAuto = (key: string, where: string) => {
     const result = input.verification?.rows[key];
     if (result === undefined) {
       autoPending += 1;
-      return {
-        status: "pending" as const,
-        html: `<div class="auto auto-pending"><p><span class="auto-mark">…</span> To be verified automatically: ${inline(what)}</p><p class="auto-hint">Run <code>pnpm review:verify</code> (or <code>pnpm review:build</code>) to check it.</p></div>`,
-      };
+      return;
     }
-    const failed = result.checks.filter(({ pass }) => !pass);
-    const ok = result.error === undefined && failed.length === 0;
+    const ok =
+      result.error === undefined && result.checks.every(({ pass }) => pass);
     if (ok) autoPassed += 1;
     else failedRows.push(where);
-    const lines = result.checks
-      .map(
-        (check) =>
-          `<li class="${check.pass ? "pass" : "fail"}"><span class="auto-mark">${check.pass ? "✓" : "✗"}</span> ${escapeHtml(check.label)}${check.detail === "" ? "" : `<span class="auto-detail">${escapeHtml(check.detail)}</span>`}</li>`,
-      )
-      .join("");
-    const error =
-      result.error === undefined
-        ? ""
-        : `<li class="fail"><span class="auto-mark">✗</span> The check could not run<span class="auto-detail">${escapeHtml(result.error)}</span></li>`;
-    const headline = ok
-      ? `<span class="auto-mark">✓</span> Verified automatically (${result.checks.length} check${result.checks.length === 1 ? "" : "s"}): ${inline(what)}`
-      : `<span class="auto-mark">✗</span> Failed automatic verification: ${escapeHtml([...failed.map(({ label }) => label), ...(result.error === undefined ? [] : ["could not run"])].join("; "))}`;
-    return {
-      status: ok ? ("pass" as const) : ("fail" as const),
-      html: `<div class="auto ${ok ? "auto-pass" : "auto-fail"}"><details${ok ? "" : " open"}><summary>${headline}</summary><ul class="auto-checks">${lines}${error}</ul></details></div>`,
-    };
   };
 
   const itemRow = (
@@ -287,30 +263,22 @@ export function renderReviewPage(input: ReviewPageInput): {
     if (item === undefined) {
       // A fully automated item that has left the checklist.
       autoRows += 1;
-      const result = autoHtml(id, kind?.auto ?? note, `${where} — ${name}`);
-      if (visualOnly) return "";
-      return `<li class="item item-auto item-${result.status}"><span class="item-title">${inline(name)}</span>${result.html}</li>`;
+      countAuto(id, `${where} — ${name}`);
+      return "";
     }
-    used.set(item, [
-      ...(used.get(item) ?? []),
-      `<a href="#${anchor}">${escapeHtml(where)}</a>`,
-    ]);
-    const details = `<details><summary>Checklist text</summary><div class="item-body">${itemBodyHtml(item.body)}</div></details>`;
+    used.add(item);
     const title = `${where} — ${item.title}`;
     if (kind?.kind === "auto") {
       autoRows += 1;
-      const result = autoHtml(id, kind.auto, title);
-      if (visualOnly) return "";
-      return `<li class="item item-auto item-${result.status}"><span class="item-title">${inline(item.title)}</span>${result.html}${details}</li>`;
+      countAuto(id, title);
+      return "";
     }
     visualRows += 1;
+    const details = `<details><summary>Checklist text</summary><div class="item-body">${itemBodyHtml(item.body)}</div></details>`;
     const checkbox = `<label><input type="checkbox" data-check="${escapeHtml(id)}"><span class="item-title">${inline(item.title)}</span></label>`;
     if (kind?.kind === "mixed") {
-      const result = autoHtml(id, kind.auto, title);
-      const autoPart = visualOnly
-        ? `<p class="auto-hint">The factual part is verified automatically (see index.html).</p>`
-        : result.html;
-      return `<li class="item item-mixed"><label><input type="checkbox" data-check="${escapeHtml(id)}"><span class="item-title">${inline(item.title)}</span></label><p class="note"><strong>Look at:</strong> ${inline(kind.visual)}</p>${autoPart}${details}</li>`;
+      countAuto(id, title);
+      return `<li class="item">${checkbox}<p class="note">${inline(kind.visual)}</p>${details}</li>`;
     }
     return `<li class="item">${checkbox}<p class="note">${inline(note)}</p>${details}</li>`;
   };
@@ -352,8 +320,6 @@ export function renderReviewPage(input: ReviewPageInput): {
           `<dt>${escapeHtml(label.replace(/([a-z])([A-Z])/g, "$1 $2"))}</dt><dd>${escapeHtml(value)}</dd>`,
       )
       .join("");
-    const status = `${facts.complete ? "complete" : facts.expectComplete === false ? "incomplete (intended)" : '<strong class="bad">incomplete</strong>'}, ${facts.legal ? "legal" : facts.expectLegal === false ? "not legal (intended)" : '<strong class="bad">not legal</strong>'}`;
-    const missing = facts.required.filter(({ present }) => !present);
     const rows = [
       `<dt>Level</dt><dd>${facts.level}</dd>`,
       identity,
@@ -369,16 +335,8 @@ export function renderReviewPage(input: ReviewPageInput): {
       facts.known.length === 0
         ? ""
         : `<dt>Known rituals</dt><dd>${escapeHtml(facts.known.join("; "))}</dd>`,
-      `<dt>Status</dt><dd>${status}</dd>`,
-      missing.length === 0
-        ? ""
-        : `<dt>Missing</dt><dd class="bad">${escapeHtml(missing.map(({ name }) => name).join(", "))} (the review needs these; rebuild after fixing the plan)</dd>`,
     ].join("");
-    const diagnostics =
-      facts.diagnostics.length === 0
-        ? ""
-        : `<details class="diagnostics"><summary>${facts.diagnostics.length} diagnostic${facts.diagnostics.length === 1 ? "" : "s"}</summary><ul>${facts.diagnostics.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul></details>`;
-    return `<dl class="facts">${rows}</dl>${diagnostics}`;
+    return `<dl class="facts">${rows}</dl>`;
   };
 
   const shownCharacters = new Set<string>();
@@ -400,7 +358,7 @@ export function renderReviewPage(input: ReviewPageInput): {
           linkBlock(slug, character.record.id, link, index, title),
         )
         .join("");
-      if (visualOnly && links === "") return "";
+      if (links === "") return "";
       shownCharacters.add(slug);
       return `<article class="character" id="${slug}"><h2>${escapeHtml(title)}</h2><p class="purpose">${escapeHtml(review.purpose)}</p>${factsHtml(character)}${variants === "" ? "" : `<p class="variants-label">Copies for library checks (see General):</p><ul class="variants">${variants}</ul>`}${links}</article>`;
     })
@@ -437,15 +395,6 @@ export function renderReviewPage(input: ReviewPageInput): {
     visual: visualRows,
     autoRows,
   };
-  const summaryHtml = `<section class="panel summary" id="summary"><h2>${visualOnly ? "Visual items only" : "Automatic verification"}</h2>${
-    visualOnly
-      ? `<p>Rows that code verifies are hidden here; they appear in ${input.otherPage === undefined ? "index.html" : `<a href="${escapeHtml(input.otherPage)}">${escapeHtml(input.otherPage)}</a>`} once verified. Mixed rows list only what to look at. Ticks are shared with index.html (same keys).</p><p><strong>${visualRows}</strong> rows left for you; ${autoRows} fully automatic rows hidden.</p>`
-      : `<p><strong class="good">${autoPassed} verified automatically</strong>, <strong class="${failedRows.length === 0 ? "good" : "bad"}">${failedRows.length} failed</strong>${autoPending === 0 ? "" : `, ${autoPending} not yet verified`}, <strong>${visualRows} left for you</strong> (checkboxes)${input.otherPage === undefined ? "" : ` — see <a href="${escapeHtml(input.otherPage)}">${escapeHtml(input.otherPage)}</a> for the visual rows alone`}.${input.verification === undefined ? "" : ` Verified ${escapeHtml(input.verification.generatedAt)}.`}</p>${
-          failedRows.length === 0
-            ? ""
-            : `<ul class="failed-list">${failedRows.map((row) => `<li class="bad">${escapeHtml(row)}</li>`).join("")}</ul>`
-        }`
-  }</section>`;
   const unmappedSection =
     unmapped.length === 0
       ? ""
@@ -455,13 +404,6 @@ export function renderReviewPage(input: ReviewPageInput): {
             return `<li class="item"><label><input type="checkbox" data-check="${escapeHtml(id)}"><span class="item-title">${inline(item.title)}</span></label><p class="note">${escapeHtml(item.section)}</p><div class="item-body">${itemBodyHtml(item.body)}</div></li>`;
           })
           .join("")}</ul></article>`;
-
-  const index = checklist
-    .map((item) => {
-      const places = used.get(item);
-      return `<tr><td>${escapeHtml(item.section)}</td><td>${inline(item.title)}</td><td>${places === undefined ? '<a href="#unmapped" class="bad">unmapped</a>' : [...new Set(places)].join("<br>")}</td></tr>`;
-    })
-    .join("");
 
   const toc = plan.reviews
     .filter(({ spec }) => shownCharacters.has(spec.slug))
@@ -510,48 +452,27 @@ code{font:.85em ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhe
 .item label{display:flex;gap:.5rem;align-items:flex-start;cursor:pointer;font-weight:600}
 .item input{margin-top:.25rem;width:1.05rem;height:1.05rem;flex:none}
 .item.done .item-title{color:var(--done);text-decoration:line-through}
-.item-auto>.item-title{font-weight:600;padding-left:1.55rem}
-.auto{margin:.15rem 0 0 1.55rem;font-size:.92rem}
-.auto summary{cursor:pointer}
-.auto-pass{color:var(--done)}
-.auto-fail{color:var(--bad);border-left:3px solid var(--bad);padding-left:.5rem}
-.auto-fail summary{font-weight:600}
-.auto-pending,.auto-hint{color:var(--muted);margin:.15rem 0 0 1.55rem;font-size:.9rem}
-.auto-pending p{margin:0}
-.auto-checks{margin:.2rem 0;padding-left:1.1rem;list-style:none;color:var(--ink)}
-.auto-checks li{margin:.1rem 0}
-.auto-checks .fail{color:var(--bad)}
-.auto-checks .pass .auto-mark{color:var(--done)}
-.auto-detail{display:block;color:var(--muted);font-size:.86rem;overflow-wrap:anywhere;white-space:pre-wrap}
-.good{color:var(--done)}
-.failed-list{margin:.3rem 0 0;padding-left:1.2rem}
 .note{margin:.1rem 0 0 1.55rem}
 .item details,.item>.item-body{margin:.15rem 0 0 1.55rem;font-size:.9rem;color:var(--muted)}
 .item-body p{margin:.2rem 0}
 .item-body ul{margin:.2rem 0;padding-left:1.2rem}
-.diagnostics{font-size:.88rem;color:var(--muted);margin-bottom:.4rem}
 .variants-label{margin:.4rem 0 0;font-size:.92rem}
 
 .variants{margin:.2rem 0 .4rem;font-size:.92rem}
 ol.steps-list li{margin:.35rem 0}
 .toc{columns:2 18rem;padding-left:1.2rem}
-table{border-collapse:collapse;width:100%;font-size:.88rem}
-td{border-top:1px solid var(--line);padding:.3rem .4rem;vertical-align:top}
-.table-wrap{overflow-x:auto}
 @media (max-width:40rem){header input[type=url]{width:100%;max-width:none}header label{flex:1 1 100%}}
 </style>
 </head>
 <body>
 <main>
 <header>
-<h1>Visual review${visualOnly ? ": visual items" : ""} (${built.length} characters)</h1>
+<h1>Visual review (${built.length} characters)</h1>
 <label>App base URL <input type="url" id="base" value="${escapeHtml(input.base)}"></label>
 <span class="progress" id="progress"></span>
 <button type="button" id="theme">Theme</button>
 <button type="button" id="reset">Clear checks</button>
 </header>
-
-${summaryHtml}
 
 <section class="panel" id="before">
 <h2>Before you start</h2>
@@ -564,7 +485,7 @@ ${summaryHtml}
 <li>Check items off as you go (kept in this browser). Afterwards, re-enable your own content and trash the review characters (their titles start with "Review –").</li>
 </ol>
 <p>Generated ${escapeHtml(input.generatedAt)} from <code>docs/visual-review-checklist.md</code> (${checklist.length} items${unmapped.length === 0 ? "" : `, <a href="#unmapped" class="bad">${unmapped.length} not yet mapped</a>`}). Rebuild with <code>nix develop -c pnpm review:build</code>.</p>
-<ul class="toc">${toc}<li><a href="#general">General</a></li><li><a href="#coverage">Coverage index</a></li></ul>
+<ul class="toc">${toc}<li><a href="#general">General</a></li></ul>
 </section>
 
 ${characterSections}
@@ -573,7 +494,6 @@ ${generalSections === "" ? "" : `<article class="character" id="general"><h2>Gen
 
 ${unmappedSection}
 
-<article class="character" id="coverage"><h2>Coverage index</h2><p class="purpose">Every checklist item and where this page asks for it.</p><div class="table-wrap"><table><tbody>${index}</tbody></table></div></article>
 </main>
 <script>
 (function () {

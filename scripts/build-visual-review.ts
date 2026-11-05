@@ -21,9 +21,10 @@
  *
  * After the build it runs the verifier (`pnpm review:verify`,
  * apps/web/scripts/verify-visual-review.ts), which checks the factual rows
- * and rewrites the pages with its results (scripts/visual-review-output.ts):
- * index.html and the visual-only index-visual.html. `--no-verify` skips
- * it; `--pages-only` only rewrites the pages from the last build.
+ * and rewrites the page (scripts/visual-review-output.ts). index.html shows
+ * only what the owner looks at; failed checks are listed in this script's
+ * output. `--no-verify` skips it; `--pages-only` only rewrites the page from
+ * the last build.
  */
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -901,6 +902,9 @@ function reportPages(pages: WrittenPages): void {
       ? `Rows: ${summary.autoPassed} verified, ${summary.autoFailed.length} failed, ${summary.visual} for the owner.\n`
       : `Rows: ${summary.autoPending} awaiting verification, ${summary.visual} for the owner.\n`,
   );
+  summary.autoFailed.forEach((row) =>
+    process.stdout.write(`  FAILED: ${row}\n`),
+  );
 }
 
 async function main(): Promise<void> {
@@ -1036,7 +1040,7 @@ async function main(): Promise<void> {
     }
   }
   process.stdout.write(
-    `\nWrote ${backupFile}\n      ${packFile}\n      ${pageFile}\n      ${resolve(args.outDir, "index-visual.html")}\n`,
+    `\nWrote ${backupFile}\n      ${packFile}\n      ${pageFile}\n`,
   );
   reportPages(pages);
   if (failures > 0)
