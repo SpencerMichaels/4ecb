@@ -32,6 +32,7 @@ import {
   powerTableAttackLabel,
   powerTableAttackTitle,
   powerTableLevel,
+  type CandidateTableTypeGroup,
   type ChoiceSelectionTableKind,
 } from "./builder-ui";
 import {
@@ -157,6 +158,40 @@ export function candidateReferenceIndex(
   return index;
 }
 
+const typeGroupCache = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  Map<"feat" | "power", WeakMap<ContentEntity, CandidateTableTypeGroup>>
+>();
+
+/** A record's type section, once per content and table kind: every render
+ * of a table (each filter keystroke, each inspected row) groups all of its
+ * candidates. */
+function cachedTypeGroup(
+  entity: ContentEntity,
+  kind: "feat" | "power",
+  byId: ReadonlyMap<string, ContentEntity>,
+): CandidateTableTypeGroup {
+  let byKind = typeGroupCache.get(byId);
+  if (byKind === undefined) {
+    byKind = new Map();
+    typeGroupCache.set(byId, byKind);
+  }
+  let groups = byKind.get(kind);
+  if (groups === undefined) {
+    groups = new WeakMap();
+    byKind.set(kind, groups);
+  }
+  let group = groups.get(entity);
+  if (group === undefined) {
+    const referenceIndex = candidateReferenceIndex(byId);
+    group = candidateTableTypeGroup(entity, kind, (reference) =>
+      referenceIndex.get(reference.trim().toLocaleLowerCase()),
+    );
+    groups.set(entity, group);
+  }
+  return group;
+}
+
 type FeatPresentationGroup = ReturnType<
   typeof groupParameterizedCandidates
 >[number];
@@ -275,6 +310,13 @@ function candidateHeaderIsSortable(label: string): boolean {
   return !["description", "short description"].includes(normalizedLabel);
 }
 
+// One collator for every comparison: localeCompare with options builds one
+// per call, which dominated sorting a 3,700-feat table on each render.
+const candidateSortCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: "base",
+});
+
 function compareCandidateSortValues(
   left: string | number | undefined,
   right: string | number | undefined,
@@ -283,10 +325,7 @@ function compareCandidateSortValues(
   if (right === undefined) return -1;
   if (typeof left === "number" && typeof right === "number")
     return left - right;
-  return String(left).localeCompare(String(right), undefined, {
-    numeric: true,
-    sensitivity: "base",
-  });
+  return candidateSortCollator.compare(String(left), String(right));
 }
 
 export function CandidateSelectionTable({
@@ -430,14 +469,11 @@ export function CandidateSelectionTable({
       const wanted = facetValues[facet.id] ?? "";
       return wanted === "" || facetValuesFor(facet, candidate).includes(wanted);
     });
-  const referenceIndex = candidateReferenceIndex(byId);
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
     return entity === undefined || (kind !== "feat" && kind !== "power")
       ? { key: "other", label: "Other", order: 900 }
-      : candidateTableTypeGroup(entity, kind, (reference) =>
-          referenceIndex.get(reference.trim().toLocaleLowerCase()),
-        );
+      : cachedTypeGroup(entity, kind, byId);
   };
   const matchesFilter = (candidate: CandidateDecision, label?: string) => {
     if (normalizedFilter === "") return true;
