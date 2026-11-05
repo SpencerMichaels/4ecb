@@ -18,7 +18,8 @@ export interface SheetBeastCompanionCard {
   readonly part?: SheetBeastCompanionCardPart;
   /** The player's name for the beast (`_COMPANION_NAME`), else the category. */
   readonly name: string;
-  /** `_COMPANION_APPEARANCE`, the legacy panel's species line. */
+  /** `_COMPANION_APPEARANCE`, the legacy panel's species line; the player
+   *  may write several lines, joined here with spaces. */
   readonly appearance?: string;
   /** The record: Bear, Wolf, Vadalis-bred Griffon, … */
   readonly category: string;
@@ -207,7 +208,9 @@ export function sheetBeastCompanionCard(
     return repeated ? [] : [{ label, text: value }];
   });
   const optional = {
-    appearance: text("_COMPANION_APPEARANCE"),
+    // The Build tab edits it as multi-line text; the title prints it as
+    // one line, its lines joined with a space.
+    appearance: text("_COMPANION_APPEARANCE")?.replace(/\s*[\r\n]+\s*/g, " "),
     size: field(entity, "Size"),
     speed: statistics.speed,
     healingSurges: statistics.sharesHealingSurges

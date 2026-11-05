@@ -476,7 +476,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Beast ranger: Name and Appearance fields",
-            "The Name and Appearance fields' layout.",
+            "The short Name field with the multi-line Appearance box beneath it.",
           ],
           [
             "Builder Companion pane",
@@ -484,7 +484,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Name and Appearance",
-            'Name ("Ash") and Appearance inputs; the card title reads "Ash — wolf".',
+            'Name ("Ash") input and a multi-line Appearance box; the card title reads "Ash — Wolf".',
           ],
         ],
       },

@@ -167,9 +167,15 @@ live site.
 
 - [ ] **Beast ranger: Name and Appearance fields.**
   - **Where:** `edit?tab=build&level=1&section=companion`.
-  - **Expect:** the Name (Ash) and Appearance single-line fields side by side
-    under the companion row, laid out like the Details tab's inline fields.
-  - **Wrong if:** the fields overlap the table or wrap badly.
+  - **Expect:** under the companion row, the short Name field (Ash), as wide
+    as the Details tab's Player field, and beneath it a full-width
+    multi-line Appearance box like the Details tab's Appearance note that
+    grows as you type several lines. On the printed beast card
+    (`?preview=1`) the title reads "Ash — <your text>" with the lines
+    joined by spaces, as before.
+  - **Wrong if:** the fields overlap the table, Appearance is a one-line field
+    or sits beside Name, the box doesn't grow, or the card title breaks onto
+    separate lines where you pressed Enter.
 
 ## Pass 6: Sentinel druid 25 (`sentinel-bear`)
 
@@ -540,12 +546,10 @@ pass named.
 3. **Familiar header colour** (Pass 4): in dark theme the builder card's
    header turns the generic dark green panel colour instead of the teal
    used in print. Keep it, or keep teal?
-4. **One-line Appearance** (Pass 5): is a single-line Appearance field
-   enough for a beast companion?
-5. **Bear Companion Notes cards** (Pass 6): the sentinel also prints "Bear
+4. **Bear Companion Notes cards** (Pass 6): the sentinel also prints "Bear
    Companion Notes (1)" and "(2)" power cards, content powers that repeat
    the beast card's aura and notes. Keep them?
-6. **Mount card arrangement** (Pass 8): do the one-row tiles and the load
+5. **Mount card arrangement** (Pass 8): do the one-row tiles and the load
    table at the bottom read well, or want another arrangement?
-7. **Alias wording** (`hu` → `sheet`, Battle Awareness): its body reads
+6. **Alias wording** (`hu` → `sheet`, Battle Awareness): its body reads
    "Choices: Athletics; counts as Fighter". Does that read well?

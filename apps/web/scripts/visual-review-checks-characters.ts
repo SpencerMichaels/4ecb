@@ -1806,6 +1806,11 @@ rule(
       contains("A Name input", textOf(html), "Name"),
       contains("… holding Ash", html, 'value="Ash"'),
       contains("An Appearance input", textOf(html), "Appearance"),
+      contains(
+        "… a multi-line box beneath the Name row",
+        html,
+        '</div><label class="companion-appearance-field"><span>Appearance</span><textarea',
+      ),
       equal(
         "The card title",
         beast === undefined || beast.kind !== "beast"

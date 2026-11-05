@@ -19,7 +19,9 @@ export function hasCompanionChoice(
 /**
  * The companion's name and appearance (legacy `_COMPANION_NAME` and
  * `_COMPANION_APPEARANCE`), shown in the Build tab's Companion section beside
- * the companion choice; the beast companion card's title reads them.
+ * the companion choice: the name as a short inline field (the Details tab's
+ * Player width), the appearance as a freeform multi-line box beneath it like
+ * the Details tab's Appearance note. The beast companion card reads both.
  */
 export function CompanionNameFields({
   build,
@@ -31,18 +33,21 @@ export function CompanionNameFields({
   return (
     <section
       aria-label="Companion name and appearance"
-      className="character-inline-fields companion-name-fields"
+      className="companion-name-fields"
     >
+      <div className="character-inline-fields">
+        <CharacterTextField
+          inlineLabel
+          label="Name"
+          name={COMPANION_NAME_TEXT}
+          value={build.textStrings[COMPANION_NAME_TEXT] ?? ""}
+          onDispatch={onDispatch}
+        />
+      </div>
       <CharacterTextField
-        inlineLabel
-        label="Name"
-        name={COMPANION_NAME_TEXT}
-        value={build.textStrings[COMPANION_NAME_TEXT] ?? ""}
-        onDispatch={onDispatch}
-      />
-      <CharacterTextField
-        inlineLabel
+        className="companion-appearance-field"
         label="Appearance"
+        multiline
         name={COMPANION_APPEARANCE_TEXT}
         value={build.textStrings[COMPANION_APPEARANCE_TEXT] ?? ""}
         onDispatch={onDispatch}

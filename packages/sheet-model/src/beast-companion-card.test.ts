@@ -168,6 +168,18 @@ describe("beast companion card", () => {
     expect(card).not.toHaveProperty("resistances");
   });
 
+  it("joins a multi-line appearance into the title's one line", () => {
+    const card = sheetBeastCompanionCard(wolf(), beast(), {
+      textStrings: {
+        _COMPANION_APPEARANCE:
+          "  Grey timber wolf,\r\ntorn left ear\r\n\r\n \n\nwith a whistle\n",
+      },
+    });
+    expect(card.appearance).toBe(
+      "Grey timber wolf, torn left ear with a whistle",
+    );
+  });
+
   it("falls back to the record name and reads the granted attack power", () => {
     const power: EvaluatedPower = {
       definitionId: "BEAST_BASIC",

@@ -206,11 +206,33 @@
 
 /* Grows with its text where the browser supports it; otherwise a roomy
    minimum that can be dragged taller. */
-.character-note-panel textarea {
+.character-note-panel textarea,
+.companion-appearance-field textarea {
   field-sizing: content;
   min-height: 12rem;
   resize: vertical;
   width: 100%;
+}
+
+/* Build tab Companion section: the short Name field, then the beast's
+   freeform Appearance box (the Details notes' textarea, shorter to start)
+   across the section beneath it. */
+.companion-name-fields {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.companion-appearance-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.companion-appearance-field > span {
+  color: var(--muted);
+}
+
+.companion-appearance-field textarea {
+  min-height: 6rem;
 }
 
 .character-detail-group > .field-help {
