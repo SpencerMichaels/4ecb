@@ -186,6 +186,23 @@ function legacyTable(
     : { kind: "table", rows };
 }
 
+const SEE_BELOW_LEAD = /^see below\s*[:.]?$/iu;
+
+/** The books' "See Below:" pointed from a stat block down to the bulleted
+ *  rules after it; in a card or pane the list follows directly, so a field
+ *  whose first line only says "see below" drops that line when a list comes
+ *  next, on every surface. Display only: the stored text keeps it. */
+function withoutSeeBelowLead(
+  blocks: readonly ProseBlock[],
+): readonly ProseBlock[] {
+  const [lead, next] = blocks;
+  return (lead?.kind === "heading" || lead?.kind === "paragraph") &&
+    SEE_BELOW_LEAD.test(lead.text.trim()) &&
+    next?.kind === "list"
+    ? blocks.slice(1)
+    : blocks;
+}
+
 export function proseBlocks(value: string): readonly ProseBlock[] {
   const blocks: ProseBlock[] = [];
   let start = 0;
@@ -197,7 +214,10 @@ export function proseBlocks(value: string): readonly ProseBlock[] {
     blocks.push(...plainProseBlocks(value.slice(start, match.index)), table);
     start = match.index + match[0].length;
   }
-  return [...blocks, ...plainProseBlocks(value.slice(start), true)];
+  return withoutSeeBelowLead([
+    ...blocks,
+    ...plainProseBlocks(value.slice(start), true),
+  ]);
 }
 
 export function ProseBlocks({

@@ -135,3 +135,53 @@ describe("shared prose renderer", () => {
     expect(markup).not.toContain('onclick="bad()"');
   });
 });
+
+describe("a See Below lead", () => {
+  const list = "* You gain darkvision.\n* You cannot be blinded.";
+  const listBlock = {
+    kind: "list",
+    ordered: false,
+    items: ["You gain darkvision.", "You cannot be blinded."],
+  };
+
+  it("is dropped from any field when a list follows it", () => {
+    for (const lead of [
+      "See Below:",
+      "See below:",
+      "See Below: ",
+      "See below.",
+      "See Below",
+      "see below",
+      "  see below :",
+    ])
+      expect(proseBlocks(`${lead}\n${list}`)).toEqual([listBlock]);
+    expect(proseBlocks("See Below:\r\n• One.\r\n• Two.")).toEqual([
+      { kind: "list", ordered: false, items: ["One.", "Two."] },
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(Prose, { value: `See Below:\n${list}` }),
+    );
+    expect(markup).not.toMatch(/see below/i);
+    expect(markup).toContain("<li>You gain darkvision.</li>");
+  });
+
+  it("stays when it is not a lead line pointing at a following list", () => {
+    for (const unchanged of [
+      "See below",
+      "See below.",
+      "See Below:",
+      "See below: a benefit",
+      "See Below:\nA paragraph, not a list.",
+      "1 hour (see below)",
+      "Power (Daily): Minor Action. See below:\n* Kept.",
+      `Lead text.\nSee Below:\n${list}`,
+    ])
+      expect(
+        renderToStaticMarkup(createElement(Prose, { value: unchanged })),
+      ).toMatch(/see below/i);
+    // A ritual's "Component Cost: See below" points at its body text.
+    expect(proseBlocks("See below")).toEqual([
+      { kind: "paragraph", text: "See below" },
+    ]);
+  });
+});

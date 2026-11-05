@@ -88,7 +88,9 @@ describe("familiar card", () => {
       {},
     );
     expect(card).toMatchObject({
-      constantBenefits: "* Venom affinity.",
+      // The redundant "See Below:" lead is dropped by the shared prose
+      // renderer, on every surface, not here.
+      constantBenefits: "See Below:\n* Venom affinity.",
       activeBenefits: "Slide a poisoned creature.",
       description: "Lolth's children.",
     });

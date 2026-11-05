@@ -237,17 +237,11 @@ export function printItemPresentation(card: SheetCard) {
       entry.label.trim().toLowerCase() === "properties" &&
       isHeaderPropertyValue(entry.value),
   );
-  const bodyFields = card.fields
-    .filter(
-      (entry) =>
-        !excluded.has(entry.label.trim().toLowerCase()) &&
-        !weaponProperties.includes(entry),
-    )
-    .map((entry) =>
-      /^propert(?:y|ies)$/i.test(entry.label.trim())
-        ? { ...entry, value: withoutSeeBelowLead(entry.value) }
-        : entry,
-    );
+  const bodyFields = card.fields.filter(
+    (entry) =>
+      !excluded.has(entry.label.trim().toLowerCase()) &&
+      !weaponProperties.includes(entry),
+  );
   const precedesPowers = (entry: SheetValue) =>
     /^(?:prerequisites?|requirements?)$/i.test(entry.label.trim());
   const rules = bodyFields.some((entry) => printItemPower(entry) !== undefined)
@@ -341,16 +335,6 @@ export function isHeaderPropertyValue(value: string): boolean {
     blocks.every(({ kind }) => kind === "paragraph") &&
     !/[.!?;:](?:\s|$)/u.test(value.trim())
   );
-}
-
-/** The books' "See Below:" pointed from the stat block down to the item's
- *  bulleted properties; on a card the list follows directly, so the lead line
- *  is dropped when a list comes next. Display only: the stored text keeps it. */
-export function withoutSeeBelowLead(value: string): string {
-  const lead = value.match(/^\s*see below\s*[:.]?[ \t]*\r?\n/iu);
-  if (lead === null) return value;
-  const rest = value.slice(lead[0].length);
-  return proseBlocks(rest)[0]?.kind === "list" ? rest : value;
 }
 
 /** Only remove a recognized usage/action prefix; unknown authored prose stays intact. */

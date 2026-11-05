@@ -81,6 +81,26 @@ describe("familiar card", () => {
     );
   });
 
+  it("drops a benefit's See Below lead before its list", () => {
+    // Spiderling of Lolth's "Passive Benefits".
+    for (const layout of ["print", "panel"] as const) {
+      const html = renderToStaticMarkup(
+        <FamiliarCard
+          card={{
+            ...card,
+            constantBenefits:
+              "See Below:\n* Venom Affinity: +2 to saves.\n* Webs of Malice: -1 to saves.",
+          }}
+          layout={layout}
+        />,
+      );
+      expect(html).not.toMatch(/see below/i);
+      expect(html).toContain(
+        '<h4>Constant benefits</h4><div class="prose-blocks"><ul><li>Venom Affinity: +2 to saves.</li>',
+      );
+    }
+  });
+
   it("prints a split familiar as a stats card and a notes card", () => {
     const stats = renderToStaticMarkup(
       <FamiliarCard card={{ ...card, part: "stats" }} />,
