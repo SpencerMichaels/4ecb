@@ -1167,6 +1167,63 @@ describe("character evaluator", () => {
     );
   });
 
+  it("reports a pick ineligible only by source once, on its occurrence", () => {
+    const evaluateWith = (definitionId: string) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          sourceEntitlements: ["Allowed Book"],
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "chosen",
+              definitionId,
+              acquiredLevel: 1,
+              parentId: "root",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+          ],
+          inventory: [],
+        },
+        [
+          entity("ROOT", "1", "Level", {
+            source: "Allowed Book",
+            rules: [rule("select", { type: "Feat", Category: "Allowed" }, 0)],
+          }),
+          entity("BLOCKED", "Blocked feat", "Feat", {
+            source: "Blocked Book",
+            categories: ["Allowed"],
+          }),
+          entity("BLOCKED_ILLEGAL", "Blocked illegal feat", "Feat", {
+            source: "Blocked Book",
+            categories: ["Other"],
+          }),
+        ],
+      );
+    const codes = (result: ReturnType<typeof evaluateWith>) =>
+      result.diagnostics
+        .filter(({ occurrenceId }) => occurrenceId === "chosen")
+        .map(({ code }) => code);
+
+    const blocked = evaluateWith("BLOCKED");
+    expect(codes(blocked)).toEqual(["occurrence.source-unentitled"]);
+    expect(blocked.legal).toBe(false);
+
+    // A rules reason besides the source still raises the error, naming only
+    // the rules reason.
+    const illegal = evaluateWith("BLOCKED_ILLEGAL");
+    expect(codes(illegal)).toContain("occurrence.source-unentitled");
+    const ineligible = illegal.diagnostics.find(
+      ({ code }) => code === "choice.ineligible",
+    );
+    expect(ineligible?.message).toBe(
+      "The selected Feat is not eligible: category.",
+    );
+  });
+
   it("treats every source as entitled when no list is configured", () => {
     const result = evaluateCharacter(
       {

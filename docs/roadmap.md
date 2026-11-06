@@ -943,8 +943,6 @@ checklist's Campaigns pass.
 
 Follow-ups (not done):
 
-- A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
-  and `choice.ineligible`), as the campaign one was before `e0d89803`.
 - Owner skim of some Pathfinder deity descriptions: Easivra, Erecura,
   Grundinnar, Kitumu, Alazhra, Feronia, Lissala, Nivi Rhombodazzle.
 

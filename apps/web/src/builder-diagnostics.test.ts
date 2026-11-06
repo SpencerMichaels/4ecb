@@ -534,6 +534,85 @@ describe("builder issue groups", () => {
     ]);
   });
 
+  it("lists a pick outside the allowed sources once, as an error on its choice", () => {
+    const featChoice = (reasons: string[]): EvaluatedChoice => ({
+      id: "feat-choice",
+      level: 1,
+      providerOccurrenceId: "root",
+      ruleOrdinal: 0,
+      index: 0,
+      type: "Feat",
+      optional: false,
+      selectedOccurrenceId: "selected-feat",
+      candidates: [
+        {
+          definitionId: "ID_BLOCKED_FEAT",
+          eligible: false,
+          sourceEntitled: false,
+          rulesLegal: !reasons.includes("already-class-skill"),
+          activeDefinition: true,
+          activeOccurrenceIds: ["selected-feat"],
+          providerOccurrenceIds: ["root"],
+          reasons,
+        },
+      ],
+    });
+    const unentitled = (reasons: string[]) =>
+      builderIssueGroups({
+        ...common,
+        byId: new Map([
+          [
+            "id_blocked_feat",
+            { id: "ID_BLOCKED_FEAT", name: "Blocked Feat", type: "Feat" },
+          ],
+        ]) as unknown as ReadonlyMap<string, ContentEntity>,
+        evaluation: evaluation({
+          legal: false,
+          occurrences: [
+            {
+              id: "selected-feat",
+              definitionId: "ID_BLOCKED_FEAT",
+              acquiredLevel: 1,
+              parentId: "root",
+              kind: "choice",
+            },
+          ],
+          choices: [featChoice(reasons)],
+          diagnostics: [
+            {
+              severity: "error",
+              code: "occurrence.source-unentitled",
+              message:
+                "Blocked Feat is not included in the configured source entitlements.",
+              occurrenceId: "selected-feat",
+            },
+          ],
+        }),
+      });
+
+    const result = unentitled(["source-unentitled"]);
+    expect(result.warnings).toEqual([]);
+    expect(result.houseRules).toEqual([]);
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        kind: "error",
+        detail:
+          "Blocked Feat is not included in the configured source entitlements.",
+        target: { kind: "choice", choiceId: "feat-choice" },
+      }),
+    ]);
+
+    // A reason the engine raises no diagnostic for still lists, without the
+    // source reason.
+    const redundant = unentitled(["source-unentitled", "already-class-skill"]);
+    expect(redundant.errors).toHaveLength(1);
+    expect(redundant.houseRules).toEqual([
+      expect.objectContaining({
+        key: expect.stringMatching(/^selected-redundant:/),
+      }),
+    ]);
+  });
+
   it("lists a granted occurrence the campaign doesn't use by name", () => {
     const result = builderIssueGroups({
       ...common,

@@ -94,7 +94,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v119-2026-11-06-prerequisite-met-through";
+  "evaluated-character-v120-2026-11-06-permission-pick-not-ineligible";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -386,7 +386,7 @@ function campaignRestrictionChecker(
 
 /** Candidate reasons that are policy, not rules: they clear
  *  `sourceEntitled`, never `rulesLegal`. */
-const PERMISSION_REASONS: ReadonlySet<string> = new Set([
+export const PERMISSION_REASONS: ReadonlySet<string> = new Set([
   "source-unentitled",
   "campaign-restricted",
 ]);
@@ -4480,23 +4480,25 @@ function evaluateCharacterInternal(
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });
+    // The pick's occurrence diagnostic (occurrence.source-unentitled,
+    // occurrence.campaign-restricted) speaks for a permission reason.
+    const rulesReasons =
+      selected?.reasons.filter((reason) => !PERMISSION_REASONS.has(reason)) ??
+      [];
     if (
-      selected !== undefined &&
-      selected.reasons.some(
+      rulesReasons.some(
         (reason) =>
           reason !== "prerequisite" &&
           reason !== "prerequisite-unverified" &&
           // A redundant pick is harmless, not an error.
           reason !== "already-class-skill" &&
-          // occurrence.campaign-restricted speaks for a restricted pick.
-          reason !== "campaign-restricted" &&
           (reason !== "category" || !exactOwnedPrerequisite),
       )
     )
       diagnostics.push({
         severity: "error",
         code: "choice.ineligible",
-        message: `The selected ${choice.type} is not eligible: ${selected.reasons.join(", ")}.`,
+        message: `The selected ${choice.type} is not eligible: ${rulesReasons.join(", ")}.`,
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });

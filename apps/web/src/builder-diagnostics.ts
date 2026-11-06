@@ -6,6 +6,7 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   itemChoiceSlots,
+  PERMISSION_REASONS,
   userEditName,
   type EngineDiagnostic,
   type EvaluatedCharacter,
@@ -592,14 +593,12 @@ export function builderIssueGroups({
   // A pick or holding the character's campaign doesn't use (D116) is a house
   // rule, as legacy listed it. These come first so a pick also saved as a
   // house rule keeps this more specific issue under the shared key.
-  const campaignRestrictedOccurrenceIds = new Set<string>();
   const campaignHouseRules: BuilderIssue[] = evaluation.diagnostics.flatMap(
     (diagnostic): BuilderIssue[] => {
       if (diagnostic.occurrenceId === undefined) return [];
       const effect =
         "It remains on the character and is preserved on export, but the character is marked as using house rules.";
       if (diagnostic.code === "occurrence.campaign-restricted") {
-        campaignRestrictedOccurrenceIds.add(diagnostic.occurrenceId);
         const occurrence = evaluation.occurrences.find(
           (candidate) => candidate.id === diagnostic.occurrenceId,
         );
@@ -823,11 +822,18 @@ export function builderIssueGroups({
     evaluation.diagnostics.flatMap((diagnostic) =>
       diagnostic.severity === "error" &&
       diagnostic.occurrenceId !== undefined &&
-      [
-        "choice.ineligible",
-        "occurrence.source-unentitled",
-        "prerequisite.failed",
-      ].includes(diagnostic.code)
+      ["choice.ineligible", "prerequisite.failed"].includes(diagnostic.code)
+        ? [diagnostic.occurrenceId]
+        : [],
+    ),
+  );
+  // Occurrences whose source entitlement or campaign restriction has its own
+  // diagnostic (an error and a house rule, above).
+  const permissionDiagnosedOccurrenceIds = new Set(
+    evaluation.diagnostics.flatMap((diagnostic) =>
+      diagnostic.occurrenceId !== undefined &&
+      (diagnostic.code === "occurrence.source-unentitled" ||
+        diagnostic.code === "occurrence.campaign-restricted")
         ? [diagnostic.occurrenceId]
         : [],
     ),
@@ -851,11 +857,12 @@ export function builderIssueGroups({
         return [];
       const candidate = selectedCandidateDecision(choice, evaluation);
       if (candidate === undefined || candidate.eligible) return [];
-      // The campaign house-rule issue speaks for a restricted pick.
-      const reasons = campaignRestrictedOccurrenceIds.has(
+      // The pick's own permission issue (source or campaign) speaks for a
+      // permission reason.
+      const reasons = permissionDiagnosedOccurrenceIds.has(
         choice.selectedOccurrenceId,
       )
-        ? candidate.reasons.filter((reason) => reason !== "campaign-restricted")
+        ? candidate.reasons.filter((reason) => !PERMISSION_REASONS.has(reason))
         : candidate.reasons;
       if (reasons.length === 0) return [];
       const unverified =

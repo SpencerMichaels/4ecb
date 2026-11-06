@@ -26,6 +26,15 @@ recoverable and diagnostic, but the ordinary choose command does not turn them
 into house rules. Rules-illegal same-category candidates remain revealable and
 selectable through the explicit unavailable/house-rule workflow.
 
+Source entitlement and campaign restriction are the permission reasons
+(`PERMISSION_REASONS`). An owned definition failing one gets its own
+occurrence diagnostic (`occurrence.source-unentitled`, an error;
+`occurrence.campaign-restricted`, a warning), and that diagnostic speaks for
+it: a selected pick's `choice.ineligible` considers, and names, only its
+other (rules) reasons, so a pick ineligible only by permission raises just
+the occurrence diagnostic. `builder-diagnostics.ts` drops the same reasons
+from its selected-ineligible issues.
+
 Campaign restrictions (D116) are the other half of that access policy.
 `EvaluationInput.restrictedDefinitionIds` lists the definition IDs a
 campaign does not use (matched case-insensitively; undefined or empty
@@ -39,8 +48,7 @@ them: "must worship Moradin" is met through a campaign deity's CountsAsDeity
 while Moradin itself is restricted. Items are restricted the same way (owner,
 2026-11-06): a `select` of an item type marks a restricted item like any
 candidate. An owned restricted occurrence stays active and gets the warning
-`occurrence.campaign-restricted` (a restricted pick gets no
-`choice.ineligible` error besides: the warning speaks for it); a held holding (equipped or not) whose
+`occurrence.campaign-restricted`; a held holding (equipped or not) whose
 item or enchantment is restricted gets `item.campaign-restricted` instead,
 targeted at the holding's `<entry>:definition:<index>` occurrence ID like
 `item.requirement-unmet`. Either makes `legal` false. "Show all" lists in

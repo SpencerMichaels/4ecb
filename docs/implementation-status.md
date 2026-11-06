@@ -1,5 +1,34 @@
 # Implementation status
 
+## One issue for a pick outside the allowed sources (2026-11-06)
+
+Campaign follow-up (D116). A pick whose source the character isn't entitled
+to raised both `occurrence.source-unentitled` and `choice.ineligible`
+(reason `source-unentitled`), so the player saw two errors for it, as a
+campaign-restricted pick did before `e0d89803`. The evaluator now drops
+every `PERMISSION_REASONS` reason (source-unentitled, campaign-restricted;
+exported from `rules-engine`) before deciding on `choice.ineligible` and
+from its message: the pick's occurrence diagnostic speaks for it, and a
+rules reason (category, owned, …) still raises the error, naming only the
+rules reasons (cache v120). `builder-diagnostics.ts` follows the same rule:
+`selectedIneligibleIssues` drops the permission reasons for any occurrence
+with its own permission diagnostic, instead of a campaign-only filter and a
+blanket skip of source-unentitled occurrences, so a pick outside the sources
+is exactly one error with a Review target on its choice. Tests:
+`evaluator.test.ts` ("reports a pick ineligible only by source once") and
+`builder-diagnostics.test.ts` ("lists a pick outside the allowed sources
+once").
+
+Evaluation timing after `dd70d3cb` (prerequisite met-through): full
+`evaluateCharacter` on `full-local.4ecp`, best of 6 warm runs, `a6c87530`
+vs `dd70d3cb` — Alysa Redfield (hybrid) 4558 vs 4423 ms, KrizDevvon15 10715
+vs 10479 ms, Natan 12 6421 vs 6393 ms, the Pathfinder Torag probe (irina at
+6th, campaign profile) 2090 vs 2185 ms: within run-to-run noise (<5%), so no
+change. Script: ignored `tmp/probe/timing/time.ts`.
+
+Verification: `pnpm typecheck`, `pnpm test`, eslint/prettier on the changed
+files, `pnpm parity:baseline` (no new mismatches).
+
 ## Deity table bands by pantheon (2026-11-06)
 
 The builder's Deity table bands its rows by an authored `Pantheon`
@@ -47,9 +76,10 @@ The owner's walk-through is the Campaigns pass of
 Verification: `nix develop --command bash scripts/check.sh` and
 `pnpm parity:baseline` (results in this entry's commit message).
 
-Follow-ups (also in the roadmap's Campaign slice): a possible double report of
-source-unentitled picks; an
-owner skim of eight Pathfinder deity descriptions. Owner action outside the
+Follow-ups (also in the roadmap's Campaign slice): an owner skim of eight
+Pathfinder deity descriptions. (The possible double report of
+source-unentitled picks was real and is fixed: "One issue for a pick outside
+the allowed sources".) Owner action outside the
 repo: homenet `apps/4ecb/pack.yml` must copy and keep
 `private-packs/campaigns/`.
 
