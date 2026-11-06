@@ -931,6 +931,12 @@ the play milestones M5.8–M7 are deferred). Until they exist, the play-bundle
 and session-protocol deliverables and exit criteria are out of scope; the rest
 applies to the builder, sheet, content packs and saved characters as shipped.
 
+Known cleanup carried in (2026-11-05): the `.sp-monochrome` print styles in
+`apps/web/src/sheet-overview.css` are dead since D083 removed the monochrome
+option; the "item requirement unmet" style of untargeted issues left by
+`f324b9a` (warnings on granted features could land on their granting choice);
+and Alysa's resistance text ("5 lightning and resist thunder 5").
+
 ### Goal
 
 Declare the character-builder product stable for its actual audience: the
