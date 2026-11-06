@@ -22,6 +22,7 @@ import {
   parseCampaignManifest,
   parseHouseRules,
   readCampaignFile,
+  summarizeCampaign,
 } from "./campaign-command";
 
 const fixtureManifest = resolve(
@@ -122,6 +123,34 @@ describe("campaign.json", () => {
     expect(() => parseCampaignManifest({ ...base, patches: {} }, "/")).toThrow(
       /patches must be an array/,
     );
+    const rulePatch = {
+      id: "ID_RACE",
+      rule: {
+        match: { name: "grant", attributes: { name: "ID_PRIMORDIAL" } },
+        set: { name: "ID_IGNAN" },
+      },
+    };
+    expect(
+      parseCampaignManifest({ ...base, patches: [patch, rulePatch] }, "/")
+        .manifest.patches,
+    ).toEqual([patch, rulePatch]);
+    expect(() =>
+      parseCampaignManifest(
+        { ...base, patches: [{ ...rulePatch, field: "name" }] },
+        "/",
+      ),
+    ).toThrow(/patches\[0\] has unknown keys: field/);
+    expect(() =>
+      parseCampaignManifest(
+        {
+          ...base,
+          patches: [{ id: "ID_RACE", rule: { remove: 1, delete: true } }],
+        },
+        "/",
+      ),
+    ).toThrow(
+      /patches\[0\]\.rule has unknown keys: delete; remove must be true/,
+    );
   });
 });
 
@@ -154,10 +183,21 @@ describe("campaign build", () => {
     ]);
     expect(campaign.legacyHouseRulesXml).toMatch(/^<RulesElement /);
     expect(campaign.legacyHouseRulesXml).toContain('type="CountsAsDeity"');
-    expect(campaign.patches?.map(({ id, field }) => [id, field])).toEqual([
+    expect(
+      campaign.patches?.map((patch) => [
+        patch.id,
+        "rule" in patch ? "rule" : patch.field,
+      ]),
+    ).toEqual([
       ["ID_4ECB_SYNTHETIC_RACE_1", "name"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
+      ["ID_4ECB_SYNTHETIC_RACE_1", "rule"],
     ]);
+    expect(summarizeCampaign(campaign)).toMatchObject({
+      version: 3,
+      patches: 2,
+      rulePatches: 1,
+    });
     // An authored "Also Known As" is parsed once, at build, into aliases;
     // the legacy XML keeps the field verbatim for export (D116).
     const tide = campaign.houseRules.entities.find(
@@ -290,6 +330,110 @@ describe("campaign build", () => {
       "Patch ID_GONE name not applied: no record ID_GONE (stock)",
     ]);
     // Patches never reach the legacy campaign block.
+    expect(campaign.legacyHouseRulesXml).toBe("");
+  });
+
+  it("reports each rule patch with the elements it matched", async () => {
+    const pack = await buildContentPack(
+      parseD20Rules(
+        rules(
+          [
+            '<RulesElement internal-id="ID_INTERNAL_GRANTS_GNOME" name="Gnome" type="Grants"><rules>',
+            '<grant name="ID_FMP_LANGUAGE_1" type="Language" />',
+            '<grant name="ID_FMP_LANGUAGE_4" type="Language" />',
+            "</rules></RulesElement>",
+            '<RulesElement internal-id="ID_FEAT_FEY" name="Fey-Minded" type="Feat"><rules>',
+            '<select type="Language" number="1" Category="ID_FMP_LANGUAGE_4|ID_FMP_LANGUAGE_19" default="ID_FMP_LANGUAGE_4" />',
+            "</rules></RulesElement>",
+          ].join("\n"),
+        ),
+        "stock.xml",
+      ),
+      { packId: "stock", name: "Stock" },
+    );
+    const xml = rules("");
+    const sylvan = { name: "ID_PF_LANGUAGE_SYLVAN", type: "Language" };
+    const campaign = await buildCampaign(
+      {
+        campaignId: "test-setting",
+        name: "Test Setting",
+        revision: 1,
+        restrictions: { ids: [], types: [] },
+        patches: [
+          {
+            id: "ID_INTERNAL_GRANTS_GNOME",
+            rule: {
+              match: {
+                name: "grant",
+                attributes: { name: "ID_FMP_LANGUAGE_4", type: "Language" },
+              },
+              set: { name: "ID_PF_LANGUAGE_GNOMISH" },
+            },
+          },
+          {
+            id: "ID_INTERNAL_GRANTS_GNOME",
+            rule: { add: [{ name: "grant", attributes: sylvan }] },
+          },
+          {
+            id: "ID_FEAT_FEY",
+            rule: {
+              match: { name: "select", attributes: { type: "Language" } },
+              replaceId: { from: "ID_FMP_LANGUAGE_4", to: sylvan.name },
+            },
+          },
+          {
+            id: "ID_FEAT_FEY",
+            rule: {
+              match: { name: "grant", attributes: { type: "Language" } },
+              remove: true,
+            },
+          },
+        ],
+      },
+      parseHouseRules(xml, "house-rules.xml"),
+      houseRulesChildrenXml(xml),
+    );
+    const report = campaignAgainstPack(campaign, pack);
+    expect(
+      report.rulePatches.map(({ id, operation, status, matched }) => ({
+        id,
+        operation,
+        status,
+        matched,
+      })),
+    ).toEqual([
+      {
+        id: "ID_FEAT_FEY",
+        operation:
+          'replace ID_FMP_LANGUAGE_4 with ID_PF_LANGUAGE_SYLVAN in <select type="Language" />',
+        status: "applies",
+        matched: [
+          '<select type="Language" number="1" Category="ID_FMP_LANGUAGE_4|ID_FMP_LANGUAGE_19" default="ID_FMP_LANGUAGE_4" />',
+        ],
+      },
+      {
+        id: "ID_FEAT_FEY",
+        operation: 'remove <grant type="Language" />',
+        status: "no-match",
+        matched: [],
+      },
+      {
+        id: "ID_INTERNAL_GRANTS_GNOME",
+        operation:
+          'set name="ID_PF_LANGUAGE_GNOMISH" on <grant name="ID_FMP_LANGUAGE_4" type="Language" />',
+        status: "applies",
+        matched: ['<grant name="ID_FMP_LANGUAGE_4" type="Language" />'],
+      },
+      {
+        id: "ID_INTERNAL_GRANTS_GNOME",
+        operation: 'add <grant name="ID_PF_LANGUAGE_SYLVAN" type="Language" />',
+        status: "applies",
+        matched: [],
+      },
+    ]);
+    expect(report.warnings).toEqual([
+      'Rule patch ID_FEAT_FEY: remove <grant type="Language" /> not applied: ID_FEAT_FEY has no matching rule element (stock)',
+    ]);
     expect(campaign.legacyHouseRulesXml).toBe("");
   });
 });

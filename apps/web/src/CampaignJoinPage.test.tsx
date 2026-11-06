@@ -128,6 +128,13 @@ describe("campaign invite states", () => {
         patches: [
           { id: "ID_A", field: "Languages", expect: "Common", value: "Elven" },
           { id: "ID_B", field: "name", expect: "B", value: "Bee" },
+          {
+            id: "ID_B",
+            rule: {
+              match: { name: "grant", attributes: { name: "ID_C" } },
+              remove: true,
+            },
+          },
         ],
       },
       source,
@@ -137,6 +144,7 @@ describe("campaign invite states", () => {
       { label: "Revision", value: "4" },
       { label: "House rules", value: "None" },
       { label: "Changed fields", value: "2 fields" },
+      { label: "Changed rules", value: "1 rule" },
     ]);
   });
 });

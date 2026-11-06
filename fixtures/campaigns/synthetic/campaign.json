@@ -5,7 +5,9 @@
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": ["ID_4ECB_SYNTHETIC_FEAT_1"],
-    "types": { "Deity": "campaign-only" }
+    "types": {
+      "Deity": "campaign-only"
+    }
   },
   "patches": [
     {
@@ -19,6 +21,21 @@
       "field": "Short Description",
       "expect": "A synthetic race used to exercise imports.",
       "value": "A synthetic race of the campaign's high cliffs."
+    },
+    {
+      "id": "ID_4ECB_SYNTHETIC_RACE_1",
+      "rule": {
+        "match": {
+          "name": "statadd",
+          "attributes": {
+            "name": "Speed",
+            "value": "+6"
+          }
+        },
+        "set": {
+          "value": "+5"
+        }
+      }
     }
   ]
 }

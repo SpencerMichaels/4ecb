@@ -12,6 +12,11 @@ import {
   campaignPatchOutcomeMessage,
   campaignPatchOutcomes,
   campaignPatches,
+  campaignRuleOperationShapeErrors,
+  campaignRulePatchOutcomeMessage,
+  campaignRulePatches,
+  describeCampaignRuleOperation,
+  runCampaignRulePatches,
   decodeCampaign,
   encodeCampaign,
   resolveCampaignRestrictions,
@@ -19,8 +24,10 @@ import {
   validateCampaign,
   type CampaignDocument,
   type CampaignManifest,
-  type CampaignPatch,
+  type CampaignPatchEntry,
   type CampaignPatchOutcome,
+  type CampaignRuleOperation,
+  type CampaignRulePatchOutcome,
   type CampaignTypeRestriction,
   type ContentPack,
 } from "@4ecb/content-pack";
@@ -59,17 +66,32 @@ const MANIFEST_KEYS = new Set([
 const PATCH_KEYS = ["id", "field", "expect", "value"] as const;
 
 /**
- * `patches: [{id, field, expect, value}]`, every key a string and no other
- * keys. Patches live in campaign.json, not the house-rule XML: that XML is
- * the legacy `Houserules` block, RulesElement records only, kept verbatim
- * for export, and the old builder has no way to express a patch.
+ * `patches: [{id, field, expect, value} | {id, rule: {...}}]`: a field
+ * patch has string keys and no others; a rule patch is an ID and one rule
+ * operation (`campaignRuleOperationShapeErrors`). Patches live in
+ * campaign.json, not the house-rule XML: that XML is the legacy
+ * `Houserules` block, RulesElement records only, kept verbatim for export,
+ * and the old builder has no way to express a patch.
  */
-function parsePatches(value: unknown): CampaignPatch[] {
+function parsePatches(value: unknown): CampaignPatchEntry[] {
   if (!Array.isArray(value))
     throw new Error("campaign.json patches must be an array");
-  return value.map((patch, index) => {
+  return value.map((patch, index): CampaignPatchEntry => {
     const label = `campaign.json patches[${index}]`;
     if (!isRecord(patch)) throw new Error(`${label} must be an object`);
+    if ("rule" in patch) {
+      const unknown = Object.keys(patch).filter(
+        (key) => key !== "id" && key !== "rule",
+      );
+      if (unknown.length > 0)
+        throw new Error(`${label} has unknown keys: ${unknown.join(", ")}`);
+      if (typeof patch.id !== "string")
+        throw new Error(`${label}.id must be a string`);
+      const errors = campaignRuleOperationShapeErrors(patch.rule);
+      if (errors.length > 0)
+        throw new Error(`${label}.rule ${errors.join("; ")}`);
+      return { id: patch.id, rule: patch.rule as CampaignRuleOperation };
+    }
     const unknown = Object.keys(patch).filter(
       (key) => !(PATCH_KEYS as readonly string[]).includes(key),
     );
@@ -95,7 +117,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Reads a `campaign.json` value: `{campaignId, name, revision, houseRules?,
  * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}},
- * patches?: [{id, field, expect, value}]}`. Unknown
+ * patches?: [{id, field, expect, value} | {id, rule}]}`. Unknown
  * keys are refused, so a misspelt restriction never silently restricts
  * nothing. Identity and limit rules are `buildCampaign`'s.
  */
@@ -204,7 +226,32 @@ export interface CampaignAgainstReport {
   readonly overriddenIds: readonly string[];
   /** Each field patch against the pack: the drift guard. */
   readonly patches: readonly CampaignPatchReport[];
+  /** Each rule patch against the pack, in the order they apply. */
+  readonly rulePatches: readonly CampaignRulePatchReport[];
   readonly warnings: readonly string[];
+}
+
+export interface CampaignRulePatchReport {
+  readonly id: string;
+  /** What the operation does, e.g. `remove <grant name="…" />`. */
+  readonly operation: string;
+  readonly status: CampaignRulePatchOutcome["status"];
+  /** The elements it matched as XML (for "present", those already there). */
+  readonly matched: readonly string[];
+  readonly rule: CampaignRuleOperation;
+}
+
+function rulePatchReport(
+  outcome: CampaignRulePatchOutcome,
+): CampaignRulePatchReport {
+  const { id, rule } = outcome.patch;
+  return {
+    id,
+    operation: describeCampaignRuleOperation(rule),
+    status: outcome.status,
+    matched: outcome.matched,
+    rule,
+  };
 }
 
 export interface CampaignPatchReport {
@@ -293,6 +340,15 @@ export function campaignAgainstPack(
   for (const outcome of patchOutcomes)
     if (outcome.status !== "applies")
       warnings.push(`${campaignPatchOutcomeMessage(outcome)} (${packId})`);
+  // Rule patches run in order, each on the record the earlier ones left;
+  // field patches never touch rules, so they need not run first here.
+  const ruleOutcomes = runCampaignRulePatches(
+    composed,
+    campaignRulePatches(campaign),
+  ).outcomes;
+  for (const outcome of ruleOutcomes)
+    if (outcome.status !== "applies")
+      warnings.push(`${campaignRulePatchOutcomeMessage(outcome)} (${packId})`);
   return {
     packId,
     contentDigest,
@@ -300,6 +356,7 @@ export function campaignAgainstPack(
     typeRules,
     overriddenIds,
     patches: patchOutcomes.map(patchReport),
+    rulePatches: ruleOutcomes.map(rulePatchReport),
     warnings,
   };
 }
@@ -317,6 +374,7 @@ export function summarizeCampaign(campaign: CampaignDocument) {
       types: campaign.restrictions.types,
     },
     patches: campaignPatches(campaign).length,
+    rulePatches: campaignRulePatches(campaign).length,
     houseRules: summarizeContentPack(campaign.houseRules),
     legacyHouseRulesXmlBytes: new TextEncoder().encode(
       campaign.legacyHouseRulesXml,

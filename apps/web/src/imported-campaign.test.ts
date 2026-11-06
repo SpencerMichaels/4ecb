@@ -145,7 +145,7 @@ describe("legacy campaign export (D116)", () => {
     ).toBeUndefined();
   });
 
-  it("drops field patches silently: the legacy block cannot carry them", async () => {
+  it("drops field and rule patches silently: the legacy block cannot carry them", async () => {
     const plain = await dmCampaign();
     const patched = await buildCampaign(
       {
@@ -159,6 +159,17 @@ describe("legacy campaign export (D116)", () => {
             field: "name",
             expect: "Kept Ways",
             value: "Tidal Ways",
+          },
+          {
+            id: "ID_TEST_FEAT_KEPT",
+            rule: {
+              add: [
+                {
+                  name: "grant",
+                  attributes: { name: "ID_TEST_LANGUAGE", type: "Language" },
+                },
+              ],
+            },
           },
         ],
       },
@@ -271,7 +282,7 @@ describe("legacy campaign import (D116)", () => {
         types: [],
       },
       legacyHouseRulesXml: HOUSE_RULES.trim(),
-      // The legacy block has no field patches to bring.
+      // The legacy block has no field or rule patches to bring.
       patches: [],
     });
     expect(

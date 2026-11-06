@@ -1,5 +1,67 @@
 # Implementation status
 
+## Campaign rule patches (2026-11-06)
+
+Campaign follow-up (D116 amendment, owner-approved). A campaign's `patches`
+may hold rule patches, `{id, rule}`: one operation on a stock record's rule
+elements. `set` attributes, `replaceId` (a whole ID token in attribute
+values), `replaceWith` an element in place and `remove` each take a `match`
+(element name plus attribute values, ignoring case) and a `count` (default
+one) as the drift guard; `add` inserts elements, appended or `before` /
+`after` one anchor element, and applies only while none is present.
+Positions matter: the evaluator keys a granted element's occurrence by its
+rule's ordinal (`<parent>:grant:<ordinal>`, and a saved grant holds its
+slot) and a select's choices by the select's ordinal, so a patch replacing
+a copy that characters were built on must keep the copy's order. Field
+patches gain `"prerequisites"`. content-pack `campaign.ts`:
+`CampaignRulePatch`, `CampaignRuleOperation`, `campaignRulePatches`,
+`runCampaignRulePatches`, `campaignRulePatchOutcomes`,
+`applyCampaignRulePatches`, `describeCampaignRuleOperation`;
+`composeCampaignProfile` applies field patches, then rule patches (a
+record's in authored order), then resolves restrictions; a patch that does
+not apply (target missing, no match, a different match count, an `add`
+element already present, an anchor matching no element or several) leaves
+the server's rules with a `campaign.rule-patch-not-applied` warning. Rule
+ordinals are renumbered to positions. Composition already drops stored
+`_Prerequisite IR` from multi-layer packs (every campaign profile), so
+patched prerequisites are parsed against the composed records. The format
+is version 3; version-1 and version-2 documents load unchanged with their
+digests (a recorded version-2 digest is a test golden), and version 2
+cannot carry rule patches or "prerequisites". `content-tool campaign build`
+reads rule patches from `campaign.json` (strict keys and types),
+`--against` lists each under `rulePatches` with `operation`, status
+(`applies`, `target-missing`, `no-match`, `ambiguous`, `present`) and the
+`matched` elements as XML, and warns on each that would not apply;
+`campaign inspect` prints `rulePatches`. Legacy export drops them; legacy
+import creates none. The invite page summary adds "Changed rules: N rules".
+The synthetic fixture campaign has one rule patch (the Cliffkin's Speed
+statadd +6 → +5), and `scripts/check.sh` asserts its `--against` entry and
+the inspect counts.
+
+Pathfinder coverage (not yet converted): 82 house-rule records replace a
+stock ID. 70 (19 race Grants, 7 races, 7 familiars, 6 feats, 21 class
+features including the Moteborn options and Scholar, 3 items, 6 Shifter
+backgrounds, Learn Primordial) change only rules, names, Languages and
+prerequisites; a prototype conversion against `tmp/content/full-local.4ecp`
+turned them into 9 field and 124 rule patches whose composed records equal
+the copies' exactly (fields, rules and rule ordinals; with unanchored adds,
+Scholar L10, the Ioun Stone of Perfect Language and the Helm of Languages
+differed in grant order), with no diagnostics and the same restricted IDs.
+The 12 Language copies stay full copies: the `Language: campaign-only` type
+rule restricts every stock Language record the house rules don't supply
+(Giant, Deep Speech and Supernal also change their description prose;
+Abyssal and Supernal their categories, the only category edits, so none
+were added).
+
+Verification: synthetic `campaign.test.ts` (each operation, order and
+whole-token matching, anchored adds, no-match / ambiguous / present /
+missing target keep the server's rules with a diagnostic, declared count,
+overlay target and invalid operations refused, digest and canonical
+`count`, version 2 golden), `campaign-command.test.ts` (manifest parsing,
+`--against` report), `imported-campaign.test.ts` (export unaffected),
+`CampaignJoinPage.test.tsx`; `pnpm test`, `pnpm typecheck`, lint, prettier
+and `scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## Record aliases (2026-11-06)
 
 Campaign follow-up (D116 amendment, owner-approved design). A record may

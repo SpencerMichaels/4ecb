@@ -4779,3 +4779,47 @@ expect, value}`: `field` is "name" or a specific's name; other top-level
   composed campaign profiles need no stored field and stock packs, which
   have no aliases, are unchanged (`docs/rules-engine.md`, prerequisite
   display).
+- **Amendment (2026-11-06): rule patches** (owner-approved: the Pathfinder
+  campaign carried about 70 full copies of stock records — race Grants,
+  races, familiars, feats, items, Shifter backgrounds, class features —
+  only to change what they grant or offer, and a copy hides later server
+  fixes to the record's other fields). A `patches` entry may be a rule
+  patch `{id, rule}`, one operation on the record's rule elements: `set`
+  attributes, `replaceId` (a whole ID token in attribute values, e.g. a
+  grant's `name` or one entry of a select's `Category`), `replaceWith` an
+  element in place, `remove`, or `add` elements (appended, or placed
+  `before`/`after` one anchor element: rule positions key a character's
+  saved grant and choice occurrences, so a patch replacing a copy that
+  characters were built on must keep the copy's order). Each operation but `add`
+  carries a `match` (element name and attribute values) and an optional
+  `count` (default 1): its drift guard, applied only when exactly that many
+  elements match; `add` applies only while none of its elements is
+  present. A record's rule patches apply in order after its field patches
+  (layering, field patches, rule patches, restrictions: the two kinds touch
+  different parts of a record, and restrictions resolve over the result);
+  one that does not apply leaves the server's rules and a
+  `campaign.rule-patch-not-applied` warning, never a failed composition.
+  Field patches also gain `"prerequisites"` (the `<Prereqs>` line; empty
+  removes it), because the five Moteborn language options change their
+  prerequisites with their rules. Stored `_Prerequisite IR` is never stale:
+  a campaign composition always has two or more layers and
+  `composeContentPacks` drops stored prerequisite IR from multi-layer packs.
+  Category edits were not needed: of the 82 Pathfinder records that replace
+  a stock ID, only Abyssal and Supernal change categories, and the 12
+  Language copies stay full copies anyway, because the `Language:
+campaign-only` type rule exempts only house-rule records (and Giant, Deep
+  Speech and Supernal change their description prose). A prototype
+  conversion turned the other 70 into 9 field and 124 rule patches whose
+  composed records equal the copies' exactly, rule ordinals included
+  (appending instead of anchoring, three — Scholar L10, the Ioun Stone of
+  Perfect Language and the Helm of Languages — differed in grant order). The document format is version 3: a version-2
+  reader would refuse rule patches as malformed and read "prerequisites" as
+  a specific; version-2 documents keep loading with their digests (a
+  recorded version-2 digest is a test golden) and cannot carry either.
+  Patches of both kinds are in the digest, validated and bounded; one on a
+  house-rule record is a build error; `campaign build --against` reports
+  each rule patch with its status (applies, target missing, no match,
+  ambiguous, present) and the matched elements; `campaign inspect` counts
+  them; the invite page shows "Changed rules". Legacy export drops them
+  silently and legacy import creates none (`docs/content-pack-format.md`,
+  Rule patches).

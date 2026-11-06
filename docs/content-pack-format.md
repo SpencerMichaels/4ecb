@@ -85,14 +85,15 @@ optional (identified by magic bytes, as for `.4ecp`):
 
 ```text
 CampaignDocument
-├── format: "4ecb-campaign", version: 2 (1 still read)
+├── format: "4ecb-campaign", version: 3 (1 and 2 still read)
 ├── campaignId          1-32 pack-ID characters
 ├── name                pack-name rules
 ├── revision            integer 1..999,999; the DM bumps it on every change
 ├── restrictions
 │   ├── ids[]           record IDs not offered (legacy Restricted)
 │   └── types[]         { type, allow: "campaign-only" }
-├── patches[]           { id, field, expect, value }; version 2 only
+├── patches[]           { id, field, expect, value } | { id, rule }; version 2+
+│                       (rule patches and "prerequisites" from version 3)
 ├── houseRules          an embedded ContentPack, packId campaign.<id>.r<revision>
 ├── legacyHouseRulesXml the DM's RulesElement XML verbatim, for legacy export
 └── contentDigest       SHA-256
@@ -102,16 +103,24 @@ The digest covers every other field, in that order, with the overlay standing
 in as its own manifest digest; the overlay pack verifies itself. A campaign's
 identity is `(campaignId, contentDigest)`; `revision` orders its versions, and
 a store refuses the same ID and revision with a different digest.
-`buildCampaign` sorts restricted IDs, type rules and patches (by ID, then
-field) ignoring case, so the digest does not depend on how they were listed;
-IDs, types and patch (ID, field) pairs must be unique ignoring case.
+`buildCampaign` sorts restricted IDs, type rules and patches ignoring case,
+so the digest does not depend on how they were listed: patches by ID, a
+record's field patches (by field) before its rule patches, which keep the
+order authored because each sees the record the earlier ones left. IDs,
+types and field patch (ID, field) pairs must be unique ignoring case.
 
-**Versions.** `buildCampaign` writes version 2, which always carries
+**Versions.** `buildCampaign` writes version 3, which always carries
 `patches` (possibly empty). A version-1 document has no `patches` field and
 reads as having none; its digest input has no `patches` key, so version-1
 documents (installed, in backups, hosted) keep their digests and load
-unchanged. Version 2 exists because a version-1 reader would otherwise
-ignore patches; such a reader refuses it as an unsupported version.
+unchanged. A version-2 document carries field patches only (no rule patches
+and no `prerequisites` field, both refused there); each serializes in the
+digest exactly as before, so version-2 documents keep their digests too.
+Each version exists because the previous reader would misread the next: a
+version-1 reader would ignore patches, and a version-2 reader would refuse
+rule patches as malformed and treat a `prerequisites` patch as a specific
+of that name; such readers refuse the newer document as an unsupported
+version.
 
 **Record aliases.** `ContentEntity.aliases` lists other names a record is
 known by ("Also known as"), for a same-thing rename (Deva → Aasimar,
@@ -142,16 +151,80 @@ content set (`docs/rules-engine.md`, prerequisite display).
 **Field patches.** A patch changes one field of a record the campaign does not
 supply, so the record's other fields keep following server revisions (a
 whole-record override would freeze them). `field` is `"name"` (the record's
-name) or a specific's name (`Languages`, `Short Description`; matched
-ignoring case and surrounding space); other top-level fields (description,
-flavor, rules) are not patchable. `expect` is the value the DM saw and
-`value` the campaign's. Limits: at most 10,000 patches; a field name of 1-120
+name), `"prerequisites"` (the record's `<Prereqs>` line; version 3: an
+empty `expect` means it has none, an empty `value` removes it) or a
+specific's name (`Languages`, `Short Description`; matched ignoring case
+and surrounding space); other top-level fields (description, flavor,
+categories) are not patchable, and rules change through rule patches
+(below). `expect` is the value the DM saw and `value` the campaign's. Limits: at most 10,000 patches; a field name of 1-120
 trimmed characters that does not start with `_` (stored IR such as
 `_Power Text IR` is built from the content and never patched); `expect` and
 `value` at most 4,000 characters without control characters other than tab
 and newline; `value` differs from `expect`; a name is never empty. A patch
 on a record the campaign's own house rules supply is a build and
 validation error: the DM edits that record instead.
+
+**Rule patches** (version 3). A rule patch `{id, rule}` changes a record's
+rule elements (`rules`: grant, select, statadd, textstring, modify… with
+their attributes) the same way, so a campaign that only changes what a
+record grants or offers needs no copy. `rule` is one operation, exactly
+one of:
+
+```text
+{ "match": M, "count": N, "set": { "name": "ID_NEW" } }
+{ "match": M, "count": N, "replaceId": { "from": "ID_OLD", "to": "ID_A|ID_B" } }
+{ "match": M, "count": N, "replaceWith": E }
+{ "match": M, "count": N, "remove": true }
+{ "add": [E, …] }
+{ "add": [E, …], "before": M }      or      "after": M
+```
+
+`M` is `{name, attributes?: {name: value}}`: rule elements named `name`
+that carry every listed attribute with that value (element and attribute
+names and values compared ignoring case; unlisted attributes are not
+compared). `E` is a rule element `{name, attributes: {name: value},
+text?}` (attributes in order; `text` is the element's inner text, such as
+a select's prompt). `set` sets attributes on each matched element (added
+when absent); `replaceId` replaces a whole token (an ID or list entry,
+bounded by anything but letters, digits, `_` and `-`, so
+`ID_FMP_LANGUAGE_1` never touches `ID_FMP_LANGUAGE_18`) in every
+attribute value of each matched element, and an element matches only when
+a value contains it; `replaceWith` replaces each matched element in place;
+`remove` deletes it; `add` inserts its elements after the record's last
+rule, or before or after the one element its `before` or `after` anchor
+matches. Rule ordinals are renumbered to positions afterwards, as the
+parser numbers them. Positions matter: a character's saved state keys a
+granted element's occurrence by its rule's ordinal
+(`<parent>:grant:<ordinal>`, and a saved grant holds its slot so the
+evaluator does not grant that slot again), and a select's choices by the
+select's ordinal, so a patch replacing a full copy that characters were
+built on must reproduce the copy's order, which anchored adds do. For example (Pathfinder's Orc and Fey-Minded):
+
+```text
+{ "id": "ID_INTERNAL_GRANTS_ORC",
+  "rule": { "match": { "name": "grant",
+                       "attributes": { "name": "ID_FMP_LANGUAGE_19", "type": "Language" } },
+            "set": { "name": "ID_4ECB_PF_LANGUAGE_ORCISH" } } }
+{ "id": "ID_FMP_FEAT_2728",
+  "rule": { "match": { "name": "select", "attributes": { "type": "Language" } },
+            "replaceId": { "from": "ID_FMP_LANGUAGE_4", "to": "ID_4ECB_PF_LANGUAGE_SYLVAN" } } }
+```
+
+The match is the drift guard: an operation applies only when exactly
+`count` (default 1; 1-1,000) elements match, so a server revision that
+changed the element leaves the record's rules as the server has them.
+`add` takes no match or count and applies only while none of its elements
+(same name and the same attributes, ignoring case) is on the record
+already and, when anchored, exactly one element matches the anchor (none
+is `no-match`, several `ambiguous`). A record's rule patches apply in order, each to the record the
+earlier ones left. Limits: element and attribute names of 1-120
+characters (a letter, then letters, digits, `_`, `.`, `:` or `-`), at
+most 64 attributes per match, `set` or element, attribute values and text
+of at most 4,000 characters without control characters other than tab
+and newline, at most 100 elements per `add`, and the shared 10,000
+patches. An operation must change something (`set` values differing from
+the match's, `replaceId` from ≠ to), and one on a house-rule record is a
+build and validation error.
 
 `decodeCampaign` reads at most 16 MiB of input and 16 MiB decoded (streaming,
 before parsing), then checks the shape with counts before contents: at most
@@ -169,9 +242,20 @@ the server's value and the composed pack gets a `warning` diagnostic with
 code `campaign.patch-not-applied` (target missing, field missing, field
 repeated, or "the content has X, the patch expects Y"); composition never
 fails over a patch. An applied `name` patch keeps the stock name as an
-alias (`renamedEntity`, content-domain `aliases.ts`). Patching does not
-re-run pack-build parses: a patched field's stored IR is not rebuilt (hence
-no `_` fields). It then resolves
+alias (`renamedEntity`, content-domain `aliases.ts`). It then applies the
+rule patches (`applyCampaignRulePatches`): one that does not apply (record
+missing, no element matches, a different number matches than `count`, or
+an `add` element already present) leaves the record's rules as composed
+and records a `warning` with code `campaign.rule-patch-not-applied` naming
+the operation and the elements found. Patching does not re-run pack-build
+parses: a patched field's stored IR is not rebuilt (hence no `_` fields).
+Stored `_Prerequisite IR` is never stale: a campaign composition always has
+at least two layers, and `composeContentPacks` drops stored prerequisite IR
+from every record of a multi-layer pack, so the engine parses a patched
+`prerequisites` line, and any prerequisite that names a patched rule's IDs,
+against the composed records. Rule patches touch no specific, so the other
+stored IR (`_Power Text IR`, `_Note Values IR`) is unaffected. It then
+resolves
 the restrictions against the patched records: an ID rule matches ignoring
 case (in the composed record's spelling; an ID with no record is kept as
 listed, for legacy round trips), and a type rule restricts every record of
@@ -194,15 +278,29 @@ manifest and house-rule XML, `campaign inspect` prints one, and
 `advertise-campaign` hosts it (`docs/public-deployment.md`); the browser stores
 installed documents as described in `docs/architecture.md` (Browser
 persistence). Patches are authored in `campaign.json` as
-`patches: [{id, field, expect, value}]`, not in the house-rule XML, which is
-the legacy `Houserules` block (RulesElement records only, exported verbatim).
-`campaign build --against PACK.4ecp` lists every patch with its status
-(`applies`, `target-missing`, `field-missing`, `field-ambiguous`, or
-`stock-differs` with the pack's `current` value beside `expect`) and warns on
-each one that would not apply: the drift guard to run against each new server
-pack. Legacy export drops patches silently (the `D20CampaignSetting` block
-cannot express them) and legacy import creates none. The invite page's
-summary shows the patch count ("Changed fields").
+`patches: [{id, field, expect, value} | {id, rule}]`, not in the house-rule
+XML, which is the legacy `Houserules` block (RulesElement records only,
+exported verbatim). `campaign build --against PACK.4ecp` lists every field
+patch with its status (`applies`, `target-missing`, `field-missing`,
+`field-ambiguous`, or `stock-differs` with the pack's `current` value beside
+`expect`) and, under `rulePatches`, every rule patch in order with its
+`operation`, status (`applies`, `target-missing`, `no-match`, `ambiguous`,
+`present`) and the `matched` elements as XML, for example:
+
+```text
+{ "id": "ID_INTERNAL_GRANTS_ORC",
+  "operation": "set name=\"ID_4ECB_PF_LANGUAGE_ORCISH\" on <grant name=\"ID_FMP_LANGUAGE_19\" type=\"Language\" />",
+  "status": "applies",
+  "matched": ["<grant name=\"ID_FMP_LANGUAGE_19\" type=\"Language\" />"],
+  "rule": { … } }
+```
+
+It warns on each patch that would not apply: the drift guard to run against
+each new server pack. `campaign inspect` prints the version, `patches` (field
+patches) and `rulePatches` counts. Legacy export drops patches of both kinds
+silently (the `D20CampaignSetting` block cannot express them) and legacy
+import creates none. The invite page's summary shows the counts ("Changed
+fields", "Changed rules").
 
 ## Compatibility policy
 

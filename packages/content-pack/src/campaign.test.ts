@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type {
+  ContentEntity,
   ParsedContentEntity,
   ParsedContentSource,
 } from "@4ecb/content-domain";
@@ -26,7 +27,11 @@ import {
   MAX_CAMPAIGN_PATCH_VALUE_LENGTH,
   campaignPatchOutcomes,
   campaignPatches,
+  campaignRulePatchOutcomes,
+  campaignRulePatches,
   type CampaignPatch,
+  type CampaignPatchEntry,
+  type CampaignRulePatch,
   type CampaignDocument,
   type CampaignManifest,
 } from "./index";
@@ -510,7 +515,7 @@ describe("campaign field patches", () => {
 
   it("builds patches in canonical order under the digest", async () => {
     const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
-    expect(campaign.version).toBe(2);
+    expect(campaign.version).toBe(3);
     expect(campaignPatches(campaign).map(({ id }) => id)).toEqual([
       "id_syn_learn_primordial",
       "ID_SYN_RACE_GENASI",
@@ -754,7 +759,623 @@ describe("campaign field patches", () => {
       decodeCampaign(jsonBuffer({ ...v1, patches })),
     ).rejects.toThrow("A version 1 campaign cannot carry patches");
     await expect(
-      decodeCampaign(jsonBuffer({ ...built, version: 3 })),
-    ).rejects.toThrow("Unsupported campaign version: 3");
+      decodeCampaign(jsonBuffer({ ...built, version: 4 })),
+    ).rejects.toThrow("Unsupported campaign version: 4");
+  });
+
+  it("still decodes version 2 documents with their digests", async () => {
+    const built = await buildCampaign(patchedManifest, houseRuleSource, xml);
+    // The digest a version-2 build gave this campaign, before rule patches.
+    const v2 = {
+      ...built,
+      version: 2,
+      contentDigest:
+        "a33b381b293c2143fe497c366f655c7fa986fa6a810e2e71cc139d8e3dbbb283",
+    } as const;
+    const decoded = await decodeCampaign(jsonBuffer(v2));
+    expect(decoded.version).toBe(2);
+    expect(campaignPatches(decoded)).toEqual(campaignPatches(built));
+    expect(campaignRulePatches(decoded)).toEqual([]);
+    const profile = await composeCampaignProfile([await base()], decoded, {
+      packId: "campaign:synthetic-setting:v2",
+      name: "Synthetic Setting",
+    });
+    expect(
+      profile.pack.entities.find(({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL")
+        ?.name,
+    ).toBe("Learn Ignan");
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...v2,
+          patches: [
+            ...v2.patches!,
+            { id: "ID_SYN_RACE_GENASI", rule: { add: [grantIgnan] } },
+          ],
+        }),
+      ),
+    ).rejects.toThrow("Campaign patches are invalid");
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...v2,
+          patches: [
+            {
+              id: "ID_SYN_RACE_GENASI",
+              field: "prerequisites",
+              expect: "",
+              value: "Fire",
+            },
+          ],
+        }),
+      ),
+    ).rejects.toThrow("A version 2 campaign cannot patch prerequisites");
+  });
+});
+
+const grantIgnan = {
+  name: "grant",
+  attributes: { name: "ID_SYN_LANGUAGE_IGNAN", type: "Language" },
+};
+
+describe("campaign rule patches", () => {
+  function rule(
+    name: string,
+    attributes: Record<string, string>,
+    ordinal: number,
+    text = "",
+  ) {
+    return {
+      name,
+      attributes: Object.entries(attributes).map(([key, value]) => ({
+        name: key,
+        value,
+      })),
+      text,
+      children: [],
+      ordinal,
+    };
+  }
+  const grants = {
+    ...entity("ID_SYN_GRANTS_GENASI", "Grants", "Genasi"),
+    rules: [
+      rule("grant", { name: "ID_SYN_SIZE_MEDIUM", type: "Size" }, 0),
+      rule("grant", { name: "ID_SYN_LANGUAGE_COMMON", type: "Language" }, 1),
+      rule(
+        "grant",
+        { name: "ID_SYN_LANGUAGE_PRIMORDIAL", type: "Language" },
+        2,
+      ),
+      rule("statadd", { name: "Speed", value: "+6" }, 3),
+    ],
+  };
+  const feat = {
+    ...entity("ID_SYN_FEAT_SCHOLAR", "Feat", "Scholar"),
+    prerequisites: "!ID_SYN_LANGUAGE_PRIMORDIAL",
+    rules: [
+      rule(
+        "select",
+        {
+          type: "Language",
+          number: "1",
+          Category: "ID_SYN_LANGUAGE_COMMON|ID_SYN_LANGUAGE_PRIMORDIAL",
+          default: "ID_SYN_LANGUAGE_PRIMORDIAL",
+        },
+        0,
+      ),
+      rule(
+        "select",
+        {
+          type: "Language",
+          number: "1",
+          Category: "ID_SYN_LANGUAGE_PRIMORDIAL_2",
+        },
+        1,
+      ),
+    ],
+  };
+  const race = {
+    ...entity("ID_SYN_RACE_TIEFLING", "Race", "Tiefling"),
+    rules: [
+      rule(
+        "select",
+        { type: "Language", number: "1", Category: "Starting" },
+        0,
+      ),
+    ],
+  };
+  const stockRecords = source([...stock.entities, grants, feat, race]);
+  const replaceGrant: CampaignRulePatch = {
+    id: "ID_SYN_GRANTS_GENASI",
+    rule: {
+      match: {
+        name: "grant",
+        attributes: { name: "ID_SYN_LANGUAGE_PRIMORDIAL", type: "Language" },
+      },
+      set: { name: "ID_SYN_LANGUAGE_IGNAN" },
+    },
+  };
+  const rulePatches: CampaignPatchEntry[] = [
+    replaceGrant,
+    {
+      id: "ID_SYN_GRANTS_GENASI",
+      rule: {
+        add: [
+          {
+            name: "select",
+            attributes: { type: "Language", number: "1", Category: "Starting" },
+            text: "Choose a language",
+          },
+        ],
+      },
+    },
+    {
+      id: "ID_SYN_GRANTS_GENASI",
+      rule: {
+        match: { name: "statadd", attributes: { name: "speed" } },
+        remove: true,
+      },
+    },
+    {
+      id: "ID_SYN_FEAT_SCHOLAR",
+      rule: {
+        match: { name: "select", attributes: { type: "Language" } },
+        replaceId: {
+          from: "ID_SYN_LANGUAGE_PRIMORDIAL",
+          to: "ID_SYN_LANGUAGE_IGNAN|ID_SYN_LANGUAGE_AQUAN",
+        },
+      },
+    },
+    {
+      id: "ID_SYN_FEAT_SCHOLAR",
+      field: "prerequisites",
+      expect: "!ID_SYN_LANGUAGE_PRIMORDIAL",
+      value: "",
+    },
+    {
+      id: "ID_SYN_RACE_TIEFLING",
+      rule: {
+        match: {
+          name: "select",
+          attributes: { type: "Language", Category: "Starting" },
+        },
+        replaceWith: {
+          name: "grant",
+          attributes: { name: "ID_SYN_LANGUAGE_IGNAN", type: "Language" },
+        },
+      },
+    },
+  ];
+  const ruleManifest: CampaignManifest = { ...manifest, patches: rulePatches };
+  const options = { packId: "campaign:synthetic-setting:r", name: "Synthetic" };
+
+  async function base(entities = stockRecords) {
+    return buildContentPack(entities, { packId: "synthetic", name: "S" });
+  }
+
+  function rulesOf(pack: { entities: readonly ContentEntity[] }, id: string) {
+    return pack.entities
+      .find((candidate) => candidate.id === id)
+      ?.rules.map(({ name, attributes, text, ordinal }) => [
+        ordinal,
+        name,
+        Object.fromEntries(attributes.map((a) => [a.name, a.value])),
+        text,
+      ]);
+  }
+
+  it("applies each operation in order and keeps the record's other rules", async () => {
+    const campaign = await buildCampaign(ruleManifest, houseRuleSource, xml);
+    expect(campaign.version).toBe(3);
+    // Field patches sort before a record's rule patches, which keep their
+    // authored order.
+    expect(
+      (campaign.patches ?? []).map((patch) =>
+        "rule" in patch ? `${patch.id} rule` : `${patch.id} ${patch.field}`,
+      ),
+    ).toEqual([
+      "ID_SYN_FEAT_SCHOLAR prerequisites",
+      "ID_SYN_FEAT_SCHOLAR rule",
+      "ID_SYN_GRANTS_GENASI rule",
+      "ID_SYN_GRANTS_GENASI rule",
+      "ID_SYN_GRANTS_GENASI rule",
+      "ID_SYN_RACE_TIEFLING rule",
+    ]);
+    const profile = await composeCampaignProfile(
+      [await base()],
+      campaign,
+      options,
+    );
+    expect(rulesOf(profile.pack, "ID_SYN_GRANTS_GENASI")).toEqual([
+      [0, "grant", { name: "ID_SYN_SIZE_MEDIUM", type: "Size" }, ""],
+      [1, "grant", { name: "ID_SYN_LANGUAGE_COMMON", type: "Language" }, ""],
+      [2, "grant", { name: "ID_SYN_LANGUAGE_IGNAN", type: "Language" }, ""],
+      [
+        3,
+        "select",
+        { type: "Language", number: "1", Category: "Starting" },
+        "Choose a language",
+      ],
+    ]);
+    // Whole tokens only: ID_SYN_LANGUAGE_PRIMORDIAL_2 is another ID.
+    expect(rulesOf(profile.pack, "ID_SYN_FEAT_SCHOLAR")).toEqual([
+      [
+        0,
+        "select",
+        {
+          type: "Language",
+          number: "1",
+          Category:
+            "ID_SYN_LANGUAGE_COMMON|ID_SYN_LANGUAGE_IGNAN|ID_SYN_LANGUAGE_AQUAN",
+          default: "ID_SYN_LANGUAGE_IGNAN|ID_SYN_LANGUAGE_AQUAN",
+        },
+        "",
+      ],
+      [
+        1,
+        "select",
+        {
+          type: "Language",
+          number: "1",
+          Category: "ID_SYN_LANGUAGE_PRIMORDIAL_2",
+        },
+        "",
+      ],
+    ]);
+    expect(rulesOf(profile.pack, "ID_SYN_RACE_TIEFLING")).toEqual([
+      [0, "grant", { name: "ID_SYN_LANGUAGE_IGNAN", type: "Language" }, ""],
+    ]);
+    const scholar = profile.pack.entities.find(
+      ({ id }) => id === "ID_SYN_FEAT_SCHOLAR",
+    );
+    expect(scholar).not.toHaveProperty("prerequisites");
+    expect(scholar?.description).toBe("Scholar text");
+    expect(
+      profile.pack.diagnostics.filter(({ code }) =>
+        code.startsWith("campaign."),
+      ),
+    ).toEqual([]);
+    expect((await validateContentPack(profile.pack)).valid).toBe(true);
+    expect(await decodeCampaign(buffer(encodeCampaign(campaign)))).toEqual(
+      campaign,
+    );
+  });
+
+  it("keeps the server's rules with a diagnostic when a match drifts", async () => {
+    const campaign = await buildCampaign(
+      {
+        ...manifest,
+        patches: [
+          replaceGrant,
+          {
+            id: "ID_SYN_FEAT_SCHOLAR",
+            rule: {
+              match: { name: "select", attributes: { type: "Language" } },
+              remove: true,
+            },
+          },
+          {
+            id: "ID_SYN_RACE_TIEFLING",
+            rule: { add: [{ ...grantIgnan, name: "Grant" }] },
+          },
+          {
+            id: "ID_SYN_GONE",
+            rule: { add: [grantIgnan] },
+          },
+        ],
+      },
+      houseRuleSource,
+      xml,
+    );
+    // A later server revision already grants Ignan, in place of Primordial.
+    const fixed = source([
+      ...stockRecords.entities.filter(
+        ({ id }) => id !== grants.id && id !== race.id,
+      ),
+      {
+        ...grants,
+        rules: grants.rules.map((statement) =>
+          statement.ordinal === 2
+            ? rule("grant", grantIgnan.attributes, 2)
+            : statement,
+        ),
+      },
+      {
+        ...race,
+        rules: [...race.rules, rule("grant", grantIgnan.attributes, 1)],
+      },
+    ]);
+    const profile = await composeCampaignProfile(
+      [await base(fixed)],
+      campaign,
+      options,
+    );
+    expect(rulesOf(profile.pack, "ID_SYN_GRANTS_GENASI")).toEqual(
+      rulesOf(await base(fixed), "ID_SYN_GRANTS_GENASI"),
+    );
+    expect(rulesOf(profile.pack, "ID_SYN_FEAT_SCHOLAR")).toEqual(
+      rulesOf(await base(fixed), "ID_SYN_FEAT_SCHOLAR"),
+    );
+    expect(
+      profile.pack.diagnostics
+        .filter(({ code }) => code === "campaign.rule-patch-not-applied")
+        .map(({ severity, entityId, message }) => [
+          severity,
+          entityId,
+          message,
+        ]),
+    ).toEqual([
+      [
+        "warning",
+        "ID_SYN_FEAT_SCHOLAR",
+        'Rule patch ID_SYN_FEAT_SCHOLAR: remove <select type="Language" /> not applied: ID_SYN_FEAT_SCHOLAR has 2 matching rule elements, the patch expects 1: <select type="Language" number="1" Category="ID_SYN_LANGUAGE_COMMON|ID_SYN_LANGUAGE_PRIMORDIAL" default="ID_SYN_LANGUAGE_PRIMORDIAL" />, <select type="Language" number="1" Category="ID_SYN_LANGUAGE_PRIMORDIAL_2" />',
+      ],
+      [
+        "warning",
+        "ID_SYN_GONE",
+        'Rule patch ID_SYN_GONE: add <grant name="ID_SYN_LANGUAGE_IGNAN" type="Language" /> not applied: no record ID_SYN_GONE',
+      ],
+      [
+        "warning",
+        "ID_SYN_GRANTS_GENASI",
+        'Rule patch ID_SYN_GRANTS_GENASI: set name="ID_SYN_LANGUAGE_IGNAN" on <grant name="ID_SYN_LANGUAGE_PRIMORDIAL" type="Language" /> not applied: ID_SYN_GRANTS_GENASI has no matching rule element',
+      ],
+      [
+        "warning",
+        "ID_SYN_RACE_TIEFLING",
+        'Rule patch ID_SYN_RACE_TIEFLING: add <Grant name="ID_SYN_LANGUAGE_IGNAN" type="Language" /> not applied: ID_SYN_RACE_TIEFLING already has <grant name="ID_SYN_LANGUAGE_IGNAN" type="Language" />',
+      ],
+    ]);
+    expect(
+      campaignRulePatchOutcomes(
+        (await base(fixed)).entities,
+        campaignRulePatches(campaign),
+      ).map(({ status }) => status),
+    ).toEqual(["ambiguous", "target-missing", "no-match", "present"]);
+    // With the declared count, the same match applies.
+    const both = await buildCampaign(
+      {
+        ...manifest,
+        patches: [
+          {
+            id: "ID_SYN_FEAT_SCHOLAR",
+            rule: {
+              match: { name: "select", attributes: { type: "Language" } },
+              count: 2,
+              remove: true,
+            },
+          },
+        ],
+      },
+      houseRuleSource,
+      xml,
+    );
+    expect(
+      rulesOf(
+        (await composeCampaignProfile([await base()], both, options)).pack,
+        "ID_SYN_FEAT_SCHOLAR",
+      ),
+    ).toEqual([]);
+  });
+
+  it("places added elements before or after one anchor element", async () => {
+    const common = {
+      name: "grant",
+      attributes: { name: "ID_SYN_LANGUAGE_COMMON" },
+    };
+    const aquan = {
+      name: "grant",
+      attributes: { name: "ID_SYN_LANGUAGE_AQUAN", type: "Language" },
+    };
+    const campaign = await buildCampaign(
+      {
+        ...manifest,
+        patches: [
+          { id: grants.id, rule: { add: [grantIgnan], after: common } },
+          { id: grants.id, rule: { add: [aquan], before: common } },
+          // No element, or several, match the anchor: not applied.
+          {
+            id: grants.id,
+            rule: { add: [{ ...aquan, name: "x" }], after: { name: "select" } },
+          },
+          {
+            id: grants.id,
+            rule: {
+              add: [{ ...aquan, name: "y" }],
+              before: { name: "grant", attributes: { type: "Language" } },
+            },
+          },
+        ],
+      },
+      houseRuleSource,
+      xml,
+    );
+    const profile = await composeCampaignProfile(
+      [await base()],
+      campaign,
+      options,
+    );
+    expect(
+      rulesOf(profile.pack, grants.id)?.map(([ordinal, name, attributes]) => [
+        ordinal,
+        name,
+        (attributes as Record<string, string>).name,
+      ]),
+    ).toEqual([
+      [0, "grant", "ID_SYN_SIZE_MEDIUM"],
+      [1, "grant", "ID_SYN_LANGUAGE_AQUAN"],
+      [2, "grant", "ID_SYN_LANGUAGE_COMMON"],
+      [3, "grant", "ID_SYN_LANGUAGE_IGNAN"],
+      [4, "grant", "ID_SYN_LANGUAGE_PRIMORDIAL"],
+      [5, "statadd", "Speed"],
+    ]);
+    expect(
+      campaignRulePatchOutcomes(
+        (await base()).entities,
+        campaignRulePatches(campaign),
+      ).map(({ status, matched }) => [status, matched.length]),
+    ).toEqual([
+      ["applies", 1],
+      ["applies", 1],
+      ["no-match", 0],
+      ["ambiguous", 4],
+    ]);
+    expect(
+      profile.pack.diagnostics
+        .filter(({ code }) => code === "campaign.rule-patch-not-applied")
+        .map(({ message }) => message)[1],
+    ).toMatch(
+      /^Rule patch ID_SYN_GRANTS_GENASI: add <y name="ID_SYN_LANGUAGE_AQUAN" type="Language" \/> before <grant type="Language" \/> not applied: ID_SYN_GRANTS_GENASI has 4 matching rule elements, the patch expects 1: /,
+    );
+    for (const [rule, message] of [
+      [{ add: [aquan], before: common, after: common }, /not both/],
+      [
+        { match: common, remove: true, after: common },
+        /only add takes before or after/,
+      ],
+    ] as const)
+      await expect(
+        buildCampaign(
+          { ...manifest, patches: [{ id: "ID_X", rule }] },
+          houseRuleSource,
+          xml,
+        ),
+      ).rejects.toThrow(message);
+  });
+
+  it("puts rule patches under the digest", async () => {
+    const campaign = await buildCampaign(ruleManifest, houseRuleSource, xml);
+    const fieldOnly = await buildCampaign(
+      {
+        ...manifest,
+        patches: rulePatches.filter((patch) => !("rule" in patch)),
+      },
+      houseRuleSource,
+      xml,
+    );
+    expect(fieldOnly.contentDigest).not.toBe(campaign.contentDigest);
+    // count: 1 is the default and canonicalizes away.
+    const explicit = await buildCampaign(
+      {
+        ...manifest,
+        patches: rulePatches.map((patch) =>
+          "rule" in patch && patch.rule.match !== undefined
+            ? { ...patch, rule: { ...patch.rule, count: 1 } }
+            : patch,
+        ),
+      },
+      houseRuleSource,
+      xml,
+    );
+    expect(explicit.contentDigest).toBe(campaign.contentDigest);
+    const tampered = (campaign.patches ?? []).map((patch) =>
+      patch === campaignRulePatches(campaign)[0]
+        ? {
+            ...patch,
+            rule: { ...patch.rule, replaceId: { from: "A", to: "B" } },
+          }
+        : patch,
+    );
+    await expect(
+      decodeCampaign(jsonBuffer({ ...campaign, patches: tampered })),
+    ).rejects.toThrow(/Digest mismatch|exactly one of/);
+    const changed = (campaign.patches ?? []).map((patch) =>
+      patch === campaignRulePatches(campaign)[0]
+        ? {
+            ...patch,
+            rule: {
+              ...patch.rule,
+              replaceId: { from: "ID_SYN_LANGUAGE_PRIMORDIAL", to: "X" },
+            },
+          }
+        : patch,
+    );
+    await expect(
+      decodeCampaign(jsonBuffer({ ...campaign, patches: changed })),
+    ).rejects.toThrow(/Digest mismatch/);
+  });
+
+  it("refuses rule patches on house-rule records and invalid operations", async () => {
+    const select = { name: "select", attributes: { type: "Language" } };
+    const invalid: [CampaignPatchEntry, RegExp][] = [
+      [
+        { id: "id_syn_deity_forge", rule: { add: [grantIgnan] } },
+        /is one of the campaign's house rules; edit the record instead/,
+      ],
+      [
+        {
+          id: "ID_X",
+          rule: { match: select, remove: true, add: [grantIgnan] },
+        },
+        /exactly one of set, replaceId, replaceWith, remove, add, not remove and add/,
+      ],
+      [{ id: "ID_X", rule: {} }, /exactly one of/],
+      [{ id: "ID_X", rule: { remove: true } }, /needs a match/],
+      [
+        { id: "ID_X", rule: { match: select, add: [grantIgnan] } },
+        /add takes no match or count/,
+      ],
+      [{ id: "ID_X", rule: { add: [] } }, /add lists no elements/],
+      [
+        { id: "ID_X", rule: { match: select, count: 0, remove: true } },
+        /count must be an integer from 1 to 1,000/,
+      ],
+      [
+        {
+          id: "ID_X",
+          rule: { match: select, set: { type: "Language" } },
+        },
+        /changes nothing/,
+      ],
+      [
+        {
+          id: "ID_X",
+          rule: { match: select, replaceId: { from: "A|B", to: "C" } },
+        },
+        /replaceId.from must be one ID or list entry/,
+      ],
+      [
+        {
+          id: "ID_X",
+          rule: {
+            add: [
+              {
+                name: "grant",
+                attributes: JSON.parse('{"__proto__": "x"}') as Record<
+                  string,
+                  string
+                >,
+              },
+            ],
+          },
+        },
+        /attribute "__proto__" must be/,
+      ],
+      [
+        { id: "ID_X", rule: { add: [{ name: "<grant>", attributes: {} }] } },
+        /element "<grant>" must be/,
+      ],
+    ];
+    for (const [patch, message] of invalid)
+      await expect(
+        buildCampaign({ ...manifest, patches: [patch] }, houseRuleSource, xml),
+      ).rejects.toThrow(message);
+    const campaign = await buildCampaign(ruleManifest, houseRuleSource, xml);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: [{ id: "ID_X", rule: { remove: "yes" } }],
+        }),
+      ),
+    ).rejects.toThrow("Campaign patches are invalid");
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: [{ id: "ID_X", rule: { add: [grantIgnan] }, field: "x" }],
+        }),
+      ),
+    ).rejects.toThrow("Campaign patches are invalid");
   });
 });

@@ -4,7 +4,8 @@
      "Hearthfather" names a base deity that only a richer pack would supply:
      the Anvil Warden still counts as it (CountsAsDeity, D116). The Tide
      Mother is also known as the Sea Mother (an authored alias), and
-     campaign.json renames the Cliffkin, which keeps that name as an alias. -->
+     campaign.json renames the Cliffkin, which keeps that name as an alias,
+     and a rule patch slows its Speed statadd from +6 to +5. -->
 <D20Rules game-system="D&amp;D4E">
   <RulesElement internal-id="ID_4ECB_CAMPAIGN_DEITY_ANVIL" name="Anvil Warden" type="Deity" source="4ECB Synthetic Campaign" revision-date="2026-11-06">
     <Category>Lawful Good</Category>
