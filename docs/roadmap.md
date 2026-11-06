@@ -924,6 +924,18 @@ Make supported customization convenient rather than file-format-only.
 - A custom pack and campaign profile can be backed up, shared, imported, and
   upgraded independently of characters.
 
+### Campaign slice (D116)
+
+**Status (2026-11-06): designed, not built; placement pending owner.** A
+narrowed, pulled-forward part of M8: campaign documents (overlay content plus
+ID and type restrictions), per-character campaign membership with the
+profile recomposed over server revisions, file import/export and a
+`deploy/`-hosted invite link, `content-tool` authoring, deity "counts as"
+equivalents for `worship` prerequisites, legacy `D20CampaignSetting`
+export/import, and a Pathfinder campaign (Inner Sea major and other deities,
+mapped alignments, domains and equivalents) as the first real campaign. The
+form editor stays in M8.
+
 ## M9 — 1.0 stabilization
 
 **Status (2026-11-05): next, after M5.7 and M5.75 close** (owner decision;

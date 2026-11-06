@@ -4536,3 +4536,58 @@ hold the ritual as known loot.
   `<loot>` the old builder stores, at its level: the imported loot it was
   filled from as it was, else new loot (`withLegacyRitualChoices`). A
   re-import fills the choice again from that loot.
+
+### D116 — Campaigns layer a DM's content and restrictions over the server's
+
+Status: accepted design (2026-11-06, owner); not built. Placement in the
+milestone order is pending (roadmap M8, "Campaign slice").
+
+Owner's user story: "as the DM, I want to use the Pathfinder setting for my
+4e game. For players, the biggest change is that the list of deities
+changes", with "the ability to create a 'campaign' of some sort that players
+can either be invited to or add themselves to … that has all my custom
+content on top of the base content served by the server (without having to
+apply my custom content to the server as a whole)."
+
+A plain personal pack can't do it: profile layers only add or replace
+records by ID (`last-pack-wins-v1`), so the stock deities would stay
+choosable; a personal pack applies to every new character in the browser;
+and it stops the browser following server revisions (D004 amendment).
+
+- **Model.** A Campaign is a portable, versioned document: ID, name,
+  revision, house-rule content (an overlay pack) and restrictions. It is the
+  legacy `D20CampaignSetting` (`reverse-engineering/docs/09-campaign-format.md`:
+  `Restricted` + `Houserules`) as a native document. A character belongs to
+  at most one campaign; its profile is the server packs plus the campaign
+  layer, recomposed on each server revision, so server updates keep reaching
+  campaign characters. Characters outside the campaign are unaffected.
+- **Restrictions.** By ID (legacy's form) or by type ("Deity: campaign
+  only"), so content added later is covered too; export expands a type rule
+  to the legacy ID list. Restricted records stay in the catalog (prerequisites
+  still resolve their names) but are not offered; an existing pick is a
+  house-rule character issue with a Review target, as legacy did.
+- **Distribution.** A campaign file the DM exports and players import, and
+  an invite link to a copy hosted beside the private packs in `deploy/`
+  (digest-pinned; hosting it applies it to nobody). A new revision reaches
+  characters as the existing content-update issue and preview. No accounts
+  or backend.
+- **Authoring.** Until M8's editor, the DM writes the house-rule records as
+  XML and builds the campaign with `content-tool`; parsing stays at pack
+  build.
+- **Pathfinder deities.** Alignment maps 9 → 5 in the content: LG → Lawful
+  Good; NG, CG → Good; LN, N, CN → Unaligned; LE, NE → Evil; CE → Chaotic
+  Evil, so `deityAlignmentIssue` works unchanged. Each deity's Pathfinder
+  domains map to the 34 4e Domain records as closely as possible (not 1:1),
+  so domain feats and Channel Divinity keep working.
+- **Deity equivalents.** Deity-specific content stays available through
+  equivalents (owner: "Moradin in D&D is roughly the same as Torag in
+  Pathfinder"). About 220 stock records require a named deity (128 feats,
+  25 paragon paths, 31 class features, 30 backgrounds, 5 epic destinies, 1
+  power), so the equivalence lives on the campaign's deity, not on those
+  records: a Torag record "counts as" Moradin, and a `worship` prerequisite
+  is met by the owned deity's name or a name it counts as (the
+  `CountsAsClass` precedent for hybrids). One deity may count as several.
+  The requirement still reads "Moradin"; the builder explains it is met
+  through Torag. Legacy export can't express counts-as, so an exported
+  character fails those prerequisites in the old builder (a lossy-export
+  note).
