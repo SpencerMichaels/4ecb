@@ -203,6 +203,10 @@ const reviews: ReviewCharacter[] = [
             "Printed Deity entry",
             "Sehanine after Background (church icon): Domains line, then the description.",
           ],
+          [
+            "Concrete reminders",
+            "Page 1's Remember in play: Superior Will reads 'Make saving throw…' (its Will bonus is in Will); no Fey Pact of the White Well Reward or Rod Expertise reminder (their damage, attack and AC/Reflex bonuses are in the numbers).",
+          ],
         ],
       },
       {
@@ -723,6 +727,16 @@ const reviews: ReviewCharacter[] = [
           [
             "Other detail stacks",
             "Eye of Vecna's detail stack (search for it if it isn't in this category).",
+          ],
+        ],
+      },
+      {
+        label: "Print preview",
+        path: preview,
+        items: [
+          [
+            "Tome of Binding reminder",
+            "Page 1's Remember in play: Tome of Binding reads '…creatures summoned gain a +1 bonus to damage rolls.' (its Constitution modifier).",
           ],
         ],
       },

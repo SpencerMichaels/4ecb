@@ -174,29 +174,63 @@ export interface SheetOverview {
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
-function hasPlayReminder(summary: string, description: string): boolean {
+function hasPlayReminder(
+  summary: string,
+  description: string,
+  keywordScoped = false,
+): boolean {
   // One clause per line: a short description often has no closing period, and
   // a stripped condition must not run on into the benefit text.
   const text = `${summary}\n${description}`;
-  // Ally-facing benefits remain manual even when their prerequisite is a loadout.
-  if (/\b(?:ally|allies)\b/i.test(text)) return true;
+  // Ally-facing benefits remain manual even when their prerequisite is a
+  // loadout. A possessive names a creature or power, not an ally ("the
+  // creature you summon with summon warlock's ally").
+  if (/(?<!['’]s\s)\b(?:ally|allies)\b/i.test(text)) return true;
   // Conditions the evaluator settles, not the player at the table: what is
-  // worn or wielded ("while you are not wearing heavy armor" is a
-  // `not-wearing` statadd), and build-time proficiency or training ("if you
+  // worn, wielded or held ("while you are not wearing heavy armor" is a
+  // `not-wearing` statadd, "when you hold a rod" `requires=WearingRod`),
+  // up to the clause's comma so the benefit after it still counts ("when
+  // holding a light blade …, you do not provoke opportunity attacks"),
+  // and build-time proficiency or training ("if you
   // are not already proficient", "if you are already trained in History").
   const withoutLoadoutConditions = text
     .replace(
-      /\b(?:while|when|if)\s+(?:you\s+(?:are\s+|aren't\s+)?)?(?:not\s+)?(?:wearing|wielding|equipped)\b[^.;\n]*/gi,
+      /\b(?:while|when|if)\s+(?:you\s+(?:are\s+|aren't\s+)?)?(?:not\s+)?(?:wearing|wielding|equipped|hold(?:ing)?)\b[^.;,\n]*/gi,
       "",
     )
     .replace(
       /\bif\s+you\s+(?:(?:are\s+not|aren't|do\s+not|don't)\s+(?:already\s+)?|(?:are\s+)?already\s+)(?:proficient|trained|have\s+(?:training|proficiency))\b[^.;,\n]*/gi,
+      "",
+    )
+    // A power keyword the record's own keyword-scoped stat additions put
+    // on the power rows ("when you use a power that has the cold or
+    // necrotic keyword" beside `cold:damage`).
+    .replace(
+      keywordScoped
+        ? /\bwhen(?:ever)?\s+you\s+use\s+an?\s+(?:[\w-]+\s+){0,3}?(?:power|attack)\s+(?:that\s+has|with)\s+the\s+[^.;\n]*?\bkeywords?\b/gi
+        : /(?!)/g,
       "",
     );
   // Require an in-play condition, choice, or changed action. Passive proficiency,
   // training, numeric bonuses and power grants alone are not useful reminders.
   return /\b(?:when|whenever|if|unless|trigger|bloodied|combat advantage|opportunity|reroll|draw|shift(?:s|ing)?|push|pull|slide|teleport|spend|forgo|give up|once per)\b/i.test(
     withoutLoadoutConditions,
+  );
+}
+/** Whether the record adds to keyword-scoped power rolls (`cold:damage`,
+ *  `rod implement,implement:attack`), which the evaluator puts on the power
+ *  rows. */
+function keywordScopedBonus(entity: ContentEntity | undefined): boolean {
+  return (
+    entity?.rules.some(
+      (rule) =>
+        key(rule.name) === "statadd" &&
+        rule.attributes.some(
+          (attribute) =>
+            key(attribute.name) === "name" &&
+            /:(?:damage|attack)\b/i.test(attribute.value),
+        ),
+    ) ?? false
   );
 }
 /** The carded powers a feature grants. `representing` holds the texts of
@@ -477,7 +511,7 @@ export function withSheetOverview(
         ...(entity ? referenceMetadata.get(key(entity.id)) : undefined),
         playReminder:
           !accessOnly(entity, benefit || summary, cards, summary) &&
-          hasPlayReminder(summary, benefit),
+          hasPlayReminder(summary, benefit, keywordScopedBonus(entity)),
         ...(reminderText === summary ? {} : { reminderText }),
         accessOnly: accessOnly(entity, benefit || summary, cards, summary),
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),

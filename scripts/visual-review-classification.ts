@@ -64,6 +64,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "beatrix|4|printed deity entry": auto(
     "Sehanine's entry follows Background, with the church icon, a Domains line, then the description.",
   ),
+  "beatrix|4|concrete reminders": auto(
+    "Superior Will's reminder leaves out its +2 Will (in Will); no White Well Reward reminder (its Pact Reward is on Eldritch Bolt's damage) and no Rod Expertise reminder (D112).",
+  ),
   "beatrix|5|granted aliases on feature rows": auto(
     "The on-screen feature list shows the same alias text.",
   ),
@@ -190,6 +193,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   "wizard-gnome|9|other detail stacks": auto(
     "The Eye of Vecna's detail stack.",
+  ),
+  "wizard-gnome|10|tome of binding reminder": auto(
+    "Tome of Binding's reminder states the bonus as the evaluated Constitution modifier, printed on page 1 (D112).",
   ),
   // Fey warlock
   "warlock-fey|0|wizard spellbook": auto(

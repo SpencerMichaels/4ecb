@@ -928,6 +928,55 @@ rule("beatrix", "Print preview", "Printed Deity entry", (c) =>
   printedDeity(c, "Sehanine"),
 );
 
+/** A page-1 reminder candidate's text, by its label (D112). */
+const reminderText = (c: ReviewCharacter, label: string) =>
+  (c.sheet.overview?.reminderCandidates ?? []).find(
+    (candidate) => candidate.label === label,
+  )?.value;
+
+rule("beatrix", "Print preview", "Concrete reminders", (c) => {
+  // Owner 2026-11-05: a reminder states its value or, when the value is
+  // already in the numbers, goes (D112).
+  const bolt = c.evaluation.powers.find(({ name }) => name === "Eldritch Bolt");
+  const reward = (bolt?.variants ?? [])
+    .flatMap((variant) => variant.damageComponents)
+    .find(
+      (component) => component.source === "Fey Pact of the White Well Reward",
+    );
+  return [
+    equal(
+      "Superior Will's reminder leaves out the Will bonus already in Will",
+      reminderText(c, "Superior Will"),
+      "Make saving throw to end stunned or dazed at start of your turn even if not (save ends) effect",
+    ),
+    equal(
+      "… which Will carries (Superior Will +2)",
+      c.evaluation.stats["Superior Will"]?.value,
+      2,
+    ),
+    equal(
+      "No White Well Reward reminder",
+      reminderText(c, "Fey Pact of the White Well Reward"),
+      undefined,
+    ),
+    equal(
+      "… its Pact Reward is on Eldritch Bolt's damage",
+      reward?.value,
+      c.evaluation.stats["Pact Reward"]?.value,
+    ),
+    equal(
+      "No Rod Expertise reminder (its attack bonus and holding-a-rod AC/Reflex are applied)",
+      reminderText(c, "Rod Expertise"),
+      undefined,
+    ),
+    lacks(
+      "… and no tier table on the printed reminders",
+      printedPagesFor(c).text,
+      "+2/+3/+4 (by tier) to Will",
+    ),
+  ];
+});
+
 rule("beatrix", "Sheet (on screen)", "Granted aliases on feature rows", (c) => [
   onScreenFeature(c, "Fey Pact of the White Well Boon: counts as Fey Pact"),
 ]);
@@ -1348,6 +1397,21 @@ function printedGrantedRituals(c: ReviewCharacter, provider: string): Check[] {
 rule("piri", "Print preview", "Printed reference pages", (c) =>
   printedGrantedRituals(c, "Druid"),
 );
+
+rule("wizard-gnome", "Print preview", "Tome of Binding reminder", (c) => {
+  // The note leaves the bonus to the full text ("equal to your
+  // Constitution modifier"); the reminder states it (D112).
+  const modifier = Number(c.evaluation.stats["Constitution modifier"]?.value);
+  const text = reminderText(c, "Tome of Binding");
+  return [
+    equal(
+      "Tome of Binding's reminder states the Constitution modifier",
+      text,
+      `Encounter, free; with tome, creatures summoned gain a ${modifier < 0 ? "" : "+"}${modifier} bonus to damage rolls.`,
+    ),
+    contains("… printed on page 1", printedPagesFor(c).text, text ?? "—"),
+  ];
+});
 
 rule("wizard-gnome", "Rituals tab", "Free-ritual counter", (c) => [
   ...ritualCounter(c, "Spellbook"),
