@@ -6,29 +6,36 @@ const BOTTOM_GAP_PX = 16;
 const MIN_HEIGHT_PX = 256;
 
 /**
- * Sizes the level page's selection tables to the view: the first table ends
- * at the bottom of the level page's scroller, or of the window when the page
- * scrolls (either scrolled to the top),
- * and any later tables in the tab use that same height. Published as
- * `--fitted-table-height` on the container for the stylesheet to apply.
+ * Sizes a builder tab's tables to the view: the first table ends at the
+ * bottom of the container when it is its own scroller, or of the window when
+ * the page scrolls (either scrolled to the top), and any later tables in the
+ * tab use that same height. Published as `--fitted-table-height` on the
+ * container for the stylesheet to apply. The level page's selection tables
+ * use it, and so do the Inventory and Shop tables (`.equipment-table-scroll`
+ * in `.equipment-primary`).
  */
 export function useFittedTableHeight(
   container: RefObject<HTMLElement | null>,
+  tableSelector = ".selection-table-scroll",
 ): void {
   useLayoutEffect(() => {
     const element = container.current;
-    if (element === null) return;
+    // Nothing to fit without layout (a test DOM has no matchMedia).
+    if (
+      element === null ||
+      typeof window.matchMedia !== "function" ||
+      typeof ResizeObserver === "undefined"
+    )
+      return;
     const tall = window.matchMedia(TALL_LAYOUT);
-    // The level page stacks above its detail pane when the tab is narrow
+    // The table stacks above its detail pane when the tab is narrow
     // (a container query, 14-responsive.css); then tables keep their own
     // height. The stylesheet flags the side-by-side layout.
     const split = () =>
       getComputedStyle(element).getPropertyValue("--builder-split").trim() ===
       "1";
     const fit = () => {
-      const first = element.querySelector<HTMLElement>(
-        ".selection-table-scroll",
-      );
+      const first = element.querySelector<HTMLElement>(tableSelector);
       if (!tall.matches || !split() || first === null) {
         element.style.removeProperty("--fitted-table-height");
         return;
@@ -47,8 +54,7 @@ export function useFittedTableHeight(
       while (
         block.parentElement !== null &&
         block.parentElement !== element &&
-        block.parentElement.querySelectorAll(".selection-table-scroll")
-          .length === 1
+        block.parentElement.querySelectorAll(tableSelector).length === 1
       )
         block = block.parentElement;
       const below =

@@ -304,6 +304,29 @@ describe("Known records in the Inventory (D114)", () => {
     expect(rowNamed("Bought Rite").querySelectorAll("button")).toHaveLength(1);
   });
 
+  it("keeps the known lists in the Inventory's fitted scroll container", () => {
+    renderWorkspace({
+      build: { ...build, inventory: [] },
+    });
+    // One bounded scroller holds the whole table, item bands and known
+    // lists alike, directly in the mode content the fitting hook measures
+    // (use-fitted-table-height.ts, 13-equipment.css).
+    const scroll = container.querySelector(
+      ".equipment-primary > .equipment-mode-content > .equipment-table-scroll",
+    );
+    expect(scroll).not.toBeNull();
+    expect(container.querySelectorAll(".equipment-table-scroll")).toHaveLength(
+      1,
+    );
+    expect(
+      scroll?.querySelector(":scope > table.inventory-table"),
+    ).not.toBeNull();
+    expect(scroll?.contains(rowNamed("Bought Rite"))).toBe(true);
+    expect(
+      scroll?.contains(container.querySelector(".inventory-allowance-row")),
+    ).toBe(true);
+  });
+
   it("removes a learned record from its right-click menu; a granted one says why not", () => {
     const onRemoveKnown = vi.fn();
     renderWorkspace({ onRemoveKnown });

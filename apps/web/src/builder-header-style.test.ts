@@ -318,7 +318,7 @@ describe("builder workspace split", () => {
       /@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.shared-choice-detail\s*:is/,
     );
     expect(styles).toMatch(
-      /@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.level-choice-workspace\s*\{\s*--builder-split: 1;/,
+      /@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.level-choice-workspace,\s*\.equipment-workspace\s*\{\s*--builder-split: 1;/,
     );
     expect(
       readFileSync(

@@ -313,7 +313,8 @@
 }
 
 @container builder-tab (min-width: 42.01rem) {
-  .level-choice-workspace {
+  .level-choice-workspace,
+  .equipment-workspace {
     --builder-split: 1;
   }
 }

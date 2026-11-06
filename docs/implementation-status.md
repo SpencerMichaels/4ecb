@@ -1,5 +1,29 @@
 # Implementation status
 
+## Inventory table ends at the window bottom (2026-11-06)
+
+Owner feedback: the Inventory table grew taller than the window, so the
+page and then the table had to be scrolled. The pinned builder (windows
+over 63rem wide) already bounded it by its flex chain; below 63rem (the
+sidebar drawer, e.g. a ~1400px window at 140% zoom) it kept its own
+`max(44rem, 200vh - 46rem)` height from before the Loadout split. The
+Inventory and Shop tables now use the level page's fitting:
+`useFittedTableHeight` takes a table selector and measures
+`.equipment-primary`'s `.equipment-table-scroll`, and 13-equipment.css
+caps it at `--fitted-table-height` while the detail pane sits beside it
+(`--builder-split` on `.equipment-workspace`); the old
+`--equipment-mode-block-size` and the mode content's 44rem minimum are
+gone. Item bands and the known Rituals/formulas/practices groups are rows
+of the one table, so they scroll with it (bands are not sticky, as in the
+Shop). Loadout is a grid of slots, not a table, and needs no bound.
+
+Verification: `known-records-ui.test.tsx` (one scroller holds the whole
+table and the known lists), `loadout-ui.test.ts` and
+`builder-header-style.test.ts` (CSS); a DOM skeleton in headless Chromium
+at 1000×700: table 704px tall in a 613px viewport before, ending 16px above
+the window bottom after; the pinned layout unchanged. Owner check: the
+checklist's "Beatrix: Inventory and Shop end at the window".
+
 ## Campaign alternate names; Pathfinder revision 6 (2026-11-06)
 
 D116 amendment (owner decision reversing revision 5's race renames). A

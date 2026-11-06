@@ -95,6 +95,7 @@ import {
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
+import { useFittedTableHeight } from "./use-fitted-table-height";
 import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import {
   BuilderCreatureCard,
@@ -1124,6 +1125,10 @@ export function EquipmentWorkspace({
     [build.inventory, byId],
   );
   const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
+  // The Inventory and Shop tables end at the bottom of the window, as the
+  // level page's tables do (use-fitted-table-height.ts).
+  const primary = useRef<HTMLDivElement>(null);
+  useFittedTableHeight(primary, ".equipment-table-scroll");
   // Select the requested holding once per request: inspect it, expand its
   // category, then land on its row (scrolled into view, its button
   // focused) once the expanded category renders it.
@@ -1500,6 +1505,7 @@ export function EquipmentWorkspace({
     >
       <div className="equipment-workspace">
         <div
+          ref={primary}
           className="equipment-primary"
           aria-label={
             workspace === "shop"

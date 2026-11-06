@@ -1,9 +1,5 @@
 /* Equipment: loadout, inventory, shop, wallet. */
 
-.equipment-mode-content {
-  min-block-size: var(--equipment-mode-block-size);
-}
-
 .loadout-grid {
   display: grid;
   gap: 1rem;
@@ -65,6 +61,19 @@
   border: 1px solid var(--border);
   max-block-size: max(22rem, calc(100vh - 23rem));
   overflow: auto;
+}
+
+/* The Inventory and Shop tables end at the bottom of the window, as the
+   level page's tables do (--fitted-table-height, measured by
+   use-fitted-table-height.ts on .equipment-primary), while the detail pane
+   sits beside them; short lists still shrink to their rows. The pinned
+   builder (14-responsive.css) sizes them by its flex chain instead. */
+@media (min-height: 30rem) {
+  @container builder-tab (min-width: 42.01rem) {
+    .equipment-primary .equipment-table-scroll {
+      max-block-size: var(--fitted-table-height, calc(100dvh - 19rem));
+    }
+  }
 }
 
 .equipment-table-scroll thead {
@@ -694,11 +703,6 @@ label.inline-field > select:disabled {
 .inventory-icon-action .icon {
   height: 1rem;
   width: 1rem;
-}
-
-.inventory-table-scroll {
-  max-block-size: var(--equipment-mode-block-size);
-  overflow: auto;
 }
 
 /* As the shop table: at least 7.5rem for the name beside the 14.5rem of

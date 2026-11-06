@@ -940,7 +940,5 @@
 }
 
 .equipment-primary {
-  --equipment-mode-block-size: max(44rem, calc(200vh - 46rem));
-
   min-width: 0;
 }

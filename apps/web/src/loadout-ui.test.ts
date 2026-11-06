@@ -142,15 +142,21 @@ describe("loadout interaction and geometry", () => {
       /\.inventory-table \.table-section-row[\s\S]*?background: var\(--brand-navy\)/,
     );
     expect(styles).toContain("--brand-navy: #1d3d5d");
-    expect(styles).toMatch(
-      /\.equipment-primary\s*\{[^}]*--equipment-mode-block-size: max\(44rem, calc\(200vh - 46rem\)\)/,
+    // The Inventory scrolls in the shared equipment table scroller, which
+    // ends at the window's bottom like the level page's tables (the fitted
+    // height from use-fitted-table-height.ts), not in a taller own box.
+    expect(workspace).toContain(
+      'className="equipment-table-scroll inventory-table-scroll"',
+    );
+    expect(workspace).toContain(
+      'useFittedTableHeight(primary, ".equipment-table-scroll")',
     );
     expect(styles).toMatch(
-      /\.equipment-mode-content\s*\{[^}]*min-block-size: var\(--equipment-mode-block-size\)/,
+      /@media \(min-height: 30rem\)\s*\{\s*@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.equipment-primary \.equipment-table-scroll\s*\{\s*max-block-size: var\(--fitted-table-height,/,
     );
-    expect(styles).toMatch(
-      /\.inventory-table-scroll\s*\{[^}]*max-block-size: var\(--equipment-mode-block-size\)[^}]*overflow: auto/,
-    );
+    expect(styles).toMatch(/\.equipment-table-scroll\s*\{[^}]*overflow: auto/);
+    expect(styles).not.toContain("--equipment-mode-block-size");
+    expect(styles).not.toMatch(/\.inventory-table-scroll\s*\{/);
     expect(styles).toMatch(/\.inventory-table\s*\{[^}]*font-size: 0\.78rem/);
     expect(styles).toMatch(/\.item-icon\s*\{[^}]*--item-icon-size: 1\.5rem/);
     expect(styles).toMatch(

@@ -132,6 +132,10 @@ const reviews: ReviewCharacter[] = [
             "Just above 63rem docked and at 140%: the Shop toolbar stacking inside the catalog column, headers over their own columns, a narrow table scrolling sideways.",
           ],
           [
+            "Beatrix: Inventory and Shop end at the window",
+            "Inventory (all bands open) and Shop at 140% zoom, docked and with the drawer: the table ends at the window bottom, scrolls inside with its header fixed, the page itself never needs scrolling to reach the last row; detail pane beside it.",
+          ],
+          [
             "Beatrix: striped tables",
             "Inventory, Shop (items and rituals) and Retraining rows in the feat table's alternating stripes, restarting under each group band; hover tint and selected rows over the stripes; light and dark, 140% zoom.",
           ],
