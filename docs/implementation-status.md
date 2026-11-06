@@ -1,5 +1,30 @@
 # Implementation status
 
+## Fitted tables leave room for their pager (2026-11-06)
+
+Follow-up to "Inventory table ends at the window bottom": in the drawer
+layout (the page scrolls) the Shop's pager sat just below the window's
+bottom, and so did a Build-tab selection table's pager ("Rows 1–200 of
+N", e.g. the feat table): `useFittedTableHeight` subtracted what trails the
+table only when the container was its own scroller, and never counted
+siblings after the table's block (the Shop's pager follows its scroller
+directly in `.equipment-primary`). The measurement is now
+`trailingContentHeight` (use-fitted-table-height.ts), used in both
+layouts: from the table's block (the outermost ancestor holding no other
+table) it adds each following sibling at every level up to the container
+until one holds another table, skipping boxless content (the closed
+acquisition dialog), plus the last content's bottom margin at the
+container's end. A lone table still leaves room for everything after it;
+with several, the first and what trails it fit, as before. The docked
+Shop/Inventory keep their flex chain.
+
+Verification: `use-fitted-table-height.test.ts` (Shop-shaped pager after
+the scroller, a selection table's own block, margins, stopping at the next
+table, a closed dialog) and `known-records-ui.test.tsx` (the rendered
+Shop's pager follows its scroller in the measured container and is
+counted). Owner check: the checklist's "Beatrix: Inventory and Shop end
+at the window" (now including the pager and the Build tab's feat table).
+
 ## Alchemical formulas name the created item's price (2026-11-06)
 
 Owner-approved. Adventurer's Vault prints a formula above the item it

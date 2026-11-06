@@ -173,24 +173,29 @@ live site.
   - **Wrong if:** two headers overlap, a field or button runs under the
     detail pane, or the name column is only a few letters wide.
 - [ ] **Beatrix: Inventory and Shop end at the window.** Added 2026-11-06;
-      the CSS rule and the table's place in its scroller are unit-tested
-      and the drawer-layout height was measured on a DOM skeleton, this is
-      the real page.
+      the CSS rule, the table's place in its scroller and the room left for
+      what follows it (the pager) are unit-tested and the drawer-layout
+      height was measured on a DOM skeleton, this is the real page.
   - **Where:** `edit?tab=inventory` with every band open (Worn items,
     Adventuring gear, Rituals, …) until the list is longer than the
     window, then the Shop (All items); at 140% zoom in your usual window,
     then narrowed below 63rem (about 1411px at 140%) so the sidebar
     becomes the drawer, and in a short window. Select a row each time.
-  - **Expect:** the table's frame ends just above the window's bottom
-    edge; the wheel scrolls the rows inside it while the Item / Quantity
-    header stays put; the page itself has no scrollbar to reach the last
-    row (in the drawer layout the Shop's pager may sit just below the
-    fold). Collapsing bands shrinks the frame to its rows. The item card
-    sits beside the table, as in the Shop. Loadout is unchanged.
-  - **Wrong if:** you must scroll the page and then the table to see the
-    last row, the frame ends far above the window bottom with a long list,
-    the header scrolls away, or the table stays tall after collapsing
-    bands.
+    Then the Build tab's Level 1 feat choice (a table over 200 rows, so
+    with a "Rows 1–200 of N" pager) in the same two layouts.
+  - **Expect:** the table's frame ends just above the Shop's pager
+    (Previous · "1–200 of N" · Next), and the pager just above the
+    window's bottom edge, in the docked and the drawer layout alike; the
+    Inventory's frame (no pager) ends just above the window's bottom edge.
+    The wheel scrolls the rows inside it while the Item / Quantity header
+    stays put; the page itself has no scrollbar to reach the last row or
+    the pager. Collapsing bands shrinks the frame to its rows. The item
+    card sits beside the table, as in the Shop. Loadout is unchanged. The
+    feat table and its pager fit the same way.
+  - **Wrong if:** you must scroll the page to reach the pager or to see
+    the last row, the frame ends far above the window bottom with a long
+    list, the header scrolls away, or the table stays tall after
+    collapsing bands.
 
 - [ ] **Beatrix: striped tables.**
   - **Where:** `edit?tab=inventory` (scroll through Worn items), then the

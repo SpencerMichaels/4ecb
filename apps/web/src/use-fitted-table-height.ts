@@ -6,13 +6,75 @@ const BOTTOM_GAP_PX = 16;
 const MIN_HEIGHT_PX = 256;
 
 /**
+ * The height of what follows the first table inside the measured container,
+ * up to the next table or the container's end: its pager, the panel's
+ * padding and border, and later siblings such as the Shop's pager after its
+ * scroller. The table's own block is the outermost ancestor holding no other
+ * table; after it come its following siblings, at every level up to the
+ * container, until one holds another table. A lone table so leaves room for
+ * everything after it and the page itself never scrolls; with several, the
+ * first table and what trails it just fit. Content without a box (a closed
+ * dialog, `display: none`) adds nothing. The last content's bottom margin
+ * counts when only the container's end follows it.
+ */
+export function trailingContentHeight(
+  container: HTMLElement,
+  table: HTMLElement,
+  tableSelector: string,
+): number {
+  let block: HTMLElement = table;
+  while (
+    block.parentElement !== null &&
+    block.parentElement !== container &&
+    block.parentElement.querySelectorAll(tableSelector).length === 1
+  )
+    block = block.parentElement;
+  let bottom = block.getBoundingClientRect().bottom;
+  let last: Element = block;
+  let reachedEnd = true;
+  walk: for (
+    let node: Element = block;
+    node !== container && node.parentElement !== null;
+    node = node.parentElement
+  ) {
+    for (
+      let sibling = node.nextElementSibling;
+      sibling !== null;
+      sibling = sibling.nextElementSibling
+    ) {
+      if (
+        sibling.matches(tableSelector) ||
+        sibling.querySelector(tableSelector) !== null
+      ) {
+        reachedEnd = false;
+        break walk;
+      }
+      const rect = sibling.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) continue;
+      bottom = Math.max(bottom, rect.bottom);
+      last = sibling;
+    }
+  }
+  const margin = reachedEnd
+    ? parseFloat(getComputedStyle(last).marginBottom)
+    : 0;
+  return Math.max(
+    0,
+    bottom -
+      table.getBoundingClientRect().bottom +
+      (Number.isFinite(margin) ? margin : 0),
+  );
+}
+
+/**
  * Sizes a builder tab's tables to the view: the first table ends at the
  * bottom of the container when it is its own scroller, or of the window when
- * the page scrolls (either scrolled to the top), and any later tables in the
- * tab use that same height. Published as `--fitted-table-height` on the
- * container for the stylesheet to apply. The level page's selection tables
- * use it, and so do the Inventory and Shop tables (`.equipment-table-scroll`
- * in `.equipment-primary`).
+ * the page scrolls (either scrolled to the top), less what trails it
+ * (`trailingContentHeight`, so its pager stays in view), and any later
+ * tables in the tab use that same height. Published as
+ * `--fitted-table-height` on the container for the stylesheet to apply. The
+ * level page's selection tables use it, and so do the Inventory and Shop
+ * tables (`.equipment-table-scroll` in `.equipment-primary`).
  */
 export function useFittedTableHeight(
   container: RefObject<HTMLElement | null>,
@@ -46,23 +108,7 @@ export function useFittedTableHeight(
       const style = getComputedStyle(element);
       const scrolls = style.overflowY === "auto";
       const firstRect = first.getBoundingClientRect();
-      // Leave room for what trails the table inside its own block (its pager,
-      // the panel's padding and border): the block is the outermost ancestor
-      // holding no other table. A lone table's block is the whole tab, so the
-      // page itself never scrolls; with several, the first block just fits.
-      let block: HTMLElement = first;
-      while (
-        block.parentElement !== null &&
-        block.parentElement !== element &&
-        block.parentElement.querySelectorAll(tableSelector).length === 1
-      )
-        block = block.parentElement;
-      const below =
-        block.getBoundingClientRect().bottom -
-        firstRect.bottom +
-        (block === element.lastElementChild
-          ? parseFloat(getComputedStyle(block).marginBottom)
-          : 0);
+      const below = trailingContentHeight(element, first, tableSelector);
       const height = Math.max(
         MIN_HEIGHT_PX,
         Math.floor(
@@ -75,7 +121,8 @@ export function useFittedTableHeight(
                 below
             : window.innerHeight -
                 (firstRect.top + window.scrollY) -
-                BOTTOM_GAP_PX,
+                BOTTOM_GAP_PX -
+                below,
         ),
       );
       element.style.setProperty("--fitted-table-height", `${height}px`);

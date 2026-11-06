@@ -133,7 +133,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Beatrix: Inventory and Shop end at the window",
-            "Inventory (all bands open) and Shop at 140% zoom, docked and with the drawer: the table ends at the window bottom, scrolls inside with its header fixed, the page itself never needs scrolling to reach the last row; detail pane beside it.",
+            "Inventory (all bands open), Shop and the Build tab's Level 1 feat table at 140% zoom, docked and with the drawer: the table ends just above its pager (or the window bottom), scrolls inside with its header fixed, the page itself never needs scrolling to reach the last row or the pager; detail pane beside it.",
           ],
           [
             "Beatrix: striped tables",

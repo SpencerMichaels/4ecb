@@ -21,6 +21,7 @@ import {
   ritualAllowanceGroups,
   ritualAllowanceLabel,
 } from "./known-records-ui";
+import { trailingContentHeight } from "./use-fitted-table-height";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -325,6 +326,32 @@ describe("Known records in the Inventory (D114)", () => {
     expect(
       scroll?.contains(container.querySelector(".inventory-allowance-row")),
     ).toBe(true);
+  });
+
+  it("fits the Shop table above its pager, which follows the scroller in the measured container", () => {
+    renderWorkspace({ workspace: "shop" });
+    const primary = container.querySelector<HTMLElement>(".equipment-primary");
+    const scroll = primary?.querySelector<HTMLElement>(
+      ":scope > .equipment-table-scroll",
+    );
+    const pager = primary?.querySelector<HTMLElement>(
+      ":scope > .equipment-pagination",
+    );
+    expect(scroll).not.toBeNull();
+    expect(pager).not.toBeNull();
+    expect(
+      scroll!.compareDocumentPosition(pager!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // The fitting hook leaves the pager's room under the table
+    // (use-fitted-table-height.ts), so it stays in view.
+    const box = (top: number, bottom: number) => () =>
+      ({ top, bottom, height: bottom - top, width: 100 }) as DOMRect;
+    scroll!.getBoundingClientRect = box(100, 600);
+    pager!.getBoundingClientRect = box(606, 640);
+    expect(
+      trailingContentHeight(primary!, scroll!, ".equipment-table-scroll"),
+    ).toBe(40);
   });
 
   it("removes a learned record from its right-click menu; a granted one says why not", () => {
