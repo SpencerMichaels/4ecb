@@ -1653,9 +1653,9 @@ character's legality changed.
 ## Summoned creature commands share implement rows (D111, 2026-10-31)
 
 Adjacent creature commands whose per-implement rows give the same numbers
-print those rows once, under the last of them, captioned with the commands
-(sheet-model `withCommandRows`/`SheetCreatureEntry.variantsFor`,
-`CreatureCard.tsx`, the `PrintPowerVariants` `caption`). With 4
+print those rows once, under the last of them (sheet-model `withCommandRows`,
+`CreatureCard.tsx`; the caption naming the commands was dropped 2026-11-05,
+`2c82612`, D111 amendment). With 4
 implements this fits Summon Thought Warrior (Augment 1) and Phantasmist
 Stalker's actions cards at the 6pt floor (they were 105% and 102% by the font
 model); Summon Emerald Terror stays the edge case (100% with 4 implements, 112%
