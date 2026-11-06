@@ -1539,7 +1539,8 @@ describe("sheet model", () => {
         source: "Synthetic source",
         fields: [
           { label: "Type", value: "Ritual" },
-          { label: "Key Skill", value: "Arcana" },
+          // The card's one-word labels (learned-record-fields.ts).
+          { label: "Skill", value: "Arcana" },
         ],
       }),
     ]);

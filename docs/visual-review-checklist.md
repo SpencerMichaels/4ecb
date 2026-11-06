@@ -615,8 +615,9 @@ live site.
     entries (Animal Messenger is druid-granted); then the on-screen sheet's
     Rituals & practices cards, light and dark theme.
   - **Expect:** each entry starts with the ritual's description, then its
-    fields; each card starts with its subheader right under the name, no
-    gap where a heading line was.
+    fields under the card's one-word labels (Skill, Cost, Price; the label
+    text itself is unit-tested); each card starts with its subheader
+    right under the name, no gap where a heading line was.
   - **Wrong if:** "Granted by" or "Chosen for" shows anywhere, or a card
     keeps an empty band above its subheader.
 

@@ -101,6 +101,7 @@ import {
 } from "./power-card-header";
 export { characterClassName, hybridClassName } from "./class-identity";
 export { featureNoteHidden, featureNoteText } from "./feature-notes";
+export { learnedRecordFieldLabel } from "./learned-record-fields";
 export {
   CREATURE_ACTIONS_KEY_SUFFIX,
   creatureCardText,
@@ -125,6 +126,7 @@ export {
   type SheetCreatureEntry,
   type SheetCreatureOrigin,
 } from "./creature-card";
+import { learnedRecordFieldLabel } from "./learned-record-fields";
 import { powerVariantLabel } from "./power-variant-label";
 export {
   NO_IMPLEMENT_ROW_LABEL,
@@ -884,7 +886,11 @@ function learnedReference(
       itemType: entity?.type ?? "Ritual",
       prerequisiteLines,
     }),
-    fields: entityFields(entity),
+    // The printed reference entry: the card's one-word labels.
+    fields: entityFields(entity).map((field) => ({
+      ...field,
+      label: learnedRecordFieldLabel(field.label),
+    })),
     ...entityPresentation(entity, prerequisiteLines),
   };
 }

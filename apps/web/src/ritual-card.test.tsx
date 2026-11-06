@@ -5,7 +5,7 @@ import {
   withStoredFormulaItems,
   type ContentEntity,
 } from "@4ecb/content-domain";
-import { sheetItemCard } from "@4ecb/sheet-model";
+import { learnedRecordFieldLabel, sheetItemCard } from "@4ecb/sheet-model";
 
 import { ItemCard } from "./ItemCard";
 import { canonicalItemIcon, KNOWN_RECORD_ICONS } from "./item-icons";
@@ -210,15 +210,39 @@ describe("a formula whose cost is the created item's price", () => {
     expect(markup).toContain(creates);
   });
 
-  it("gives the printed reference entry the same fields", () => {
-    // Printed rituals are reference-page entries built from these fields.
+  it("gives the printed reference entry the same fields under the card's labels", () => {
+    // Printed rituals are reference-page entries built from these fields,
+    // relabeled by the same learnedRecordFieldLabel as the card subheader.
     const fields = cardOf(acidic!).fields;
     expect(fields).toContainEqual({
       label: "Component Cost",
       value: "Item's price",
     });
     expect(fields.at(-1)).toEqual({ label: "Creates", value: creates });
+    const printed = fields.map(({ label, value }) => ({
+      label: learnedRecordFieldLabel(label),
+      value,
+    }));
+    expect(printed).toContainEqual({ label: "Cost", value: "Item's price" });
+    expect(printed).toContainEqual({
+      label: "Skill",
+      value: "Arcana or Thievery (no check)",
+    });
+    expect(printed).toContainEqual({ label: "Price", value: "200 gp" });
   });
+
+  it.each([ritual, practice, formula])(
+    "labels %s's subheader fields as its printed reference entry does",
+    (entity) => {
+      const card = cardOf(entity);
+      const printed = card.fields.map(({ label, value }) => ({
+        label: learnedRecordFieldLabel(label),
+        value: value.trim(),
+      }));
+      for (const stat of printItemPresentation(card).statRows.flat())
+        expect(printed).toContainEqual(stat);
+    },
+  );
 
   it("leaves a formula without linked versions as authored", () => {
     // `formula` names no versions in its set: no Creates line.

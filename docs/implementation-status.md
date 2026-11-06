@@ -25,6 +25,23 @@ Shop's pager follows its scroller in the measured container and is
 counted). Owner check: the checklist's "Beatrix: Inventory and Shop end
 at the window" (now including the pager and the Build tab's feat table).
 
+## Printed rituals use the card's one-word labels (2026-11-06)
+
+The printed "Rituals & practices" reference entries read "Component Cost",
+"Key Skill" and "Market Price" while the card read Cost, Skill and Price.
+One label source, sheet-model `learnedRecordFieldLabel`
+(learned-record-fields.ts), now names both: the card subheader
+(`print-item-presentation.ts`) and `SheetLearnedReference.fields`, which
+the reference pages print (also "Prerequisites" → "Prerequisite"). The
+card's own `fields` keep the authored names it reads values by. Other
+surfaces checked: item reference entries print only slot, name and
+quantity; the on-screen sheet and builder panes use the card.
+
+Verification: `ritual-card.test.tsx` (each ritual, formula and practice
+subheader cell appears among the relabeled reference fields; Acidic
+Fire's Cost/Skill/Price) and sheet-model `index.test.ts`. Owner check:
+the checklist's "Piri: rituals on the sheet".
+
 ## Alchemical formulas name the created item's price (2026-11-06)
 
 Owner-approved. Adventurer's Vault prints a formula above the item it

@@ -1,4 +1,8 @@
-import type { SheetCard, SheetValue } from "@4ecb/sheet-model";
+import {
+  learnedRecordFieldLabel,
+  type SheetCard,
+  type SheetValue,
+} from "@4ecb/sheet-model";
 import { itemCategoryIcon } from "./item-icons";
 import { proseBlocks } from "./Prose";
 
@@ -129,6 +133,8 @@ export function printItemPresentation(card: SheetCard) {
     ? field("Type")?.trim() || card.itemType || "Ritual"
     : undefined;
   const ritualCategory = field("Category")?.trim();
+  // Each row names the fields it shows; their one-word labels are
+  // sheet-model's, shared with the printed reference entry.
   const ritualRows = [
     [
       [
@@ -138,15 +144,17 @@ export function printItemPresentation(card: SheetCard) {
           : ritualCategory,
       ],
       ["Time", field("Time")],
-      ["Skill", field("Key Skill")],
+      ["Key Skill", field("Key Skill")],
     ],
     [["Duration", field("Duration")]],
-    [["Cost", field("Component Cost")]],
+    [["Component Cost", field("Component Cost")]],
     [["Prerequisite", field("Prerequisite", "Prerequisites")]],
   ]
     .map((row) =>
-      row.flatMap(([label, value]) =>
-        label && value?.trim() ? [{ label, value: value.trim() }] : [],
+      row.flatMap(([name, value]) =>
+        name && value?.trim()
+          ? [{ label: learnedRecordFieldLabel(name), value: value.trim() }]
+          : [],
       ),
     )
     .filter((values) => values.length > 0);
