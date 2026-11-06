@@ -1481,6 +1481,10 @@ const reviews: ReviewCharacter[] = [
             "Serene Blade runepriest",
             'Proficiencies reads "military heavy blades".',
           ],
+          [
+            "Sub-choices on reminder rows",
+            'Page-1 reminder "Level 5 Scholar Feature: Dungeoneering" and reference heading "Scholar Feature: Dungeoneering": a pick with no card or entry of its own stays named.',
+          ],
         ],
       },
     ],
@@ -1522,10 +1526,6 @@ const reviews: ReviewCharacter[] = [
           [
             "Older native characters",
             "Opening it gives the missing gifts (watch the Equipment tab next).",
-          ],
-          [
-            "Sub-choices on reminder rows",
-            'Page-1 reminder "Level 5 Scholar Feature: Dungeoneering" and reference heading "Scholar Feature: Dungeoneering": a pick with no card or entry of its own stays named.',
           ],
         ],
       },
@@ -1644,6 +1644,10 @@ const reviews: ReviewCharacter[] = [
                 "Spellbook subtitle",
                 'Expeditious Retreat and Freezing Cloud: "Spellbook" at the right of the title band; not on Sleep.',
               ],
+              [
+                "Spellbook reference heading",
+                'Character Reference pages: the Spellbook heading reads just "Spellbook"; its spells are power cards, so it does not name them.',
+              ],
             ],
           },
         ],
@@ -1666,10 +1670,6 @@ const reviews: ReviewCharacter[] = [
               [
                 "Associate card",
                 "The Trained Blink Dog card after Skills and the Arcane Wisp.",
-              ],
-              [
-                "Spellbook reference heading",
-                'Character Reference pages: the Spellbook heading reads just "Spellbook"; its spells are power cards, so it does not name them.',
               ],
             ],
           },
@@ -1807,6 +1807,10 @@ const reviews: ReviewCharacter[] = [
                 "The Conditional modifiers pane and the Play data card's note lines.",
               ],
               [
+                "Play data Defenses line",
+                'One Defenses line, "Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers"; the conditional defense bonuses are in page 1\'s Conditional modifiers pane, and no reminder repeats them.',
+              ],
+              [
                 "Militant Dawn not reminded",
                 "No Militant Dawn reminder on page 1: its radiant damage equals Natan's Charisma modifier (−1), a bonus that does nothing (D112).",
               ],
@@ -1832,10 +1836,6 @@ const reviews: ReviewCharacter[] = [
             ],
           },
         ],
-              [
-                "Play data Defenses line",
-                'One Defenses line, "Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers"; the conditional defense bonuses are in page 1\'s Conditional modifiers pane, and no reminder repeats them.',
-              ],
       },
       {
         slug: "skye",

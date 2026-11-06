@@ -2246,27 +2246,6 @@ than widening; other choices' reference cards use the same width. Panel flavor
 text sits directly under the name bar, as in published power blocks; printed
 cards omit it.
 
-### D080 — Builder character sidebar and level picker
-
-Status: accepted (2026-10-18).
-
-Builder detail cards are now one card wide, so the full-width character header
-and the always-visible level rail no longer earn their space. Every builder tab
-shares one sticky left sidebar beside the tab bar: a large centered portrait,
-the editable name and race/class/level line, then the key numbers arranged like
-the printed Play-data card (abilities as score + modifier, defenses, health,
-then initiative, speed and passive senses). Resistances and other notes stay
-on the sheet. The sidebar is its own component (`BuilderCharacterStats`),
-borrowing the Play card's arrangement rather than sharing the print
-component, because the two are expected to diverge; values and tooltips come
-from the evaluated stats and shared derived values as before.
-
-Level switching is rare (play mostly fills the newest level), so the level
-plan moves behind the Build tab's own "Level N ▾" heading, which drops down a
-tier-by-level grid keeping the former rail's completion status (a dropdown,
-matching its chevron, rather than a modal). It is not in
-the sidebar and has no extra arrows. The section tabs replace the former
-Next button: level tab tables instead end at the bottom of the window, later
 **Movement technique band (owner, 2026-11-05).** A monk full discipline's
 movement technique sits at the card's foot instead of directly under the
 attack, where it looked cramped while free space was left lower down: the
@@ -2288,6 +2267,27 @@ a card or pane wraps, the item that starts the new line drops its separator
 stat rows (`starts-wrapped-row`), re-run by the card fit loop at each text
 size, by one shared ResizeObserver and before printing.
 
+### D080 — Builder character sidebar and level picker
+
+Status: accepted (2026-10-18).
+
+Builder detail cards are now one card wide, so the full-width character header
+and the always-visible level rail no longer earn their space. Every builder tab
+shares one sticky left sidebar beside the tab bar: a large centered portrait,
+the editable name and race/class/level line, then the key numbers arranged like
+the printed Play-data card (abilities as score + modifier, defenses, health,
+then initiative, speed and passive senses). Resistances and other notes stay
+on the sheet. The sidebar is its own component (`BuilderCharacterStats`),
+borrowing the Play card's arrangement rather than sharing the print
+component, because the two are expected to diverge; values and tooltips come
+from the evaluated stats and shared derived values as before.
+
+Level switching is rare (play mostly fills the newest level), so the level
+plan moves behind the Build tab's own "Level N ▾" heading, which drops down a
+tier-by-level grid keeping the former rail's completion status (a dropdown,
+matching its chevron, rather than a modal). It is not in
+the sidebar and has no extra arrows. The section tabs replace the former
+Next button: level tab tables instead end at the bottom of the window, later
 tables in a tab sharing the first one's height, and short lists shrinking to
 their rows. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above
