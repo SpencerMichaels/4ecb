@@ -933,9 +933,9 @@ applies to the builder, sheet, content packs and saved characters as shipped.
 
 Known cleanup carried in (2026-11-05): the `.sp-monochrome` print styles in
 `apps/web/src/sheet-overview.css` are dead since D083 removed the monochrome
-option; the "item requirement unmet" style of untargeted issues left by
-`f324b9a` (warnings on granted features could land on their granting choice);
-and Alysa's resistance text ("5 lightning and resist thunder 5").
+option; warnings on granted features still have no Review target (they
+could land on the choice that granted them, `86926ce`); and Alysa's
+resistance text reads "5 lightning and resist thunder 5".
 
 ### Goal
 
