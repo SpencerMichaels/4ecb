@@ -4514,7 +4514,8 @@ hold the ritual as known loot.
   5th and 10th level formulas as "of your level or lower" (the Level 5 and
   10 Alchemist Features). The Level 5 Sorcere Adept Feature ("if you
   already have Ritual Caster, two rituals instead") is not modeled: the
-  feature grants Ritual Caster itself, so "already have" can't be expressed.
+  feature grants Ritual Caster itself, so "already have" can't be expressed
+  (modeled since the amendment below).
 - **Known.** A ritual picked in a Ritual select is known through the choice
   (`grantedKnownRecords` via `choice`, "Chosen for Psion"): changed in the
   Build tab, never removed from the Inventory, never counted against an
@@ -4536,6 +4537,26 @@ hold the ritual as known loot.
   `<loot>` the old builder stores, at its level: the imported loot it was
   filled from as it was, else new loot (`withLegacyRitualChoices`). A
   re-import fills the choice again from that loot.
+
+Amendment (2026-11-06, owner, on the unmodeled Sorcere Adept rituals):
+"Let's just do it now." The allowance grammar gains a condition part,
+`requires-other=ID[|ID…]`: the allowance counts only while the character
+has one of those records through an occurrence outside the provider's own
+subtree (occurrence provenance in `ritual-allowances.ts`, never names). The
+Level 5 Sorcere Adept Feature (`ID_TIV_CLASS_FEATURE_DRAGON_413-6-2`)
+gets `Ritual; 2@5<=level; requires-other=ID_FMP_FEAT_159`, so a wizard,
+a character who chose Ritual Caster or anyone else who has it from another
+source gets two free rituals of their level or lower at 5; one who gets
+Ritual Caster from the feature gets none. Its grant gains the stock guard
+`requires="!ID_FMP_FEAT_159"` (Master Trickster's idiom), because the rules
+text gives the feat only to a character without it. Legacy
+`VerifyGrant` (`D20RulesEngine/-Module-.cs` ~34973) never checks for a
+held element (only choices do, `D20Choice.CheckPrevious` → `AlreadyHas`
+~16620–16650), so legacy holds two Ritual Caster elements, as its saves
+hold Ghost Sound twice under Master Trickster and Cantrips. The modern
+grant pass already skips a grant of a held record, but not when the
+feature's grant lands before the other source (a wizard default arriving
+in a later pass): without the guard that build held Ritual Caster twice.
 
 ### D116 — Campaigns layer a DM's content and restrictions over the server's
 

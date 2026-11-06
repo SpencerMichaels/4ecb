@@ -5,7 +5,7 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import type { EvaluatedCharacter } from "./evaluator";
+import type { CharacterOccurrence, EvaluatedCharacter } from "./evaluator";
 import { grantedKnownRecords, type EntityLookup } from "./known-records";
 
 /**
@@ -23,6 +23,12 @@ import { grantedKnownRecords, type EntityLookup } from "./known-records";
  *   step's level or lower, "of that level or lower") or `level` (the level
  *   it is learned at or lower, "of your level or lower"). Without it any
  *   level is allowed.
+ * - `requires-other=ID[|ID…]` makes the allowance conditional: it counts
+ *   only while the character has one of those records from a source other
+ *   than the provider (an occurrence outside the provider's own subtree).
+ *   The Level 5 Sorcere Adept Feature grants Ritual Caster, and "if you
+ *   already have this feat" gives two rituals instead: its own grant must
+ *   not satisfy "already have".
  *
  * A choice among named rituals (a Psion's Sending or Tenser's Floating
  * Disk) is a `select type="Ritual"` instead, chosen in the Build tab and
@@ -50,6 +56,8 @@ export interface RitualAllowanceStep {
 export interface RitualAllowanceDefinition {
   readonly kind: RitualAllowanceKind;
   readonly steps: readonly RitualAllowanceStep[];
+  /** Records one of which the character must have from another source. */
+  readonly requiresOther?: readonly string[];
 }
 
 export interface RitualAllowance extends RitualAllowanceDefinition {
@@ -106,7 +114,18 @@ export function parseRitualAllowance(
   );
   if (kind === undefined) return undefined;
   const steps: RitualAllowanceStep[] = [];
+  let requiresOther: string[] | undefined;
   for (const part of parts.slice(1)) {
+    const condition = /^requires-other\s*=\s*(.*)$/iu.exec(part);
+    if (condition !== null) {
+      const ids = condition[1]!
+        .split("|")
+        .map((id) => id.trim())
+        .filter((id) => id !== "");
+      if (ids.length === 0 || requiresOther !== undefined) return undefined;
+      requiresOther = ids;
+      continue;
+    }
     const step =
       /^(\d+)\s*@\s*(\d+(?:\s*,\s*\d+)*)\s*(?:<=\s*(\d+|step|level))?$/iu.exec(
         part,
@@ -129,12 +148,46 @@ export function parseRitualAllowance(
   return {
     kind,
     steps: steps.sort((left, right) => left.level - right.level),
+    ...(requiresOther === undefined ? {} : { requiresOther }),
   };
 }
 
-/** The allowances of the character's active elements, in activation order. */
+/**
+ * Whether the character has one of `ids` through an occurrence outside
+ * every subtree of the provider's occurrences, i.e. from another source.
+ * Decided from occurrence provenance, never names: a record the provider
+ * granted or chose itself does not count.
+ */
+function hasFromOtherSource(
+  ids: readonly string[],
+  providerId: string,
+  occurrences: readonly CharacterOccurrence[],
+): boolean {
+  const wanted = new Set(ids.map(key));
+  const provider = key(providerId);
+  const byId = new Map(
+    occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  return occurrences.some((occurrence) => {
+    if (!wanted.has(key(occurrence.definitionId))) return false;
+    const seen = new Set<string>();
+    let current: CharacterOccurrence | undefined = occurrence;
+    while (current !== undefined && !seen.has(current.id)) {
+      if (key(current.definitionId) === provider) return false;
+      seen.add(current.id);
+      current =
+        current.parentId === undefined ? undefined : byId.get(current.parentId);
+    }
+    return true;
+  });
+}
+
+/**
+ * The allowances of the character's active elements, in activation order;
+ * a `requires-other` allowance only while its condition holds.
+ */
 export function ritualAllowances(
-  evaluation: Pick<EvaluatedCharacter, "activeDefinitionIds">,
+  evaluation: Pick<EvaluatedCharacter, "activeDefinitionIds" | "occurrences">,
   entityById: EntityLookup,
 ): readonly RitualAllowance[] {
   const result: RitualAllowance[] = [];
@@ -147,7 +200,16 @@ export function ritualAllowances(
       .filter(({ name }) => key(name) === key(FREE_RITUAL_ALLOWANCE_FIELD))
       .forEach(({ value }, index) => {
         const definition = parseRitualAllowance(value);
-        if (definition === undefined) return;
+        if (
+          definition === undefined ||
+          (definition.requiresOther !== undefined &&
+            !hasFromOtherSource(
+              definition.requiresOther,
+              entity.id,
+              evaluation.occurrences,
+            ))
+        )
+          return;
         result.push({
           ...definition,
           key: index === 0 ? entity.id : `${entity.id}#${index + 1}`,

@@ -93,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v114-2026-11-05-ritual-choices";
+  "evaluated-character-v115-2026-11-06-ritual-allowance-conditions";
 
 export interface CharacterOccurrence {
   readonly id: string;

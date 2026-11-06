@@ -10,7 +10,12 @@
   KIND is the learned record's type (Ritual, Alchemical Formula, Martial
   Practice); each step gives COUNT more at the listed character levels; MAX
   is a level, `step` (that step's level or lower) or `level` (the level it
-  is learned at or lower), none for any level. Parsed by
+  is learned at or lower), none for any level. A further
+  `requires-other=ID[|ID…]` part makes the allowance count only while the
+  character has one of those records from a source other than the provider
+  (an occurrence outside the provider's own subtree, by provenance, not
+  name): "if you already have Ritual Caster" when the provider grants
+  Ritual Caster itself. Parsed by
   packages/rules-engine/src/ritual-allowances.ts. Rituals a provider grants
   outright (FREEBEE, grant) are not counted here. The published text stays
   as it is and is still shown. Merged after the CBLoader parts by
@@ -52,6 +57,14 @@
        and 2 more at 21. -->
   <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_2511"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_2511"><specific name="_FreeRitualAllowance">Alchemical Formula; 2@1&lt;=level; 2@21&lt;=level</specific><rules><grant name="ID_FMP_FEAT_652" type="Feat" /><grant name="ID_FMP_RITUAL_142" type="Ritual" /></rules></AppendNodes>
+  <!-- Level 5 Sorcere Adept Feature (Dragon 413 theme): Ritual Caster, or,
+       if the character already has it, 2 rituals of your level or lower
+       instead. The grant gains the stock "unless already held" guard
+       (Master Trickster's requires="!ID") so a wizard's Ritual Caster is not
+       given twice, whatever order the two arrive in; the allowance counts
+       only a Ritual Caster from another source. -->
+  <RemoveNodes internal-id="ID_TIV_CLASS_FEATURE_DRAGON_413-6-2"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_CLASS_FEATURE_DRAGON_413-6-2"><specific name="_FreeRitualAllowance">Ritual; 2@5&lt;=level; requires-other=ID_FMP_FEAT_159</specific><rules><grant name="ID_FMP_FEAT_159" type="Feat" requires="!ID_FMP_FEAT_159" /></rules></AppendNodes>
   <!-- Practiced Prodigy: 2 practices of your level or lower, then 1 more at
        5, 11, 15, 21, 25. -->
   <AppendNodes internal-id="ID_FMP_FEAT_2454"><specific name="_FreeRitualAllowance">Martial Practice; 2@1&lt;=level; 1@5,11,15,21,25&lt;=level</specific></AppendNodes>

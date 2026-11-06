@@ -29,8 +29,22 @@ Inventory, Known in the Shop, never counted against an allowance. Import
 known ritual that stands for it; export writes the pick as legacy loot. The
 same content change adds Practiced Study, Alchemical Innovator and
 Duplicitous Nature allowances (Bloodstinger Poison granted once) and makes
-the Alchemist's later formulas "of your level or lower"; Sorcere Adept's
-conditional rituals are not modeled.
+the Alchemist's later formulas "of your level or lower".
+
+Sorcere Adept (D115 amendment, 2026-11-06): the allowance grammar's
+`requires-other=ID` condition counts an allowance only while the character
+has the record from a source other than the provider (occurrence
+provenance). The Level 5 Sorcere Adept Feature gives two free rituals of
+the character's level or lower when Ritual Caster comes from elsewhere (a
+wizard, a chosen feat), else grants Ritual Caster, never twice (its grant
+gained `requires="!ID_FMP_FEAT_159"`). Verification:
+`ritual-allowance-conditions.test.ts` (wizard at 5: two free rituals, one
+Ritual Caster; non-caster: Ritual Caster granted, no allowance; level 4:
+nothing; the grant arriving before another source), a real-content probe
+(Jim Darkmagic plus the theme: 2 free of level 5 or lower at 5, none at 4;
+Chopper Farlund: Ritual Caster from the feature, no allowance), full suites,
+typecheck, lint; `review:build` 176 factual rows pass; parity on the 17
+Ritual Caster characters: no new mismatches (no save holds the theme).
 
 Verification: `ritual-choices.test.ts`, `known-records.test.ts`,
 `ritual-allowances.test.ts`, `profile-migration.test.ts`, the legacy-dnd4e
