@@ -10,6 +10,7 @@ import {
   BuilderItemCard,
 } from "./BuilderCards";
 import { CreatureCard } from "./CreatureCard";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { dotted } from "./test-dot-list";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ItemCard } from "./ItemCard";
@@ -88,6 +89,10 @@ describe("CreatureCard", () => {
     // Flavor prose stays off the printed card.
     expect(html).not.toContain("Ponies are small horses.");
     expect(html).toContain(">Mount<");
+    // Speed shrinks to stay on one line rather than wrapping.
+    expect(html).toContain(
+      `<span class="${ONE_LINE_FIT_CLASS}"><strong>Speed</strong> 7</span>`,
+    );
   });
 
   it("prints a stats card and an actions card with its own title", () => {

@@ -4,6 +4,7 @@ import type { SheetFamiliarCard } from "@4ecb/sheet-model";
 
 import { FamiliarCard, familiarCardTitle } from "./FamiliarCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { dotted } from "./test-dot-list";
 
 const card: SheetFamiliarCard = {
@@ -29,7 +30,12 @@ describe("familiar card", () => {
     expect(dotted(html)).toContain("Tiny familiar · Heroic Tier");
     expect(html).toContain("<dt>AC</dt><dd>19</dd>");
     expect(html).toContain("<dt>HP</dt><dd>1</dd>");
-    expect(html).toContain("<dt>Speed</dt><dd>6, fly 6</dd>");
+    expect(html).toContain(
+      `<dt>Speed</dt><dd class="${ONE_LINE_FIT_CLASS}">6, fly 6</dd>`,
+    );
+    expect(html).toContain(
+      `<p class="print-play-note ${ONE_LINE_FIT_CLASS}"><strong>Senses</strong>`,
+    );
     expect(html).toContain("Low-light vision");
     expect(html).toContain("A missed attack never damages it.");
     expect(html.indexOf("Constant benefits")).toBeLessThan(

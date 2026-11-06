@@ -8,6 +8,7 @@ import {
 import { DotList } from "./DotList";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import {
   CardPanelSubheading,
   CardText,
@@ -117,11 +118,13 @@ export function FamiliarCard({
               <StatGroup
                 label="Speed"
                 tone="movement"
-                values={[{ label: "Speed", value: card.speed ?? "—" }]}
+                values={[
+                  { label: "Speed", value: card.speed ?? "—", oneLine: true },
+                ]}
               />
             </div>
             {card.senses === undefined ? null : (
-              <p className="print-play-note">
+              <p className={`print-play-note ${ONE_LINE_FIT_CLASS}`}>
                 <strong>Senses</strong> {card.senses}
               </p>
             )}

@@ -35,6 +35,7 @@ import {
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { DotList } from "./DotList";
+import { fittingOneLineSize } from "./one-line-fit";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
@@ -894,22 +895,6 @@ function SummaryColumns({
     </div>
   );
 }
-export function fittingIdentityNameSize(
-  measure: (size: number) => number,
-  available: number,
-  preferred = 27,
-  minimum = 18,
-): number {
-  if (measure(preferred) <= available) return preferred;
-  let low = minimum;
-  let high = preferred;
-  while (high - low > 0.25) {
-    const size = (low + high) / 2;
-    if (measure(size) <= available) low = size;
-    else high = size;
-  }
-  return low;
-}
 function IdentityName({ name }: { name: string }) {
   const ref = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
@@ -917,10 +902,15 @@ function IdentityName({ name }: { name: string }) {
     if (!element) return;
     const check = () => {
       if (!element.clientWidth) return;
-      const size = fittingIdentityNameSize((size) => {
-        element.style.fontSize = `${size}pt`;
-        return element.scrollWidth;
-      }, element.clientWidth);
+      const size = fittingOneLineSize(
+        (size) => {
+          element.style.fontSize = `${size}pt`;
+          return element.scrollWidth;
+        },
+        element.clientWidth,
+        27,
+        18,
+      );
       element.style.fontSize = `${size}pt`;
     };
     const observer = new ResizeObserver(check);

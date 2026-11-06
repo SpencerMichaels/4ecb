@@ -9,6 +9,7 @@ import {
   signedNumber,
 } from "./CreatureCard";
 import { DotList } from "./DotList";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { Icon } from "./Icon";
 import {
   CardPanelSubheading,
@@ -98,10 +99,12 @@ export function AssociateCard({
         <p className="print-play-note">
           <DotList
             items={[
-              <>
+              <span className={ONE_LINE_FIT_CLASS}>
                 <strong>Speed</strong> {card.speed || "—"}
-              </>,
-              card.senses,
+              </span>,
+              card.senses === undefined || card.senses === "" ? undefined : (
+                <span className={ONE_LINE_FIT_CLASS}>{card.senses}</span>
+              ),
             ]}
           />
         </p>

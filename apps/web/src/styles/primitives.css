@@ -272,3 +272,23 @@ button.dialog-close {
 .dot-list-item.starts-wrapped-row::before {
   display: none;
 }
+
+/* Short values that shrink to stay on one line (one-line-fit.ts: a
+   companion's speed and senses); only at their floor (data-fit-min, default
+   6pt) may they wrap, or truncate with data-fit-overflow="ellipsis". An
+   inline one shrink-wraps, so inside a "·" list it moves to its own line
+   whole before it shrinks. */
+.one-line-fit {
+  max-width: 100%;
+  white-space: nowrap;
+}
+span.one-line-fit {
+  display: inline-block;
+}
+.one-line-fit.is-wrapped {
+  white-space: normal;
+}
+.one-line-fit.is-truncated {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

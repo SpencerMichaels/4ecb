@@ -1,3 +1,4 @@
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import "./stat-tiles.css";
 
 export interface StatTileValue {
@@ -6,6 +7,9 @@ export interface StatTileValue {
   readonly title?: string;
   /** Value shown before the label at the value size, e.g. an ability score. */
   readonly lead?: string;
+  /** Text value that shrinks to stay on one line (`one-line-fit.ts`), e.g. a
+   *  familiar's speed, instead of wrapping inside its tile. */
+  readonly oneLine?: boolean;
 }
 
 export type StatTone =
@@ -51,7 +55,12 @@ export function StatGroup({
                 </>
               )}
             </dt>
-            <dd {...(value.title === undefined ? {} : { title: value.title })}>
+            <dd
+              {...(value.title === undefined ? {} : { title: value.title })}
+              {...(value.oneLine === true
+                ? { className: ONE_LINE_FIT_CLASS }
+                : {})}
+            >
               {value.value}
             </dd>
           </div>

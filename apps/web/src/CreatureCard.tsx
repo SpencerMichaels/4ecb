@@ -8,6 +8,7 @@ import {
 
 import { abilityAbbreviation } from "./ability-abbreviations";
 import { DotList } from "./DotList";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -317,11 +318,14 @@ export function CreatureCard({
               <DotList
                 items={[
                   ...movement.map(([label, value]) => (
-                    <>
+                    <span className={ONE_LINE_FIT_CLASS}>
                       <strong>{label}</strong> {value}
-                    </>
+                    </span>
                   )),
-                  card.senses,
+                  card.senses === undefined ||
+                  card.senses === "" ? undefined : (
+                    <span className={ONE_LINE_FIT_CLASS}>{card.senses}</span>
+                  ),
                 ]}
               />
             </p>

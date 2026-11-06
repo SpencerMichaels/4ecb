@@ -1,18 +1,22 @@
 import { useLayoutEffect, useRef } from "react";
 
 import { markLineStarts } from "./line-starts";
+import { fitOneLineTexts } from "./one-line-fit";
 import {
   preferredPrintCardTextSize,
   printCardFontSizes,
 } from "./print-card-fit";
 
 /**
- * Aligns the action/range and primary attack/target bands on one shared first
+ * Shrinks the card's one-line values to fit (`one-line-fit.ts`), aligns the action/range and primary attack/target bands on one shared first
  * column, and marks the items that begin a wrapped line of every "·" list on
  * the card (secondary attack bands, item stat rows, DotLists) so they drop
  * their leading separator — at each fitted text size, before measuring.
  */
 function layoutCardBands(element: HTMLElement) {
+  // Shrink one-line values (a companion's speed) first: the line starts and
+  // the card's fit measure their fitted width.
+  fitOneLineTexts(element);
   // Restore intrinsic sizing before sharing the widest first cell. Never
   // measure the previously assigned width, which would prevent shrinking.
   element.style.removeProperty("--print-card-header-first-column");

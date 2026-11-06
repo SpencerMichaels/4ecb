@@ -4,6 +4,7 @@ import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
 import { DotList } from "./DotList";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -159,10 +160,12 @@ export function BeastCompanionCard({
             <p className="print-play-note">
               <DotList
                 items={[
-                  <>
+                  <span className={ONE_LINE_FIT_CLASS}>
                     <strong>Speed</strong> {card.speed ?? "—"}
-                  </>,
-                  `${card.vision} vision`,
+                  </span>,
+                  <span className={ONE_LINE_FIT_CLASS}>
+                    {card.vision} vision
+                  </span>,
                 ]}
               />
             </p>

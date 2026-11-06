@@ -5,6 +5,7 @@ import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 import { BeastCompanionCard, beastCompanionTitle } from "./BeastCompanionCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { appStyles } from "./test-styles";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { dotted } from "./test-dot-list";
 
 const card: SheetBeastCompanionCard = {
@@ -72,7 +73,9 @@ describe("beast companion card", () => {
     expect(html).toContain('<span class="stat-tile-lead">16</span>');
     expect(html).toContain('<span class="stat-tile-label">STR</span>');
     expect(html).toContain("<dd>+3</dd>");
-    expect(dotted(html)).toContain("7 · Low-light vision");
+    expect(dotted(html)).toContain(
+      `<span class="${ONE_LINE_FIT_CLASS}"><strong>Speed</strong> 7</span> · <span class="${ONE_LINE_FIT_CLASS}">Low-light vision</span>`,
+    );
     expect(dotted(html)).toContain(
       "<strong>Bite</strong> +12 vs AC · 1d8+3 damage",
     );

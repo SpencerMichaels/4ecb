@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SheetAssociateCard } from "@4ecb/sheet-model";
 
 import { AssociateCard } from "./AssociateCard";
+import { ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { dotted } from "./test-dot-list";
 
 const card: SheetAssociateCard = {
@@ -77,7 +78,12 @@ describe("associate card", () => {
     expect(html).toContain('title="Your bloodied value"');
     expect(html).toMatch(/Init<\/.*?\+6/);
     expect(html).toMatch(/Perc<\/.*?\+15/);
-    expect(html).toContain("Low-light vision");
+    expect(html).toContain(
+      `<span class="${ONE_LINE_FIT_CLASS}"><strong>Speed</strong>`,
+    );
+    expect(html).toContain(
+      `<span class="${ONE_LINE_FIT_CLASS}">Low-light vision</span>`,
+    );
     expect(dotted(html)).toContain("Mossy Pack (teleportation) · Aura 1");
     expect(html).toContain("Mossy Bite");
     expect(dotted(html)).toContain("Standard · At-Will");

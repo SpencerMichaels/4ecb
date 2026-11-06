@@ -14,7 +14,6 @@ import {
   fittingBasicAttackLimit,
   fittingSummaryPaneCount,
   moreRemindersCaption,
-  fittingIdentityNameSize,
   overviewBasicAttackRows,
   overviewTrackingRows,
   sortedTrackingRows,
@@ -1785,13 +1784,6 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain('class="selection-metadata-icon action-type-icon');
     expect(html).not.toContain(">Action</th>");
-  });
-  it("shrinks identity names to a readable minimum before leaving overflow to ellipsis", () => {
-    expect(fittingIdentityNameSize((size) => size * 5, 200)).toBe(27);
-    const fitted = fittingIdentityNameSize((size) => size * 10, 220);
-    expect(fitted).toBeLessThanOrEqual(22);
-    expect(fitted).toBeGreaterThan(21.75);
-    expect(fittingIdentityNameSize((size) => size * 100, 220)).toBe(18);
   });
   it("preserves the full long name in title text and the heading tooltip", () => {
     const name = "A very long synthetic character name that needs truncation";
