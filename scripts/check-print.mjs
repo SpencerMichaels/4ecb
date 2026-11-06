@@ -537,6 +537,32 @@ try {
       layout.overflowing.length === 0,
       `${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
     );
+    // A one-line card name longer than the card (f06f2834's nowrap Play data
+    // name) must stay inside it, never widen the card's grid column so the
+    // whole body runs past the card's edge.
+    const longCardName = await evaluate(
+      client,
+      `(() => {
+        const card = document.querySelector(".print-only .print-play-character");
+        const name = card?.querySelector("h3 > span");
+        if (!card || !name) return { found: false };
+        const original = name.textContent;
+        name.textContent = "Pirimelliandra Thistledown of the Seven Hills and the Far Shore";
+        const edge = card.getBoundingClientRect().right;
+        const past = [...card.querySelectorAll("header, .print-play-body, .print-play-body > *")]
+          .filter((element) => element.getBoundingClientRect().right > edge + 1)
+          .map((element) => element.className || element.tagName);
+        const result = { found: true, scrollWidth: card.scrollWidth, clientWidth: card.clientWidth, past };
+        name.textContent = original;
+        return result;
+      })()`,
+    );
+    assert(
+      longCardName.found &&
+        longCardName.scrollWidth <= longCardName.clientWidth + 1 &&
+        longCardName.past.length === 0,
+      `${variant.name} widens the Play data card for a long name: ${JSON.stringify(longCardName)}`,
+    );
     assert(
       !layout.weaponFontMismatch,
       `${variant.name} uses smaller weapon text`,

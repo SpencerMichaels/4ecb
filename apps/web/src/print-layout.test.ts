@@ -375,6 +375,19 @@ describe("print layout contract", () => {
       /\.print-card-variant-table tbody th\s*\{[^}]*overflow-wrap:\s*break-word;/,
     );
   });
+  it("gives every card one column no wider than the card itself", () => {
+    // An implicit auto column grows to a nowrap line's width (the Play data
+    // name, f06f2834) and carries the whole card body past the card's edge.
+    const base = /\n\.print-reference-card\s*\{([^}]*)\}/.exec(styles)?.[1];
+    expect(base).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\);/);
+    // No card kind brings back a content-sized column.
+    for (const [, selector, body] of styles.matchAll(
+      /\n(\.print-[\w-]+-card(?:\.[\w-]+)*)\s*\{([^}]*)\}/g,
+    ))
+      expect(
+        `${selector} ${/grid-template-columns:\s*([^;]+);/.exec(body ?? "")?.[1] ?? "minmax(0, 1fr)"}`,
+      ).toBe(`${selector} minmax(0, 1fr)`);
+  });
   it("defines Letter and A4 pages with a fixed three-by-three card grid", () => {
     expect(styles).toMatch(/@page\s*\{[\s\S]*?size:\s*letter/);
     expect(styles).toMatch(/@page\s+a4sheet\s*\{[\s\S]*?size:\s*A4/);

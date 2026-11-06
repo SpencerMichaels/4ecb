@@ -517,6 +517,10 @@
   display: grid;
   font-family: Arial, sans-serif;
   font-size: var(--print-card-text-size, 8pt);
+  /* One column no wider than the card: an unbreakable line (a one-line
+     name, a nowrap heading) truncates or wraps inside the card instead of
+     sizing an auto column past its edge, where it is cut off. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   height: 3.405in;
   line-height: 1.08;

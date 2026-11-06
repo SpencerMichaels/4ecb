@@ -1154,7 +1154,6 @@
 }
 .print-item-card {
   --card-color: #ff8c00;
-  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
 }
 .print-item-card.no-subheader {

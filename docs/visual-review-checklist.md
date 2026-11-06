@@ -487,6 +487,17 @@ live site.
     the weapon column stays wide while a number column wraps, the table
     overflows the card, or the printed card's text shrinks noticeably
     compared with its neighbours.
+- [ ] **Drow invoker: Play data card width.**
+  - **Where:** `?preview=1`, the first card page's Play data card (the
+    review name is longer than the card); then the browser's print preview.
+    At 140% zoom.
+  - **Expect:** the name sits on one line, cut off with "…", and every stat
+    group (abilities, defenses, HP row, Init/Speed/passives, Senses and
+    Defenses lines) fits inside the card's border, with the same right
+    margin as the Skills card beside it.
+  - **Wrong if:** the stat tiles or note lines run past the card's right
+    border or are cut off there, the name wraps onto a second line, or the
+    card is wider than its neighbours.
 
 ## Pass 8: Arena fighter 11 (`fighter-arena`)
 

@@ -3618,6 +3618,14 @@ D079 implemented on branch `unified-cards`:
   Column headings ("Dmg 2", "Attack 1") never wrap on any layout, so each
   number column is at least its heading wide and weapon names take the
   squeeze (owner, 2026-11-06).
+- Every card's grid is one `minmax(0, 1fr)` column (`.print-reference-card`),
+  so a nowrap line never sizes the column past the card: the Play data card's
+  one-line name (f06f2834) had widened its column to the full name, carrying
+  the whole stat body past the right edge of 26 of the 31 review characters'
+  cards (Drow invoker: 413 px of content in a 235 px card; now 235/235, the
+  name cut off with an ellipsis). `check:print` stretches the fixture's
+  Play data name and fails if any part of the card runs past its edge
+  (owner, 2026-11-06).
 - Panel cards lay out their bands like printed cards, so a wrapped secondary
   attack line starts with its target icon rather than a "·" separator.
 - Builder and on-screen panel cards have dark-theme paper, ink and card
