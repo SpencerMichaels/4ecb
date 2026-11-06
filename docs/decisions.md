@@ -4360,7 +4360,10 @@ Amended (2026-11-05, owner decisions):
 
 Status: accepted (2026-11-05).
 
-Owner decision (2026-11-05, a player request): a **build overview** that
+Owner decision (2026-11-05, a player request: "we used to have an
+'overview' page that listed in one place, the full set of choices per level
+that a character has. It fell behind the rest of the app so I removed it.
+Players still want that feature though."): a **build overview** that
 lists, in one place, every choice the character has made, level by level.
 It is a builder tab, **Overview**, beside Build (icon `list-checks`, the
 `CandidateSelectionTable` checklist icon, so it reads in the coming
