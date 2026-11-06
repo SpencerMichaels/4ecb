@@ -21,8 +21,17 @@ card's `candidate-reason` box, the rows' and buttons' small reason text and
 the `unavailable-note` wrapper and their CSS are gone. `description`
 holds every reason in full ("Unavailable in this campaign. Illegal: does not
 meet prerequisites"): the badge's title, and in a row the end of the name
-button's accessible description. The badge keeps one look for both
-statuses. Verification: `UnavailableLabel.test.tsx`,
+button's accessible description. A lone `prerequisite-unverified` (the
+engine couldn't parse the prerequisite; `pickLegality` keeps it
+rules-legal) reads "Unverified: prerequisites can't be checked"; a rule
+reason beside it wins ("Illegal: …", counted in "(+N more)") and a
+permission reason wins over both; the description lists it last. Tone
+follows the presentation's `status` (`unavailable` / `illegal` /
+`unverified`) through a `candidate-unavailable-<status>` modifier on the
+same badge: Illegal is the danger red (`--danger`/`--danger-soft`, with
+their dark-mode values), Unavailable and Unverified stay amber (the app
+has no neutral/info advisory tone). Skill toggles' status line uses the
+`label`. Verification: `UnavailableLabel.test.tsx`,
 `UnavailableLabel.style.test.ts`, `ShopWorkspace.test.ts`,
 `accessibility-contract.test.ts`.
 

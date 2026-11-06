@@ -889,7 +889,8 @@ Moradin, or an item a character holds), build and import or advertise it.
     each badge. Build → skill training: a skill that can't be chosen.
     Inventory → right-click a held item whose saved choice is restricted →
     Choose… dialog.
-  - **Expect:** the same amber badge with a left bar everywhere, and no
+  - **Expect:** the same badge with a left bar everywhere (tone per
+    status, next item), and no
     other reason text or box anywhere. The stock deity's row and card read
     "Unavailable in this campaign". The unmet feat's row and card read
     "Illegal: does not meet prerequisites" (several rule reasons: the first
@@ -901,6 +902,19 @@ Moradin, or an item a character holds), build and import or advertise it.
     line or box sits beside the badge, a row's badge overflows or clips its
     cell or stretches full width at 140%, or the badge is unreadable in
     dark theme.
+- [ ] **Badge tones: Illegal red, Unavailable and Unverified amber.**
+  - **Where:** same places as above; also a feat table with Show all on
+    and a feat whose prerequisite the engine can't parse (its badge reads
+    "Unverified: prerequisites can't be checked"). Check light and dark
+    theme at 140% zoom.
+  - **Expect:** "Illegal: …" badges are the soft red background with dark
+    red text and left bar (light) / dark red background with pink text
+    (dark), matching other error surfaces; "Unavailable …" and
+    "Unverified: …" badges keep the amber look. Same size and shape for
+    all three.
+  - **Wrong if:** an Illegal badge is amber, an Unverified badge is red,
+    the red is hard to read in dark theme, or the badges differ in size,
+    padding or bar.
 - [ ] **Content updates: new server and campaign revisions.**
   - **Where:** a non-campaign character after a server content update; a
     campaign character's editor left open while the second campaign

@@ -11,6 +11,7 @@ import { unavailablePresentation } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
 import { CandidateSelectionTable } from "./CandidateSelectionTable";
 import { CompactChoiceButtons } from "./ChoiceEditors";
+import { UnavailableLabel } from "./UnavailableLabel";
 
 function feat(index: number, name: string): ContentEntity {
   return {
@@ -69,7 +70,7 @@ describe("unavailablePresentation", () => {
     expect(unavailablePresentation(["campaign-restricted"])).toEqual({
       label: "Unavailable in this campaign",
       description: "Unavailable in this campaign",
-      status: "Unavailable in this campaign",
+      status: "unavailable",
     });
     expect(unavailablePresentation(["source-unentitled"]).label).toBe(
       "Unavailable: not in your allowed sources",
@@ -80,18 +81,18 @@ describe("unavailablePresentation", () => {
       label: "Unavailable in this campaign",
       description:
         "Unavailable in this campaign. Unavailable: not in your allowed sources",
-      status: "Unavailable in this campaign",
+      status: "unavailable",
     });
     expect(unavailablePresentation(["prerequisite"])).toEqual({
       label: "Illegal: does not meet prerequisites",
       description: "Illegal: does not meet prerequisites",
-      status: "Illegal: does not meet prerequisites",
+      status: "illegal",
     });
     expect(unavailablePresentation(["prerequisite", "duplicate"])).toEqual({
       label: "Illegal: does not meet prerequisites (+1 more)",
       description:
         "Illegal: does not meet prerequisites; already selected in another slot",
-      status: "Illegal: does not meet prerequisites (+1 more)",
+      status: "illegal",
     });
   });
 
@@ -102,8 +103,54 @@ describe("unavailablePresentation", () => {
       label: "Unavailable in this campaign",
       description:
         "Unavailable in this campaign. Illegal: does not meet prerequisites",
-      status: "Unavailable in this campaign",
+      status: "unavailable",
     });
+  });
+
+  it("says Unverified for a lone unparsed prerequisite", () => {
+    expect(unavailablePresentation(["prerequisite-unverified"])).toEqual({
+      label: "Unverified: prerequisites can't be checked",
+      description: "Unverified: prerequisites can't be checked",
+      status: "unverified",
+    });
+  });
+
+  it("lets a rule reason win over an unverified one", () => {
+    expect(
+      unavailablePresentation(["prerequisite-unverified", "duplicate"]),
+    ).toEqual({
+      label: "Illegal: already selected in another slot (+1 more)",
+      description:
+        "Illegal: already selected in another slot. Unverified: prerequisites can't be checked",
+      status: "illegal",
+    });
+  });
+
+  it("lets a permission reason win over an unverified one", () => {
+    expect(
+      unavailablePresentation(["prerequisite-unverified", "source-unentitled"]),
+    ).toEqual({
+      label: "Unavailable: not in your allowed sources",
+      description:
+        "Unavailable: not in your allowed sources. Unverified: prerequisites can't be checked",
+      status: "unavailable",
+    });
+  });
+});
+
+describe("UnavailableLabel tone", () => {
+  it("adds one modifier class per status", () => {
+    const badge = (reasons: readonly string[]) =>
+      renderToStaticMarkup(createElement(UnavailableLabel, { reasons }));
+    expect(badge(["campaign-restricted"])).toContain(
+      'class="candidate-unavailable candidate-unavailable-unavailable"',
+    );
+    expect(badge(["prerequisite"])).toContain(
+      'class="candidate-unavailable candidate-unavailable-illegal"',
+    );
+    expect(badge(["prerequisite-unverified"])).toContain(
+      'class="candidate-unavailable candidate-unavailable-unverified"',
+    );
   });
 });
 
@@ -117,15 +164,17 @@ describe("one label per status", () => {
         }),
       );
     expect(card(0)).toContain(
-      'class="candidate-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span>',
+      'class="candidate-unavailable candidate-unavailable-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span>',
     );
     expect(card(1)).toContain(">Unavailable: not in your allowed sources<");
     expect(card(2)).toContain(
-      'class="candidate-unavailable" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span>',
+      'class="candidate-unavailable candidate-unavailable-illegal" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span>',
     );
     for (const index of [0, 1, 2]) {
       expect(card(index)).not.toContain("candidate-reason");
-      expect(card(index).match(/candidate-unavailable/g)).toHaveLength(1);
+      expect(card(index).match(/class="candidate-unavailable /g)).toHaveLength(
+        1,
+      );
     }
   });
 
@@ -153,10 +202,10 @@ describe("one label per status", () => {
       }),
     );
     expect(markup).toContain(
-      '<span class="candidate-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span></button>',
+      '<span class="candidate-unavailable candidate-unavailable-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span></button>',
     );
     expect(markup).toContain(
-      '<span class="candidate-unavailable" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span></button>',
+      '<span class="candidate-unavailable candidate-unavailable-illegal" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span></button>',
     );
     expect(markup).not.toContain("<small");
     expect(markup).not.toContain("unavailable-note");

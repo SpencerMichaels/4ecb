@@ -2118,7 +2118,7 @@ export function SkillTrainingEditor({
                                   ? "Clear a skill in this group to choose"
                                   : reason?.eligible === false
                                     ? unavailablePresentation(reason.reasons)
-                                        .status
+                                        .label
                                     : "Available"}
                           </span>
                         </button>

@@ -1604,37 +1604,59 @@ function lowerFirst(text: string): string {
   return text.charAt(0).toLocaleLowerCase() + text.slice(1);
 }
 
+/** The engine could not parse the prerequisite; `pickLegality` treats the
+ * option as rules-legal, so alone it reads "Unverified", not "Illegal". */
+const UNVERIFIED_REASON = "prerequisite-unverified";
+const UNVERIFIED_LABEL = "Unverified: prerequisites can't be checked";
+
+/** The tone of an `UnavailableLabel` badge: a permission reason
+ * ("unavailable", amber), a rule the option breaks ("illegal", red) or a
+ * prerequisite the engine could not check ("unverified", amber). */
+export type UnavailableStatus = "unavailable" | "illegal" | "unverified";
+
 /**
  * How an option that can't be chosen says why, on every surface (one
  * `UnavailableLabel`, one label per status). A permission reason makes it
  * "Unavailable" ("Unavailable in this campaign"); every other reason is a
  * rule the option breaks, "Illegal: <reason>" ("Illegal: does not meet
- * prerequisites"). When both apply the permission label is shown: no rule
- * matters for an option the character may not use. Several rule reasons
- * show the first in the label and "(+N more)" after it, so a row stays one
+ * prerequisites"), except a lone unparsed prerequisite, "Unverified:
+ * prerequisites can't be checked". When both apply the permission label is
+ * shown: no rule matters for an option the character may not use; a rule
+ * reason likewise wins over an unverified one. Several reasons show the
+ * first rule in the label and "(+N more)" after it, so a row stays one
  * short line. `description` is every reason in full, for the title and
- * accessible description; `status` is the label, for a status slot.
+ * accessible description; `status` picks the badge tone.
  */
 export function unavailablePresentation(reasons: readonly string[]): {
   readonly label: string;
   readonly description: string;
-  readonly status: string;
+  readonly status: UnavailableStatus;
 } {
   const permissionLabels = Object.keys(permissionReasonLabels)
     .filter((reason) => reasons.includes(reason))
     .map((reason) => permissionReasonLabels[reason]!);
-  const rules = reasons
-    .filter((reason) => !(reason in permissionReasonLabels))
+  const others = reasons.filter(
+    (reason) => !(reason in permissionReasonLabels),
+  );
+  const unverified = others.includes(UNVERIFIED_REASON);
+  const rules = others
+    .filter((reason) => reason !== UNVERIFIED_REASON)
     .map((reason) => lowerFirst(candidateReason([reason])));
   const description = [
     ...permissionLabels,
     ...(rules.length === 0 ? [] : [`Illegal: ${rules.join("; ")}`]),
+    ...(unverified ? [UNVERIFIED_LABEL] : []),
   ].join(". ");
-  const more = rules.length > 1 ? ` (+${rules.length - 1} more)` : "";
-  const label =
-    permissionLabels[0] ??
-    (rules[0] === undefined ? "Unavailable" : `Illegal: ${rules[0]}${more}`);
-  return { label, description: description || label, status: label };
+  const more = others.length > 1 ? ` (+${others.length - 1} more)` : "";
+  const [label, status]: readonly [string, UnavailableStatus] =
+    permissionLabels[0] !== undefined
+      ? [permissionLabels[0], "unavailable"]
+      : rules[0] !== undefined
+        ? [`Illegal: ${rules[0]}${more}`, "illegal"]
+        : unverified
+          ? [UNVERIFIED_LABEL, "unverified"]
+          : ["Unavailable", "unavailable"];
+  return { label, description: description || label, status };
 }
 
 export function isCandidateSelectable(candidate: CandidateDecision): boolean {

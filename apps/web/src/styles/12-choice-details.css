@@ -733,8 +733,10 @@
 
 /* The one "can't be chosen" label (UnavailableLabel): a card's subheading,
    a table row's or choice button's note, the only text for the status:
-   "Unavailable in this campaign" (permission) or "Illegal: <reason>"
-   (a rule). */
+   "Unavailable in this campaign" (permission), "Illegal: <reason>"
+   (a rule) or "Unverified: prerequisites can't be checked". Amber for
+   unavailable and unverified, the danger red for illegal (the modifier
+   class from unavailablePresentation's status; tokens carry dark mode). */
 .candidate-unavailable {
   background: var(--warning-soft);
   border-left: 3px solid currentColor;
@@ -743,6 +745,11 @@
   font-size: 0.7rem;
   font-weight: 800;
   padding: 0.25rem 0.5rem;
+}
+
+.candidate-unavailable.candidate-unavailable-illegal {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 /* In a table row or choice button: a smaller badge on its own line. */
