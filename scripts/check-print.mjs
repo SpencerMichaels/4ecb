@@ -537,31 +537,65 @@ try {
       layout.overflowing.length === 0,
       `${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
     );
-    // A one-line card name longer than the card (f06f2834's nowrap Play data
-    // name) must stay inside it, never widen the card's grid column so the
-    // whole body runs past the card's edge.
-    const longCardName = await evaluate(
+    // The Play data name stays on one line inside the card (f06f2834): it
+    // shrinks no smaller than the identity line under it, then truncates with
+    // an ellipsis, and never widens the card's grid column so the body runs
+    // past the card's edge. Each name is set, the card nudged so its fit
+    // observer refits, and the card measured.
+    const playNameFits = await evaluate(
       client,
-      `(() => {
+      `(async () => {
         const card = document.querySelector(".print-only .print-play-character");
-        const name = card?.querySelector("h3 > span");
-        if (!card || !name) return { found: false };
+        const heading = card?.querySelector("h3");
+        const name = heading?.querySelector(":scope > span");
+        const identity = card?.querySelector(".print-play-identity");
+        if (!card || !heading || !name || !identity) return { found: false };
+        const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const refit = async (text) => {
+          name.textContent = text;
+          card.style.width = "2.46in";
+          await frame();
+          card.style.removeProperty("width");
+          await frame();
+          const edge = card.getBoundingClientRect().right;
+          return {
+            size: parseFloat(getComputedStyle(heading).fontSize),
+            floor: parseFloat(getComputedStyle(identity).fontSize),
+            preferred: 13 * 96 / 72,
+            truncated: heading.classList.contains("is-truncated"),
+            nameFits: heading.scrollWidth <= heading.clientWidth + 1,
+            cardFits: card.scrollWidth <= card.clientWidth + 1,
+            past: [...card.querySelectorAll("header, .print-play-body, .print-play-body > *")]
+              .filter((element) => element.getBoundingClientRect().right > edge + 1)
+              .map((element) => element.className || element.tagName),
+          };
+        };
         const original = name.textContent;
-        name.textContent = "Pirimelliandra Thistledown of the Seven Hills and the Far Shore";
-        const edge = card.getBoundingClientRect().right;
-        const past = [...card.querySelectorAll("header, .print-play-body, .print-play-body > *")]
-          .filter((element) => element.getBoundingClientRect().right > edge + 1)
-          .map((element) => element.className || element.tagName);
-        const result = { found: true, scrollWidth: card.scrollWidth, clientWidth: card.clientWidth, past };
-        name.textContent = original;
-        return result;
+        const medium = await refit("Pirimelliandra Thistledown the Bold");
+        const long = await refit("Pirimelliandra Thistledown of the Seven Hills and the Far Shore");
+        await refit(original);
+        return { found: true, medium, long };
       })()`,
+      true,
+    );
+    const { medium: mediumName, long: longName } = playNameFits;
+    assert(
+      playNameFits.found &&
+        [mediumName, longName].every(
+          (fit) => fit.cardFits && fit.past.length === 0,
+        ),
+      `${variant.name} widens the Play data card for a long name: ${JSON.stringify(playNameFits)}`,
     );
     assert(
-      longCardName.found &&
-        longCardName.scrollWidth <= longCardName.clientWidth + 1 &&
-        longCardName.past.length === 0,
-      `${variant.name} widens the Play data card for a long name: ${JSON.stringify(longCardName)}`,
+      mediumName.nameFits &&
+        !mediumName.truncated &&
+        mediumName.size < mediumName.preferred - 0.25 &&
+        mediumName.size >= mediumName.floor - 0.01,
+      `${variant.name} does not shrink a longer Play data name to fit: ${JSON.stringify(mediumName)}`,
+    );
+    assert(
+      longName.truncated && Math.abs(longName.size - longName.floor) < 0.3,
+      `${variant.name} does not truncate an overlong Play data name at the identity line's size: ${JSON.stringify(longName)}`,
     );
     assert(
       !layout.weaponFontMismatch,

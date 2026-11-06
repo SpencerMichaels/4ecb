@@ -491,13 +491,17 @@ live site.
   - **Where:** `?preview=1`, the first card page's Play data card (the
     review name is longer than the card); then the browser's print preview.
     At 140% zoom.
-  - **Expect:** the name sits on one line, cut off with "…", and every stat
+  - **Expect:** the name sits on one line; a name too long for the card
+    first shrinks, down to the size of the "Drow Invoker 11" line under it
+    and no smaller, and only then is cut off with "…" (hover shows the full
+    name). Every stat
     group (abilities, defenses, HP row, Init/Speed/passives, Senses and
     Defenses lines) fits inside the card's border, with the same right
     margin as the Skills card beside it.
   - **Wrong if:** the stat tiles or note lines run past the card's right
-    border or are cut off there, the name wraps onto a second line, or the
-    card is wider than its neighbours.
+    border or are cut off there, the name wraps onto a second line, is
+    cut off while still larger than the line under it, ends up smaller
+    than that line, or the card is wider than its neighbours.
 - [ ] **Drow invoker: Spiderling speed on one line (2026-11-06).**
   - **Where:** `?preview=1`, the Spiderling of Lolth familiar card; then in
     the builder open the familiar choice from `edit?tab=overview` (the

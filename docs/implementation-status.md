@@ -3650,10 +3650,14 @@ D079 implemented on branch `unified-cards`:
   so a nowrap line never sizes the column past the card: the Play data card's
   one-line name (f06f2834) had widened its column to the full name, carrying
   the whole stat body past the right edge of 26 of the 31 review characters'
-  cards (Drow invoker: 413 px of content in a 235 px card; now 235/235, the
-  name cut off with an ellipsis). `check:print` stretches the fixture's
-  Play data name and fails if any part of the card runs past its edge
-  (owner, 2026-11-06).
+  cards (Drow invoker: 413 px of content in a 235 px card; now 235/235).
+  The name itself stays on one line through the shared one-line fitter
+  (`one-line-fit.ts`, run by `PrintCharacterCard`): it shrinks from 13pt no
+  smaller than the identity line under it (its computed size, 7.5pt), then
+  truncates with an ellipsis, the full name in its title (owner,
+  2026-11-06). `check:print` sets a longer and an overlong fixture name and
+  fails if the card widens, the longer one doesn't shrink to fit, or the
+  overlong one isn't truncated at the identity size.
 - Panel cards lay out their bands like printed cards, so a wrapped secondary
   attack line starts with its target icon rather than a "·" separator.
 - Builder and on-screen panel cards have dark-theme paper, ink and card

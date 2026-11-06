@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { CharacterPortrait } from "@4ecb/character-domain";
 import type { CharacterSheetModel } from "@4ecb/sheet-model";
 
+import { fitOneLineText, ONE_LINE_FIT_CLASS } from "./one-line-fit";
 import { PlayDataStats } from "./PlayDataStats";
 import { playData } from "./play-data";
 
@@ -27,6 +28,44 @@ function PlayCardFrame({
   );
 }
 
+/**
+ * The Play data name stays on one line: it shrinks no smaller than the
+ * identity line under it (owner, 2026-11-06), then truncates with an
+ * ellipsis. The floor is read from the identity line's computed size.
+ */
+function useFittedPlayName(name: string) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    const card = element?.closest<HTMLElement>(".print-reference-card");
+    if (!element || !card) return;
+    const fit = () => {
+      const identity = element.parentElement?.querySelector(
+        ".print-play-identity",
+      );
+      if (identity) {
+        const floor = Number.parseFloat(getComputedStyle(identity).fontSize);
+        if (floor > 0) element.dataset.fitMin = `${floor}px`;
+      }
+      fitOneLineText(element);
+    };
+    // Hidden print cards have no geometry: the observer refits once the
+    // preview or print media shows them.
+    const observer = new ResizeObserver(fit);
+    observer.observe(card);
+    fit();
+    let active = true;
+    void document.fonts.ready.then(() => {
+      if (active) fit();
+    });
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [name]);
+  return ref;
+}
+
 /** Legacy "Play Data" character card: core numbers for use at the table. */
 export function PrintCharacterCard({
   model,
@@ -42,6 +81,7 @@ export function PrintCharacterCard({
   const summary = [identity("Race"), identity("Class"), identity("Level")]
     .filter(Boolean)
     .join(" ");
+  const nameRef = useFittedPlayName(name);
   return (
     <PlayCardFrame
       className="print-play-character"
@@ -55,7 +95,12 @@ export function PrintCharacterCard({
             />
           ) : null}
           <div className="print-play-heading">
-            <h3 title={name}>
+            <h3
+              className={ONE_LINE_FIT_CLASS}
+              data-fit-overflow="ellipsis"
+              ref={nameRef}
+              title={name}
+            >
               <span>{name}</span>
             </h3>
             {summary ? <p className="print-play-identity">{summary}</p> : null}

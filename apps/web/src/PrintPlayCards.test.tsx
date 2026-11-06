@@ -99,12 +99,16 @@ describe("printed play-data cards", () => {
     );
   });
 
-  it("keeps a long name on one line, cut off with its full text as the title", () => {
+  it("keeps a long name on one line, shrunk to the identity size then cut off, with its full text as the title", () => {
     const name = "Pirimelliandra Thistledown of the Seven Hills";
     const html = renderToStaticMarkup(
       <PrintCharacterCard model={model} name={name} portrait={undefined} />,
     );
-    expect(html).toContain(`<h3 title="${name}"><span>${name}</span></h3>`);
+    // The shared one-line fitter shrinks it (floor: the identity line's
+    // size, read in the browser), then truncates; check:print measures it.
+    expect(html).toContain(
+      `<h3 class="one-line-fit" data-fit-overflow="ellipsis" title="${name}"><span>${name}</span></h3>`,
+    );
     const rule =
       /\.print-play-character \.print-play-heading h3 \{([^}]*)\}/.exec(
         appStyles,
