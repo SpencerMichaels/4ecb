@@ -36,6 +36,15 @@ describe("visual-review facts decided by CSS", () => {
     ).toContain("color: var(--muted)");
   });
 
+  it("hangs a dialog option's text beside its radio, in a dialog wide enough for a psion's options", () => {
+    const choice = declarations(".dialog-choice");
+    expect(choice).toContain("display: grid");
+    expect(choice).toContain("grid-template-columns: auto minmax(0, 1fr)");
+    expect(declarations(".ritual-allowance-dialog")).toContain(
+      "width: min(34rem, calc(100vw - 2rem))",
+    );
+  });
+
   it("sets the Known table's empty groups in muted italics", () => {
     const empty = declarations(".rituals-empty-row td");
     expect(empty).toContain("font-style: italic");

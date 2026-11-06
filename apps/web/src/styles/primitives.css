@@ -85,6 +85,20 @@ dialog:not([open]) {
   justify-content: flex-end;
 }
 
+/* A dialog's radio or checkbox option: the control is the bullet and the
+   option's text hangs beside it, so a wrapped line indents under the text
+   instead of starting under the control like a new item. */
+.dialog-choice {
+  align-items: start;
+  column-gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.dialog-choice > input {
+  margin: 0.2em 0 0;
+}
+
 .dialog-footer-start {
   margin-inline-end: auto;
 }

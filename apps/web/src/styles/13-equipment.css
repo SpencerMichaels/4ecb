@@ -905,9 +905,12 @@ button.inventory-icon-action:disabled {
   font-weight: 600;
 }
 
+/* Wide enough for "Psion · 1 free ritual: Sending or Tenser's Floating
+   Disk" on one line; a longer option wraps under its own text
+   (.dialog-choice). */
 .ritual-allowance-dialog {
   overflow: auto;
-  width: min(26rem, calc(100vw - 2rem));
+  width: min(34rem, calc(100vw - 2rem));
 }
 
 .ritual-allowance-body {

@@ -12,6 +12,7 @@ import {
 } from "@4ecb/rules-engine";
 
 import {
+  AllowanceChoiceDialog,
   groupKnownRecords,
   knownRecordSourceLabel,
   ritualAllowanceLabel,
@@ -291,5 +292,34 @@ describe("Rituals workspace", () => {
     expect(markup).toContain("Known rituals");
     expect(markup).toContain('aria-label="Learn Bought Rite free"');
     expect(markup).not.toContain("</svg> Learn rituals</button>");
+  });
+
+  it("hangs each Learn-free option's text beside its radio", () => {
+    const markup = renderToStaticMarkup(
+      createElement(AllowanceChoiceDialog, {
+        name: "Tenser's Floating Disk",
+        allowances: [
+          {
+            key: "PSION",
+            providerId: "PSION",
+            provider: "Psion",
+            kind: "Ritual",
+            steps: [],
+          },
+        ],
+        describe: () => "1 free ritual: Sending or Tenser's Floating Disk",
+        onLearn: vi.fn(),
+        onCancel: vi.fn(),
+      }),
+    );
+    // Every option, "None (a gift)" included, is a two-column choice: the
+    // radio, then one text element (no loose text beside the control).
+    expect(markup.match(/<label class="dialog-choice">/g)).toHaveLength(2);
+    expect(markup).toContain(
+      '<label class="dialog-choice"><input type="radio" name="ritual-allowance" checked=""/><span class="dot-list">',
+    );
+    expect(markup).toContain(
+      '<input type="radio" name="ritual-allowance"/><span>None (a gift)</span></label>',
+    );
   });
 });

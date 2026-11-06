@@ -120,7 +120,7 @@ export function ritualAllowanceLabel(
  *  Each option names its provider and what it still covers, since one
  *  provider can have several (a Psion's any 1st-level ritual, and Sending or
  *  Tenser's Floating Disk). */
-function AllowanceChoiceDialog({
+export function AllowanceChoiceDialog({
   name,
   allowances,
   describe,
@@ -164,13 +164,13 @@ function AllowanceChoiceDialog({
       <fieldset className="ritual-allowance-body">
         <legend>Use a free ritual from</legend>
         {allowances.map((allowance) => (
-          <label key={allowance.key}>
+          <label className="dialog-choice" key={allowance.key}>
             <input
               type="radio"
               name="ritual-allowance"
               checked={chosen === allowance.key}
               onChange={() => setChosen(allowance.key)}
-            />{" "}
+            />
             <DotList
               items={[
                 allowance.provider,
@@ -183,14 +183,14 @@ function AllowanceChoiceDialog({
             />
           </label>
         ))}
-        <label>
+        <label className="dialog-choice">
           <input
             type="radio"
             name="ritual-allowance"
             checked={chosen === ""}
             onChange={() => setChosen("")}
-          />{" "}
-          None (a gift)
+          />
+          <span>None (a gift)</span>
         </label>
       </fieldset>
       <footer>
