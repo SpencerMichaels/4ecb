@@ -1,4 +1,5 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { readNoteValues, type ContentEntity } from "@4ecb/content-domain";
+import { noteValueText, type EvaluatedStat } from "@4ecb/rules-engine";
 
 /**
  * The sheet's one-line note for a feature, feat or racial trait, as the
@@ -52,4 +53,37 @@ export function featureNoteHidden(
   const supersededBy = sheetOverride(entity)?.supersededBy;
   if (supersededBy === undefined) return false;
   return supersededBy.trim() === "" || ownsClassFeature(supersededBy.trim());
+}
+
+/**
+ * A feature note as a page-1 reminder prints it (D112): each value the
+ * pack build parsed out of it (`_Note Values IR`) at the character's level
+ * and ability modifiers ("+1/+2/+3 (by tier) to damage" at 12th level is
+ * "+2 to damage"), and without the clauses the record's own stat additions
+ * already put on the sheet ("+2/+3/+4 (by tier) to Will; make saving
+ * throw…" is "Make saving throw…"). A note without parsed values is
+ * unchanged; every number comes from rules-engine `noteValueText`.
+ */
+export function featureReminderText(
+  entity: ContentEntity,
+  text: string,
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): string {
+  const note = readNoteValues(entity.specifics, text);
+  if (note === undefined) return text;
+  const resolved = note.segments
+    .map((segment) =>
+      segment.kind === "text"
+        ? segment.text
+        : segment.kind === "value"
+          ? noteValueText(segment.value, level, stats)
+          : "",
+    )
+    .join("")
+    .replace(/^[\s;,]+/, "")
+    .replace(/[\s;,]+$/, "");
+  return note.segments[0]?.kind === "applied"
+    ? resolved.charAt(0).toLocaleUpperCase() + resolved.slice(1)
+    : resolved;
 }

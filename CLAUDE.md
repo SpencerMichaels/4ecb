@@ -218,7 +218,10 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   rules engine only read those, computing just what depends on the character.
   Precedents: `_Associate Stat Block` and `_Power Text IR` (a power's
   attack/hit/effect texts and field riders, content-domain `power-text.ts`,
-  looked up by text in `rules-engine/src/power-text-index.ts`) and
+  looked up by text in `rules-engine/src/power-text-index.ts`),
+  `_Note Values IR` (a feature note's tier, level-step and ability values,
+  content-domain `note-values.ts`, printed in page-1 reminders by
+  `featureReminderText` via derived-values `noteValueText`, D112) and
   `_Prerequisite IR` (prerequisite trees, content-domain
   `prerequisite-ir.ts`, stored by `content-tool build` against the whole
   pack and used only for that same record set); bump the field's version

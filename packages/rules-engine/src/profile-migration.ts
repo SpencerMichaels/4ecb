@@ -2,6 +2,7 @@ import type { CharacterBuild } from "@4ecb/character-domain";
 import {
   ASSOCIATE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_FIELD,
+  NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,
   type ContentEntity,
@@ -174,6 +175,7 @@ function removedSelections(
 const DERIVED_SPECIFICS: ReadonlySet<string> = new Set([
   ASSOCIATE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_FIELD,
+  NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,
 ]);

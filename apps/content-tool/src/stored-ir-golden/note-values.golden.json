@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "fixture": "b08c59ee1c08b73ac4f816fca6050791ec971eddf639eb7638e1db539d37cf60",
+  "output": {
+    "ID_GOLDEN_FEAT_NOTE_APPLIED": {
+      "version": 1,
+      "notes": [
+        {
+          "text": "+2/+3/+4 (by tier) to Will; make saving throw to end stunned or dazed at start of your turn even if not (save ends) effect",
+          "segments": [
+            {
+              "kind": "applied",
+              "text": "+2/+3/+4 (by tier) to Will; "
+            },
+            {
+              "kind": "text",
+              "text": "make saving throw to end stunned or dazed at start of your turn even if not (save ends) effect"
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_NOTE_STEPS": {
+      "version": 1,
+      "notes": [
+        {
+          "text": "Deal 2 + Dex mod extra damage if oath target moves away. (4 + Dex mod at 11th level, 6 + Dex mod at 21st)",
+          "segments": [
+            {
+              "kind": "text",
+              "text": "Deal "
+            },
+            {
+              "kind": "value",
+              "value": {
+                "terms": [
+                  {
+                    "kind": "flat",
+                    "value": 2
+                  },
+                  {
+                    "kind": "ability",
+                    "abilities": [
+                      "Dexterity"
+                    ]
+                  }
+                ],
+                "signed": false,
+                "steps": [
+                  {
+                    "level": 11,
+                    "terms": [
+                      {
+                        "kind": "flat",
+                        "value": 4
+                      },
+                      {
+                        "kind": "ability",
+                        "abilities": [
+                          "Dexterity"
+                        ]
+                      }
+                    ],
+                    "add": false
+                  },
+                  {
+                    "level": 21,
+                    "terms": [
+                      {
+                        "kind": "flat",
+                        "value": 6
+                      },
+                      {
+                        "kind": "ability",
+                        "abilities": [
+                          "Dexterity"
+                        ]
+                      }
+                    ],
+                    "add": false
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "text",
+              "text": " extra damage if oath target moves away."
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_NOTE_FILL": {
+      "version": 1,
+      "notes": [
+        {
+          "text": "Encounter, free; with tome, creatures summoned gain a bonus to damage rolls.",
+          "segments": [
+            {
+              "kind": "text",
+              "text": "Encounter, free; with tome, creatures summoned gain a "
+            },
+            {
+              "kind": "value",
+              "value": {
+                "terms": [
+                  {
+                    "kind": "ability",
+                    "abilities": [
+                      "Constitution"
+                    ]
+                  }
+                ],
+                "signed": true
+              }
+            },
+            {
+              "kind": "text",
+              "text": " bonus to damage rolls."
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_NOTE_OVERRIDE": {
+      "version": 1,
+      "notes": [
+        {
+          "text": "Temporary hp equal to Con mod (+5 at 11th, +10 at 21st) when you drop enemy to 0 hp; +1 damage per tier with weapon attacks",
+          "segments": [
+            {
+              "kind": "text",
+              "text": "Temporary hp equal to "
+            },
+            {
+              "kind": "value",
+              "value": {
+                "terms": [
+                  {
+                    "kind": "ability",
+                    "abilities": [
+                      "Constitution"
+                    ]
+                  }
+                ],
+                "signed": false,
+                "steps": [
+                  {
+                    "level": 11,
+                    "terms": [
+                      {
+                        "kind": "flat",
+                        "value": 5
+                      }
+                    ],
+                    "add": true
+                  },
+                  {
+                    "level": 21,
+                    "terms": [
+                      {
+                        "kind": "flat",
+                        "value": 10
+                      }
+                    ],
+                    "add": true
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "text",
+              "text": " when you drop enemy to 0 hp; "
+            },
+            {
+              "kind": "value",
+              "value": {
+                "terms": [
+                  {
+                    "kind": "per-tier",
+                    "value": {
+                      "kind": "flat",
+                      "value": 1
+                    }
+                  }
+                ],
+                "signed": true
+              }
+            },
+            {
+              "kind": "text",
+              "text": " damage with weapon attacks"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

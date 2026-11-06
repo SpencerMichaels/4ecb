@@ -3015,6 +3015,9 @@ Decision:
   without edit behaviour; probe copies never carry it. Toggling never
   re-evaluates. Custom reminders, provenance hints, per-row or per-section
   reset, starring and reminder ordering were not approved.
+  Concrete values (owner, 2026-11-05; D112): a reminder that only vaguely
+  mentions a bonus states the value at the character's level and abilities,
+  or goes when the bonus is already in the numbers.
 - A monk full discipline's movement technique prints once, on the
   discipline's card (owner decision 2026-10-28, a layout choice, not a
   rules one): `deckPowerCards` drops the technique's own card from the deck
@@ -4164,3 +4167,60 @@ decision: a power with both the Weapon and Implement keywords (19 on the
 full pack, e.g. Freezing Swordburst, Soul Cutter, Moonfire Blade) keeps
 "Unarmed", since that row is an unarmed weapon attack. 89 summon powers
 with commands have the Implement keyword, none the Weapon keyword.
+
+### D112 — Page-1 reminders state their values
+
+Status: accepted (2026-11-05).
+
+Owner decision: page-1 "Remember in play" reminders that only vaguely
+mention a bonus become concrete; "we should err on the side of trying to
+auto calculate the values for tiered stuff (should be able to)". Examples
+were Tome of Binding ("creatures summoned gain a bonus to damage rolls")
+and Fey Pact of the White Well Reward ("Gain tiered damage bonus").
+
+- **Already in the numbers: no reminder.** A reminder exists only for what
+  the player must remember at the table (D099). Three text triggers wrongly
+  made applied bonuses reminders: a possessive "ally" that names a creature
+  or power ("the creature you summon with summon warlock's ally": every
+  Pact Reward, whose `Pact Reward` stat is on the warlock power rows and the
+  summoned ally's attack cards, and the Binder's Ally / Summon Warlock's
+  Ally grants, which have creature cards); a held loadout ("when you hold a
+  rod", a `WearingRod` statadd, joining the worn/wielded conditions of
+  580ddda); and "when you use a power that has the cold … keyword" on a
+  record whose own statadds are keyword-scoped (`cold:damage`), which the
+  evaluator puts on those power rows (Student of Moil, Astral Fire,
+  Elemental Empowerment). A stripped loadout condition now ends at its
+  clause's comma, so a benefit after it still counts ("When holding a light
+  blade …, you do not provoke opportunity attacks": Drow Fighting Style,
+  Serpent Strike Fighting, Heavy Blade Expertise's OA defense).
+- **Otherwise the value, resolved.** The pack build parses each feat's,
+  class feature's and racial trait's note (`Short Description` and the
+  `_CS_ShortDescription` override) into `_Note Values IR` (content-domain
+  `note-values.ts`, parser legacy-wotc `note-values.ts`, version 1, golden
+  in `stored-ir-golden`): tier tables ("+1/+2/+3 (by tier)", "1d8/2d8/3d8"),
+  per-tier multiples ("+1 damage per tier", "1[W] per tier"), level steps
+  ("(+2 at 11th, +3 at 21st level)", "(+3 at epic)", ", or 2d6 at level
+  21", replacing the value or, "Con mod (+5 at 11th)", adding to it),
+  ability modifiers ("Dex mod", "your Con or Int modifier": the higher
+  score's, as native MultipleAbilityChoices) and one-half the level. A note
+  that leaves a bonus to the full text ("a bonus to damage rolls" beside
+  "… equal to your Constitution modifier") takes the full text's value. A
+  clause that is only a bonus to a defense, initiative, speed or skill which
+  the record's unconditional statadds apply is marked applied and left out
+  ("+2/+3/+4 (by tier) to Will; make saving throw …" prints "Make saving
+  throw …"). The sheet (`featureReminderText`) prints each value with
+  rules-engine `noteValueText` at the character's level and evaluated
+  ability modifiers, so Tome of Binding reads "creatures summoned gain a +1
+  bonus to damage rolls" on the level-5 gnome. The feature list and
+  reference pages keep the authored note.
+- **Left as written** when no value is determinable: values that depend on
+  play ("equal to the number of allies adjacent to you", rune feat counts),
+  class tables the note only names ("deal bonus damage": Sneak Attack,
+  Warlock's Curse, Hunter's Quarry), multiples ("twice your Con mod",
+  "2x Cha mod"), slash-separated pairs ("+4/+6 when bloodied"), cumulative
+  wording ("+2 at paragon and epic") and other creatures' modifiers ("its
+  Con modifier", "that power's relevant ability modifier"). An ability
+  named to replace another ("use Str modifier instead of Cha modifier") is
+  never a value. Of the pack's notes that are reminders, about 665 now
+  print resolved values, 14 vague ones went as already applied, and about
+  60 keep vague wording.

@@ -16,6 +16,7 @@ import { SaxesParser } from "saxes";
 
 import { associateStatBlockField } from "./associate-stat-block";
 import { creatureStatBlockField } from "./creature-stat-block";
+import { noteValuesField } from "./note-values";
 import { powerTextField } from "./power-text";
 import { mergeSummonCommunityCards } from "./summon-community-cards";
 import { summonCreatureField } from "./summon-creature";
@@ -385,6 +386,21 @@ export class D20RulesParser {
           id,
         ),
       );
+
+    // A feature note's tier, level-step and ability values (D112),
+    // parsed once here for the sheet's reminders.
+    const noteValues = noteValuesField(
+      type,
+      specifics,
+      description.trim() ||
+        specifics.find(
+          (field) => field.name.trim().toLocaleLowerCase() === "full text",
+        )?.value ||
+        "",
+      rules,
+      specifics.length,
+    );
+    if (noteValues !== undefined) specifics.push(noteValues);
 
     const base = {
       id,

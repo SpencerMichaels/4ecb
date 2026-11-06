@@ -5,6 +5,9 @@ import type {
   AssociateEntry,
   AssociateHitPoints,
   AssociateStatBlock,
+  NoteValue,
+  NoteValueConstant,
+  NoteValueTerm,
 } from "@4ecb/content-domain";
 
 import type { EvaluatedContribution, EvaluatedStat } from "./stats";
@@ -668,6 +671,24 @@ function firstNumericStat(
   return 0;
 }
 
+/**
+ * The modifier of the highest-scoring of `abilities` (earlier ones winning
+ * ties), as native MultipleAbilityChoices (`-Module-.cs` ~24663) reads a
+ * line's listed abilities; 0 for none.
+ */
+function highestAbilityModifier(
+  abilities: readonly AssociateAbilityName[],
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): number {
+  if (abilities.length === 0) return 0;
+  const score = (ability: AssociateAbilityName) =>
+    numericStat(stats, ability) ?? 0;
+  const best = abilities.reduce((top, ability) =>
+    score(ability) > score(top) ? ability : top,
+  );
+  return numericStat(stats, `${best} modifier`) ?? 0;
+}
+
 function signedTerm(value: number): string {
   return value < 0 ? ` - ${-value}` : ` + ${value}`;
 }
@@ -691,8 +712,6 @@ function associateDamageText(
   const dice = damage.terms.flatMap((term) =>
     term.kind === "dice" ? [term.dice] : [],
   );
-  const score = (ability: AssociateAbilityName) =>
-    numericStat(stats, ability) ?? 0;
   let fixed = creatureBonus;
   for (const term of damage.terms) {
     if (term.kind === "flat") fixed += term.value;
@@ -700,12 +719,8 @@ function associateDamageText(
     else if (term.kind === "level") fixed += level;
     else if (term.kind === "highest-ability")
       fixed += Math.max(...BEAST_ABILITY_NAMES.map(modifier));
-    else if (term.kind === "ability" && term.abilities.length > 0)
-      fixed += modifier(
-        term.abilities.reduce((best, ability) =>
-          score(ability) > score(best) ? ability : best,
-        ),
-      );
+    else if (term.kind === "ability")
+      fixed += highestAbilityModifier(term.abilities, stats);
   }
   const expression = (total: number) => {
     const base = dice.join(" + ");
@@ -831,4 +846,57 @@ export function associateStatistics(input: {
       Object.entries(optional).filter(([, value]) => value !== undefined),
     ),
   };
+}
+
+/** The tier of a level: 0 heroic (1–10), 1 paragon (11–20), 2 epic. */
+export function levelTier(level: number): 0 | 1 | 2 {
+  return level >= 21 ? 2 : level >= 11 ? 1 : 0;
+}
+
+/**
+ * A feature note's value (D112, parsed at pack build into content-domain
+ * `NoteValue`) at the character's level and ability modifiers: the level
+ * step in force (a replacement, or an addition to the base), tier tables
+ * and per-tier multiples, one-half the level and the highest of the named
+ * ability modifiers, summed after any dice ("2d8 + 3"). A signed value
+ * prints its sign ("+3").
+ */
+export function noteValueText(
+  value: NoteValue,
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): string {
+  const step = [...(value.steps ?? [])]
+    .sort((a, b) => a.level - b.level)
+    .reverse()
+    .find((candidate) => level >= candidate.level);
+  const terms: readonly NoteValueTerm[] =
+    step === undefined
+      ? value.terms
+      : step.add
+        ? [...value.terms, ...step.terms]
+        : step.terms;
+  const tier = levelTier(level);
+  let fixed = 0;
+  const dice = new Map<string, number>();
+  const add = (constant: NoteValueConstant, times = 1) => {
+    if (constant.kind === "flat") fixed += constant.value * times;
+    else
+      dice.set(
+        constant.die,
+        (dice.get(constant.die) ?? 0) + constant.count * times,
+      );
+  };
+  for (const term of terms) {
+    if (term.kind === "flat" || term.kind === "dice") add(term);
+    else if (term.kind === "tier") add(term.values[tier]);
+    else if (term.kind === "per-tier") add(term.value, tier + 1);
+    else if (term.kind === "half-level") fixed += halfLevel(level);
+    else fixed += highestAbilityModifier(term.abilities, stats);
+  }
+  const base = [...dice].map(([die, count]) => `${count}${die}`).join(" + ");
+  if (base === "")
+    return value.signed && fixed >= 0 ? `+${fixed}` : String(fixed);
+  const sign = value.signed ? "+" : "";
+  return fixed === 0 ? `${sign}${base}` : `${sign}${base}${signedTerm(fixed)}`;
 }

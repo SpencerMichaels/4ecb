@@ -1,7 +1,8 @@
 /**
  * Guard against stale stored parses. The pack build parses content text once
  * and stores the result with a version (`_Power Text IR`, `_Prerequisite
- * IR`, `_Associate Stat Block`, `_Creature Stat Block`); the engine trusts a stored field whose
+ * IR`, `_Associate Stat Block`, `_Creature Stat Block`,
+ * `_Note Values IR`); the engine trusts a stored field whose
  * version matches. A parser change without a version bump would leave every
  * older pack with stale IR that synthetic tests never see.
  *
@@ -27,6 +28,8 @@ import {
   ASSOCIATE_STAT_BLOCK_VERSION,
   CREATURE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_VERSION,
+  NOTE_VALUES_FIELD,
+  NOTE_VALUES_VERSION,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
   PREREQUISITE_IR_FIELD,
@@ -88,6 +91,13 @@ const kinds = [
     constant:
       "CREATURE_STAT_BLOCK_VERSION (packages/content-domain/src/creature-stat-block.ts)",
     file: "creature-stat-block.golden.json",
+  },
+  {
+    field: NOTE_VALUES_FIELD,
+    version: NOTE_VALUES_VERSION,
+    constant:
+      "NOTE_VALUES_VERSION (packages/content-domain/src/note-values.ts)",
+    file: "note-values.golden.json",
   },
 ] as const;
 

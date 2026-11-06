@@ -6,3 +6,4 @@ export {
 export { powerTextField } from "./power-text";
 export { parseCreatureStatBlock } from "./creature-stat-block";
 export { parseSummonCreature } from "./summon-creature";
+export { noteValuesField, parseNote } from "./note-values";

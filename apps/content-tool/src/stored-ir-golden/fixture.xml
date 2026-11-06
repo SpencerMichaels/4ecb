@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Synthetic input for stored-ir-golden.test.ts: the text the pack build parses
-  into _Power Text IR, _Associate Stat Block, _Creature Stat Block and
-  _Prerequisite IR, written in
+  into _Power Text IR, _Associate Stat Block, _Creature Stat Block,
+  _Prerequisite IR and _Note Values IR, written in
   the spellings real records use. Changing this file means regenerating the
   goldens (see the test); it never needs a version bump by itself.
 -->
@@ -319,5 +319,26 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
     <rules>
       <modify name="ID_GOLDEN_COMPANION_1_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" />
     </rules>
+  </RulesElement>
+
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NOTE_APPLIED" name="Golden Superior Will" type="Feat" source="Synthetic">
+    <specific name="Short Description">+2/+3/+4 (by tier) to Will; make saving throw to end stunned or dazed at start of your turn even if not (save ends) effect</specific>
+    <rules>
+      <statadd name="Golden Superior Will" value="+2" />
+      <statadd name="Golden Superior Will" value="+1" requires="Paragon Tier" />
+      <statadd name="Golden Superior Will" value="+1" requires="Epic Tier" />
+      <statadd name="Will Defense" value="+Golden Superior Will" type="Feat" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NOTE_STEPS" name="Golden Censure" type="Class Feature" source="Synthetic">
+    <specific name="Short Description">Deal 2 + Dex mod extra damage if oath target moves away. (4 + Dex mod at 11th level, 6 + Dex mod at 21st)</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NOTE_FILL" name="Golden Tome" type="Class Feature" source="Synthetic">
+    Once per encounter, as a free action, if you use your tome when using an arcane summoning power, all creatures summoned by that power gain a bonus to damage rolls equal to your Constitution modifier.
+    <specific name="Short Description">Encounter, free; with tome, creatures summoned gain a bonus to damage rolls.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_NOTE_OVERRIDE" name="Golden Rageblood" type="Racial Trait" source="Synthetic">
+    <specific name="Short Description">You gain temporary hit points.</specific>
+    <specific name="_CS_ShortDescription">Temporary hp equal to Con mod (+5 at 11th, +10 at 21st) when you drop enemy to 0 hp; +1 damage per tier with weapon attacks@</specific>
   </RulesElement>
 </D20Rules>

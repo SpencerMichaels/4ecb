@@ -39,7 +39,7 @@ import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
-import { featureNoteText } from "./feature-notes";
+import { featureNoteText, featureReminderText } from "./feature-notes";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -57,6 +57,9 @@ export interface OverviewFeature {
   readonly level?: number;
   /** A display heuristic, not a claim that every other benefit is calculated. */
   readonly playReminder?: boolean;
+  /** The reminder's text where it differs from the summary: its values at
+   *  the character's level and abilities, applied clauses left out (D112). */
+  readonly reminderText?: string;
   readonly accessOnly?: boolean;
   /** Choices made under the feature, shown after its name. */
   readonly choices?: readonly SheetFeatureChoice[];
@@ -416,6 +419,15 @@ export function withSheetOverview(
         description.split(/\bBenefit:\s*/i).at(-1) ||
         description;
       const cards = grantedCards(entity, cardedPowers, definitions);
+      const reminderText =
+        entity === undefined || input.evaluatedStats === undefined
+          ? summary
+          : featureReminderText(
+              entity,
+              summary,
+              input.level,
+              input.evaluatedStats,
+            );
       const fields =
         entity?.specifics
           .filter(
@@ -466,6 +478,7 @@ export function withSheetOverview(
         playReminder:
           !accessOnly(entity, benefit || summary, cards, summary) &&
           hasPlayReminder(summary, benefit),
+        ...(reminderText === summary ? {} : { reminderText }),
         accessOnly: accessOnly(entity, benefit || summary, cards, summary),
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
@@ -681,6 +694,8 @@ export function withSheetOverview(
   };
   const featureReminderId = (feature: OverviewFeature) =>
     `feature:${feature.id}`;
+  const reminderValue = (feature: OverviewFeature) =>
+    feature.reminderText ?? (feature.summary || feature.description);
   for (const feature of features)
     if (
       ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
@@ -690,7 +705,7 @@ export function withSheetOverview(
         featureReminderId(feature),
         true,
         feature.name,
-        feature.summary || feature.description,
+        reminderValue(feature),
         reminderCategory(feature.group),
         undefined,
         feature.group === "Feat"
@@ -701,7 +716,7 @@ export function withSheetOverview(
       const index = reminders.findIndex(
         (reminder) =>
           reminder.label === feature.name &&
-          reminder.value === (feature.summary || feature.description),
+          reminder.value === reminderValue(feature),
       );
       if (index >= 0) reminderByFeature.set(feature.id, index);
     }
@@ -750,7 +765,7 @@ export function withSheetOverview(
             : featureChoiceText(feature.choices);
         const canonical = {
           label: feature.name,
-          value: feature.summary || feature.description,
+          value: reminderValue(feature),
           category: reminderCategory(feature.group),
           ...(choice === undefined ? {} : { choice }),
         };
