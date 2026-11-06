@@ -828,9 +828,15 @@ describe("release accessibility contract", () => {
     expect(icon).toContain('"shopping-cart": ShoppingCart');
     expect(icon).toContain('"scroll-text": ScrollText');
     expect(icon).toContain('aria-hidden="true"');
-    expect(characterEditor).toContain('<Icon name="handbag" /> Inventory');
-    expect(characterEditor).toContain('<Icon name="sword" /> Loadout');
-    expect(characterEditor).toContain('<Icon name="shopping-cart" /> Shop');
+    expect(characterEditor).toContain(
+      '<Icon name="handbag" />\n                  <span className="builder-tab-label">Inventory</span>',
+    );
+    expect(characterEditor).toContain(
+      '<Icon name="sword" />\n                  <span className="builder-tab-label">Loadout</span>',
+    );
+    expect(characterEditor).toContain(
+      '<Icon name="shopping-cart" />\n                  <span className="builder-tab-label">Shop</span>',
+    );
     expect(equipmentWorkspace).not.toContain("equipment-view-toggle");
   });
 

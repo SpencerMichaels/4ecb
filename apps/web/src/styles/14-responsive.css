@@ -411,16 +411,19 @@
     align-items: stretch;
     border-bottom: 0;
     flex-direction: column;
+    flex-wrap: nowrap;
     gap: 0;
   }
 
   .builder-tabs {
     border-bottom: 1px solid var(--border);
+    flex: none;
     margin-bottom: 0;
   }
 
   .builder-tabs-bar > .builder-status {
     align-self: stretch;
+    margin-inline-start: 0;
   }
 
   .shop-toolbar {

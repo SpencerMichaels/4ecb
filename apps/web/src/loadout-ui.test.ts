@@ -41,8 +41,12 @@ describe("loadout interaction and geometry", () => {
   });
 
   it("shows Inventory and Loadout as separate builder tabs", () => {
-    expect(editor).toContain('<Icon name="handbag" /> Inventory');
-    expect(editor).toContain('<Icon name="sword" /> Loadout');
+    expect(editor).toContain(
+      '<Icon name="handbag" />\n                  <span className="builder-tab-label">Inventory</span>',
+    );
+    expect(editor).toContain(
+      '<Icon name="sword" />\n                  <span className="builder-tab-label">Loadout</span>',
+    );
     expect(editor).toContain("loadout: true,");
     expect(workspace).not.toContain("equipment-view-toggle");
     expect(workspace).toMatch(/\{loadoutView \? \([\s\S]*?<LoadoutGrid/);

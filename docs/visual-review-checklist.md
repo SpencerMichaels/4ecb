@@ -138,6 +138,23 @@ live site.
     chevron doesn't flip, the strip is hard to see in dark theme, or a
     side-by-side tab's left column is so narrow its rows or filters
     overlap.
+- [ ] **Beatrix: icon-only builder tabs.**
+  - **Where:** `edit?tab=inventory`; narrow the window step by step from wide
+    to below 48rem, docked and with the drawer, at 100% and 140% zoom;
+    switch tabs while narrow and hover an icon-only tab. Then the same on
+    "Review – Zilvra" (`zilvra`, more status badges) just above 63rem (about
+    1411px at 140%).
+  - **Expect:** the tab bar never scrolls. When the labels don't fit
+    beside the status buttons, every tab but the selected one shows only
+    its icon (the hover tooltip names it) and the selected one keeps its
+    label; switching tabs moves the label without the bar jumping between
+    modes. The status buttons stay at the right; on Zilvra at the narrowest
+    docked width they sit on a row above the tabs, still at the right, and
+    the tabs keep the rule under them.
+  - **Wrong if:** a horizontal scrollbar appears in the tab bar, a label
+    is cut off, icon-only tabs are cramped or unevenly spaced, the bar
+    flickers between modes, the selected tab loses its label, or the
+    status row sits left or below the rule.
 
 ## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 

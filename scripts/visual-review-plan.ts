@@ -128,6 +128,10 @@ const reviews: ReviewCharacter[] = [
             "Below 63rem (about 1411px at 140%): the left-edge strip, sliding the sidebar out and back (strip, Esc, outside click), content height, scrolling in a short window; each tab side by side down to about a 46rem window.",
           ],
           [
+            "Beatrix: icon-only builder tabs",
+            "Narrowing the window docked and with the drawer: icon-only tabs but the selected one, tooltips, no scrolling; Zilvra's status row wrapping above the tabs at the narrowest docked width.",
+          ],
+          [
             "Class detail card",
             'Select the Class row (Hexblade): the card\'s heading line reads "Arcane Striker"; a "Key abilities" row with the other class traits.',
           ],

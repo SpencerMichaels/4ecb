@@ -1612,8 +1612,12 @@ rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
     resolve("apps/web/src/CharacterEditorPage.tsx"),
     "utf8",
   );
-  const shop = source.indexOf('<Icon name="shopping-cart" /> Shop');
-  const rituals = source.indexOf('<Icon name="book-marked" /> Rituals');
+  const shop = source.indexOf(
+    '<span className="builder-tab-label">Shop</span>',
+  );
+  const rituals = source.search(
+    /<Icon name="book-marked" \/>\s*<span className="builder-tab-label">Rituals<\/span>/,
+  );
   const html = ritualsHtml(c);
   const text = textOf(html);
   const allowances = freeRitualAllowanceTexts(c.evaluation);

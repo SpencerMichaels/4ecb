@@ -2299,6 +2299,7 @@ export function CharacterEditorPage({
                 <button
                   aria-selected={workspaceTab === "build"}
                   role="tab"
+                  title="Build"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, {
@@ -2310,17 +2311,20 @@ export function CharacterEditorPage({
                     })
                   }
                 >
-                  <Icon name="level" /> Build
+                  <Icon name="level" />
+                  <span className="builder-tab-label">Build</span>
                 </button>
                 <button
                   aria-selected={workspaceTab === "details"}
                   role="tab"
+                  title="Details"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, { workspace: "details" })
                   }
                 >
-                  <Icon name="details" /> Details
+                  <Icon name="details" />
+                  <span className="builder-tab-label">Details</span>
                   {unresolvedCharacterDetailChoices.length > 0 ? (
                     <span
                       aria-label="Details has unresolved required choices"
@@ -2337,6 +2341,7 @@ export function CharacterEditorPage({
                     navigation.loadout === true
                   }
                   role="tab"
+                  title="Loadout"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, {
@@ -2345,7 +2350,8 @@ export function CharacterEditorPage({
                     })
                   }
                 >
-                  <Icon name="sword" /> Loadout
+                  <Icon name="sword" />
+                  <span className="builder-tab-label">Loadout</span>
                 </button>
                 <button
                   aria-selected={
@@ -2353,35 +2359,42 @@ export function CharacterEditorPage({
                     navigation.loadout !== true
                   }
                   role="tab"
+                  title="Inventory"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, { workspace: "equipment" })
                   }
                 >
-                  <Icon name="handbag" /> Inventory
+                  <Icon name="handbag" />
+                  <span className="builder-tab-label">Inventory</span>
                 </button>
                 <button
                   aria-selected={workspaceTab === "shop"}
                   role="tab"
+                  title="Shop"
                   type="button"
                   onClick={() => onNavigate(characterId, { workspace: "shop" })}
                 >
-                  <Icon name="shopping-cart" /> Shop
+                  <Icon name="shopping-cart" />
+                  <span className="builder-tab-label">Shop</span>
                 </button>
                 <button
                   aria-selected={workspaceTab === "rituals"}
                   role="tab"
+                  title="Rituals"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, { workspace: "rituals" })
                   }
                 >
-                  <Icon name="book-marked" /> Rituals
+                  <Icon name="book-marked" />
+                  <span className="builder-tab-label">Rituals</span>
                 </button>
                 {/* Least used, so last. */}
                 <button
                   aria-selected={workspaceTab === "retraining"}
                   role="tab"
+                  title="Retraining"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, {
@@ -2390,7 +2403,8 @@ export function CharacterEditorPage({
                     })
                   }
                 >
-                  <Icon name="undo" /> Retraining
+                  <Icon name="undo" />
+                  <span className="builder-tab-label">Retraining</span>
                 </button>
               </div>
               <div aria-label="Builder status" className="builder-status">
