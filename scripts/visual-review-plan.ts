@@ -124,6 +124,10 @@ const reviews: ReviewCharacter[] = [
             "The White Well pact's level sections (the pact choice exists only at Build level 1, so only Level 1 starts open; open the later sections by clicking them); also Alchemist, Feytouched and Archmage.",
           ],
           [
+            "Beatrix: narrow-window sidebar drawer",
+            "Below 63rem (about 1411px at 140%): the left-edge strip, sliding the sidebar out and back (strip, Esc, outside click), content height, scrolling in a short window.",
+          ],
+          [
             "Class detail card",
             'Select the Class row (Hexblade): the card\'s heading line reads "Arcane Striker"; a "Key abilities" row with the other class traits.',
           ],

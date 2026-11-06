@@ -109,6 +109,28 @@ live site.
     "Level N" tag at the right.
   - **Wrong if:** the tag overlaps or pushes the text, or a heading is cut
     off with "…".
+- [ ] **Beatrix: narrow-window sidebar drawer.**
+  - **Where:** `edit?tab=build&level=1&section=class`; narrow the window
+    below 63rem (about 1411px at 140% zoom, 1008px at 100%), then click the
+    strip at the window's left edge, click it again, reopen it and press
+    Esc, reopen it and click the level page. Also try Inventory, a tall
+    window, and a short one (at 140% zoom).
+  - **Expect:** closed, only a slim strip with a ">" shows at the window's
+    left edge, as tall as the sidebar's content, and the tab bar starts
+    just right of it; no space opens above or below. Clicking it slides the
+    sidebar out over the workspace (which doesn't move or narrow) with the
+    strip as its right edge, now "<", in the same border and colours; it
+    slides back on the second click, Esc or a click outside. Open, the
+    sidebar's portrait, name, stats and funds look exactly as when docked;
+    in a short window the drawer stops at the window's bottom and scrolls
+    inside. Hover and keyboard focus on the strip are visible. Widening
+    the window brings back the docked sidebar with no strip.
+  - **Wrong if:** the sidebar folds above the content, the strip runs the
+    full window height when the content is shorter, the drawer pushes the
+    workspace aside or slides under the tab bar, a horizontal scrollbar
+    appears, the sidebar's stats wrap differently from the docked
+    sidebar, the strip and panel look like two separate controls, the
+    chevron doesn't flip, or the strip is hard to see in dark theme.
 
 ## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 

@@ -121,6 +121,7 @@ import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
 import { UpdateButton } from "./PwaUpdate";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
+import { BuilderSidebar } from "./BuilderSidebar";
 import { LevelGainsList } from "./LevelGainsList";
 import { levelGains } from "./level-gains";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
@@ -2211,7 +2212,7 @@ export function CharacterEditorPage({
         id="main-content"
       >
         <div className="builder-layout">
-          <aside aria-label="Character" className="builder-sidebar">
+          <BuilderSidebar>
             <header className="builder-sidebar-identity">
               <PortraitEditor
                 name={character.title}
@@ -2255,7 +2256,7 @@ export function CharacterEditorPage({
               ) : null}
             </div>
             <BuildVersion />
-          </aside>
+          </BuilderSidebar>
           <div className="builder-main">
             {settingLevel ? (
               <SetLevelDialog

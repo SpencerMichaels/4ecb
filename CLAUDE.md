@@ -274,7 +274,9 @@ dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
 changes move focus to the new main landmark. Every builder tab shares the
 sticky character sidebar (`builder-layout`/`builder-sidebar` in
-`CharacterEditorPage.tsx`: portrait, name, `BuilderCharacterStats`) and the
+`CharacterEditorPage.tsx`: portrait, name, `BuilderCharacterStats`; below
+63rem `BuilderSidebar.tsx` parks it as a left drawer whose right-edge
+chevron strip slides it out over the workspace, a non-modal disclosure) and the
 Build tab's "Level N" heading is the `LevelPicker` modal — D080; there is no
 separate header or level rail.
 

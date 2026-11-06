@@ -209,6 +209,24 @@
   min-width: 0;
 }
 
+/* Wide windows: the frame and drawer add no box, so the sidebar is the
+   grid's first column and the drawer's edge strip (BuilderSidebar.tsx) is
+   hidden. */
+.builder-sidebar-frame,
+.builder-sidebar-drawer {
+  display: contents;
+}
+
+.builder-sidebar-rail {
+  display: none;
+}
+
+/* Focus moves to the overlay itself when it opens; its controls keep
+   their own focus rings. */
+.builder-sidebar:focus {
+  outline: none;
+}
+
 /* Identity sits on the page above the box; the box starts at the stats. */
 .builder-sidebar {
   display: flex;

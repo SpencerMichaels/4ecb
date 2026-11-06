@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { BUILDER_SIDEBAR_RAIL_QUERY } from "./BuilderSidebar";
 import { appStyles } from "./test-styles";
 
 const styles = appStyles;
@@ -109,12 +110,12 @@ describe("builder character sidebar layout", () => {
     ).toContain("font-size: 1.4em");
   });
 
-  it("keeps detail panes one card wide and folds the sidebar on narrow windows", () => {
+  it("keeps detail panes one card wide and collapses the sidebar to a rail on narrow windows", () => {
     expect(declarationsFor(".level-choice-workspace")).toContain(
       "grid-template-columns: minmax(0, 1fr) var(--panel-card-width)",
     );
     expect(styles).toMatch(
-      /@media \(max-width: 63rem\)[\s\S]*?\.builder-layout\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+      /@media \(max-width: 63rem\)[\s\S]*?\.builder-layout\s*\{[^}]*grid-template-columns: var\(--builder-rail-width\) minmax\(0, 1fr\)/,
     );
     expect(styles).toMatch(
       /@media \(max-width: 48rem\)[\s\S]*?\.builder-tabs-bar\s*\{[^}]*flex-direction: column/,
@@ -231,5 +232,68 @@ describe("update notification color", () => {
     );
     // Defined for light, explicit dark and system dark themes.
     expect(styles.match(/--notify:\s*#[0-9a-f]{6};/g)).toHaveLength(3);
+  });
+});
+
+describe("BuilderSidebar styles", () => {
+  const header = `@media ${BUILDER_SIDEBAR_RAIL_QUERY} {`;
+  // The narrow block's rules (it holds no nested at-rule).
+  const narrow = appStyles
+    .slice(appStyles.indexOf(header) + header.length)
+    .split("@")[0];
+  function narrowRule(selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (
+      new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([^}]*)\\}`).exec(
+        narrow ?? "",
+      )?.[1] ?? ""
+    );
+  }
+
+  it("collapses to a slim rail at the same rem threshold as the component", () => {
+    expect(BUILDER_SIDEBAR_RAIL_QUERY).toMatch(/^\(max-width: [\d.]+rem\)$/);
+    expect(appStyles).toContain(header);
+    // The wide layout's pinned rules start just past the same threshold.
+    expect(appStyles).toContain("@media (min-width: 63.01rem)");
+    expect(narrowRule(".builder-layout")).toContain(
+      "--builder-rail-width: 1.375rem",
+    );
+    expect(narrowRule(".builder-layout")).toContain(
+      "grid-template-columns: var(--builder-rail-width) minmax(0, 1fr)",
+    );
+  });
+
+  it("parks the sidebar off-screen as a drawer whose right edge is the strip", () => {
+    const drawer = narrowRule(".builder-sidebar-drawer");
+    expect(drawer).toContain("position: sticky");
+    expect(drawer).toContain("max-block-size: calc(100dvh - 2rem)");
+    expect(drawer).not.toMatch(/(^|[^-])block-size/);
+    expect(drawer).toContain(
+      "transform: translateX(calc(-1 * var(--builder-drawer-panel-width)))",
+    );
+    expect(narrowRule(".builder-sidebar-drawer-open")).toContain(
+      "transform: none",
+    );
+    // A closed drawer's panel is out of the tab order and the a11y tree.
+    expect(narrowRule(".builder-sidebar-drawer > .builder-sidebar")).toContain(
+      "visibility: hidden",
+    );
+    expect(
+      narrowRule(".builder-sidebar-drawer-open > .builder-sidebar"),
+    ).toContain("visibility: visible");
+    expect(narrowRule(".builder-sidebar-rail")).toContain("display: flex");
+    expect(
+      narrowRule('.builder-sidebar-rail[aria-expanded="true"] > .icon'),
+    ).toContain("transform: rotate(180deg)");
+    expect(styles).toMatch(
+      /@media \(max-width: 63rem\) and \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.builder-sidebar-drawer,[^}]*transition: none/,
+    );
+  });
+
+  it("hides the strip on wide windows", () => {
+    expect(appStyles).toMatch(/\.builder-sidebar-rail\s*\{\s*display: none;/);
+    expect(appStyles).toMatch(
+      /\.builder-sidebar-frame,\s*\.builder-sidebar-drawer\s*\{\s*display: contents;/,
+    );
   });
 });

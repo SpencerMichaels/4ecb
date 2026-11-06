@@ -2307,7 +2307,7 @@ Next button: level tab tables instead end at the bottom of the window, later
 tables in a tab sharing the first one's height, and short lists shrinking to
 their rows. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above
-the workspace.
+the workspace (superseded by the 2026-11-05 drawer below).
 
 **Navigation cleanup (2026-10-18).** The portrait, name and race/class/level
 sit on the page above the sidebar's stat groups, which are unboxed and use
@@ -2330,6 +2330,34 @@ and Diagnostics is reached only from the status badges, so it is hidden when
 nothing needs attention. The app header is removed: the builder's Character
 sheet, Settings and Close icons follow undo/redo, the library has a visible
 title and Settings gear, and Settings has a close button.
+
+**Narrow-window drawer (2026-11-05).** The owner decided the sidebar no
+longer folds above the workspace below 63rem. Below that width (the point
+where the 17rem sidebar stops fitting beside a usable workspace, the same
+threshold as the wide layout's pinned rules at 63.01rem; rem-based, so at
+140% zoom it is about 1411 device pixels) the sidebar becomes a drawer
+(`BuilderSidebar.tsx`): it is parked off-screen to the left, and only its
+right-edge strip, a slim button with a ">" chevron, shows at the window's
+left edge. Clicking the strip slides the whole sidebar out over the
+workspace, which keeps its full width; the strip travels with it as its
+right edge, now showing "<", and clicking it again slides it back. A first
+version showed a portrait thumbnail and the chevron in a separate rail; the
+owner dropped it: "the collapsed sidebar takes up a lot of unnecessary
+vertical space below it. We could just do a narrow vertical line top to
+bottom, with a `>` chevron indicating it can be clicked to pull out", and
+then "let's not make it full height, just make it the height needed to
+display its content". So the drawer, strip included, is as tall as the
+sidebar's content, sticky at the top like the docked sidebar, and capped at
+the window's height, where the panel scrolls inside. The sidebar's content
+is the same component docked and in the drawer. The open drawer is a
+non-modal disclosure, not a dialog: the strip is a button with
+`aria-expanded` and `aria-controls` naming the sidebar (the `aside`
+labelled "Character"), focus moves to the sidebar on open, and Esc or the
+strip closes it with focus back on the strip; a click outside closes it and
+leaves focus where the click landed. Esc inside a dialog opened from the
+sidebar (the portrait editor) stays with that dialog. Wide windows keep the
+always-open docked sidebar with no strip, and widening the window docks it
+again, closed.
 
 ### D081 — Implement powers list only usable implements (rules over legacy)
 

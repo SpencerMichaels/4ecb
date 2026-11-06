@@ -180,14 +180,107 @@
   }
 }
 
-/* Narrow windows fold the sidebar back above the workspace. */
+/* Narrow windows turn the sidebar into a drawer (D080): parked off-screen
+   to the left with only its right-edge strip showing (a chevron button,
+   ">" closed, "<" open), it slides out over the workspace, which keeps
+   its full width. The strip sits at the window's left edge. The value
+   matches BUILDER_SIDEBAR_RAIL_QUERY in BuilderSidebar.tsx. */
 @media (max-width: 63rem) {
   .builder-layout {
-    grid-template-columns: minmax(0, 1fr);
+    --builder-rail-width: 1.375rem;
+    gap: 0.5rem;
+    grid-template-columns: var(--builder-rail-width) minmax(0, 1fr);
+    margin-inline-start: calc(-1 * var(--builder-gap, 1rem));
   }
 
-  .builder-sidebar {
+  .builder-sidebar-frame {
+    align-self: stretch;
+    display: block;
+    position: relative;
+    z-index: 30;
+  }
+
+  .builder-sidebar-drawer {
+    --builder-drawer-panel-width: min(
+      var(--builder-sidebar-width) + 1.5rem + 1px,
+      100vw - var(--builder-rail-width) - 2rem
+    );
+    display: flex;
+    inline-size: max-content;
+    /* As tall as the sidebar's content (the strip matching it), capped at
+       the window, where the panel scrolls inside. */
+    max-block-size: calc(100dvh - 2rem);
+    position: sticky;
+    top: 1rem;
+    transform: translateX(calc(-1 * var(--builder-drawer-panel-width)));
+    transition: transform 160ms ease;
+  }
+
+  .builder-sidebar-drawer-open {
+    box-shadow: 0 0.35rem 0.8rem rgb(0 0 0 / 20%);
+    transform: none;
+  }
+
+  /* The panel and the strip share one frame: the panel's border runs on
+     into the strip's. */
+  .builder-sidebar-drawer > .builder-sidebar {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-inline-end: 0;
+    box-sizing: border-box;
+    /* The docked width plus the panel's padding and border, so the content
+       wraps exactly as when docked. */
+    inline-size: var(--builder-drawer-panel-width);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.75rem;
     position: static;
+    transition: visibility 0s linear 160ms;
+    visibility: hidden;
+  }
+
+  .builder-sidebar-drawer-open > .builder-sidebar {
+    transition-delay: 0s;
+    visibility: visible;
+  }
+
+  .builder-sidebar-rail {
+    align-items: center;
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    border-radius: 0 2px 2px 0;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    flex: none;
+    inline-size: var(--builder-rail-width);
+    justify-content: center;
+    padding: 0;
+  }
+
+  .builder-sidebar-rail:hover,
+  .builder-sidebar-rail[aria-expanded="true"] {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+
+  .builder-sidebar-rail > .icon {
+    block-size: 1rem;
+    flex: none;
+    inline-size: 1rem;
+    transition: transform 160ms ease;
+  }
+
+  .builder-sidebar-rail[aria-expanded="true"] > .icon {
+    transform: rotate(180deg);
+  }
+}
+
+@media (max-width: 63rem) and (prefers-reduced-motion: reduce) {
+  .builder-sidebar-drawer,
+  .builder-sidebar-drawer > .builder-sidebar,
+  .builder-sidebar-rail > .icon {
+    transition: none;
   }
 }
 
