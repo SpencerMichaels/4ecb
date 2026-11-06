@@ -347,7 +347,7 @@ export function CandidateDetailCard({
   // A granted card needs no "Granted power" label: it sits under the
   // option it comes with.
   const subheading = !isUnavailable ? undefined : (
-    <UnavailableLabel layout="card" reasons={candidate.reasons} />
+    <UnavailableLabel reasons={candidate.reasons} />
   );
   const beastCard = builderCards.beastCardFor(entity);
   if (beastCard !== undefined)

@@ -859,21 +859,25 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** a restricted option is selectable or worded as an
     "allowed sources" problem, an issue is reported twice, or greyed rows
     are illegible at 140% or in dark theme.
-- [ ] **One "Unavailable" label.**
+- [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with
-    Show all on: a row whose prerequisites are unmet, and its card.
+    Show all on: a row whose prerequisites are unmet, and its card; hover
+    each badge. Build → skill training: a skill that can't be chosen.
     Inventory → right-click a held item whose saved choice is restricted →
     Choose… dialog.
-  - **Expect:** the same amber badge with a left bar everywhere. The stock
-    deity's row and card read "Unavailable in this campaign" and show no
-    second box. The unmet feat's row shows an "Unavailable" badge with
-    "Does not meet prerequisites" beside it in small text, and its card
-    shows the badge and the reason box as before. In the dialog the kept
-    pick's button shows the "Unavailable in this campaign" badge on its
-    own line under the name.
-  - **Wrong if:** a reason appears twice, a row's badge overflows or
-    clips its cell at 140%, or the badge is unreadable in dark theme.
+  - **Expect:** the same amber badge with a left bar everywhere, and no
+    other reason text or box anywhere. The stock deity's row and card read
+    "Unavailable in this campaign". The unmet feat's row and card read
+    "Illegal: does not meet prerequisites" (several rule reasons: the first
+    plus "(+N more)"; hovering shows them all). The skill's status line
+    reads the same "Illegal: …" wording. In the dialog the kept pick's
+    button shows "Unavailable in this campaign" on its own line under the
+    name.
+  - **Wrong if:** a reason appears twice, a "Does not meet prerequisites"
+    line or box sits beside the badge, a row's badge overflows or clips its
+    cell or stretches full width at 140%, or the badge is unreadable in
+    dark theme.
 - [ ] **Content updates: new server and campaign revisions.**
   - **Where:** a non-campaign character after a server content update; a
     campaign character's editor left open while the second campaign

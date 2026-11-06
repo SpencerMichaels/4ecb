@@ -1559,7 +1559,8 @@ export function candidateReason(reasons: readonly string[]): string {
 }
 
 /** Reasons that say the character may not use an option at all (the
- * campaign, the allowed sources), not that a rule blocks it. */
+ * campaign, the allowed sources), not that a rule blocks it: the option
+ * is "Unavailable". Campaign first, the one shown when both apply. */
 const permissionReasonLabels: Readonly<Record<string, string>> = {
   "campaign-restricted": "Unavailable in this campaign",
   "source-unentitled": "Unavailable: not in your allowed sources",
@@ -1567,38 +1568,43 @@ const permissionReasonLabels: Readonly<Record<string, string>> = {
 
 /**
  * How an option that can't be chosen says why, on every surface (one
- * `UnavailableLabel`): a permission reason is merged into the label
- * ("Unavailable in this campaign"); any other reason follows a plain
- * "Unavailable" label as its own text. `description` is always the full
- * reason, for the accessible description; `status` is the one-line form
- * for a status slot (the merged label, else the rule reason).
+ * `UnavailableLabel`, one label per status). A permission reason makes it
+ * "Unavailable" ("Unavailable in this campaign"); every other reason is a
+ * rule the option breaks, "Illegal: <reason>" ("Illegal: does not meet
+ * prerequisites"). When both apply the permission label is shown: no rule
+ * matters for an option the character may not use. Several rule reasons
+ * show the first in the label and "(+N more)" after it, so a row stays one
+ * short line. `description` is every reason in full, for the title and
+ * accessible description; `status` is the label, for a status slot.
  */
 export function unavailablePresentation(reasons: readonly string[]): {
   readonly label: string;
-  readonly reason?: string;
   readonly description: string;
   readonly status: string;
 } {
-  const description = candidateReason(reasons);
-  const permission =
-    reasons.length > 0 &&
-    reasons.every((reason) => reason in permissionReasonLabels);
-  if (!permission)
-    return {
-      label: "Unavailable",
-      reason: description,
-      description,
-      status: description,
-    };
-  const merged = reasons.includes("campaign-restricted")
-    ? "campaign-restricted"
-    : "source-unentitled";
-  const label = permissionReasonLabels[merged]!;
-  return { label, description, status: label };
+  const permissionLabels = Object.keys(permissionReasonLabels)
+    .filter((reason) => reasons.includes(reason))
+    .map((reason) => permissionReasonLabels[reason]!);
+  const rules = reasons
+    .filter((reason) => !(reason in permissionReasonLabels))
+    .map((reason) => lowerFirst(candidateReason([reason])));
+  const description = [
+    ...permissionLabels,
+    ...(rules.length === 0 ? [] : [`Illegal: ${rules.join("; ")}`]),
+  ].join(". ");
+  const more = rules.length > 1 ? ` (+${rules.length - 1} more)` : "";
+  const label =
+    permissionLabels[0] ??
+    (rules[0] === undefined ? "Unavailable" : `Illegal: ${rules[0]}${more}`);
+  return { label, description: description || label, status: label };
 }
 
 export function isCandidateSelectable(candidate: CandidateDecision): boolean {
   return candidate.sourceEntitled !== false;
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLocaleLowerCase() + text.slice(1);
+}
+
 }
 
 export function isCandidateVisible(

@@ -1,26 +1,30 @@
 # Implementation status
 
-## One "Unavailable" label (2026-11-06)
+## One label per status: "Unavailable" or "Illegal" (2026-11-06)
 
-Owner feedback: the campaign reason looked like a near-duplicate of the
-"Unavailable" badge. Every place an option shows why it can't be chosen
-now renders `UnavailableLabel.tsx` (class `candidate-unavailable`, from
-`unavailablePresentation` in `builder-ui.ts`): the candidate card's
+Owner feedback: never two labels for one status, and options blocked by a
+rule are "illegal", not "unavailable". Every place an option shows why it
+can't be chosen renders `UnavailableLabel.tsx` (class
+`candidate-unavailable`, from `unavailablePresentation` in
+`builder-ui.ts`), the only text for the status: the candidate card's
 subheading (`CandidateDetail.tsx`), selection-table rows
-(`CandidateSelectionTable.tsx`) and choice buttons (`CompactChoiceButtons`,
-including `ItemChoicePicker`'s kept restricted pick; options now pass
-`unavailableReasons`). A permission reason is merged into the label:
-"Unavailable in this campaign" (`campaign-restricted`) and "Unavailable:
-not in your allowed sources" (`source-unentitled`), with no separate
-reason line. Any other reason keeps the card's existing form, an
-"Unavailable" badge plus its `candidate-reason` paragraph; in rows and
-buttons the badge comes first, followed by the reason as small text
-(`unavailable-note`). Before this change rows and buttons showed only the
-bare reason, styled by `td small` and `button small`, and those rules are
-gone. The full reason is the badge's title, and in a row it is part of
-the name button's accessible description. Skill toggles' status line uses
-the same wording (`status`). Verification: `UnavailableLabel.test.tsx`,
-`UnavailableLabel.style.test.ts`, `ShopWorkspace.test.ts`.
+(`CandidateSelectionTable.tsx`), choice buttons (`CompactChoiceButtons`,
+including `ItemChoicePicker`'s kept restricted pick; options pass
+`unavailableReasons`) and skill toggles' status line (`status`). A
+permission reason reads "Unavailable in this campaign"
+(`campaign-restricted`) or "Unavailable: not in your allowed sources"
+(`source-unentitled`); every other reason is a rule, "Illegal: <reason>"
+with the reason's first letter lowercased ("Illegal: does not meet
+prerequisites"). Several rule reasons show the first and "(+N more)". When a
+permission and a rule reason both apply, the permission label is shown. The
+card's `candidate-reason` box, the rows' and buttons' small reason text and
+the `unavailable-note` wrapper and their CSS are gone. `description`
+holds every reason in full ("Unavailable in this campaign. Illegal: does not
+meet prerequisites"): the badge's title, and in a row the end of the name
+button's accessible description. The badge keeps one look for both
+statuses. Verification: `UnavailableLabel.test.tsx`,
+`UnavailableLabel.style.test.ts`, `ShopWorkspace.test.ts`,
+`accessibility-contract.test.ts`.
 
 ## Pathfinder campaign revision 5 (2026-11-06)
 

@@ -140,10 +140,7 @@ export function CompactChoiceButtons({
                 {option.label}
               </KeyAbilityName>
               {option.unavailableReasons === undefined ? null : (
-                <UnavailableLabel
-                  layout="inline"
-                  reasons={option.unavailableReasons}
-                />
+                <UnavailableLabel reasons={option.unavailableReasons} />
               )}
             </button>
           );

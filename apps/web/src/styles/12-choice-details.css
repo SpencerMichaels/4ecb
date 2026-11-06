@@ -732,8 +732,9 @@
 }
 
 /* The one "can't be chosen" label (UnavailableLabel): a card's subheading,
-   a table row's or choice button's note. A permission reason is merged
-   into it ("Unavailable in this campaign"). */
+   a table row's or choice button's note, the only text for the status:
+   "Unavailable in this campaign" (permission) or "Illegal: <reason>"
+   (a rule). */
 .candidate-unavailable {
   background: var(--warning-soft);
   border-left: 3px solid currentColor;
@@ -744,22 +745,12 @@
   padding: 0.25rem 0.5rem;
 }
 
-/* Inline: the label, then a rule reason as small text beside it. */
-.unavailable-note {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.45rem;
-}
-
-.unavailable-note .candidate-unavailable {
+/* In a table row or choice button: a smaller badge on its own line. */
+.selection-table-scroll td .candidate-unavailable,
+.compact-choice-options > button .candidate-unavailable {
+  justify-self: start;
   padding: 0.1rem 0.4rem;
-}
-
-.candidate-reason {
-  background: var(--warning-soft);
-  border-left: 3px solid var(--warning);
-  padding: 0.55rem 0.7rem;
+  width: fit-content;
 }
 
 .candidate-facts {

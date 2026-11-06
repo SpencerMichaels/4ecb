@@ -469,7 +469,9 @@ describe("release accessibility contract", () => {
     );
     // Granted cards sit under their option and need no label.
     expect(candidateDetail).not.toContain('className="candidate-relationship"');
-    expect(candidateDetail).toContain('<UnavailableLabel layout="card"');
+    expect(candidateDetail).toContain(
+      "<UnavailableLabel reasons={candidate.reasons} />",
+    );
     expect(styles).toMatch(/\.entity-kind\s*\{[^}]*margin-bottom: 0;/);
   });
 

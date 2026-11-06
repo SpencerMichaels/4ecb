@@ -343,7 +343,8 @@
   color: var(--text);
 }
 
-.selection-table-scroll td .unavailable-note {
+.selection-table-scroll td .candidate-unavailable {
+  display: block;
   margin-top: 0.2rem;
 }
 

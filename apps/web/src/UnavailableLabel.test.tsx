@@ -65,33 +65,50 @@ const candidates = [
 ];
 
 describe("unavailablePresentation", () => {
-  it("merges a permission reason into the label, keeps a rule reason apart", () => {
+  it("says Unavailable for a permission reason, Illegal for a rule", () => {
     expect(unavailablePresentation(["campaign-restricted"])).toEqual({
       label: "Unavailable in this campaign",
-      description: "Not used in this campaign",
+      description: "Unavailable in this campaign",
       status: "Unavailable in this campaign",
     });
     expect(unavailablePresentation(["source-unentitled"]).label).toBe(
       "Unavailable: not in your allowed sources",
     );
     expect(
-      unavailablePresentation(["source-unentitled", "campaign-restricted"])
-        .label,
-    ).toBe("Unavailable in this campaign");
-    expect(unavailablePresentation(["prerequisite"])).toEqual({
-      label: "Unavailable",
-      reason: "Does not meet prerequisites",
-      description: "Does not meet prerequisites",
-      status: "Does not meet prerequisites",
+      unavailablePresentation(["source-unentitled", "campaign-restricted"]),
+    ).toEqual({
+      label: "Unavailable in this campaign",
+      description:
+        "Unavailable in this campaign. Unavailable: not in your allowed sources",
+      status: "Unavailable in this campaign",
     });
+    expect(unavailablePresentation(["prerequisite"])).toEqual({
+      label: "Illegal: does not meet prerequisites",
+      description: "Illegal: does not meet prerequisites",
+      status: "Illegal: does not meet prerequisites",
+    });
+    expect(unavailablePresentation(["prerequisite", "duplicate"])).toEqual({
+      label: "Illegal: does not meet prerequisites (+1 more)",
+      description:
+        "Illegal: does not meet prerequisites; already selected in another slot",
+      status: "Illegal: does not meet prerequisites (+1 more)",
+    });
+  });
+
+  it("shows the permission label when a rule reason also applies", () => {
     expect(
-      unavailablePresentation(["campaign-restricted", "prerequisite"]).label,
-    ).toBe("Unavailable");
+      unavailablePresentation(["campaign-restricted", "prerequisite"]),
+    ).toEqual({
+      label: "Unavailable in this campaign",
+      description:
+        "Unavailable in this campaign. Illegal: does not meet prerequisites",
+      status: "Unavailable in this campaign",
+    });
   });
 });
 
-describe("one Unavailable label", () => {
-  it("labels a candidate card the same way for every reason", () => {
+describe("one label per status", () => {
+  it("labels a candidate card with the one badge and no reason box", () => {
     const card = (index: number) =>
       renderToStaticMarkup(
         createElement(CandidateDetailCard, {
@@ -100,20 +117,19 @@ describe("one Unavailable label", () => {
         }),
       );
     expect(card(0)).toContain(
-      'class="candidate-unavailable" title="Not used in this campaign">Unavailable in this campaign</span>',
+      'class="candidate-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span>',
     );
-    expect(card(0)).not.toContain("candidate-reason");
     expect(card(1)).toContain(">Unavailable: not in your allowed sources<");
-    expect(card(1)).not.toContain("candidate-reason");
     expect(card(2)).toContain(
-      'class="candidate-unavailable" title="Does not meet prerequisites">Unavailable</span>',
+      'class="candidate-unavailable" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span>',
     );
-    expect(card(2)).toContain(
-      '<p class="candidate-reason">Does not meet prerequisites</p>',
-    );
+    for (const index of [0, 1, 2]) {
+      expect(card(index)).not.toContain("candidate-reason");
+      expect(card(index).match(/candidate-unavailable/g)).toHaveLength(1);
+    }
   });
 
-  it("marks choice buttons with the same label", () => {
+  it("marks choice buttons with the same label and no reason text", () => {
     const markup = renderToStaticMarkup(
       createElement(CompactChoiceButtons, {
         label: "Pick",
@@ -136,13 +152,14 @@ describe("one Unavailable label", () => {
         onChoose: () => undefined,
       }),
     );
-    expect(markup).toContain('title="Not used in this campaign"');
     expect(markup).toContain(
-      '<span class="unavailable-note"><span class="candidate-unavailable" title="Not used in this campaign">Unavailable in this campaign</span></span>',
+      '<span class="candidate-unavailable" title="Unavailable in this campaign">Unavailable in this campaign</span></button>',
     );
     expect(markup).toContain(
-      '<span class="unavailable-note"><span class="candidate-unavailable" title="Does not meet prerequisites">Unavailable</span><small>Does not meet prerequisites</small></span>',
+      '<span class="candidate-unavailable" title="Illegal: does not meet prerequisites">Illegal: does not meet prerequisites</span></button>',
     );
+    expect(markup).not.toContain("<small");
+    expect(markup).not.toContain("unavailable-note");
   });
 });
 
@@ -168,7 +185,7 @@ describe("Unavailable rows", () => {
     container.remove();
   });
 
-  it("shows each row's reason as the label, the full reason described", () => {
+  it("shows each row's one label, every reason described", () => {
     act(() =>
       root.render(
         <CandidateSelectionTable
@@ -188,31 +205,32 @@ describe("Unavailable rows", () => {
     const rows = [
       ...container.querySelectorAll("tr.selection-candidate-row"),
     ].map((row) => ({
-      label: row.querySelector(".unavailable-note .candidate-unavailable")
-        ?.textContent,
-      reason: row.querySelector(".unavailable-note small")?.textContent,
+      label: [...row.querySelectorAll(".candidate-unavailable")].map(
+        (badge) => badge.textContent,
+      ),
+      small: row.querySelector("td small")?.textContent,
       description: row
         .querySelector(".selection-candidate-toggle")
         ?.getAttribute("aria-description"),
     }));
     expect(rows).toEqual([
       {
-        label: "Unavailable in this campaign",
-        reason: undefined,
+        label: ["Unavailable in this campaign"],
+        small: undefined,
         description:
-          "Click to inspect. This item cannot currently be selected. Unavailable: Not used in this campaign.",
+          "Click to inspect. This item cannot currently be selected. Unavailable in this campaign.",
       },
       {
-        label: "Unavailable: not in your allowed sources",
-        reason: undefined,
+        label: ["Unavailable: not in your allowed sources"],
+        small: undefined,
         description:
-          "Click to inspect. This item cannot currently be selected. Unavailable: Not included in this character's allowed sources.",
+          "Click to inspect. This item cannot currently be selected. Unavailable: not in your allowed sources.",
       },
       {
-        label: "Unavailable",
-        reason: "Does not meet prerequisites",
+        label: ["Illegal: does not meet prerequisites"],
+        small: undefined,
         description:
-          "Click to inspect. Double-click or press Enter to select. Unavailable: Does not meet prerequisites.",
+          "Click to inspect. Double-click or press Enter to select. Illegal: does not meet prerequisites.",
       },
     ]);
   });

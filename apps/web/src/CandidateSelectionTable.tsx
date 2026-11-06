@@ -20,7 +20,6 @@ import {
 
 import {
   backgroundAssociatedSkills,
-  candidateReason,
   candidateTableTypeGroup,
   choiceTableSummary,
   classTableMetadata,
@@ -36,6 +35,7 @@ import {
   type CandidateTableTypeGroup,
   type ChoiceSelectionTableKind,
 } from "./builder-ui";
+  unavailablePresentation,
 import {
   firstSelectedCandidateId,
   initialCandidateScrollStep,
@@ -738,7 +738,7 @@ export function CandidateSelectionTable({
                 selectionBlocked
                   ? "Click to inspect. This item cannot currently be selected."
                   : "Click to inspect. Double-click or press Enter to select."
-              }${unavailable ? ` Unavailable: ${candidateReason(candidate.reasons)}.` : ""}`}
+              }${unavailable ? ` ${unavailablePresentation(candidate.reasons).description}.` : ""}`}
               aria-pressed={selected}
               className="selection-candidate-toggle"
               type="button"
@@ -762,7 +762,7 @@ export function CandidateSelectionTable({
             </button>
           </div>
           {unavailable ? (
-            <UnavailableLabel layout="inline" reasons={candidate.reasons} />
+            <UnavailableLabel reasons={candidate.reasons} />
           ) : null}
         </td>
         {kind === "power" ? (
