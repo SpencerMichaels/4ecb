@@ -11,6 +11,7 @@ import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
   internalizePrerequisite,
+  prerequisiteAlternates,
   withoutOwnedDefinitions,
   withStoredPrerequisiteIr,
 } from "./prerequisites";
@@ -117,6 +118,33 @@ describe("legacy prerequisites", () => {
     expect(evaluatePrerequisite("!ID_WARLORD", hybridContext).status).toBe(
       "satisfied",
     );
+    // What met it: the alternate, per clause and for the whole prerequisite.
+    const alternateIds = (prerequisite: string) =>
+      prerequisiteAlternates(prerequisite, hybridContext).map(({ id }) => id);
+    expect(alternateIds("Warlord")).toEqual(["COUNTS_WARLORD"]);
+    expect(alternateIds("warlord class")).toEqual(["COUNTS_WARLORD"]);
+    expect(alternateIds("Battlefront Leader class feature")).toEqual([
+      "COUNTS_BATTLEFRONT",
+    ]);
+    expect(
+      evaluatePrerequisite("Warlord, Battlefront Leader class feature", {
+        ...hybridContext,
+      }).clauses.map((clause) => clause.alternateIds),
+    ).toEqual([["COUNTS_WARLORD"], ["COUNTS_BATTLEFRONT"]]);
+    expect(alternateIds("!ID_WARLORD")).toEqual([]);
+    // A directly met clause names no alternate.
+    const direct = {
+      ...hybridContext,
+      owned: [
+        ...hybridOwned,
+        { id: "ID_WARLORD", name: "Warlord", type: "Class" },
+      ] as unknown as ContentEntity[],
+    };
+    expect(prerequisiteAlternates("Warlord", direct)).toEqual([]);
+    expect(prerequisiteAlternates("warlord class", direct)).toEqual([]);
+    expect(
+      evaluatePrerequisite("Warlord", direct).clauses[0]?.alternateIds,
+    ).toBeUndefined();
   });
 
   it("meets a named-deity requirement through an owned CountsAsDeity (D116)", () => {
@@ -186,6 +214,40 @@ describe("legacy prerequisites", () => {
     expect(
       statusOf("must worship a deity of the Protection domain", withGrant),
     ).toBe("satisfied");
+
+    // What met it: the CountsAsDeity, unless another clause or the deity
+    // itself meets it directly.
+    const alternatesOf = (
+      prerequisite: string,
+      worshipped: readonly object[],
+    ) =>
+      prerequisiteAlternates(prerequisite, {
+        owned: [channelDivinity, ...worshipped] as ContentEntity[],
+        definitions: deityDefinitions,
+        level: 8,
+        abilities: {},
+      }).map(({ id }) => id);
+    expect(alternatesOf("must worship Moradin", withGrant)).toEqual([
+      "ID_INTERNAL_COUNTSASDEITY_MORADIN",
+    ]);
+    expect(alternatesOf("follower of Moradin", withGrant)).toEqual([
+      "ID_INTERNAL_COUNTSASDEITY_MORADIN",
+    ]);
+    expect(alternatesOf("must worship Moradin", [moradin])).toEqual([]);
+    expect(alternatesOf("must worship Moradin", [torag])).toEqual([]);
+    expect(
+      alternatesOf(
+        "Channel Divinity class feature, must worship Moradin",
+        withGrant,
+      ),
+    ).toEqual(["ID_INTERNAL_COUNTSASDEITY_MORADIN"]);
+    // An "any" group another child meets directly needs no alternate.
+    expect(
+      alternatesOf("Channel Divinity class feature or Polytheist", withGrant),
+    ).toEqual([]);
+    expect(
+      alternatesOf("Polytheist or must worship Moradin", withGrant),
+    ).toEqual(["ID_INTERNAL_COUNTSASDEITY_MORADIN"]);
   });
 
   it("reads a bare Shifter as either shifter race (SpecialCase)", () => {

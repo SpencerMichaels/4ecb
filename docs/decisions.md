@@ -4639,10 +4639,11 @@ and it stops the browser following server revisions (D004 amendment).
   same-named CountsAsDeity record, which content grants (Torag grants a
   "Moradin" CountsAsDeity). The engine knows nothing of any setting. One
   deity may count as several, and a deity with no equivalent counts as none
-  but still carries mapped domains. The requirement still reads "Moradin";
-  explaining that it is met through Torag is a follow-up (prerequisite
-  results carry only the clause text and status; CountsAsClass has no such
-  explanation either). The type is a modern
+  but still carries mapped domains. The requirement still reads "Moradin",
+  and the builder says what met it: "Must worship Moradin — met through
+  Torag", for every counts-as alternate (a hybrid class's CountsAsClass
+  too); a deity's card lists what it counts as after its domains. The type
+  is a modern
   extension: the old builder ignores it, so an exported character fails
   those prerequisites there (exported silently, below). Stock content uses it
   too: the seven "<Deity> (Forgotten Realms)" duplicates count as their

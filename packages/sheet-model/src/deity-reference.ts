@@ -46,6 +46,47 @@ export function deityDomainsText(
   return names.length === 0 ? undefined : names.join(", ");
 }
 
+/**
+ * The deities a deity counts as (D116): the CountsAsDeity records its rules
+ * grant, by the records' own names, in grant order. Lookups by ID only, so
+ * a card reads its own rules, never the pack.
+ */
+export function deityCountsAs(
+  deity: ContentEntity,
+  lookup: (id: string) => ContentEntity | undefined,
+): readonly ContentEntity[] {
+  const seen = new Set<string>();
+  return deity.rules.flatMap((rule) => {
+    if (key(rule.name) !== "grant") return [];
+    const attribute = (name: string) =>
+      rule.attributes.find((candidate) => key(candidate.name) === name)?.value;
+    const granted = attribute("name");
+    if (
+      granted === undefined ||
+      key(attribute("type") ?? "") !== "countsasdeity"
+    )
+      return [];
+    const record = lookup(granted.trim());
+    if (
+      record === undefined ||
+      key(record.type) !== "countsasdeity" ||
+      seen.has(key(record.id))
+    )
+      return [];
+    seen.add(key(record.id));
+    return [record];
+  });
+}
+
+/** "The Raven Queen, Kelemvor", or undefined for a deity counting as none. */
+export function deityCountsAsText(
+  deity: ContentEntity,
+  lookup: (id: string) => ContentEntity | undefined,
+): string | undefined {
+  const names = deityCountsAs(deity, lookup).map(({ name }) => name.trim());
+  return names.length === 0 ? undefined : names.join(", ");
+}
+
 export function sheetDeityReference(
   deity: ContentEntity,
   lookup: (id: string) => ContentEntity | undefined,

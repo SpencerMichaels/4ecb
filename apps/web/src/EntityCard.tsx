@@ -422,16 +422,26 @@ export function prerequisiteLine(value: string): string {
     .join("; ");
 }
 
-/** "Prerequisite: Hexblade", labelled like a power card's rule lines. */
+/** "Prerequisite: Hexblade", labelled like a power card's rule lines; a
+ * requirement met only through a counts-as alternate says what met it
+ * ("Must worship Moradin — met through Torag"). */
 export function EntityPrerequisites({
   entity,
+  metThrough = [],
 }: {
   readonly entity: ContentEntity;
+  /** Names of the owned elements whose counts-as alternates meet it. */
+  readonly metThrough?: readonly string[];
 }) {
   const line = prerequisiteLine(entity.printPrerequisites ?? "");
   return line === "" ? null : (
     <p className="entity-card-prerequisites">
       <strong>Prerequisite:</strong> {line}
+      {metThrough.length === 0 ? null : (
+        <span className="entity-card-prerequisites-met">
+          {` — met through ${metThrough.join(", ")}`}
+        </span>
+      )}
     </p>
   );
 }
@@ -446,8 +456,10 @@ export function EntityCardBody({
   afterFields,
   renderDescription,
   showSource = true,
+  prerequisiteMetThrough,
 }: {
   readonly entity: ContentEntity;
+  readonly prerequisiteMetThrough?: readonly string[];
   readonly hideFlavortext: boolean;
   readonly beforeNarrative?: ReactNode;
   readonly afterNarrative?: ReactNode;
@@ -465,7 +477,12 @@ export function EntityCardBody({
       {/* The book order: flavor, prerequisites, then the text, so a lead-in
           ("You gain the following benefits:") ends right above the
           benefits it introduces. */}
-      <EntityPrerequisites entity={entity} />
+      <EntityPrerequisites
+        entity={entity}
+        {...(prerequisiteMetThrough === undefined
+          ? {}
+          : { metThrough: prerequisiteMetThrough })}
+      />
       {entity.description.length === 0
         ? null
         : (renderDescription?.(entity.description) ?? (

@@ -109,13 +109,21 @@ export type PrerequisiteIr =
   | { readonly kind: "hybrid" | "never" | "ignored"; readonly text: string }
   | { readonly kind: "unverified"; readonly text: string };
 
+export interface PrerequisiteClauseResult {
+  readonly text: string;
+  readonly status: PrerequisiteStatus;
+  /**
+   * The owned counts-as alternates (CountsAsClass, CountsAsRace,
+   * CountsAsFeature, CountsAsDeity, CountsAsPact) a satisfied clause is met
+   * through, by ID; absent when it is met directly.
+   */
+  readonly alternateIds?: readonly string[];
+}
+
 export interface PrerequisiteResult {
   readonly status: PrerequisiteStatus;
   readonly ir?: PrerequisiteIr;
-  readonly clauses: readonly {
-    readonly text: string;
-    readonly status: PrerequisiteStatus;
-  }[];
+  readonly clauses: readonly PrerequisiteClauseResult[];
 }
 
 const normalizedCache = new Map<string, string>();
@@ -2195,13 +2203,141 @@ function dilettantePredicate(
   );
 }
 
+/** Whether a type is a legacy counts-as alternate ("CountsAsClass", ...). */
+function isCountsAsType(type: string): boolean {
+  return normalized(type).startsWith("countsas");
+}
+
+const ownedAlternatesCache = new WeakMap<
+  readonly ContentEntity[],
+  readonly ContentEntity[]
+>();
+
+/** The owned counts-as alternates, once per owned list. */
+function ownedAlternates(
+  context: PrerequisiteContext,
+): readonly ContentEntity[] {
+  let alternates = ownedAlternatesCache.get(context.owned);
+  if (alternates === undefined) {
+    alternates = context.owned.filter((entity) => isCountsAsType(entity.type));
+    ownedAlternatesCache.set(context.owned, alternates);
+  }
+  return alternates;
+}
+
+/**
+ * The owned alternates a satisfied leaf is met through: [] when an owned
+ * record meets it directly (or it takes no alternate).
+ */
+function leafAlternates(
+  ir: PrerequisiteIr,
+  context: PrerequisiteContext,
+): readonly ContentEntity[] {
+  const alternates = ownedAlternates(context);
+  if (alternates.length === 0) return [];
+  const named = (types: readonly string[], value: string) =>
+    context.owned.filter(
+      (entity) =>
+        types.includes(normalized(entity.type)) &&
+        normalized(entity.name) === normalized(value),
+    );
+  switch (ir.kind) {
+    case "element": {
+      if (ir.negated) return [];
+      const wanted = new Set(ir.definitionIds.map(normalized));
+      const matched = alternates.filter((entity) =>
+        wanted.has(normalized(entity.id)),
+      );
+      if (matched.length === 0) return [];
+      const matchedIds = new Set(
+        matched.map((entity) => normalized(entity.id)),
+      );
+      const direct = ir.definitionIds.some(
+        (id) => !matchedIds.has(normalized(id)) && ownsDefinition(context, id),
+      );
+      return direct ? [] : matched;
+    }
+    case "class":
+      // A hybrid owns "Hybrid Warlord" and a CountsAsClass named "Warlord".
+      return named(["class", "hybrid class"], ir.value).length > 0
+        ? []
+        : named(["countsasclass"], ir.value);
+    case "worship":
+      return named(["deity"], ir.value).length > 0
+        ? []
+        : named(
+            WORSHIPPED_TYPES.filter((type) => type !== "deity"),
+            ir.value,
+          );
+    default:
+      return [];
+  }
+}
+
+/**
+ * What a prerequisite is met through: undefined when unmet, [] when met
+ * directly. An "any" group one child meets directly needs no alternate.
+ */
+function satisfyingAlternates(
+  ir: PrerequisiteIr,
+  context: PrerequisiteContext,
+): readonly ContentEntity[] | undefined {
+  if (ir.kind === "all") {
+    const found: ContentEntity[] = [];
+    for (const child of ir.children) {
+      const alternates = satisfyingAlternates(child, context);
+      if (alternates === undefined) return undefined;
+      for (const alternate of alternates)
+        if (!found.includes(alternate)) found.push(alternate);
+    }
+    return found;
+  }
+  if (ir.kind === "any") {
+    let first: readonly ContentEntity[] | undefined;
+    for (const child of ir.children) {
+      const alternates = satisfyingAlternates(child, context);
+      if (alternates === undefined) continue;
+      if (alternates.length === 0) return [];
+      first ??= alternates;
+    }
+    return first;
+  }
+  return evaluatePrerequisiteIr(ir, context) === "satisfied"
+    ? leafAlternates(ir, context)
+    : undefined;
+}
+
+/**
+ * The owned counts-as alternates a satisfied prerequisite is met through (a
+ * hybrid's CountsAsClass, a deity's CountsAsDeity, D116), so the builder
+ * can say what met it; [] when it is unmet or met directly.
+ */
+export function prerequisiteAlternates(
+  prerequisite: string | undefined,
+  context: PrerequisiteContext,
+): readonly ContentEntity[] {
+  if (ownedAlternates(context).length === 0) return [];
+  const ir = internalizePrerequisite(prerequisite, context);
+  return ir === undefined ? [] : (satisfyingAlternates(ir, context) ?? []);
+}
+
 function leafResults(
   ir: PrerequisiteIr,
   context: PrerequisiteContext,
 ): PrerequisiteResult["clauses"] {
   if (ir.kind === "all" || ir.kind === "any")
     return ir.children.flatMap((child) => leafResults(child, context));
-  return [{ text: ir.text, status: evaluatePrerequisiteIr(ir, context) }];
+  const status = evaluatePrerequisiteIr(ir, context);
+  const alternates = status === "satisfied" ? leafAlternates(ir, context) : [];
+  return [
+    {
+      text: ir.text,
+      status,
+      ...(alternates.length === 0
+        ? {}
+        : { alternateIds: alternates.map((entity) => entity.id) }),
+    },
+  ];
 }
 
 /** `evaluatePrerequisite(...).status`, without the per-clause results. */

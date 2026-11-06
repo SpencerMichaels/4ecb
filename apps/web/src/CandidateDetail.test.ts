@@ -547,3 +547,66 @@ describe("option detail benefits by level", () => {
     );
   });
 });
+
+describe("counts-as on option details (D116)", () => {
+  const grant = (name: string, type: string, ordinal: number) => ({
+    name: "grant",
+    attributes: [
+      { name: "name", value: name },
+      { name: "type", value: type },
+    ],
+    text: "",
+    children: [],
+    ordinal,
+  });
+  const torag: ContentEntity = {
+    ...entity("ID_TORAG", "Torag", "Deity", {}, "The forge god."),
+    rules: [grant("ID_COUNTSASDEITY_MORADIN", "CountsAsDeity", 0)],
+  };
+  const countsAsMoradin = entity(
+    "ID_COUNTSASDEITY_MORADIN",
+    "Moradin",
+    "CountsAsDeity",
+    {},
+  );
+  const plainDeity = entity("ID_IOUN", "Ioun", "Deity", {}, "Knowledge.");
+  const feat: ContentEntity = {
+    ...entity("ID_MORADIN_FEAT", "Moradin's Blessing", "Feat", {}),
+    printPrerequisites: "Must worship Moradin",
+  };
+  const byId = new Map(
+    [torag, countsAsMoradin, plainDeity, feat].map((item) => [
+      item.id.toLowerCase(),
+      item,
+    ]),
+  );
+  const detail = (shown: ContentEntity, decision: Partial<CandidateDecision>) =>
+    renderToStaticMarkup(
+      createElement(CandidateDetail, {
+        candidate: { ...candidate, definitionId: shown.id, ...decision },
+        entity: shown,
+        byId,
+      }),
+    );
+
+  it("says what met a prerequisite through a counts-as alternate", () => {
+    expect(detail(feat, { prerequisiteMetThrough: ["ID_TORAG"] })).toContain(
+      '<strong>Prerequisite:</strong> Must worship Moradin<span class="entity-card-prerequisites-met"> — met through Torag</span>',
+    );
+  });
+
+  it("adds nothing to a directly met prerequisite", () => {
+    const markup = detail(feat, {});
+    expect(markup).toContain(
+      "<strong>Prerequisite:</strong> Must worship Moradin</p>",
+    );
+    expect(markup).not.toContain("met through");
+  });
+
+  it("lists the deities a deity counts as, and none for one without", () => {
+    expect(detail(torag, {})).toContain(
+      '<p class="deity-counts-as"><strong>Counts as:</strong> Moradin</p>',
+    );
+    expect(detail(plainDeity, {})).not.toContain("Counts as");
+  });
+});

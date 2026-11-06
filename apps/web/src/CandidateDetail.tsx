@@ -331,6 +331,13 @@ export function CandidateDetailCard({
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const structuredKind = structuredEntityKind(entity);
   const isUnavailable = candidate !== undefined && !candidate.eligible;
+  // A prerequisite met through a counts-as alternate names what met it.
+  const metThrough = (candidate?.prerequisiteMetThrough ?? []).flatMap((id) => {
+    const granter = references?.get(id.trim().toLocaleLowerCase());
+    return granter === undefined ? [] : [granter.name];
+  });
+  const prerequisiteProps =
+    metThrough.length === 0 ? {} : { prerequisiteMetThrough: metThrough };
   // Only the option being inspected, not cards for what it grants.
   // Only an option picked from a table (not a card it grants, nor a button
   // choice like Gender) can be favorited.
@@ -428,6 +435,7 @@ export function CandidateDetailCard({
               hideFlavortext={hideFlavortext}
               kind={structuredKind}
               references={references}
+              {...prerequisiteProps}
             />
           ) : (
             <EntityCardBody
@@ -437,6 +445,7 @@ export function CandidateDetailCard({
               entity={entity}
               hideFlavortext={hideFlavortext}
               showSource={false}
+              {...prerequisiteProps}
               {...(isThemeCandidate
                 ? {
                     renderDescription: (description: string) => (

@@ -933,7 +933,9 @@ ID and type restrictions), per-character campaign membership with the
 profile recomposed over server revisions, file import/export and a
 `deploy/`-hosted invite link, `content-tool` authoring, deity "counts as"
 equivalents for `worship` prerequisites (CountsAsDeity in the engine and
-for the Forgotten Realms duplicates done 2026-11-06), legacy `D20CampaignSetting`
+for the Forgotten Realms duplicates done 2026-11-06; the "met through
+Torag" prerequisite explanation and the deity card's "Counts as" line
+followed the same day), legacy `D20CampaignSetting`
 export/import, and a Pathfinder campaign (Inner Sea major and other deities,
 mapped alignments, domains and equivalents) as the first real campaign. The
 form editor stays in M8. The owner's walk-through is the visual-review
@@ -941,9 +943,6 @@ checklist's Campaigns pass.
 
 Follow-ups (not done):
 
-- Explain a `worship` prerequisite met through an equivalent ("met through
-  Torag"): prerequisite results carry only the clause text and status
-  (CountsAsClass has no explanation either).
 - A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
   and `choice.ineligible`), as the campaign one was before `e0d89803`.
 - Materialized campaign profile packs are never garbage-collected (about

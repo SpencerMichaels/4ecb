@@ -24,14 +24,45 @@ The owner's walk-through is the Campaigns pass of
 Verification: `nix develop --command bash scripts/check.sh` and
 `pnpm parity:baseline` (results in this entry's commit message).
 
-Follow-ups (also in the roadmap's Campaign slice): the "met through Torag"
-prerequisite explanation; a possible double report of
+Follow-ups (also in the roadmap's Campaign slice): a possible double report of
 source-unentitled picks; no garbage collection of materialized campaign
 packs (ordinary profile activation now composes in the content worker, see
 "Content profile activation in the content worker" below); an
 owner skim of eight Pathfinder deity descriptions. Owner action outside the
 repo: homenet `apps/4ecb/pack.yml` must copy and keep
 `private-packs/campaigns/`.
+
+## Prerequisites met through counts-as alternates (2026-11-06)
+
+Campaign follow-up (D116). A prerequisite met only through a counts-as
+alternate says what met it: the option's card reads "Prerequisite: Must
+worship Moradin — met through Torag". `prerequisiteAlternates` (rules-engine
+`prerequisites.ts`) returns the owned alternates (any `CountsAs*` type:
+CountsAsClass, CountsAsRace, CountsAsFeature, CountsAsPact, CountsAsDeity) a
+satisfied prerequisite relies on, for `element`, `class` and `worship`
+clauses; a clause an owned record meets directly, or an "any" group one
+child meets directly, needs none, and negated clauses take none. Clause
+results carry them as `alternateIds`. The evaluator names the granting
+element from the alternate occurrence's parent, past internal `Grants`
+records (the deity, the hybrid class, a multiclass feat) on `CandidateDecision.prerequisiteMetThrough`, computed only for
+satisfied candidates when the scope owns an alternate and cached with the
+candidate's status. `CandidateDetail.tsx` resolves the names through the
+cached reference index and `EntityPrerequisites` (`EntityCard.tsx`,
+also under `StructuredEntityBody`) appends "— met through <names>". The
+other direction: a deity's card lists what it counts as after its domains
+("Counts as: The Raven Queen, Kelemvor", `DeityDomains.tsx` over sheet-model
+`deityCountsAs`, the CountsAsDeity records its rules grant, resolved by ID),
+only when it has any. Evaluation cache bumped to v119; no stored IR changed.
+Verification: synthetic `prerequisites.test.ts`,
+`prerequisite-met-through.test.ts` (Torag → Moradin feat, a Warlord feat
+through a hybrid class's CountsAsClass, nothing for a direct or unmet one),
+`deity-reference.test.ts` and `CandidateDetail.test.ts`; `pnpm vitest run
+packages apps`, typecheck, lint and prettier pass; `parity:baseline` shows
+no new mismatches. Private: on the Pathfinder campaign over the full pack,
+Pharasma's card reads "The Raven Queen, Kelemvor" (Torag "Moradin, Onatar")
+and a Torag character's Moradin and Onatar feats are met through Torag;
+the hybrid samples (Alysa Redfield, DV, Sylestine) show 54–79 candidates
+met through their hybrid classes and hybrid class features.
 
 ## Content profile activation in the content worker (2026-11-06)
 
@@ -373,9 +404,8 @@ deity-alignment issue still read only the Deity record. The new
 (`_SupportsID` names it, like `ID_INTERNAL_COUNTSASCLASS_CLERIC`). Before
 the change they failed all 24 name-matched "must worship <Deity>"
 requirements (Bahamut 10, Bane 5, Corellon 5, one each for Asmodeus,
-Gruumsh, Lolth and Tiamat). The builder still does not say how a
-requirement is met (prerequisite clauses carry only text and status, as
-for CountsAsClass), and `.dnd4e` export does not yet note the alternate
+Gruumsh, Lolth and Tiamat). The builder did not yet say how a requirement
+is met (built since: "Prerequisites met through counts-as alternates"), and `.dnd4e` export does not yet note the alternate
 as lossy. Evaluation cache bumped to v116; the stored `_Prerequisite IR`
 version is unchanged, because its parse changes only for record sets that
 contain CountsAsDeity records, and those sets are new. Verification:

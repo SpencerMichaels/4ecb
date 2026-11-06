@@ -168,6 +168,8 @@ export {
 } from "./inventory-packages";
 export {
   deityDomains,
+  deityCountsAs,
+  deityCountsAsText,
   deityDomainsText,
   type SheetDeityReference,
 } from "./deity-reference";

@@ -355,11 +355,14 @@ export function StructuredEntityBody({
   kind,
   references,
   hideFlavortext,
+  prerequisiteMetThrough,
 }: {
   readonly entity: ContentEntity;
   readonly kind: StructuredEntityKind;
   readonly references: ReadonlyMap<string, ContentEntity>;
   readonly hideFlavortext: boolean;
+  /** Names of what meets its prerequisite through a counts-as alternate. */
+  readonly prerequisiteMetThrough?: readonly string[];
 }) {
   const shortDescription = contentSpecificValue(entity, "Short Description");
   // A class leads with its power source and role, as the books head it:
@@ -402,7 +405,12 @@ export function StructuredEntityBody({
           {description === "" ? null : ` ${description}`}
         </p>
       )}
-      <EntityPrerequisites entity={entity} />
+      <EntityPrerequisites
+        entity={entity}
+        {...(prerequisiteMetThrough === undefined
+          ? {}
+          : { metThrough: prerequisiteMetThrough })}
+      />
       {kind === "race" ? (
         <RaceBody entity={entity} references={references} />
       ) : kind === "class" ? (

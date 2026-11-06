@@ -43,6 +43,7 @@ import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
   evaluatePrerequisiteStatus,
+  prerequisiteAlternates,
   ownedPrerequisiteTokens,
   withoutOwnedDefinitions,
   type PrerequisiteContext,
@@ -93,7 +94,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v118-2026-11-06-campaign-pick-not-ineligible";
+  "evaluated-character-v119-2026-11-06-prerequisite-met-through";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -182,6 +183,13 @@ export interface CandidateDecision {
   /** Occurrences whose rules/slots own those active occurrences. */
   readonly providerOccurrenceIds: readonly string[];
   readonly reasons: readonly string[];
+  /**
+   * A met prerequisite that counts-as alternates satisfy: the definitions
+   * that granted them (the deity Torag for its CountsAsDeity "Moradin", the
+   * hybrid class for its CountsAsClass), so the builder can say "met through
+   * Torag". Absent when the prerequisite is met directly.
+   */
+  readonly prerequisiteMetThrough?: readonly string[];
 }
 
 export interface ActiveDefinitionMembership {
@@ -3884,6 +3892,8 @@ function evaluateCharacterInternal(
     {
       readonly context: PrerequisiteContext;
       readonly expressionContext: ExpressionContext;
+      /** The scope's occurrences, to name what granted an alternate. */
+      readonly owners: readonly CharacterOccurrence[];
     }
   >([
     [
@@ -3896,6 +3906,7 @@ function evaluateCharacterInternal(
           occurrences,
         ),
         expressionContext,
+        owners: occurrences,
       },
     ],
   ]);
@@ -4039,6 +4050,7 @@ function evaluateCharacterInternal(
         categoryValuesFor: (entity: ContentEntity) =>
           index.categoryValues(entity),
       },
+      owners: scopedOccurrences,
     };
     prerequisiteScopes.set(scopeKey, scope);
     prerequisiteScopeRequests.set(requestKey, scope);
@@ -4047,8 +4059,50 @@ function evaluateCharacterInternal(
   };
   const candidatePrerequisiteStatuses = new Map<
     string,
-    ReturnType<typeof evaluatePrerequisite>["status"]
+    {
+      readonly status: ReturnType<typeof evaluatePrerequisite>["status"];
+      readonly metThrough: readonly string[];
+    }
   >();
+  const ownersById = new WeakMap<
+    readonly CharacterOccurrence[],
+    ReadonlyMap<string, CharacterOccurrence>
+  >();
+  /** What granted each alternate: its occurrence's parent's definition,
+   *  past internal `Grants` records (a class grants its CountsAsClass
+   *  through one) to the element the player chose. */
+  const alternateGranters = (
+    alternates: readonly ContentEntity[],
+    owners: readonly CharacterOccurrence[],
+  ): readonly string[] => {
+    if (alternates.length === 0) return [];
+    const wanted = new Set(alternates.map(({ id }) => key(id)));
+    let byId = ownersById.get(owners);
+    if (byId === undefined) {
+      byId = new Map(owners.map((occurrence) => [occurrence.id, occurrence]));
+      ownersById.set(owners, byId);
+    }
+    const parentOf = (occurrence: CharacterOccurrence) =>
+      occurrence.parentId === undefined
+        ? undefined
+        : byId.get(occurrence.parentId);
+    const granters: string[] = [];
+    for (const occurrence of owners) {
+      if (!wanted.has(key(occurrence.definitionId))) continue;
+      let parent = parentOf(occurrence);
+      for (
+        let depth = 0;
+        parent !== undefined &&
+        depth < 8 &&
+        key(index.get(parent.definitionId)?.type ?? "") === "grants";
+        depth += 1
+      )
+        parent = parentOf(parent);
+      if (parent !== undefined && !granters.includes(parent.definitionId))
+        granters.push(parent.definitionId);
+    }
+    return granters;
+  };
   const withPrerequisites = (
     level: number,
     candidate: CandidateDecision,
@@ -4068,25 +4122,38 @@ function evaluateCharacterInternal(
       "",
       ...[...setAside].map(key).sort(),
     ].join("\0");
-    let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
-    if (prerequisiteStatus === undefined) {
-      const prerequisiteContext = withoutOwnedDefinitions(
-        prerequisiteScopeAt(level, excludedIds).context,
-        setAside,
-      );
-      prerequisiteStatus = evaluatePrerequisiteStatus(
+    let evaluated = candidatePrerequisiteStatuses.get(candidateKey);
+    if (evaluated === undefined) {
+      const scope = prerequisiteScopeAt(level, excludedIds);
+      const prerequisiteContext = {
+        ...withoutOwnedDefinitions(scope.context, setAside),
+        ...(candidateEntity === undefined ? {} : { subject: candidateEntity }),
+      };
+      const status = evaluatePrerequisiteStatus(
         candidateEntity?.prerequisites,
-        {
-          ...prerequisiteContext,
-          ...(candidateEntity === undefined
-            ? {}
-            : { subject: candidateEntity }),
-        },
+        prerequisiteContext,
       );
-      candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
+      evaluated = {
+        status,
+        metThrough:
+          status === "satisfied"
+            ? alternateGranters(
+                prerequisiteAlternates(
+                  candidateEntity?.prerequisites,
+                  prerequisiteContext,
+                ),
+                scope.owners,
+              )
+            : [],
+      };
+      candidatePrerequisiteStatuses.set(candidateKey, evaluated);
     }
+    const prerequisiteStatus = evaluated.status;
+    if (prerequisiteStatus === "satisfied")
+      return evaluated.metThrough.length === 0
+        ? candidate
+        : { ...candidate, prerequisiteMetThrough: evaluated.metThrough };
     if (
-      prerequisiteStatus === "satisfied" ||
       candidate.reasons.includes("prerequisite") ||
       candidate.reasons.includes("prerequisite-unverified")
     )
