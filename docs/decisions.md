@@ -4642,6 +4642,18 @@ and it stops the browser following server revisions (D004 amendment).
   but still carries mapped domains. The requirement still reads "Moradin";
   the builder explains it is met through Torag. The type is a modern
   extension: the old builder ignores it, so an exported character fails
-  those prerequisites there (a lossy-export note). Stock content uses it
+  those prerequisites there (exported silently, below). Stock content uses it
   too: the seven "<Deity> (Forgotten Realms)" duplicates count as their
   base deity, whose name-matched requirements they otherwise fail.
+- **Owner decisions (2026-11-06).** A campaign character's base is the
+  browser's active content (personal packs included) plus the campaign
+  layer. Players pick a campaign in Details or with "New character in
+  <campaign>" on the invite page; the library's New character is unchanged.
+  A legacy save with a non-empty campaign block offers to join a matching
+  installed campaign or create one from it. Restrictions cover items as
+  well as build choices: the Shop doesn't sell a restricted item and an
+  owned one is a house-rule issue on its holding. Under "Show all" a
+  restricted option is shown but not selectable. Legacy export drops
+  counts-as silently (no confirmation; this replaces the lossy-export note
+  above). The Pathfinder campaign source is tracked in
+  `content/campaigns/pathfinder/`; built `.4ecc` files are ignored.
