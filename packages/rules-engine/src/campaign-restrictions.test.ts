@@ -132,7 +132,7 @@ function evaluate(
 }
 
 function candidate(
-  result: ReturnType<typeof evaluate>,
+  result: Pick<ReturnType<typeof evaluate>, "choices">,
   type: string,
   definitionId: string,
 ) {
@@ -201,6 +201,74 @@ describe("campaign restrictions (D116)", () => {
     expect(restricted.occurrences.map(({ id }) => id)).toContain(
       "selected-deity",
     );
+  });
+
+  it("flags a held restricted item on its holding and does not offer it", () => {
+    const items = [
+      entity("ROOT", "1", "Level", {
+        rules: [rule("select", { type: "Magic Item", optional: "true" }, 0)],
+      }),
+      entity("ID_STOCK_SWORD", "Stock Sword", "Magic Item", {
+        specifics: { "Magic Item Type": "Weapon", "Item Slot": "Main Hand" },
+      }),
+      entity("ID_CAMPAIGN_SWORD", "Campaign Sword", "Magic Item", {
+        specifics: { "Magic Item Type": "Weapon", "Item Slot": "Main Hand" },
+      }),
+    ];
+    const evaluateItems = (
+      equippedQuantity: number,
+      restrictedDefinitionIds?: readonly string[],
+    ) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [rootOccurrence],
+          inventory: [
+            {
+              id: "holding",
+              definitionIds: ["ID_STOCK_SWORD"],
+              quantity: 1,
+              equippedQuantity,
+              acquiredLevel: 1,
+            },
+          ],
+          ...(restrictedDefinitionIds === undefined
+            ? {}
+            : { restrictedDefinitionIds }),
+        },
+        items,
+      );
+
+    expect(evaluateItems(0).legal).toBe(true);
+    for (const equipped of [0, 1]) {
+      const restricted = evaluateItems(equipped, ["ID_STOCK_SWORD"]);
+      // One issue, on the holding (as item.requirement-unmet targets it),
+      // equipped or not.
+      expect(
+        restricted.diagnostics.filter(({ code }) =>
+          code.endsWith("campaign-restricted"),
+        ),
+      ).toEqual([
+        expect.objectContaining({
+          severity: "warning",
+          code: "item.campaign-restricted",
+          occurrenceId: "holding:definition:0",
+        }),
+      ]);
+      expect(restricted.legal).toBe(false);
+      expect(
+        candidate(restricted, "Magic Item", "ID_STOCK_SWORD"),
+      ).toMatchObject({
+        eligible: false,
+        sourceEntitled: false,
+        // An equipped one also reads "owned".
+        reasons: expect.arrayContaining(["campaign-restricted"]),
+      });
+      expect(
+        candidate(restricted, "Magic Item", "ID_CAMPAIGN_SWORD"),
+      ).toMatchObject({ eligible: true });
+    }
   });
 
   it("restricts nothing with an empty list", () => {

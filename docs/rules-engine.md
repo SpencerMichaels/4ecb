@@ -36,9 +36,15 @@ entitlement site: ordinary choices, rule defaults, replacement and
 retraining options, and the archery-mastery replacement. Restricted records
 stay in the rules index, so prerequisite and worship names still resolve
 them: "must worship Moradin" is met through a campaign deity's CountsAsDeity
-while Moradin itself is restricted. An owned restricted occurrence stays
-active and gets the warning `occurrence.campaign-restricted`, which makes
-`legal` false. The input is threaded into the nested prerequisite snapshots
+while Moradin itself is restricted. Items are restricted the same way (owner,
+2026-11-06): a `select` of an item type marks a restricted item like any
+candidate. An owned restricted occurrence stays active and gets the warning
+`occurrence.campaign-restricted`; a held holding (equipped or not) whose
+item or enchantment is restricted gets `item.campaign-restricted` instead,
+targeted at the holding's `<entry>:definition:<index>` occurrence ID like
+`item.requirement-unmet`. Either makes `legal` false. "Show all" lists in
+the builder show restricted options but they stay unselectable
+(`sourceEntitled: false`); Shop catalog filtering is the web's. The input is threaded into the nested prerequisite snapshots
 (and their cache key) like `sourceEntitlements`;
 `previewProfileMigration` takes `sourceRestrictedDefinitionIds` and
 `targetRestrictedDefinitionIds` so each side evaluates under its own

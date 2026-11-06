@@ -2110,7 +2110,12 @@ function evaluateCharacterInternal(
         message: `${definition.name} is not included in the configured source entitlements.`,
         occurrenceId: occurrence.id,
       });
-    if (definition !== undefined && isCampaignRestricted(definition))
+    // A holding's restricted item is reported on the holding, below.
+    if (
+      definition !== undefined &&
+      occurrence.kind !== "inventory" &&
+      isCampaignRestricted(definition)
+    )
       diagnostics.push({
         severity: "warning",
         code: "occurrence.campaign-restricted",
@@ -4477,6 +4482,21 @@ function evaluateCharacterInternal(
       });
     });
   }
+  // A held item (or enchantment) the campaign does not use, equipped or
+  // not, is reported on its holding like an unmet item requirement (D116).
+  for (const entry of inventory) {
+    if (entry.quantity <= 0 || entry.acquiredLevel > input.level) continue;
+    entry.definitionIds.forEach((definitionId, definitionIndex) => {
+      const entity = index.get(definitionId);
+      if (entity === undefined || !isCampaignRestricted(entity)) return;
+      diagnostics.push({
+        severity: "warning",
+        code: "item.campaign-restricted",
+        message: `${entity.name} is not used in this campaign.`,
+        occurrenceId: `${entry.id}:definition:${definitionIndex}`,
+      });
+    });
+  }
   const complete =
     converged &&
     !diagnostics.some((diagnostic) => diagnostic.code === "choice.required");
@@ -4487,7 +4507,8 @@ function evaluateCharacterInternal(
         (diagnostic.severity === "error" &&
           diagnostic.code !== "choice.required") ||
         diagnostic.code === "prerequisite.unverified" ||
-        diagnostic.code === "occurrence.campaign-restricted",
+        diagnostic.code === "occurrence.campaign-restricted" ||
+        diagnostic.code === "item.campaign-restricted",
     ) &&
     !itemRequirementUnmet &&
     !occurrences.some((occurrence) => occurrence.legality === "houserule");

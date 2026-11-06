@@ -8,16 +8,20 @@ prerequisite evaluations. A restricted candidate reads reason
 `campaign-restricted` and `sourceEntitled: false` at every entitlement site
 (choices, defaults, replacements/retraining, archery mastery); restricted
 records stay indexed, so prerequisite and worship names still resolve; an
-owned restricted occurrence is a warning `occurrence.campaign-restricted`
-and makes `legal` false. `previewProfileMigration` takes source and target
+owned restricted occurrence is a warning `occurrence.campaign-restricted`,
+and a held holding whose item is restricted (equipped or not) a warning
+`item.campaign-restricted` on the holding (owner: restrictions apply to
+items too); either makes `legal` false. Item-type `select` candidates are
+marked like any other; Shop catalog filtering is a later web step. `previewProfileMigration` takes source and target
 restricted IDs (`ProfileMigrationOptions`), and `evaluateRitualChoiceFills`
 an optional list. Nothing supplies the IDs yet: the worker and builder issue
 are step 6. Evaluation cache bumped to v117. Verification: synthetic
 `campaign-restrictions.test.ts` (restricted deity not offered; a worship
 feat met through Torag's CountsAsDeity while Moradin is restricted; an
-existing restricted pick → diagnostic and `legal: false`; an empty list
+existing restricted pick → diagnostic and `legal: false`; a held
+restricted item → one holding diagnostic, equipped or not; an empty list
 changes nothing; migration preview applies each side's restrictions), full
-`pnpm test` (2091 passing), rules-engine typecheck, lint and prettier;
+`pnpm test` (2092 passing), rules-engine typecheck, lint and prettier;
 `parity:baseline` shows no new mismatches.
 
 ## Legacy campaign setting read/write (2026-11-06)
