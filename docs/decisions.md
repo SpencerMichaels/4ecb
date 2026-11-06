@@ -2369,10 +2369,11 @@ never scrolls: when the tab labels don't fit beside the status buttons, the
 tabs show only their icons, each keeping its accessible name and a tooltip,
 except the selected tab, which keeps its label; the status buttons stay at
 the right. The tabs are a `builder-tabs` inline-size container taking the
-width the status buttons leave, so the switch (below 53rem, the measured
-width of all eight labels with the Details attention mark) follows the
+width the status buttons leave, so the switch (below 47rem, the measured
+width of all seven labels with the Details attention mark, since the
+Rituals tab went, D114) follows the
 badge count, the window and the sidebar drawer, and switching tabs can't
-flip it. When even the icon-only tabs (about 26.5rem) don't fit, the status
+flip it. When even the icon-only tabs (about 23.5rem) don't fit, the status
 buttons wrap onto a row above the tabs, still at the right.
 
 ### D081 — Implement powers list only usable implements (rules over legacy)

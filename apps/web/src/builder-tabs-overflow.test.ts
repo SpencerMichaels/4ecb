@@ -72,9 +72,9 @@ describe("icon-only builder tabs", () => {
       "container: builder-tabs / inline-size",
     );
     // The tabs grow from the width the icon-only strip needs.
-    expect(declarationsFor(".builder-tabs")).toContain("flex: 1 1 26.5rem");
+    expect(declarationsFor(".builder-tabs")).toContain("flex: 1 1 23.5rem");
     const compact = styles.slice(
-      styles.indexOf("@container builder-tabs (max-width: 53rem) {") + 1,
+      styles.indexOf("@container builder-tabs (max-width: 47rem) {") + 1,
     );
     // Visually hidden, so screen readers keep the name.
     expect(compact).toMatch(
