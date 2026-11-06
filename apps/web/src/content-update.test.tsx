@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
 
+import { renderToStaticMarkup } from "react-dom/server";
+
 import {
   contentUpdateProgressDetail,
   describeContentUpdate,
-  needsContentUpdate,
 } from "./content-update";
+import { ContentUpdateSummaryView } from "./ContentUpdateDialog";
 
 const summary = {
   converged: true,
@@ -50,6 +52,19 @@ describe("content update summary", () => {
         },
       ],
       ritualChoiceCommand: { kind: "batch", commands: [] },
+      restrictedSelections: [
+        {
+          occurrenceId: "deity",
+          kind: "selection",
+          name: "Moradin",
+          type: "Deity",
+        },
+        {
+          occurrenceId: "sword:definition:0",
+          kind: "holding",
+          name: "Grandfather's Sword",
+        },
+      ],
       source: summary,
       target: summary,
       statChanges: [
@@ -87,6 +102,7 @@ describe("content update summary", () => {
       removals: [
         "Dwarven Resilience (power) — no longer included by Dwarven Resilience (racial trait)",
       ],
+      restricted: ["Moradin (deity)", "Grandfather's Sword"],
       removedOccurrenceIds: ["occ-dr"],
       filledChoices: ["Sending: now chosen under Psion"],
       fillCommand: { kind: "batch", commands: [] },
@@ -95,21 +111,27 @@ describe("content update summary", () => {
     });
   });
 
-  it("flags a character pinned to content other than the active content", () => {
-    const active = {
-      packId: "corrected",
-      contentDigest: "b".repeat(64),
-    } as Parameters<typeof needsContentUpdate>[1];
-    expect(
-      needsContentUpdate({ packId: "old", contentDigest: "a" }, active),
-    ).toBe(true);
-    expect(
-      needsContentUpdate(
-        { packId: "corrected", contentDigest: "b".repeat(64) },
-        active,
-      ),
-    ).toBe(false);
-    expect(needsContentUpdate(undefined, active)).toBe(false);
+  it("lists the picks a campaign won't use in the dialog", () => {
+    const html = renderToStaticMarkup(
+      <ContentUpdateSummaryView
+        name="Kyra"
+        campaignName="Golarion"
+        summary={{
+          changes: [],
+          missing: [],
+          updatedRules: [],
+          removals: [],
+          filledChoices: [],
+          restricted: ["Moradin (deity)"],
+          removedOccurrenceIds: [],
+          canUpdate: true,
+          changesKnown: true,
+        }}
+      />,
+    );
+    expect(html).toContain("Not used in Golarion");
+    expect(html).toContain("<li>Moradin (deity)</li>");
+    expect(html).not.toContain("will change");
   });
 });
 

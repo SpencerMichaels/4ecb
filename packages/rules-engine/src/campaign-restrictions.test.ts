@@ -331,6 +331,61 @@ describe("campaign restrictions (D116)", () => {
     expect(intoCampaign.targetDiagnostics).toContainEqual(
       expect.objectContaining({ code: "occurrence.campaign-restricted" }),
     );
+    expect(intoCampaign.restrictedSelections).toEqual([
+      {
+        occurrenceId: "selected-deity",
+        kind: "selection",
+        name: "Moradin",
+        type: "Deity",
+      },
+    ]);
+    // A held item is named by its holding.
+    const withSword = [
+      ...definitions,
+      entity("ID_STOCK_SWORD", "Stock Sword", "Magic Item"),
+    ];
+    expect(
+      previewProfileMigration(
+        {
+          ...build,
+          inventory: [
+            {
+              id: "holding",
+              name: "Grandfather's Sword",
+              acquiredLevel: 1,
+              quantity: 1,
+              equippedQuantity: 0,
+              elements: [
+                {
+                  definitionId: "ID_STOCK_SWORD",
+                  name: "Stock Sword",
+                  type: "Magic Item",
+                },
+              ],
+              overrides: {},
+              legality: "rules-legal",
+            },
+          ],
+        },
+        withSword,
+        withSword,
+        { targetRestrictedDefinitionIds: ["ID_STOCK_SWORD"] },
+      ).restrictedSelections,
+    ).toEqual([
+      {
+        occurrenceId: "holding:definition:0",
+        kind: "holding",
+        name: "Grandfather's Sword",
+        type: "Magic Item",
+      },
+    ]);
+    // Already restricted before: nothing new to list.
+    expect(
+      previewProfileMigration(build, definitions, definitions, {
+        sourceRestrictedDefinitionIds: ["ID_FMP_DEITY_9"],
+        targetRestrictedDefinitionIds: ["ID_FMP_DEITY_9"],
+      }).restrictedSelections,
+    ).toEqual([]);
 
     const outOfCampaign = previewProfileMigration(
       build,

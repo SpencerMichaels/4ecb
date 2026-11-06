@@ -14,6 +14,7 @@ import {
   evaluateCharacter,
   type EngineDiagnostic,
   type EvaluatedCharacter,
+  type EvaluationInput,
   type EvaluationProgress,
 } from "./evaluator";
 import {
@@ -76,6 +77,10 @@ export interface ProfileMigrationPreview {
    *  The known entries stay; adoption applies `ritualChoiceCommand`. */
   readonly ritualChoiceFills: readonly RitualChoiceFill[];
   readonly ritualChoiceCommand?: CharacterCommand;
+  /** Saved picks and held items the target's campaign does not use (D116)
+   *  that the source content did not already flag, named from the target
+   *  content. Adoption keeps them; they become house-rule issues. */
+  readonly restrictedSelections: readonly RestrictedSelection[];
   readonly source?: ProfileEvaluationSummary;
   readonly target: ProfileEvaluationSummary;
   readonly statChanges: readonly ProfileMigrationValueChange[];
@@ -88,6 +93,14 @@ export interface ProfileMigrationPreview {
 /** Progress of one of the preview's two evaluations (new content first). */
 export interface ProfileMigrationProgress extends EvaluationProgress {
   readonly evaluation: "target" | "source";
+}
+
+export interface RestrictedSelection {
+  /** The diagnostic's occurrence ID (a holding's is `<entry>:definition:<n>`). */
+  readonly occurrenceId: string;
+  readonly kind: "selection" | "holding";
+  readonly name: string;
+  readonly type?: string;
 }
 
 export interface ProfileMigrationOptions {
@@ -229,6 +242,75 @@ function summary(evaluation: EvaluatedCharacter): ProfileEvaluationSummary {
   };
 }
 
+const RESTRICTED_CODES: Readonly<
+  Record<string, RestrictedSelection["kind"] | undefined>
+> = {
+  "occurrence.campaign-restricted": "selection",
+  "item.campaign-restricted": "holding",
+};
+
+function restrictedKeys(evaluation: EvaluatedCharacter): Set<string> {
+  return new Set(
+    evaluation.diagnostics.flatMap(({ code, occurrenceId }) =>
+      RESTRICTED_CODES[code] === undefined || occurrenceId === undefined
+        ? []
+        : [`${code}\0${occurrenceId}`],
+    ),
+  );
+}
+
+/** The campaign-restricted picks and holdings `target` reports that
+ *  `source` did not, named from the target content. */
+function newlyRestrictedSelections(
+  input: EvaluationInput,
+  target: EvaluatedCharacter,
+  source: EvaluatedCharacter | undefined,
+  targetById: ReadonlyMap<string, ContentEntity>,
+): RestrictedSelection[] {
+  const before =
+    source === undefined ? new Set<string>() : restrictedKeys(source);
+  const seen = new Set<string>();
+  return target.diagnostics.flatMap(({ code, occurrenceId }) => {
+    const kind = RESTRICTED_CODES[code];
+    if (kind === undefined || occurrenceId === undefined) return [];
+    const id = `${code}\0${occurrenceId}`;
+    if (before.has(id) || seen.has(id)) return [];
+    seen.add(id);
+    let definitionId: string | undefined;
+    let holdingName: string | undefined;
+    if (kind === "selection") {
+      definitionId = target.occurrences.find(
+        (occurrence) => occurrence.id === occurrenceId,
+      )?.definitionId;
+    } else {
+      const marker = ":definition:";
+      const separator = occurrenceId.lastIndexOf(marker);
+      const entry = input.inventory.find(
+        (candidate) => candidate.id === occurrenceId.slice(0, separator),
+      );
+      definitionId =
+        entry?.definitionIds[
+          Number(occurrenceId.slice(separator + marker.length))
+        ];
+      holdingName = entry?.name;
+    }
+    const entity =
+      definitionId === undefined
+        ? undefined
+        : targetById.get(key(definitionId));
+    const name = holdingName ?? entity?.name;
+    if (name === undefined) return [];
+    return [
+      {
+        occurrenceId,
+        kind,
+        name,
+        ...(entity === undefined ? {} : { type: entity.type }),
+      },
+    ];
+  });
+}
+
 function diagnosticCodes(evaluation: EvaluatedCharacter): Set<string> {
   return new Set(evaluation.diagnostics.map((diagnostic) => diagnostic.code));
 }
@@ -281,9 +363,10 @@ export function previewProfileMigration(
   // The comparison reads stats, powers and diagnostics only, so neither
   // evaluation builds candidate catalogs (the exhaustive lists check every
   // power in the content against each slot and dominate the cost).
+  const targetInput = projectBuildForEvaluation(build, targetEntities);
   const targetEvaluation = evaluateCharacter(
     {
-      ...projectBuildForEvaluation(build, targetEntities),
+      ...targetInput,
       candidateDetailLevels: [],
       ...(options.targetRestrictedDefinitionIds === undefined
         ? {}
@@ -407,6 +490,12 @@ export function previewProfileMigration(
     ...(ritualChoices.command === undefined
       ? {}
       : { ritualChoiceCommand: ritualChoices.command }),
+    restrictedSelections: newlyRestrictedSelections(
+      targetInput,
+      targetEvaluation,
+      sourceEvaluation,
+      targetById,
+    ),
     ...(sourceEvaluation === undefined
       ? {}
       : { source: summary(sourceEvaluation) }),

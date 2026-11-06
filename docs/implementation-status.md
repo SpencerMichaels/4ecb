@@ -1,5 +1,35 @@
 # Implementation status
 
+## Per-character content target (2026-11-06)
+
+D116 step 7. New `apps/web/src/campaign-profile.ts`: `contentTarget(binding,
+{manifest, profile}, campaigns)` gives a character outside a campaign the
+active content (unchanged behavior) and a campaign character the active
+profile's layers (or the active pack alone) plus its campaign's newest
+installed revision; `bindingMatchesTarget` compares by identity, without
+composing; `materialize()` composes (or reuses) the campaign profile through
+`ContentPackRepository.materializeCampaignProfile` and returns the pack ID
+and binding. `campaignChangeTarget(campaign | undefined, active)` is the
+target for moving a character into or out of a campaign (step 9's Details
+select uses it with the same dialog); `contentTargetMove` tells joining,
+leaving and updating apart for the dialog's wording. `content-update.ts`:
+`needsContentUpdate(binding, target)`; `activeProfileBinding` moved to
+`campaign-profile.ts` (re-exported). `ContentUpdateDialog.tsx` takes a
+target, materializes it when it opens ("Preparing <campaign>"), and lists
+"Not used in <campaign>" from the new
+`ProfileMigrationPreview.restrictedSelections` (rules-engine: the
+campaign-restricted picks and holdings the target reports and the source
+did not, named from the target content). `CharacterEditorPage.tsx` reads the
+character's campaign revisions (re-read on the window event
+`CAMPAIGNS_CHANGED_EVENT`, for step 8 to dispatch after installs) and raises
+the update issue against the target. A campaign with no installed revision
+leaves the character on its pinned pack silently (nothing to do that keeps
+it in its campaign); with its pinned pack missing too, the not-installed
+issue points to Settings. Known limit: composing a campaign profile runs on
+the main thread when the dialog opens. Verification:
+`campaign-profile.test.ts`, `content-update.test.tsx`,
+`campaign-restrictions.test.ts`; `pnpm test`, `pnpm typecheck`.
+
 ## Pathfinder campaign source (2026-11-06)
 
 D116 step 11. `content/campaigns/pathfinder/campaign.json` (campaignId

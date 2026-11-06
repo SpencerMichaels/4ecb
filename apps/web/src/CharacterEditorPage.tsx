@@ -8,10 +8,11 @@ import {
 } from "react";
 
 import {
+  CampaignRepository,
   CharacterRepository,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import type { ContentPackManifest } from "@4ecb/content-pack";
+import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
   resolvedBoundProfile,
@@ -137,6 +138,7 @@ import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
+import { CAMPAIGNS_CHANGED_EVENT, contentTarget } from "./campaign-profile";
 import {
   acquisitionCommands,
   loadoutChangeCommand,
@@ -552,6 +554,51 @@ export function CharacterEditorPage({
       saveQueue.current = undefined;
     };
   }, [characterId, reloadKey]);
+
+  // The installed revisions of the character's campaign (D116), re-read
+  // when campaigns change. A campaign character has no target while they
+  // load, so no update issue flashes against the plain active content.
+  const campaignId = character?.profileBinding?.campaign?.campaignId;
+  const [campaignRevisions, setCampaignRevisions] = useState<{
+    readonly campaignId: string;
+    readonly revisions: readonly CampaignDocument[];
+  }>();
+  useEffect(() => {
+    if (campaignId === undefined) return;
+    let cancelled = false;
+    const load = () => {
+      void new CampaignRepository()
+        .revisions(campaignId)
+        .then((revisions) => {
+          if (!cancelled) setCampaignRevisions({ campaignId, revisions });
+        })
+        .catch(() => {
+          // Unreadable campaigns leave the character on its pinned pack.
+          if (!cancelled) setCampaignRevisions({ campaignId, revisions: [] });
+        });
+    };
+    load();
+    window.addEventListener(CAMPAIGNS_CHANGED_EVENT, load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(CAMPAIGNS_CHANGED_EVENT, load);
+    };
+  }, [campaignId]);
+  const profileBinding = character?.profileBinding;
+  const updateTarget = useMemo(() => {
+    const active = { manifest: activeManifest, profile: activeProfile };
+    if (campaignId === undefined)
+      return contentTarget(profileBinding, active, []);
+    return campaignRevisions?.campaignId === campaignId
+      ? contentTarget(profileBinding, active, campaignRevisions.revisions)
+      : undefined;
+  }, [
+    activeManifest,
+    activeProfile,
+    campaignId,
+    campaignRevisions,
+    profileBinding,
+  ]);
 
   useEffect(() => {
     if (navigation.workspace !== "retraining" || character === undefined)
@@ -1463,10 +1510,10 @@ export function CharacterEditorPage({
         ? [
             contentNotInstalledIssue(
               character.title,
-              activeManifest !== undefined,
+              updateTarget !== undefined,
             ),
           ]
-        : needsContentUpdate(character.profileBinding, activeManifest)
+        : needsContentUpdate(character.profileBinding, updateTarget)
           ? [contentUpdateIssue(character.title)]
           : []),
       ...(evaluationFailure === undefined
@@ -2270,11 +2317,10 @@ export function CharacterEditorPage({
             ) : null}
             {reviewingContentUpdate &&
             character !== undefined &&
-            activeManifest !== undefined ? (
+            updateTarget !== undefined ? (
               <ContentUpdateDialog
                 character={character}
-                target={activeManifest}
-                activeProfile={activeProfile}
+                target={updateTarget}
                 rulesClient={readyRulesClient}
                 onClose={() => setReviewingContentUpdate(false)}
                 onUpdated={() => {

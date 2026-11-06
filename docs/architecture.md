@@ -330,6 +330,27 @@ the web migration key (`contentProfileRevisionKey`) includes the campaign.
 Materialized campaign packs are not garbage-collected yet (one per base and
 campaign revision pair).
 
+Each character has a content target (`apps/web/src/campaign-profile.ts`,
+`contentTarget`): outside a campaign, the active content, as before; in one,
+the active profile's layers (or the active pack alone) plus the newest
+installed revision of its campaign. D004's auto-follow is untouched: it moves
+the active content, and a campaign character's target follows it. The
+target's identity (base layers, overlay layer, campaign digest) is compared
+with the binding without composing anything (`bindingMatchesTarget`), so a
+new server revision or a new campaign revision raises the existing
+content-update issue; the campaign profile is materialized only when the
+update dialog opens. The preview then evaluates the target under its
+campaign's restrictions and lists, besides the usual changes, the picks and
+holdings that become "Not used in <campaign>"
+(`ProfileMigrationPreview.restrictedSelections`: target-side restricted
+diagnostics the source did not have). A campaign character whose campaign
+has no installed revision has no target: it stays on its pinned pack with no
+issue (moving it onto the plain active content would drop it from its
+campaign unasked); if its pinned pack is missing too, the not-installed issue
+points to Settings. `campaignChangeTarget(campaign | undefined, active)` is
+the same target for moving a character into or out of a campaign, previewed
+and applied by the same dialog.
+
 Characters pin a resolved profile revision. Installing a newer pack does not
 alter them. Profile migration produces a preview of missing IDs, changed rules,
 new diagnostics, and calculated differences before the user accepts it.

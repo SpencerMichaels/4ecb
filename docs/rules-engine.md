@@ -51,6 +51,9 @@ the builder show restricted options but they stay unselectable
 `targetRestrictedDefinitionIds` so each side evaluates under its own
 campaign, and the target's also reach `evaluateRitualChoiceFills`
 (`fillRitualChoicesFromKnown` takes them as an optional third argument).
+The preview's `restrictedSelections` names the restricted picks and holdings
+the target reports that the source did not (the update dialog's "Not used in
+<campaign>" list).
 The web's rules worker supplies the IDs from the loaded pack's
 `campaign.restrictedIds` for every evaluation, library summary, ritual fill
 and each preview side (from that side's own pack); the main-thread

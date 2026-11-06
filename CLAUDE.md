@@ -402,8 +402,10 @@ separate header or level rail.
   update is a character issue of kind `update` (`contentUpdateIssue` in
   `builder-diagnostics.ts`, raised via `withCharacterIssues`), not a warning:
   its own status badge opens `ContentUpdateDialog.tsx` (`content-update.ts`,
-  backed by `previewProfileMigration`) to move a character onto the active
-  content.
+  backed by `previewProfileMigration`) to move a character onto its content
+  target (`campaign-profile.ts` `contentTarget`: the active content, or for a
+  campaign character the active layers plus its campaign's newest installed
+  revision, materialized only when the dialog opens; D116).
   Raise new character issues the same way, never as one-off banners.
   An issue's `target` names the exact choice (choice ID, or the holding
   for an item's choice); its Review lands there through `review-landing.ts`

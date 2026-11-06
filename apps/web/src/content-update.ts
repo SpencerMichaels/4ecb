@@ -1,23 +1,25 @@
-import type { CharacterCommand } from "@4ecb/character-domain";
-import type { ContentPackManifest } from "@4ecb/content-pack";
-import type { ContentProfileDefinition } from "@4ecb/browser-storage";
+import type {
+  CharacterCommand,
+  CharacterProfileBinding,
+} from "@4ecb/character-domain";
 import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
 
-import {
-  contentProfileMatchesRevision,
-  type ContentProfileRevision,
-} from "./profile-migration";
+import { bindingMatchesTarget, type ContentTarget } from "./campaign-profile";
 import type { ProfileMigrationPreviewProgress } from "./rules-worker-messages";
 
-/** True when the character is pinned to content other than the active content. */
+export { activeProfileBinding } from "./campaign-profile";
+
+/** True when the character is pinned to content other than its target: the
+ *  active content, or for a campaign character the active layers plus its
+ *  campaign's newest installed revision (D116). */
 export function needsContentUpdate(
-  binding: ContentProfileRevision | undefined,
-  active: ContentPackManifest | undefined,
+  binding: CharacterProfileBinding | undefined,
+  target: ContentTarget | undefined,
 ): boolean {
   return (
     binding !== undefined &&
-    active !== undefined &&
-    !contentProfileMatchesRevision(binding, active)
+    target !== undefined &&
+    !bindingMatchesTarget(binding, target)
   );
 }
 
@@ -134,6 +136,9 @@ export interface ContentUpdateSummary {
   readonly filledChoices: readonly string[];
   /** The command making those choices, applied on update. */
   readonly fillCommand?: CharacterCommand;
+  /** Picks and held items the target's campaign doesn't use that the
+   *  current content allowed ("Torag (deity)", D116); they stay, flagged. */
+  readonly restricted: readonly string[];
   /** Saved selections to remove when the player updates. */
   readonly removedOccurrenceIds: readonly string[];
   /** False when the character cannot be calculated with the new content. */
@@ -175,6 +180,13 @@ export function describeContentUpdate(
       (selection) =>
         `${selection.name}${selection.type ? ` (${selection.type.toLowerCase()})` : ""} — no longer included by ${selection.providerName} (${selection.providerType.toLowerCase()})`,
     ),
+    restricted: [
+      ...new Set(
+        preview.restrictedSelections.map(({ name, type }) =>
+          type === undefined ? name : `${name} (${type.toLowerCase()})`,
+        ),
+      ),
+    ],
     removedOccurrenceIds: preview.removedSelections.map(
       (selection) => selection.occurrenceId,
     ),
@@ -188,23 +200,6 @@ export function describeContentUpdate(
       : { fillCommand: preview.ritualChoiceCommand }),
     canUpdate: preview.target.converged,
     changesKnown: preview.sourceAvailable,
-  };
-}
-
-/** The binding a character gets when it adopts the active content. */
-export function activeProfileBinding(
-  manifest: ContentPackManifest,
-  activeProfile: ContentProfileDefinition | undefined,
-): ContentProfileRevision & { readonly contentDigest: string } {
-  return {
-    packId: manifest.packId,
-    contentDigest: manifest.contentDigest,
-    ...(activeProfile?.materializedPackId === manifest.packId
-      ? {
-          layers: activeProfile.layers,
-          resolutionPolicy: activeProfile.resolutionPolicy,
-        }
-      : {}),
   };
 }
 
