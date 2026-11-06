@@ -28,15 +28,12 @@ describe("visual-review facts decided by CSS", () => {
     );
   });
 
-  it("mutes ritual source lines and the Learn-free dialog's detail", () => {
+  it("mutes the free-ritual provider and the Learn-free dialog's detail", () => {
     expect(
       declarations(
         ".ritual-allowance-option-detail, .rituals-allowance-source",
       ),
     ).toContain("color: var(--muted)");
-    expect(declarations(".inventory-table .inventory-known-detail")).toContain(
-      "color: var(--muted)",
-    );
   });
 
   it("hangs a dialog option's text beside its radio, in a dialog wide enough for a psion's options", () => {
@@ -56,10 +53,6 @@ describe("visual-review facts decided by CSS", () => {
         ".inventory-table .inventory-category-row .table-section-count",
       ),
     ).toContain("font-size: inherit");
-    // A known record's detail line wraps under its name.
-    expect(declarations(".inventory-table .inventory-known-detail")).toContain(
-      "white-space: normal",
-    );
   });
 
   it("sets the Inventory's no-items line in muted italics", () => {

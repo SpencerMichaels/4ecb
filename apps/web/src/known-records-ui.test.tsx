@@ -17,7 +17,7 @@ import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import {
   AllowanceChoiceDialog,
   groupKnownRecords,
-  knownRecordSourceLabel,
+  knownRecordGrantLabel,
   ritualAllowanceGroups,
   ritualAllowanceLabel,
 } from "./known-records-ui";
@@ -250,13 +250,13 @@ const menuItem = (label: string) =>
   ) as HTMLButtonElement | undefined;
 
 describe("Known records in the Inventory (D114)", () => {
-  it("groups known records by kind, sources without levels, once each", () => {
+  it("groups known records by kind, once each; only a grant has a label", () => {
     const records = knownRecords(build, evaluate(build), (id) =>
       byId.get(id.toLowerCase()),
     );
     const groups = groupKnownRecords(records);
     expect(
-      groups.get("ritual")?.map((record) => knownRecordSourceLabel(record)),
+      groups.get("ritual")?.map((record) => knownRecordGrantLabel(record)),
     ).toEqual([undefined, "Granted by Synthetic Druid"]);
     expect(groups.get("alchemical-formula")).toEqual([]);
     expect(groups.get("martial-practice")).toEqual([]);
@@ -276,21 +276,30 @@ describe("Known records in the Inventory (D114)", () => {
     const labels = [
       ...container.querySelectorAll(".inventory-category-label"),
     ].map((label) => label.textContent);
-    expect(labels).toEqual(["Rituals known2"]);
+    // Named as the Shop's learning categories, without "known".
+    expect(labels).toEqual(["Rituals2"]);
     expect(
       container.querySelector(".inventory-category-label .table-section-count")
         ?.textContent,
     ).toBe("2");
     // A kind the character doesn't know has no group, like an item
     // category with no holdings.
-    expect(text).not.toContain("Alchemical formulas known");
-    expect(rowNamed("Gifted Rite").textContent).toBe(
-      "Gifted RiteLevel 1 Exploration Nature Granted by Synthetic Druid",
-    );
-    expect(rowNamed("Bought Rite").textContent).toBe(
-      "Bought RiteLevel 2 Warding",
-    );
-    expect(text).not.toMatch(/at level/i);
+    expect(text).not.toContain("Alchemical formulas");
+    // A row is its name only: level, category and key skill are the
+    // card's subheader, and where a record came from is never shown.
+    expect(rowNamed("Gifted Rite").textContent).toBe("Gifted Rite");
+    expect(rowNamed("Bought Rite").textContent).toBe("Bought Rite");
+    expect(text).not.toMatch(/at level|Granted by|Learned free/i);
+    // The item rows' three cells (name, quantity, actions), so the name
+    // sits in the Item column where item names do.
+    const cells = [...rowNamed("Bought Rite").children];
+    expect(cells.map((cell) => cell.tagName)).toEqual(["TH", "TD", "TD"]);
+    expect(cells.map((cell) => cell.getAttribute("colspan"))).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    expect(cells[2]?.className).toBe("inventory-actions-cell");
     // No per-row buttons: Remove is in the right-click menu.
     expect(rowNamed("Bought Rite").querySelectorAll("button")).toHaveLength(1);
   });
@@ -331,9 +340,7 @@ describe("Known records in the Inventory (D114)", () => {
     };
     renderWorkspace({ build: used });
     expect(container.querySelector(".rituals-allowance")).toBeNull();
-    expect(rowNamed("New Rite").textContent).toContain(
-      "Learned free (Synthetic Druid)",
-    );
+    expect(rowNamed("New Rite").textContent).toBe("New Rite");
   });
 });
 
@@ -490,14 +497,11 @@ describe("Learning in the Shop (D114)", () => {
       undefined,
       () => undefined,
     );
-    expect(
-      knownRecordSourceLabel(record!, (key) =>
-        key === "P" ? "Spellbook" : undefined,
-      ),
-    ).toBe("Learned free (Spellbook)");
+    // A learned record, free or bought, has no label.
+    expect(knownRecordGrantLabel(record!)).toBeUndefined();
     // A ritual picked in a Build-tab Ritual choice (D115).
     expect(
-      knownRecordSourceLabel({
+      knownRecordGrantLabel({
         element: { name: "Sending", type: "Ritual" },
         source: { kind: "granted", provider: "Psion", via: "choice" },
       }),

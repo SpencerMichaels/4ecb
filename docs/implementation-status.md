@@ -1017,6 +1017,34 @@ required Ritual choice, she knows no ritual). Owner visual checks pending:
 checklist "Psion: the ritual choice in the Class flow" and the updated
 "Psion: free rituals in the Inventory and Shop".
 
+## Known-record rows and ritual cards (2026-11-06)
+
+D114 amendment (owner feedback). The Inventory's known groups read
+"Rituals", "Alchemical formulas" and "Martial practices" (the Shop's
+category names, no "known"). Each row is the item rows' three cells, the
+name alone in the Item column: before, one cell spanned the table, which
+made it the row's last cell and so right-aligned by the actions column's
+rule. The muted "Level · Category · Key skill · source" line is gone, and
+so is every source label ("Learned free (…)", "Granted by …", "Chosen
+for …") in the row and as the detail card's subheading; only the inert
+Remove's reason names a grant (`knownRecordGrantLabel`). The ritual,
+formula and practice card (`ItemCard` via `print-item-presentation.ts`,
+every surface) gains a subheader, its lines undivided: Category · Time ·
+Skill, then Duration, Cost and any Prerequisite each on its own line;
+one-word labels; a practice's category is not repeated. Level stays in the
+type bar ("Martial Practice … Level 8"), the market price in the footer. Its description is the body again: the
+card showed a description only for an item with no body fields, and every
+ritual has some, so all 371 ritual records printed none (Alter Ego, Animal
+Messenger, Alchemical Silver checked on the private pack; now 0 of 371
+without one).
+
+Verification: `ritual-card.test.tsx`, `known-records-ui.test.tsx`,
+`visual-review-styles.test.ts`; `pnpm review:verify` 175 of 176 factual
+rows pass (the failure, invoker "rituals category", expects the Shop's
+removed "Rituals and practices" optgroup, from 0bd40e44). Owner checks:
+the checklist's "Drow invoker: rituals in the Inventory and Shop" and
+"Psion: free rituals in the Inventory and Shop".
+
 ## Rituals fold into the Shop and Inventory (2026-11-05)
 
 Owner decision D114: the Rituals tab is removed. The Shop's Type list has

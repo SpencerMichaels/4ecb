@@ -111,7 +111,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Piri
   "piri|0|rows": auto(
-    'The druid-granted ritual\'s Inventory row reads "Granted by Druid".',
+    'The druid-granted ritual\'s Inventory row is its name alone (no "Granted by Druid").',
   ),
   "piri|0|free-ritual counter": auto(
     'The druid\'s free-ritual block in the Inventory, before the known groups: no rule sentence, and a "Free rituals (Druid)" heading with a line per allowance left (none once used).',
@@ -176,8 +176,8 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "wizard-gnome|6|free-ritual counter": auto(
     'The "Free rituals (Spellbook)" block\'s line ("… free 1st-level rituals and … free rituals of level 5 or lower"), with no rule sentence.',
   ),
-  "wizard-gnome|6|known-list source line": auto(
-    'Comprehend Language\'s Inventory row reads "Learned free (Spellbook)", no level.',
+  "wizard-gnome|6|known-list rows": auto(
+    'Comprehend Language (learned free) has an Inventory row of its name alone; no row says "Learned free".',
   ),
   "wizard-gnome|6|learn x free dialog": auto(
     "The wizard's Spellbook is one allowance (no dialog); with a psion's allowance beside it, Tenser's Floating Disk fits both, so Learn free asks.",
@@ -267,7 +267,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Drow invoker
   "invoker-drow|0|no rituals tab": auto(
-    'No Rituals tab or workspace; no Free rituals rule sentence (its one free ritual is used, so no free-ritual block); "Rituals known (N)" in the Inventory, no source naming a level.',
+    'No Rituals tab or workspace; no Free rituals rule sentence (its one free ritual is used, so no free-ritual block); "Rituals (N)" in the Inventory, not "Rituals known".',
   ),
   "invoker-drow|0|free-ritual counter": auto(
     "The invoker's one free ritual is used, so the Inventory has no free-ritual block.",
@@ -276,13 +276,13 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "Only the kinds known have a group, in order after the item categories, each count inside the item categories' label.",
   ),
   "invoker-drow|0|rows": auto(
-    'Each row has the book icon, the name, then Level, Category, Key skill and "Granted by Invoker" on the muted detail line.',
+    "Each row has the book icon and the name alone, in the item rows' three cells (no colspan).",
   ),
   "invoker-drow|0|remove": auto(
     "Known rows have no buttons besides the name; their right-click menu's Remove is inert, with the reason, for a granted ritual.",
   ),
   "invoker-drow|0|detail card": auto(
-    "A selected row's card has its source as the subheading.",
+    "A selected row's card has the ritual subheader (one-word labels) and its description as the body, with no source note.",
   ),
   "invoker-drow|1|rituals category": auto(
     'Shop → Rituals: the three learning categories after the items in the Type select, "Search rituals…", Affordable / Proficient / Filters (no Known chip), Buy / Learn free, a learned ritual Known and disabled.',
@@ -546,7 +546,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The Inventory keeps its Item, Quantity and actions columns; a known group only for a kind the psion knows.",
   ),
   "psion-thought-warrior|1|chosen ritual": auto(
-    'Tenser\'s Floating Disk is listed once, "Chosen for Psion", uses no free-ritual allowance, and reads Known in the Shop with Buy disabled.',
+    "Tenser's Floating Disk is listed once, chosen for the Psion, its row the name alone, uses no free-ritual allowance, and reads Known in the Shop with Buy disabled.",
   ),
   "psion-thought-warrior|2|psion ritual choice (d115)": auto(
     "The level-1 Ritual choice offers Sending and Tenser's Floating Disk, Tenser's Floating Disk chosen; the folded Class row ends \"Ritual: Tenser's Floating Disk\", and no Other row lists it.",

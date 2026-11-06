@@ -954,15 +954,6 @@ button.inventory-icon-action:disabled {
   color: var(--muted);
 }
 
-/* A known record's row spans the inventory's three columns (no quantity
-   or row actions: Remove is its right-click menu); its level, category,
-   key skill and source sit under the name like an item's augment note. */
-.inventory-table .inventory-known-detail {
-  color: var(--muted);
-  font-size: 0.85em;
-  white-space: normal;
-}
-
 .inventory-table .inventory-empty-row td {
   color: var(--muted);
   font-style: italic;

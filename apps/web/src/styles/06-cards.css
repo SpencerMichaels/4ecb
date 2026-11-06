@@ -1207,6 +1207,11 @@
 .print-item-stat-row:last-child {
   border-bottom: 0;
 }
+/* A ritual's subheader lines (fields, duration, cost, prerequisite) read
+   as one block; only the stats' own border divides it from the body. */
+.print-item-stats.is-ritual .print-item-stat-row {
+  border-bottom: 0;
+}
 .print-item-stat-row > div {
   align-items: baseline;
   display: flex;

@@ -92,7 +92,7 @@ import {
   KNOWN_RECORD_GROUPS,
   knownRecordKind as knownRecordKindOf,
   knownRecordKey,
-  knownRecordSourceLabel,
+  knownRecordGrantLabel,
   ritualAllowanceGroups,
 } from "../src/known-records-ui";
 import { canonicalHashRedirect } from "../src/routes";
@@ -1375,11 +1375,6 @@ function ritualStatuses(c: ReviewCharacter) {
 }
 
 function knownRows(c: ReviewCharacter) {
-  const statuses = ritualStatuses(c);
-  const provider = (allowance: string) =>
-    statuses.find(
-      ({ allowance: candidate }) => key(candidate.key) === key(allowance),
-    )?.allowance.provider;
   return knownRecords(
     c.build,
     c.evaluation,
@@ -1388,7 +1383,7 @@ function knownRows(c: ReviewCharacter) {
   ).map((record) => ({
     record,
     name: record.entity?.name ?? record.element.name,
-    source: knownRecordSourceLabel(record, provider),
+    grant: knownRecordGrantLabel(record),
   }));
 }
 
@@ -1456,17 +1451,17 @@ rule("piri", "Inventory", "Rows", (c) => {
   const rows = knownRows(c).filter(
     ({ record }) => record.source.kind === "granted",
   );
-  const granted = rows.find(({ source }) => source === "Granted by Druid");
+  const granted = rows.find(({ grant }) => grant === "Granted by Druid");
   return [
     truthy(
-      'A granted ritual reads "Granted by Druid"',
+      "A ritual granted by Druid",
       granted !== undefined,
-      rows.map(({ name, source }) => `${name}: ${source}`).join("; "),
+      rows.map(({ name, grant }) => `${name}: ${grant}`).join("; "),
     ),
-    contains(
-      "The Inventory row shows it under the name",
+    equal(
+      "Its Inventory row is the name alone (no source line)",
       textOf(knownRowHtml(inventoryHtml(c), granted?.name ?? "?") ?? ""),
-      "Granted by Druid",
+      granted?.name,
     ),
   ];
 });
@@ -1536,19 +1531,20 @@ rule("wizard-gnome", "Inventory", "Free-ritual counter", (c) => [
   ),
 ]);
 
-rule("wizard-gnome", "Inventory", "Known-list source line", (c) => {
+rule("wizard-gnome", "Inventory", "Known-list rows", (c) => {
   const row = knownRows(c).find(({ name }) => name === "Comprehend Language");
   return [
+    truthy(
+      "Comprehend Language is learned free",
+      row?.record.source.kind === "learned" &&
+        row.record.source.acquisition === "free",
+    ),
     equal(
-      "Comprehend Language's source line (no level: current state)",
-      row?.source,
-      "Learned free (Spellbook)",
-    ),
-    contains(
-      "The Inventory row shows it under the name",
+      "Its Inventory row is the name alone (no provenance: owner, 2026-11-06)",
       textOf(knownRowHtml(inventoryHtml(c), "Comprehend Language") ?? ""),
-      "Learned free (Spellbook)",
+      "Comprehend Language",
     ),
+    lacks("No row says Learned free", textOf(inventoryHtml(c)), "Learned free"),
   ];
 });
 
@@ -1715,13 +1711,13 @@ rule("psion-thought-warrior", "Inventory", "Chosen ritual", (c) => {
   return [
     equal(
       "Listed once, chosen for the Psion",
-      rows.map(({ source }) => source),
+      rows.map(({ grant }) => grant),
       ["Chosen for Psion"],
     ),
-    contains(
-      "The Inventory row shows it under the name",
+    equal(
+      "Its Inventory row is the name alone (no source line)",
       textOf(knownRowHtml(html, "Tenser's Floating Disk") ?? ""),
-      "Chosen for Psion",
+      "Tenser's Floating Disk",
     ),
     equal(
       "It uses no free-ritual allowance",
@@ -1767,10 +1763,11 @@ rule("invoker-drow", "Inventory", "No Rituals tab", (c) => {
     ),
     equal("No free-ritual block (nothing left)", headings, []),
     contains(
-      `The Inventory lists "Rituals known" with its count ${rituals.length}`,
+      `The Inventory lists "Rituals" with its count ${rituals.length}`,
       text,
-      `Rituals known${rituals.length}`,
+      `Rituals${rituals.length}`,
     ),
+    lacks('No group says "known"', text, "Rituals known"),
     lacks("No source names a level (current state)", text, "at level"),
   ];
 });
@@ -1821,15 +1818,10 @@ rule("invoker-drow", "Inventory", "Groups", (c) => {
 rule("invoker-drow", "Inventory", "Rows", (c) => {
   const html = inventoryHtml(c);
   const granted = knownRows(c).find(
-    ({ source }) => source === "Granted by Invoker",
+    ({ grant }) => grant === "Granted by Invoker",
   );
   const row =
     granted === undefined ? undefined : knownRowHtml(html, granted.name);
-  const value = (field: string) =>
-    granted?.record.entity === undefined
-      ? undefined
-      : contentSpecificValue(granted.record.entity, field)?.trim();
-  const level = value("Level");
   return [
     truthy(
       "A ritual granted by Invoker",
@@ -1838,24 +1830,18 @@ rule("invoker-drow", "Inventory", "Rows", (c) => {
     ),
     contains("Its row has the book icon", row ?? "", "lucide-book"),
     equal(
-      "Name, then Level, Category, Key skill and source on the detail line",
+      "The row is the name alone (level, category and skill are the card's)",
       textOf(row ?? ""),
-      [
-        granted?.name ?? "?",
-        [
-          level === undefined ? undefined : `Level ${level}`,
-          value("Category"),
-          value("Key Skill"),
-          "Granted by Invoker",
-        ]
-          .filter((part) => part !== undefined && part !== "")
-          .join(" · "),
-      ].join(""),
+      granted?.name ?? "?",
     ),
-    contains(
-      "The detail line uses the muted known-detail style",
-      row ?? "",
-      "inventory-known-detail",
+    equal(
+      "It has the item rows' three cells (Item, Quantity, actions)",
+      [...(row ?? "").matchAll(/<(th|td)\b[^>]*>/gu)].map((match) =>
+        match[0].includes("colSpan") || match[0].includes("colspan")
+          ? `${match[1]}+span`
+          : match[1],
+      ),
+      ["th", "td", "td"],
     ),
   ];
 });
@@ -1898,27 +1884,29 @@ rule("invoker-drow", "Inventory", "Remove", (c) => {
 });
 
 rule("invoker-drow", "Inventory", "Detail card", (c) => {
-  const row = knownRows(c).find(
-    ({ record, source }) => record.entity !== undefined && source !== undefined,
-  );
+  const row = knownRows(c).find(({ record }) => record.entity !== undefined);
+  const entity = row?.record.entity;
   const detail =
-    row?.record.entity === undefined
+    entity === undefined
       ? ""
-      : itemDetailHtml(
-          c,
-          {
-            entities: [row.record.entity],
-            displayName: row.record.entity.name,
-            effectiveLevel: c.build.effectiveLevel,
-          },
-          row.source === undefined ? {} : { note: row.source },
-        );
+      : itemDetailHtml(c, {
+          entities: [entity],
+          displayName: entity.name,
+          effectiveLevel: c.build.effectiveLevel,
+        });
   return [
     contains(
-      `The selected row's card has its source (${row?.source}) as the subheading`,
+      `${row?.name}'s card has the ritual subheader`,
       detail,
-      `<p class="candidate-relationship">${row?.source ?? ""}</p>`,
+      'class="print-item-subheader"',
     ),
+    contains("… with one-word labels", textOf(detail), "Skill"),
+    contains(
+      "… and its description as the body",
+      textOf(detail),
+      textOf(entity?.description.split("\n")[0] ?? "—").slice(0, 40),
+    ),
+    lacks("… and no source note", detail, 'class="candidate-relationship"'),
   ];
 });
 

@@ -4554,6 +4554,21 @@ position between modes.
   `apps/web/src/known-records-ui.tsx` (`useKnownRecordsModel`, one model
   for the Shop's known IDs and price percent and the Inventory's groups).
 
+Amendment (2026-11-06, owner): the Inventory list was right-aligned, "the
+title is displaced by a subtitle that just repeats a bunch of info that is
+in (or should be in) the card's subheading", and "'Learned free' also
+resurfaces, despite making a decision earlier that we don't need to show
+the provenance of rituals to the player like that" (this decision's
+"bought at level X was unnecessary"). The groups are named "Rituals",
+"Alchemical formulas" and "Martial practices", as in the Shop. A row is the
+item rows' three cells with the name alone; no source shows in the list or
+on the card (the inert Remove still gives a grant's reason). The card's
+subheader carries the ritual's short fields with one-word labels, its lines
+undivided: Category · Time · Skill, then Duration, Cost and any
+Prerequisite each on its own line ("don't put a field with a short
+fixed(ish) size value after a variable length one"); its level stays in
+the type bar, its price in the footer, and its description is the body.
+
 ### D115 — A choice among named rituals is a Build-tab choice
 
 Status: accepted (2026-11-05, owner). Amends D114's allowances.

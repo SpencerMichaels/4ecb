@@ -40,6 +40,13 @@ export function printItemPresentation(card: SheetCard) {
   const isWeapon =
     baseType === "Weapon" || magicType?.toLowerCase() === "weapon";
   const isArmor = baseType === "Armor" || magicType?.toLowerCase() === "armor";
+  // Rituals, alchemical formulas and martial practices are all "Ritual"
+  // records (the formula or practice names itself in its type field).
+  const isRitual = [card.itemType, baseType].some((type) =>
+    /^(?:ritual|alchemical formula|martial practice)$/i.test(
+      type?.trim() ?? "",
+    ),
+  );
   const isImplement =
     /^(?:superior implement|implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)$/i.test(
       magicType ?? card.itemType ?? "",
@@ -113,15 +120,49 @@ export function printItemPresentation(card: SheetCard) {
   const remainingStats = combatStats.filter(
     (stat) => !groupedRows.some((values) => values.includes(stat)),
   );
-  const statRows =
-    remainingStats.length > 0 ? [...groupedRows, remainingStats] : groupedRows;
+  // A ritual reads like its published block: its short, evenly sized
+  // fields are the subheader (owner, 2026-11-06): category, time and
+  // skill on one line; the variable-length duration, cost and any
+  // prerequisite each on their own, so none pushes a short field aside. Its level is the type bar's, its
+  // market price the footer's, and its description the body.
+  const ritualKind = isRitual
+    ? field("Type")?.trim() || card.itemType || "Ritual"
+    : undefined;
+  const ritualCategory = field("Category")?.trim();
+  const ritualRows = [
+    [
+      [
+        "Category",
+        ritualCategory?.toLowerCase() === ritualKind?.toLowerCase()
+          ? undefined
+          : ritualCategory,
+      ],
+      ["Time", field("Time")],
+      ["Skill", field("Key Skill")],
+    ],
+    [["Duration", field("Duration")]],
+    [["Cost", field("Component Cost")]],
+    [["Prerequisite", field("Prerequisite", "Prerequisites")]],
+  ]
+    .map((row) =>
+      row.flatMap(([label, value]) =>
+        label && value?.trim() ? [{ label, value: value.trim() }] : [],
+      ),
+    )
+    .filter((values) => values.length > 0);
+  const statRows = isRitual
+    ? ritualRows
+    : remainingStats.length > 0
+      ? [...groupedRows, remainingStats]
+      : groupedRows;
   const stats = statRows.flat();
   const kind =
-    baseType === "Weapon" || baseType === "Armor"
+    ritualKind ??
+    (baseType === "Weapon" || baseType === "Armor"
       ? baseType
       : (magicType?.replace(/\s+slot item$/i, " item") ??
         card.itemType ??
-        "Item");
+        "Item"));
   const lower = (value: string | undefined) => value?.trim().toLowerCase();
   const category = field(
     "Weapon Category",
@@ -146,11 +187,13 @@ export function printItemPresentation(card: SheetCard) {
           .join(" ");
   const primaryMetadata = [
     lower(lastField("Rarity")),
-    ...(isWeapon
-      ? [lower(field("Hands Required")), lower(field("Group"))]
-      : isArmor
-        ? [lower(field("Hands Required")), armorDescription]
-        : [lower(field("Hands Required")), lower(category ?? kind)]),
+    ...(isRitual
+      ? []
+      : isWeapon
+        ? [lower(field("Hands Required")), lower(field("Group"))]
+        : isArmor
+          ? [lower(field("Hands Required")), armorDescription]
+          : [lower(field("Hands Required")), lower(category ?? kind)]),
   ]
     .filter(Boolean)
     .join(" ");
@@ -225,6 +268,16 @@ export function printItemPresentation(card: SheetCard) {
     "enchantequiv",
     "granted powers",
   ]);
+  if (isRitual)
+    for (const label of [
+      "time",
+      "duration",
+      "component cost",
+      "key skill",
+      "prerequisite",
+      "prerequisites",
+    ])
+      excluded.add(label);
   if (criticalFormula) excluded.add("critical");
   // A weapon's keyword properties ("Heavy Thrown, High Crit") read as one
   // header row; authored property prose with several lines or a list
@@ -295,16 +348,20 @@ export function printItemPresentation(card: SheetCard) {
     rules,
     // Keep unstructured/custom mechanical prose when it has no structured
     // replacement, but never repeat an explicitly identified flavor passage.
+    // A ritual's description is its rules text, never a repeat.
     description:
-      rules.length === 0 &&
-      weaponProperties.length === 0 &&
-      stats.every((stat) =>
-        ["Category", "Rarity", "Key ability"].includes(stat.label),
-      ) &&
+      (isRitual ||
+        (rules.length === 0 &&
+          weaponProperties.length === 0 &&
+          stats.every((stat) =>
+            ["Category", "Rarity", "Key ability"].includes(stat.label),
+          ))) &&
       card.description !== card.flavor
         ? card.description
         : undefined,
     kind,
+    /** A ritual's subheader lines read as one block, without dividers. */
+    isRitual,
     level: lastField("Level"),
     slot,
     weight: displayWeight,

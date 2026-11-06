@@ -244,7 +244,8 @@ Open **Equipment** while editing a character. Inventory is the main view;
   and therefore requires two clicks on the same armed button; Escape or an
   outside click cancels the armed state. After the items, the rituals,
   alchemical formulas and martial practices the character knows are listed
-  ("Rituals known"), with the free rituals still left above them; right-click
+  ("Rituals", "Alchemical formulas", "Martial practices"), with the free
+  rituals still left above them; right-click
   a learned one to **Remove** it (a granted one can't be removed).
 - **Shop** is a peer editor tab. Browse by modern role, slot, subtype, source,
   rarity, or tier; the Filters disclosure also exposes the original builder's

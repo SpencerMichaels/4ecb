@@ -26,14 +26,15 @@ import { Icon } from "./Icon";
 export type KnownRecordKind =
   "ritual" | "alchemical-formula" | "martial-practice";
 
-/** The Inventory's known-record groups, in order. */
+/** The Inventory's known-record groups, in order, named as the Shop's
+ *  learning categories are (owner, 2026-11-06: no "known"). */
 export const KNOWN_RECORD_GROUPS: readonly {
   readonly kind: KnownRecordKind;
   readonly label: string;
 }[] = [
-  { kind: "ritual", label: "Rituals known" },
-  { kind: "alchemical-formula", label: "Alchemical formulas known" },
-  { kind: "martial-practice", label: "Martial practices known" },
+  { kind: "ritual", label: "Rituals" },
+  { kind: "alchemical-formula", label: "Alchemical formulas" },
+  { kind: "martial-practice", label: "Martial practices" },
 ];
 
 export function knownRecordKind(record: KnownRecord): KnownRecordKind {
@@ -45,25 +46,18 @@ export function knownRecordKind(record: KnownRecord): KnownRecordKind {
 }
 
 /**
- * Why the character knows a record, where it matters: its grant or Build-tab
- * choice (it can't be removed here), or the free-ritual allowance it used. A bought record says
- * nothing, and no source names a level: the list is current state.
+ * Why the Inventory can't remove a granted record: its grant or Build-tab
+ * choice ("Granted by Druid", "Chosen for Psion"), said only in the inert
+ * Remove's reason. The lists never show where a record came from (owner,
+ * 2026-11-06, after D114's "bought at level X"): a learned record has no
+ * label.
  */
-export function knownRecordSourceLabel(
-  record: KnownRecord,
-  allowanceProvider: (key: string) => string | undefined = () => undefined,
-): string | undefined {
+export function knownRecordGrantLabel(record: KnownRecord): string | undefined {
   const { source } = record;
-  if (source.kind === "granted" && source.via === "choice")
+  if (source.kind !== "granted") return undefined;
+  if (source.via === "choice")
     return source.provider === "" ? "Chosen" : `Chosen for ${source.provider}`;
-  if (source.kind === "granted")
-    return source.provider === "" ? "Granted" : `Granted by ${source.provider}`;
-  if (source.acquisition === "bought") return undefined;
-  const provider =
-    source.allowance === undefined
-      ? undefined
-      : allowanceProvider(source.allowance);
-  return provider === undefined ? "Learned free" : `Learned free (${provider})`;
+  return source.provider === "" ? "Granted" : `Granted by ${source.provider}`;
 }
 
 const ALLOWANCE_NOUNS: Readonly<
@@ -324,7 +318,6 @@ export interface KnownRecordsModel {
   readonly allowanceGroups: readonly RitualAllowanceGroup[];
   /** Percent of market price the character pays for a ritual. */
   readonly ritualCostPercent: number;
-  readonly allowanceProvider: (allowanceKey: string) => string | undefined;
   readonly describeAllowance: (
     allowance: RitualAllowance,
   ) => string | undefined;
@@ -364,7 +357,6 @@ export function useKnownRecordsModel(
       statuses,
       allowanceGroups: ritualAllowanceGroups(statuses),
       ritualCostPercent: ritualCostPercent(evaluation?.stats ?? {}),
-      allowanceProvider: (key) => statusOf(key)?.allowance.provider,
       describeAllowance: (allowance) => {
         const status = statusOf(allowance.key);
         return status === undefined ? undefined : ritualAllowanceLabel(status);

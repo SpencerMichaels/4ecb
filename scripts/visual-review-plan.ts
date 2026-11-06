@@ -454,7 +454,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Rows",
-            'Under "Rituals known", the druid-granted ritual\'s detail line ends "Granted by Druid".',
+            'Under "Rituals", the druid-granted ritual\'s row is its name alone (no "Granted by Druid" line).',
           ],
           [
             "Free-ritual counter",
@@ -717,8 +717,8 @@ const reviews: ReviewCharacter[] = [
             'Under "Free rituals (Spellbook)": e.g. "2 free 1st-level rituals and 2 free rituals of level 5 or lower" (one of the 1st-level ones is used).',
           ],
           [
-            "Known-list source line",
-            'Comprehend Language\'s row under "Rituals known" ends "Learned free (Spellbook)" (no level).',
+            "Known-list rows",
+            'Comprehend Language\'s row under "Rituals" is its name alone: no "Learned free" or level.',
           ],
           [
             '"Learn X free" dialog',
@@ -1097,11 +1097,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Drow invoker: rituals in the Inventory and Shop",
-            "The Inventory's Rituals known group and its right-click menu, then the Shop's Rituals category, at 140% zoom and in both themes.",
+            "The Inventory's Rituals group, a ritual's card and the right-click menu, then the Shop's Rituals category, at 140% zoom and in both themes.",
           ],
           [
             "No Rituals tab",
-            'No Rituals tab; no Free rituals rule sentence; "Rituals known (N)" after the item groups.',
+            'No Rituals tab; no Free rituals rule sentence; "Rituals (N)" after the item groups.',
           ],
           [
             "Free-ritual counter",
@@ -1111,10 +1111,7 @@ const reviews: ReviewCharacter[] = [
             "Groups",
             "Only the kinds the invoker knows have a group, after the items, each count in the title's label.",
           ],
-          [
-            "Rows",
-            'Book icon, name, then a muted line: Level, Category, Key skill, "Granted by Invoker".',
-          ],
+          ["Rows", "Book icon and name alone, in the item rows' three cells."],
           [
             "Remove",
             "No per-row buttons: Remove is the right-click menu, inert with the reason on a granted ritual.",
@@ -1462,7 +1459,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Chosen ritual",
-            'Tenser\'s Floating Disk is listed once under "Rituals known", "Chosen for Psion", with Remove inert; the Shop marks it Known.',
+            'Tenser\'s Floating Disk is listed once under "Rituals", chosen for the Psion (no source line), with Remove inert; the Shop marks it Known.',
           ],
           [
             "Psion: free rituals in the Inventory and Shop",

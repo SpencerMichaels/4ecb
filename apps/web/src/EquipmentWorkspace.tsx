@@ -32,9 +32,7 @@ import {
   type KnownRecord,
   type RitualAllowance,
 } from "@4ecb/rules-engine";
-import { contentSpecificValue } from "./builder-ui";
 import { offeredDetailEntities } from "./detail-stack";
-import { DotList } from "./DotList";
 import {
   alchemicalFormulaItems,
   comparableSaleProceeds,
@@ -89,7 +87,7 @@ import {
   KNOWN_RECORD_GROUPS,
   knownEntryForEntity,
   knownRecordKey,
-  knownRecordSourceLabel,
+  knownRecordGrantLabel,
   RitualAllowanceSummary,
   useKnownRecordsModel,
   type KnownRecordKind,
@@ -276,8 +274,6 @@ export function inventoryEquippedStatus(
 export interface InspectedItemDetail {
   readonly entities: readonly ContentEntity[];
   readonly displayName: string;
-  /** A builder addition below the card: a known record's source. */
-  readonly note?: string;
   readonly effectiveLevel?: number;
   readonly kindLabel?: string;
   /** Entities resolved for the item's own choices (e.g. the specific Power
@@ -348,14 +344,11 @@ export function itemDetailReferences(
 export function ItemDetail({
   item,
   byId,
-  note,
   empty,
   onSetItemSetPartyPieces,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  /** A builder addition shown below the card (D079), e.g. a known source. */
-  readonly note?: string;
   readonly empty?: { readonly heading: string; readonly hint: string };
   /** Sets or clears a group item set's party count (Equipment and Shop). */
   readonly onSetItemSetPartyPieces?: (
@@ -404,11 +397,6 @@ export function ItemDetail({
           name={item.displayName}
           entities={item.entities}
           withCreatureCard
-          {...(note === undefined
-            ? {}
-            : {
-                subheading: <p className="candidate-relationship">{note}</p>,
-              })}
         />
       </div>
       <BuilderCreatureCard name={item.displayName} entities={item.entities} />
@@ -1298,7 +1286,7 @@ export function EquipmentWorkspace({
         label: "Remove",
         ...(source.kind === "granted"
           ? {
-              disabledReason: `${knownRecordSourceLabel(record) ?? "Granted"}; it can't be removed.`,
+              disabledReason: `${knownRecordGrantLabel(record) ?? "Granted"}; it can't be removed.`,
             }
           : {}),
         onSelect: () => {
@@ -1313,12 +1301,10 @@ export function EquipmentWorkspace({
       setInspected(undefined);
       return;
     }
-    const note = knownRecordSourceLabel(record, known.allowanceProvider);
     setInspected({
       entities: [record.entity],
       displayName: record.entity.name,
       effectiveLevel: build.effectiveLevel,
-      ...(note === undefined ? {} : { note }),
     });
   };
   // Buying a ritual, formula or practice learns it; Learn free uses the
@@ -1399,15 +1385,6 @@ export function EquipmentWorkspace({
               {expanded
                 ? records.map((record) => {
                     const name = record.entity?.name ?? record.element.name;
-                    const value = (field: string) =>
-                      record.entity === undefined
-                        ? undefined
-                        : contentSpecificValue(record.entity, field)?.trim();
-                    const level = value("Level");
-                    const source = knownRecordSourceLabel(
-                      record,
-                      known.allowanceProvider,
-                    );
                     return (
                       <tr
                         className="table-clickable-row"
@@ -1418,7 +1395,7 @@ export function EquipmentWorkspace({
                           openKnownContextMenu(event, record, name)
                         }
                       >
-                        <th scope="row" colSpan={3}>
+                        <th scope="row">
                           <button
                             type="button"
                             className="table-inspect-button inventory-item-button"
@@ -1440,20 +1417,14 @@ export function EquipmentWorkspace({
                               <span className="inventory-item-name">
                                 {name}
                               </span>
-                              <DotList
-                                className="inventory-known-detail"
-                                items={[
-                                  level === undefined || level === ""
-                                    ? undefined
-                                    : `Level ${level}`,
-                                  value("Category"),
-                                  value("Key Skill"),
-                                  source,
-                                ]}
-                              />
                             </span>
                           </button>
                         </th>
+                        {/* The item rows' quantity and actions columns: a
+                            known record has neither (Remove is its
+                            right-click menu). */}
+                        <td />
+                        <td className="inventory-actions-cell" />
                       </tr>
                     );
                   })
@@ -2079,7 +2050,6 @@ export function EquipmentWorkspace({
           <ItemDetail
             byId={byId}
             item={inspected}
-            {...(inspected?.note === undefined ? {} : { note: inspected.note })}
             onSetItemSetPartyPieces={(setId, pieces) =>
               onSetText(
                 itemSetPartyCountName(setId, build.textStrings),

@@ -69,7 +69,9 @@ export function ItemCard({
       <CardPanelSubheading subheading={panel.subheading} />
       {!hasSubheader ? null : (
         <div className="print-item-subheader">
-          <dl className="print-item-stats">
+          <dl
+            className={`print-item-stats${item.isRitual ? " is-ritual" : ""}`}
+          >
             {item.statRows.map((row, rowIndex) => (
               <div className="print-item-stat-row" key={rowIndex}>
                 {row.map(({ label, value }) => (

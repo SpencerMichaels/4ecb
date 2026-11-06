@@ -218,7 +218,6 @@ export function itemDetailHtml(
   c: ReviewCharacter,
   item: InspectedItemDetail,
   options: {
-    readonly note?: string;
     readonly partyPieces?: boolean;
     readonly cards?: BuilderCardSettings;
   } = {},
@@ -230,7 +229,6 @@ export function itemDetailHtml(
       createElement(ItemDetail, {
         item,
         byId: c.context.byId,
-        ...(options.note === undefined ? {} : { note: options.note }),
         ...(options.partyPieces === true
           ? { onSetItemSetPartyPieces: () => undefined }
           : {}),

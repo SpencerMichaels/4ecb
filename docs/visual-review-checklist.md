@@ -392,25 +392,35 @@ live site.
 
 - [ ] **Drow invoker: rituals in the Inventory and Shop.**
   - **Where:** `edit?tab=inventory` at 140% zoom, in light and dark theme:
-    scroll to "Rituals known" below the items, click a ritual, right-click
-    it, then right-click a granted one (its line ends "Granted by
-    Invoker"). Then the Shop: open the Type list, choose Rituals, then
-    Alchemical formulas and back to All items.
-  - **Expect:** "Rituals known" reads like the item groups above it, its
-    count the same size and weight as the word; each row is the book icon,
-    the name, and one muted line "Level N · Category · Key skill" (plus
-    the source for a granted or free ritual), with no quantity buttons or
-    trash icon. The detail pane shows the ritual's card. The right-click
-    menu has Remove; on the granted ritual it is greyed, its tooltip saying
-    why. In the Type list the three learning categories follow the items as
-    ordinary entries, with no group heading. In every category the
-    toolbar (Type, Slot, Subtype, search, Affordable, Proficient, Filters)
-    and the table's columns stay in the same places; the Level header is
-    on one line; a learned ritual's row reads Known with its buttons
-    disabled.
-  - **Wrong if:** the count is smaller than the title, a detail line
-    overlaps the next row or a long one isn't wrapped under the name, a
-    row has a visible Remove/⋮ button, the menu is clipped, a toolbar
+    scroll to "Rituals" below the items, click a ritual, right-click
+    it, then right-click a granted one (its greyed Remove says "Granted
+    by Invoker; it can't be removed."). Then the Shop: open the Type
+    list, choose Rituals, then Alchemical formulas and back to All items.
+  - **Expect:** "Rituals" (no "known") reads like the item groups above
+    it, its count the same size and weight as the word; each row is the
+    book icon and the name alone, left-aligned in the Item column exactly
+    where item names sit (no subtitle line, no "Learned free"/"Granted
+    by"), with the Quantity and actions columns empty. The detail pane
+    shows the ritual's card: under the name a shaded subheader, one line
+    "CATEGORY Exploration · TIME 10 minutes · SKILL Nature", then
+    "DURATION …" and "COST …" each on its own line (and a "PREREQUISITE …"
+    line when there is one), with no divider between those lines
+    (one-word labels; a long value wraps inside its line), then the
+    description as the body, the market price in the footer and "Ritual …
+    Level N" in the type bar. Choose a martial practice (Alter Ego, on a
+    character that knows one, or in the Shop's Martial practices): its
+    description shows too and the type bar reads "Martial Practice". The
+    right-click menu has Remove; on the granted ritual it is greyed, its
+    tooltip saying why. In the Type list the three learning categories
+    follow the items as ordinary entries, with no group heading. In every
+    category the toolbar (Type, Slot, Subtype, search, Affordable,
+    Proficient, Filters) and the table's columns stay in the same places;
+    the Level header is on one line; a learned ritual's row reads Known
+    with its buttons disabled.
+  - **Wrong if:** the count is smaller than the title, a ritual name sits
+    at the right or in a different column/indent than item names, the
+    card has no description or repeats the subheader fields in its body,
+    a row has a visible Remove/⋮ button, the menu is clipped, a toolbar
     control moves or disappears between categories, "Level" breaks onto
     two lines, or grey text is unreadable in dark theme.
 
@@ -495,14 +505,14 @@ live site.
   - **Expect:** after the item groups, a full-width row holding a compact
     block: a bold "Free rituals" with a grey "(Psion)", then one line
     indented under it, "1 free 1st-level ritual", inset like the cells
-    above. Under "Rituals known", Tenser's Floating Disk once, its muted
-    line ending "Chosen for Psion"; right-click → Remove is inert with the
-    reason. In the Shop its row reads Known with Buy and Learn free
-    disabled.
+    above. Under "Rituals", Tenser's Floating Disk once, its name alone
+    (no "Chosen for Psion" line); right-click → Remove is inert with the
+    reason "Chosen for Psion; it can't be removed." In the Shop its row
+    reads Known with Buy and Learn free disabled.
   - **Wrong if:** the block reads like a paragraph or its lines don't sit
     under the heading, it touches the table's edge or squeezes into the
-    Item column, Tenser's Floating Disk is listed twice or as "Learned
-    free", or grey text is unreadable in dark theme.
+    Item column, Tenser's Floating Disk is listed twice or with a
+    source line, or grey text is unreadable in dark theme.
 
 ## Pass 10: Hu's sheet editing (`hu`)
 
