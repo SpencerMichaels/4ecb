@@ -4,19 +4,11 @@ import {
   useEffect,
   type CSSProperties,
   type DragEvent as ReactDragEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
 import { flushSync } from "react-dom";
-
-/** Keys that toggle a focused target: Enter/Space, or the Menu key/Shift+F10
- *  that would raise a context menu (the right-click equivalent). */
-const togglesTarget = (event: ReactKeyboardEvent) =>
-  event.key === "Enter" ||
-  event.key === " " ||
-  event.key === "ContextMenu" ||
-  (event.key === "F10" && event.shiftKey);
+import { Icon } from "./Icon";
 
 /** `order` with `entry` moved to just before `before` (or to the end). */
 export function movedBefore<Entry>(
@@ -54,14 +46,82 @@ const afterMiddle = (event: ReactDragEvent<HTMLElement>) => {
 };
 
 /**
- * An Edit-mode overlay over one sheet card (D099). It never
- * changes what it covers: it is absolutely positioned by its container's CSS,
- * screen-only, and never inside measured probe copies. Like the legacy
- * builder's card "Hide", a right-click hides or shows what it covers; there
- * is no menu and no visible button (owner, 2026-10-25). Keyboard users focus
- * the overlay and press Enter, Space, the Menu key or Shift+F10. A plain
- * click does nothing; pressing and dragging the overlay onto another moves
- * the card there (`drag`, mouse only: no keyboard or touch equivalent yet).
+ * Edit mode's visible show/hide control (D099): a small eye at a card's
+ * corner or a reminder row's end, eye when shown, eye-off when hidden. It
+ * exists only while Edit mode is on (never in print or in measured probe
+ * copies) and is positioned out of flow by its container's CSS, so it never
+ * changes what it sits on. Right-click on the card or row remains a
+ * shortcut for the same `onToggle`. Enter/Space press it; the Menu key and
+ * Shift+F10 raise the browser's contextmenu event, which toggles it too.
+ */
+export function SheetEditToggle({
+  className,
+  style,
+  name,
+  hidden,
+  onToggle,
+}: {
+  readonly className?: string;
+  readonly style?: CSSProperties;
+  /** What the toggle covers, for its accessible name ("Hide Arc Strike"). */
+  readonly name: string;
+  readonly hidden: boolean;
+  readonly onToggle: () => void;
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const toggle = () => {
+    const button = buttonRef.current;
+    // Should a toggle re-render this control away, fall back to its
+    // neighbour so keyboard focus stays on the sheet.
+    const focused = button !== null && document.activeElement === button;
+    const controls = [
+      ...document.querySelectorAll<HTMLElement>(".sheet-edit-toggle"),
+    ];
+    const index = button === null ? -1 : controls.indexOf(button);
+    const fallback = controls[index + 1] ?? controls[index - 1];
+    onToggle();
+    if (!focused) return;
+    window.requestAnimationFrame(() => {
+      if (button.isConnected) button.focus();
+      else if (fallback?.isConnected) fallback.focus();
+    });
+  };
+
+  return (
+    <button
+      aria-label={`${hidden ? "Show" : "Hide"} ${name}`}
+      className={`sheet-edit-toggle print-excluded${className ? ` ${className}` : ""}`}
+      data-hidden={hidden || undefined}
+      draggable={false}
+      ref={buttonRef}
+      style={style}
+      title={`${hidden ? "Show" : "Hide"} ${name}`}
+      type="button"
+      onClick={toggle}
+      onContextMenu={(event: ReactMouseEvent) => {
+        // Handled here so a row's own right-click does not toggle it twice.
+        event.preventDefault();
+        event.stopPropagation();
+        toggle();
+      }}
+    >
+      <Icon name={hidden ? "eye-off" : "eye"} />
+    </button>
+  );
+}
+
+/**
+ * An Edit-mode overlay over one sheet card (D099). It never changes what it
+ * covers: it is absolutely positioned by its container's CSS, screen-only,
+ * and never inside measured probe copies. A visible eye toggle
+ * (`SheetEditToggle`) sits at the card's corner as a sibling of the overlay
+ * in the same grid area, so pressing it can never start a drag; like the
+ * legacy builder's card "Hide", a right-click on the card is a shortcut for
+ * the same toggle (owner, 2026-11-06: no feature only behind right-click).
+ * A plain click on the card does nothing; pressing and dragging the overlay
+ * onto another moves the card there (`drag`, mouse only: no keyboard or
+ * touch equivalent yet).
  */
 export function SheetEditTarget({
   className,
@@ -75,7 +135,7 @@ export function SheetEditTarget({
 }: {
   readonly className: string;
   readonly style?: CSSProperties;
-  /** What the overlay covers, for its accessible name ("Hide Arc Strike"). */
+  /** What the overlay covers, for its toggle's name ("Hide Arc Strike"). */
   readonly name: string;
   /** Hidden from print, still shown dimmed in Edit mode. */
   readonly hidden?: boolean;
@@ -85,85 +145,64 @@ export function SheetEditTarget({
   readonly dataKey?: string;
   readonly children?: ReactNode;
 }) {
-  const targetRef = useRef<HTMLDivElement>(null);
-
-  const toggle = () => {
-    const target = targetRef.current;
-    // Should a toggle re-render this overlay away, fall back to its
-    // neighbour so keyboard focus stays on the sheet.
-    const focused = target !== null && document.activeElement === target;
-    const controls = [
-      ...document.querySelectorAll<HTMLElement>(".sheet-edit-target"),
-    ];
-    const index = target === null ? -1 : controls.indexOf(target);
-    const fallback = controls[index + 1] ?? controls[index - 1];
-    onToggle();
-    if (!focused) return;
-    window.requestAnimationFrame(() => {
-      if (target.isConnected) target.focus();
-      else if (fallback?.isConnected) fallback.focus();
-    });
-  };
-
   return (
-    <div
-      aria-label={`${hidden ? "Show" : "Hide"} ${name}`}
-      aria-pressed={hidden}
-      className={`sheet-edit-target ${className}`}
-      data-dragging={drag?.dragging || undefined}
-      data-drop={drag?.dropEdge}
-      data-hidden={hidden || undefined}
-      data-key={dataKey}
-      draggable={drag === undefined ? undefined : true}
-      ref={targetRef}
-      role="button"
-      style={style}
-      tabIndex={0}
-      onDragStart={(event) => {
-        if (drag === undefined) return;
-        drag.onStart();
-        if (!event.dataTransfer) return;
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", name);
-        const image = drag.image?.(event.currentTarget);
-        if (image) {
-          const box = event.currentTarget.getBoundingClientRect();
-          event.dataTransfer.setDragImage(
-            image,
-            event.clientX - box.left,
-            event.clientY - box.top,
-          );
-        }
-      }}
-      onDragOver={(event) => {
-        if (!drag?.accepting) return;
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-        drag.onOver(afterMiddle(event));
-      }}
-      onDragLeave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-          drag?.onLeave();
-      }}
-      onDrop={(event) => {
-        if (!drag?.accepting) return;
-        event.preventDefault();
-        drag.onDrop(afterMiddle(event));
-      }}
-      onDragEnd={() => drag?.onEnd()}
-      onContextMenu={(event: ReactMouseEvent) => {
-        event.preventDefault();
-        toggle();
-      }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget || !togglesTarget(event))
-          return;
-        event.preventDefault();
-        toggle();
-      }}
-    >
-      {children}
-    </div>
+    <>
+      <div
+        className={`sheet-edit-target ${className}`}
+        data-dragging={drag?.dragging || undefined}
+        data-drop={drag?.dropEdge}
+        data-hidden={hidden || undefined}
+        data-key={dataKey}
+        data-name={name}
+        draggable={drag === undefined ? undefined : true}
+        style={style}
+        onDragStart={(event) => {
+          if (drag === undefined) return;
+          drag.onStart();
+          if (!event.dataTransfer) return;
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", name);
+          const image = drag.image?.(event.currentTarget);
+          if (image) {
+            const box = event.currentTarget.getBoundingClientRect();
+            event.dataTransfer.setDragImage(
+              image,
+              event.clientX - box.left,
+              event.clientY - box.top,
+            );
+          }
+        }}
+        onDragOver={(event) => {
+          if (!drag?.accepting) return;
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          drag.onOver(afterMiddle(event));
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            drag?.onLeave();
+        }}
+        onDrop={(event) => {
+          if (!drag?.accepting) return;
+          event.preventDefault();
+          drag.onDrop(afterMiddle(event));
+        }}
+        onDragEnd={() => drag?.onEnd()}
+        onContextMenu={(event: ReactMouseEvent) => {
+          event.preventDefault();
+          onToggle();
+        }}
+      >
+        {children}
+      </div>
+      <SheetEditToggle
+        className="sheet-card-toggle"
+        hidden={hidden}
+        name={name}
+        onToggle={onToggle}
+        {...(style === undefined ? {} : { style })}
+      />
+    </>
   );
 }
 

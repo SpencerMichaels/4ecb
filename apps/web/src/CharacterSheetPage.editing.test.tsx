@@ -173,9 +173,12 @@ const rightClick = (target: Element) => {
 };
 /** The Edit overlay covering a card, shown or hidden. */
 const cardTarget = (name: string) =>
-  container.querySelector<HTMLElement>(
+  container.querySelector<HTMLElement>(`.sheet-card-edit[data-name="${name}"]`);
+/** A card's Edit-mode eye toggle, shown or hidden. */
+const cardToggle = (name: string) =>
+  container.querySelector<HTMLButtonElement>(
     [`Hide ${name}`, `Show ${name}`]
-      .map((label) => `.sheet-card-edit[aria-label="${label}"]`)
+      .map((label) => `button.sheet-card-toggle[aria-label="${label}"]`)
       .join(", "),
   );
 async function toggle(target: HTMLElement | null) {
@@ -285,6 +288,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       container.querySelector(".segmented-control legend")?.textContent,
     ).toBe("Sheet");
     expect(container.querySelector(".sheet-edit-target")).toBeNull();
+    expect(container.querySelector(".sheet-edit-toggle")).toBeNull();
     expect(sectionsTrigger()).toBeUndefined();
     await act(async () => modes[1]!.click());
     expect(onSheetModeChange).toHaveBeenLastCalledWith(true);
@@ -293,14 +297,27 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     for (const name of ["Play data", "Skills", "Arc Strike", "Synthetic Cloak"])
       expect(cardTarget(name), name).not.toBeNull();
     const overlay = cardTarget("Arc Strike")!;
-    expect(overlay.getAttribute("aria-label")).toBe("Hide Arc Strike");
-    expect(overlay.getAttribute("aria-pressed")).toBe("false");
-    expect(overlay.closest(".sheet-edit-target")?.className).toContain(
-      "print-excluded",
+    expect(overlay.className).toContain("print-excluded");
+    // Every card has a visible eye toggle, eye while shown.
+    expect(container.querySelectorAll("button.sheet-card-toggle")).toHaveLength(
+      container.querySelectorAll(".sheet-card-edit").length,
     );
+    const eye = cardToggle("Arc Strike")!;
+    expect(eye.getAttribute("aria-label")).toBe("Hide Arc Strike");
+    expect(eye.className).toContain("print-excluded");
+    expect(eye.querySelector(".lucide-eye")).not.toBeNull();
+    expect(eye.querySelector(".lucide-eye-off")).toBeNull();
+    // It shares the card's grid area, beside (never inside) the draggable
+    // overlay, so pressing it cannot start a drag.
+    expect(overlay.contains(eye)).toBe(false);
+    expect(eye.closest('[draggable="true"]')).toBeNull();
+    expect(eye.style.gridColumn).toBe(overlay.style.gridColumn);
+    expect(eye.style.gridRow).toBe(overlay.style.gridRow);
     // Overlays never sit inside the measured probe copies.
     expect(
-      container.querySelector(".ov-measure .sheet-edit-target"),
+      container.querySelector(
+        ".ov-measure .sheet-edit-target, .ov-measure .sheet-edit-toggle",
+      ),
     ).toBeNull();
     // Sections have no on-paper control and there is no reveal checkbox:
     // Edit mode always shows hidden cards.
@@ -342,47 +359,68 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     ).toEqual(["View", "Edit"]);
   });
 
-  it("toggles a card on right-click or the keyboard, with no menu or button", async () => {
+  it("toggles a card with its eye button, a right-click, or the keyboard, with no menu", async () => {
     await renderSheet(true);
     const overlay = cardTarget("Arc Strike")!;
+    // The overlay is the drag and right-click surface, not a second tab
+    // stop: the eye toggle is the card's one keyboard control.
     expect(overlay.querySelector("button")).toBeNull();
-    expect(overlay.getAttribute("role")).toBe("button");
-    expect(overlay.tabIndex).toBe(0);
-    // A plain click does nothing (pressing and dragging moves the card).
+    expect(overlay.hasAttribute("role")).toBe(false);
+    expect(overlay.hasAttribute("tabindex")).toBe(false);
+    // A plain click on the card does nothing (pressing and dragging moves
+    // it).
     await act(async () => overlay.click());
     expect(runtime.updateMetadata).not.toHaveBeenCalled();
+
+    // Clicking the eye hides the card, saving the same layout change as a
+    // right-click; the toggle turns to eye-off and stays focusable.
+    const eye = cardToggle("Arc Strike")!;
+    let dragStarted = false;
+    overlay.addEventListener("dragstart", () => (dragStarted = true));
+    await act(async () => {
+      eye.focus();
+      eye.click();
+    });
+    await settle();
+    expect(dragStarted).toBe(false);
+    expect(document.body.querySelector('[role="menu"]')).toBeNull();
+    expect(cardToggle("Arc Strike")?.getAttribute("aria-label")).toBe(
+      "Show Arc Strike",
+    );
+    expect(cardToggle("Arc Strike")?.querySelector(".lucide-eye-off")).not.toBe(
+      null,
+    );
+    expect(cardTarget("Arc Strike")?.hasAttribute("data-hidden")).toBe(true);
+    expect(runtime.updateMetadata).toHaveBeenCalledTimes(1);
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: { version: 1, hiddenCards: ["power:id_arc_strike"] },
+    });
+
+    // The right-click shortcut on the card shows it again.
     let event: MouseEvent | undefined;
     await act(async () => {
-      event = rightClick(overlay);
+      event = rightClick(cardTarget("Arc Strike")!);
     });
     await settle();
     expect(event?.defaultPrevented).toBe(true);
     expect(document.body.querySelector('[role="menu"]')).toBeNull();
-    // Edit mode keeps the hidden card in place, ready to show again.
-    expect(cardTarget("Arc Strike")?.getAttribute("aria-label")).toBe(
+    expect(cardToggle("Arc Strike")?.getAttribute("aria-label")).toBe(
+      "Hide Arc Strike",
+    );
+    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
+      sheetLayout: null,
+    });
+
+    // A right-click on the eye itself (the Menu key or Shift+F10 on the
+    // focused toggle raises the same event) toggles once.
+    await act(async () => {
+      rightClick(cardToggle("Arc Strike")!);
+    });
+    await settle();
+    expect(cardToggle("Arc Strike")?.getAttribute("aria-label")).toBe(
       "Show Arc Strike",
     );
-    expect(runtime.updateMetadata).toHaveBeenCalledTimes(1);
-
-    for (const init of [
-      { key: "Enter" },
-      { key: " " },
-      { key: "ContextMenu" },
-      { key: "F10", shiftKey: true },
-    ]) {
-      const target = cardTarget("Arc Strike")!;
-      const wasHidden = target.getAttribute("aria-pressed") === "true";
-      await act(async () =>
-        target.dispatchEvent(
-          new KeyboardEvent("keydown", { ...init, bubbles: true }),
-        ),
-      );
-      await settle();
-      expect(
-        cardTarget("Arc Strike")?.getAttribute("aria-label"),
-        init.key,
-      ).toBe(wasHidden ? "Hide Arc Strike" : "Show Arc Strike");
-    }
+    expect(runtime.updateMetadata).toHaveBeenCalledTimes(3);
   });
 
   it("hides cards by right-click without re-evaluating, saving silently", async () => {
@@ -419,7 +457,12 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await renderSheet(true);
     expect(cardPageText()).toContain("Arc Strike");
     const overlay = cardTarget("Arc Strike")!;
-    expect(overlay.getAttribute("aria-label")).toBe("Show Arc Strike");
+    expect(cardToggle("Arc Strike")?.getAttribute("aria-label")).toBe(
+      "Show Arc Strike",
+    );
+    expect(
+      cardToggle("Arc Strike")?.querySelector(".lucide-eye-off"),
+    ).not.toBeNull();
     expect(overlay.hasAttribute("data-hidden")).toBe(true);
     // The header stays; the body is blanked behind a faint "Hidden".
     expect(overlay.textContent).toBe("Hidden");
@@ -442,6 +485,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await act(async () => window.dispatchEvent(new Event("beforeprint")));
     expect(cardPageText()).not.toContain("Arc Strike");
     expect(container.querySelector(".sheet-edit-target")).toBeNull();
+    expect(container.querySelector(".sheet-edit-toggle")).toBeNull();
     expect(container.querySelector(".sheet-edit-tools")).not.toBeNull();
     await act(async () => window.dispatchEvent(new Event("afterprint")));
     expect(cardPageText()).toContain("Arc Strike");
@@ -454,7 +498,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
   });
 
-  it("toggles a page-1 reminder row on right-click, showing hidden rows only in Edit", async () => {
+  it("toggles a page-1 reminder row with its eye button or a right-click, showing hidden rows only in Edit", async () => {
     // An Action Point rider: printed on the Action Point card, so its
     // page-1 reminder is off by default.
     runtime.evaluate = vi.fn(
@@ -488,15 +532,24 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(row()?.textContent).not.toMatch(/Hidden/);
     // Probe copies carry no edit behaviour.
     expect(
-      container.querySelector(".ov-reminder-probe .sheet-reminder-edit"),
+      container.querySelector(
+        ".ov-reminder-probe .sheet-reminder-edit, .ov-reminder-probe .sheet-edit-toggle",
+      ),
     ).toBeNull();
-    // A right-click toggles directly: no menu opens.
-    let event: MouseEvent | undefined;
-    await act(async () => {
-      event = rightClick(row()!);
-    });
+    // The off-by-default rider shows its eye-off toggle at the row's end.
+    const eye = () =>
+      row()?.querySelector<HTMLButtonElement>(
+        ":scope > button.sheet-reminder-toggle",
+      );
+    expect(eye()?.getAttribute("aria-label")).toMatch(/^Show Ward Tattoo/);
+    expect(eye()?.querySelector(".lucide-eye-off")).not.toBeNull();
+    expect(eye()?.className).toContain("print-excluded");
+    expect(row()?.lastElementChild).toBe(eye());
+    // Clicking it shows the row directly: no menu opens.
+    await act(async () => eye()!.click());
     await settle();
-    expect(event?.defaultPrevented).toBe(true);
+    expect(eye()?.getAttribute("aria-label")).toMatch(/^Hide Ward Tattoo/);
+    expect(eye()?.querySelector(".lucide-eye")).not.toBeNull();
     expect(container.querySelector('[role="menu"]')).toBeNull();
     expect(row()?.hasAttribute("data-hidden")).toBe(false);
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
@@ -511,11 +564,13 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     // Printing strips the edit UI; a shown row prints.
     await act(async () => window.dispatchEvent(new Event("beforeprint")));
     expect(row()?.classList.contains("sheet-reminder-edit")).toBe(false);
+    expect(container.querySelector(".sheet-edit-toggle")).toBeNull();
     await act(async () => window.dispatchEvent(new Event("afterprint")));
 
     await renderSheet(false);
     expect(row()).toBeDefined();
     expect(row()?.classList.contains("sheet-reminder-edit")).toBe(false);
+    expect(container.querySelector(".sheet-edit-toggle")).toBeNull();
     // Right-clicking in View mode changes nothing.
     await act(async () => {
       rightClick(row()!);
@@ -523,9 +578,16 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await settle();
     expect(runtime.updateMetadata).toHaveBeenCalledTimes(1);
 
-    // Hiding it again returns to the default layout; print leaves it out.
+    // Hiding it again by the right-click shortcut returns to the default
+    // layout; print leaves it out.
     await renderSheet(true);
-    await toggle(row()!);
+    let event: MouseEvent | undefined;
+    await act(async () => {
+      event = rightClick(row()!);
+    });
+    await settle();
+    expect(event?.defaultPrevented).toBe(true);
+    expect(row()?.hasAttribute("data-hidden")).toBe(true);
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: null,
     });
@@ -653,11 +715,11 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(pageNumber(".print-card-page")).toBe("1");
     for (
       let shown = container.querySelector<HTMLElement>(
-        '.sheet-card-edit[aria-pressed="false"]',
+        ".sheet-card-edit:not([data-hidden])",
       );
       shown !== null;
       shown = container.querySelector<HTMLElement>(
-        '.sheet-card-edit[aria-pressed="false"]',
+        ".sheet-card-edit:not([data-hidden])",
       )
     )
       await toggle(shown);

@@ -38,6 +38,7 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { StatGroup } from "./StatTiles";
+import { SheetEditToggle } from "./SheetEditTarget";
 import { WritingLines } from "./WritingLines";
 import {
   CONDITIONAL_MODIFIER_GROUPS,
@@ -409,38 +410,54 @@ function Reminders({
 }) {
   return (
     <div className="sp-reminders">
-      {values.map((entry, index) => (
-        <div
-          key={index}
-          data-reminder-index={indices?.[index]}
-          data-hidden={entry.shown === false || undefined}
-          {...(onToggle === undefined || entry.id === undefined
-            ? {}
-            : {
-                className: "sheet-reminder-edit",
-                onContextMenu: (event: ReactMouseEvent) => {
-                  event.preventDefault();
-                  onToggle(entry.id!);
-                },
-              })}
-        >
-          <strong>
-            {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}
-            {entry.choice ? `: ${entry.choice}` : null}
-          </strong>{" "}
-          {entry.elements && entry.elements.length > 1 ? (
-            <ul className="ov-reminder-elements">
-              {entry.elements.map((element, index) => (
-                <li key={index}>
-                  <Prose value={element} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Prose value={entry.value} />
-          )}
-        </div>
-      ))}
+      {values.map((entry, index) => {
+        const label =
+          entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label;
+        const id = onToggle === undefined ? undefined : entry.id;
+        return (
+          <div
+            key={index}
+            data-reminder-index={indices?.[index]}
+            data-hidden={entry.shown === false || undefined}
+            {...(id === undefined
+              ? {}
+              : {
+                  className: "sheet-reminder-edit",
+                  onContextMenu: (event: ReactMouseEvent) => {
+                    event.preventDefault();
+                    onToggle!(id);
+                  },
+                })}
+          >
+            <strong>
+              {label}
+              {entry.choice ? `: ${entry.choice}` : null}
+            </strong>{" "}
+            {entry.elements && entry.elements.length > 1 ? (
+              <ul className="ov-reminder-elements">
+                {entry.elements.map((element, index) => (
+                  <li key={index}>
+                    <Prose value={element} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Prose value={entry.value} />
+            )}
+            {/* Edit mode's visible toggle, out of flow at the row's end, so
+                the row (and the probe copy it was fitted from) keeps its
+                size. */}
+            {id === undefined ? null : (
+              <SheetEditToggle
+                className="sheet-reminder-toggle"
+                hidden={entry.shown === false}
+                name={entry.choice ? `${label}: ${entry.choice}` : label}
+                onToggle={() => onToggle!(id)}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -457,7 +474,8 @@ function ReminderPanels({
 }: {
   values: readonly ReminderEntry[];
   visibleIndices?: readonly number[] | undefined;
-  /** Edit mode's right-click toggle; never on measured probe copies. */
+  /** Edit mode's eye toggle and right-click shortcut; never on measured
+   *  probe copies. */
   onToggle?: ((id: string) => void) | undefined;
 }) {
   const categories = [
@@ -3579,7 +3597,7 @@ export function SheetOverview({
   /** Page 1's reminder rows from the sheet layout (D099), in page order;
    *  Edit mode includes hidden rows. Defaults to the model's own. */
   reminders?: readonly ReminderEntry[];
-  /** Edit mode: right-clicking a reminder row toggles it. */
+  /** Edit mode: a reminder row's eye toggle (or a right-click) toggles it. */
   onToggleReminder?: (id: string) => void;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {

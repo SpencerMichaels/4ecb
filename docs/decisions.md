@@ -3178,6 +3178,24 @@ Decision:
   it, the reminder dedup reads a pane bonus to all four defenses as one to
   "defenses" (`reminder-coverage.ts`), so Natan's Astral Majesty, Aversion
   staff and Cloak of Distortion reminders no longer repeat the pane.
+- Amendment (owner, 2026-11-06; the rule recorded as D117): "we should
+  avoid hiding features like this behind right click unless there is no
+  main-UI alternative." This supersedes "no visible per-card button" above
+  (the 2026-10-25 objection was to noisy ⋮ menu buttons): in Edit mode
+  every card and every page-1 reminder row (including riders that are off
+  by default) has a small eye toggle — eye while it prints, eye-off while
+  hidden — at the card's top-right corner or the row's end, labelled
+  "Hide <name>" / "Show <name>" (`SheetEditToggle` in `SheetEditTarget.tsx`).
+  Right-click stays a shortcut for the same `onToggle` (one action, so they
+  cannot drift); still no menu. The toggle is the one keyboard control: the
+  card overlay is no longer focusable (Enter/Space press the toggle; the
+  Menu key and Shift+F10 raise its contextmenu event), and reminder rows,
+  which had no keyboard path, now have one. A card's toggle is a sibling of
+  its draggable overlay in the same grid area, never inside it, so pressing
+  it cannot start a drag. Both toggles are absolutely positioned (out of
+  flow), `print-excluded`, exist only while Edit mode is on and not
+  printing, and never appear in probe copies, so card fitting and page-1
+  measuring are unchanged.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
@@ -4979,5 +4997,5 @@ selected holding's actions are buttons in its detail pane.
   trash button.
 - **Wording.** An item-choice issue now says to make the choice "from its
   detail pane on the Inventory tab", not to right-click.
-- **Later surfaces.** Sheet Edit mode's right-click hide/show is being
-  given visible eye toggles separately (same rule).
+- **Sheet Edit mode.** Its right-click hide/show on cards and page-1
+  reminder rows now has visible eye toggles (D099 amendment, 2026-11-06).

@@ -1,5 +1,30 @@
 # Implementation status
 
+## Sheet Edit mode has visible eye toggles (2026-11-06)
+
+D099 amendment under D117 (owner rule: right-click is a shortcut, never
+the only way in). In the print preview's Edit mode every card has a small
+eye toggle at its top-right corner and every page-1 (and continuation)
+reminder row one at its end, riders that are off by default included: eye
+while it prints, eye-off while hidden, labelled "Hide <name>" / "Show
+<name>" (`SheetEditToggle` in `SheetEditTarget.tsx`, `eye-off` added to
+`Icon.tsx`, styles in `05-sheet.css`). It calls the same `onToggle` as the
+right-click shortcut, which stays. The card overlay is no longer a
+focusable `role="button"`; the toggle is the one keyboard control, and
+reminder rows gain a keyboard path. A card's toggle is a sibling of its
+draggable overlay in the same grid area, so pressing it starts no drag.
+Both are absolutely positioned and `print-excluded`, render only in Edit
+mode while not printing and never in probe copies, so card fitting and
+page-1 measuring are unchanged.
+
+Verification: `CharacterSheetPage.editing.test.tsx` (toggles only in Edit,
+eye/eye-off and labels follow the state, a click saves the same layout
+change as a right-click, a right-click on the toggle toggles once, no
+dragstart, none in probes or after `beforeprint`; the off-by-default
+Action Point rider's row), `print-layout.test.ts` (toggles out of flow),
+`pnpm vitest run packages apps`, typecheck, lint, format:check,
+`review:verify`.
+
 ## Item actions are visible in the detail pane (2026-11-06)
 
 D117 (owner rule: right-click is a shortcut, never the only way to an

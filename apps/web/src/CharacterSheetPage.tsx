@@ -474,7 +474,8 @@ export function CharacterSheetPage({
         : resolvedLayout?.reminders.filter((reminder) => reminder.shown),
     [resolvedLayout, showPrintPreview, sheetEditing, printing],
   );
-  // Right-clicking a page-1 reminder row in Edit mode shows or hides it.
+  // A page-1 reminder row's eye toggle (or a right-click) in Edit mode
+  // shows or hides it.
   const toggleReminder = useCallback(
     (id: string) => {
       const reminder = resolvedLayout?.reminders.find(

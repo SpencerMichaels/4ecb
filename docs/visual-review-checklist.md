@@ -582,6 +582,26 @@ live site.
     invisible or misplaced, the browser opens or searches the dragged text,
     a stepper crowds its label, a hidden card is hard to tell from a shown
     one, or a footer looks lopsided.
+- [ ] **Hu: Edit mode eye toggles (D099 amendment, D117).**
+  - **Where:** `?preview=1&edit=1`. Look at the card pages and page 1's
+    reminder panels (and a continuation page if Hu has one). Click a power
+    card's eye, then its eye-off; click a reminder row's eye, and the eye-off
+    of a rider that is off by default (an Action Point rider, if Hu has
+    one). Press and drag a card starting on its eye. Tab through a few
+    toggles. Switch to View, then open the browser's print preview from
+    Edit. At 140% zoom and in both themes.
+  - **Expect:** a small round eye at every card's top-right corner and at
+    the top-right end of every reminder row, eye-off on hidden cards and
+    off rows; clicking flips the card or row exactly as right-click does,
+    and the icon flips with it; nothing on the page moves or refits when a
+    toggle appears or flips; pressing on the eye never starts a drag (a
+    drag from the card body still works); a focus ring only on the focused
+    toggle; no toggles in View or in the print preview.
+  - **Wrong if:** a toggle covers a card's title or a reminder's first
+    words badly enough to hide what it is, the eye is hard to see on the
+    card header or in dark mode, a faded (off) row's eye is faded too,
+    cards or rows shift when Edit turns on, the drag starts from the eye,
+    or a toggle shows in View or print.
 
 ## Pass 11: Natan (`natan`)
 

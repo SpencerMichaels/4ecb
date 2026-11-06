@@ -487,11 +487,30 @@ describe("print layout contract", () => {
 
   it("fades a hidden reminder row in Edit mode, with no mark", () => {
     expect(appStyles).toMatch(
-      /\.sheet-reminder-edit\[data-hidden\]\s*\{\s*opacity:\s*0\.35;/,
+      /\.sheet-reminder-edit\[data-hidden\] > :not\(\.sheet-edit-toggle\)\s*\{\s*opacity:\s*0\.35;/,
     );
     expect(appStyles).not.toMatch(/sheet-hidden-reminder-mark/);
     // Probe copies are never styled as edit rows.
     expect(appStyles).not.toMatch(/\.ov-reminder-probe[^{]*sheet-reminder/);
+  });
+
+  it("keeps Edit mode's eye toggles out of flow, so nothing refits", () => {
+    // Absolutely positioned: a card's toggle in its grid area, a reminder
+    // row's at the row's end, so neither changes a measured size.
+    expect(appStyles).toMatch(
+      /button\.sheet-edit-toggle \{[^}]*position: absolute;/,
+    );
+    expect(appStyles).toMatch(
+      /button\.sheet-card-toggle \{[^}]*inset-block-start: [^;]+;[^}]*inset-inline-end: [^;]+;/,
+    );
+    expect(appStyles).toMatch(
+      /button\.sheet-reminder-toggle \{[^}]*inset-inline-end: 0;/,
+    );
+    expect(appStyles).toMatch(
+      /\.sheet-reminder-edit \{\s*position: relative;\s*\}/,
+    );
+    // Never styled inside probe copies.
+    expect(appStyles).not.toMatch(/\.ov-[a-z-]*probe[^{]*sheet-edit-toggle/);
   });
 
   it("keeps View | Edit in place whether or not Edit mode's tools show", () => {
