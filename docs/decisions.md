@@ -4465,3 +4465,54 @@ position between modes.
   `ritualAllowanceStatuses`. The shared UI pieces are
   `apps/web/src/known-records-ui.tsx` (`useKnownRecordsModel`, one model
   for the Shop's known IDs and price percent and the Inventory's groups).
+
+### D115 — A choice among named rituals is a Build-tab choice
+
+Status: accepted (2026-11-05, owner). Amends D114's allowances.
+
+Owner, on the psion's "1 free ritual: Sending or Tenser's Floating Disk"
+allowance line: "Shouldn't that be a table choice kind of thing, rather than
+something they have to navigate to the shop to look up?"
+
+Only two providers choose among named rituals: Psion (PH3 Ritual Casting:
+"Choose either Sending or Tenser's Floating Disk… It also contains another
+1st-level ritual of your choice") and the Wild Sage feat (Dowsing Rod,
+Portend Weather or Traveler's Camouflage). Neither stock nor CBLoader
+content has a select for them, and the legacy builder had none: its saves
+hold the ritual as known loot.
+
+- **Content (D089).** `98-ritual-allowances.part` gives Psion's class record
+  (`ID_FMP_CLASS_437`, so the Build tab shows it in the Class flow beside
+  the augmented at-wills) and Wild Sage (`ID_FMP_FEAT_1885`, in the feat's
+  flow) a `select type="Ritual" number="1" Category="ID|ID"`, stock's
+  named-option idiom (Shifter Soul, Genasi Soul). The psion keeps its open
+  `Ritual; 1@1<=1` allowance. The allowance grammar's `from=` restriction is
+  removed. The same change adds the open allowances research found missing:
+  Practiced Study (1 practice of your level or lower), Alchemical Innovator
+  (2 formulas at 11, 15, 21, 25), Duplicitous Nature (2 formulas, 2 more at
+  21; its doubled Bloodstinger Poison grant is now one) and the Alchemist's
+  5th and 10th level formulas as "of your level or lower" (the Level 5 and
+  10 Alchemist Features). The Level 5 Sorcere Adept Feature ("if you
+  already have Ritual Caster, two rituals instead") is not modeled: the
+  feature grants Ritual Caster itself, so "already have" can't be expressed.
+- **Known.** A ritual picked in a Ritual select is known through the choice
+  (`grantedKnownRecords` via `choice`, "Chosen for Psion"): changed in the
+  Build tab, never removed from the Inventory, never counted against an
+  allowance, marked Known in the Shop. A stored known copy of it (imported
+  loot) is listed once and kept, but does not enter evaluation as an owned
+  element, which would make the topology pass drop the pick
+  (`projectBuildForEvaluation`).
+- **Import and content updates** (`rules-engine/src/ritual-choices.ts`). An
+  open Ritual choice is filled from the known entry that stands for it: one
+  learned from a retired allowance of the provider or what it grants
+  (`ID_INTERNAL_GRANTS_PSION#2`, Wild Sage's key), else the earliest free
+  entry from imported loot. Never a bought entry or one on a current
+  allowance; one entry per choice. The .dnd4e import does it in the rules
+  worker, and the content-update dialog lists it ("Sending: now chosen under
+  Psion") and applies it on update. It never happens silently later, so a
+  player's own change stands. A psion with no matching ritual (Azreille)
+  shows the choice as required.
+- **Export.** The pick is dropped from the element tree and written as the
+  `<loot>` the old builder stores, at its level: the imported loot it was
+  filled from as it was, else new loot (`withLegacyRitualChoices`). A
+  re-import fills the choice again from that loot.

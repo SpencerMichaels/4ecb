@@ -204,8 +204,8 @@ legacy.
 
 The top of the tab says what is still free, one compact block per provider:
 a "Free rituals (Psion)" heading, then one line per allowance with some left
-("1 free 1st-level ritual", "1 free ritual: Sending or Tenser's Floating
-Disk"), counted by `ritualAllowanceStatuses` (owner, 2026-11-05). The
+("1 free 1st-level ritual"; a choice among named rituals, such as
+Sending or Tenser's Floating Disk, is a Build-tab choice since D115), counted by `ritualAllowanceStatuses` (owner, 2026-11-05). The
 class's "Free Rituals" rule sentence (the `textContributions` text) is not
 repeated there; a used-up allowance's line goes, and the block goes once
 nothing is left (it is status, not a control). The allowance is shown, not

@@ -17,6 +17,34 @@ typecheck and lint pass; `review:verify` checks Beatrix's Level 1 rows
 (automatic row `beatrix|6|build overview rows`). Owner visual check pending
 (checklist "Beatrix: build overview").
 
+## Ritual choices in the Build tab (2026-11-05)
+
+Owner decision D115: the psion's Sending or Tenser's Floating Disk and the
+Wild Sage's three rituals are Build-tab choices (content `select
+type="Ritual"` on the Psion class and the feat), shown in the Class and
+Feats flows; the allowance grammar's `from=` is gone. A chosen ritual is
+known through its choice ("Chosen for Psion"): listed once in the
+Inventory, Known in the Shop, never counted against an allowance. Import
+(rules worker) and the content-update dialog fill an open choice from the
+known ritual that stands for it; export writes the pick as legacy loot. The
+same content change adds Practiced Study, Alchemical Innovator and
+Duplicitous Nature allowances (Bloodstinger Poison granted once) and makes
+the Alchemist's later formulas "of your level or lower"; Sorcere Adept's
+conditional rituals are not modeled.
+
+Verification: `ritual-choices.test.ts`, `known-records.test.ts`,
+`ritual-allowances.test.ts`, `profile-migration.test.ts`, the legacy-dnd4e
+export round trip, `content-update.test.ts` and `known-records-ui.test.tsx`;
+the full package and app suites, typecheck, lint and format pass.
+`pnpm review:build`: 176 factual rows pass, 0 fail (new rows
+`psion-thought-warrior|1|chosen ritual` and `|2|psion ritual choice
+(d115)`; the psion review character picks Tenser's Floating Disk). Parity
+on the 14 characters with psion, Wild Sage or ritual loot: no new
+mismatches; Azreille's informational full-pack run is now incomplete (the
+required Ritual choice, she knows no ritual). Owner visual checks pending:
+checklist "Psion: the ritual choice in the Class flow" and the updated
+"Psion: free rituals in the Inventory and Shop".
+
 ## Rituals fold into the Shop and Inventory (2026-11-05)
 
 Owner decision D114: the Rituals tab is removed. The Shop's Type list has
