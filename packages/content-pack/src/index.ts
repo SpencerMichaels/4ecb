@@ -7,7 +7,11 @@ import type {
   ParsedContentSource,
   RejectedContentRecord,
 } from "@4ecb/content-domain";
-import { withoutStoredPrerequisiteIr } from "@4ecb/content-domain";
+import {
+  entityAliasErrors,
+  MAX_ENTITY_ALIASES,
+  withoutStoredPrerequisiteIr,
+} from "@4ecb/content-domain";
 
 import { readLimitedText, sha256 } from "./internal";
 
@@ -437,6 +441,9 @@ function isContentEntity(value: unknown): boolean {
     entity !== undefined &&
     typeof entity.id === "string" &&
     typeof entity.name === "string" &&
+    (entity.aliases === undefined ||
+      (isStringArray(entity.aliases) &&
+        entity.aliases.length <= MAX_ENTITY_ALIASES)) &&
     typeof entity.type === "string" &&
     typeof entity.source === "string" &&
     isStringArray(entity.sources) &&
@@ -660,6 +667,7 @@ export async function validateContentPack(
     if (entity.name.length === 0 || entity.type.length === 0) {
       errors.push(`Entity ${entity.id} has an empty name or type`);
     }
+    errors.push(...entityAliasErrors(entity));
   }
 
   const expectedTypeCounts = JSON.stringify(typeCounts(pack.entities));

@@ -433,6 +433,18 @@ function namesWord(text: string, name: string): boolean {
   );
 }
 
+/** "Also known as: Deva": the other names a record is known by (D116), a
+ * campaign's renamed record's stock name, labelled like the prerequisite
+ * line. Shown first, so a player looking for the old name sees it at once. */
+export function EntityAliases({ entity }: { readonly entity: ContentEntity }) {
+  const aliases = entity.aliases ?? [];
+  return aliases.length === 0 ? null : (
+    <p className="entity-card-aliases">
+      <strong>Also known as:</strong> {aliases.join(", ")}
+    </p>
+  );
+}
+
 /** "Prerequisite: Hexblade", labelled like a power card's rule lines; a
  * requirement met only through a counts-as alternate says what met it
  * ("Must worship Moradin — met through Torag"). */
@@ -484,6 +496,7 @@ export function EntityCardBody({
   const fields = entityCardSpecifics(entity);
   return (
     <>
+      <EntityAliases entity={entity} />
       {beforeNarrative}
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>

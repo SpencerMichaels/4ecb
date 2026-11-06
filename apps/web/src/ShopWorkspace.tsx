@@ -268,6 +268,7 @@ function shopSearchText(entity: ContentEntity): string {
   if (text === undefined) {
     text = [
       entity.name,
+      ...(entity.aliases ?? []),
       shopDisplayName(entity),
       entity.type,
       shopSubtype(entity) ?? "",

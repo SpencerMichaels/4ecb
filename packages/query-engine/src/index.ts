@@ -277,6 +277,7 @@ function searchableText(entity: ContentEntity): string {
   return [
     entity.id,
     entity.name,
+    ...(entity.aliases ?? []),
     entity.type,
     entity.source,
     ...entity.sources,

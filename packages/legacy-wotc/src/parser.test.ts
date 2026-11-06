@@ -163,3 +163,38 @@ describe('native ParseOneRule\'s modify name="this"', () => {
     expect(cudgel?.specifics).toEqual([]);
   });
 });
+
+describe("record aliases (D116)", () => {
+  it("parses an authored Also Known As into aliases and consumes the field", () => {
+    const parsed = parseD20Rules(`<?xml version="1.0" encoding="utf-8"?>
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_TEST_CELESTIAL" name="Celestial" type="Language" source="Synthetic">
+    <specific name="Script">Celestial</specific>
+    <specific name=" also known as "> Supernal ,  Tongue of  Heaven, celestial, supernal ,</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_TEST_COMMON" name="Common" type="Language" source="Synthetic">
+    <specific name="Script">Common</specific>
+  </RulesElement>
+</D20Rules>`);
+    const [celestial, common] = parsed.entities;
+    // Trimmed, spaces collapsed, the name and repeats (ignoring case) gone.
+    expect(celestial?.aliases).toEqual(["Supernal", "Tongue of Heaven"]);
+    expect(celestial?.specifics.map(({ name }) => name)).toEqual(["Script"]);
+    // A record without one has no aliases field at all (digests unchanged).
+    expect(common).not.toHaveProperty("aliases");
+    expect(parsed.diagnostics).toEqual([]);
+  });
+
+  it("drops names the pack format cannot hold, with a warning", () => {
+    const names = Array.from({ length: 40 }, (_, index) => `Name ${index}`);
+    const parsed = parseD20Rules(`<D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_TEST_MANY" name="Many" type="Deity" source="Synthetic">
+    <specific name="Also Known As">${"x".repeat(121)}, ${names.join(", ")}</specific>
+  </RulesElement>
+</D20Rules>`);
+    expect(parsed.entities[0]?.aliases).toEqual(names.slice(0, 32));
+    expect(parsed.diagnostics.map(({ code }) => code)).toEqual([
+      "record.aliases-dropped",
+    ]);
+  });
+});

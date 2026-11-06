@@ -56,10 +56,13 @@ build_campaign() {
 build_campaign "$scratch_dir/first.4ecc"
 build_campaign "$scratch_dir/second.4ecc"
 cmp "$scratch_dir/first.4ecc" "$scratch_dir/second.4ecc"
-jq -e '.against.patches | length == 1 and all(.status == "applies")' \
+jq -e '.against.patches | length == 2 and all(.status == "applies")' \
   "$scratch_dir/first.4ecc.json" >/dev/null
 pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
-  jq -e '.validation.valid and .houseRules.recordCount == 4 and .patches == 1' >/dev/null
+  jq -e '.validation.valid and .houseRules.recordCount == 4 and .patches == 2' >/dev/null
+# Record aliases (D116): the authored "Also Known As" is parsed at build.
+gzip -dc "$scratch_dir/first.4ecc" |
+  jq -e '[.houseRules.entities[] | select(.aliases == ["Sea Mother"])] | length == 1' >/dev/null
 pnpm --silent content-tool advertise-campaign "$scratch_dir/first.4ecc" \
   --out-dir "$scratch_dir/deploy" >/dev/null
 jq -e '.campaigns | length == 1' "$scratch_dir/deploy/runtime-config.json" >/dev/null

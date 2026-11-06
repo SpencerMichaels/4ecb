@@ -915,6 +915,20 @@ Moradin, or an item a character holds), build and import or advertise it.
     shows anywhere a player picks, a CountsAsLanguage ("Supernal",
     "Primordial") appears in the Languages list, or a race or background is
     greyed out over a language.
+- [ ] **Record aliases ("Also known as").** Added 2026-11-06; matching and
+      search are unit-tested, this is the card line.
+  - **Where:** a campaign with a `name` patch or an "Also Known As" record
+    (the synthetic fixture's Crag Folk race and Tide Mother deity, or a
+    Pathfinder rename once authored): the Race step's card, the Deity
+    step's card, and each table's filter box typed with the old name.
+  - **Expect:** the card's first body line reads "**Also known as:**
+    Cliffkin" (or "Sea Mother") in the same label style as the
+    Prerequisite line, above the flavor and stat grid / domains; the
+    "Also Known As" field does not appear again in the field list; typing
+    the old name in the table filter keeps the renamed row.
+  - **Wrong if:** the line sits below the fields, uses a different label
+    style from "Prerequisite:", or a record without aliases shows an empty
+    "Also known as" line.
 
 ## Decisions
 

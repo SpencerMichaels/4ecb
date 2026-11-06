@@ -1,4 +1,5 @@
 import {
+  entityNames,
   prerequisiteDefinitionSetStamp,
   prerequisiteStampSize,
   readStoredPrerequisiteIr,
@@ -145,6 +146,14 @@ function normalized(value: string): string {
   return result;
 }
 
+/**
+ * Whether one of the record's names (its name or an alias, D116) is
+ * `wanted` (already normalized): an alias is the record's own name.
+ */
+function namedAs(entity: ContentEntity, wanted: string): boolean {
+  return entityNames(entity).some((name) => normalized(name) === wanted);
+}
+
 interface DefinitionIndex {
   readonly byNameOrId: ReadonlyMap<string, readonly ContentEntity[]>;
   readonly typesByLength: readonly string[];
@@ -199,7 +208,7 @@ function definitionIndex(
   for (const definition of definitions)
     for (const token of new Set([
       normalized(definition.id),
-      normalized(definition.name),
+      ...entityNames(definition).map(normalized),
     ])) {
       const matches = mutable.get(token) ?? [];
       matches.push(definition);
@@ -213,7 +222,7 @@ function definitionIndex(
     connectorNames: [
       ...new Set(
         definitions
-          .map((definition) => normalized(definition.name))
+          .flatMap((definition) => entityNames(definition).map(normalized))
           .filter((name) => CONNECTOR.test(name)),
       ),
     ].sort((left, right) => right.length - left.length),
@@ -346,9 +355,7 @@ function resolveDefinitions(
     (definition) =>
       (requiredType === undefined ||
         normalized(definition.type) === normalized(requiredType)) &&
-      [definition.id, definition.name].some(
-        (value) => normalized(value) === wanted,
-      ),
+      (normalized(definition.id) === wanted || namedAs(definition, wanted)),
   );
 }
 
@@ -406,7 +413,14 @@ function withCountsAsAlternates(
     const type = COUNTS_AS_ALTERNATES[normalized(definition.type)];
     return type === undefined
       ? []
-      : resolveDefinitions(definition.name, context, type);
+      : [
+          // Its aliases are its names too; one alternate once.
+          ...new Set(
+            entityNames(definition).flatMap((name) =>
+              resolveDefinitions(name, context, type),
+            ),
+          ),
+        ];
   });
   return [
     ...matches,
@@ -671,10 +685,12 @@ function typedElement(
   return (
     elementOf(
       text,
-      definitionsOfType(context, type).filter((definition) => {
-        const candidate = normalized(definition.name);
-        return candidate.startsWith(variant) && candidate.endsWith(")");
-      }),
+      definitionsOfType(context, type).filter((definition) =>
+        entityNames(definition).some((name) => {
+          const candidate = normalized(name);
+          return candidate.startsWith(variant) && candidate.endsWith(")");
+        }),
+      ),
     ) ??
     elementOf(
       text,
@@ -1946,12 +1962,7 @@ function ownsDefinition(
   if (context.ownedTokens !== undefined) return context.ownedTokens.has(wanted);
   if (
     context.owned.some((entity) =>
-      [
-        entity.id,
-        entity.name,
-        `${entity.name} ${entity.type}`,
-        `${entity.type} ${entity.name}`,
-      ].some((value) => normalized(value) === wanted),
+      entityTokens(entity).some((value) => normalized(value) === wanted),
     )
   )
     return true;
@@ -1975,15 +1986,30 @@ function domainIdsNamed(
     byName = new Map();
     for (const definition of definitions) {
       if (normalized(definition.type) !== "domain") continue;
-      const key = normalized(definition.name);
-      byName.set(
-        key,
-        new Set([...(byName.get(key) ?? []), normalized(definition.id)]),
-      );
+      for (const name of entityNames(definition)) {
+        const key = normalized(name);
+        byName.set(
+          key,
+          new Set([...(byName.get(key) ?? []), normalized(definition.id)]),
+        );
+      }
     }
     domainIdCache.set(definitions, byName);
   }
   return byName.get(name) ?? new Set();
+}
+
+/** A record's tokens: its ID, and each of its names (aliases too) alone,
+ *  as "<name> <type>" and as "<type> <name>". */
+function entityTokens(entity: ContentEntity): readonly string[] {
+  return [
+    entity.id,
+    ...entityNames(entity).flatMap((name) => [
+      name,
+      `${name} ${entity.type}`,
+      `${entity.type} ${name}`,
+    ]),
+  ];
 }
 
 /** The owned-definition tokens prerequisite clauses are matched against. */
@@ -1992,12 +2018,9 @@ export function ownedPrerequisiteTokens(
 ): ReadonlySet<string> {
   return new Set(
     owned.flatMap((entity) =>
-      [
-        entity.id,
-        entity.name,
-        `${entity.name} ${entity.type}`,
-        `${entity.type} ${entity.name}`,
-      ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
+      entityTokens(entity).map((value) =>
+        value.trim().toLocaleLowerCase().replaceAll("_", " "),
+      ),
     ),
   );
 }
@@ -2128,7 +2151,7 @@ export function evaluatePrerequisiteIr(
       return context.owned.some(
         (entity) =>
           normalized(entity.type) === "skill training" &&
-          normalized(entity.name) === normalized(ir.value),
+          namedAs(entity, normalized(ir.value)),
       )
         ? "satisfied"
         : "failed";
@@ -2136,7 +2159,7 @@ export function evaluatePrerequisiteIr(
       return context.owned.some(
         (entity) =>
           normalized(entity.type) === "power source" &&
-          normalized(entity.name) === normalized(ir.value),
+          namedAs(entity, normalized(ir.value)),
       )
         ? "satisfied"
         : "failed";
@@ -2146,7 +2169,7 @@ export function evaluatePrerequisiteIr(
         (entity) =>
           ["class", "hybrid class", "countsasclass"].includes(
             normalized(entity.type),
-          ) && normalized(entity.name) === normalized(ir.value),
+          ) && namedAs(entity, normalized(ir.value)),
       )
         ? "satisfied"
         : "failed";
@@ -2155,7 +2178,7 @@ export function evaluatePrerequisiteIr(
       return context.owned.some(
         (entity) =>
           WORSHIPPED_TYPES.includes(normalized(entity.type)) &&
-          normalized(entity.name) === normalized(ir.value),
+          namedAs(entity, normalized(ir.value)),
       )
         ? "satisfied"
         : "failed";
@@ -2166,7 +2189,7 @@ export function evaluatePrerequisiteIr(
       const domainIds = domainIdsNamed(context, wanted);
       return context.owned.some((entity) => {
         const type = normalized(entity.type);
-        if (type === "domain") return normalized(entity.name) === wanted;
+        if (type === "domain") return namedAs(entity, wanted);
         return (
           type === "deity" &&
           [
@@ -2186,7 +2209,9 @@ export function evaluatePrerequisiteIr(
       return context.owned.some(
         (entity) =>
           /proficien/i.test(`${entity.type} ${entity.name}`) &&
-          normalized(entity.name).includes(requested),
+          entityNames(entity).some((name) =>
+            normalized(name).includes(requested),
+          ),
       )
         ? "satisfied"
         : "unverified";
@@ -2291,7 +2316,7 @@ function leafAlternates(
     context.owned.filter(
       (entity) =>
         types.includes(normalized(entity.type)) &&
-        normalized(entity.name) === normalized(value),
+        namedAs(entity, normalized(value)),
     );
   switch (ir.kind) {
     case "element": {

@@ -9,7 +9,7 @@ import {
 } from "./builder-ui";
 import { namedClassFeatures } from "./detail-stack";
 import { DotList } from "./DotList";
-import { EntityPrerequisites } from "./EntityCard";
+import { EntityAliases, EntityPrerequisites } from "./EntityCard";
 import { Prose } from "./Prose";
 
 /**
@@ -387,6 +387,7 @@ export function StructuredEntityBody({
       : [];
   return (
     <div className="structured-entity-body">
+      <EntityAliases entity={entity} />
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}

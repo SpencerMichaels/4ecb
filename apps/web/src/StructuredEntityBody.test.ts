@@ -152,6 +152,16 @@ describe("structured race, class and background cards", () => {
     );
   });
 
+  it("names a renamed race's stock name first (D116 aliases)", () => {
+    const aasimar = {
+      ...entity("ID_RACE_DEVA", "Aasimar", "Race", { Size: "Medium" }),
+      aliases: ["Deva"],
+    };
+    expect(render(aasimar)).toMatch(
+      /^<div class="structured-entity-body"><p class="entity-card-aliases"><strong>Also known as:<\/strong> Deva<\/p>/,
+    );
+  });
+
   it("applies only to races, classes and backgrounds", () => {
     expect(
       structuredEntityKind(entity("FEAT", "Toughness", "Feat", {})),

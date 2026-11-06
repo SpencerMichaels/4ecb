@@ -4737,3 +4737,29 @@ expect, value}`: `field` is "name" or a specific's name; other top-level
   2, because a version-1 reader would ignore patches; version-1 documents
   still load as having none and keep their digests
   (`docs/content-pack-format.md`, Campaign documents).
+- **Amendment (2026-11-06): record aliases** (owner-approved design: a
+  renamed record keeps its old name, so everything that matches by name
+  keeps working, the UI says "Also known as: Deva", and searching the old
+  name finds it; owner: aliases are for same-thing renames, while deity
+  equivalents such as Torag for Moradin stay counts-as). A record carries
+  optional `aliases` (content-domain `aliases.ts`), in the entity and the
+  pack digest only when present, so stock packs keep their digests. A
+  campaign `name` patch adds the stock name automatically (Deva → Aasimar,
+  Genasi → Geniekin, Supernal → Celestial); a record may also author an
+  "Also Known As" specific (comma-separated), which the D20Rules parser
+  consumes into `aliases` at pack build, and the reference card shows once,
+  first, as "Also known as". Every name lookup reads names through
+  `entityNames`: prerequisite internalization (untyped names, "<name>
+  <type>", the "fluent in" and "worship" prefixes, counts-as alternates and
+  stand-ins), the evaluation-time name clauses, and the evaluator's
+  `RulesIndex` (grants, selections and category values by name), where a
+  record that has the name itself wins over another's alias. An alias is
+  the record's own name, not an alternate: the name walk's CountsAsRace
+  exclusion for non-feat owners never blocks it, and nothing reports "met
+  through". The builder tables' filter, the Shop search and the
+  query-engine full-text index match aliases. Legacy export is by ID and
+  unchanged; a campaign's legacy house-rule XML keeps "Also Known As"
+  verbatim, which the old builder shows as an ordinary field. Stock
+  prerequisite trees are byte-identical on the full and stock packs, and
+  the legacy parity baseline is unchanged
+  (`docs/content-pack-format.md`, Record aliases; `docs/rules-engine.md`).

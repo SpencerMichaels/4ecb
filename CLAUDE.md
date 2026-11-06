@@ -256,6 +256,10 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   its version, fails when output changes under an unchanged version, and
   after a bump the golden is regenerated with
   `UPDATE_STORED_IR_GOLDEN=1 pnpm vitest run apps/content-tool/src/stored-ir-golden.test.ts`.
+  A record's optional `aliases` ("also known as", D116: a campaign `name`
+  patch's stock name, or an authored "Also Known As" parsed at pack build)
+  are its own names: code that matches records by name reads them through
+  content-domain `entityNames`, never `entity.name` alone.
 - **Rules engine** (`rules-engine`) implements the recovered rule language as
   explicit phases (resolve profile -> level/history context -> grants/removals
   -> choices -> prerequisites/legality -> stat/text/power statements ->

@@ -1,7 +1,11 @@
 import {
   getAttribute,
   getElementText,
+  isAlsoKnownAsField,
+  MAX_ENTITY_ALIAS_LENGTH,
+  MAX_ENTITY_ALIASES,
   normalizeDisplayText,
+  parseAlsoKnownAs,
   type ContentAttribute,
   type ContentDiagnostic,
   type ContentElementNode,
@@ -263,6 +267,44 @@ export class D20RulesParser {
     }
   }
 
+  /**
+   * The record's "Also Known As" names, removed from `specifics`. Names the
+   * pack format can't hold (too long, too many) are dropped with a warning.
+   */
+  #aliases(
+    specifics: SpecificField[],
+    name: string,
+    ordinal: number,
+    id: string,
+  ): string[] {
+    const authored = specifics.filter((field) =>
+      isAlsoKnownAsField(field.name),
+    );
+    if (authored.length === 0) return [];
+    for (const field of authored) specifics.splice(specifics.indexOf(field), 1);
+    const parsed = parseAlsoKnownAs(
+      authored.map((field) => field.value).join(","),
+      name,
+    );
+    const kept = parsed
+      .filter(
+        (alias) =>
+          alias.length <= MAX_ENTITY_ALIAS_LENGTH && !/\p{Cc}/u.test(alias),
+      )
+      .slice(0, MAX_ENTITY_ALIASES);
+    if (kept.length !== parsed.length)
+      this.#diagnostics.push(
+        makeDiagnostic(
+          "warning",
+          "record.aliases-dropped",
+          `Also Known As: kept ${kept.length} of ${parsed.length} names (at most ${MAX_ENTITY_ALIASES}, each at most ${MAX_ENTITY_ALIAS_LENGTH} characters)`,
+          ordinal,
+          id,
+        ),
+      );
+    return kept;
+  }
+
   #acceptRecord(node: ContentElementNode): void {
     const ordinal = this.#recordOrdinal++;
     const id = getAttribute(node.attributes, "internal-id")?.trim() ?? "";
@@ -320,6 +362,11 @@ export class D20RulesParser {
       rules,
     );
     const printPrerequisites = optionalText(node, "print-prereqs");
+    // Authored aliases ("Also Known As", D116 amendment), parsed once here
+    // into `aliases`; the field itself is consumed (the card shows the
+    // aliases once, as "Also known as"). The legacy XML a campaign keeps
+    // for export still has it, as an ordinary field.
+    const aliases = this.#aliases(specifics, name, ordinal, id);
     const description = buildDescription(node);
     // An associate's prose stat block, parsed once here into a typed field
     // the rules engine reads (D107); lines it cannot place are diagnostics.
@@ -425,6 +472,7 @@ export class D20RulesParser {
 
     this.#entities.push({
       ...base,
+      ...(aliases.length === 0 ? {} : { aliases }),
       ...(revisionDate === undefined ? {} : { revisionDate }),
       ...(flavor === undefined ? {} : { flavor }),
       ...(prerequisites === undefined ? {} : { prerequisites }),

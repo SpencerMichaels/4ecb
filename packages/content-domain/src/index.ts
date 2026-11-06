@@ -94,6 +94,12 @@ export interface EntityExtension {
 export interface ContentEntity {
   readonly id: string;
   readonly name: string;
+  /**
+   * Other names the record is known by ("Also known as", D116): matched by
+   * name lookups as the record's own name. Present only when non-empty
+   * (see `aliases.ts`), so records without aliases keep their digests.
+   */
+  readonly aliases?: readonly string[];
   readonly type: string;
   readonly source: string;
   readonly sources: readonly string[];
@@ -225,6 +231,7 @@ export function isUserFacingSpecific(field: SpecificField): boolean {
   return !tokens.every((token) => /^[A-Z0-9]+(?:_[A-Z0-9-]+)+$/.test(token));
 }
 
+export * from "./aliases";
 export * from "./associate-stat-block";
 export * from "./creature-stat-block";
 export * from "./power-text";

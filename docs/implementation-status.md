@@ -1,5 +1,43 @@
 # Implementation status
 
+## Record aliases (2026-11-06)
+
+Campaign follow-up (D116 amendment, owner-approved design). A record may
+carry `aliases` ("also known as", content-domain `aliases.ts`:
+`entityNames`, `renamedEntity`, `parseAlsoKnownAs`, `entityAliasErrors`),
+in the entity and the pack digest only when present, validated by
+content-pack (1-32 trimmed names of at most 120 characters, no repeats of
+each other or the name). Sources: a campaign `name` patch keeps the stock
+name as an alias (`applyCampaignPatches`), and an authored "Also Known As"
+specific is consumed into `aliases` by the legacy-wotc D20Rules parser at
+pack build (content-tool build, campaign build, browser house-rule
+parsing); the legacy house-rule XML keeps the field verbatim for export.
+Lookups: the prerequisite name index, owned/definition tokens, Domain map
+and evaluation-time name clauses (`prerequisites.ts` `namedAs`,
+`entityTokens`) and the evaluator's `RulesIndex` (`find`,
+`categoryValues`, `categoryAliases`; real names win over aliases) read
+every name through `entityNames`. The stored `_Prerequisite IR` stamp
+hashes a record's aliases with its ID only when present (stock stamps
+unchanged, no IR version bump); evaluation cache v122. UI: the reference
+card (`EntityCardBody`, `StructuredEntityBody`) shows "Also known as: …"
+first; the builder tables' filter, the Shop search and the query-engine
+full-text index match aliases; profile-migration fingerprints compare
+them. The synthetic campaign renames the Cliffkin "Crag Folk" and gives
+the Tide Mother an "Also Known As" (Sea Mother), and `scripts/check.sh`
+asserts both patches apply and the alias is in the built campaign. The
+Pathfinder content does not use aliases yet. Verification: synthetic
+`aliases` tests in `prerequisites.test.ts` (Deva race untyped, typed and
+"Race Deva" for feat and paragon-path owners; "fluent in Supernal" through
+an aliased Celestial without CountsAsLanguage; "Primordial language" with
+a restricted Primordial and an aliased elemental tongue; worship),
+`rules-index.test.ts`, `campaign.test.ts`, content-pack `index.test.ts`,
+`parser.test.ts`, query-engine `index.test.ts`, `EntityCard.test.ts`,
+`StructuredEntityBody.test.ts`, `campaign-command.test.ts`; every
+prerequisite of the full and stock packs internalizes byte-identically
+before and after (11,265 and 7,166 records); `pnpm parity:baseline`
+unchanged; `pnpm test`, `pnpm typecheck`, lint, prettier and
+`scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## Pathfinder campaign languages (2026-11-06)
 
 Campaign content (D116 and its CountsAsLanguage and field-patch

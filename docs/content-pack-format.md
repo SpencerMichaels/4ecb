@@ -35,6 +35,8 @@ Each normalized entity preserves:
 
 - stable ID, name, open-ended type, source, revision date, and ordered original
   attributes;
+- optional `aliases`: other names the record is known by (D116 amendment,
+  below), present only when non-empty;
 - ordered categories and repeated `specific` fields;
 - prerequisites, printable prerequisites, flavor, main text, and normalized
   rule statements;
@@ -111,6 +113,28 @@ documents (installed, in backups, hosted) keep their digests and load
 unchanged. Version 2 exists because a version-1 reader would otherwise
 ignore patches; such a reader refuses it as an unsupported version.
 
+**Record aliases.** `ContentEntity.aliases` lists other names a record is
+known by ("Also known as"), for a same-thing rename (Deva → Aasimar,
+Supernal → Celestial); a different deity that should meet another's
+requirements stays a counts-as record. It is part of an entity, and so of
+the pack digest, only when present: records without aliases, and so every
+stock pack, keep their digests. Validation: 1-32 aliases, each 1-120
+trimmed characters without control characters, none repeating another or
+the record's name ignoring case. Aliases come from two places. A `name`
+field patch keeps the record's stock name as an alias (and drops the new
+name from its aliases, if it was one). A house-rule or part record may
+author them as a specific named `Also Known As` (comma-separated, matched
+ignoring case and surrounding space): the D20Rules parser (legacy-wotc
+`parser.ts`, shared by `content-tool build`, `campaign build` and the
+browser's legacy house-rules path) consumes the field into `aliases` at
+pack build, trimmed and deduplicated, dropping names the format can't hold
+with a `record.aliases-dropped` warning. The legacy house-rule XML a
+campaign keeps for export still carries the field verbatim, which the old
+builder shows as an ordinary field. Name lookups match an alias as the
+record's own name (`docs/rules-engine.md`); the builder's reference cards
+show "Also known as: …" first, and the builder tables, Shop and
+query-engine full-text index search aliases.
+
 **Field patches.** A patch changes one field of a record the campaign does not
 supply, so the record's other fields keep following server revisions (a
 whole-record override would freeze them). `field` is `"name"` (the record's
@@ -140,8 +164,10 @@ once, and its current value is exactly `expect`. Otherwise the record keeps
 the server's value and the composed pack gets a `warning` diagnostic with
 code `campaign.patch-not-applied` (target missing, field missing, field
 repeated, or "the content has X, the patch expects Y"); composition never
-fails over a patch. Patching does not re-run pack-build parses: a patched
-field's stored IR is not rebuilt (hence no `_` fields). It then resolves
+fails over a patch. An applied `name` patch keeps the stock name as an
+alias (`renamedEntity`, content-domain `aliases.ts`). Patching does not
+re-run pack-build parses: a patched field's stored IR is not rebuilt (hence
+no `_` fields). It then resolves
 the restrictions against the patched records: an ID rule matches ignoring
 case (in the composed record's spelling; an ID with no record is kept as
 listed, for legacy round trips), and a type rule restricts every record of

@@ -1,5 +1,9 @@
 import type { EquipmentSlotAssignment } from "@4ecb/character-domain";
-import { contentCache, type ContentEntity } from "@4ecb/content-domain";
+import {
+  contentCache,
+  entityNames,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 import {
   equipmentPredicate,
@@ -94,7 +98,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v121-2026-11-06-counts-as-language";
+  "evaluated-character-v122-2026-11-06-record-aliases";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -395,6 +399,9 @@ export class RulesIndex {
   readonly entities: readonly ContentEntity[];
   readonly #byId = new Map<string, ContentEntity>();
   readonly #byNameType = new Map<string, ContentEntity>();
+  /** Records by alias (D116), read only where no record has the name. */
+  readonly #byAlias = new Map<string, ContentEntity>();
+  readonly #byAliasType = new Map<string, ContentEntity>();
   readonly #byType = new Map<string, ContentEntity[]>();
   readonly #expandedCategoryValues = new Map<string, ReadonlySet<string>>();
   readonly categoryAliases = new Map<string, ReadonlySet<string>>();
@@ -408,14 +415,28 @@ export class RulesIndex {
         ...(this.#byType.get(key(entity.type)) ?? []),
         entity,
       ]);
-      const aliases = new Set([
-        key(entity.id),
-        key(entity.name),
-        key(`${entity.name} ${entity.type}`),
-        key(`${entity.type} ${entity.name}`),
-      ]);
-      for (const value of aliases) this.categoryAliases.set(value, aliases);
+      const tokens = (name: string) => [
+        key(name),
+        key(`${name} ${entity.type}`),
+        key(`${entity.type} ${name}`),
+      ];
+      const own = [key(entity.id), ...tokens(entity.name)];
+      // An alias (D116) is one of the record's names; a record that has
+      // the name itself keeps its token.
+      const aliasTokens = (entity.aliases ?? []).flatMap(tokens);
+      const aliases = new Set([...own, ...aliasTokens]);
+      for (const value of own) this.categoryAliases.set(value, aliases);
+      for (const value of aliasTokens)
+        if (!this.categoryAliases.has(value))
+          this.categoryAliases.set(value, aliases);
     }
+    for (const entity of entities)
+      for (const alias of entity.aliases ?? []) {
+        if (!this.#byAlias.has(key(alias)))
+          this.#byAlias.set(key(alias), entity);
+        const typed = `${key(entity.type)}\0${key(alias)}`;
+        if (!this.#byAliasType.has(typed)) this.#byAliasType.set(typed, entity);
+      }
   }
 
   get(id: string): ContentEntity | undefined {
@@ -425,8 +446,10 @@ export class RulesIndex {
     return (
       this.get(nameOrId) ??
       (type === undefined
-        ? this.entities.find((entity) => key(entity.name) === key(nameOrId))
-        : this.#byNameType.get(`${key(type)}\0${key(nameOrId)}`))
+        ? (this.entities.find((entity) => key(entity.name) === key(nameOrId)) ??
+          this.#byAlias.get(key(nameOrId)))
+        : (this.#byNameType.get(`${key(type)}\0${key(nameOrId)}`) ??
+          this.#byAliasType.get(`${key(type)}\0${key(nameOrId)}`)))
     );
   }
   type(type: string): readonly ContentEntity[] {
@@ -437,7 +460,11 @@ export class RulesIndex {
     const cached = this.#expandedCategoryValues.get(id);
     if (cached !== undefined) return cached;
     const values = new Set<string>();
-    for (const value of [entity.id, entity.name, ...entity.categories]) {
+    for (const value of [
+      entity.id,
+      ...entityNames(entity),
+      ...entity.categories,
+    ]) {
       values.add(key(value));
       for (const alias of this.categoryAliases.get(key(value)) ?? [])
         values.add(key(alias));

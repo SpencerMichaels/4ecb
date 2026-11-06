@@ -430,6 +430,30 @@ CountsAsDeity brings no domains or alignment, so domain requirements and
 the deity-alignment issue read only the Deity record. The old builder
 ignores the type.
 
+A record's aliases (`ContentEntity.aliases`, "also known as", D116
+amendment) are its own names, not alternates: a campaign that renames the
+Deva "Aasimar" keeps "Deva" as an alias, and "Deva", "Deva race" and
+"Race Deva" still resolve to that record, for every owner (the name walk's
+CountsAsRace exclusion is about the record's type, so it never touches an
+alias). Every lookup reads names through content-domain `entityNames`
+(name, then aliases), in one place each: the prerequisite name index
+(`definitionIndex`, cached by profile array identity, which also feeds
+`resolveDefinitions`, the connector-name spans, the counts-as alternates
+and stand-ins and the "<name> (<variant>)" reading), the owned and
+definition tokens (`entityTokens`: ID, each name, "<name> <type>",
+"<type> <name>"), the Domain-by-name map, and the evaluation-time name
+clauses (`namedAs`: training, class source, class, `worship`, domains,
+proficiency). So "fluent in Supernal" is met by a Language named Celestial
+aliased Supernal without any CountsAsLanguage, and "Primordial language"
+lists both a restricted stock Primordial and an elemental tongue aliased
+Primordial. The evaluator's `RulesIndex` does the same for grants,
+selections and category values by name (`find`, `categoryValues`); a
+record that has the name itself wins over another's alias. Stock content
+has no aliases, so stock trees are unchanged (the full and stock packs
+internalize byte-identically, 2026-11-06). The stored-IR stamp below hashes
+a record's aliases with its ID only when it has some, so a set whose
+aliases differ internalizes afresh.
+
 Because the tree depends only on the profile, the owner and the text,
 `content-tool build` internalizes every record's prerequisites once against
 the finished record set (`withStoredPrerequisiteIr`) and stores the tree as

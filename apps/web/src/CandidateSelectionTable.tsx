@@ -496,6 +496,7 @@ export function CandidateSelectionTable({
     return [
       label,
       entity?.name,
+      ...(entity?.aliases ?? []),
       entity?.printPrerequisites,
       entity === undefined ? undefined : choiceTableSummary(entity, kind),
       entity === undefined || kind !== "deity"

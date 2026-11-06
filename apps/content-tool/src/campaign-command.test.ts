@@ -155,8 +155,19 @@ describe("campaign build", () => {
     expect(campaign.legacyHouseRulesXml).toMatch(/^<RulesElement /);
     expect(campaign.legacyHouseRulesXml).toContain('type="CountsAsDeity"');
     expect(campaign.patches?.map(({ id, field }) => [id, field])).toEqual([
+      ["ID_4ECB_SYNTHETIC_RACE_1", "name"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
     ]);
+    // An authored "Also Known As" is parsed once, at build, into aliases;
+    // the legacy XML keeps the field verbatim for export (D116).
+    const tide = campaign.houseRules.entities.find(
+      ({ id }) => id === "ID_4ECB_CAMPAIGN_DEITY_TIDE",
+    );
+    expect(tide?.aliases).toEqual(["Sea Mother"]);
+    expect(tide?.specifics.map(({ name }) => name)).toEqual(["Alignment"]);
+    expect(campaign.legacyHouseRulesXml).toContain(
+      '<specific name="Also Known As">Sea Mother</specific>',
+    );
 
     const bytes = await campaignFileBytes(campaign);
     expect(Buffer.from(bytes)).toEqual(

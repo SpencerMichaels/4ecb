@@ -950,6 +950,11 @@ Follow-ups (not done):
   Languages, the "Learn <language>" names), authored with its 24 Pathfinder
   languages (revision 4) and checked with `--against` the full pack
   (`docs/implementation-status.md`, Pathfinder campaign languages).
+- Done (2026-11-06): record aliases ("Also known as"): a renamed record
+  keeps its stock name for name lookups, the card and search; a `name`
+  patch adds it, or a record authors "Also Known As"
+  (`docs/implementation-status.md`, Record aliases). The Pathfinder
+  content has not adopted them yet (e.g. renaming Deva or Genasi).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

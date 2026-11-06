@@ -340,6 +340,157 @@ describe("legacy prerequisites", () => {
     expect(statusOf("!ID_FMP_LANGUAGE_8", kept, [supernal])).toBe("failed");
   });
 
+  it("matches a record's aliases as its own name (D116 aliases)", () => {
+    // Minimal records (an alias makes a bare literal no longer overlap).
+    const record = (value: object) => value as ContentEntity;
+    // A campaign renamed the Deva "Aasimar"; the stock name is an alias.
+    const aasimar = record({
+      id: "ID_FMP_RACE_DEVA",
+      name: "Aasimar",
+      aliases: ["Deva"],
+      type: "Race",
+    });
+    const human = { id: "ID_FMP_RACE_HUMAN", name: "Human", type: "Race" };
+    // A hybrid's CountsAsRace, which the name walk skips for non-feats.
+    const countsAsDeva = {
+      id: "ID_COUNTSAS_DEVA",
+      name: "Deva",
+      type: "CountsAsRace",
+    } as ContentEntity;
+    const feat = { id: "ID_DEVA_FEAT", name: "Astral Fire", type: "Feat" };
+    const path = {
+      id: "ID_DEVA_PATH",
+      name: "Radiant Servant",
+      type: "Paragon Path",
+    } as ContentEntity;
+    const definitions = [
+      aasimar,
+      human,
+      countsAsDeva,
+      feat,
+      path,
+    ] as ContentEntity[];
+    const statusOf = (
+      prerequisite: string,
+      subject: object,
+      race: object,
+    ): string =>
+      evaluatePrerequisite(prerequisite, {
+        owned: [race] as ContentEntity[],
+        definitions,
+        subject: subject as ContentEntity,
+        level: 11,
+        abilities: {},
+      }).status;
+    for (const subject of [feat, path])
+      for (const prerequisite of ["Deva", "Deva race", "Race Deva"]) {
+        const label = `${prerequisite} (${subject.type})`;
+        expect(statusOf(prerequisite, subject, aasimar), label).toBe(
+          "satisfied",
+        );
+        expect(statusOf(prerequisite, subject, human), label).toBe("failed");
+      }
+    // Untyped on a non-feat owner: the name walk skips the CountsAsRace,
+    // never the alias (it is the race's own name); the race then brings
+    // its same-named alternate, as the stock Deva does.
+    expect(
+      internalizePrerequisite("Deva", {
+        owned: [],
+        definitions,
+        subject: path,
+        level: 1,
+        abilities: {},
+      }),
+    ).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_FMP_RACE_DEVA", "ID_COUNTSAS_DEVA"],
+    });
+    // Met directly, not through an alternate.
+    expect(
+      prerequisiteAlternates("Deva", {
+        owned: [aasimar],
+        definitions,
+        subject: path,
+        level: 11,
+        abilities: {},
+      }),
+    ).toEqual([]);
+
+    // "fluent in Supernal" met by a language named Celestial aliased
+    // Supernal: no CountsAsLanguage needed.
+    const language = (id: string, name: string, aliases?: string[]) =>
+      record({
+        id,
+        name,
+        type: "Language",
+        ...(aliases === undefined ? {} : { aliases }),
+      });
+    const celestial = language("ID_PF_CELESTIAL", "Celestial", ["Supernal"]);
+    const common = language("ID_FMP_LANGUAGE_1", "Common");
+    // A restricted stock Primordial stays in the catalog beside the
+    // elemental tongue that is also known as Primordial.
+    const primordial = language("ID_FMP_LANGUAGE_7", "Primordial");
+    const aquan = language("ID_PF_AQUAN", "Aquan", ["Primordial"]);
+    const wizard = { id: "ID_WIZARD", name: "Wizard", type: "Class" };
+    const languages = [
+      wizard,
+      feat,
+      celestial,
+      common,
+      primordial,
+      aquan,
+    ] as ContentEntity[];
+    const speaks = (prerequisite: string, known: readonly object[]) =>
+      evaluatePrerequisite(prerequisite, {
+        owned: [wizard, ...known] as ContentEntity[],
+        definitions: languages,
+        subject: feat as ContentEntity,
+        level: 1,
+        abilities: {},
+      }).status;
+    expect(speaks("fluent in Supernal", [celestial])).toBe("satisfied");
+    expect(speaks("fluent in Supernal", [common])).toBe("failed");
+    expect(speaks("Wizard, Primordial language", [aquan])).toBe("satisfied");
+    expect(speaks("Wizard, Primordial language", [primordial])).toBe(
+      "satisfied",
+    );
+    expect(speaks("Wizard, Primordial language", [common])).toBe("failed");
+    expect(
+      internalizePrerequisite("Wizard, Primordial language", {
+        owned: [],
+        definitions: languages,
+        subject: feat as ContentEntity,
+        level: 1,
+        abilities: {},
+      }),
+    ).toMatchObject({
+      kind: "all",
+      children: [
+        { kind: "element" },
+        {
+          kind: "element",
+          definitionIds: ["ID_FMP_LANGUAGE_7", "ID_PF_AQUAN"],
+        },
+      ],
+    });
+
+    // Name-matched clauses read aliases too: "must worship".
+    const deity = record({
+      id: "ID_DEITY",
+      name: "Sun Father",
+      aliases: ["Pelor"],
+      type: "Deity",
+    });
+    expect(
+      evaluatePrerequisite("must worship Pelor", {
+        owned: [deity],
+        definitions: [deity],
+        level: 1,
+        abilities: {},
+      }).status,
+    ).toBe("satisfied");
+  });
+
   it("stands a counts-as record in for any typed name no record has (D116)", () => {
     const torag = { id: "ID_TORAG", name: "Torag", type: "Deity" };
     const countsAsMoradin = {

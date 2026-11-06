@@ -101,6 +101,24 @@ describe("shared entity-card class details", () => {
     expect(isClassEntity(entity("Hybrid Class", []))).toBe(true);
   });
 
+  it("says what else a record is known by, first (D116 aliases)", () => {
+    const render = (aliases?: readonly string[]) =>
+      renderToStaticMarkup(
+        createElement(EntityCardBody, {
+          entity: {
+            ...entity("Race", [field("Size", "Medium", 0)]),
+            ...(aliases === undefined ? {} : { aliases }),
+          },
+          hideFlavortext: false,
+        }),
+      );
+    const markup = render(["Deva", "Star-born"]);
+    expect(markup).toMatch(
+      /^<p class="entity-card-aliases"><strong>Also known as:<\/strong> Deva, Star-born<\/p>/,
+    );
+    expect(render()).not.toContain("Also known as");
+  });
+
   it("lists non-class specifics as labelled field lines", () => {
     const markup = renderToStaticMarkup(
       createElement(EntityCardBody, {

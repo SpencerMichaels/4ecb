@@ -106,6 +106,16 @@ describe("CompendiumIndex", () => {
     expect(result.total).toBe(1);
   });
 
+  it("finds a record by an alias (D116)", () => {
+    const aliased = new CompendiumIndex([
+      ...entities,
+      { ...entity("ID_RACE_DEVA", "Aasimar", "Race"), aliases: ["Deva"] },
+    ]);
+    expect(aliased.query({ text: "deva" }).items.map(({ id }) => id)).toEqual([
+      "ID_RACE_DEVA",
+    ]);
+  });
+
   it("matches phrases and reports facet counts", () => {
     const result = index.query({ text: '"immediate interrupt"' });
     expect(result.items.map((item) => item.id)).toEqual(["ID_POWER_2"]);

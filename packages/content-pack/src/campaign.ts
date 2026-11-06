@@ -7,6 +7,7 @@ import type {
   ContentEntity,
   ParsedContentSource,
 } from "@4ecb/content-domain";
+import { renamedEntity } from "@4ecb/content-domain";
 
 import {
   assertContentPackShape,
@@ -685,7 +686,9 @@ export function applyCampaignPatches(
       let patched = entity;
       for (const { field, value } of own) {
         if (isNameField(field)) {
-          patched = { ...patched, name: value };
+          // The stock name stays an alias, so everything that names the
+          // record by its old name still finds it (Deva → Aasimar).
+          patched = renamedEntity(patched, value);
           continue;
         }
         const folded = field.trim().toLocaleLowerCase();

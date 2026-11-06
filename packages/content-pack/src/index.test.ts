@@ -278,6 +278,46 @@ describe("content pack", () => {
     );
   });
 
+  it("carries record aliases in the digest only when present (D116)", async () => {
+    const options = { packId: "synthetic", name: "Synthetic" };
+    const plain = await buildContentPack(source, options);
+    expect(plain.entities[0]).not.toHaveProperty("aliases");
+    const withAliases = (aliases: readonly string[]) =>
+      buildContentPack(
+        {
+          ...source,
+          entities: source.entities.map((entity) => ({ ...entity, aliases })),
+        },
+        options,
+      );
+    const aliased = await withAliases(["Sample"]);
+    expect(aliased.manifest.contentDigest).not.toBe(
+      plain.manifest.contentDigest,
+    );
+    expect((await validateContentPack(aliased)).valid).toBe(true);
+    expect(decodeContentPack(encodeContentPack(aliased))).toEqual(aliased);
+    for (const [aliases, error] of [
+      [[], /are empty/],
+      [["Example"], /repeat each other or the name/],
+      [["Sample", "sample"], /repeat each other or the name/],
+      [[" Sample"], /trimmed characters/],
+      [["x".repeat(121)], /trimmed characters/],
+    ] as const)
+      expect(
+        (await validateContentPack(await withAliases(aliases))).errors.join(
+          "\n",
+        ),
+      ).toMatch(error);
+    expect(() =>
+      decodeContentPack(
+        JSON.stringify({
+          ...aliased,
+          entities: [{ ...aliased.entities[0], aliases: "Sample" }],
+        }),
+      ),
+    ).toThrow("valid records");
+  });
+
   it("rejects malformed nested content before validation or storage", async () => {
     const pack = await buildContentPack(source, {
       packId: "synthetic",

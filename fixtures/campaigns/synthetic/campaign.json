@@ -10,6 +10,12 @@
   "patches": [
     {
       "id": "ID_4ECB_SYNTHETIC_RACE_1",
+      "field": "name",
+      "expect": "Cliffkin",
+      "value": "Crag Folk"
+    },
+    {
+      "id": "ID_4ECB_SYNTHETIC_RACE_1",
       "field": "Short Description",
       "expect": "A synthetic race used to exercise imports.",
       "value": "A synthetic race of the campaign's high cliffs."

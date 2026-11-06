@@ -552,16 +552,45 @@ describe("campaign field patches", () => {
       ["Size", "Medium"],
     ]);
     expect(genasi?.description).toBe("Genasi text");
-    expect(
-      profile.pack.entities.find(({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL")
-        ?.name,
-    ).toBe("Learn Ignan");
+    // A renamed record keeps its stock name as an alias (D116).
+    const learn = profile.pack.entities.find(
+      ({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL",
+    );
+    expect(learn?.name).toBe("Learn Ignan");
+    expect(learn?.aliases).toEqual(["Learn Primordial"]);
+    expect(genasi).not.toHaveProperty("aliases");
     expect(
       profile.pack.diagnostics.filter(({ code }) =>
         code.startsWith("campaign."),
       ),
     ).toEqual([]);
     expect((await validateContentPack(profile.pack)).valid).toBe(true);
+  });
+
+  it("keeps a renamed record's earlier aliases and drops its new name from them", async () => {
+    const aliased = source([
+      ...patchedStock.entities.filter(
+        ({ id }) => id !== "ID_SYN_LEARN_PRIMORDIAL",
+      ),
+      {
+        ...entity(
+          "ID_SYN_LEARN_PRIMORDIAL",
+          "Background Choice",
+          "Learn Primordial",
+        ),
+        aliases: ["Learn Ignan", "Learn the Old Tongue"],
+      },
+    ]);
+    const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
+    const profile = await composeCampaignProfile(
+      [await base(aliased)],
+      campaign,
+      { packId: "campaign:synthetic-setting:a", name: "Synthetic Setting" },
+    );
+    expect(
+      profile.pack.entities.find(({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL")
+        ?.aliases,
+    ).toEqual(["Learn the Old Tongue", "Learn Primordial"]);
   });
 
   it("keeps the content's value when it changed or the target is gone", async () => {

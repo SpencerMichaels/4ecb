@@ -210,6 +210,7 @@ function entityFingerprint(entity: ContentEntity): string {
   return JSON.stringify({
     id: entity.id,
     name: entity.name,
+    aliases: entity.aliases,
     type: entity.type,
     attributes: entity.attributes,
     categories: entity.categories,
