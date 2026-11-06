@@ -2052,4 +2052,13 @@ body:has(.sp-prototype) {
   .sp-paper-a4 .sp-paper {
     page: sp-a4;
   }
+  /* Each section's wrapper carries its papers' page name: a wrapper holding
+     only its measuring probe (a reference group with no entries) would
+     otherwise switch to the unnamed page and back, forcing a blank page. */
+  .sheet-overview {
+    page: sp-letter;
+  }
+  .sheet-overview.sp-paper-a4 {
+    page: sp-a4;
+  }
 }
