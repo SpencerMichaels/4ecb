@@ -22,7 +22,7 @@ import type { AssociateAbilityName } from "./associate-stat-block";
 /** The internal field holding a record's parsed note values. */
 export const NOTE_VALUES_FIELD = "_Note Values IR";
 /** Bump when the parse or the stored shape changes. */
-export const NOTE_VALUES_VERSION = 1;
+export const NOTE_VALUES_VERSION = 2;
 
 /** A number or dice ("1d8", "1[W]": `count` of `die`). */
 export type NoteValueConstant =

@@ -38,7 +38,8 @@ const ABILITIES: readonly (readonly [RegExp, AssociateAbilityName])[] = [
 const ABBR =
   "(?:str(?:ength)?|con(?:stitution)?|dex(?:terity)?|int(?:elligence)?|wis(?:dom)?|cha(?:risma)?)";
 const ABIL = `(?:your\\s+)?${ABBR}(?:(?:\\s*,\\s*(?:or\\s+)?|\\s+or\\s+)${ABBR})*\\s+mod(?:ifier)?(?![a-z])`;
-const HALF = "(?:one[- ]?half|half)\\s+(?:of\\s+)?(?:your\\s+)?level(?![a-z])";
+const HALF =
+  "(?:(?:one[- ]?half|half)\\s+(?:of\\s+)?|1\\/2\\s+)(?:your\\s+)?level(?![a-z])";
 const CONST = "\\d+(?:d\\d+|\\[W\\])?(?![\\d/a-z])";
 const TIER_VALUE = "\\+?\\d+(?:d\\d+|\\[W\\])?";
 const TIER = `${TIER_VALUE}\\s*\\/\\s*${TIER_VALUE}\\s*\\/\\s*${TIER_VALUE}(?![\\d/])(?:\\s*\\((?:by|per)\\s+tier\\)|\\s+(?:by|per)\\s+tier)?`;

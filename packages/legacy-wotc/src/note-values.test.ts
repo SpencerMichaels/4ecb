@@ -84,6 +84,11 @@ describe("feature note values (D112)", () => {
     expect(note(short(half), half)).toBe(
       "Gain resistance to poison («5 + half level»);",
     );
+    const slash =
+      "Gain 1/2 level + Con modifier temp hp when you use daily attack power";
+    expect(note(short(slash), slash)).toBe(
+      "Gain «half level + Constitution» temp hp when you use daily attack power",
+    );
   });
 
   it("attaches level steps to the value before them", () => {

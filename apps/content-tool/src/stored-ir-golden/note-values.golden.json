@@ -1,9 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "fixture": "b08c59ee1c08b73ac4f816fca6050791ec971eddf639eb7638e1db539d37cf60",
   "output": {
     "ID_GOLDEN_FEAT_NOTE_APPLIED": {
-      "version": 1,
+      "version": 2,
       "notes": [
         {
           "text": "+2/+3/+4 (by tier) to Will; make saving throw to end stunned or dazed at start of your turn even if not (save ends) effect",
@@ -21,7 +21,7 @@
       ]
     },
     "ID_GOLDEN_FEAT_NOTE_STEPS": {
-      "version": 1,
+      "version": 2,
       "notes": [
         {
           "text": "Deal 2 + Dex mod extra damage if oath target moves away. (4 + Dex mod at 11th level, 6 + Dex mod at 21st)",
@@ -91,7 +91,7 @@
       ]
     },
     "ID_GOLDEN_FEAT_NOTE_FILL": {
-      "version": 1,
+      "version": 2,
       "notes": [
         {
           "text": "Encounter, free; with tome, creatures summoned gain a bonus to damage rolls.",
@@ -123,7 +123,7 @@
       ]
     },
     "ID_GOLDEN_FEAT_NOTE_OVERRIDE": {
-      "version": 1,
+      "version": 2,
       "notes": [
         {
           "text": "Temporary hp equal to Con mod (+5 at 11th, +10 at 21st) when you drop enemy to 0 hp; +1 damage per tier with weapon attacks",

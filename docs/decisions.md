@@ -4196,7 +4196,7 @@ and Fey Pact of the White Well Reward ("Gain tiered damage bonus").
 - **Otherwise the value, resolved.** The pack build parses each feat's,
   class feature's and racial trait's note (`Short Description` and the
   `_CS_ShortDescription` override) into `_Note Values IR` (content-domain
-  `note-values.ts`, parser legacy-wotc `note-values.ts`, version 1, golden
+  `note-values.ts`, parser legacy-wotc `note-values.ts`, version 2, golden
   in `stored-ir-golden`): tier tables ("+1/+2/+3 (by tier)", "1d8/2d8/3d8"),
   per-tier multiples ("+1 damage per tier", "1[W] per tier"), level steps
   ("(+2 at 11th, +3 at 21st level)", "(+3 at epic)", ", or 2d6 at level
@@ -4221,6 +4221,6 @@ and Fey Pact of the White Well Reward ("Gain tiered damage bonus").
   wording ("+2 at paragon and epic") and other creatures' modifiers ("its
   Con modifier", "that power's relevant ability modifier"). An ability
   named to replace another ("use Str modifier instead of Cha modifier") is
-  never a value. Of the pack's notes that are reminders, about 665 now
-  print resolved values, 14 vague ones went as already applied, and about
-  60 keep vague wording.
+  never a value. Of the pack's notes that are reminders, 690 now print
+  fully resolved values and 19 partly, 14 vague ones went as already
+  applied, and 46 keep vague wording (version 2 also reads "1/2 level").
