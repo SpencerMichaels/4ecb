@@ -54,6 +54,7 @@ import {
 import { useCandidateFavorites } from "./candidate-favorites";
 import { EntityCardLeadingIcon } from "./EntityCard";
 import { Icon } from "./Icon";
+import { UnavailableLabel } from "./UnavailableLabel";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export type InspectedOption = {
@@ -733,11 +734,11 @@ export function CandidateSelectionTable({
               <EntityCardLeadingIcon entity={entity} />
             </span>
             <button
-              aria-description={
+              aria-description={`${
                 selectionBlocked
                   ? "Click to inspect. This item cannot currently be selected."
                   : "Click to inspect. Double-click or press Enter to select."
-              }
+              }${unavailable ? ` Unavailable: ${candidateReason(candidate.reasons)}.` : ""}`}
               aria-pressed={selected}
               className="selection-candidate-toggle"
               type="button"
@@ -761,7 +762,7 @@ export function CandidateSelectionTable({
             </button>
           </div>
           {unavailable ? (
-            <small>{candidateReason(candidate.reasons)}</small>
+            <UnavailableLabel layout="inline" reasons={candidate.reasons} />
           ) : null}
         </td>
         {kind === "power" ? (

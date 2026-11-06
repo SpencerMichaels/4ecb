@@ -1,5 +1,27 @@
 # Implementation status
 
+## One "Unavailable" label (2026-11-06)
+
+Owner feedback: the campaign reason looked like a near-duplicate of the
+"Unavailable" badge. Every place an option shows why it can't be chosen
+now renders `UnavailableLabel.tsx` (class `candidate-unavailable`, from
+`unavailablePresentation` in `builder-ui.ts`): the candidate card's
+subheading (`CandidateDetail.tsx`), selection-table rows
+(`CandidateSelectionTable.tsx`) and choice buttons (`CompactChoiceButtons`,
+including `ItemChoicePicker`'s kept restricted pick; options now pass
+`unavailableReasons`). A permission reason is merged into the label:
+"Unavailable in this campaign" (`campaign-restricted`) and "Unavailable:
+not in your allowed sources" (`source-unentitled`), with no separate
+reason line. Any other reason keeps the card's existing form, an
+"Unavailable" badge plus its `candidate-reason` paragraph; in rows and
+buttons the badge comes first, followed by the reason as small text
+(`unavailable-note`). Before this change rows and buttons showed only the
+bare reason, styled by `td small` and `button small`, and those rules are
+gone. The full reason is the badge's title, and in a row it is part of
+the name button's accessible description. Skill toggles' status line uses
+the same wording (`status`). Verification: `UnavailableLabel.test.tsx`,
+`UnavailableLabel.style.test.ts`, `ShopWorkspace.test.ts`.
+
 ## Pathfinder campaign revision 5 (2026-11-06)
 
 Campaign content (D116 rule-patch, alias and prerequisite-line amendments;
@@ -703,7 +725,8 @@ D116 step 6. `rules.worker.ts` passes the loaded pack's
 library-summary and fill-ritual-choices, and each migration-preview side
 its own pack's (`source/targetRestrictedDefinitionIds`); the main-thread
 cache key (pack ID + digest) already covers it. `builder-ui.ts` labels
-reason `campaign-restricted` "Not used in this campaign"; such candidates
+reason `campaign-restricted` "Not used in this campaign" (shown as the merged
+label "Unavailable in this campaign", 2026-11-06); such candidates
 are hidden unless Show all and never selectable (`sourceEntitled: false`).
 `builder-diagnostics.ts` raises `occurrence.campaign-restricted` as a
 house-rule issue on the choice (else the occurrence's holding/no target)
@@ -724,7 +747,7 @@ for an owned item's choice takes the same `restrictedIds` (follow-up,
 `campaignRestricted` in `equipment-ui.ts`, the per-ID test
 `campaignOfferedEntities` uses) drops restricted candidates (the dialog
 has no Show all) except the holding's saved pick at that path, kept listed,
-selected and choosable again, marked "Not used in this campaign", while the
+selected and choosable again, marked "Unavailable in this campaign", while the
 picks above it are the saved ones; it is already the holding's house-rule
 issue. Verification: `ShopWorkspace.test.ts`. Nothing creates campaign characters yet (steps 7–9).
 Verification: `rules.worker.campaign.test.ts`, `builder-ui.test.ts`,

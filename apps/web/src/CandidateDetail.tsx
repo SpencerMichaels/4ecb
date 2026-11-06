@@ -4,11 +4,7 @@ import type { CandidateDecision } from "@4ecb/rules-engine";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { isFamiliarEntity } from "@4ecb/sheet-model";
 
-import {
-  candidateReason,
-  primaryDetailTypeLabel,
-  themePowerGroups,
-} from "./builder-ui";
+import { primaryDetailTypeLabel, themePowerGroups } from "./builder-ui";
 import {
   BuilderBeastCompanionCard,
   BuilderCardContext,
@@ -47,6 +43,7 @@ import {
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
+import { UnavailableLabel } from "./UnavailableLabel";
 
 export function CandidateDetail({
   candidate,
@@ -350,10 +347,7 @@ export function CandidateDetailCard({
   // A granted card needs no "Granted power" label: it sits under the
   // option it comes with.
   const subheading = !isUnavailable ? undefined : (
-    <>
-      <span className="candidate-unavailable">Unavailable</span>
-      <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
-    </>
+    <UnavailableLabel layout="card" reasons={candidate.reasons} />
   );
   const beastCard = builderCards.beastCardFor(entity);
   if (beastCard !== undefined)

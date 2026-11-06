@@ -343,8 +343,7 @@
   color: var(--text);
 }
 
-.selection-table-scroll td small {
-  display: block;
+.selection-table-scroll td .unavailable-note {
   margin-top: 0.2rem;
 }
 

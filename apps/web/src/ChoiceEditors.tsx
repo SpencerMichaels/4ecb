@@ -19,7 +19,6 @@ import {
   buildPresetPlan,
   type BuildPresetPlan,
   type BuildPresetReplacement,
-  candidateReason,
   choiceForRepeatedCandidate,
   choicePresentationLabel,
   choiceSectionId,
@@ -44,6 +43,7 @@ import {
   selectedDefinitionId,
   selectedOccurrence,
   retrainingCategory,
+  unavailablePresentation,
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
 } from "./builder-ui";
@@ -52,6 +52,7 @@ import { CandidateDetail } from "./CandidateDetail";
 import { CandidateSelectionTable } from "./CandidateSelectionTable";
 import { Icon } from "./Icon";
 import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
+import { UnavailableLabel } from "./UnavailableLabel";
 
 export function CompactChoiceButtons({
   label,
@@ -72,7 +73,9 @@ export function CompactChoiceButtons({
     readonly id: string;
     readonly label: string;
     readonly selectable: boolean;
-    readonly unavailableReason?: string;
+    /** Why the option can't be chosen (candidate reasons), shown as its
+     * `UnavailableLabel`. */
+    readonly unavailableReasons?: readonly string[];
   }[];
   readonly keyAbilities?: readonly string[];
   readonly selectedId: string;
@@ -114,7 +117,12 @@ export function CompactChoiceButtons({
                 undefined
               }
               key={option.id}
-              title={option.unavailableReason}
+              title={
+                option.unavailableReasons === undefined
+                  ? undefined
+                  : unavailablePresentation(option.unavailableReasons)
+                      .description
+              }
               type="button"
               onClick={() => {
                 if (selected && clearable && !disabled) {
@@ -131,8 +139,11 @@ export function CompactChoiceButtons({
               >
                 {option.label}
               </KeyAbilityName>
-              {option.unavailableReason === undefined ? null : (
-                <small>{option.unavailableReason}</small>
+              {option.unavailableReasons === undefined ? null : (
+                <UnavailableLabel
+                  layout="inline"
+                  reasons={option.unavailableReasons}
+                />
               )}
             </button>
           );
@@ -1019,7 +1030,7 @@ export function ChoiceEditor({
                   ...(candidate.eligible
                     ? {}
                     : {
-                        unavailableReason: candidateReason(candidate.reasons),
+                        unavailableReasons: candidate.reasons,
                       }),
                 }))}
                 keyAbilities={keyAbilities}
@@ -1065,7 +1076,7 @@ export function ChoiceEditor({
               selectable: isCandidateSelectable(candidate),
               ...(candidate.eligible
                 ? {}
-                : { unavailableReason: candidateReason(candidate.reasons) }),
+                : { unavailableReasons: candidate.reasons }),
             }))}
             keyAbilities={keyAbilities}
             selectedId={selectedValue}
@@ -2109,7 +2120,8 @@ export function SkillTrainingEditor({
                                     scopeChosen === scope.choices.length
                                   ? "Clear a skill in this group to choose"
                                   : reason?.eligible === false
-                                    ? candidateReason(reason.reasons)
+                                    ? unavailablePresentation(reason.reasons)
+                                        .status
                                     : "Available"}
                           </span>
                         </button>

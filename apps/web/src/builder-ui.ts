@@ -1558,6 +1558,45 @@ export function candidateReason(reasons: readonly string[]): string {
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }
 
+/** Reasons that say the character may not use an option at all (the
+ * campaign, the allowed sources), not that a rule blocks it. */
+const permissionReasonLabels: Readonly<Record<string, string>> = {
+  "campaign-restricted": "Unavailable in this campaign",
+  "source-unentitled": "Unavailable: not in your allowed sources",
+};
+
+/**
+ * How an option that can't be chosen says why, on every surface (one
+ * `UnavailableLabel`): a permission reason is merged into the label
+ * ("Unavailable in this campaign"); any other reason follows a plain
+ * "Unavailable" label as its own text. `description` is always the full
+ * reason, for the accessible description; `status` is the one-line form
+ * for a status slot (the merged label, else the rule reason).
+ */
+export function unavailablePresentation(reasons: readonly string[]): {
+  readonly label: string;
+  readonly reason?: string;
+  readonly description: string;
+  readonly status: string;
+} {
+  const description = candidateReason(reasons);
+  const permission =
+    reasons.length > 0 &&
+    reasons.every((reason) => reason in permissionReasonLabels);
+  if (!permission)
+    return {
+      label: "Unavailable",
+      reason: description,
+      description,
+      status: description,
+    };
+  const merged = reasons.includes("campaign-restricted")
+    ? "campaign-restricted"
+    : "source-unentitled";
+  const label = permissionReasonLabels[merged]!;
+  return { label, description, status: label };
+}
+
 export function isCandidateSelectable(candidate: CandidateDecision): boolean {
   return candidate.sourceEntitled !== false;
 }

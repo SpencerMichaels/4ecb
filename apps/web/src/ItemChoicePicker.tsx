@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BuildOccurrence } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { candidateReason, itemChoiceLabel } from "./builder-ui";
+import { itemChoiceLabel } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
 import { CompactChoiceButtons } from "./ChoiceEditors";
 import { Icon } from "./Icon";
@@ -43,7 +43,7 @@ export function ItemChoicePicker({
         label: itemChoiceLabel(candidate.name),
         selectable: true,
         ...(candidate.id === page.keptRestrictedId
-          ? { unavailableReason: candidateReason(["campaign-restricted"]) }
+          ? { unavailableReasons: ["campaign-restricted"] }
           : {}),
       }))}
       selectedId={selectedId}

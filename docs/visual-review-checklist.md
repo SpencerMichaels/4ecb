@@ -850,7 +850,7 @@ Moradin, or an item a character holds), build and import or advertise it.
     "Move <name> into <campaign>?" and None asks "Take <name> out of its
     campaign?"; Cancel leaves the select unchanged. Show all off lists only
     the campaign's 62 deities; on, the stock ones are greyed and
-    unselectable with "Not used in this campaign". The worshipper has one
+    unselectable, labelled "Unavailable in this campaign". The worshipper has one
     issue, "Moradin is not used in this campaign.", whose Review opens the
     Deity choice; a restricted held item stays held, its issue's Review
     selecting it in the Inventory. The Shop never lists a restricted item,
@@ -859,6 +859,21 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** a restricted option is selectable or worded as an
     "allowed sources" problem, an issue is reported twice, or greyed rows
     are illegible at 140% or in dark theme.
+- [ ] **One "Unavailable" label.**
+  - **Where:** a Pathfinder campaign character, Build → Deity, Show all
+    on: a stock deity's row, then click it for its card. A feat table with
+    Show all on: a row whose prerequisites are unmet, and its card.
+    Inventory → right-click a held item whose saved choice is restricted →
+    Choose… dialog.
+  - **Expect:** the same amber badge with a left bar everywhere. The stock
+    deity's row and card read "Unavailable in this campaign" and show no
+    second box. The unmet feat's row shows an "Unavailable" badge with
+    "Does not meet prerequisites" beside it in small text, and its card
+    shows the badge and the reason box as before. In the dialog the kept
+    pick's button shows the "Unavailable in this campaign" badge on its
+    own line under the name.
+  - **Wrong if:** a reason appears twice, a row's badge overflows or
+    clips its cell at 140%, or the badge is unreadable in dark theme.
 - [ ] **Content updates: new server and campaign revisions.**
   - **Where:** a non-campaign character after a server content update; a
     campaign character's editor left open while the second campaign

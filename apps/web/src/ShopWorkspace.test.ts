@@ -686,10 +686,10 @@ describe("Owned-item choices under campaign restrictions (D116)", () => {
     const campaign = render([ashfallEvasion.id, simplePower.id]);
     expect(campaign).not.toContain(simplePower.name);
     expect(campaign).toMatch(
-      /aria-checked="true"[^>]*>(?:(?!<\/button>).)*Ashfall Evasion(?:(?!<\/button>).)*Not used in this campaign/s,
+      /aria-checked="true"[^>]*>(?:(?!<\/button>).)*Ashfall Evasion(?:(?!<\/button>).)*Unavailable in this campaign/s,
     );
     const plain = render();
     expect(plain).toContain(simplePower.name);
-    expect(plain).not.toContain("Not used in this campaign");
+    expect(plain).not.toContain("Unavailable in this campaign");
   });
 });
