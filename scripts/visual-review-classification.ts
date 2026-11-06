@@ -354,8 +354,8 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "fighter-arena|1|mount creature cards (d110)": auto(
     'Warhorse and Silver Dragon Steed creature cards after Skills: identity, defense and HP tiles, Kick, Charger, load table, no alignment; the steed\'s owner-relative HP, AC, Bite and Breath Weapon; a split puts the stats card then the "— Actions" card; the item cards keep load and drop the repeated block.',
   ),
-  "fighter-arena|1|sub-choices on feature rows": auto(
-    "The Fighter Weapon Talent reminder label shows Arena Training.",
+  "fighter-arena|1|arena training applied, not reminded": auto(
+    "No Arena Training reminder or candidate; AC carries Arena Training's applied +2 (level 11, hide armor); the Unarmed Melee Basic Attack row gets its +2 proficiency bonus and a 1d8 die.",
   ),
   "fighter-arena|1|spear expertise [arena fighter]": auto(
     "Charging damage with a spear uses the lower heroic/paragon value.",
@@ -409,6 +409,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   "hexblade-white-well|2|paired attack and damage effects": auto(
     "Melee Basic Attack has one Back to the Wall line for attack and damage, under Additional effects.",
+  ),
+  "sentinel-bear|2|sub-choices on reminder rows": auto(
+    "The Druid Wilderness Knacks reminder names its knacks (Beast Empathy, Mountain Guide), on the printed page 1.",
   ),
   "sentinel-bear|2|paired attack and damage effects": auto(
     "Melee Basic Attack has one Back to the Wall line for attack and damage, under Additional effects.",

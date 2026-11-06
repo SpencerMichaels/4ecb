@@ -2030,6 +2030,24 @@ rule("ranger-beast", "Print preview", "Beast power cards", (c) => {
   ];
 });
 
+rule("sentinel-bear", "Print preview", "Sub-choices on reminder rows", (c) => {
+  const reminder = c.sheet.overview?.reminders.find(
+    ({ label }) => label === "Druid Wilderness Knacks",
+  );
+  return [
+    equal(
+      "The Druid Wilderness Knacks reminder names its choices",
+      reminder?.choice,
+      "Beast Empathy, Mountain Guide",
+    ),
+    contains(
+      "… printed on page 1",
+      printedPagesFor(c).text,
+      `${reminder?.label}: ${reminder?.choice}`,
+    ),
+  ];
+});
+
 rule("sentinel-bear", "Print preview", "Printed beast card", (c) => {
   const beast = printedDeck(c).find(({ kind }) => kind === "beast");
   return [
@@ -3400,23 +3418,50 @@ function roseScythe(c: ReviewCharacter, where: "builder" | "print"): Check[] {
 /* Arena fighter                                                       */
 /* ------------------------------------------------------------------ */
 
-rule("fighter-arena", "Print preview", "Sub-choices on feature rows", (c) => {
-  const reminder = c.sheet.overview?.reminders.find(
-    ({ choice }) => choice !== undefined && /Arena/.test(`${choice}`),
-  );
-  return [
-    truthy(
-      "A page-1 reminder names its choice",
-      reminder !== undefined,
-      reminder === undefined ? "none" : `${reminder.label}: ${reminder.choice}`,
-    ),
-    contains(
-      "… printed on page 1",
-      printedPagesFor(c).text,
-      `${reminder?.label}: ${reminder?.choice}`,
-    ),
-  ];
-});
+rule(
+  "fighter-arena",
+  "Print preview",
+  "Arena Training applied, not reminded",
+  (c) => {
+    // Every Arena Training effect is in the numbers (owner 2026-11-05):
+    // the AC bonus out of heavy armor is a `not-wearing` statadd, the
+    // improvised-weapon bonus and die are native on the power rows.
+    const candidates = (c.sheet.overview?.reminderCandidates ?? []).filter(
+      ({ label }) => /^Arena Training\b/.test(label),
+    );
+    const unarmed = c.evaluation.powers
+      .find(({ name }) => name === "Melee Basic Attack")
+      ?.variants.find(({ equipmentName }) => equipmentName === "Unarmed");
+    const arenaProficiency = (unarmed?.attackComponents ?? []).find(
+      (component) =>
+        component.label === "proficiency bonus" &&
+        component.source === "Arena Training",
+    );
+    return [
+      equal(
+        "No Arena Training reminder candidate",
+        candidates.map(({ label }) => label).join(", "),
+        "",
+      ),
+      lacks(
+        "… nor on the printed pages' reminders",
+        printedPagesFor(c).text,
+        "Increases AC bonus",
+      ),
+      equal(
+        "AC carries Arena Training's applied bonus",
+        contributionTotal(c, ["AC"], /^Arena Training$/),
+        tierStep(c.evaluation.level, [1, 2, 3]),
+      ),
+      equal(
+        "The Unarmed Melee Basic Attack's Arena Training proficiency bonus",
+        arenaProficiency?.value,
+        2,
+      ),
+      equal("… and its improvised die", unarmed?.weaponDamage, "1d8"),
+    ];
+  },
+);
 
 /** A conditional or applied weapon contribution total from one provider. */
 function contributionTotal(

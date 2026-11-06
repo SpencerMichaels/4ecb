@@ -1038,6 +1038,73 @@ describe("printed overview data", () => {
         .sort(),
     );
   });
+  it("leaves armor and build-time proficiency conditions to the evaluator, never swallowing a benefit", () => {
+    // [name, short description, full text, reminder?]
+    const examples = [
+      // Every effect is applied: a `not-wearing` AC statadd, proficiency at
+      // build, improvised weapons on the power rows (Arena Training).
+      [
+        "Ring Training",
+        "Grants proficiency with 2 weapons. Increases AC bonus and improvised weapon damage",
+        "You treat weapons you are not proficient with as improvised weapons. You gain a +2 proficiency bonus to attack rolls with improvised weapons.\n\tWhile you are not wearing heavy armor, you gain a +1 bonus to AC.\n\tIf you are not already proficient with your ring weapons, you gain proficiency with them.",
+        false,
+      ],
+      [
+        "Wild Agility",
+        "Gain +1 AC and Reflex when not wearing heavy armor. (+2 at 11th level)",
+        "While you are not wearing heavy armor, you gain a +1 bonus to AC and Reflex.",
+        false,
+      ],
+      [
+        "Old Lore",
+        "Gain training in History.",
+        "You gain training in History. If you are already trained in History, choose a different skill.",
+        false,
+      ],
+      // A short description without a closing period: its loadout condition
+      // ends at the line, so the benefit's own trigger still counts.
+      [
+        "Rod Focus",
+        "Spells crit with 19-20 when wielding a rod",
+        "When you wield a rod while using an arcane power, you can score a critical hit on a roll of 19-20.",
+        true,
+      ],
+      [
+        "Wind Step",
+        "Ignore difficult terrain when not wearing heavy armor",
+        "Whenever you charge or run and are not wearing heavy armor, you ignore difficult terrain.",
+        true,
+      ],
+    ] as const;
+    const definitions = examples.map(([name, summary, text], i) => ({
+      ...feat,
+      id: `feat:evaluated-condition:${i}`,
+      name,
+      description: text,
+      specifics: [
+        {
+          name: "Short Description",
+          value: summary,
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    }));
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: definitions.map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: "Feat",
+        })),
+      },
+      definitions,
+    );
+    expect(m.overview?.features.map((f) => [f.name, f.playReminder])).toEqual(
+      examples.map(([name, , , expected]) => [name, expected]),
+    );
+  });
   it("retains full selected rules separately from authored short descriptions", () => {
     const m = buildSheetModel(snapshot, [feat]);
     expect(m.overview?.features[0]).toMatchObject({

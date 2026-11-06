@@ -172,13 +172,24 @@ export interface SheetOverview {
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
 function hasPlayReminder(summary: string, description: string): boolean {
-  const text = `${summary} ${description}`;
+  // One clause per line: a short description often has no closing period, and
+  // a stripped condition must not run on into the benefit text.
+  const text = `${summary}\n${description}`;
   // Ally-facing benefits remain manual even when their prerequisite is a loadout.
   if (/\b(?:ally|allies)\b/i.test(text)) return true;
-  const withoutLoadoutConditions = text.replace(
-    /\b(?:while|when|if)\s+(?:you\s+(?:are\s+)?)?(?:wearing|wielding|equipped)\b[^.;]*/gi,
-    "",
-  );
+  // Conditions the evaluator settles, not the player at the table: what is
+  // worn or wielded ("while you are not wearing heavy armor" is a
+  // `not-wearing` statadd), and build-time proficiency or training ("if you
+  // are not already proficient", "if you are already trained in History").
+  const withoutLoadoutConditions = text
+    .replace(
+      /\b(?:while|when|if)\s+(?:you\s+(?:are\s+|aren't\s+)?)?(?:not\s+)?(?:wearing|wielding|equipped)\b[^.;\n]*/gi,
+      "",
+    )
+    .replace(
+      /\bif\s+you\s+(?:(?:are\s+not|aren't|do\s+not|don't)\s+(?:already\s+)?|(?:are\s+)?already\s+)(?:proficient|trained|have\s+(?:training|proficiency))\b[^.;,\n]*/gi,
+      "",
+    );
   // Require an in-play condition, choice, or changed action. Passive proficiency,
   // training, numeric bonuses and power grants alone are not useful reminders.
   return /\b(?:when|whenever|if|unless|trigger|bloodied|combat advantage|opportunity|reroll|draw|shift(?:s|ing)?|push|pull|slide|teleport|spend|forgo|give up|once per)\b/i.test(

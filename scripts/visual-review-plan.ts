@@ -585,6 +585,10 @@ const reviews: ReviewCharacter[] = [
             "Paired attack and damage effects",
             "Melee Basic Attack: one Back to the Wall line for attack and damage.",
           ],
+          [
+            "Sub-choices on reminder rows",
+            "Page-1 reminder labels with a choice: Druid Wilderness Knacks shows Beast Empathy, Mountain Guide.",
+          ],
         ],
       },
     ],
@@ -1317,11 +1321,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Arena fighter: print preview",
-            "The Arena Training reminder, the Warhorse card and the Steed's two cards; the Warhorse item card without the load table.",
+            "The Warhorse card and the Steed's two cards; the Warhorse item card without the load table.",
           ],
           [
-            "Sub-choices on feature rows",
-            "Page-1 reminder labels with a choice: the Fighter Weapon Talent row shows Arena Training.",
+            "Arena Training applied, not reminded",
+            "No Arena Training reminder on page 1: its AC bonus (not in heavy armor) is in AC and its improvised-weapon bonus on the Unarmed rows.",
           ],
           [
             "Spear Expertise [Arena Fighter]",

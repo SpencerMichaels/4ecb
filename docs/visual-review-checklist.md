@@ -293,10 +293,11 @@ live site.
     band, the short item card looks broken (an empty body band), or the
     paragraph or a table shows on both cards.
 - [ ] **Arena fighter: print preview.**
-  - **Where:** `?preview=1`: page 1's reminder "Arena Training: Arena Weapon
-    (Glaive), Arena Weapon (Spear)", then the cards after Skills: the
-    Warhorse and the Silver Dragon Steed.
-  - **Expect:** the reminder wraps clear of its "Level N" tag. The Warhorse
+  - **Where:** `?preview=1`: page 1's "Remember in play" reminders, then
+    the cards after Skills: the Warhorse and the Silver Dragon Steed.
+  - **Expect:** no Arena Training reminder (every effect is in the numbers:
+    AC, and the Unarmed rows' improvised +2 and 1d8; owner 2026-11-05), and
+    the reminders that remain fill the space without a gap. The Warhorse
     is one card with one row of defense and HP tiles and its load table at
     the bottom; the Warhorse item card (with the other item cards) is
     short: name, "Mount", price and type bar, with no load table. Now that
@@ -304,7 +305,7 @@ live site.
     at about the 6 pt floor (Firefox); if your browser
     still finds it overflowing, it is two adjacent cards, "Silver Dragon
     Steed" and "Silver Dragon Steed — Actions".
-  - **Wrong if:** the tag overlaps the reminder, a card overflows, the
+  - **Wrong if:** an Arena Training reminder is back, a card overflows, the
     Steed prints as one clipped card or with a "(continued)" card, the
     tiles wrap onto two rows, text is unreadable at the reduced size, the
     load table prints on both Warhorse cards, or the Warhorse item card
