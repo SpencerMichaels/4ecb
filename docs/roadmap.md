@@ -937,7 +937,8 @@ for the Forgotten Realms duplicates done 2026-11-06; the "met through
 Torag" prerequisite explanation and the deity card's "Counts as" line
 followed the same day), legacy `D20CampaignSetting`
 export/import, and a Pathfinder campaign (Inner Sea major and other deities,
-mapped alignments, domains and equivalents) as the first real campaign. The
+mapped alignments, domains and equivalents; its 24 languages followed the
+same day) as the first real campaign. The
 form editor stays in M8. The owner's walk-through is the visual-review
 checklist's Campaigns pass.
 
@@ -945,9 +946,10 @@ Follow-ups (not done):
 
 - Owner skim of some Pathfinder deity descriptions: Easivra, Erecura,
   Grundinnar, Kitumu, Alazhra, Feronia, Lissala, Nivi Rhombodazzle.
-- Author the Pathfinder campaign's field patches (race Languages, the four
-  "Learn <language>" names) now that campaigns support them (D116
-  amendment, field patches), checked with `--against` the full pack.
+- Done (2026-11-06): the Pathfinder campaign's field patches (race
+  Languages, the "Learn <language>" names), authored with its 24 Pathfinder
+  languages (revision 4) and checked with `--against` the full pack
+  (`docs/implementation-status.md`, Pathfinder campaign languages).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

@@ -891,6 +891,30 @@ Moradin, or an item a character holds), build and import or advertise it.
     hides the stock ones.
   - **Wrong if:** the dialogs differ in width or button order from the
     content-update dialog, or focus stays trapped after closing.
+- [ ] **Pathfinder languages (campaign revision 4).** Added 2026-11-06;
+      the choice contents are checked by a private probe, these are the
+      surfaces.
+  - **Where:** a new character in the Pathfinder campaign: Race step with
+    a Gnome, Genasi, Tiefling and Thri-Kreen (race cards and their
+    language picks); the Human's "choice of one other"; a background with
+    language associations (benefit list); the sheet's Languages line; a
+    saved character with a Primordial pick (e.g. Azreille) moved into the
+    campaign.
+  - **Expect:** race cards read the Pathfinder lines ("Common, Gnomish,
+    Sylvan"; Genasi "Common, choice of Aquan, Auran, Ignan, or Terran";
+    Thri-Kreen "Common, choice of one other"). Genasi shows one language
+    choice of the four tongues; Tiefling's pick lists the 11 common
+    languages plus Abyssal and Infernal; the Human's lists the 11 only.
+    Backgrounds list "Learn Celestial", "Learn Jotun", "Learn Undercommon"
+    and "Learn an elemental tongue" (which opens a choice of four), and no
+    Damaran, Netherese or other restricted Learn row unless Show all is
+    on. A Deva cleric's Holy Speech reads "met through Celestial". The
+    saved Primordial pick has one "Primordial is not used in this
+    campaign." issue whose Review opens its choice.
+  - **Wrong if:** a stock name (Giant, Deep Speech, Supernal, Primordial)
+    shows anywhere a player picks, a CountsAsLanguage ("Supernal",
+    "Primordial") appears in the Languages list, or a race or background is
+    greyed out over a language.
 
 ## Decisions
 

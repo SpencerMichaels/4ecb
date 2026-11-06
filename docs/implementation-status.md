@@ -1,5 +1,61 @@
 # Implementation status
 
+## Pathfinder campaign languages (2026-11-06)
+
+Campaign content (D116 and its CountsAsLanguage and field-patch
+amendments; owner decisions of 2026-11-06). The Pathfinder campaign
+(revision 4) restricts every stock Language (`"Language": "campaign-only"`)
+and supplies the 24 Pathfinder languages in
+`content/campaigns/pathfinder/house-rules.xml`. The 11 common ones (Common,
+Draconic, Dwarven, Elven, Sylvan, Gnomish, Goblin, Halfling, Jotun, Orcish,
+Undercommon) carry the Starting category, so every unfiltered "choice of
+one other" offers exactly them; the 13 uncommon ones (Aklo, Abyssal,
+Infernal, Celestial, Gnoll, Necril, Terran, Ignan, Auran, Aquan,
+Shadowtongue, Muan, Talican) appear only where a race or feature names
+them. Nine keep a stock ID (Common, Draconic, Dwarven, Elven, Goblin,
+Abyssal, and Celestial, Jotun and Undercommon in place of Supernal, Giant
+and Deep Speech), so existing grants, picks and ID prerequisites reach
+them; Abyssal and Celestial drop the stock "2nd level" prerequisite with the
+Starting category, so a Tiefling or Deva can take them at 1st level. The
+other 15 are new `ID_4ECB_PF_LANGUAGE_*` records, and All, Secret Language
+and The language of the mind are unchanged copies. Celestial grants a
+"Supernal" CountsAsLanguage and the six elemental tongues a "Primordial"
+one, so "fluent in Supernal" (Holy Speech, met through Celestial) and
+"Primordial language" (Rimetongue Caller) still resolve. 70 stock records
+whose language grants or choices change are full copies with only that
+change (19 race Grants records, 7 Race records, 7 familiars, 6 feats, 21
+class features, 3 items, Learn Primordial and 6 Shifter backgrounds): for
+example Genasi's single race-level choice of Aquan, Auran, Ignan or Terran,
+the uncommon additions to the Tiefling, Deva, Shadar-kai, Shade, Revenant
+and Vryloka picks, the elemental themes' tongues, Moteborn's options
+("an elemental tongue" in place of Primordial, Jotun renamed), and Scholar
+L10, the Ioun Stone of Perfect Language and the Helm of Languages granting
+all 24. A restricted language's grantor is swapped, never restricted: the
+five Forgotten Realms Shifter backgrounds and the Thri-Kreen race give a
+choice of one common language instead; only the 11 "Learn <restricted
+language>" background choices are restricted by ID. 23 field patches change
+the Languages line of 20 races and the names Learn Celestial, Learn Jotun
+and Learn Undercommon. A save with a Primordial free pick shows it as "not
+used in this campaign" (accepted, decision 15).
+
+Verification: `content-tool campaign build --against
+tmp/content/full-local.4ecp`: valid, 0 errors, all 23 patches apply, 159
+records restricted (135 deities, 13 languages, 11 Learn choices; no race or
+background), the only warnings the 82 expected "replaces" notices. A
+private probe composing the campaign over the full pack (61 checks, all
+pass) evaluates races and features: Human's pick offers exactly the 11
+common languages; Dwarf, Orc, Gnome, Githyanki, Duergar, Svirfneblin, Drow
+and others know their Pathfinder languages; Genasi has one choice of the
+four tongues and Extra Manifestation adds none; the uncommon race picks;
+Deva with Celestial meets Holy Speech (met through Celestial); Firecrafter's
+Ignan, Muan and Talican meet "Primordial language"; Thri-Kreen and the
+Shifter backgrounds are offered and give a common-language choice; the
+restricted Learn options are not offered; the Moteborn options in five
+language states; the patched race lines; Azreille's Primordial pick is
+campaign-restricted; the language items and Scholar L10 grant all 24. A
+round-trip parse of the house rules confirms every copied record matches
+the stock record except its intended change. `pnpm test`, prettier.
+
 ## Campaign field patches (2026-11-06)
 
 Campaign follow-up (D116 amendment). A campaign document carries `patches`
@@ -24,9 +80,7 @@ The invite page summary shows "Changed fields: N fields". The synthetic
 fixture campaign patches the Cliffkin's Short Description, and
 `scripts/check.sh` asserts every patch applies against the synthetic pack.
 The Pathfinder campaign's race Languages and "Learn <language>" patches
-are not authored yet (they need the private pack's current values; author
-them in `content/campaigns/pathfinder/campaign.json` and check with
-`--against tmp/content/full-local.4ecp`). Verification: synthetic
+were authored with its languages (above). Verification: synthetic
 `campaign.test.ts` (applies, expect mismatch, missing target and field,
 overlay target refused, digest, limits, version 1), `campaign-command.test.ts`
 (manifest parsing, drift report), `imported-campaign.test.ts` (export

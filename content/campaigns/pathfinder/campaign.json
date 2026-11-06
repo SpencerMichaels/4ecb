@@ -1,9 +1,165 @@
 {
   "campaignId": "pathfinder",
   "name": "Pathfinder (Inner Sea)",
-  "revision": 3,
+  "revision": 4,
   "houseRules": "house-rules.xml",
   "restrict": {
-    "types": { "Deity": "campaign-only" }
-  }
+    "ids": [
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN"
+    ],
+    "types": {
+      "Deity": "campaign-only",
+      "Language": "campaign-only"
+    }
+  },
+  "patches": [
+    {
+      "id": "ID_FMP_RACE_25",
+      "field": "Languages",
+      "expect": "Common, Giant",
+      "value": "Common, Orcish"
+    },
+    {
+      "id": "ID_FMP_RACE_36",
+      "field": "Languages",
+      "expect": "Common, Giant",
+      "value": "Common, Orcish"
+    },
+    {
+      "id": "ID_FMP_RACE_37",
+      "field": "Languages",
+      "expect": "Common, either Dwarven or Giant",
+      "value": "Common, either Dwarven or Jotun"
+    },
+    {
+      "id": "ID_FMP_RACE_19",
+      "field": "Languages",
+      "expect": "Abyssal, Common",
+      "value": "Common, Gnoll"
+    },
+    {
+      "id": "ID_FMP_RACE_20",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Gnomish, Sylvan"
+    },
+    {
+      "id": "ID_TIV_RACE_DRAGONMAGAZINE422-1",
+      "field": "Languages",
+      "expect": "Common, choice of one other",
+      "value": "Common, Gnomish, choice of one other"
+    },
+    {
+      "id": "ID_FMP_RACE_5",
+      "field": "Languages",
+      "expect": "Common, choice of one other",
+      "value": "Common, Halfling, choice of one other"
+    },
+    {
+      "id": "ID_FMP_RACE_61",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Sylvan"
+    },
+    {
+      "id": "ID_FMP_RACE_62",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Sylvan"
+    },
+    {
+      "id": "ID_FMP_RACE_60",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Sylvan"
+    },
+    {
+      "id": "ID_FMP_RACE_44",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Sylvan"
+    },
+    {
+      "id": "ID_FMP_RACE_16",
+      "field": "Languages",
+      "expect": "Common, Elven",
+      "value": "Common, Elven, Undercommon"
+    },
+    {
+      "id": "ID_FMP_RACE_66",
+      "field": "Languages",
+      "expect": "Common, Deep Speech, Elven",
+      "value": "Common, Gnomish, Undercommon"
+    },
+    {
+      "id": "ID_FMP_RACE_42",
+      "field": "Languages",
+      "expect": "Common, Deep Speech, Dwarven",
+      "value": "Common, Dwarven, Undercommon"
+    },
+    {
+      "id": "ID_FMP_RACE_17",
+      "field": "Languages",
+      "expect": "Common, Deep Speech",
+      "value": "Common, Aklo"
+    },
+    {
+      "id": "ID_FMP_RACE_18",
+      "field": "Languages",
+      "expect": "Common, Deep Speech",
+      "value": "Common, Aklo"
+    },
+    {
+      "id": "ID_FMP_RACE_49",
+      "field": "Languages",
+      "expect": "Common, Deep Speech, choice of one other",
+      "value": "Common, Aklo, choice of one other"
+    },
+    {
+      "id": "ID_FMP_RACE_41",
+      "field": "Languages",
+      "expect": "Common, Primordial",
+      "value": "Common, Aquan"
+    },
+    {
+      "id": "ID_FMP_RACE_24",
+      "field": "Languages",
+      "expect": "Common, choice of one other",
+      "value": "Common, Jotun, choice of one other"
+    },
+    {
+      "id": "ID_FMP_RACE_51",
+      "field": "Languages",
+      "expect": "Common, Thri-kreen",
+      "value": "Common, choice of one other"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SUPERNAL",
+      "field": "name",
+      "expect": "Learn Supernal",
+      "value": "Learn Celestial"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_GIANT",
+      "field": "name",
+      "expect": "Learn Giant",
+      "value": "Learn Jotun"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DEEP_SPEECH",
+      "field": "name",
+      "expect": "Learn Deep Speech",
+      "value": "Learn Undercommon"
+    }
+  ]
 }
