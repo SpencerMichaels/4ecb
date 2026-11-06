@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import {
+  CampaignRepository,
   ContentPackRepository,
   type ContentProfileDefinition,
   type InstalledContentPack,
@@ -43,10 +44,13 @@ import { PwaUpdateProvider } from "./PwaUpdate";
 import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
+  refreshInstalledCampaigns,
   shouldActivateAdvertisedContent,
+  type AdvertisedCampaign,
   type AdvertisedContentPack,
 } from "./runtime-content";
 import { appContentRuntime } from "./app-runtime";
+import { CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
 import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME } from "./content-profile-ui";
 import {
   applyThemePreference,
@@ -57,6 +61,7 @@ import {
 } from "./theme";
 
 const repository = new ContentPackRepository();
+const campaignRepository = new CampaignRepository();
 
 const loadCharacterEditorPage = () =>
   import("./CharacterEditorPage").then((module) => ({
@@ -157,6 +162,9 @@ export function App() {
     useState<ContentProfileDefinition>();
   const [advertisedPacks, setAdvertisedPacks] = useState<
     readonly AdvertisedContentPack[]
+  >([]);
+  const [advertisedCampaigns, setAdvertisedCampaigns] = useState<
+    readonly AdvertisedCampaign[]
   >([]);
   const [contentDownloads, setContentDownloads] = useState<
     Readonly<Record<string, ContentDownloadState>>
@@ -489,6 +497,7 @@ export function App() {
         );
       const configured = parseRuntimeContentConfig(await response.json());
       setAdvertisedPacks(configured.contentPacks);
+      setAdvertisedCampaigns(configured.campaigns);
       setRuntimeContentError(undefined);
       const installed = new Map(
         (await repository.listInstalled()).map((entry) => [
@@ -528,6 +537,15 @@ export function App() {
           await refreshAfterContentChange();
         }
       }
+      // In the background, newer hosted revisions of the campaigns this
+      // browser has (never one it hasn't added); they reach characters as
+      // the content-update issue. Failures are quiet and retried next load.
+      void refreshInstalledCampaigns(campaignRepository, configured.campaigns)
+        .then((installed) => {
+          if (installed.length > 0)
+            window.dispatchEvent(new Event(CAMPAIGNS_CHANGED_EVENT));
+        })
+        .catch(() => undefined);
     } catch (reason: unknown) {
       setRuntimeContentError(
         reason instanceof Error ? reason.message : String(reason),
@@ -604,6 +622,7 @@ export function App() {
                     <SettingsRoute
                       installedPacks={installedPacks}
                       advertisedPacks={advertisedPacks}
+                      advertisedCampaigns={advertisedCampaigns}
                       contentDownloads={contentDownloads}
                       {...(activeProfile === undefined
                         ? {}

@@ -24,6 +24,11 @@ vi.mock("@4ecb/browser-storage", () => ({
     inspectBackup = storage.inspectBackup;
     restoreBackup = storage.restoreBackup;
     restoreBackupKeepingBoth = storage.restoreBackupKeepingBoth;
+    listMetadataPartitioned = () =>
+      Promise.resolve({ active: [], deleted: [] });
+  },
+  CampaignRepository: class {
+    list = () => Promise.resolve([]);
   },
   ContentPackRepository: class {},
 }));

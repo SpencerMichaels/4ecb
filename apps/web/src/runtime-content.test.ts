@@ -1,9 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { buildContentPack, encodeContentPackBytes } from "@4ecb/content-pack";
+import {
+  buildCampaign,
+  buildContentPack,
+  encodeCampaign,
+  encodeContentPackBytes,
+  type CampaignDocument,
+} from "@4ecb/content-pack";
 import type { ParsedContentSource } from "@4ecb/content-domain";
 import {
+  downloadAdvertisedCampaign,
   downloadAdvertisedPack,
+  MAX_ADVERTISED_CAMPAIGNS,
+  newerAdvertisedCampaigns,
   parseRuntimeContentConfig,
+  refreshInstalledCampaigns,
+  type AdvertisedCampaign,
   shouldActivateAdvertisedContent,
 } from "./runtime-content";
 
@@ -141,5 +152,188 @@ describe("runtime content", () => {
     expect(shouldActivateAdvertisedContent(layers(old), [], originOf)).toBe(
       false,
     );
+  });
+});
+
+function campaign(
+  revision: number,
+  campaignId = "synthetic-setting",
+): Promise<CampaignDocument> {
+  return buildCampaign(
+    {
+      campaignId,
+      name: "Synthetic Setting",
+      revision,
+      restrictions: { ids: [], types: [] },
+    },
+    { ...source, sourceKey: "house-rules.xml" },
+    "",
+  );
+}
+
+function advertisement(document: CampaignDocument): AdvertisedCampaign {
+  return {
+    campaignId: document.campaignId,
+    name: document.name,
+    revision: document.revision,
+    contentDigest: document.contentDigest,
+    url: `https://example.test/private-packs/campaigns/${document.campaignId}-r${document.revision}.4ecc`,
+  };
+}
+
+/** Serves each advertised campaign's bytes by URL, recording requests. */
+function campaignServer(documents: readonly CampaignDocument[]) {
+  const requested: string[] = [];
+  const fetcher = (async (input: RequestInfo | URL) => {
+    const url = String(input);
+    requested.push(url);
+    const document = documents.find(
+      (candidate) => advertisement(candidate).url === url,
+    );
+    return document === undefined
+      ? new Response("missing", { status: 404 })
+      : new Response(encodeCampaign(document).slice().buffer);
+  }) as typeof fetch;
+  return { fetcher, requested };
+}
+
+describe("runtime campaigns", () => {
+  const digest = "b".repeat(64);
+  const entry = {
+    campaignId: "pathfinder",
+    name: "Pathfinder",
+    revision: 2,
+    contentDigest: digest,
+    url: "/private-packs/campaigns/pathfinder-bbbbbbbbbbbb.4ecc",
+  };
+
+  it("parses advertised campaigns with same-origin URLs", () => {
+    const config = parseRuntimeContentConfig(
+      { campaigns: [entry] },
+      "https://group.test/app/",
+    );
+    expect(config.contentPacks).toEqual([]);
+    expect(config.campaigns).toEqual([
+      {
+        ...entry,
+        url: "https://group.test/private-packs/campaigns/pathfinder-bbbbbbbbbbbb.4ecc",
+      },
+    ]);
+    expect(parseRuntimeContentConfig({}).campaigns).toEqual([]);
+  });
+
+  it("rejects malformed, cross-origin, duplicate, or too many campaigns", () => {
+    const parse = (campaigns: unknown) =>
+      parseRuntimeContentConfig({ campaigns }, "https://group.test/");
+    expect(() => parse({})).toThrow("must be an array");
+    expect(() =>
+      parse([{ ...entry, url: "https://elsewhere.test/x.4ecc" }]),
+    ).toThrow("same-origin");
+    expect(() => parse([{ ...entry, contentDigest: "short" }])).toThrow(
+      "SHA-256",
+    );
+    expect(() => parse([{ ...entry, revision: 1.5 }])).toThrow("revision");
+    expect(() => parse([{ ...entry, campaignId: "-bad" }])).toThrow(
+      "campaignId",
+    );
+    expect(() => parse([{ ...entry, name: " " }])).toThrow("name");
+    expect(() => parse([entry, { ...entry, revision: 3 }])).toThrow(
+      "duplicate",
+    );
+    expect(() =>
+      parse(
+        Array.from({ length: MAX_ADVERTISED_CAMPAIGNS + 1 }, (_, index) => ({
+          ...entry,
+          campaignId: `campaign-${index}`,
+        })),
+      ),
+    ).toThrow("more than");
+  });
+
+  it("selects only newer revisions of installed campaigns", async () => {
+    const first = await campaign(1);
+    const second = await campaign(2);
+    const stranger = await campaign(1, "not-added");
+    expect(
+      newerAdvertisedCampaigns(
+        [first],
+        [advertisement(second), advertisement(stranger)],
+      ),
+    ).toEqual([advertisement(second)]);
+    // Same or older revisions, and an exact copy already present, are skipped.
+    expect(
+      newerAdvertisedCampaigns([first, second], [advertisement(second)]),
+    ).toEqual([]);
+    expect(newerAdvertisedCampaigns([second], [advertisement(first)])).toEqual(
+      [],
+    );
+  });
+
+  it("refreshes installed campaigns from the server in the background", async () => {
+    const first = await campaign(1);
+    const second = await campaign(2);
+    const stranger = await campaign(3, "not-added");
+    const installed: CampaignDocument[] = [first];
+    const repository = {
+      list: async () => [...installed],
+      install: async (document: CampaignDocument) => {
+        installed.push(document);
+        return document;
+      },
+    };
+    const { fetcher, requested } = campaignServer([second, stranger]);
+    const added = await refreshInstalledCampaigns(
+      repository,
+      [advertisement(second), advertisement(stranger)],
+      fetcher,
+    );
+    expect(added.map(({ revision }) => revision)).toEqual([2]);
+    expect(requested).toEqual([advertisement(second).url]);
+    expect(installed.map(({ campaignId }) => campaignId)).not.toContain(
+      "not-added",
+    );
+    // Nothing newer: nothing is fetched.
+    requested.length = 0;
+    await refreshInstalledCampaigns(
+      repository,
+      [advertisement(second)],
+      fetcher,
+    );
+    expect(requested).toEqual([]);
+  });
+
+  it("quietly skips a hosted campaign that fails or doesn't match", async () => {
+    const first = await campaign(1);
+    const second = await campaign(2);
+    const install = async (document: CampaignDocument) => document;
+    const repository = { list: async () => [first], install };
+    // Missing on the server.
+    expect(
+      await refreshInstalledCampaigns(
+        repository,
+        [advertisement(second)],
+        campaignServer([]).fetcher,
+      ),
+    ).toEqual([]);
+    // The file is a different revision than advertised.
+    const mislabeled = { ...advertisement(second), revision: 3 };
+    const wrongFile = (async () =>
+      new Response(encodeCampaign(second).slice().buffer)) as typeof fetch;
+    await expect(
+      downloadAdvertisedCampaign(mislabeled, wrongFile),
+    ).rejects.toThrow("does not match");
+    expect(
+      await refreshInstalledCampaigns(repository, [mislabeled], wrongFile),
+    ).toEqual([]);
+    // A tampered file fails its digest.
+    const tampered = (async () =>
+      new Response(
+        new TextEncoder().encode(
+          JSON.stringify({ ...second, name: "Tampered" }),
+        ),
+      )) as typeof fetch;
+    await expect(
+      downloadAdvertisedCampaign(advertisement(second), tampered),
+    ).rejects.toThrow();
   });
 });

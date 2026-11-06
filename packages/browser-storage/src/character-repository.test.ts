@@ -685,7 +685,7 @@ describe("CharacterRepository", () => {
     const reopened = await openDB(name);
     expect(await reopened.get("characterMetadata", epic.id)).toMatchObject({
       paragonPath: "Radiant Servant",
-      metadataVersion: 2,
+      metadataVersion: 3,
     });
     reopened.close();
   });
@@ -1025,6 +1025,18 @@ describe("CharacterRepository", () => {
     // Restoring again is idempotent.
     expect(await destination.characters.restoreBackup(backup)).toBe(2);
     expect(await destination.campaigns.list()).toHaveLength(3);
+  });
+
+  it("names a member's campaign on its library metadata row", async () => {
+    const { characters } = campaignStorage();
+    await characters.put(memberOf("member", await campaign(1)));
+    await characters.put(character("outsider"));
+    await characters.moveToTrash("outsider");
+    const { active, deleted } = await characters.listMetadataPartitioned();
+    expect(active.map(({ campaignId }) => campaignId)).toEqual([
+      "synthetic-setting",
+    ]);
+    expect(deleted[0]).not.toHaveProperty("campaignId");
   });
 
   it("exports a character with only its bound campaign revision", async () => {

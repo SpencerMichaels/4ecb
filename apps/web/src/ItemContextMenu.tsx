@@ -74,11 +74,13 @@ export function ItemContextMenu({
       onClose();
     };
     document.addEventListener("pointerdown", dismissOutside);
-    document.addEventListener("keydown", dismissWithEscape);
+    // Capture, so Esc closes the menu before a page-level Esc handler
+    // (Settings closes on Esc) sees it; it checks defaultPrevented.
+    document.addEventListener("keydown", dismissWithEscape, true);
     window.addEventListener("blur", onClose);
     return () => {
       document.removeEventListener("pointerdown", dismissOutside);
-      document.removeEventListener("keydown", dismissWithEscape);
+      document.removeEventListener("keydown", dismissWithEscape, true);
       window.removeEventListener("blur", onClose);
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };

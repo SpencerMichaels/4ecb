@@ -28,6 +28,7 @@ import {
   requestPersistentStorage,
   type PersistenceStatus,
 } from "./browser-persistence";
+import { CampaignSettings } from "./CampaignSettings";
 import { downloadCharacterBackup } from "./download";
 import type { ContentDownloadState } from "./App";
 import { Icon } from "./Icon";
@@ -47,7 +48,10 @@ import {
   updateRow,
   type ContentRow,
 } from "./content-profile-ui";
-import type { AdvertisedContentPack } from "./runtime-content";
+import type {
+  AdvertisedCampaign,
+  AdvertisedContentPack,
+} from "./runtime-content";
 import type { ThemePreference } from "./theme";
 import {
   DEFAULT_PRINT_CARD_TEXT_SIZE,
@@ -100,6 +104,8 @@ function phaseLabel(phase: ImportPackProgressPhase): string {
 export interface SettingsPageProps {
   readonly installedPacks: readonly InstalledContentPack[];
   readonly advertisedPacks: readonly AdvertisedContentPack[];
+  /** Campaigns the server hosts (D116), for invite links. */
+  readonly advertisedCampaigns?: readonly AdvertisedCampaign[];
   readonly activeProfile?: ContentProfileDefinition;
   readonly contentDownloads: Readonly<Record<string, ContentDownloadState>>;
   readonly runtimeContentError?: string;
@@ -175,6 +181,7 @@ function CheckboxSetting({
 export function SettingsPage({
   installedPacks,
   advertisedPacks,
+  advertisedCampaigns = [],
   activeProfile,
   contentDownloads,
   runtimeContentError,
@@ -1074,6 +1081,11 @@ export function SettingsPage({
             and choose to update.
           </p>
         </section>
+
+        <CampaignSettings
+          advertisedCampaigns={advertisedCampaigns}
+          onError={showError}
+        />
       </div>
 
       <p aria-live="polite" className="visually-hidden">

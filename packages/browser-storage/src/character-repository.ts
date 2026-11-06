@@ -122,6 +122,9 @@ export interface CharacterMetadata {
     readonly packId: string;
     readonly contentDigest?: string;
   };
+  /** The campaign the character belongs to (D116), so Settings can count a
+   *  campaign's characters without reading every record. */
+  readonly campaignId?: string;
   /** A disposable cache of the character's evaluated stats for the library
    *  (see CharacterLibrarySummary); never a source of truth. */
   readonly librarySummary?: CharacterLibrarySummary;
@@ -175,7 +178,7 @@ function withPreviousSummary(
 /** Bumped whenever characterMetadata() derives new fields: rows from an
  *  older derivation are re-derived from their records on the next library
  *  read (refreshStaleMetadata). */
-const CHARACTER_METADATA_VERSION = 2;
+const CHARACTER_METADATA_VERSION = 3;
 
 interface StoredCharacterMetadata extends CharacterMetadata {
   readonly metadataVersion?: number;
@@ -343,6 +346,9 @@ function characterMetadata(
               : { contentDigest: record.profileBinding.contentDigest }),
           },
         }),
+    ...(record.profileBinding?.campaign === undefined
+      ? {}
+      : { campaignId: record.profileBinding.campaign.campaignId }),
   };
 }
 

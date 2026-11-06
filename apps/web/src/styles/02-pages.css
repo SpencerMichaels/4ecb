@@ -256,8 +256,34 @@
   gap: 1rem;
 }
 
-.settings-columns > .game-content-settings {
+.settings-columns > .game-content-settings,
+.settings-columns > .campaign-settings {
   grid-column: 1 / -1;
+}
+
+/* Settings → Campaigns: the name column takes the width; revision and
+   character counts stay narrow and right-aligned. */
+.campaign-table td:nth-child(2) {
+  width: auto;
+}
+
+.campaign-table td:first-child {
+  width: 100%;
+}
+
+.campaign-table th:not(:first-child),
+.campaign-table-number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.campaign-table tbody tr[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.campaign-invite-url {
+  overflow-wrap: anywhere;
 }
 
 .settings-options {

@@ -719,7 +719,12 @@ The MVP image contains a static, unprivileged web server and built assets:
 The runtime-configuration path supplies feature flags, relay configuration, and
 an optional ordered `contentPacks` baseline without rebuilding the image. Each
 advertisement contains a revision-qualified pack ID, exact content digest, and
-same-origin immutable URL. The file stays outside the
+same-origin immutable URL. An optional `campaigns` list (at most 64; D116)
+advertises hosted campaign documents as `{campaignId, name, revision,
+contentDigest, url}`, one entry per campaign, same-origin URLs only;
+advertising one installs it nowhere: the browser only fetches newer revisions
+of campaigns it already has (digest-verified, in the background) and builds
+invite links for hosted revisions. The file stays outside the
 service-worker precache and is network-only so later operator overrides cannot
 be shadowed by the build-time default. The image has a health endpoint,
 read-only root filesystem support, no bundled proprietary corpus, and documented

@@ -119,6 +119,29 @@ Installing a pack with an existing ID replaces that installed revision. Stored
 characters remain bound to their exact original digest and show a mismatch
 until that revision is restored or a migration is previewed and adopted.
 
+## Campaigns
+
+A campaign is a DM's house-rule content and limits (for example, which
+deities exist) layered over the game content for the characters in it (D116).
+**Settings → Campaigns** lists the campaigns in this browser: name, newest
+installed revision, and how many library characters belong to it.
+
+- **Import campaign…** adds a `.4ecc` file the DM built with
+  `content-tool campaign build`. Its digest is checked before it is stored; a
+  file with the same revision as an installed one but different content is
+  refused (the DM bumps the revision for every change).
+- Right-click a campaign for **Export file** (the newest revision as
+  `.4ecc`), **Copy invite link** and **Remove**. Copy invite link is
+  available only when your group's server hosts that exact revision; the
+  link is for players to join (the join page itself is not built yet).
+  Remove deletes every revision and is unavailable while any character,
+  including one in the trash, belongs to the campaign.
+
+When the group's server hosts a newer revision of a campaign you have, the
+browser fetches and verifies it in the background after the app loads; a
+campaign you haven't added is never downloaded. Characters in the campaign
+then offer the update the same way as a content update.
+
 ## Create, import, and manage characters
 
 1. To start without the old application, choose **New Character** on the
