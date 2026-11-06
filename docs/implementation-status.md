@@ -31,8 +31,7 @@ source-unentitled picks; ordinary profile activation still composing on
 the main thread; no garbage collection of materialized campaign packs; an
 owner skim of eight Pathfinder deity descriptions. Owner action outside the
 repo: homenet `apps/4ecb/pack.yml` must copy and keep
-`private-packs/campaigns/`. Seen in passing, unrelated: `pnpm audit:coverage`
-exits 1 on an Associate registry mismatch.
+`private-packs/campaigns/`.
 
 ## Campaigns in legacy .dnd4e export and import (2026-11-06)
 
@@ -2133,6 +2132,12 @@ community card's hand-typed defenses were one level ahead). Still deferred:
 hexblade summons (e.g. Lesser Planar Ally), Animal Master minions and the
 Veiled Horde Shadow, which have no Associate record; an associate card in the
 builder's detail panes. Players need a content republish.
+
+Coverage audit fix (2026-11-06): `pnpm audit:coverage` failed with "Associate:
+registry claims companions; code disagrees". The registry was right; the
+audit's companions check (`scripts/audit-coverage.ts`) predated D107 and
+accepted only familiars and the beast companion. It now accepts the Associate
+type, and the audit exits 0.
 
 ## Prerequisite qualifiers scope over the whole list (2026-10-21)
 

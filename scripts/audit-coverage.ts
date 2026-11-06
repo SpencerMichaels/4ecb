@@ -102,10 +102,12 @@ function registryProblems(
               ? // A god fragment prints as a power card built from its fields.
                 key(type) === "power" || key(type) === "god fragment"
               : surface === "companions"
-                ? // Familiar cards, and the beast companion card with the
-                  // Companion Ability Increase picks its abilities include.
+                ? // Familiar cards, the beast companion card with the
+                  // Companion Ability Increase picks its abilities include,
+                  // and associate cards (D107, evaluateAssociates).
                   isFamiliarEntity(sample) ||
                   key(type) === "companion" ||
+                  key(type) === "associate" ||
                   /^companion ability increase\b/i.test(type)
                 : surface === "items"
                   ? // Set benefits print on their Item Set card.
