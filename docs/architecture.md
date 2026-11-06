@@ -321,7 +321,9 @@ A campaign character's profile (D116) is the browser's active profile layers
 by `ContentPackRepository.materializeCampaignProfile` with origin "profile"
 and profile ID `campaign:<campaignId>`. Its pack ID hashes the base layers,
 the overlay layer and `campaign:<campaignId>:<contentDigest>`, so an
-existing stored pack is reused as is; it is composed by content-pack
+existing stored pack is reused as is (the page only looks it up,
+`storedCampaignProfile`; a compose runs in the content worker,
+`content.worker.ts`); it is composed by content-pack
 `composeCampaignProfile`, whose `campaign` field carries the resolved
 restricted IDs (`campaignRestrictions` above). It is never the active
 profile. The character binding adds `campaign: {campaignId, revision,
