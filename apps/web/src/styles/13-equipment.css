@@ -897,14 +897,21 @@ button.inventory-icon-action:disabled {
   }
 }
 
-/* Rituals tab: known rituals, formulas and practices and the learning
- * catalog, which reuses the Shop table in learning mode. */
+/* Known rituals, formulas and practices (D114): the Inventory lists them
+ * after the items, the Shop's learning categories learn them. */
 /* Free rituals left: per provider a "Free rituals (Psion)" heading, then
-   one indented line per allowance that still has some. */
+   one indented line per allowance that still has some. In the Inventory it
+   is a full-width row before the known groups. */
 .rituals-allowance {
   display: grid;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+}
+
+.inventory-table .inventory-allowance-row td {
+  padding-block: 0.6rem;
+  text-align: left;
+  white-space: normal;
+  width: auto;
 }
 
 .rituals-allowance-group {
@@ -943,53 +950,23 @@ button.inventory-icon-action:disabled {
 }
 
 .ritual-allowance-option-detail,
-.rituals-allowance-source,
-.rituals-known-source {
+.rituals-allowance-source {
   color: var(--muted);
 }
 
-.rituals-known-header {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.rituals-known-header h3 {
-  margin: 0;
-}
-
-/* The Known table's five columns: name, Level, Category, Key skill and
-   Remove. Its fixed layout (.inventory-table) takes every column's width
-   from the header row, so each is sized here: the inventory's widths are
-   for its own three columns, and the generic 1% width would let Category
-   and Key skill spill into the next column. Long values wrap in place. */
-.rituals-known-table thead th:nth-child(2) {
-  width: 3.5em;
-}
-
-.rituals-known-table thead th:nth-child(3),
-.rituals-known-table thead th:nth-child(4) {
-  width: 7.5em;
-}
-
-.rituals-known-table thead th:last-child {
-  width: 2rem;
-}
-
-.rituals-known-table :is(th, td):not(:first-child) {
-  overflow-wrap: break-word;
+/* A known record's row spans the inventory's three columns (no quantity
+   or row actions: Remove is its right-click menu); its level, category,
+   key skill and source sit under the name like an item's augment note. */
+.inventory-table .inventory-known-detail {
+  color: var(--muted);
+  font-size: 0.85em;
   white-space: normal;
 }
 
-.rituals-known-table td:nth-child(2) {
-  text-align: center;
-}
-
-.rituals-empty-row td {
+.inventory-table .inventory-empty-row td {
   color: var(--muted);
   font-style: italic;
+  text-align: left;
 }
 
 /* A holding whose definition isn't in the content in use (homebrew). */

@@ -11,7 +11,6 @@ import {
   Bone,
   BowArrow,
   BookMarked,
-  BookCheck,
   BookOpen,
   Brain,
   Calculator,
@@ -159,7 +158,6 @@ export type IconName =
   | "affordable"
   | "download"
   | "export"
-  | "known"
   | "proficient"
   | "duplicate"
   | "dumbbell"
@@ -302,7 +300,6 @@ const icons: Record<IconName, LucideIcon> = {
   affordable: Coins,
   consolidate: Coins,
   proficient: BadgeCheck,
-  known: BookCheck,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,

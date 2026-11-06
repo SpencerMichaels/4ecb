@@ -19,12 +19,22 @@ import {
   type CoinAdjustment,
   type CurrencyAmount,
   type BuildInventoryEntry,
+  type BuildKnownEntry,
   type CharacterBuild,
   type CharacterCommand,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { itemChoiceSlots, itemSetPartyCountName } from "@4ecb/rules-engine";
+import {
+  eligibleRitualAllowances,
+  itemChoiceSlots,
+  itemSetPartyCountName,
+  type EvaluatedCharacter,
+  type KnownRecord,
+  type RitualAllowance,
+} from "@4ecb/rules-engine";
+import { contentSpecificValue } from "./builder-ui";
 import { offeredDetailEntities } from "./detail-stack";
+import { DotList } from "./DotList";
 import {
   alchemicalFormulaItems,
   comparableSaleProceeds,
@@ -74,6 +84,16 @@ import {
 } from "./item-choice-pages";
 import { canonicalItemIcon } from "./item-icons";
 import { ItemChoiceDialog } from "./ItemChoicePicker";
+import {
+  AllowanceChoiceDialog,
+  KNOWN_RECORD_GROUPS,
+  knownEntryForEntity,
+  knownRecordKey,
+  knownRecordSourceLabel,
+  RitualAllowanceSummary,
+  useKnownRecordsModel,
+  type KnownRecordKind,
+} from "./known-records-ui";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
@@ -256,6 +276,8 @@ export function inventoryEquippedStatus(
 export interface InspectedItemDetail {
   readonly entities: readonly ContentEntity[];
   readonly displayName: string;
+  /** A builder addition below the card: a known record's source. */
+  readonly note?: string;
   readonly effectiveLevel?: number;
   readonly kindLabel?: string;
   /** Entities resolved for the item's own choices (e.g. the specific Power
@@ -999,6 +1021,9 @@ export function EquipmentWorkspace({
   onSetWielding,
   onSetAugment,
   onSetText,
+  evaluation,
+  onLearnKnown,
+  onRemoveKnown,
   focusRequest,
 }: {
   /**
@@ -1051,8 +1076,24 @@ export function EquipmentWorkspace({
   ) => void;
   /** Saves a textstring (a group item set's party count); "" clears it. */
   readonly onSetText: (name: string, value: string) => void;
+  /** The current evaluation: known rituals, formulas and practices (granted
+   *  or learned), the free allowances left and the ritual price (D114). */
+  readonly evaluation?: EvaluatedCharacter | undefined;
+  /** Learns a ritual, formula or practice: the Shop's Buy (paying
+   *  `priceCopper`) or Learn free. */
+  readonly onLearnKnown: (entry: BuildKnownEntry, priceCopper: number) => void;
+  /** Forgets a learned record (a granted one can't be removed). */
+  readonly onRemoveKnown: (entryId: string) => void;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
+  const known = useKnownRecordsModel(build, evaluation, byId);
+  const [knownGroupExpansion, setKnownGroupExpansion] = useState<
+    ReadonlyMap<KnownRecordKind, boolean>
+  >(new Map());
+  const [pendingFree, setPendingFree] = useState<{
+    readonly entity: ContentEntity;
+    readonly allowances: readonly RitualAllowance[];
+  }>();
   const [contextMenu, setContextMenu] = useState<ItemContextMenuState>();
   const closeContextMenu = useCallback(() => setContextMenu(undefined), []);
   const [choosing, setChoosing] = useState<{
@@ -1240,6 +1281,185 @@ export function EquipmentWorkspace({
     );
     if (menu !== undefined) setContextMenu(menu);
   };
+  // A known record's right-click menu: Remove a learned record; a granted
+  // one stays in the menu, inert, saying why.
+  const openKnownContextMenu = (
+    event: ReactMouseEvent<HTMLElement>,
+    record: KnownRecord,
+    name: string,
+  ) => {
+    const { source } = record;
+    const menu = itemContextMenuAt(event, `${name} actions`, [
+      {
+        label: "Remove",
+        ...(source.kind === "granted"
+          ? {
+              disabledReason: `${knownRecordSourceLabel(record) ?? "Granted"}; it can't be removed.`,
+            }
+          : {}),
+        onSelect: () => {
+          if (source.kind === "learned") onRemoveKnown(source.entryId);
+        },
+      },
+    ]);
+    if (menu !== undefined) setContextMenu(menu);
+  };
+  const inspectKnown = (record: KnownRecord) => {
+    if (record.entity === undefined) {
+      setInspected(undefined);
+      return;
+    }
+    const note = knownRecordSourceLabel(record, known.allowanceProvider);
+    setInspected({
+      entities: [record.entity],
+      displayName: record.entity.name,
+      effectiveLevel: build.effectiveLevel,
+      ...(note === undefined ? {} : { note }),
+    });
+  };
+  // Buying a ritual, formula or practice learns it; Learn free uses the
+  // free allowance it fits, asking which when several do.
+  const learnKnown = (
+    entity: ContentEntity,
+    priceCopper: number,
+    allowance?: RitualAllowance,
+  ) =>
+    onLearnKnown(
+      knownEntryForEntity(entity, build.effectiveLevel, priceCopper, allowance),
+      priceCopper,
+    );
+  const learnFromShop = (entity: ContentEntity, priceCopper: number) => {
+    if (priceCopper > 0) {
+      learnKnown(entity, priceCopper);
+      return;
+    }
+    const eligible = eligibleRitualAllowances(
+      known.statuses,
+      entity,
+      build.effectiveLevel,
+    );
+    if (eligible.length > 1) setPendingFree({ entity, allowances: eligible });
+    else learnKnown(entity, 0, eligible[0]);
+  };
+  const knownGroups = KNOWN_RECORD_GROUPS.flatMap((group) => {
+    const records = known.groups.get(group.kind) ?? [];
+    return records.length === 0 ? [] : [{ ...group, records }];
+  });
+  // The known lists and the free allowances left, after the items: only
+  // the kinds the character knows, like the item categories.
+  const knownSections = (
+    <>
+      {known.allowanceGroups.length === 0 ? null : (
+        <tbody>
+          <tr className="inventory-allowance-row">
+            <td colSpan={3}>
+              <RitualAllowanceSummary groups={known.allowanceGroups} />
+            </td>
+          </tr>
+        </tbody>
+      )}
+      {knownGroups.map(({ kind, label, records }) => {
+        const expanded = knownGroupExpansion.get(kind) ?? true;
+        const sectionId = `inventory-known-${kind}`;
+        return (
+          <Fragment key={kind}>
+            <tbody>
+              <tr className="inventory-category-row table-section-row">
+                <th colSpan={3} scope="rowgroup">
+                  <button
+                    className="table-section-toggle"
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={sectionId}
+                    onClick={() =>
+                      setKnownGroupExpansion((current) =>
+                        new Map(current).set(kind, !expanded),
+                      )
+                    }
+                  >
+                    <Icon name="chevron" />
+                    <span className="inventory-category-label">
+                      <span>{label}</span>
+                      <small
+                        className="table-section-count"
+                        aria-label={`${records.length} known`}
+                      >
+                        {records.length}
+                      </small>
+                    </span>
+                  </button>
+                </th>
+              </tr>
+            </tbody>
+            <tbody id={sectionId} hidden={!expanded}>
+              {expanded
+                ? records.map((record) => {
+                    const name = record.entity?.name ?? record.element.name;
+                    const value = (field: string) =>
+                      record.entity === undefined
+                        ? undefined
+                        : contentSpecificValue(record.entity, field)?.trim();
+                    const level = value("Level");
+                    const source = knownRecordSourceLabel(
+                      record,
+                      known.allowanceProvider,
+                    );
+                    return (
+                      <tr
+                        className="table-clickable-row"
+                        data-known-entry={knownRecordKey(record)}
+                        key={knownRecordKey(record)}
+                        onClick={() => inspectKnown(record)}
+                        onContextMenu={(event) =>
+                          openKnownContextMenu(event, record, name)
+                        }
+                      >
+                        <th scope="row" colSpan={3}>
+                          <button
+                            type="button"
+                            className="table-inspect-button inventory-item-button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              inspectKnown(record);
+                            }}
+                          >
+                            <span className="inventory-item-icon item-icon">
+                              <Icon
+                                name={
+                                  record.entity === undefined
+                                    ? "book"
+                                    : canonicalItemIcon(record.entity)
+                                }
+                              />
+                            </span>
+                            <span className="inventory-item-copy">
+                              <span className="inventory-item-name">
+                                {name}
+                              </span>
+                              <DotList
+                                className="inventory-known-detail"
+                                items={[
+                                  level === undefined || level === ""
+                                    ? undefined
+                                    : `Level ${level}`,
+                                  value("Category"),
+                                  value("Key Skill"),
+                                  source,
+                                ]}
+                              />
+                            </span>
+                          </button>
+                        </th>
+                      </tr>
+                    );
+                  })
+                : null}
+            </tbody>
+          </Fragment>
+        );
+      })}
+    </>
+  );
   // One row per holding, except a package pair's second holding.
   const inventoryRows = inventory.filter(
     (entry) => (packageGroups.get(entry.id)?.representative ?? entry) === entry,
@@ -1329,7 +1549,9 @@ export function EquipmentWorkspace({
                   />
                 ) : (
                   <>
-                    {inventoryGroups.length === 0 ? (
+                    {inventoryGroups.length === 0 &&
+                    knownGroups.length === 0 &&
+                    known.allowanceGroups.length === 0 ? (
                       <p>No carried inventory.</p>
                     ) : (
                       <div className="equipment-table-scroll inventory-table-scroll">
@@ -1343,6 +1565,13 @@ export function EquipmentWorkspace({
                               </th>
                             </tr>
                           </thead>
+                          {inventoryGroups.length === 0 ? (
+                            <tbody>
+                              <tr className="inventory-empty-row">
+                                <td colSpan={3}>No carried inventory.</td>
+                              </tr>
+                            </tbody>
+                          ) : null}
                           {inventoryGroups.map(({ category, entries }) => {
                             const expanded =
                               inventoryCategoryExpansion.get(category.id) ??
@@ -1803,6 +2032,7 @@ export function EquipmentWorkspace({
                               </Fragment>
                             );
                           })}
+                          {knownSections}
                         </table>
                       </div>
                     )}
@@ -1829,7 +2059,9 @@ export function EquipmentWorkspace({
                 })
               }
               onAcquire={onPurchase}
-              // Shop mode offers only item categories (learning is in Rituals).
+              knownDefinitionIds={known.knownIds}
+              ritualCostPercent={known.ritualCostPercent}
+              onLearn={learnFromShop}
               onBrowseChange={(category) =>
                 onShopCategoryChange(category as ShopCategory)
               }
@@ -1842,6 +2074,7 @@ export function EquipmentWorkspace({
           <ItemDetail
             byId={byId}
             item={inspected}
+            {...(inspected?.note === undefined ? {} : { note: inspected.note })}
             onSetItemSetPartyPieces={(setId, pieces) =>
               onSetText(
                 itemSetPartyCountName(setId, build.textStrings),
@@ -1853,6 +2086,18 @@ export function EquipmentWorkspace({
       </div>
       {contextMenu === undefined ? null : (
         <ItemContextMenu menu={contextMenu} onClose={closeContextMenu} />
+      )}
+      {pendingFree === undefined ? null : (
+        <AllowanceChoiceDialog
+          name={pendingFree.entity.name}
+          allowances={pendingFree.allowances}
+          describe={known.describeAllowance}
+          onCancel={() => setPendingFree(undefined)}
+          onLearn={(allowance) => {
+            learnKnown(pendingFree.entity, 0, allowance);
+            setPendingFree(undefined);
+          }}
+        />
       )}
       {choosing === undefined ? null : (
         <ItemChoiceDialog

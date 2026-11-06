@@ -5,7 +5,6 @@ export type BuilderWorkspaceTab =
   | "details"
   | "equipment"
   | "shop"
-  | "rituals"
   | "diagnostics"
   | "house-rules";
 
@@ -39,9 +38,10 @@ export type ShopCategory =
   | "weapons"
   | "weapon-enchantments"
   | "wondrous-items"
-  | "worn-items";
+  | "worn-items"
+  | RitualCategory;
 
-/** A catalog the Rituals tab learns from; opening one shows the catalog. */
+/** A Shop catalog whose records are learned (known), not held. */
 export type RitualCategory =
   "rituals" | "alchemical-formulas" | "martial-practices";
 
@@ -57,8 +57,7 @@ export type BuilderNavigation =
         "overview" | "details" | "diagnostics" | "house-rules";
     }
   | { readonly workspace: "equipment"; readonly loadout?: boolean }
-  | { readonly workspace: "shop"; readonly category?: ShopCategory }
-  | { readonly workspace: "rituals"; readonly category?: RitualCategory };
+  | { readonly workspace: "shop"; readonly category?: ShopCategory };
 
 export type AppRoute =
   | { readonly page: "settings" }
@@ -80,7 +79,6 @@ const BUILDER_WORKSPACES: readonly BuilderWorkspaceTab[] = [
   "details",
   "equipment",
   "shop",
-  "rituals",
   "diagnostics",
   "house-rules",
 ];
@@ -115,6 +113,9 @@ const SHOP_CATEGORIES: readonly ShopCategory[] = [
   "wondrous-items",
   "worn-items",
   "scrolls",
+  "rituals",
+  "alchemical-formulas",
+  "martial-practices",
 ];
 const RITUAL_CATEGORIES: readonly RitualCategory[] = [
   "rituals",
@@ -143,6 +144,17 @@ function parseBuilderNavigation(query: string): BuilderNavigation {
   const parameters = new URLSearchParams(query);
   const requestedWorkspace = parameters.get("tab");
   if (requestedWorkspace === "inventory") return { workspace: "equipment" };
+  // The Rituals tab folded into the Shop's learning categories, its known
+  // list into the Inventory (D114).
+  if (requestedWorkspace === "rituals") {
+    const category = parameters.get("category");
+    return {
+      workspace: "shop",
+      category: includesValue(RITUAL_CATEGORIES, category)
+        ? category
+        : "rituals",
+    };
+  }
   if (requestedWorkspace === "loadout")
     return { workspace: "equipment", loadout: true };
   const workspace = includesValue(BUILDER_WORKSPACES, requestedWorkspace)
@@ -153,7 +165,8 @@ function parseBuilderNavigation(query: string): BuilderNavigation {
   if (workspace === "equipment") {
     const section = parameters.get("section");
     if (section === "shop") return { workspace: "shop", category: "items" };
-    if (section === "practices") return { workspace: "rituals" };
+    if (section === "practices")
+      return { workspace: "shop", category: "rituals" };
     return {
       workspace,
       ...(section === "loadout" || parameters.get("loadout") === "1"
@@ -163,19 +176,9 @@ function parseBuilderNavigation(query: string): BuilderNavigation {
   }
   if (workspace === "shop") {
     const category = parameters.get("category");
-    // Learning moved out of Shop into the Rituals tab.
-    if (includesValue(RITUAL_CATEGORIES, category))
-      return { workspace: "rituals", category };
     return {
       workspace,
       ...(includesValue(SHOP_CATEGORIES, category) ? { category } : {}),
-    };
-  }
-  if (workspace === "rituals") {
-    const category = parameters.get("category");
-    return {
-      workspace,
-      ...(includesValue(RITUAL_CATEGORIES, category) ? { category } : {}),
     };
   }
   const levelValue = parameters.get("level");
@@ -253,10 +256,7 @@ export function characterEditorHash(
   } else if (navigation.workspace === "retraining") {
     if (navigation.level !== undefined)
       parameters.set("level", String(navigation.level));
-  } else if (
-    navigation.workspace === "shop" ||
-    navigation.workspace === "rituals"
-  ) {
+  } else if (navigation.workspace === "shop") {
     if (navigation.category !== undefined)
       parameters.set("category", navigation.category);
   }

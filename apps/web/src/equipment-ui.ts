@@ -253,7 +253,8 @@ export type ShopBrowseId =
   | "alchemical-formulas"
   | "martial-practices";
 
-export const SHOP_BROWSE_CATEGORIES: readonly {
+/** The Shop's item categories; "All items" covers these only. */
+export const ITEM_BROWSE_CATEGORIES: readonly {
   readonly id: ShopBrowseId;
   readonly label: string;
 }[] = [
@@ -273,8 +274,9 @@ export const SHOP_BROWSE_CATEGORIES: readonly {
   { id: "worn-items", label: "Worn items" },
 ];
 
-/** The learning catalogs, in the Rituals tab rather than Shop. */
-export const RITUAL_BROWSE_CATEGORIES: readonly {
+/** The Shop's learning categories: buying one of their records learns it
+ *  (the character's known list), it is never held (D114). */
+export const LEARNING_BROWSE_CATEGORIES: readonly {
   readonly id: ShopBrowseId;
   readonly label: string;
 }[] = [
@@ -282,6 +284,24 @@ export const RITUAL_BROWSE_CATEGORIES: readonly {
   { id: "alchemical-formulas", label: "Alchemical formulas" },
   { id: "martial-practices", label: "Martial practices" },
 ];
+
+/** Every Shop category: the item categories, then the learning ones. */
+export const SHOP_BROWSE_CATEGORIES: readonly {
+  readonly id: ShopBrowseId;
+  readonly label: string;
+}[] = [...ITEM_BROWSE_CATEGORIES, ...LEARNING_BROWSE_CATEGORIES];
+
+/** Whether a Shop category's records are learned rather than held. */
+export function isLearningBrowse(id: ShopBrowseId | undefined): boolean {
+  return LEARNING_BROWSE_CATEGORIES.some((category) => category.id === id);
+}
+
+/** Whether a record is learned (a ritual, formula or practice), not held;
+ *  a Ritual Scroll is an item. */
+export function isLearnedRecord(entity: ContentEntity): boolean {
+  const kind = practiceKind(entity);
+  return kind !== undefined && kind !== "scroll";
+}
 
 export type InventoryCategoryId =
   | "adventuring-gear"
@@ -663,8 +683,8 @@ const shopCatalogs = new WeakMap<
   Map<readonly { readonly id: ShopBrowseId }[], readonly ContentEntity[]>
 >();
 
-/** The records the Shop (or the Rituals catalog) offers under these browse
- * categories, in content order: once per content and category list. */
+/** The records the Shop offers under these browse categories, in content
+ * order: once per content and category list. */
 export function shopCatalog(
   entities: readonly ContentEntity[],
   categories: readonly { readonly id: ShopBrowseId }[],

@@ -18,7 +18,6 @@ import {
   preferredShopBrowse,
   readShopSessionPreferences,
   retainedShopFilter,
-  shopKnownFilterMatches,
   ShopWorkspace,
   writeShopSessionPreferences,
 } from "./ShopWorkspace";
@@ -175,7 +174,6 @@ describe("Shop workspace", () => {
       subtype: "Axe",
       affordable: false,
       proficient: false,
-      knownOnly: true,
       advancedOpen: true,
       legacy: "Magic Weapons",
       source: "Public fixture",
@@ -213,12 +211,6 @@ describe("Shop workspace", () => {
     expect(retainedShopFilter("Head", ["Head", "Neck"], false)).toBe("Head");
     expect(retainedShopFilter("Head", ["Neck"], false)).toBe("");
     expect(retainedShopFilter("Head", ["Head"], true)).toBe("");
-  });
-
-  it("applies Known only while browsing learnable records", () => {
-    expect(shopKnownFilterMatches(true, true, false)).toBe(false);
-    expect(shopKnownFilterMatches(false, true, false)).toBe(true);
-    expect(shopKnownFilterMatches(true, false, false)).toBe(true);
   });
 
   it("orders the acquisition dialog's pages with item-owned choices before a physical pairing", () => {
@@ -403,9 +395,10 @@ describe("Shop workspace", () => {
     );
 
     expect(markup).toContain("All items");
-    // Learning catalogs live in the Rituals tab, not Shop.
-    expect(markup).not.toContain("Alchemical formulas");
-    expect(markup).not.toContain("Martial practices");
+    // The learning categories follow the items, in their own group (D114).
+    expect(markup).toContain(
+      '<optgroup label="Rituals and practices"><option value="rituals">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></optgroup>',
+    );
     expect(markup).toContain("Implement enchantments");
     expect(markup).toMatch(
       /aria-pressed="true"><svg[^>]*lucide-coins[\s\S]*?<\/svg> Affordable/,
@@ -473,7 +466,7 @@ describe("Shop workspace", () => {
   });
 });
 
-describe("Shop catalog in learning mode", () => {
+describe("Shop learning categories", () => {
   const ritual: ContentEntity = {
     ...potion,
     id: "PUBLIC_RITUAL",
@@ -499,11 +492,13 @@ describe("Shop catalog in learning mode", () => {
       },
     ],
   };
-  const render = (knownDefinitionIds: ReadonlySet<string>) =>
+  const render = (
+    knownDefinitionIds: ReadonlySet<string>,
+    browse: "rituals" | "all" = "rituals",
+  ) =>
     renderToStaticMarkup(
       createElement(ShopWorkspace, {
-        mode: "learning",
-        browse: "rituals",
+        browse,
         characterLevel: 1,
         entities: [potion, ritual, formula],
         inventory: [],
@@ -517,21 +512,30 @@ describe("Shop catalog in learning mode", () => {
       }),
     );
 
-  it("offers only the learning catalogs, with Buy and Learn free", () => {
+  it("lists a category's records with Buy and Learn free, in the Shop's own toolbar", () => {
     const markup = render(new Set());
     expect(markup).toContain('aria-label="Buy Public Rite"');
     expect(markup).toContain('aria-label="Learn Public Rite free"');
     expect(markup).not.toContain("Public Potion");
     expect(markup).not.toContain("Public Formula");
-    expect(markup).toContain("Alchemical formulas");
-    expect(markup).not.toContain("All items");
-    expect(markup).toMatch(/aria-pressed="false">.*Known<\/button>/);
+    expect(markup).toContain('placeholder="Search rituals…"');
+    // The same controls as the item categories, in the same places.
+    expect(markup).toMatch(/<\/svg> Affordable<\/button>/);
+    expect(markup).toMatch(/<\/svg> Proficient<\/button>/);
+    expect(markup).not.toMatch(/<\/svg> Known<\/button>/);
+    expect(markup).toContain('class="selection-sort-button">Owned<svg');
+  });
+
+  it("keeps rituals, formulas and practices out of All items", () => {
+    const markup = render(new Set(), "all");
+    expect(markup).toContain("Public Potion");
+    expect(markup).not.toContain("Public Rite");
+    expect(markup).not.toContain("Public Formula");
   });
 
   it("prices rituals at the character's Ritual Cost Modifier percent (legacy LootCost)", () => {
     const markup = renderToStaticMarkup(
       createElement(ShopWorkspace, {
-        mode: "learning",
         browse: "rituals",
         characterLevel: 1,
         entities: [ritual],

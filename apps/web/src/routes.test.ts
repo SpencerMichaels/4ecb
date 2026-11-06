@@ -116,15 +116,11 @@ describe("hash routes", () => {
         expected: { workspace: "shop", category: "consumables" },
       },
       {
-        navigation: { workspace: "rituals" as const },
-        expected: { workspace: "rituals" },
-      },
-      {
         navigation: {
-          workspace: "rituals" as const,
+          workspace: "shop" as const,
           category: "martial-practices" as const,
         },
-        expected: { workspace: "rituals", category: "martial-practices" },
+        expected: { workspace: "shop", category: "martial-practices" },
       },
       {
         navigation: { workspace: "diagnostics" as const },
@@ -171,7 +167,6 @@ describe("hash routes", () => {
       [{ workspace: "equipment" as const, loadout: true }, "loadout"],
       [{ workspace: "equipment" as const }, "inventory"],
       [{ workspace: "shop" as const }, "shop"],
-      [{ workspace: "rituals" as const }, "rituals"],
       [{ workspace: "retraining" as const }, "retraining"],
       [{ workspace: "diagnostics" as const }, "diagnostics"],
       [{ workspace: "house-rules" as const }, "house-rules"],
@@ -223,14 +218,26 @@ describe("hash routes", () => {
     expect(
       parseHashRoute("#/characters/one/edit?tab=equipment&section=practices"),
     ).toMatchObject({
-      builder: { workspace: "rituals" },
+      builder: { workspace: "shop", category: "rituals" },
     });
-    // Learning moved out of Shop: old Shop learning links open the Rituals tab.
+    // The Shop's learning categories are its own again (D114).
     expect(
       canonicalHashRedirect(
         "#/characters/one/edit?tab=shop&category=alchemical-formulas",
       ),
-    ).toBe("#/characters/one/edit?tab=rituals&category=alchemical-formulas");
+    ).toBeUndefined();
+    // The removed Rituals tab, and its catalogs, open the Shop's categories.
+    expect(canonicalHashRedirect("#/characters/one/edit?tab=rituals")).toBe(
+      "#/characters/one/edit?tab=shop&category=rituals",
+    );
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=rituals&category=martial-practices",
+      ),
+    ).toBe("#/characters/one/edit?tab=shop&category=martial-practices");
+    expect(
+      canonicalHashRedirect("#/characters/one/edit?tab=rituals&category=bogus"),
+    ).toBe("#/characters/one/edit?tab=shop&category=rituals");
     expect(
       parseHashRoute("#/characters/one/edit?tab=equipment&section=shop"),
     ).toMatchObject({

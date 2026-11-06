@@ -137,17 +137,6 @@ button.dialog-close {
   width: 100%;
 }
 
-/* A section row's label when the section doesn't fold: the toggle's
-   padding and weight, without the button. */
-.table-section-label {
-  align-items: baseline;
-  display: flex;
-  font-weight: 800;
-  gap: 0.4rem;
-  padding: 0.45rem 0.55rem;
-  text-align: left;
-}
-
 .table-section-toggle .icon {
   height: 0.95rem;
   transition: transform 100ms ease;

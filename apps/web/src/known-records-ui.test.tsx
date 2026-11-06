@@ -1,8 +1,10 @@
-import { createElement } from "react";
+// @vitest-environment jsdom
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CharacterBuild } from "@4ecb/character-domain";
+import type { BuildKnownEntry, CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 import {
   evaluateCharacter,
@@ -11,14 +13,18 @@ import {
   type RitualAllowanceStatus,
 } from "@4ecb/rules-engine";
 
+import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import {
   AllowanceChoiceDialog,
   groupKnownRecords,
   knownRecordSourceLabel,
   ritualAllowanceGroups,
   ritualAllowanceLabel,
-  RitualsWorkspace,
-} from "./RitualsWorkspace";
+} from "./known-records-ui";
+
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function rule(
   name: string,
@@ -96,6 +102,14 @@ const content = [
   entity("RITUAL_BOUGHT", "Bought Rite", "Ritual", {
     specifics: { Category: "Warding", Level: "2", type: "Ritual" },
   }),
+  entity("RITUAL_NEW", "New Rite", "Ritual", {
+    specifics: {
+      Category: "Travel",
+      Level: "1",
+      "Market Price": "50 gp",
+      type: "Ritual",
+    },
+  }),
   entity("FORMULA", "Synthetic Formula", "Ritual", {
     specifics: { Category: "Poison", Level: "3", type: "Alchemical Formula" },
   }),
@@ -159,72 +173,145 @@ const build: CharacterBuild = {
   baseAbilities: {},
   textStrings: {},
 };
-const evaluation = evaluateCharacter(
-  projectBuildForEvaluation(build, content),
-  content,
-);
+const evaluate = (value: CharacterBuild) =>
+  evaluateCharacter(projectBuildForEvaluation(value, content), content);
+const noCoins = { copper: 0, silver: 0, gold: 0, platinum: 0, astral: 0 };
 
-const render = (category?: "rituals") =>
-  renderToStaticMarkup(
-    createElement(RitualsWorkspace, {
-      build,
-      entities: content,
-      byId,
-      evaluation,
-      walletCopper: 10_000,
-      category,
-      onCategoryChange: vi.fn(),
-      onLearn: vi.fn(),
-      onRemove: vi.fn(),
-    }),
+let container: HTMLDivElement;
+let root: Root;
+beforeEach(() => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+});
+afterEach(() => {
+  act(() => root.unmount());
+  container.remove();
+});
+
+function renderWorkspace(
+  options: {
+    readonly build?: CharacterBuild;
+    readonly workspace?: "equipment" | "shop";
+    readonly onLearnKnown?: (
+      entry: BuildKnownEntry,
+      priceCopper: number,
+    ) => void;
+    readonly onRemoveKnown?: (entryId: string) => void;
+  } = {},
+) {
+  const value = options.build ?? build;
+  act(() =>
+    root.render(
+      <EquipmentWorkspace
+        build={value}
+        entities={content}
+        byId={byId}
+        wallet={{ carried: { ...noCoins, gold: 100 }, stored: noCoins }}
+        activeDefinitionIds={[]}
+        workspace={options.workspace ?? "equipment"}
+        loadoutView={false}
+        shopCategory="rituals"
+        onShopCategoryChange={() => undefined}
+        onPutInventory={() => undefined}
+        onPurchase={() => undefined}
+        onSell={() => undefined}
+        onInventoryCommands={() => undefined}
+        onEquipSlot={() => undefined}
+        onSetWielding={() => undefined}
+        onSetAugment={() => undefined}
+        onSetText={() => undefined}
+        evaluation={evaluate(value)}
+        onLearnKnown={options.onLearnKnown ?? vi.fn()}
+        onRemoveKnown={options.onRemoveKnown ?? vi.fn()}
+      />,
+    ),
   );
+}
 
-describe("Rituals workspace", () => {
-  it("lists known records by kind with their source, once each", () => {
-    const records = knownRecords(build, evaluation, (id) =>
+const rowNamed = (name: string) =>
+  [...container.querySelectorAll("tr")].find((row) =>
+    row.querySelector(".inventory-item-name")?.textContent?.includes(name),
+  )!;
+const rightClick = (target: Element) =>
+  act(() => {
+    target.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 40,
+        clientY: 50,
+      }),
+    );
+  });
+const menuItem = (label: string) =>
+  [...document.querySelectorAll(".item-context-menu button")].find(
+    (button) => button.textContent === label,
+  ) as HTMLButtonElement | undefined;
+
+describe("Known records in the Inventory (D114)", () => {
+  it("groups known records by kind, sources without levels, once each", () => {
+    const records = knownRecords(build, evaluate(build), (id) =>
       byId.get(id.toLowerCase()),
     );
     const groups = groupKnownRecords(records);
     expect(
       groups.get("ritual")?.map((record) => knownRecordSourceLabel(record)),
-    ).toEqual(["Bought at level 1", "Granted by Synthetic Druid"]);
+    ).toEqual([undefined, "Granted by Synthetic Druid"]);
     expect(groups.get("alchemical-formula")).toEqual([]);
     expect(groups.get("martial-practice")).toEqual([]);
   });
 
-  it("shows what is still free, every group, and Remove only for learned records", () => {
-    const markup = render();
-    // The class's rule sentence is not repeated: a heading naming the
-    // provider, then a line per allowance with some left.
-    expect(markup).not.toContain("As a druid you have been given");
-    expect(markup).toContain(
-      '<div class="rituals-allowance"><div class="rituals-allowance-group"><p class="rituals-allowance-heading"><strong>Free rituals</strong><span class="rituals-allowance-source"> (Synthetic Druid)</span></p><p class="rituals-allowance-count">1 free 1st-level ritual</p></div></div>',
+  it("lists the kinds the character knows after the items, with the free rituals left", () => {
+    renderWorkspace();
+    const text = container.textContent ?? "";
+    // No items: the table still holds the known lists.
+    expect(text).toContain("No carried inventory.");
+    expect(container.querySelector(".inventory-allowance-row")?.innerHTML).toBe(
+      '<td colspan="3"><div class="rituals-allowance"><div class="rituals-allowance-group"><p class="rituals-allowance-heading"><strong>Free rituals</strong><span class="rituals-allowance-source"> (Synthetic Druid)</span></p><p class="rituals-allowance-count">1 free 1st-level ritual</p></div></div></td>',
     );
-    expect(markup).toContain("Learn rituals");
-    for (const heading of [
-      "Rituals",
-      "Alchemical formulas",
-      "Martial practices",
-    ])
-      expect(markup).toContain(
-        `<span class="table-section-label"><span>${heading}</span>`,
-      );
-    expect(markup).toContain("No alchemical formulas known.");
-    expect(markup).toContain("No martial practices known.");
-    expect(markup).toContain("Granted by Synthetic Druid");
-    expect(markup).toContain('aria-label="Remove Bought Rite"');
-    // A granted record has no Remove, even with an imported stored copy.
-    expect(markup).not.toContain('aria-label="Remove Gifted Rite"');
-    expect(markup).toContain("<td>Exploration</td><td>Nature</td>");
+    expect(text).not.toContain("As a druid you have been given");
+    // The group count sits in the same label element as the item
+    // categories' counts (same size as the title).
+    const labels = [
+      ...container.querySelectorAll(".inventory-category-label"),
+    ].map((label) => label.textContent);
+    expect(labels).toEqual(["Rituals known2"]);
+    expect(
+      container.querySelector(".inventory-category-label .table-section-count")
+        ?.textContent,
+    ).toBe("2");
+    // A kind the character doesn't know has no group, like an item
+    // category with no holdings.
+    expect(text).not.toContain("Alchemical formulas known");
+    expect(rowNamed("Gifted Rite").textContent).toBe(
+      "Gifted RiteLevel 1 Exploration Nature Granted by Synthetic Druid",
+    );
+    expect(rowNamed("Bought Rite").textContent).toBe(
+      "Bought RiteLevel 2 Warding",
+    );
+    expect(text).not.toMatch(/at level/i);
+    // No per-row buttons: Remove is in the right-click menu.
+    expect(rowNamed("Bought Rite").querySelectorAll("button")).toHaveLength(1);
+  });
+
+  it("removes a learned record from its right-click menu; a granted one says why not", () => {
+    const onRemoveKnown = vi.fn();
+    renderWorkspace({ onRemoveKnown });
+    rightClick(rowNamed("Gifted Rite"));
+    const inert = menuItem("Remove");
+    expect(inert?.getAttribute("aria-disabled")).toBe("true");
+    expect(inert?.title).toBe(
+      "Granted by Synthetic Druid; it can't be removed.",
+    );
+    act(() => inert?.click());
+    expect(onRemoveKnown).not.toHaveBeenCalled();
+    rightClick(rowNamed("Bought Rite"));
+    act(() => menuItem("Remove")?.click());
+    expect(onRemoveKnown).toHaveBeenCalledWith("bought");
   });
 
   it("drops the free-ritual block once every allowance is used", () => {
-    const withFree = [
-      ...content,
-      entity("RITUAL_FREE", "Free Rite", "Ritual", {
-        specifics: { Category: "Travel", Level: "1", type: "Ritual" },
-      }),
-    ];
     const used: CharacterBuild = {
       ...build,
       known: [
@@ -233,8 +320,8 @@ describe("Rituals workspace", () => {
           id: "free-pick",
           acquiredLevel: 1,
           element: {
-            definitionId: "RITUAL_FREE",
-            name: "Free Rite",
+            definitionId: "RITUAL_NEW",
+            name: "New Rite",
             type: "Ritual",
           },
           acquisition: "free",
@@ -242,26 +329,50 @@ describe("Rituals workspace", () => {
         },
       ],
     };
-    const markup = renderToStaticMarkup(
-      createElement(RitualsWorkspace, {
-        build: used,
-        entities: withFree,
-        byId: new Map(withFree.map((value) => [value.id.toLowerCase(), value])),
-        evaluation: evaluateCharacter(
-          projectBuildForEvaluation(used, withFree),
-          withFree,
-        ),
-        walletCopper: 10_000,
-        category: undefined,
-        onCategoryChange: vi.fn(),
-        onLearn: vi.fn(),
-        onRemove: vi.fn(),
-      }),
+    renderWorkspace({ build: used });
+    expect(container.querySelector(".rituals-allowance")).toBeNull();
+    expect(rowNamed("New Rite").textContent).toContain(
+      "Learned free (Synthetic Druid)",
     );
-    expect(markup).not.toContain("rituals-allowance");
-    // The Known table and Learn rituals stay.
-    expect(markup).toContain("Learn rituals");
-    expect(markup).toContain("Free Rite");
+  });
+});
+
+describe("Learning in the Shop (D114)", () => {
+  it("buys a ritual into the known list and learns one free with the allowance it fits", () => {
+    const onLearnKnown = vi.fn();
+    renderWorkspace({ workspace: "shop", onLearnKnown });
+    const buy = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Buy New Rite"]',
+    )!;
+    act(() => buy.click());
+    expect(onLearnKnown).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        acquiredLevel: 1,
+        acquisition: "bought",
+        element: {
+          definitionId: "RITUAL_NEW",
+          name: "New Rite",
+          type: "Ritual",
+        },
+      }),
+      5_000,
+    );
+    expect(onLearnKnown.mock.lastCall?.[0]).not.toHaveProperty("allowance");
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Learn New Rite free"]')!
+        .click(),
+    );
+    expect(onLearnKnown).toHaveBeenLastCalledWith(
+      expect.objectContaining({ acquisition: "free", allowance: "CLASS" }),
+      0,
+    );
+    // Known records are marked like owned items and can't be learned again.
+    const known = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Buy Bought Rite"]',
+    );
+    expect(known?.disabled).toBe(true);
+    expect(known?.closest("tr")?.textContent).toContain("Known");
   });
 
   it("labels allowance counters and the allowance a ritual used", () => {
@@ -303,7 +414,6 @@ describe("Rituals workspace", () => {
     expect(ritualAllowanceLabel(choice, (id) => id.toUpperCase())).toBe(
       "1 free ritual: A, B or C",
     );
-    // Nothing left (used up, or not earned yet): no line.
     const usedUp = status(
       { total: 2, remaining: 0, remainders: [] },
       "Martial Practice",
@@ -313,8 +423,6 @@ describe("Rituals workspace", () => {
       ritualAllowanceLabel(status({ total: 0, remaining: 0, remainders: [] })),
     ).toBeUndefined();
 
-    // Grouped by provider, in order: a psion's two allowances under one
-    // heading; a provider with nothing left has no group.
     const as = (
       value: RitualAllowanceStatus,
       providerId: string,
@@ -393,21 +501,14 @@ describe("Rituals workspace", () => {
       knownRecordSourceLabel(record!, (key) =>
         key === "P" ? "Spellbook" : undefined,
       ),
-    ).toBe("Learned free at level 3 (Spellbook)");
-  });
-
-  it("swaps the main pane to the learning catalog", () => {
-    const markup = render("rituals");
-    expect(markup).toContain("Known rituals");
-    expect(markup).toContain('aria-label="Learn Bought Rite free"');
-    expect(markup).not.toContain("</svg> Learn rituals</button>");
+    ).toBe("Learned free (Spellbook)");
   });
 
   it("hangs each Learn-free option's text beside its radio", () => {
     const markup = renderToStaticMarkup(
-      createElement(AllowanceChoiceDialog, {
-        name: "Tenser's Floating Disk",
-        allowances: [
+      <AllowanceChoiceDialog
+        name="Tenser's Floating Disk"
+        allowances={[
           {
             key: "PSION",
             providerId: "PSION",
@@ -415,14 +516,12 @@ describe("Rituals workspace", () => {
             kind: "Ritual",
             steps: [],
           },
-        ],
-        describe: () => "1 free ritual: Sending or Tenser's Floating Disk",
-        onLearn: vi.fn(),
-        onCancel: vi.fn(),
-      }),
+        ]}
+        describe={() => "1 free ritual: Sending or Tenser's Floating Disk"}
+        onLearn={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
-    // Every option, "None (a gift)" included, is a two-column choice: the
-    // radio, then one text element (no loose text beside the control).
     expect(markup.match(/<label class="dialog-choice">/g)).toHaveLength(2);
     expect(markup).toContain(
       '<label class="dialog-choice"><input type="radio" name="ritual-allowance" checked=""/><span class="dot-list">',
@@ -430,5 +529,6 @@ describe("Rituals workspace", () => {
     expect(markup).toContain(
       '<input type="radio" name="ritual-allowance"/><span>None (a gift)</span></label>',
     );
+    expect(markup).toContain(">Cancel</button>");
   });
 });

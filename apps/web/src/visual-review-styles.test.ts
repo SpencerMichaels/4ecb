@@ -22,7 +22,7 @@ function declarations(selector: string): string {
 }
 
 describe("visual-review facts decided by CSS", () => {
-  it("indents the Rituals tab's free-ritual lines under their heading", () => {
+  it("indents the free-ritual lines under their heading", () => {
     expect(declarations(".rituals-allowance-count")).toContain(
       "padding-inline-start: 1rem",
     );
@@ -31,9 +31,12 @@ describe("visual-review facts decided by CSS", () => {
   it("mutes ritual source lines and the Learn-free dialog's detail", () => {
     expect(
       declarations(
-        ".ritual-allowance-option-detail, .rituals-allowance-source, .rituals-known-source",
+        ".ritual-allowance-option-detail, .rituals-allowance-source",
       ),
     ).toContain("color: var(--muted)");
+    expect(declarations(".inventory-table .inventory-known-detail")).toContain(
+      "color: var(--muted)",
+    );
   });
 
   it("hangs a dialog option's text beside its radio, in a dialog wide enough for a psion's options", () => {
@@ -45,30 +48,22 @@ describe("visual-review facts decided by CSS", () => {
     );
   });
 
-  it("sizes every Known-table column and pads its group labels", () => {
-    // Fixed layout takes widths from the header row: no column is left at
-    // the generic 1%, where text spills into the next column.
-    expect(declarations(".rituals-known-table thead th:nth-child(2)")).toBe(
-      "width: 3.5em;",
-    );
+  it("sizes the Inventory's known-group counts like their titles", () => {
+    // Known groups share the item categories' label: the count inherits
+    // the title's size, not the small generic count.
     expect(
       declarations(
-        ".rituals-known-table thead th:nth-child(3), .rituals-known-table thead th:nth-child(4)",
+        ".inventory-table .inventory-category-row .table-section-count",
       ),
-    ).toBe("width: 7.5em;");
-    expect(declarations(".rituals-known-table thead th:last-child")).toBe(
-      "width: 2rem;",
-    );
-    expect(
-      declarations(".rituals-known-table :is(th, td):not(:first-child)"),
-    ).toContain("white-space: normal");
-    expect(declarations(".table-section-label")).toContain(
-      "padding: 0.45rem 0.55rem",
+    ).toContain("font-size: inherit");
+    // A known record's detail line wraps under its name.
+    expect(declarations(".inventory-table .inventory-known-detail")).toContain(
+      "white-space: normal",
     );
   });
 
-  it("sets the Known table's empty groups in muted italics", () => {
-    const empty = declarations(".rituals-empty-row td");
+  it("sets the Inventory's no-items line in muted italics", () => {
+    const empty = declarations(".inventory-table .inventory-empty-row td");
     expect(empty).toContain("font-style: italic");
     expect(empty).toContain("color: var(--muted)");
   });

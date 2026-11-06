@@ -853,7 +853,9 @@ describe("release accessibility contract", () => {
   it("keeps Shop filtering local, labeled, and independent of acquisition", () => {
     expect(shopWorkspace).toContain('type="search"');
     expect(shopWorkspace).toContain('"Search all items…"');
-    expect(shopWorkspace).toContain('"Search rituals…"');
+    expect(shopWorkspace).toContain(
+      "`Search ${browseLabel.toLocaleLowerCase()}…`",
+    );
     expect(shopWorkspace).toContain("aria-pressed={affordable}");
     expect(shopWorkspace).toContain("aria-pressed={proficient}");
     expect(shopWorkspace).toContain("aria-label={`Buy ${displayName}`}");

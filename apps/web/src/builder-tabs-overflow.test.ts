@@ -50,7 +50,6 @@ describe("icon-only builder tabs", () => {
     "Loadout",
     "Inventory",
     "Shop",
-    "Rituals",
     "Retraining",
   ];
 

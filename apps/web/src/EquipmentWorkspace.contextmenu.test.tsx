@@ -114,6 +114,8 @@ describe("Equipment item right-click actions (D101)", () => {
           onSetWielding={onSetWielding}
           onSetAugment={() => undefined}
           onSetText={() => undefined}
+          onLearnKnown={() => undefined}
+          onRemoveKnown={() => undefined}
         />,
       ),
     );
@@ -184,6 +186,8 @@ describe("Equipment loadout size rules (D102)", () => {
           onSetWielding={onSetWielding}
           onSetAugment={() => undefined}
           onSetText={() => undefined}
+          onLearnKnown={() => undefined}
+          onRemoveKnown={() => undefined}
         />,
       ),
     );
@@ -266,6 +270,8 @@ describe("Equipment augment attachment (CharLootAugment)", () => {
           onSetWielding={() => undefined}
           onSetAugment={onSetAugment}
           onSetText={() => undefined}
+          onLearnKnown={() => undefined}
+          onRemoveKnown={() => undefined}
         />,
       ),
     );
@@ -433,6 +439,8 @@ describe("Equipment item-owned choices", () => {
           onSetWielding={() => undefined}
           onSetAugment={() => undefined}
           onSetText={() => undefined}
+          onLearnKnown={() => undefined}
+          onRemoveKnown={() => undefined}
         />,
       ),
     );

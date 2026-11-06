@@ -46,7 +46,6 @@ import {
   ZERO_CURRENCY,
   characterDisplayName,
   currentWalletTextKey,
-  currencyToCopper,
   formatLegacyCurrency,
   resolveCharacterWallet,
   type EquipmentSlotId,
@@ -157,7 +156,6 @@ import {
 import { ToastRegion, useToasts } from "./Toasts";
 import { RetrainingWorkspace } from "./RetrainingWorkspace";
 import { CompanionNameFields, hasCompanionChoice } from "./CompanionNameFields";
-import { RitualsWorkspace } from "./RitualsWorkspace";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
 import {
   AbilityIncreaseEditor,
@@ -2377,18 +2375,6 @@ export function CharacterEditorPage({
                   <Icon name="shopping-cart" />
                   <span className="builder-tab-label">Shop</span>
                 </button>
-                <button
-                  aria-selected={workspaceTab === "rituals"}
-                  role="tab"
-                  title="Rituals"
-                  type="button"
-                  onClick={() =>
-                    onNavigate(characterId, { workspace: "rituals" })
-                  }
-                >
-                  <Icon name="book-marked" />
-                  <span className="builder-tab-label">Rituals</span>
-                </button>
                 {/* Least used, so last. */}
                 <button
                   aria-selected={workspaceTab === "retraining"}
@@ -3076,45 +3062,13 @@ export function CharacterEditorPage({
                     onSetText={(name, value) =>
                       dispatch({ kind: "set-text", name, value })
                     }
-                  />
-                </BuilderCardContext.Provider>
-              )}
-            </div>
-
-            <div
-              className="builder-tab-content"
-              hidden={workspaceTab !== "rituals"}
-            >
-              {workspaceTab !== "rituals" ||
-              carriedWallet === undefined ||
-              storedWallet === undefined ? null : (
-                <BuilderCardContext.Provider
-                  value={equipmentCardSettings ?? buildCardSettings}
-                >
-                  <RitualsWorkspace
-                    build={build}
-                    entities={entities}
-                    byId={byId}
                     evaluation={currentEvaluation}
-                    walletCopper={
-                      currencyToCopper(carriedWallet) +
-                      currencyToCopper(storedWallet)
-                    }
-                    category={
-                      navigation.workspace === "rituals"
-                        ? navigation.category
-                        : undefined
-                    }
-                    onCategoryChange={(category) =>
-                      onNavigate(characterId, {
-                        workspace: "rituals",
-                        ...(category === undefined ? {} : { category }),
-                      })
-                    }
-                    onLearn={(entry, priceCopper) =>
+                    onLearnKnown={(entry, priceCopper) =>
                       dispatch({ kind: "learn-known", entry, priceCopper })
                     }
-                    onRemove={(id) => dispatch({ kind: "remove-known", id })}
+                    onRemoveKnown={(id) =>
+                      dispatch({ kind: "remove-known", id })
+                    }
                   />
                 </BuilderCardContext.Provider>
               )}
