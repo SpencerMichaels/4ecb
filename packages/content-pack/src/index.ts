@@ -9,6 +9,8 @@ import type {
 } from "@4ecb/content-domain";
 import { withoutStoredPrerequisiteIr } from "@4ecb/content-domain";
 
+import { readLimitedText, sha256 } from "./internal";
+
 export const CONTENT_PACK_FORMAT = "4ecb-content-pack";
 export const CONTENT_PACK_VERSION = 1;
 export const MAX_CONTENT_PACK_ENCODED_BYTES = 128 * 1024 * 1024;
@@ -38,6 +40,18 @@ export interface ContentPackManifest {
   >;
 }
 
+/**
+ * The campaign a materialized campaign profile was composed with (D116):
+ * its identity and the record IDs its restrictions resolved to against the
+ * composed entities. Only `composeCampaignProfile` sets it.
+ */
+export interface ContentPackCampaign {
+  readonly campaignId: string;
+  readonly revision: number;
+  readonly contentDigest: string;
+  readonly restrictedIds: readonly string[];
+}
+
 export interface ContentPack {
   readonly format: typeof CONTENT_PACK_FORMAT;
   readonly manifest: ContentPackManifest;
@@ -45,6 +59,7 @@ export interface ContentPack {
   readonly rejected: readonly RejectedContentRecord[];
   readonly rawTopLevel: readonly ContentNode[];
   readonly diagnostics: readonly ContentDiagnostic[];
+  readonly campaign?: ContentPackCampaign;
 }
 
 export interface BuildContentPackOptions {
@@ -166,20 +181,22 @@ function digestInput(pack: ContentPack): string {
     rejected: pack.rejected,
     rawTopLevel: pack.rawTopLevel,
     diagnostics: pack.diagnostics,
+    // Only when present, so packs without a campaign keep their digests.
+    ...(pack.campaign === undefined ? {} : { campaign: pack.campaign }),
   });
-}
-
-async function sha256(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const hash = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(hash)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 export async function buildContentPack(
   source: ParsedContentSource,
   options: BuildContentPackOptions,
+): Promise<ContentPack> {
+  return buildPack(source, options, undefined);
+}
+
+async function buildPack(
+  source: ParsedContentSource,
+  options: BuildContentPackOptions,
+  campaign: ContentPackCampaign | undefined,
 ): Promise<ContentPack> {
   const identityErrors = contentPackIdentityErrors(
     options.packId,
@@ -210,6 +227,7 @@ export async function buildContentPack(
     rejected: source.rejected,
     rawTopLevel: source.rawTopLevel,
     diagnostics: source.diagnostics,
+    ...(campaign === undefined ? {} : { campaign }),
   };
   const contentDigest = await sha256(digestInput(packWithoutDigest));
   return {
@@ -218,9 +236,16 @@ export async function buildContentPack(
   };
 }
 
+/**
+ * @param resolveCampaign internal: `composeCampaignProfile` derives the
+ * composed pack's `campaign` field from the resolved entities.
+ */
 export async function composeContentPacks(
   packs: readonly ContentPack[],
   options: BuildContentPackOptions,
+  resolveCampaign?: (
+    entities: readonly ContentEntity[],
+  ) => ContentPackCampaign | undefined,
 ): Promise<ComposedContentProfile> {
   if (packs.length === 0)
     throw new Error("A content profile requires at least one pack");
@@ -255,7 +280,7 @@ export async function composeContentPacks(
   const entities = [...resolved.values()].sort((left, right) =>
     left.id.localeCompare(right.id),
   );
-  const pack = await buildContentPack(
+  const pack = await buildPack(
     {
       gameSystem: gameSystem ?? "D&D4E",
       sourceKey: packs
@@ -296,6 +321,7 @@ export async function composeContentPacks(
       },
     },
     options,
+    resolveCampaign?.(entities),
   );
   return {
     layers: packs.map(({ manifest }) => ({
@@ -460,7 +486,20 @@ function isDiagnostic(value: unknown): boolean {
   );
 }
 
-function assertPackShape(value: unknown): asserts value is ContentPack {
+function isPackCampaign(value: unknown): boolean {
+  const campaign = isRecord(value) ? value : undefined;
+  return (
+    campaign !== undefined &&
+    typeof campaign.campaignId === "string" &&
+    isNonnegativeInteger(campaign.revision) &&
+    typeof campaign.contentDigest === "string" &&
+    isStringArray(campaign.restrictedIds)
+  );
+}
+
+export function assertContentPackShape(
+  value: unknown,
+): asserts value is ContentPack {
   if (!isRecord(value)) throw new Error("Content pack must be a JSON object");
   if (value.format !== CONTENT_PACK_FORMAT) {
     throw new Error(`Unsupported content pack format: ${String(value.format)}`);
@@ -541,11 +580,13 @@ function assertPackShape(value: unknown): asserts value is ContentPack {
     !value.diagnostics.every(isDiagnostic)
   )
     throw new Error("Content pack diagnostics are invalid");
+  if (value.campaign !== undefined && !isPackCampaign(value.campaign))
+    throw new Error("Content pack campaign is invalid");
 }
 
 export function decodeContentPack(value: string): ContentPack {
   const decoded: unknown = JSON.parse(value);
-  assertPackShape(decoded);
+  assertContentPackShape(decoded);
   return decoded;
 }
 
@@ -564,59 +605,15 @@ export async function decodeContentPackBytes(
   limits: ContentPackByteLimits = {},
   options: ContentPackDecodeOptions = {},
 ): Promise<ContentPack> {
-  const maxEncodedBytes =
-    limits.maxEncodedBytes ?? MAX_CONTENT_PACK_ENCODED_BYTES;
-  const maxDecodedBytes =
-    limits.maxDecodedBytes ?? MAX_CONTENT_PACK_DECODED_BYTES;
-  if (value.byteLength > maxEncodedBytes)
-    throw new Error(
-      `Content pack exceeds the ${maxEncodedBytes.toLocaleString()} byte input-size limit`,
-    );
-
-  const bytes = new Uint8Array(value);
-  const gzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
-  let consumedBytes = 0;
-  const source = new Blob([value]).stream().pipeThrough(
-    new TransformStream<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>({
-      transform(chunk, controller) {
-        consumedBytes += chunk.byteLength;
-        options.onProgress?.({
-          completed: consumedBytes,
-          total: value.byteLength,
-        });
-        controller.enqueue(chunk);
-      },
-    }),
-  );
-  const stream = gzip
-    ? source.pipeThrough(new DecompressionStream("gzip"))
-    : source;
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let decodedBytes = 0;
-  try {
-    while (true) {
-      const result = await reader.read();
-      if (result.done) break;
-      decodedBytes += result.value.byteLength;
-      if (decodedBytes > maxDecodedBytes) {
-        await reader.cancel();
-        throw new Error(
-          `Decoded content pack exceeds the ${maxDecodedBytes.toLocaleString()} byte limit`,
-        );
-      }
-      chunks.push(result.value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const decoded = new Uint8Array(decodedBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    decoded.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return decodeContentPack(new TextDecoder().decode(decoded));
+  const text = await readLimitedText(value, {
+    label: "content pack",
+    maxEncodedBytes: limits.maxEncodedBytes ?? MAX_CONTENT_PACK_ENCODED_BYTES,
+    maxDecodedBytes: limits.maxDecodedBytes ?? MAX_CONTENT_PACK_DECODED_BYTES,
+    ...(options.onProgress === undefined
+      ? {}
+      : { onProgress: options.onProgress }),
+  });
+  return decodeContentPack(text);
 }
 
 export async function validateContentPack(
@@ -730,3 +727,5 @@ export function diffContentPacks(
     unchangedCount,
   };
 }
+
+export * from "./campaign";

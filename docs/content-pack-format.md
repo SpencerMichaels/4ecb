@@ -74,6 +74,60 @@ are cached in IndexedDB, while imported personal packs remain above the baseline
 and never upload. Download/import changes availability only; profile activation
 and character migration remain explicit.
 
+## Campaign documents
+
+A campaign (D116) is a DM's house-rule content and restrictions as a portable
+document, layered over the server's packs for the characters that belong to
+it. A `.4ecc` file is canonical UTF-8 JSON followed by one newline, gzip
+optional (identified by magic bytes, as for `.4ecp`):
+
+```text
+CampaignDocument
+├── format: "4ecb-campaign", version: 1
+├── campaignId          1-32 pack-ID characters
+├── name                pack-name rules
+├── revision            integer 1..999,999; the DM bumps it on every change
+├── restrictions
+│   ├── ids[]           record IDs not offered (legacy Restricted)
+│   └── types[]         { type, allow: "campaign-only" }
+├── houseRules          an embedded ContentPack, packId campaign.<id>.r<revision>
+├── legacyHouseRulesXml the DM's RulesElement XML verbatim, for legacy export
+└── contentDigest       SHA-256
+```
+
+The digest covers every other field, in that order, with the overlay standing
+in as its own manifest digest; the overlay pack verifies itself. A campaign's
+identity is `(campaignId, contentDigest)`; `revision` orders its versions, and
+a store refuses the same ID and revision with a different digest.
+`buildCampaign` sorts restricted IDs and type rules ignoring case, so the
+digest does not depend on how they were listed; IDs and types must be unique
+ignoring case.
+
+`decodeCampaign` reads at most 16 MiB of input and 16 MiB decoded (streaming,
+before parsing), then checks the shape with counts before contents: at most
+10,000 house-rule records, 50,000 restricted IDs, 32 type rules and 8 MiB of
+legacy XML. It then validates (identity, revision, overlay pack ID, the
+overlay's own validation and both digests) and throws on any error.
+
+`composeCampaignProfile(basePacks, campaign, options)` composes
+`[...basePacks, campaign.houseRules]` with `last-pack-wins-v1` and resolves
+the restrictions against the composed records: an ID rule matches ignoring
+case (in the composed record's spelling; an ID with no record is kept as
+listed, for legacy round trips), and a type rule restricts every record of
+that type whose ID the house rules do not supply, so an overlay record that
+replaces a stock ID is campaign content. Type rules are resolved again on
+every composition, so records in later server revisions are covered. The
+materialized pack carries an optional top-level field:
+
+```text
+campaign: { campaignId, revision, contentDigest, restrictedIds[] }
+```
+
+It is part of the pack digest only when present, so every pack without it
+keeps its digest. Restricted records stay in the pack; the rules engine
+declines to offer them. A materialized campaign profile is never a base layer
+of another.
+
 ## Compatibility policy
 
 Readers reject unsupported format versions. Any future incompatible shape gets
