@@ -16,13 +16,20 @@ import type { EvaluatedCharacter } from "./evaluator";
  * record is known (D091: the new builder wins over legacy's one-time gift).
  */
 
-export type GrantedKnownVia = "grant" | "freebee";
+/**
+ * How the evaluation gives a record: `grant type="Ritual"`, a legacy
+ * `FREEBEE:<id>` free-gift stat, or the player's pick in a
+ * `select type="Ritual"` (a Psion's Sending or Tenser's Floating Disk,
+ * D115). A chosen record is known through its choice, like a granted one:
+ * it is changed in the Build tab, never removed from the Inventory, and
+ * never uses a free-ritual allowance.
+ */
+export type GrantedKnownVia = "grant" | "freebee" | "choice";
 
 export interface GrantedKnownRecord {
   readonly definitionId: string;
-  /** Display name of the granting element ("Druid", "Duplicitous Nature"). */
+  /** Display name of the granting or choosing element ("Druid", "Psion"). */
   readonly provider: string;
-  /** `grant type="Ritual"`, or a legacy `FREEBEE:<id>` free-gift stat. */
   readonly via: GrantedKnownVia;
   readonly acquiredLevel?: number;
 }
@@ -58,7 +65,11 @@ function isRitual(entity: ContentEntity | undefined): entity is ContentEntity {
   return entity?.type.trim().toLocaleLowerCase() === "ritual";
 }
 
-/** Records the evaluation grants: `grant type="Ritual"` and `FREEBEE:` stats. */
+/**
+ * Records the evaluation gives: `grant type="Ritual"`, `FREEBEE:` stats and
+ * Ritual choices, once each (a grant wins over a gift, a gift over a
+ * choice).
+ */
 export function grantedKnownRecords(
   evaluation: Pick<EvaluatedCharacter, "occurrences" | "stats">,
   entityById: EntityLookup,
@@ -67,21 +78,24 @@ export function grantedKnownRecords(
   const occurrences = new Map(
     evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
   );
+  const providerName = (occurrence: { readonly parentId?: string }) => {
+    const parent =
+      occurrence.parentId === undefined
+        ? undefined
+        : occurrences.get(occurrence.parentId);
+    return parent === undefined
+      ? ""
+      : (entityById(parent.definitionId)?.name ?? "");
+  };
   for (const occurrence of evaluation.occurrences) {
     if (occurrence.kind !== "grant") continue;
     const entity = entityById(occurrence.definitionId);
     if (!isRitual(entity)) continue;
     const id = entity.id.toLocaleLowerCase();
     if (result.has(id)) continue;
-    const parent =
-      occurrence.parentId === undefined
-        ? undefined
-        : occurrences.get(occurrence.parentId);
-    const provider =
-      parent === undefined ? undefined : entityById(parent.definitionId);
     result.set(id, {
       definitionId: entity.id,
-      provider: provider?.name ?? "",
+      provider: providerName(occurrence),
       via: "grant",
       acquiredLevel: occurrence.acquiredLevel,
     });
@@ -106,13 +120,27 @@ export function grantedKnownRecords(
       ...(providerLevel === undefined ? {} : { acquiredLevel: providerLevel }),
     });
   }
+  for (const occurrence of evaluation.occurrences) {
+    if (occurrence.kind !== "choice") continue;
+    const entity = entityById(occurrence.definitionId);
+    if (!isRitual(entity)) continue;
+    const id = entity.id.toLocaleLowerCase();
+    if (result.has(id)) continue;
+    result.set(id, {
+      definitionId: entity.id,
+      provider: providerName(occurrence),
+      via: "choice",
+      acquiredLevel: occurrence.acquiredLevel,
+    });
+  }
   return [...result.values()];
 }
 
 /**
  * Every record the character knows at the evaluated level, once per content
- * ID. A record that is both stored and granted shows its grant as the source
- * and keeps the stored copy's ID.
+ * ID. A record that is both stored and granted (or chosen) shows its grant
+ * as the source and keeps the stored copy's ID: an imported psion's Sending
+ * loot, once it fills the Psion's choice, is listed once.
  */
 export function knownRecords(
   build: Pick<CharacterBuild, "known">,

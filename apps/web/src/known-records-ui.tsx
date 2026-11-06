@@ -45,8 +45,8 @@ export function knownRecordKind(record: KnownRecord): KnownRecordKind {
 }
 
 /**
- * Why the character knows a record, where it matters: its grant (it can't
- * be removed), or the free-ritual allowance it used. A bought record says
+ * Why the character knows a record, where it matters: its grant or Build-tab
+ * choice (it can't be removed here), or the free-ritual allowance it used. A bought record says
  * nothing, and no source names a level: the list is current state.
  */
 export function knownRecordSourceLabel(
@@ -54,6 +54,8 @@ export function knownRecordSourceLabel(
   allowanceProvider: (key: string) => string | undefined = () => undefined,
 ): string | undefined {
   const { source } = record;
+  if (source.kind === "granted" && source.via === "choice")
+    return source.provider === "" ? "Chosen" : `Chosen for ${source.provider}`;
   if (source.kind === "granted")
     return source.provider === "" ? "Granted" : `Granted by ${source.provider}`;
   if (source.acquisition === "bought") return undefined;
@@ -72,20 +74,13 @@ const ALLOWANCE_NOUNS: Readonly<
   "Martial Practice": ["martial practice", "martial practices"],
 };
 
-function listNames(names: readonly string[]): string {
-  return names.length <= 1
-    ? (names[0] ?? "")
-    : `${names.slice(0, -1).join(", ")} or ${names.at(-1)!}`;
-}
-
 /**
  * What an allowance still covers: "2 free 1st-level rituals", "1 free
- * ritual of level 5 or lower", "1 free ritual: Sending or Tenser's Floating
- * Disk". Undefined once nothing remains (used up, or not yet earned).
+ * ritual of level 5 or lower". Undefined once nothing remains (used up, or
+ * not yet earned).
  */
 export function ritualAllowanceLabel(
   status: RitualAllowanceStatus,
-  nameOf: (id: string) => string = (id) => id,
 ): string | undefined {
   if (status.remaining <= 0) return undefined;
   const [one, many] = ALLOWANCE_NOUNS[status.allowance.kind];
@@ -97,11 +92,7 @@ export function ritualAllowanceLabel(
         ? `${count} free 1st-level ${noun(count)}`
         : `${count} free ${noun(count)} of level ${maxLevel} or lower`,
   );
-  const from =
-    status.allowance.from === undefined
-      ? ""
-      : `: ${listNames(status.allowance.from.map(nameOf))}`;
-  return `${parts.join(" and ")}${from}`;
+  return parts.join(" and ");
 }
 
 /** One provider's remaining free-ritual allowances: a "Free rituals
@@ -120,7 +111,6 @@ export interface RitualAllowanceGroup {
  *  has no group. */
 export function ritualAllowanceGroups(
   statuses: readonly RitualAllowanceStatus[],
-  nameOf: (id: string) => string = (id) => id,
 ): readonly RitualAllowanceGroup[] {
   const byProvider = new Map<string, RitualAllowanceStatus[]>();
   for (const status of statuses) {
@@ -131,7 +121,7 @@ export function ritualAllowanceGroups(
   }
   return [...byProvider.values()].flatMap((group) => {
     const lines = group.flatMap((status) => {
-      const label = ritualAllowanceLabel(status, nameOf);
+      const label = ritualAllowanceLabel(status);
       return label === undefined ? [] : [{ key: status.allowance.key, label }];
     });
     if (lines.length === 0) return [];
@@ -182,10 +172,9 @@ export function RitualAllowanceSummary({
   );
 }
 
-/** Chooses the allowance a free ritual uses when several fit (Learn free).
- *  Each option names its provider and what it still covers, since one
- *  provider can have several (a Psion's any 1st-level ritual, and Sending or
- *  Tenser's Floating Disk). */
+/** Chooses the allowance a free ritual uses when several fit (Learn free):
+ *  a multiclass wizard's Spellbook and a cleric's ritual book. Each option
+ *  names its provider and what it still covers. */
 export function AllowanceChoiceDialog({
   name,
   allowances,
@@ -335,7 +324,6 @@ export interface KnownRecordsModel {
   readonly allowanceGroups: readonly RitualAllowanceGroup[];
   /** Percent of market price the character pays for a ritual. */
   readonly ritualCostPercent: number;
-  readonly nameOf: (id: string) => string;
   readonly allowanceProvider: (allowanceKey: string) => string | undefined;
   readonly describeAllowance: (
     allowance: RitualAllowance,
@@ -364,7 +352,6 @@ export function useKnownRecordsModel(
             lookup,
             build.effectiveLevel,
           );
-    const nameOf = (id: string) => lookup(id)?.name ?? id;
     const statusOf = (key: string) =>
       statuses.find(
         ({ allowance }) =>
@@ -375,15 +362,12 @@ export function useKnownRecordsModel(
       groups: groupKnownRecords(records),
       knownIds: new Set(records.map(knownRecordKey)),
       statuses,
-      allowanceGroups: ritualAllowanceGroups(statuses, nameOf),
+      allowanceGroups: ritualAllowanceGroups(statuses),
       ritualCostPercent: ritualCostPercent(evaluation?.stats ?? {}),
-      nameOf,
       allowanceProvider: (key) => statusOf(key)?.allowance.provider,
       describeAllowance: (allowance) => {
         const status = statusOf(allowance.key);
-        return status === undefined
-          ? undefined
-          : ritualAllowanceLabel(status, nameOf);
+        return status === undefined ? undefined : ritualAllowanceLabel(status);
       },
     };
   }, [build, evaluation, byId]);

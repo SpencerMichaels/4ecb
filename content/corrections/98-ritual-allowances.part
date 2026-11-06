@@ -5,17 +5,24 @@
   entitles the character to choose free rituals, formulas or practices gets a
   machine-read `_FreeRitualAllowance`:
 
-    KIND; COUNT@LEVEL[,LEVEL…][<=MAX]; …[; from=ID|ID…]
+    KIND; COUNT@LEVEL[,LEVEL…][<=MAX]; …
 
   KIND is the learned record's type (Ritual, Alchemical Formula, Martial
   Practice); each step gives COUNT more at the listed character levels; MAX
   is a level, `step` (that step's level or lower) or `level` (the level it
-  is learned at or lower), none for any level; `from=` limits the choice to
-  the listed records. Parsed by packages/rules-engine/src/ritual-allowances.ts.
-  Rituals a provider grants outright (FREEBEE) are not counted here. The
-  published text stays as it is and is still shown. Merged after the CBLoader
-  parts by scripts/build-private-content.sh. Structure and numbers only; no
-  official text.
+  is learned at or lower), none for any level. Parsed by
+  packages/rules-engine/src/ritual-allowances.ts. Rituals a provider grants
+  outright (FREEBEE, grant) are not counted here. The published text stays
+  as it is and is still shown. Merged after the CBLoader parts by
+  scripts/build-private-content.sh. Structure and numbers only; no official
+  text.
+
+  A choice among named rituals ("your choice of either Sending or Tenser's
+  Floating Disk") is not an allowance but a Build-tab choice (D115): a
+  `select type="Ritual"` whose Category lists the options, stock's idiom for
+  a named-option select (Shifter Soul, Genasi Soul). The chosen ritual is
+  known through the choice (rules-engine known-records.ts), and .dnd4e
+  export writes it as the loot the old builder stores.
 -->
 <D20Rules game-system="D&amp;D4E">
   <!-- Wizard Spellbook: 3 of level 1, then 2 more at 5, 11, 15, 21, 25 of
@@ -27,18 +34,32 @@
   <!-- Druid, invoker: one more of level 1 beside the granted ritual. -->
   <AppendNodes internal-id="ID_INTERNAL_GRANTS_DRUID"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific></AppendNodes>
   <AppendNodes internal-id="ID_INTERNAL_GRANTS_INVOKER"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific></AppendNodes>
-  <!-- Psion: one of level 1, plus a choice of Sending or Tenser's Floating
-       Disk. -->
-  <AppendNodes internal-id="ID_INTERNAL_GRANTS_PSION"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific><specific name="_FreeRitualAllowance">Ritual; 1@1; from=ID_FMP_RITUAL_55|ID_FMP_RITUAL_60</specific></AppendNodes>
+  <!-- Psion (PH3 Ritual Casting): one of level 1, plus a choice of Sending
+       or Tenser's Floating Disk. The choice is the class's own select, like
+       its augmented at-wills, so the Build tab shows it in the class's
+       flow. -->
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_PSION"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_437"><rules><select type="Ritual" number="1" Category="ID_FMP_RITUAL_55|ID_FMP_RITUAL_60" /></rules></AppendNodes>
   <!-- Alchemist (Level 1 Alchemist Feature): 1 formula of level 1, then 1
-       more at 5 and 10 of that level or lower. -->
-  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3866"><specific name="_FreeRitualAllowance">Alchemical Formula; 1@1&lt;=1; 1@5,10&lt;=step</specific></AppendNodes>
+       more at 5 and 10 of your level or lower (the Level 5 and Level 10
+       Alchemist Features). -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3866"><specific name="_FreeRitualAllowance">Alchemical Formula; 1@1&lt;=1; 1@5,10&lt;=level</specific></AppendNodes>
+  <!-- Alchemical Innovator (artificer Alchemist Savant): 2 formulas of your
+       level or lower at 11, 15, 21 and 25. -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_1578"><specific name="_FreeRitualAllowance">Alchemical Formula; 2@11,15,21,25&lt;=level</specific></AppendNodes>
+  <!-- Duplicitous Nature (Dark Sun): Bloodstinger Poison, which the content
+       granted twice, granted once; then 2 formulas of your level or lower,
+       and 2 more at 21. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_2511"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_2511"><specific name="_FreeRitualAllowance">Alchemical Formula; 2@1&lt;=level; 2@21&lt;=level</specific><rules><grant name="ID_FMP_FEAT_652" type="Feat" /><grant name="ID_FMP_RITUAL_142" type="Ritual" /></rules></AppendNodes>
   <!-- Practiced Prodigy: 2 practices of your level or lower, then 1 more at
        5, 11, 15, 21, 25. -->
   <AppendNodes internal-id="ID_FMP_FEAT_2454"><specific name="_FreeRitualAllowance">Martial Practice; 2@1&lt;=level; 1@5,11,15,21,25&lt;=level</specific></AppendNodes>
-  <!-- Wild Sage: one of Dowsing Rod, Portend Weather, Traveler's
+  <!-- Practiced Study: 1 practice of your level or lower. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_2050"><specific name="_FreeRitualAllowance">Martial Practice; 1@1&lt;=level</specific></AppendNodes>
+  <!-- Wild Sage: a choice of Dowsing Rod, Portend Weather or Traveler's
        Camouflage. -->
-  <AppendNodes internal-id="ID_FMP_FEAT_1885"><specific name="_FreeRitualAllowance">Ritual; 1@1; from=ID_FMP_RITUAL_285|ID_FMP_RITUAL_287|ID_FMP_RITUAL_291</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1885"><rules><select type="Ritual" number="1" Category="ID_FMP_RITUAL_285|ID_FMP_RITUAL_287|ID_FMP_RITUAL_291" /></rules></AppendNodes>
 
   <!-- Legacy FeatPage.DoChooseFeat adds a Spellbook (ID_FMP_GEAR_33) as loot
        whenever Student of Sword Magic is chosen. Express it as the content's

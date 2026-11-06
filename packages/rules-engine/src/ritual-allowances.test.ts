@@ -48,9 +48,12 @@ const content = [
     ["_FreeRitualAllowance", "Ritual; 3@1<=1; 2@5,11<=step"],
   ]),
   entity("DRUID", "Grants", [["_FreeRitualAllowance", "Ritual; 1@1<=1"]]),
+  // Sending or Tenser's Floating Disk is a Ritual select, not an allowance
+  // (D115); the retired `from=` form no longer parses.
   entity("PSION", "Grants", [
     ["_FreeRitualAllowance", "Ritual; 1@1<=1"],
     ["_FreeRitualAllowance", "Ritual; 1@1; from=R_SENDING|R_DISK"],
+    ["_FreeRitualAllowance", "Ritual; 1@1<=1"],
   ]),
   entity("PRODIGY", "Feat", [
     ["_FreeRitualAllowance", "Martial Practice; 2@1<=level; 1@5<=level"],
@@ -74,6 +77,7 @@ function evaluation(
   level: number,
   activeDefinitionIds: readonly string[],
   freebees: readonly string[] = [],
+  occurrences: EvaluatedCharacter["occurrences"] = [],
 ): Pick<
   EvaluatedCharacter,
   "activeDefinitionIds" | "level" | "occurrences" | "stats"
@@ -81,7 +85,7 @@ function evaluation(
   return {
     level,
     activeDefinitionIds,
-    occurrences: [],
+    occurrences,
     stats: Object.fromEntries(
       freebees.map((id) => [
         `freebee:${id}`,
@@ -116,12 +120,9 @@ describe("free-ritual allowances", () => {
         { level: 11, count: 2, max: "step" },
       ],
     });
-    expect(
-      parseRitualAllowance("martial practice; 2@1<=level; from=A|b"),
-    ).toEqual({
+    expect(parseRitualAllowance("martial practice; 2@1<=level")).toEqual({
       kind: "Martial Practice",
       steps: [{ level: 1, count: 2, max: "level" }],
-      from: ["a", "b"],
     });
     expect(parseRitualAllowance("Ritual; 1@1")).toEqual({
       kind: "Ritual",
@@ -132,6 +133,7 @@ describe("free-ritual allowances", () => {
       "Spell; 1@1",
       "Ritual; three",
       "Ritual; 0@1",
+      "Ritual; 1@1; from=A|B",
     ])
       expect(parseRitualAllowance(value)).toBeUndefined();
   });
@@ -141,7 +143,7 @@ describe("free-ritual allowances", () => {
       evaluation(1, ["PSION", "BROKEN", "psion"]),
       lookup,
     );
-    expect(allowances.map(({ key }) => key)).toEqual(["PSION", "PSION#2"]);
+    expect(allowances.map(({ key }) => key)).toEqual(["PSION", "PSION#3"]);
     expect(allowances.map(({ provider }) => provider)).toEqual([
       "psion",
       "psion",
@@ -210,6 +212,50 @@ describe("free-ritual allowances", () => {
     ]);
   });
 
+  it("never counts a ritual picked in a Ritual choice", () => {
+    const loot = {
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [],
+      overrides: {},
+      legality: "rules-legal" as const,
+    };
+    // An imported psion's Sending loot that fills the Psion's choice, and a
+    // Learn-free Tenser's Floating Disk on the open slot.
+    const build = {
+      known: [
+        free("sending", "R_SENDING", 1, { legacyLoot: loot }),
+        free("disk", "R_DISK", 1, { allowance: "DRUID" }),
+      ],
+    };
+    const occurrences: EvaluatedCharacter["occurrences"] = [
+      { id: "druid", definitionId: "DRUID", acquiredLevel: 1, kind: "grant" },
+      {
+        id: "pick",
+        definitionId: "R_SENDING",
+        acquiredLevel: 1,
+        kind: "choice",
+        parentId: "druid",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+      },
+    ];
+    const [status] = ritualAllowanceStatuses(
+      build,
+      evaluation(1, ["DRUID"], [], occurrences),
+      lookup,
+    );
+    expect(status).toMatchObject({ total: 1, used: 1, entryIds: ["disk"] });
+    // Without the choice, the loot Sending (level 6) fits no 1st-level slot
+    // and the Disk still uses it.
+    const [unchosen] = ritualAllowanceStatuses(
+      build,
+      evaluation(1, ["DRUID"]),
+      lookup,
+    );
+    expect(unchosen).toMatchObject({ used: 1, entryIds: ["disk"] });
+  });
+
   it("hides entries learned above the viewed level", () => {
     const build = {
       known: [free("late", "R_FOUR", 5, { allowance: "WIZARD_BOOK" })],
@@ -231,9 +277,9 @@ describe("free-ritual allowances", () => {
     );
     const keys = (id: string) =>
       eligibleRitualAllowances(statuses, lookup(id)!, 1).map(({ key }) => key);
-    expect(keys("R_ONE")).toEqual(["DRUID", "PSION"]);
-    expect(keys("R_DISK")).toEqual(["DRUID", "PSION", "PSION#2"]);
-    expect(keys("R_SENDING")).toEqual(["PSION#2"]);
+    expect(keys("R_ONE")).toEqual(["DRUID", "PSION", "PSION#3"]);
+    expect(keys("R_DISK")).toEqual(["DRUID", "PSION", "PSION#3"]);
+    expect(keys("R_SENDING")).toEqual([]);
     expect(keys("R_FOUR")).toEqual([]);
     expect(keys("P_THREE")).toEqual([]);
     const later = ritualAllowanceStatuses(

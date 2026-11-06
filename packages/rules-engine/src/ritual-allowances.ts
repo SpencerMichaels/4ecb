@@ -14,7 +14,7 @@ import { grantedKnownRecords, type EntityLookup } from "./known-records";
  * published "Free Rituals" text says this in prose only, so the counts are
  * added as data (content corrections, D089) in one field per provider:
  *
- *   <specific name="_FreeRitualAllowance">KIND; STEP; STEP…[; from=ID|ID…]</specific>
+ *   <specific name="_FreeRitualAllowance">KIND; STEP; STEP…</specific>
  *
  * - KIND is the learned record's authored type: `Ritual`,
  *   `Alchemical Formula` or `Martial Practice`.
@@ -23,8 +23,10 @@ import { grantedKnownRecords, type EntityLookup } from "./known-records";
  *   step's level or lower, "of that level or lower") or `level` (the level
  *   it is learned at or lower, "of your level or lower"). Without it any
  *   level is allowed.
- * - `from=` restricts the allowance to the listed records (a choice of
- *   named rituals).
+ *
+ * A choice among named rituals (a Psion's Sending or Tenser's Floating
+ * Disk) is a `select type="Ritual"` instead, chosen in the Build tab and
+ * known through that choice (D115).
  *
  * Only learned "free" entries use an allowance: rituals the provider grants
  * outright are already excluded from its count ("given Animal Messenger, and
@@ -48,8 +50,6 @@ export interface RitualAllowanceStep {
 export interface RitualAllowanceDefinition {
   readonly kind: RitualAllowanceKind;
   readonly steps: readonly RitualAllowanceStep[];
-  /** Lower-cased record IDs the allowance is restricted to. */
-  readonly from?: readonly string[];
 }
 
 export interface RitualAllowance extends RitualAllowanceDefinition {
@@ -106,17 +106,7 @@ export function parseRitualAllowance(
   );
   if (kind === undefined) return undefined;
   const steps: RitualAllowanceStep[] = [];
-  let from: string[] | undefined;
   for (const part of parts.slice(1)) {
-    const restriction = /^from\s*=\s*(.+)$/iu.exec(part);
-    if (restriction !== null) {
-      from = restriction[1]!
-        .split("|")
-        .map(key)
-        .filter((id) => id !== "");
-      if (from.length === 0) return undefined;
-      continue;
-    }
     const step =
       /^(\d+)\s*@\s*(\d+(?:\s*,\s*\d+)*)\s*(?:<=\s*(\d+|step|level))?$/iu.exec(
         part,
@@ -139,7 +129,6 @@ export function parseRitualAllowance(
   return {
     kind,
     steps: steps.sort((left, right) => left.level - right.level),
-    ...(from === undefined ? {} : { from }),
   };
 }
 
@@ -201,8 +190,6 @@ function fits(
 ): boolean {
   if (entity === undefined || slot.stepLevel > learnedAt) return false;
   if (learnedRecordKind(entity) !== allowance.kind) return false;
-  if (allowance.from !== undefined && !allowance.from.includes(key(entity.id)))
-    return false;
   const max = slotMax(slot, learnedAt);
   if (max === undefined) return true;
   const level = recordLevel(entity);
@@ -235,7 +222,7 @@ function match(
  * How much of each allowance is used at the evaluated level. Entries that
  * name an allowance count against it; imported free entries, which can't
  * name one, are matched to any allowance they fit. Entries the evaluation
- * grants outright never count.
+ * grants outright or a Ritual choice picked never count.
  */
 export function ritualAllowanceStatuses(
   build: Pick<CharacterBuild, "known">,

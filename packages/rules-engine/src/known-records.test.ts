@@ -207,6 +207,99 @@ describe("known records", () => {
     ]);
   });
 
+  it("knows a ritual picked in a Ritual select once, chosen for its provider", () => {
+    const psionContent = [
+      ...content,
+      entity("PSION", "Psion", "Grants", [
+        rule(
+          "select",
+          {
+            type: "Ritual",
+            number: "1",
+            Category: "ID_FMP_RITUAL_55|ID_FMP_RITUAL_60",
+          },
+          0,
+        ),
+      ]),
+      entity("ID_FMP_RITUAL_55", "Sending", "Ritual"),
+      entity("ID_FMP_RITUAL_60", "Tenser's Floating Disk", "Ritual"),
+    ];
+    const psionById = new Map(
+      psionContent.map((value) => [value.id.toLowerCase(), value]),
+    );
+    const psionLookup = (id: string) => psionById.get(id.toLowerCase());
+    const pick = (definitionId: string) => ({
+      id: "pick",
+      identity: {
+        definitionId,
+        name: psionLookup(definitionId)!.name,
+        type: "Ritual",
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    });
+    const psion: CharacterBuild = {
+      ...build,
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...occurrence("l1", "L1", "Level"),
+            children: [
+              {
+                ...occurrence("psion", "L1", "Grants"),
+                identity: {
+                  definitionId: "PSION",
+                  name: "Psion",
+                  type: "Grants",
+                },
+                children: [pick("ID_FMP_RITUAL_55")],
+              },
+            ],
+          },
+        },
+      ],
+      // The imported Sending loot the choice was filled from.
+      known: [
+        {
+          id: "sending-loot",
+          acquiredLevel: 1,
+          element: {
+            definitionId: "ID_FMP_RITUAL_55",
+            name: "Sending",
+            type: "Ritual",
+          },
+          acquisition: "free",
+        },
+      ],
+    };
+    const evaluated = evaluateCharacter(
+      projectBuildForEvaluation(psion, psionContent),
+      psionContent,
+    );
+    expect(
+      evaluated.choices.find(({ type }) => type === "Ritual"),
+    ).toMatchObject({ selectedOccurrenceId: "pick" });
+    expect(knownRecords(psion, evaluated, psionLookup)).toEqual([
+      {
+        element: {
+          definitionId: "ID_FMP_RITUAL_55",
+          name: "Sending",
+          type: "Ritual",
+        },
+        entity: psionLookup("ID_FMP_RITUAL_55"),
+        source: {
+          kind: "granted",
+          provider: "Psion",
+          via: "choice",
+          storedEntryId: "sending-loot",
+        },
+      },
+    ]);
+  });
+
   it("shows the free-ritual allowance text without enforcing it", () => {
     expect(freeRitualAllowanceTexts(evaluation)).toEqual([
       {

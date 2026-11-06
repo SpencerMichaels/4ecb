@@ -380,7 +380,6 @@ describe("Learning in the Shop (D114)", () => {
       value: Partial<RitualAllowanceStatus> &
         Pick<RitualAllowanceStatus, "remainders">,
       kind: RitualAllowanceStatus["allowance"]["kind"] = "Ritual",
-      from?: readonly string[],
     ): RitualAllowanceStatus => ({
       allowance: {
         key: "P",
@@ -388,7 +387,6 @@ describe("Learning in the Shop (D114)", () => {
         provider: "Spellbook",
         kind,
         steps: [],
-        ...(from === undefined ? {} : { from }),
       },
       total: 5,
       used: 0,
@@ -406,14 +404,12 @@ describe("Learning in the Shop (D114)", () => {
         }),
       ),
     ).toBe("3 free 1st-level rituals and 2 free rituals of level 5 or lower");
-    const choice = status(
-      { total: 1, remaining: 1, remainders: [{ count: 1 }] },
-      "Ritual",
-      ["a", "b", "c"],
-    );
-    expect(ritualAllowanceLabel(choice, (id) => id.toUpperCase())).toBe(
-      "1 free ritual: A, B or C",
-    );
+    const choice = status({
+      total: 1,
+      remaining: 1,
+      remainders: [{ count: 1 }],
+    });
+    expect(ritualAllowanceLabel(choice)).toBe("1 free ritual");
     const usedUp = status(
       { total: 2, remaining: 0, remainders: [] },
       "Martial Practice",
@@ -443,26 +439,23 @@ describe("Learning in the Shop (D114)", () => {
       remainders: [{ count: 1, maxLevel: 1 }],
     });
     expect(
-      ritualAllowanceGroups(
-        [
-          as(usedUp, "MARTIAL", "Martial Training"),
-          as(firstLevel, "PSION", "Psion"),
-          as(choice, "PSION", "Psion", "#2"),
-          as(
-            status(
-              {
-                total: 1,
-                remaining: 1,
-                remainders: [{ count: 1, maxLevel: 1 }],
-              },
-              "Alchemical Formula",
-            ),
-            "ALCHEMIST",
-            "Alchemist",
+      ritualAllowanceGroups([
+        as(usedUp, "MARTIAL", "Martial Training"),
+        as(firstLevel, "PSION", "Psion"),
+        as(choice, "PSION", "Psion", "#2"),
+        as(
+          status(
+            {
+              total: 1,
+              remaining: 1,
+              remainders: [{ count: 1, maxLevel: 1 }],
+            },
+            "Alchemical Formula",
           ),
-        ],
-        (id) => id.toUpperCase(),
-      ),
+          "ALCHEMIST",
+          "Alchemist",
+        ),
+      ]),
     ).toEqual([
       {
         providerId: "PSION",
@@ -470,7 +463,7 @@ describe("Learning in the Shop (D114)", () => {
         provider: "Psion",
         lines: [
           { key: "PSION", label: "1 free 1st-level ritual" },
-          { key: "PSION#2", label: "1 free ritual: A, B or C" },
+          { key: "PSION#2", label: "1 free ritual" },
         ],
       },
       {
@@ -502,6 +495,13 @@ describe("Learning in the Shop (D114)", () => {
         key === "P" ? "Spellbook" : undefined,
       ),
     ).toBe("Learned free (Spellbook)");
+    // A ritual picked in a Build-tab Ritual choice (D115).
+    expect(
+      knownRecordSourceLabel({
+        element: { name: "Sending", type: "Ritual" },
+        source: { kind: "granted", provider: "Psion", via: "choice" },
+      }),
+    ).toBe("Chosen for Psion");
   });
 
   it("hangs each Learn-free option's text beside its radio", () => {
@@ -517,7 +517,7 @@ describe("Learning in the Shop (D114)", () => {
             steps: [],
           },
         ]}
-        describe={() => "1 free ritual: Sending or Tenser's Floating Disk"}
+        describe={() => "1 free 1st-level ritual"}
         onLearn={vi.fn()}
         onCancel={vi.fn()}
       />,

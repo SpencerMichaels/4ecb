@@ -1303,6 +1303,18 @@ export function projectBuildForEvaluation(
       }),
     ),
   );
+  // A ritual picked in a Ritual select (D115) is known through that choice.
+  // Its stored known copy (the imported loot the choice was filled from,
+  // kept for export) must not also enter as an owned element: the topology
+  // pass would then drop the pick as already owned.
+  const chosenRituals = new Set(
+    occurrences.flatMap(({ kind, definitionId }) =>
+      kind === "choice" &&
+      entityById(definitionId)?.type.trim().toLocaleLowerCase() === "ritual"
+        ? [definitionId.toLocaleLowerCase()]
+        : [],
+    ),
+  );
   const inventory: CharacterInventoryEntry[] = [
     ...evaluationInventory(
       build.inventory,
@@ -1315,20 +1327,26 @@ export function projectBuildForEvaluation(
     // Known rituals are owned elements whose own rules (a community ritual's
     // granted power) still apply. They enter evaluation exactly as an
     // unequipped ritual holding did before they left the inventory.
-    ...build.known.map((entry) => ({
-      id: entry.id,
-      ...(entry.legacyLoot?.name === undefined
-        ? {}
-        : { name: entry.legacyLoot.name }),
-      definitionIds:
-        entry.element.definitionId === undefined
-          ? []
-          : [entry.element.definitionId],
-      quantity: 1,
-      equippedQuantity: 0,
-      acquiredLevel: entry.acquiredLevel,
-      overrides: entry.legacyLoot?.overrides ?? {},
-    })),
+    ...build.known
+      .filter(
+        ({ element }) =>
+          element.definitionId === undefined ||
+          !chosenRituals.has(element.definitionId.toLocaleLowerCase()),
+      )
+      .map((entry) => ({
+        id: entry.id,
+        ...(entry.legacyLoot?.name === undefined
+          ? {}
+          : { name: entry.legacyLoot.name }),
+        definitionIds:
+          entry.element.definitionId === undefined
+            ? []
+            : [entry.element.definitionId],
+        quantity: 1,
+        equippedQuantity: 0,
+        acquiredLevel: entry.acquiredLevel,
+        overrides: entry.legacyLoot?.overrides ?? {},
+      })),
   ];
   // Wallet edits and free-text character details/notes change
   // build.textStrings but never affect rules evaluation. Excluding them keeps

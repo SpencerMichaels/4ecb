@@ -1,4 +1,4 @@
-import type { CharacterBuild } from "@4ecb/character-domain";
+import type { CharacterBuild, CharacterCommand } from "@4ecb/character-domain";
 import {
   ASSOCIATE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_FIELD,
@@ -16,6 +16,10 @@ import {
   type EvaluatedCharacter,
   type EvaluationProgress,
 } from "./evaluator";
+import {
+  evaluateRitualChoiceFills,
+  type RitualChoiceFill,
+} from "./ritual-choices";
 
 export interface ProfileMigrationValueChange {
   readonly name: string;
@@ -67,6 +71,11 @@ export interface ProfileMigrationPreview {
     readonly providerName: string;
     readonly providerType: string;
   }[];
+  /** Ritual choices the new content adds that the character's known
+   *  rituals fill (a psion's Sending under the Psion's new choice, D115).
+   *  The known entries stay; adoption applies `ritualChoiceCommand`. */
+  readonly ritualChoiceFills: readonly RitualChoiceFill[];
+  readonly ritualChoiceCommand?: CharacterCommand;
   readonly source?: ProfileEvaluationSummary;
   readonly target: ProfileEvaluationSummary;
   readonly statChanges: readonly ProfileMigrationValueChange[];
@@ -346,6 +355,9 @@ export function previewProfileMigration(
       ? new Set<string>()
       : diagnosticCodes(sourceEvaluation);
   const targetCodes = diagnosticCodes(targetEvaluation);
+  const ritualChoices = targetEvaluation.converged
+    ? evaluateRitualChoiceFills(build, targetEntities, targetEvaluation)
+    : { fills: [] };
 
   return {
     sourceAvailable: sourceEntities !== undefined,
@@ -371,6 +383,10 @@ export function previewProfileMigration(
       sourceById === undefined
         ? []
         : removedSelections(build, sourceById, targetById),
+    ritualChoiceFills: ritualChoices.fills,
+    ...(ritualChoices.command === undefined
+      ? {}
+      : { ritualChoiceCommand: ritualChoices.command }),
     ...(sourceEvaluation === undefined
       ? {}
       : { source: summary(sourceEvaluation) }),

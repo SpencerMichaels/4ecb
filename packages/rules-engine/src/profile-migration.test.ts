@@ -8,6 +8,10 @@ import {
   type RuleStatement,
 } from "@4ecb/content-domain";
 
+import { applyCharacterCommand } from "@4ecb/character-domain";
+
+import { projectBuildForEvaluation } from "./build-projection";
+import { evaluateCharacter } from "./evaluator";
 import { previewProfileMigration } from "./profile-migration";
 
 function rule(value: string): RuleStatement {
@@ -176,5 +180,103 @@ describe("content profile migration preview", () => {
     expect(
       steps.findIndex((step) => step.startsWith("source")),
     ).toBeGreaterThan(steps.findLastIndex((step) => step.startsWith("target")));
+  });
+
+  it("fills a Ritual choice the new content adds from a known ritual", () => {
+    const record = (
+      id: string,
+      name: string,
+      type: string,
+      rules: readonly RuleStatement[] = [],
+    ): ContentEntity => ({ ...entity(id, "+0"), name, type, rules });
+    const select: RuleStatement = {
+      name: "select",
+      attributes: [
+        { name: "type", value: "Ritual" },
+        { name: "number", value: "1" },
+        { name: "Category", value: "ID_FMP_RITUAL_55|ID_FMP_RITUAL_60" },
+      ],
+      text: "",
+      children: [],
+      ordinal: 0,
+    };
+    const rituals = [
+      record("ID_FMP_RITUAL_55", "Sending", "Ritual"),
+      record("ID_FMP_RITUAL_60", "Tenser's Floating Disk", "Ritual"),
+    ];
+    const before = [
+      record("LEVEL", "1", "Level"),
+      record("ID_FMP_CLASS_437", "Psion", "Class"),
+      ...rituals,
+    ];
+    const after = [
+      record("LEVEL", "1", "Level"),
+      record("ID_FMP_CLASS_437", "Psion", "Class", [select]),
+      ...rituals,
+    ];
+    const psion: CharacterBuild = {
+      ...build,
+      inventory: [],
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...build.levels[0]!.root,
+            children: [
+              {
+                id: "class",
+                identity: {
+                  definitionId: "ID_FMP_CLASS_437",
+                  name: "Psion",
+                  type: "Class",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                unresolved: false,
+                children: [],
+              },
+            ],
+          },
+        },
+      ],
+      // Learned under the retired `from=` allowance of the old content.
+      known: [
+        {
+          id: "sending",
+          acquiredLevel: 1,
+          element: {
+            definitionId: "ID_FMP_RITUAL_55",
+            name: "Sending",
+            type: "Ritual",
+          },
+          acquisition: "free",
+          allowance: "ID_FMP_CLASS_437#2",
+        },
+      ],
+    };
+    const preview = previewProfileMigration(psion, before, after);
+    expect(preview.ritualChoiceFills).toEqual([
+      expect.objectContaining({
+        entryId: "sending",
+        name: "Sending",
+        provider: "Psion",
+      }),
+    ]);
+    const adopted = applyCharacterCommand(psion, preview.ritualChoiceCommand!);
+    expect(adopted.known).toEqual(psion.known);
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(adopted, after),
+      after,
+    );
+    const choice = evaluation.choices.find(({ type }) => type === "Ritual");
+    expect(
+      evaluation.occurrences.find(
+        ({ id }) => id === choice?.selectedOccurrenceId,
+      )?.definitionId,
+    ).toBe("ID_FMP_RITUAL_55");
+    // Nothing to fill on the old content, which has no such choice.
+    expect(
+      previewProfileMigration(psion, after, before).ritualChoiceFills,
+    ).toEqual([]);
   });
 });
