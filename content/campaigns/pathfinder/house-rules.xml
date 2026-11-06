@@ -13,9 +13,13 @@
   deity of a domain offers only deities of that domain. A deity that counts
   as a 4e deity grants a CountsAsDeity named exactly as that stock Deity
   record, so "must worship <Deity>" requirements are met through it;
-  _SupportsID names the stock deity. The list (alignments, domains,
-  equivalents) is owner-approved, 2026-11-06; descriptions are original.
-  CountsAsDeity is a modern type the old builder ignores.
+  _SupportsID names the stock deity. Each deity's Pantheon names the
+  Pathfinder wiki Deities Quick Reference table it came from (Inner Sea
+  major deities, Other deities, Elven, Dwarven, Eldest, Archdevils); the
+  builder's Deity table bands deities by it (D042 amendment). The list
+  (alignments, domains, equivalents) is owner-approved, 2026-11-06;
+  descriptions are original. CountsAsDeity is a modern type the old
+  builder ignores.
 -->
 <D20Rules game-system="D&amp;D4E">
 
@@ -24,6 +28,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
       <grant name="ID_FMP_DOMAIN_12" type="Domain" />
@@ -40,6 +45,7 @@
     <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_1 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_29" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -54,6 +60,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_31 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
       <grant name="ID_FMP_DOMAIN_15" type="Domain" />
@@ -68,6 +75,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_2 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_10" type="Domain" />
       <grant name="ID_FMP_DOMAIN_24" type="Domain" />
@@ -82,6 +90,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_16 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_2" type="Domain" />
       <grant name="ID_FMP_DOMAIN_10" type="Domain" />
@@ -97,6 +106,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_33 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
       <grant name="ID_FMP_DOMAIN_14" type="Domain" />
@@ -114,6 +124,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_7 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_24" type="Domain" />
       <grant name="ID_FMP_DOMAIN_32" type="Domain" />
@@ -130,6 +141,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_34 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_21" type="Domain" />
       <grant name="ID_FMP_DOMAIN_23" type="Domain" />
@@ -145,6 +157,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_26, ID_FMP_DOMAIN_32 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_12" type="Domain" />
       <grant name="ID_FMP_DOMAIN_26" type="Domain" />
@@ -162,6 +175,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_22, ID_FMP_DOMAIN_24 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_13" type="Domain" />
       <grant name="ID_FMP_DOMAIN_22" type="Domain" />
@@ -177,6 +191,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_17, ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_28 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_17" type="Domain" />
       <grant name="ID_FMP_DOMAIN_24" type="Domain" />
@@ -190,6 +205,7 @@
     <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_1" type="Domain" />
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
@@ -204,6 +220,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_13 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_19" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -218,6 +235,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_9, ID_FMP_DOMAIN_14 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
       <grant name="ID_FMP_DOMAIN_9" type="Domain" />
@@ -233,6 +251,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_32 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
       <grant name="ID_FMP_DOMAIN_23" type="Domain" />
@@ -248,6 +267,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_11, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_26 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_11" type="Domain" />
       <grant name="ID_FMP_DOMAIN_14" type="Domain" />
@@ -263,6 +283,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_15" type="Domain" />
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
@@ -277,6 +298,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_8, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
       <grant name="ID_FMP_DOMAIN_8" type="Domain" />
@@ -292,6 +314,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_30, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_19 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_30" type="Domain" />
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
@@ -305,6 +328,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_27, ID_FMP_DOMAIN_6 </specific>
+    <specific name="Pantheon"> Inner Sea major deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_5" type="Domain" />
       <grant name="ID_FMP_DOMAIN_27" type="Domain" />
@@ -320,6 +344,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_31 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -333,6 +358,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_7 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_5" type="Domain" />
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
@@ -346,6 +372,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_2 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_5" type="Domain" />
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
@@ -359,6 +386,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_2" type="Domain" />
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
@@ -372,6 +400,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_12 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_2" type="Domain" />
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
@@ -386,6 +415,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_30, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_29 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_30" type="Domain" />
       <grant name="ID_FMP_DOMAIN_20" type="Domain" />
@@ -399,6 +429,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_28 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_21" type="Domain" />
       <grant name="ID_FMP_DOMAIN_23" type="Domain" />
@@ -412,6 +443,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_8 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
       <grant name="ID_FMP_DOMAIN_13" type="Domain" />
@@ -426,6 +458,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_33 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_5" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -439,6 +472,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_10 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
       <grant name="ID_FMP_DOMAIN_13" type="Domain" />
@@ -452,6 +486,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_16, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_32 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_16" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -467,6 +502,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_25 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -481,6 +517,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_26, ID_FMP_DOMAIN_33 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_26" type="Domain" />
       <grant name="ID_FMP_DOMAIN_33" type="Domain" />
@@ -493,6 +530,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_3 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_13" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -506,6 +544,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_14" type="Domain" />
       <grant name="ID_FMP_DOMAIN_10" type="Domain" />
@@ -519,6 +558,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_33 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_19" type="Domain" />
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
@@ -532,6 +572,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_17, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_31 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_17" type="Domain" />
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
@@ -545,6 +586,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_17 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_5" type="Domain" />
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
@@ -558,6 +600,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_6 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_21" type="Domain" />
       <grant name="ID_FMP_DOMAIN_2" type="Domain" />
@@ -571,6 +614,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_33, ID_FMP_DOMAIN_32 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_33" type="Domain" />
       <grant name="ID_FMP_DOMAIN_32" type="Domain" />
@@ -583,6 +627,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_22, ID_FMP_DOMAIN_16 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_24" type="Domain" />
       <grant name="ID_FMP_DOMAIN_22" type="Domain" />
@@ -598,6 +643,7 @@
     <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_1 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_29" type="Domain" />
       <grant name="ID_FMP_DOMAIN_13" type="Domain" />
@@ -611,6 +657,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_6 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_15" type="Domain" />
       <grant name="ID_FMP_DOMAIN_21" type="Domain" />
@@ -624,6 +671,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_11, ID_FMP_DOMAIN_14 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_10" type="Domain" />
       <grant name="ID_FMP_DOMAIN_11" type="Domain" />
@@ -637,6 +685,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_8, ID_FMP_DOMAIN_16, ID_FMP_DOMAIN_28 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_8" type="Domain" />
       <grant name="ID_FMP_DOMAIN_16" type="Domain" />
@@ -651,6 +700,7 @@
     <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_17 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_1" type="Domain" />
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
@@ -664,6 +714,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Chaotic Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_32 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_19" type="Domain" />
       <grant name="ID_FMP_DOMAIN_29" type="Domain" />
@@ -678,6 +729,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_30 </specific>
+    <specific name="Pantheon"> Other deities </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
       <grant name="ID_FMP_DOMAIN_7" type="Domain" />
@@ -692,6 +744,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_18, ID_FMP_DOMAIN_33, ID_FMP_DOMAIN_23 </specific>
+    <specific name="Pantheon"> Elven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_18" type="Domain" />
       <grant name="ID_FMP_DOMAIN_33" type="Domain" />
@@ -709,6 +762,7 @@
     <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13 </specific>
+    <specific name="Pantheon"> Elven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_1" type="Domain" />
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
@@ -723,6 +777,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_22 </specific>
+    <specific name="Pantheon"> Elven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_4" type="Domain" />
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
@@ -737,6 +792,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_17 </specific>
+    <specific name="Pantheon"> Eldest </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
       <grant name="ID_FMP_DOMAIN_2" type="Domain" />
@@ -751,6 +807,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_29 </specific>
+    <specific name="Pantheon"> Archdevils </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_32" type="Domain" />
       <grant name="ID_FMP_DOMAIN_29" type="Domain" />
@@ -764,6 +821,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
       <grant name="ID_FMP_DOMAIN_14" type="Domain" />
@@ -779,6 +837,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_20 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_32" type="Domain" />
       <grant name="ID_FMP_DOMAIN_20" type="Domain" />
@@ -792,6 +851,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_15" type="Domain" />
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
@@ -805,6 +865,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_31, ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_24 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_31" type="Domain" />
       <grant name="ID_FMP_DOMAIN_12" type="Domain" />
@@ -818,6 +879,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Evil </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_4 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_28" type="Domain" />
       <grant name="ID_FMP_DOMAIN_29" type="Domain" />
@@ -832,6 +894,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Lawful Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_11 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
       <grant name="ID_FMP_DOMAIN_20" type="Domain" />
@@ -845,6 +908,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_24 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_12" type="Domain" />
       <grant name="ID_FMP_DOMAIN_3" type="Domain" />
@@ -859,6 +923,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Unaligned </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_9, ID_FMP_DOMAIN_8 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_6" type="Domain" />
       <grant name="ID_FMP_DOMAIN_9" type="Domain" />
@@ -874,6 +939,7 @@
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
     <specific name="Alignment"> Good </specific>
     <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_11 </specific>
+    <specific name="Pantheon"> Dwarven </specific>
     <rules>
       <grant name="ID_FMP_DOMAIN_24" type="Domain" />
       <grant name="ID_FMP_DOMAIN_20" type="Domain" />

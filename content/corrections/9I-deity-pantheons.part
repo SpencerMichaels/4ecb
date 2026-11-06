@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Deity pantheons (D042 amendment). The builder's Deity table groups
+  deities into collapsible bands by their authored "Pantheon" specific;
+  stock deities are grouped by setting, from each record's first source:
+  Core (Player's Handbook and Dungeon Master's Guide, so Corellon's
+  "Player's Handbook,Forgotten Realms Campaign Guide" is Core), Forgotten
+  Realms (Forgotten Realms Campaign Guide, including the "(Forgotten
+  Realms)" duplicates), Eberron (Eberron Player's Guide) and Dragon Magazine
+  (Dragon Magazine 390 and 427). Pantheon is a modern specific the old
+  builder ignores. Generated from the pack by a
+  script in ignored tmp/deity-pantheon/; merged after the CBLoader parts by
+  scripts/build-private-content.sh. Structure only; no official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <AppendNodes internal-id="ID_FMP_DEITY_1"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Avandra (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_2"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Bahamut (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_3"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Corellon (Player's Handbook,Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_4"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Erathis (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_5"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Ioun (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_6"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Kord (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_7"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Melora (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_8"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Moradin (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_9"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Pelor (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_10"><specific name="Pantheon">Core</specific></AppendNodes> <!-- The Raven Queen (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_11"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Sehanine (Player's Handbook) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_13"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Tymora (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_14"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Amaunator (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_15"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Asmodeus (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_16"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Bane (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_17"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Chauntea (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_18"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Cyric (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_19"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Ghaunadaur (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_20"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Gruumsh (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_21"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Kelemvor (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_22"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Lolth (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_23"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Oghma (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_24"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Selûne (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_25"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Shar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_26"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Silvanus (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_27"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Sune (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_28"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Tempus (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_29"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Torm (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_30"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Angharradh (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_31"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Auril (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_32"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Berronar Truesilver (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_33"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Beshaba (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_34"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Garl Glittergold (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_35"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Gond (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_36"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Ilmater (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_37"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Loviatar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_38"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Luthic (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_39"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Mielikki (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_40"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Sheela Peryroyl (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_41"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Sseth (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_42"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Talona (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_43"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Tiamat (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_44"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Umberlee (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_45"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Waukeen (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_46"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Zehir (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_47"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Akadi (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_48"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Bazim-Gorag (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_49"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Grumbar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_50"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Istishia (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_51"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Kossuth (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_52"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Abbathor (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_53"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Arvoreen (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_54"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Baervan Wildwanderer (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_55"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Bahgtru (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_56"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Baravar Cloakshadow (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_57"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Brandobaris (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_58"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Callarduran Smoothhands (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_59"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Clangeddin Silverbeard (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_60"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Cyrrollalee (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_61"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Deep Sashelas (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_62"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Dugmaren Brightmantle (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_63"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Erevan Ilesere (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_64"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Fenmarel Mestarine (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_65"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Fzoul Chembryl (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_66"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Garagos (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_67"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Hoar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_68"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Hruggek (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_69"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Jergal (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_70"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Labelas Enoreth (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_71"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Lliira (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_72"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Maglubiyet (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_73"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Malar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_74"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Marthammor Duin (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_75"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Milil (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_76"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Obould (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_77"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- The Red Knight (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_78"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Sharess (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_79"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Shargaas (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_80"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Shevarash (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_81"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Shiallia (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_82"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Siamorphe (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_83"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Solonor Thelandira (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_84"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Thard Harr (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_85"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Uthgar (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_86"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Valkur (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_87"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Vaprak (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_88"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Vergadain (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_89"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Bel (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_90"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Dispater (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_91"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Mammon (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_92"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Belial (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_93"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Levistus (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_94"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Glasya (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_95"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Baalzebul (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_96"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Mephistopheles (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_98"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Vecna (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_99"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Torog (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_100"><specific name="Pantheon">Core</specific></AppendNodes> <!-- Tharizdun (Dungeon Master's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_107"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Arawai (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_108"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Aureon (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_109"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Balinor (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_110"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Boldrei (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_111"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Dol Arrah (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_112"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Dol Dorn (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_113"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Kol Korran (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_114"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Olladra (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_115"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Onatar (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_116"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Traveler (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_118"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Devourer (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_119"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Fury (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_120"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Keeper (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_121"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Mockery (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_122"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Shadow (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_124"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Dark Six (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_125"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Sovereign Host (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_127"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Silver Flame (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_128"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Blood of Vol (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_129"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Path of Light (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_130"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Spirits of the Past (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_131"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- The Undying Court (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_132"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Elf Religion (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_134"><specific name="Pantheon">Eberron</specific></AppendNodes> <!-- Cults of the Dragon Below (Eberron Player's Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_136"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Bahamut (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_137"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Asmodeus (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_138"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Bane (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_139"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Gruumsh (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_140"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Lolth (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_141"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Tiamat (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_142"><specific name="Pantheon">Forgotten Realms</specific></AppendNodes> <!-- Corellon (Forgotten Realms) (Forgotten Realms Campaign Guide) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_144"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Aurom (Dragon Magazine 390) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_145"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Haramathur (Dragon Magazine 390) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_146"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Laeris (Dragon Magazine 390) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_147"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Nusemnee (Dragon Magazine 390) -->
+  <AppendNodes internal-id="ID_FMP_DEITY_148"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Sagawehn (Dragon Magazine 390) -->
+  <AppendNodes internal-id="ID_DRAG427_GOD"><specific name="Pantheon">Dragon Magazine</specific></AppendNodes> <!-- Nerull (Dragon Magazine 427) -->
+
+</D20Rules>
