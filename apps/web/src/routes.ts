@@ -272,22 +272,119 @@ export function characterEditorHash(
   return `#/characters/${encodeURIComponent(characterId)}/edit?${parameters.toString()}`;
 }
 
-interface HashNavigationTarget {
+/**
+ * The key this app keeps in each history entry's `history.state`: the hash
+ * of the in-app entry right before it (`null` when the entry was opened
+ * directly or came from outside the app). Back controls read it to decide
+ * whether a real Back returns where the player came from. `history.state`
+ * is per entry and survives a reload, so no other storage is needed.
+ */
+const ROUTE_ENTRY_STATE_KEY = "4ecb.route";
+
+interface RouteEntryState {
+  readonly previousHash: string | null;
+}
+
+export interface HashNavigationTarget {
   readonly location: { readonly hash: string };
   readonly history: {
-    pushState(data: null, unused: string, url: string): void;
-    replaceState(data: null, unused: string, url: string): void;
+    readonly state?: unknown;
+    pushState(data: unknown, unused: string, url: string): void;
+    replaceState(data: unknown, unused: string, url: string): void;
   };
 }
 
+export interface HashHistoryTarget extends HashNavigationTarget {
+  readonly history: HashNavigationTarget["history"] & { back(): void };
+}
+
+function routeEntryState(state: unknown): RouteEntryState | undefined {
+  if (typeof state !== "object" || state === null) return undefined;
+  const entry = (state as Record<string, unknown>)[ROUTE_ENTRY_STATE_KEY];
+  if (typeof entry !== "object" || entry === null) return undefined;
+  const previousHash = (entry as Record<string, unknown>).previousHash;
+  return typeof previousHash === "string" || previousHash === null
+    ? { previousHash }
+    : undefined;
+}
+
+function withRouteEntryState(
+  state: unknown,
+  entry: RouteEntryState,
+): Record<string, unknown> {
+  return {
+    ...(typeof state === "object" && state !== null ? state : {}),
+    [ROUTE_ENTRY_STATE_KEY]: entry,
+  };
+}
+
+/**
+ * The hash of the in-app entry before the current one: `null` when there
+ * is none (opened directly, or from outside the app), `undefined` when the
+ * entry carries no record.
+ */
+export function previousRouteHash(
+  target: HashNavigationTarget,
+): string | null | undefined {
+  return routeEntryState(target.history.state)?.previousHash;
+}
+
+/**
+ * Records where the current entry came from when it has no record yet: an
+ * entry the browser added (a link, a typed hash, a direct open) rather than
+ * `commitHashNavigation`. Entries revisited with Back/Forward or a reload
+ * keep their record. `previousHash` is the hash the app showed before
+ * (undefined on the app's first route).
+ */
+export function recordRouteEntry(
+  target: HashNavigationTarget,
+  previousHash: string | undefined,
+): void {
+  if (routeEntryState(target.history.state) !== undefined) return;
+  target.history.replaceState(
+    withRouteEntryState(target.history.state, {
+      previousHash:
+        previousHash === undefined || previousHash === target.location.hash
+          ? null
+          : previousHash,
+    }),
+    "",
+    target.location.hash,
+  );
+}
+
+/**
+ * An in-app Back control: a real `history.back()` whenever the previous
+ * entry is any page of this app (so that page's state, scroll and the
+ * Forward stack behave like the browser's Back) and true; false when the
+ * page was opened directly or from outside the app, and the caller then
+ * navigates to its own fallback with `replace`, so the browser's Back
+ * never loops between the two pages.
+ */
+export function backToPreviousRoute(target: HashHistoryTarget): boolean {
+  const previous = previousRouteHash(target);
+  if (previous === null || previous === undefined) return false;
+  target.history.back();
+  return true;
+}
+
+/**
+ * Moves to `next`. A push records the entry it came from; a replace keeps
+ * the replaced entry's record, since the entry before it is unchanged.
+ */
 export function commitHashNavigation(
   target: HashNavigationTarget,
   next: string,
   replace = false,
 ): boolean {
   if (next === target.location.hash) return false;
-  if (replace) target.history.replaceState(null, "", next);
-  else target.history.pushState(null, "", next);
+  if (replace) target.history.replaceState(target.history.state, "", next);
+  else
+    target.history.pushState(
+      withRouteEntryState(null, { previousHash: target.location.hash }),
+      "",
+      next,
+    );
   return true;
 }
 

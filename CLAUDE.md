@@ -313,7 +313,14 @@ toolbar Sections menu of sections
 (`SheetSectionsMenu.tsx`: hide/show and reorder) — D099, `?print=1` auto-opens the print
 dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
-changes move focus to the new main landmark. Every builder tab shares the
+changes move focus to the new main landmark. Each history entry records the
+in-app entry before it in `history.state` (`commitHashNavigation` on push,
+`recordRouteEntry` for browser-added entries; replaces and redirects keep the
+record, which survives a reload); in-app Back controls use
+`backToPreviousRoute`: a real `history.back()` when that previous entry is any
+app page, otherwise their fallback by replacement (the sheet toolbar's Back:
+the character's default builder; Settings' close and Esc: the last other page,
+else the library). Every builder tab shares the
 sticky character sidebar (`builder-layout`/`builder-sidebar` in
 `CharacterEditorPage.tsx`: portrait, name, `BuilderCharacterStats`; below
 63rem `BuilderSidebar.tsx` parks it as a left drawer whose right-edge

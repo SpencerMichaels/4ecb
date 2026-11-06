@@ -28,11 +28,13 @@ import {
   type PaperSize,
 } from "./paper-size";
 import {
+  backToPreviousRoute,
   canonicalHashRedirect,
   characterEditorHash,
   characterSheetHash,
   commitHashNavigation,
   parseHashRoute,
+  recordRouteEntry,
   type BuilderNavigation,
 } from "./routes";
 import {
@@ -317,6 +319,22 @@ export function App() {
     });
     if (commitHashNavigation(window, next, true)) setHash(next);
   }, []);
+  // The sheet's Back: a real Back when the sheet was reached from any app
+  // page; opened directly, the character's default builder replaces it.
+  const returnFromSheet = useCallback(
+    (characterId: string) => {
+      if (!backToPreviousRoute(window))
+        navigateBuilder(characterId, { workspace: "build" }, true);
+    },
+    [navigateBuilder],
+  );
+  // Settings' close (and Esc): a real Back to the app page it was opened
+  // from; opened directly, the last other page (else the library) replaces it.
+  const closeSettings = useCallback(() => {
+    if (backToPreviousRoute(window)) return;
+    if (commitHashNavigation(window, settingsReturnHash, true))
+      setHash(settingsReturnHash);
+  }, [settingsReturnHash]);
   useEffect(() => {
     applyThemePreference(document.documentElement, theme);
     syncThemeColor(document);
@@ -576,10 +594,18 @@ export function App() {
     };
   }, [loadRuntimeContent, refresh]);
 
+  // Each entry remembers the in-app entry before it (`backToPreviousRoute`).
+  const lastRecordedHash = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    recordRouteEntry(window, lastRecordedHash.current);
+    lastRecordedHash.current = hash;
+  }, [hash]);
+
   useEffect(() => {
     const redirect = canonicalHashRedirect(hash);
     if (redirect === undefined) return;
-    window.history.replaceState(null, "", redirect);
+    // The redirect keeps the entry's record.
+    commitHashNavigation(window, redirect, true);
     setHash(redirect);
   }, [hash]);
 
@@ -678,6 +704,7 @@ export function App() {
                       paperSize={paperSize}
                       onPaperSizeChange={setPaperSize}
                       closeHref={settingsReturnHash}
+                      onClose={closeSettings}
                     />
                   ) : route.characterId === undefined ? (
                     <CharacterLibraryPage
@@ -714,6 +741,7 @@ export function App() {
                       onSheetModeChange={(editing) =>
                         navigateSheet(route.characterId!, editing)
                       }
+                      onBack={() => returnFromSheet(route.characterId!)}
                       countCoinWeight={countCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}

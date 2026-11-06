@@ -50,6 +50,7 @@ import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
+import { characterEditorHash } from "./routes";
 import { inventoryCategory } from "./equipment-ui";
 import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
 import { AssociateCard } from "./AssociateCard";
@@ -152,6 +153,7 @@ export function CharacterSheetPage({
   paper = "letter",
   sheetEditing = false,
   onSheetModeChange,
+  onBack,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -167,6 +169,9 @@ export function CharacterSheetPage({
   /** The print preview's Edit mode (`?preview=1&edit=1`, D099). */
   readonly sheetEditing?: boolean;
   readonly onSheetModeChange?: (editing: boolean) => void;
+  /** The toolbar Back: the app returns to this character's builder (a real
+   *  Back when the builder is the previous entry). */
+  readonly onBack?: () => void;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(openPrintPreview);
   useEffect(() => {
@@ -560,8 +565,9 @@ export function CharacterSheetPage({
       return;
     printRequested.current = true;
     if (window.location.hash.endsWith("?print=1"))
+      // The entry keeps its record of where it came from (`routes.ts`).
       window.history.replaceState(
-        null,
+        window.history.state,
         "",
         window.location.hash.slice(0, -"?print=1".length),
       );
@@ -713,9 +719,11 @@ export function CharacterSheetPage({
               title="Back"
               type="button"
               onClick={() => {
-                if (window.history.length > 1) window.history.back();
+                if (onBack !== undefined) onBack();
                 else
-                  window.location.hash = `#/characters/${encodeURIComponent(characterId)}/edit`;
+                  window.location.hash = characterEditorHash(characterId, {
+                    workspace: "build",
+                  });
               }}
             >
               <Icon name="back" />

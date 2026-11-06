@@ -1,5 +1,32 @@
 # Implementation status
 
+## In-app Back controls know where the player came from (2026-11-06)
+
+- The print preview's Back button used `history.length > 1` to choose a
+  browser Back, so a sheet link opened directly (whose tab already had other
+  history) left the app instead of opening the builder. Each history entry
+  now records the in-app entry before it in `history.state`
+  (`routes.ts`: `commitHashNavigation` writes it on push and keeps it on
+  replace; App's `recordRouteEntry` fills entries the browser added through
+  links or a typed hash; the canonical redirect and the `?print=1` rewrite
+  keep it; a reload keeps it).
+- `backToPreviousRoute`: a real `history.back()` whenever the previous entry
+  is any app page (the builder at any tab or level, the library, another
+  character, Settings), so that page's state and the Forward stack behave as
+  the browser's Back; opened directly or from outside the app, the sheet's
+  Back replaces the sheet with the character's default builder
+  (`#/characters/<id>/edit?tab=build`), so the browser's Back then leaves
+  the app instead of looping to the sheet. View and Edit modes of the
+  preview count as the sheet.
+- Settings' close button and Esc use the same helper (they pushed a new entry
+  before, so Back after closing returned to Settings); opened directly they
+  replace Settings with the last other page, else the library. The campaign
+  invite page's "Back to characters" and the builder's "Close character" go
+  to the library by name and stay as they are.
+- Tests: `route-history.test.ts` (modeled session history: direct open,
+  builder tab, other character, library, Edit mode, print rewrite, reload,
+  redirect, Settings) and `route-history.dom.test.ts` (jsdom History API).
+
 ## One label per status: "Unavailable" or "Illegal" (2026-11-06)
 
 Owner feedback: never two labels for one status, and options blocked by a

@@ -135,6 +135,9 @@ export interface SettingsPageProps {
   readonly paperSize: PaperSize;
   /** The page Settings was opened from (default: the library). */
   readonly closeHref?: string;
+  /** Closes Settings back to where it was opened from (a real Back when that
+   *  page is the previous entry); without it, close goes to `closeHref`. */
+  readonly onClose?: () => void;
   readonly onPaperSizeChange: (value: PaperSize) => void;
 }
 
@@ -209,6 +212,7 @@ export function SettingsPage({
   paperSize,
   onPaperSizeChange,
   closeHref = "#/characters",
+  onClose,
 }: SettingsPageProps) {
   // Ongoing work (an import, a content switch), shown beside its controls.
   // Finished work shows in the page itself; failures and warnings are toasts.
@@ -520,11 +524,12 @@ export function SettingsPage({
         return;
       }
       if (importing) return;
-      window.location.hash = closeHref;
+      if (onClose !== undefined) onClose();
+      else window.location.hash = closeHref;
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [closeHref, importing, pendingRemove]);
+  }, [closeHref, importing, onClose, pendingRemove]);
 
   const focusFirstButton = useCallback((node: HTMLDivElement | null) => {
     if (node === null) return;
@@ -544,6 +549,19 @@ export function SettingsPage({
             className="icon-only-button button-icon"
             href={closeHref}
             title="Close settings"
+            onClick={(event) => {
+              if (
+                onClose === undefined ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              event.preventDefault();
+              onClose();
+            }}
           >
             <Icon name="remove" />
           </a>
