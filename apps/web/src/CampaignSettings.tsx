@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { CampaignRepository, CharacterRepository } from "@4ecb/browser-storage";
 import {
@@ -18,11 +25,6 @@ import {
   type CampaignRow,
 } from "./campaign-settings-ui";
 import { download } from "./download";
-import {
-  ItemContextMenu,
-  itemContextMenuAt,
-  type ItemContextMenuState,
-} from "./ItemContextMenu";
 import type { AdvertisedCampaign } from "./runtime-content";
 
 const campaignRepository = new CampaignRepository();
@@ -35,7 +37,8 @@ export interface CampaignSettingsProps {
 
 /**
  * Settings → Campaigns (D116): the campaigns installed in this browser, with
- * import, and per-row Export file, Copy invite link and Remove on right-click.
+ * import, and per-row Export, Copy invite link and Remove buttons laid out
+ * like the content packs table's (a disabled one says why on hover).
  */
 export function CampaignSettings({
   advertisedCampaigns,
@@ -47,7 +50,6 @@ export function CampaignSettings({
     readonly members: CampaignMembers;
   }>();
   const [importing, setImporting] = useState<string>();
-  const [menu, setMenu] = useState<ItemContextMenuState>();
   const [pendingRemove, setPendingRemove] = useState<CampaignRow>();
   // The last copied (or, without clipboard access, the to-copy) invite link:
   // copying shows nothing on the page, so it is stated here.
@@ -60,7 +62,6 @@ export function CampaignSettings({
   // The latest error handler, without reloading the table when it changes.
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
-  const closeMenu = useCallback(() => setMenu(undefined), []);
 
   const load = useCallback(async () => {
     const [installed, members] = await Promise.all([
@@ -135,32 +136,13 @@ export function CampaignSettings({
     window.dispatchEvent(new Event(CAMPAIGNS_CHANGED_EVENT));
   }
 
-  function rowMenu(row: CampaignRow) {
-    const inviteReason = inviteDisabledReason(row);
-    const removeReason = removeDisabledReason(row);
-    return [
-      { label: "Export file", onSelect: () => exportFile(row) },
-      {
-        label: "Copy invite link",
-        ...(inviteReason === undefined ? {} : { disabledReason: inviteReason }),
-        onSelect: () => void copyInvite(row),
-      },
-      {
-        label: "Remove",
-        ...(removeReason === undefined ? {} : { disabledReason: removeReason }),
-        onSelect: () => setPendingRemove(row),
-      },
-    ];
-  }
-
   return (
     <section className="panel settings-section campaign-settings">
       <div>
         <h3>Campaigns</h3>
         <p>
           A campaign adds a DM&apos;s house rules and limits on top of the game
-          content, for the characters in it. Right-click a campaign to export
-          it, copy its invite link, or remove it.
+          content, for the characters in it.
         </p>
       </div>
 
@@ -170,77 +152,109 @@ export function CampaignSettings({
             <th scope="col">Name</th>
             <th scope="col">Revision</th>
             <th scope="col">Characters</th>
+            <th scope="col">
+              <span className="visually-hidden">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows === undefined ? null : rows.length === 0 ? (
             <tr>
-              <td className="game-content-empty" colSpan={3}>
+              <td className="game-content-empty" colSpan={4}>
                 No campaigns in this browser.
               </td>
             </tr>
           ) : (
-            rows.flatMap((row) => [
-              <tr
-                key={row.campaignId}
-                tabIndex={0}
-                aria-label={`${row.name}, revision ${row.revision}`}
-                onContextMenu={(event) => {
-                  const next = itemContextMenuAt(event, row.name, rowMenu(row));
-                  if (next !== undefined) setMenu(next);
-                }}
-              >
-                <td>
-                  <strong>{row.name}</strong>
-                  <span className="content-row-source">{row.campaignId}</span>
-                </td>
-                <td className="campaign-table-number">{row.revision}</td>
-                <td className="campaign-table-number">{row.characters}</td>
-              </tr>,
-              pendingRemove?.campaignId === row.campaignId ? (
-                <tr
-                  className="content-row-confirm"
-                  key={`${row.campaignId}:remove`}
-                >
-                  <td colSpan={3}>
-                    <div
-                      className="content-change-review"
-                      onKeyDown={(event) => {
-                        // Esc cancels here instead of closing Settings.
-                        if (event.key !== "Escape") return;
-                        event.preventDefault();
-                        setPendingRemove(undefined);
-                      }}
-                      ref={focusConfirmation}
-                    >
-                      <p>
-                        <strong>Remove {row.name} from this browser?</strong>{" "}
-                        Every revision is removed. Import its file again to use
-                        it later.
-                      </p>
-                      <div className="inline-actions">
+            rows.map((row) => {
+              const inviteReason = inviteDisabledReason(row);
+              const removeReason = removeDisabledReason(row);
+              return (
+                <Fragment key={row.campaignId}>
+                  <tr>
+                    <td>
+                      <strong>{row.name}</strong>
+                      <span className="content-row-source">
+                        {row.campaignId}
+                      </span>
+                    </td>
+                    <td className="campaign-table-number">{row.revision}</td>
+                    <td className="campaign-table-number">{row.characters}</td>
+                    <td>
+                      <div className="content-row-actions">
+                        <button type="button" onClick={() => exportFile(row)}>
+                          Export
+                        </button>
                         <button
                           type="button"
-                          onClick={() =>
-                            void remove(row).catch((reason: unknown) =>
-                              onError(reason, `Couldn't remove ${row.name}`),
-                            )
-                          }
+                          {...actionState(inviteReason)}
+                          onClick={() => {
+                            if (inviteReason === undefined)
+                              void copyInvite(row);
+                          }}
+                        >
+                          Copy invite link
+                        </button>
+                        <button
+                          type="button"
+                          {...actionState(removeReason)}
+                          onClick={() => {
+                            if (removeReason === undefined)
+                              setPendingRemove(row);
+                          }}
                         >
                           Remove
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingRemove(undefined)}
-                        >
-                          Cancel
-                        </button>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : null,
-            ])
+                    </td>
+                  </tr>
+                  {pendingRemove?.campaignId === row.campaignId ? (
+                    <tr className="content-row-confirm">
+                      <td colSpan={4}>
+                        <div
+                          className="content-change-review"
+                          onKeyDown={(event) => {
+                            // Esc cancels here instead of closing Settings.
+                            if (event.key !== "Escape") return;
+                            event.preventDefault();
+                            setPendingRemove(undefined);
+                          }}
+                          ref={focusConfirmation}
+                        >
+                          <p>
+                            <strong>
+                              Remove {row.name} from this browser?
+                            </strong>{" "}
+                            Every revision is removed. Import its file again to
+                            use it later.
+                          </p>
+                          <div className="inline-actions">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void remove(row).catch((reason: unknown) =>
+                                  onError(
+                                    reason,
+                                    `Couldn't remove ${row.name}`,
+                                  ),
+                                )
+                              }
+                            >
+                              Remove
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPendingRemove(undefined)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              );
+            })
           )}
         </tbody>
       </table>
@@ -278,10 +292,14 @@ export function CampaignSettings({
           <code className="campaign-invite-url">{invite.url}</code>
         </p>
       )}
-
-      {menu === undefined ? null : (
-        <ItemContextMenu menu={menu} onClose={closeMenu} />
-      )}
     </section>
   );
+}
+
+/** A row action that can't be used stays visible and focusable, inert, with
+ *  its reason as the tooltip and accessible description. */
+function actionState(disabledReason: string | undefined) {
+  return disabledReason === undefined
+    ? {}
+    : { "aria-disabled": true, title: disabledReason };
 }

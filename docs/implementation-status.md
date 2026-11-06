@@ -571,18 +571,27 @@ content; rules in `campaign-settings-ui.ts`): a Name/Revision/Characters
 table over `CampaignRepository.list()` (newest installed revision per
 campaign) and library metadata `campaignId` (metadata v3, rebuilt lazily);
 the empty state is a row inside the table; Import campaign… is always
-present (`.4ecc`, `installEncoded`, errors as toasts); right-click Export
-file / Copy invite link (`#/campaigns/join/<id>`, enabled only when the
-runtime config hosts the newest installed revision's digest) / Remove
-(disabled while any character, trash included, belongs to it).
+present (`.4ecc`, `installEncoded`, errors as toasts); per-row Export /
+Copy invite link (`#/campaigns/join/<id>`, enabled whenever the runtime
+config hosts any revision of that campaign) / Remove (disabled while any
+character, trash included, belongs to it) buttons in the content packs
+table's `content-row-actions` pattern, a disabled one `aria-disabled` with
+its reason as the title (owner follow-up, 2026-11-06: buttons replaced the
+first version's right-click menu).
 `runtime-content.ts` parses `campaigns` (same-origin, at most 64, one per
 campaign); `App.tsx`'s background `refreshInstalledCampaigns` installs only
 newer revisions of installed campaigns (identity and digest checked before
 install, quiet on failure, retried next load) and dispatches
-`CAMPAIGNS_CHANGED_EVENT`. `ItemContextMenu` handles Esc in the capture
-phase so it doesn't also close Settings. Verification:
+`CAMPAIGNS_CHANGED_EVENT`. The dev server's deploy/ middleware
+(`dev-deploy-path.ts`, used by `vite.config.ts`) serves
+`/private-packs/` subpaths such as `campaigns/<file>.4ecc` (it used to keep
+only the basename, so hosted campaigns 404ed in dev), rejecting traversal,
+encoded separators and malformed escapes with a 404; the image's nginx
+`alias` already served the subdirectory. Verification:
 `runtime-content.test.ts`, `CampaignSettings.test.tsx`,
-`character-repository.test.ts`; `pnpm test`, typecheck, lint, format:check.
+`dev-deploy-path.test.ts`, `character-repository.test.ts`; a real dev-server
+`curl` of `/private-packs/campaigns/pathfinder-0ca4afd36ef9.4ecc` (200,
+identical bytes); `pnpm test`, typecheck, lint, format:check.
 
 ## Per-character content target (2026-11-06)
 

@@ -277,11 +277,6 @@
   white-space: nowrap;
 }
 
-.campaign-table tbody tr[tabindex]:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 .campaign-invite-url {
   overflow-wrap: anywhere;
 }

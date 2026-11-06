@@ -801,22 +801,27 @@ and restart it (`docs/public-deployment.md`). For a second revision, bump
 `revision` in a copy of `campaign.json` (restrict another deity, e.g.
 Moradin, or an item a character holds), build and import or advertise it.
 
-- [ ] **Settings → Campaigns: table, menu and remove.**
+- [ ] **Settings → Campaigns: table, row buttons and remove.**
   - **Where:** `#/settings` in a browser with no campaigns, then Import
-    campaign… with the built `.4ecc`; right-click its row (Export file,
-    Copy invite link, Remove), with and without a hosted copy and with a
-    character in the campaign. Also import a `.4ecp` or a corrupted file.
+    campaign… with the built `.4ecc`; use its row's Export, Copy invite
+    link and Remove buttons, with and without a hosted copy (any revision)
+    and with a character in the campaign; once at 140% zoom. Also import a
+    `.4ecp` or a corrupted file.
   - **Expect:** the Campaigns panel under Game content spans both columns;
     the empty table keeps its headers with a muted "No campaigns in this
     browser." row and Import campaign… below. A row shows the bold name
     with the muted ID under it; Revision and Characters narrow and
-    right-aligned. The menu's disabled items are greyed with a hover
-    reason; Esc closes only the menu. The inline remove confirmation and
-    the "Copied the invite link…" line sit under the button, a long URL
-    wrapping; a bad file is a "Couldn't import <file>" toast.
-  - **Wrong if:** the table or the button is hidden when empty, the menu
-    or confirmation overlaps the table, Esc also leaves the page, or the
-    URL overflows.
+    right-aligned. The row buttons sit at the row's right end, the same
+    size and style as the content packs table's Replace…/Remove; a
+    disabled one is greyed with a hover reason. Esc in the inline remove
+    confirmation closes only it. The confirmation sits under the row and
+    the "Copied the invite link…" line under the table, a long URL
+    wrapping; a bad file is a "Couldn't import <file>" toast. Right-click
+    on a row opens only the browser's own menu.
+  - **Wrong if:** the table or the Import button is hidden when empty, a
+    row button is missing instead of disabled, the buttons wrap
+    awkwardly or overflow at 140% zoom, the confirmation overlaps the
+    table, Esc also leaves the page, or the URL overflows.
 - [ ] **Invite page: join and new character.**
   - **Where:** the copied invite link in a browser without the campaign:
     Add campaign, then New character in <campaign>; reopen the link; then

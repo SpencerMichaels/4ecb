@@ -1,11 +1,12 @@
 import { execSync } from "node:child_process";
 import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+import { deployFileForRequest } from "./src/dev-deploy-path";
 import { themeBackgrounds } from "./src/theme-tokens";
 import { WEB_MANIFEST, WEB_MANIFEST_FILENAME } from "./src/web-manifest";
 
@@ -32,7 +33,8 @@ function buildCommit(): string {
 
 /** The ignored operator deploy/ directory (`content-tool advertise`,
  *  `scripts/publish-content.sh --no-push`), served in development the way the
- *  image serves it, so a locally published pack reaches the dev server. Without
+ *  image serves it, so a locally published pack or hosted campaign
+ *  (`private-packs/campaigns/`) reaches the dev server. Without
  *  deploy/, runtime-config.json falls through to public/. */
 function developmentDeployDirectory(): Plugin {
   const deploy = join(import.meta.dirname, "../../deploy");
@@ -41,16 +43,16 @@ function developmentDeployDirectory(): Plugin {
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
-        const path = (request.url ?? "").split("?")[0] ?? "";
-        const file =
-          path === "/runtime-config.json"
-            ? join(deploy, "runtime-config.json")
-            : path.startsWith("/private-packs/")
-              ? join(deploy, "private-packs", basename(path))
-              : undefined;
+        const path = (request.url ?? "").split(/[?#]/, 1)[0] ?? "";
+        const file = deployFileForRequest(deploy, path);
         if (file === undefined) return next();
-        if (!existsSync(file) || !statSync(file).isFile()) {
-          // A missing pack must not fall back to the app's HTML document.
+        if (
+          file === "reject" ||
+          !existsSync(file) ||
+          !statSync(file).isFile()
+        ) {
+          // A missing pack or campaign must not fall back to the app's HTML
+          // document.
           if (path.startsWith("/private-packs/")) {
             response.statusCode = 404;
             response.end();

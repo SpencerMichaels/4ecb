@@ -111,9 +111,17 @@ describe("campaign settings rows", () => {
       ["Another Setting", 1, 0, 1],
       ["Synthetic Setting", 2, 2, 0],
     ]);
-    // The hosted copy must be the installed revision's exact digest.
+    // The invite link names only the campaign: any hosted revision will do,
+    // here an older one than the installed revision 2.
     expect(inviteDisabledReason(rows[0]!)).toBeUndefined();
-    expect(inviteDisabledReason(rows[1]!)).toMatch(/doesn't host/);
+    expect(inviteDisabledReason(rows[1]!)).toBeUndefined();
+    expect(
+      inviteDisabledReason(
+        campaignRows([second], { active: [], deleted: [] }, [
+          hosted(other),
+        ])[0]!,
+      ),
+    ).toMatch(/doesn't host this campaign/);
     expect(removeDisabledReason(rows[0]!)).toMatch(/1 in the trash/);
     expect(removeDisabledReason(rows[1]!)).toMatch(/^2 characters belong/);
     expect(
@@ -186,19 +194,9 @@ describe("CampaignSettings", () => {
     return [...container.querySelectorAll<HTMLTableRowElement>("tbody tr")];
   }
 
-  async function openMenu(row: HTMLTableRowElement) {
-    await act(async () => {
-      row.dispatchEvent(
-        new MouseEvent("contextmenu", {
-          bubbles: true,
-          cancelable: true,
-          clientX: 20,
-          clientY: 20,
-        }),
-      );
-    });
+  function actions(row: HTMLTableRowElement): HTMLButtonElement[] {
     return [
-      ...container.querySelectorAll<HTMLButtonElement>("[role=menuitem]"),
+      ...row.querySelectorAll<HTMLButtonElement>(".content-row-actions button"),
     ];
   }
 
@@ -208,7 +206,7 @@ describe("CampaignSettings", () => {
       [...container.querySelectorAll("thead th")].map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Name", "Revision", "Characters"]);
+    ).toEqual(["Name", "Revision", "Characters", "Actions"]);
     expect(bodyRows().map(({ textContent }) => textContent)).toEqual([
       "No campaigns in this browser.",
     ]);
@@ -230,7 +228,14 @@ describe("CampaignSettings", () => {
     expect(onError).not.toHaveBeenCalled();
     expect(
       bodyRows().map(({ cells }) => [...cells].map((cell) => cell.textContent)),
-    ).toEqual([["Synthetic Settingsynthetic-setting", "1", "0"]]);
+    ).toEqual([
+      [
+        "Synthetic Settingsynthetic-setting",
+        "1",
+        "0",
+        "ExportCopy invite linkRemove",
+      ],
+    ]);
   });
 
   it("reports an import the way pack import does", async () => {
@@ -260,9 +265,11 @@ describe("CampaignSettings", () => {
     const [freeRow, usedRow] = bodyRows();
     expect(usedRow?.cells[2]?.textContent).toBe("1");
 
-    const usedMenu = await openMenu(usedRow!);
+    // No right-click menu: the row's actions are always-present buttons.
+    expect(container.querySelector("[role=menu]")).toBeNull();
+    const usedMenu = actions(usedRow!);
     expect(usedMenu.map(({ textContent }) => textContent)).toEqual([
-      "Export file",
+      "Export",
       "Copy invite link",
       "Remove",
     ]);
@@ -271,16 +278,20 @@ describe("CampaignSettings", () => {
       "true",
       "true",
     ]);
+    expect(usedMenu[1]?.title).toMatch(/doesn't host this campaign/);
     expect(usedMenu[2]?.title).toMatch(/^1 character belongs to it/);
+    await act(async () => usedMenu[1]?.click());
+    expect(container.querySelector("p.status")).toBeNull();
     await act(async () => usedMenu[2]?.click());
     expect(container.querySelector(".content-change-review")).toBeNull();
 
-    const freeMenu = await openMenu(freeRow!);
+    const freeMenu = actions(freeRow!);
     expect(freeMenu.map((item) => item.getAttribute("aria-disabled"))).toEqual([
       null,
       null,
       null,
     ]);
+    expect(freeMenu.map(({ title }) => title)).toEqual(["", "", ""]);
     await act(async () => freeMenu[2]?.click());
     expect(
       container.querySelector(".content-change-review")?.textContent,
@@ -294,24 +305,43 @@ describe("CampaignSettings", () => {
         ".content-change-review button",
       ),
     ].find(({ textContent }) => textContent === "Remove")!;
+    // Cancel closes the confirmation without removing.
+    const cancel = [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".content-change-review button",
+      ),
+    ].find(({ textContent }) => textContent === "Cancel")!;
+    await act(async () => cancel.click());
+    expect(container.querySelector(".content-change-review")).toBeNull();
+    expect(storage.remove).not.toHaveBeenCalled();
+    await act(async () => actions(bodyRows()[0]!)[2]?.click());
+    const confirmAgain = [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".content-change-review button",
+      ),
+    ].find(({ textContent }) => textContent === "Remove")!;
+    expect(confirm.isConnected).toBe(false);
     await act(async () => {
-      confirm.click();
+      confirmAgain.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(storage.remove).toHaveBeenCalledWith("free");
     expect(bodyRows()).toHaveLength(1);
   });
 
-  it("copies the invite link and says so", async () => {
-    const free = await campaign(1, "free", "Free Setting");
+  it("copies the invite link for any hosted revision and says so", async () => {
+    const older = await campaign(1, "free", "Free Setting");
+    const free = await campaign(2, "free", "Free Setting");
     storage.installed = [free];
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    await render([hosted(free)]);
-    const menu = await openMenu(bodyRows()[0]!);
+    // The server hosts revision 1; this browser has revision 2.
+    await render([hosted(older)]);
+    const menu = actions(bodyRows()[0]!);
+    expect(menu[1]?.getAttribute("aria-disabled")).toBeNull();
     await act(async () => {
       menu[1]?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));

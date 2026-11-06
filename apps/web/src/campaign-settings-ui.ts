@@ -1,4 +1,4 @@
-// Settings → Campaigns (D116): the table rows and their right-click actions,
+// Settings → Campaigns (D116): the table rows and their per-row actions,
 // kept apart from the component so they test without a DOM.
 
 import type { CampaignDocument } from "@4ecb/content-pack";
@@ -18,7 +18,8 @@ export interface CampaignRow {
   readonly trashed: number;
   /** The newest installed revision, for Export file. */
   readonly campaign: CampaignDocument;
-  /** The hosted copy of exactly this revision, when the server has one. */
+  /** The server's hosted copy of this campaign (any revision): the invite
+   *  link names only the campaign, and joining takes the hosted revision. */
   readonly hosted?: AdvertisedCampaign;
 }
 
@@ -49,9 +50,7 @@ export function campaignRows(
   return [...newest.values()]
     .map((campaign) => {
       const hosted = advertised.find(
-        (entry) =>
-          entry.campaignId === campaign.campaignId &&
-          entry.contentDigest === campaign.contentDigest,
+        (entry) => entry.campaignId === campaign.campaignId,
       );
       return {
         campaignId: campaign.campaignId,
@@ -86,7 +85,7 @@ export function campaignInviteUrl(
 /** Why Copy invite link can't be used, or undefined when it can. */
 export function inviteDisabledReason(row: CampaignRow): string | undefined {
   return row.hosted === undefined
-    ? "Your group's server doesn't host this revision. Ask the DM to publish it with the content tool, or share the campaign file."
+    ? "Your group's server doesn't host this campaign. Ask the DM to publish it with the content tool, or share the campaign file."
     : undefined;
 }
 

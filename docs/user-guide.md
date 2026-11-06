@@ -130,12 +130,14 @@ installed revision, and how many library characters belong to it.
   `content-tool campaign build`. Its digest is checked before it is stored; a
   file with the same revision as an installed one but different content is
   refused (the DM bumps the revision for every change).
-- Right-click a campaign for **Export file** (the newest revision as
-  `.4ecc`), **Copy invite link** and **Remove**. Copy invite link is
-  available only when your group's server hosts that exact revision; the
-  link opens the campaign's invite page (below).
-  Remove deletes every revision and is unavailable while any character,
-  including one in the trash, belongs to the campaign.
+- Each campaign's row has **Export** (the newest revision as `.4ecc`),
+  **Copy invite link** and **Remove** buttons, like the content packs
+  table's; a button that can't be used is greyed and says why on hover.
+  Copy invite link is available whenever your group's server hosts any
+  revision of the campaign (the link names only the campaign, and joining
+  takes the hosted revision); it opens the campaign's invite page (below).
+  Remove asks to confirm, deletes every revision and is unavailable while
+  any character, including one in the trash, belongs to the campaign.
 
 When the group's server hosts a newer revision of a campaign you have, the
 browser fetches and verifies it in the background after the app loads; a
