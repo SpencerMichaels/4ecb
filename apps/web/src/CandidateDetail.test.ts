@@ -625,4 +625,39 @@ describe("counts-as on option details (D116)", () => {
     expect(detail(plainDeity, {})).not.toContain("Counts as");
     expect(detail(campaignMoradin, {})).not.toContain("Counts as");
   });
+
+  // A campaign renames Moradin to Sun Father (alias Moradin): the line
+  // names the current name, and a granter it names adds nothing.
+  const sunFather: ContentEntity = {
+    ...entity("ID_SUN_FATHER", "Sun Father", "Deity", {}, "The forge god."),
+    aliases: ["Moradin"],
+  };
+  const renamedDetail = (decision: Partial<CandidateDecision>) =>
+    renderToStaticMarkup(
+      createElement(
+        BuilderCardContext.Provider,
+        {
+          value: {
+            ...authoredBuilderCardSettings(1),
+            prerequisiteLines: { ID_MORADIN_FEAT: "Must worship Sun Father" },
+          },
+        },
+        createElement(CandidateDetail, {
+          candidate: { ...candidate, definitionId: feat.id, ...decision },
+          entity: feat,
+          byId: new Map([...byId, [sunFather.id.toLowerCase(), sunFather]]),
+        }),
+      ),
+    );
+
+  it("shows a renamed record's current name and filters what it names (D116 aliases)", () => {
+    const named = renamedDetail({ prerequisiteMetThrough: ["ID_SUN_FATHER"] });
+    expect(named).toContain(
+      "<strong>Prerequisite:</strong> Must worship Sun Father</p>",
+    );
+    expect(named).not.toContain("met through");
+    expect(renamedDetail({ prerequisiteMetThrough: ["ID_TORAG"] })).toContain(
+      '<strong>Prerequisite:</strong> Must worship Sun Father<span class="entity-card-prerequisites-met"> — met through Torag</span>',
+    );
+  });
 });

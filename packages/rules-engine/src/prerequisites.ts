@@ -2438,3 +2438,71 @@ export function evaluatePrerequisite(
     clauses: leafResults(ir, context),
   };
 }
+
+/** A clause of an internalized prerequisite and the records it names. */
+export interface PrerequisiteReference {
+  /** The clause as the rule text writes it ("fluent in Supernal"). */
+  readonly text: string;
+  /** The records the clause resolves to: an element's IDs, or the records
+   *  of the kind a name clause is matched against (a class clause's
+   *  classes, a worship clause's deities) that have its name. */
+  readonly definitions: readonly ContentEntity[];
+}
+
+/** The record types each name clause is evaluated against
+ *  (`evaluatePrerequisiteIr`). */
+const NAME_CLAUSE_TYPES: Readonly<
+  Partial<Record<PrerequisiteIr["kind"], readonly string[]>>
+> = {
+  training: ["skill training"],
+  "class-source": ["power source"],
+  class: ["class", "hybrid class", "countsasclass"],
+  worship: WORSHIPPED_TYPES,
+  "worship-domain": ["domain"],
+};
+
+/**
+ * Every clause of `ir` with the records it resolves to over `definitions`
+ * (a clause that resolves to none is listed with none): what a displayed
+ * prerequisite line names, for showing renamed records by their current
+ * names (`prerequisite-display.ts`).
+ */
+export function prerequisiteReferences(
+  ir: PrerequisiteIr,
+  definitions: readonly ContentEntity[],
+): readonly PrerequisiteReference[] {
+  const { byNameOrId } = definitionIndex(definitions);
+  const references: PrerequisiteReference[] = [];
+  const visit = (node: PrerequisiteIr): void => {
+    if (node.kind === "all" || node.kind === "any") {
+      for (const child of node.children) visit(child);
+      return;
+    }
+    if (node.kind === "element" || node.kind === "exclusive") {
+      const ids = new Set(node.definitionIds.map(normalized));
+      references.push({
+        text: node.text,
+        definitions: node.definitionIds.flatMap((id) =>
+          (byNameOrId.get(normalized(id)) ?? []).filter((definition) =>
+            ids.has(normalized(definition.id)),
+          ),
+        ),
+      });
+      return;
+    }
+    const types = NAME_CLAUSE_TYPES[node.kind];
+    references.push({
+      text: node.text,
+      definitions:
+        types === undefined || !("value" in node)
+          ? []
+          : (byNameOrId.get(normalized(node.value)) ?? []).filter(
+              (definition) =>
+                types.includes(normalized(definition.type)) &&
+                namedAs(definition, normalized(node.value)),
+            ),
+    });
+  };
+  visit(ir);
+  return references;
+}

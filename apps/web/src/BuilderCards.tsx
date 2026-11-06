@@ -86,6 +86,9 @@ export interface BuilderCardSettings {
   /** The character's `modify` overlays, so item cards show its weapons'
    *  modified fields (a Reaper's Blade scythe's High Crit). */
   readonly itemOverlays?: readonly FieldOverlay[];
+  /** Prerequisite lines naming renamed records by their current names, by
+   *  record ID (the evaluation's `prerequisiteLines`, D116). */
+  readonly prerequisiteLines?: Readonly<Record<string, string>>;
 }
 
 /** The paragon path picked anywhere in the build, unless retrained away. */
@@ -279,6 +282,9 @@ export function evaluatedBuilderCardSettings(
     },
     characterLevel: evaluation.level,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
+    ...(evaluation.prerequisiteLines === undefined
+      ? {}
+      : { prerequisiteLines: evaluation.prerequisiteLines }),
     itemSetCardFor: (piece) => {
       const lookup = (id: string) =>
         (contentById ??= new Map(
@@ -407,6 +413,7 @@ export function BuilderItemCard({
     name,
     entities,
     overlays: settings.itemOverlays,
+    prerequisiteLines: settings.prerequisiteLines,
   });
   const card = withCreatureCard
     ? itemCardBesideCreature(itemCard, settings.creatureCardFor(name, entities))

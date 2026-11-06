@@ -336,8 +336,10 @@ export function CandidateDetailCard({
     const granter = references?.get(id.trim().toLocaleLowerCase());
     return granter === undefined ? [] : [granter.name];
   });
-  const prerequisiteProps =
-    metThrough.length === 0 ? {} : { prerequisiteMetThrough: metThrough };
+  const prerequisiteProps = {
+    prerequisiteLines: builderCards.prerequisiteLines,
+    ...(metThrough.length === 0 ? {} : { prerequisiteMetThrough: metThrough }),
+  };
   // Only the option being inspected, not cards for what it grants.
   // Only an option picked from a table (not a card it grants, nor a button
   // choice like Gender) can be favorited.

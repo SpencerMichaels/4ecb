@@ -38,6 +38,42 @@ before and after (11,265 and 7,166 records); `pnpm parity:baseline`
 unchanged; `pnpm test`, `pnpm typecheck`, lint, prettier and
 `scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
 
+## Prerequisite lines name renamed records (2026-11-06)
+
+D116 aliases amendment (owner decision). `rules-engine`
+`prerequisite-display.ts` (`prerequisiteDisplayLines`, per content set via
+`contentCache`) swaps an old name in the displayed prerequisite line for
+the renamed record's current name where the internalized rule text
+resolves it (`prerequisiteReferences` in `prerequisites.ts`), keeping the
+authored print line's wording, masking clauses that name other records,
+and swapping none of a name (with a `PrerequisiteRenameDiagnostic`) when
+the line names it more often than resolved clauses do. The evaluator
+attaches the result as `EvaluatedCharacter.prerequisiteLines` (cache
+v123); `displayPrerequisites(entity, lines)` reads it for the builder
+reference cards (`EntityPrerequisites`, met-through filter on the
+substituted line) and the sheet's feature prerequisites and cards. The
+diagnostics are available from `prerequisiteDisplayLines(...).diagnostics`;
+the `campaign build --against` report does not list them yet. Content
+correction (`93-prerequisites.part`): the Flailing Gauntlet's
+Traveler's Unpredictable Power gets Self-Forged's rule form "!Warforged,
+artificer" (was unverified) and keeps its wording as its print line.
+Verification: `prerequisite-display.test.ts` (authored print line,
+reworded line, substring clauses, other records' names and unresolved
+clauses untouched, more occurrences than clauses, kept stock name, built
+once and carried by the evaluation, stock content unchanged),
+`CandidateDetail.test.ts` (renamed line and met-through filter),
+sheet-model `prerequisite-lines.test.ts`; private: the Pathfinder
+profile over the rebuilt full pack with a temporary local rename of
+Shadar-kai, Genasi, Warforged, Deva, Revenant, Deva Heritage and the
+Primordial and Supernal records changes 372 lines with no diagnostics
+(e.g. "11th level, shadar-kai" → "11th level, fetchling", "Wis 13, deva
+or Deva Heritage" → "Wis 13, aasimar or Aasimar Heritage", "Wizard,
+Primordial language" → "Wizard, Ignan language"; "Warforged Juggernaut"
+and "warforged resolve racial power" untouched) in about 0.3 s once, and
+none on the full pack; the rebuilt Flailing Gauntlet internalizes to a
+negated Warforged element and the artificer class; `pnpm parity:baseline`
+unchanged; `pnpm test`, `pnpm typecheck`, lint, prettier.
+
 ## Pathfinder campaign languages (2026-11-06)
 
 Campaign content (D116 and its CountsAsLanguage and field-patch

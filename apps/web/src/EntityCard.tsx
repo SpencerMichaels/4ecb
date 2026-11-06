@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import {
+  displayPrerequisites,
   isUserFacingSpecific,
   type ContentEntity,
   type SpecificField,
@@ -447,16 +448,25 @@ export function EntityAliases({ entity }: { readonly entity: ContentEntity }) {
 
 /** "Prerequisite: Hexblade", labelled like a power card's rule lines; a
  * requirement met only through a counts-as alternate says what met it
- * ("Must worship Moradin — met through Torag"). */
+ * ("Must worship Moradin — met through Torag"). A renamed record the line
+ * names shows by its current name ("Prerequisite: Fetchling", D116). */
 export function EntityPrerequisites({
   entity,
   metThrough = [],
+  renamedLines,
 }: {
   readonly entity: ContentEntity;
   /** Names of the owned elements whose counts-as alternates meet it. */
   readonly metThrough?: readonly string[];
+  /** The evaluation's `prerequisiteLines`. */
+  readonly renamedLines?: Readonly<Record<string, string>> | undefined;
 }) {
-  const line = prerequisiteLine(entity.printPrerequisites ?? "");
+  // The authored print line only, with renamed records' current names.
+  const line = prerequisiteLine(
+    entity.printPrerequisites?.trim()
+      ? (displayPrerequisites(entity, renamedLines) ?? "")
+      : "",
+  );
   // A granter the line already names adds nothing: the campaign's Asmodeus
   // meets "Must worship Asmodeus" through the stock Asmodeus it counts as.
   const shown = metThrough.filter((name) => !namesWord(line, name));
@@ -483,9 +493,12 @@ export function EntityCardBody({
   renderDescription,
   showSource = true,
   prerequisiteMetThrough,
+  prerequisiteLines,
 }: {
   readonly entity: ContentEntity;
   readonly prerequisiteMetThrough?: readonly string[];
+  /** The evaluation's `prerequisiteLines` (renamed records, D116). */
+  readonly prerequisiteLines?: Readonly<Record<string, string>> | undefined;
   readonly hideFlavortext: boolean;
   readonly beforeNarrative?: ReactNode;
   readonly afterNarrative?: ReactNode;
@@ -506,6 +519,7 @@ export function EntityCardBody({
           benefits it introduces. */}
       <EntityPrerequisites
         entity={entity}
+        renamedLines={prerequisiteLines}
         {...(prerequisiteMetThrough === undefined
           ? {}
           : { metThrough: prerequisiteMetThrough })}

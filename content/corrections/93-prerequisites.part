@@ -62,6 +62,10 @@
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_295"><Prereqs>any martial class or divine class, must worship Bane</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_372"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_372"><Prereqs>!Warforged, artificer</Prereqs></AppendNodes>
+  <!-- Self-Forged's wording on the Flailing Gauntlet, which has no printed
+       line: the stock wording becomes it, so players still read it. -->
+  <RemoveNodes internal-id="ID_INTERNAL_CLASS_FEATURE_TRAVELER'S_UNPREDICTABLE_POWER_(FLAILING_GAUNTLET)"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_TRAVELER'S_UNPREDICTABLE_POWER_(FLAILING_GAUNTLET)"><Prereqs>!Warforged, artificer</Prereqs><print-prereqs>Any race except warforged, must be an artificer</print-prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_1078"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_FEAT_1078"><Prereqs>Avenger, Armor of Faith class feature</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_1979"><Prereqs /></RemoveNodes>

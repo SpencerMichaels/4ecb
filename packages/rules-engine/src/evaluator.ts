@@ -83,6 +83,7 @@ import {
   type LegacyLoadoutState,
   type LoadoutSlotContext,
 } from "./loadout-slots";
+import { prerequisiteDisplayLines } from "./prerequisite-display";
 import {
   hasAtWillCategory,
   nativePsionics,
@@ -98,7 +99,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v122-2026-11-06-record-aliases";
+  "evaluated-character-v123-2026-11-06-prerequisite-lines";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -321,6 +322,13 @@ export interface EvaluatedCharacter {
   readonly associates?: readonly EvaluatedAssociate[];
   /** Item sets the character has pieces of (legacy `ItemSetCount`). */
   readonly itemSets?: readonly EvaluatedItemSet[];
+  /**
+   * Displayed prerequisite lines by record ID, for the content's records
+   * whose line names a renamed record (D116 aliases), with its current
+   * name (`prerequisite-display.ts`); absent when none does (every stock
+   * pack). Per content set, not per character: built once and shared.
+   */
+  readonly prerequisiteLines?: Readonly<Record<string, string>>;
   readonly suggestions: readonly {
     readonly providerOccurrenceId: string;
     readonly definitionId: string;
@@ -4733,6 +4741,7 @@ function evaluateCharacterInternal(
     ];
   });
   traceEvaluationState(equipment, expressionContext);
+  const prerequisiteLines = prerequisiteDisplayLines(evaluationEntities).lines;
   return {
     level: input.level,
     converged,
@@ -4760,6 +4769,9 @@ function evaluateCharacterInternal(
     ...(beastCompanion === undefined ? {} : { beastCompanion }),
     ...(associates.length === 0 ? {} : { associates }),
     ...(itemSets.itemSets.length === 0 ? {} : { itemSets: itemSets.itemSets }),
+    ...(Object.keys(prerequisiteLines).length === 0
+      ? {}
+      : { prerequisiteLines }),
     suggestions,
     diagnostics,
   };

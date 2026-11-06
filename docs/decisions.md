@@ -4763,3 +4763,19 @@ expect, value}`: `field` is "name" or a specific's name; other top-level
   prerequisite trees are byte-identical on the full and stock packs, and
   the legacy parity baseline is unchanged
   (`docs/content-pack-format.md`, Record aliases; `docs/rules-engine.md`).
+- **Amendment (2026-11-06): prerequisite lines use current names**
+  (owner decision). Players read a renamed record by its current name in
+  prerequisite lines ("Prerequisite: Fetchling", not "Shadar-kai"); prose
+  stays as written. Precise, not text replacement: the displayed line
+  (usually the authored print line) keeps its wording, and only an old
+  name the internalized rule text resolves to the renamed record is
+  swapped, including inside clauses ("fluent in Supernal" → "fluent in
+  Celestial"). Occurrences inside clauses naming other records are never
+  touched; a line naming an old name more often than resolved clauses
+  name it keeps all of them and records a diagnostic. Case follows the
+  occurrence (lower-case in running text, as the books write race names).
+  The lines are derived in the rules engine once per content set and
+  travel with the evaluation (`EvaluatedCharacter.prerequisiteLines`), so
+  composed campaign profiles need no stored field and stock packs, which
+  have no aliases, are unchanged (`docs/rules-engine.md`, prerequisite
+  display).

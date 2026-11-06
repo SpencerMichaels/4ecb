@@ -14,6 +14,7 @@ export * from "./item-fields";
 export * from "./item-sets";
 export * from "./known-records";
 export * from "./loadout-slots";
+export * from "./prerequisite-display";
 export * from "./prerequisites";
 export * from "./powers";
 export * from "./profile-migration";

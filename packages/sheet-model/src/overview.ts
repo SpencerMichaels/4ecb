@@ -383,6 +383,8 @@ export function withSheetOverview(
     selections: readonly LegacyRuleElement[];
     content: readonly ContentEntity[];
     inventory: readonly OverviewInventory[];
+    /** The evaluation's `prerequisiteLines` (D116 aliases). */
+    prerequisiteLines?: Readonly<Record<string, string>>;
   },
 ): CharacterSheetModel {
   const stats = new Map(
@@ -478,7 +480,9 @@ export function withSheetOverview(
           .map((field) => ({ label: field.name.trim(), value: field.value })) ??
         [];
       const prerequisites =
-        entity === undefined ? undefined : displayPrerequisites(entity);
+        entity === undefined
+          ? undefined
+          : displayPrerequisites(entity, input.prerequisiteLines);
       if (
         prerequisites !== undefined &&
         !fields.some((field) => /^prerequisites?$/i.test(field.label))

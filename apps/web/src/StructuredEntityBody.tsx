@@ -356,6 +356,7 @@ export function StructuredEntityBody({
   references,
   hideFlavortext,
   prerequisiteMetThrough,
+  prerequisiteLines,
 }: {
   readonly entity: ContentEntity;
   readonly kind: StructuredEntityKind;
@@ -363,6 +364,8 @@ export function StructuredEntityBody({
   readonly hideFlavortext: boolean;
   /** Names of what meets its prerequisite through a counts-as alternate. */
   readonly prerequisiteMetThrough?: readonly string[];
+  /** The evaluation's `prerequisiteLines` (renamed records, D116). */
+  readonly prerequisiteLines?: Readonly<Record<string, string>> | undefined;
 }) {
   const shortDescription = contentSpecificValue(entity, "Short Description");
   // A class leads with its power source and role, as the books head it:
@@ -408,6 +411,7 @@ export function StructuredEntityBody({
       )}
       <EntityPrerequisites
         entity={entity}
+        renamedLines={prerequisiteLines}
         {...(prerequisiteMetThrough === undefined
           ? {}
           : { metThrough: prerequisiteMetThrough })}

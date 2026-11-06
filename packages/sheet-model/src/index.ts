@@ -754,11 +754,13 @@ function evaluatedEntityFields(
   return [...authoredFields, ...introducedFields];
 }
 
+/** `renamedLines`: an evaluation's `prerequisiteLines` (D116 aliases). */
 function entityPresentation(
   entity: ContentEntity | undefined,
+  renamedLines?: Readonly<Record<string, string>>,
 ): Pick<SheetCard, "flavor" | "prerequisites" | "description" | "source"> {
   if (entity === undefined) return {};
-  const prerequisites = displayPrerequisites(entity);
+  const prerequisites = displayPrerequisites(entity, renamedLines);
   return {
     ...(entity.flavor === undefined || entity.flavor.trim().length === 0
       ? {}
@@ -846,6 +848,7 @@ function learnedReference(
   name: string,
   entity: ContentEntity | undefined,
   origin?: SheetLearnedReferenceOrigin,
+  prerequisiteLines?: Readonly<Record<string, string>>,
 ): SheetLearnedReference {
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
@@ -856,9 +859,10 @@ function learnedReference(
       name,
       entities: entity === undefined ? [] : [entity],
       itemType: entity?.type ?? "Ritual",
+      prerequisiteLines,
     }),
     fields: entityFields(entity),
-    ...entityPresentation(entity),
+    ...entityPresentation(entity, prerequisiteLines),
   };
 }
 
@@ -1340,7 +1344,7 @@ function evaluatedPowerCards(
       ...(power.unsupported.length === 0
         ? {}
         : { calculationWarnings: power.unsupported }),
-      ...entityPresentation(entity),
+      ...entityPresentation(entity, evaluation.prerequisiteLines),
       ...powerRecordParts(
         entity,
         records.lookup,
@@ -1407,6 +1411,7 @@ export function authoredSheetPowerCard(
   entity: ContentEntity,
   personalize: (text: string) => string = (text) => text,
   lookup?: (id: string) => ContentEntity | undefined,
+  prerequisiteLines?: Readonly<Record<string, string>>,
 ): SheetCard {
   const field = (name: string) =>
     entity.specifics
@@ -1430,7 +1435,7 @@ export function authoredSheetPowerCard(
         ({ label }) => !CARD_HEADER_POWER_FIELDS.has(label.toLocaleLowerCase()),
       )
       .map(({ label, value }) => ({ label, value: personalize(value) })),
-    ...entityPresentation(entity),
+    ...entityPresentation(entity, prerequisiteLines),
     ...powerRecordParts(entity, lookup, [], personalize),
   };
 }
@@ -1487,7 +1492,12 @@ export function createSheetPowerCardFinder(
     const card =
       power === undefined
         ? withoutSummonCreatureFields(
-            authoredSheetPowerCard(entity, personalize, records.lookup),
+            authoredSheetPowerCard(
+              entity,
+              personalize,
+              records.lookup,
+              evaluation.prerequisiteLines,
+            ),
             entity,
           )
         : evaluatedPowerCards(
@@ -1523,6 +1533,8 @@ export function sheetItemCard(input: {
   readonly quantity?: number | undefined;
   readonly equippedQuantity?: number | undefined;
   readonly overlays?: readonly FieldOverlay[] | undefined;
+  /** An evaluation's `prerequisiteLines` (D116 aliases). */
+  readonly prerequisiteLines?: Readonly<Record<string, string>> | undefined;
 }): SheetCard {
   const overlays = input.overlays ?? [];
   const entities = input.entities.map((candidate) =>
@@ -1546,7 +1558,7 @@ export function sheetItemCard(input: {
         : [{ label: "Equipped", value: String(input.equippedQuantity) }]),
       ...entities.flatMap((candidate) => entityFields(candidate)),
     ],
-    ...entityPresentation(entity),
+    ...entityPresentation(entity, input.prerequisiteLines),
   };
 }
 
@@ -2333,6 +2345,7 @@ export function buildEvaluatedSheetModel(
           quantity: entry.quantity,
           equippedQuantity: entry.equippedQuantity,
           overlays: evaluation.overlays,
+          prerequisiteLines: evaluation.prerequisiteLines,
         }),
       ];
     },
@@ -2447,6 +2460,7 @@ export function buildEvaluatedSheetModel(
               provider: record.source.provider,
             }
           : { kind: "learned" },
+        evaluation.prerequisiteLines,
       ),
     )
     .sort(
@@ -2676,6 +2690,9 @@ export function buildEvaluatedSheetModel(
     loadoutContext(build.textStrings, evaluation.loadoutSlotContext),
   );
   return withSheetOverview(withPowerReferenceMetadata(model, content), {
+    ...(evaluation.prerequisiteLines === undefined
+      ? {}
+      : { prerequisiteLines: evaluation.prerequisiteLines }),
     level: evaluation.level,
     evaluatedStats: evaluation.stats,
     occurrences: evaluation.occurrences,

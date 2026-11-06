@@ -195,10 +195,21 @@ const internalSpecificNames = new Set([
 
 /** The prerequisite line to show a reader: the printed line when authored,
  *  else the rule's own Prereqs only when it is plain prose rather than rule
- *  grammar (`~MULTICLASS`, `!ID_…`, `CountsAsClass`). */
+ *  grammar (`~MULTICLASS`, `!ID_…`, `CountsAsClass`). `renamedLines`
+ *  (an evaluation's `prerequisiteLines`, by record ID) holds the lines
+ *  that name renamed records by their current names (D116 aliases). */
 export function displayPrerequisites(
-  entity: Pick<ContentEntity, "prerequisites" | "printPrerequisites">,
+  entity: Pick<ContentEntity, "prerequisites" | "printPrerequisites"> &
+    Partial<Pick<ContentEntity, "id">>,
+  renamedLines?: Readonly<Record<string, string>>,
 ): string | undefined {
+  const renamed =
+    entity.id === undefined || renamedLines === undefined
+      ? undefined
+      : Object.hasOwn(renamedLines, entity.id)
+        ? renamedLines[entity.id]
+        : undefined;
+  if (renamed !== undefined) return renamed;
   const printed = entity.printPrerequisites?.trim();
   if (printed) return printed;
   const rule = entity.prerequisites?.trim();

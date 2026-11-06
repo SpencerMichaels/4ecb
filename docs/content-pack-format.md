@@ -133,7 +133,11 @@ campaign keeps for export still carries the field verbatim, which the old
 builder shows as an ordinary field. Name lookups match an alias as the
 record's own name (`docs/rules-engine.md`); the builder's reference cards
 show "Also known as: …" first, and the builder tables, Shop and
-query-engine full-text index search aliases.
+query-engine full-text index search aliases. A displayed prerequisite line
+names a renamed record by its current name where the rule text resolves
+the old name to it, keeping the line's wording; prose is never changed.
+Nothing is stored for this: the rules engine derives the lines per
+content set (`docs/rules-engine.md`, prerequisite display).
 
 **Field patches.** A patch changes one field of a record the campaign does not
 supply, so the record's other fields keep following server revisions (a

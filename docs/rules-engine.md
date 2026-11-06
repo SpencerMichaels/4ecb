@@ -454,6 +454,49 @@ internalize byte-identically, 2026-11-06). The stored-IR stamp below hashes
 a record's aliases with its ID only when it has some, so a set whose
 aliases differ internalizes afresh.
 
+Displayed prerequisite lines name a renamed record by its current name
+(`prerequisite-display.ts`, D116 aliases amendment): "Prerequisite:
+Fetchling", not "Shadar-kai", while descriptions and other prose stay as
+written. The displayed line (`displayPrerequisites`: usually the authored
+print line, which drops "; Paragon Tier" or rewords a clause in about 15%
+of records) keeps its wording; only an old name that the internalized rule
+text resolves to the renamed record is swapped. `prerequisiteReferences`
+lists the tree's clauses with the records each resolves to (an element's
+IDs; for a name clause, the records of the type it is evaluated against
+that have the name). An occurrence of an alias in the line is swapped for
+its record's current name when a clause naming it resolves to the record
+carrying that alias, inside whatever clause names it ("fluent in
+Supernal", "Primordial language", "warforged race", "Supernal background
+association"); aliases match as whole words (letters, digits, apostrophes
+and hyphens continue a word, so "Half-Giant" never names Giant), longest
+first, so a renamed "Deva Heritage" wins over a renamed "Deva". A clause
+resolving to other records ("Emergent Primordial", "Warforged
+Juggernaut") masks its text in the line; a resolved record that still has
+the name itself (a kept stock Primordial beside a tongue also known as
+Primordial; counts-as alternates excepted, which keep stock names) keeps
+it. When the line has more unmasked occurrences of a name than clauses
+resolving it, or they resolve to different current names, none of that
+name's occurrences change and a `PrerequisiteRenameDiagnostic` records
+it; an old name in a clause the rule text does not resolve counts as an
+unresolved occurrence, so it stays and is reported. Case follows the
+occurrence: the books lower-case race names in running text ("11th level,
+shadar-kai, avenger class", "Any race except warforged"), so an
+all-lower-case occurrence gets the lower-cased name, an all-capitals one
+the capitalized name, and anything else the name as the record spells it
+with the occurrence's leading capital. `prerequisiteDisplayLines` builds
+every changed line and the diagnostics once per content set
+(`contentCache`), in the rules worker where the composed profile's
+prerequisites are internalized (composition drops stored IR, so a campaign
+profile internalizes there; on the Pathfinder profile the first build
+takes about 0.3 s, then nothing); a set without aliases (every stock pack)
+returns nothing after one scan. The evaluator attaches the lines as
+`EvaluatedCharacter.prerequisiteLines` (by record ID, absent when none;
+cache v123), and every display surface passes them to
+`displayPrerequisites(entity, lines)`: the builder's reference cards
+(`BuilderCardSettings.prerequisiteLines` → `EntityPrerequisites`, whose
+"met through" filter then reads the substituted line) and the sheet's
+feature prerequisites and power, item and learned-reference cards.
+
 Because the tree depends only on the profile, the owner and the text,
 `content-tool build` internalizes every record's prerequisites once against
 the finished record set (`withStoredPrerequisiteIr`) and stores the tree as
