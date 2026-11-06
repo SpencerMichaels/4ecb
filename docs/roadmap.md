@@ -10,6 +10,13 @@ the parity report and either resolved or explicitly moved with rationale.
 The sequence minimizes throwaway work while producing useful tools before the
 full builder MVP.
 
+**Order after M5.75 (owner decision, 2026-11-05):** M9's stabilization work
+comes next — "We should polish the core 'product' before working on any major
+feature additions." The play milestones (M5.8 desktop/tablet Play, M6 phone
+play, M7 linked sessions) are deferred, not dropped, and M8 custom content
+follows M9 when wanted. M9's play-bundle and session-protocol items apply only
+once those milestones exist.
+
 ## M0 — Compatibility and planning baseline
 
 **Status:** substantially complete; this documentation closes its product-planning
@@ -774,6 +781,10 @@ reminder control and card ordering (plan and owner decisions:
 
 ## M5.8 — Desktop/tablet local-play foundation
 
+**Status (2026-11-05): deferred by owner decision**; M9 stabilization comes
+first (see "How milestones are used"). M6 and M7 depend on it and are deferred
+with it.
+
 ### Goal
 
 Add the first mutable at-table experience beyond original Character Builder
@@ -908,6 +919,11 @@ Make supported customization convenient rather than file-format-only.
   upgraded independently of characters.
 
 ## M9 — 1.0 stabilization
+
+**Status (2026-11-05): next, after M5.7 and M5.75 close** (owner decision;
+the play milestones M5.8–M7 are deferred). Until they exist, the play-bundle
+and session-protocol deliverables and exit criteria are out of scope; the rest
+applies to the builder, sheet, content packs and saved characters as shipped.
 
 ### Goal
 
