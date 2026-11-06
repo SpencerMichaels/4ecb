@@ -945,6 +945,9 @@ Follow-ups (not done):
 
 - Owner skim of some Pathfinder deity descriptions: Easivra, Erecura,
   Grundinnar, Kitumu, Alazhra, Feronia, Lissala, Nivi Rhombodazzle.
+- Author the Pathfinder campaign's field patches (race Languages, the four
+  "Learn <language>" names) now that campaigns support them (D116
+  amendment, field patches), checked with `--against` the full pack.
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

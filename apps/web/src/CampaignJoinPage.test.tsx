@@ -119,6 +119,25 @@ describe("campaign invite states", () => {
       { label: "Deity", value: "Only the campaign's own" },
       { label: "Not offered", value: "2 records" },
     ]);
+    const patched = await buildCampaign(
+      {
+        campaignId: "synthetic-setting",
+        name: "Synthetic Setting",
+        revision: 4,
+        restrictions: { ids: [], types: [] },
+        patches: [
+          { id: "ID_A", field: "Languages", expect: "Common", value: "Elven" },
+          { id: "ID_B", field: "name", expect: "B", value: "Bee" },
+        ],
+      },
+      source,
+      "",
+    );
+    expect(campaignSummaryLines(patched)).toEqual([
+      { label: "Revision", value: "4" },
+      { label: "House rules", value: "None" },
+      { label: "Changed fields", value: "2 fields" },
+    ]);
   });
 });
 

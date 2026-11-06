@@ -6,5 +6,13 @@
   "restrict": {
     "ids": ["ID_4ECB_SYNTHETIC_FEAT_1"],
     "types": { "Deity": "campaign-only" }
-  }
+  },
+  "patches": [
+    {
+      "id": "ID_4ECB_SYNTHETIC_RACE_1",
+      "field": "Short Description",
+      "expect": "A synthetic race used to exercise imports.",
+      "value": "A synthetic race of the campaign's high cliffs."
+    }
+  ]
 }

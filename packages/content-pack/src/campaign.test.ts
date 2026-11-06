@@ -22,6 +22,11 @@ import {
   MAX_CAMPAIGN_RESTRICTED_IDS,
   MAX_CAMPAIGN_TYPE_RULES,
   MAX_CAMPAIGN_LEGACY_XML_BYTES,
+  MAX_CAMPAIGN_PATCHES,
+  MAX_CAMPAIGN_PATCH_VALUE_LENGTH,
+  campaignPatchOutcomes,
+  campaignPatches,
+  type CampaignPatch,
   type CampaignDocument,
   type CampaignManifest,
 } from "./index";
@@ -459,5 +464,268 @@ describe("campaign documents", () => {
       "5804b4370ed0147c69518c79a34bf549a89c2817160e70db1bfccbcff4c16733",
     );
     expect("campaign" in composed.pack).toBe(false);
+  });
+});
+
+describe("campaign field patches", () => {
+  const race = {
+    ...entity("ID_SYN_RACE_GENASI", "Race", "Genasi"),
+    specifics: [
+      {
+        name: "Languages",
+        value: "Common, Primordial",
+        extraAttributes: [],
+        ordinal: 0,
+      },
+      { name: "Size", value: "Medium", extraAttributes: [], ordinal: 1 },
+    ],
+  };
+  const patchedStock = source([
+    ...stock.entities,
+    race,
+    entity("ID_SYN_LEARN_PRIMORDIAL", "Background Choice", "Learn Primordial"),
+  ]);
+  const patches: CampaignPatch[] = [
+    {
+      id: "ID_SYN_RACE_GENASI",
+      field: "Languages",
+      expect: "Common, Primordial",
+      value: "Common, Ignan",
+    },
+    {
+      id: "id_syn_learn_primordial",
+      field: "name",
+      expect: "Learn Primordial",
+      value: "Learn Ignan",
+    },
+  ];
+  const patchedManifest: CampaignManifest = { ...manifest, patches };
+
+  async function base(entities = patchedStock) {
+    return buildContentPack(entities, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+  }
+
+  it("builds patches in canonical order under the digest", async () => {
+    const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
+    expect(campaign.version).toBe(2);
+    expect(campaignPatches(campaign).map(({ id }) => id)).toEqual([
+      "id_syn_learn_primordial",
+      "ID_SYN_RACE_GENASI",
+    ]);
+    const reordered = await buildCampaign(
+      { ...manifest, patches: [...patches].reverse() },
+      houseRuleSource,
+      xml,
+    );
+    expect(encodeCampaign(reordered)).toEqual(encodeCampaign(campaign));
+    const unpatched = await buildCampaign(manifest, houseRuleSource, xml);
+    expect(unpatched.patches).toEqual([]);
+    expect(unpatched.contentDigest).not.toBe(campaign.contentDigest);
+    expect(await decodeCampaign(buffer(encodeCampaign(campaign)))).toEqual(
+      campaign,
+    );
+    const [first, ...rest] = campaignPatches(campaign);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: [{ ...first!, value: "Common, Aquan" }, ...rest],
+        }),
+      ),
+    ).rejects.toThrow(/Digest mismatch/);
+  });
+
+  it("applies a patch only to the field it names", async () => {
+    const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
+    const profile = await composeCampaignProfile([await base()], campaign, {
+      packId: "campaign:synthetic-setting:p",
+      name: "Synthetic Setting",
+    });
+    const genasi = profile.pack.entities.find(
+      ({ id }) => id === "ID_SYN_RACE_GENASI",
+    );
+    expect(genasi?.specifics.map(({ name, value }) => [name, value])).toEqual([
+      ["Languages", "Common, Ignan"],
+      ["Size", "Medium"],
+    ]);
+    expect(genasi?.description).toBe("Genasi text");
+    expect(
+      profile.pack.entities.find(({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL")
+        ?.name,
+    ).toBe("Learn Ignan");
+    expect(
+      profile.pack.diagnostics.filter(({ code }) =>
+        code.startsWith("campaign."),
+      ),
+    ).toEqual([]);
+    expect((await validateContentPack(profile.pack)).valid).toBe(true);
+  });
+
+  it("keeps the content's value when it changed or the target is gone", async () => {
+    const campaign = await buildCampaign(
+      {
+        ...patchedManifest,
+        patches: [
+          ...patches,
+          { id: "ID_SYN_GONE", field: "name", expect: "Gone", value: "Here" },
+          {
+            id: "ID_SYN_RACE_GENASI",
+            field: "Vision",
+            expect: "Low-light",
+            value: "Darkvision",
+          },
+        ],
+      },
+      houseRuleSource,
+      xml,
+    );
+    // A later server revision fixed the Genasi's languages.
+    const fixed = source([
+      ...patchedStock.entities.filter(({ id }) => id !== race.id),
+      {
+        ...race,
+        specifics: race.specifics.map((specific) =>
+          specific.name === "Languages"
+            ? { ...specific, value: "Common, Primordial, Elven" }
+            : specific,
+        ),
+      },
+    ]);
+    const profile = await composeCampaignProfile(
+      [await base(fixed)],
+      campaign,
+      {
+        packId: "campaign:synthetic-setting:q",
+        name: "Synthetic Setting",
+      },
+    );
+    expect(
+      profile.pack.entities
+        .find(({ id }) => id === "ID_SYN_RACE_GENASI")
+        ?.specifics.find(({ name }) => name === "Languages")?.value,
+    ).toBe("Common, Primordial, Elven");
+    // The other patch still applies.
+    expect(
+      profile.pack.entities.find(({ id }) => id === "ID_SYN_LEARN_PRIMORDIAL")
+        ?.name,
+    ).toBe("Learn Ignan");
+    expect(
+      profile.pack.diagnostics
+        .filter(({ code }) => code === "campaign.patch-not-applied")
+        .map(({ severity, message, entityId }) => [
+          severity,
+          entityId,
+          message,
+        ]),
+    ).toEqual([
+      [
+        "warning",
+        "ID_SYN_GONE",
+        "Patch ID_SYN_GONE name not applied: no record ID_SYN_GONE",
+      ],
+      [
+        "warning",
+        "ID_SYN_RACE_GENASI",
+        'Patch ID_SYN_RACE_GENASI Languages not applied: the content has "Common, Primordial, Elven", the patch expects "Common, Primordial"',
+      ],
+      [
+        "warning",
+        "ID_SYN_RACE_GENASI",
+        "Patch ID_SYN_RACE_GENASI Vision not applied: ID_SYN_RACE_GENASI has no Vision field",
+      ],
+    ]);
+    expect(
+      campaignPatchOutcomes(
+        (await base(fixed)).entities,
+        campaignPatches(campaign),
+      ).map(({ status }) => status),
+    ).toEqual(["target-missing", "applies", "stock-differs", "field-missing"]);
+  });
+
+  it("refuses patches on house-rule records and invalid patches", async () => {
+    const invalid: [CampaignPatch[], RegExp][] = [
+      [
+        [
+          {
+            id: "id_syn_deity_forge",
+            field: "name",
+            expect: "Forge God",
+            value: "Smith God",
+          },
+        ],
+        /is one of the campaign's house rules; edit the record instead/,
+      ],
+      [[{ ...patches[0]!, value: patches[0]!.expect }], /changes nothing/],
+      [[patches[0]!, { ...patches[0]!, field: "languages" }], /listed twice/],
+      [[{ ...patches[0]!, field: "_Power Text IR" }], /cannot be patched/],
+      [[{ ...patches[1]!, value: " " }], /record name cannot be empty/],
+      [
+        [
+          {
+            ...patches[0]!,
+            value: "x".repeat(MAX_CAMPAIGN_PATCH_VALUE_LENGTH + 1),
+          },
+        ],
+        /value must be at most 4,000 characters/,
+      ],
+      [
+        Array.from({ length: MAX_CAMPAIGN_PATCHES + 1 }, (_, index) => ({
+          ...patches[0]!,
+          id: `ID_${index}`,
+        })),
+        /at most 10,000 patches/,
+      ],
+    ];
+    for (const [list, message] of invalid)
+      await expect(
+        buildCampaign({ ...manifest, patches: list }, houseRuleSource, xml),
+      ).rejects.toThrow(message);
+    const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: Array.from({ length: MAX_CAMPAIGN_PATCHES + 1 }, () => 0),
+        }),
+      ),
+    ).rejects.toThrow(/at most 10,000 patches/);
+    await expect(
+      decodeCampaign(jsonBuffer({ ...campaign, patches: [{ id: 1 }] })),
+    ).rejects.toThrow("Campaign patches are invalid");
+    const { patches: _omitted, ...withoutPatches } = campaign;
+    void _omitted;
+    await expect(decodeCampaign(jsonBuffer(withoutPatches))).rejects.toThrow(
+      "Campaign patches are missing",
+    );
+  });
+
+  it("still decodes version 1 documents as having no patches", async () => {
+    const built = await buildCampaign(manifest, houseRuleSource, xml);
+    const { patches: _omitted, ...rest } = built;
+    void _omitted;
+    // The digest a version-1 build gave this campaign, before patches.
+    const v1 = {
+      ...rest,
+      version: 1,
+      contentDigest:
+        "9282f9ecb068256ad651968a4ca987a89bce58799415dd41eb0399811b9c17ba",
+    } as const;
+    const decoded = await decodeCampaign(jsonBuffer(v1));
+    expect(decoded.version).toBe(1);
+    expect(campaignPatches(decoded)).toEqual([]);
+    const profile = await composeCampaignProfile([await base()], decoded, {
+      packId: "campaign:synthetic-setting:v1",
+      name: "Synthetic Setting",
+    });
+    expect(profile.pack.campaign?.contentDigest).toBe(v1.contentDigest);
+    await expect(
+      decodeCampaign(jsonBuffer({ ...v1, patches })),
+    ).rejects.toThrow("A version 1 campaign cannot carry patches");
+    await expect(
+      decodeCampaign(jsonBuffer({ ...built, version: 3 })),
+    ).rejects.toThrow("Unsupported campaign version: 3");
   });
 });

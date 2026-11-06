@@ -97,6 +97,32 @@ describe("campaign.json", () => {
       ),
     ).toThrow(/campaign-only/);
   });
+
+  it("reads patches and refuses malformed ones", () => {
+    const base = { campaignId: "x", name: "X", revision: 1 };
+    const patch = {
+      id: "ID_RACE",
+      field: "Languages",
+      expect: "Common, Primordial",
+      value: "Common, Ignan",
+    };
+    expect(
+      parseCampaignManifest({ ...base, patches: [patch] }, "/").manifest
+        .patches,
+    ).toEqual([patch]);
+    expect(() =>
+      parseCampaignManifest({ ...base, patches: [{ ...patch, to: "y" }] }, "/"),
+    ).toThrow(/patches\[0\] has unknown keys: to/);
+    expect(() =>
+      parseCampaignManifest(
+        { ...base, patches: [{ ...patch, expect: undefined }] },
+        "/",
+      ),
+    ).toThrow(/patches\[0\]\.expect must be a string/);
+    expect(() => parseCampaignManifest({ ...base, patches: {} }, "/")).toThrow(
+      /patches must be an array/,
+    );
+  });
 });
 
 describe("house-rule XML", () => {
@@ -128,6 +154,9 @@ describe("campaign build", () => {
     ]);
     expect(campaign.legacyHouseRulesXml).toMatch(/^<RulesElement /);
     expect(campaign.legacyHouseRulesXml).toContain('type="CountsAsDeity"');
+    expect(campaign.patches?.map(({ id, field }) => [id, field])).toEqual([
+      ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
+    ]);
 
     const bytes = await campaignFileBytes(campaign);
     expect(Buffer.from(bytes)).toEqual(
@@ -179,6 +208,78 @@ describe("campaign build", () => {
       `House rule id_other_god (Deity "Other God Revised") replaces stock's Deity "Other God"`,
       "Type rule Deitys matches no record in stock or the house rules (is the type spelt as the content spells it?)",
     ]);
+  });
+
+  it("reports each patch against the pack: the drift guard", async () => {
+    const pack = await buildContentPack(
+      parseD20Rules(
+        rules(
+          [
+            '<RulesElement internal-id="ID_GENASI" name="Genasi" type="Race"><specific name="Languages">Common, Primordial, Elven</specific></RulesElement>',
+            '<RulesElement internal-id="ID_LEARN_ELVEN" name="Learn Elven" type="Background Choice" />',
+          ].join("\n"),
+        ),
+        "stock.xml",
+      ),
+      { packId: "stock", name: "Stock" },
+    );
+    const xml = rules("");
+    const campaign = await buildCampaign(
+      {
+        campaignId: "test-setting",
+        name: "Test Setting",
+        revision: 1,
+        restrictions: { ids: [], types: [] },
+        patches: [
+          {
+            id: "ID_GENASI",
+            field: "Languages",
+            expect: "Common, Primordial",
+            value: "Common, Ignan",
+          },
+          {
+            id: "ID_LEARN_ELVEN",
+            field: "name",
+            expect: "Learn Elven",
+            value: "Learn Elven (Sylvan)",
+          },
+          { id: "ID_GONE", field: "name", expect: "Gone", value: "Here" },
+        ],
+      },
+      parseHouseRules(xml, "house-rules.xml"),
+      houseRulesChildrenXml(xml),
+    );
+    const report = campaignAgainstPack(campaign, pack);
+    expect(report.patches).toEqual([
+      {
+        id: "ID_GENASI",
+        field: "Languages",
+        status: "stock-differs",
+        expect: "Common, Primordial",
+        value: "Common, Ignan",
+        current: "Common, Primordial, Elven",
+      },
+      {
+        id: "ID_GONE",
+        field: "name",
+        status: "target-missing",
+        expect: "Gone",
+        value: "Here",
+      },
+      {
+        id: "ID_LEARN_ELVEN",
+        field: "name",
+        status: "applies",
+        expect: "Learn Elven",
+        value: "Learn Elven (Sylvan)",
+      },
+    ]);
+    expect(report.warnings).toEqual([
+      'Patch ID_GENASI Languages not applied: the content has "Common, Primordial, Elven", the patch expects "Common, Primordial" (stock)',
+      "Patch ID_GONE name not applied: no record ID_GONE (stock)",
+    ]);
+    // Patches never reach the legacy campaign block.
+    expect(campaign.legacyHouseRulesXml).toBe("");
   });
 });
 

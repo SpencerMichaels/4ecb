@@ -236,16 +236,22 @@ async function buildPack(
   };
 }
 
+/** Internal: what a campaign layer does to the composed records. */
+export interface ComposedCampaignLayer {
+  /** The composed records after the campaign's field patches. */
+  readonly entities: readonly ContentEntity[];
+  readonly diagnostics: readonly ContentDiagnostic[];
+  readonly campaign: ContentPackCampaign;
+}
+
 /**
- * @param resolveCampaign internal: `composeCampaignProfile` derives the
- * composed pack's `campaign` field from the resolved entities.
+ * @param campaignLayer internal: `composeCampaignProfile` patches the
+ * resolved records and derives the composed pack's `campaign` field.
  */
 export async function composeContentPacks(
   packs: readonly ContentPack[],
   options: BuildContentPackOptions,
-  resolveCampaign?: (
-    entities: readonly ContentEntity[],
-  ) => ContentPackCampaign | undefined,
+  campaignLayer?: (entities: readonly ContentEntity[]) => ComposedCampaignLayer,
 ): Promise<ComposedContentProfile> {
   if (packs.length === 0)
     throw new Error("A content profile requires at least one pack");
@@ -277,9 +283,11 @@ export async function composeContentPacks(
       resolved.set(key, entity);
     }
   }
-  const entities = [...resolved.values()].sort((left, right) =>
+  const layered = [...resolved.values()].sort((left, right) =>
     left.id.localeCompare(right.id),
   );
+  const layer = campaignLayer?.(layered);
+  const entities = layer?.entities ?? layered;
   const pack = await buildPack(
     {
       gameSystem: gameSystem ?? "D&D4E",
@@ -298,6 +306,7 @@ export async function composeContentPacks(
       diagnostics: [
         ...packs.flatMap((candidate) => candidate.diagnostics),
         ...collisions,
+        ...(layer?.diagnostics ?? []),
       ],
       accounting: {
         topLevelRecords:
@@ -321,7 +330,7 @@ export async function composeContentPacks(
       },
     },
     options,
-    resolveCampaign?.(entities),
+    layer?.campaign,
   );
   return {
     layers: packs.map(({ manifest }) => ({

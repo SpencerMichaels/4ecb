@@ -1,7 +1,7 @@
 // The campaign invite page (D116), kept apart from the component so its
 // states test without a DOM.
 
-import type { CampaignDocument } from "@4ecb/content-pack";
+import { campaignPatches, type CampaignDocument } from "@4ecb/content-pack";
 
 import { latestCampaign } from "./campaign-profile";
 import type { AdvertisedCampaign } from "./runtime-content";
@@ -66,6 +66,7 @@ export function campaignSummaryLines(
 ): CampaignSummaryLine[] {
   const houseRules = campaign.houseRules.entities.length;
   const { ids, types } = campaign.restrictions;
+  const patches = campaignPatches(campaign).length;
   return [
     { label: "Revision", value: String(campaign.revision) },
     {
@@ -80,5 +81,14 @@ export function campaignSummaryLines(
     ...(ids.length === 0
       ? []
       : [{ label: "Not offered", value: records(ids.length) }]),
+    // Field patches on the server's records (a race's languages, a name).
+    ...(patches === 0
+      ? []
+      : [
+          {
+            label: "Changed fields",
+            value: `${patches} ${patches === 1 ? "field" : "fields"}`,
+          },
+        ]),
   ];
 }

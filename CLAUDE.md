@@ -70,9 +70,14 @@ pnpm content-tool advertise-campaign x.4ecc [--out-dir deploy]   # private-packs
 ```
 
 Campaigns (D116): `campaign.json` is `{campaignId, name, revision,
-houseRules: "<xml path>", restrict: {ids, types: {"Deity": "campaign-only"}}}`;
-the house-rule XML is parsed at build (same parser as `build`), and
-`--against` only warns. `advertise` and `advertise-campaign` read-modify-write
+houseRules: "<xml path>", restrict: {ids, types: {"Deity": "campaign-only"}},
+patches: [{id, field, expect, value}]}`; a patch changes one field ("name" or
+a specific such as "Languages") of a server record without copying it, and
+applies only while the record still has `expect` (else a composed-pack
+diagnostic). The house-rule XML is parsed at build (same parser as `build`),
+and `--against` only warns, listing each patch's status (`applies`,
+`stock-differs` with the pack's value, `target-missing`…): rerun it on each
+new server pack. `advertise` and `advertise-campaign` read-modify-write
 `runtime-config.json`, each changing only its own key. Built `.4ecc` files are
 ignored; the public example source is `fixtures/campaigns/synthetic/`. The
 Pathfinder campaign's source is `content/campaigns/pathfinder/`, built with

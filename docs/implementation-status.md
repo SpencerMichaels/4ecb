@@ -1,5 +1,39 @@
 # Implementation status
 
+## Campaign field patches (2026-11-06)
+
+Campaign follow-up (D116 amendment). A campaign document carries `patches`
+(`{id, field, expect, value}`; field "name" or a specific's name) that
+change one field of a server record without copying it. content-pack
+`campaign.ts`: `CampaignPatch`, `campaignPatches`, `campaignPatchOutcomes`,
+`applyCampaignPatches`; `composeCampaignProfile` applies them after
+layering (via `composeContentPacks`'s internal campaign-layer hook) and
+before restrictions resolve, leaving a record at the server's value with a
+`campaign.patch-not-applied` warning diagnostic when its target is missing
+or its value is no longer `expect`. A patch on a house-rule record, a
+duplicate, a no-op, a `_` field or an over-limit patch is a build and
+validation error. The format is version 2 (always `patches`, in the
+digest); version-1 documents still decode as having none with their
+original digests (a recorded version-1 digest is a test golden).
+`content-tool campaign build` reads `patches` from `campaign.json`;
+`--against` lists every patch's status (`applies`, `target-missing`,
+`field-missing`, `field-ambiguous`, `stock-differs` with `current`) and
+warns on each that would not apply; `campaign inspect` prints the version
+and patch count. Legacy export drops patches; legacy import creates none.
+The invite page summary shows "Changed fields: N fields". The synthetic
+fixture campaign patches the Cliffkin's Short Description, and
+`scripts/check.sh` asserts every patch applies against the synthetic pack.
+The Pathfinder campaign's race Languages and "Learn <language>" patches
+are not authored yet (they need the private pack's current values; author
+them in `content/campaigns/pathfinder/campaign.json` and check with
+`--against tmp/content/full-local.4ecp`). Verification: synthetic
+`campaign.test.ts` (applies, expect mismatch, missing target and field,
+overlay target refused, digest, limits, version 1), `campaign-command.test.ts`
+(manifest parsing, drift report), `imported-campaign.test.ts` (export
+unaffected, import creates none), `CampaignJoinPage.test.tsx`; `pnpm test`,
+`pnpm typecheck`, lint, prettier and `scripts/check.sh` with
+`FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## CountsAsLanguage and counts-as stand-ins (2026-11-06)
 
 Campaign follow-up (D116 amendment; owner: "General engine rule").

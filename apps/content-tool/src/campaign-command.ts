@@ -9,6 +9,9 @@ import { stderr } from "node:process";
 import type { ParsedContentSource } from "@4ecb/content-domain";
 import {
   buildCampaign,
+  campaignPatchOutcomeMessage,
+  campaignPatchOutcomes,
+  campaignPatches,
   decodeCampaign,
   encodeCampaign,
   resolveCampaignRestrictions,
@@ -16,6 +19,8 @@ import {
   validateCampaign,
   type CampaignDocument,
   type CampaignManifest,
+  type CampaignPatch,
+  type CampaignPatchOutcome,
   type CampaignTypeRestriction,
   type ContentPack,
 } from "@4ecb/content-pack";
@@ -48,7 +53,40 @@ const MANIFEST_KEYS = new Set([
   "revision",
   "houseRules",
   "restrict",
+  "patches",
 ]);
+
+const PATCH_KEYS = ["id", "field", "expect", "value"] as const;
+
+/**
+ * `patches: [{id, field, expect, value}]`, every key a string and no other
+ * keys. Patches live in campaign.json, not the house-rule XML: that XML is
+ * the legacy `Houserules` block, RulesElement records only, kept verbatim
+ * for export, and the old builder has no way to express a patch.
+ */
+function parsePatches(value: unknown): CampaignPatch[] {
+  if (!Array.isArray(value))
+    throw new Error("campaign.json patches must be an array");
+  return value.map((patch, index) => {
+    const label = `campaign.json patches[${index}]`;
+    if (!isRecord(patch)) throw new Error(`${label} must be an object`);
+    const unknown = Object.keys(patch).filter(
+      (key) => !(PATCH_KEYS as readonly string[]).includes(key),
+    );
+    if (unknown.length > 0)
+      throw new Error(`${label} has unknown keys: ${unknown.join(", ")}`);
+    for (const key of PATCH_KEYS)
+      if (typeof patch[key] !== "string")
+        throw new Error(`${label}.${key} must be a string`);
+    const {
+      id,
+      field,
+      expect,
+      value: patched,
+    } = patch as Record<(typeof PATCH_KEYS)[number], string>;
+    return { id, field, expect, value: patched };
+  });
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -56,7 +94,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * Reads a `campaign.json` value: `{campaignId, name, revision, houseRules?,
- * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}}}`. Unknown
+ * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}},
+ * patches?: [{id, field, expect, value}]}`. Unknown
  * keys are refused, so a misspelt restriction never silently restricts
  * nothing. Identity and limit rules are `buildCampaign`'s.
  */
@@ -110,6 +149,9 @@ export function parseCampaignManifest(
       name,
       revision,
       restrictions: { ids: ids as string[], types },
+      ...(value.patches === undefined
+        ? {}
+        : { patches: parsePatches(value.patches) }),
     },
     houseRulesPath:
       houseRules === undefined
@@ -160,7 +202,31 @@ export interface CampaignAgainstReport {
   }[];
   /** House-rule records replacing a record of the pack. */
   readonly overriddenIds: readonly string[];
+  /** Each field patch against the pack: the drift guard. */
+  readonly patches: readonly CampaignPatchReport[];
   readonly warnings: readonly string[];
+}
+
+export interface CampaignPatchReport {
+  readonly id: string;
+  readonly field: string;
+  readonly status: CampaignPatchOutcome["status"];
+  readonly expect: string;
+  readonly value: string;
+  /** The pack's value, when it differs from `expect`. */
+  readonly current?: string;
+}
+
+function patchReport(outcome: CampaignPatchOutcome): CampaignPatchReport {
+  const { id, field, expect, value } = outcome.patch;
+  return {
+    id,
+    field,
+    status: outcome.status,
+    expect,
+    value,
+    ...(outcome.status === "stock-differs" ? { current: outcome.current } : {}),
+  };
 }
 
 /**
@@ -218,12 +284,22 @@ export function campaignAgainstPack(
     ),
     ...campaign.houseRules.entities,
   ];
+  // A patch never targets a house-rule record (a build error), so the
+  // composed records are the pack's for every patch.
+  const patchOutcomes = campaignPatchOutcomes(
+    composed,
+    campaignPatches(campaign),
+  );
+  for (const outcome of patchOutcomes)
+    if (outcome.status !== "applies")
+      warnings.push(`${campaignPatchOutcomeMessage(outcome)} (${packId})`);
   return {
     packId,
     contentDigest,
     restrictedRecords: resolveCampaignRestrictions(composed, campaign).length,
     typeRules,
     overriddenIds,
+    patches: patchOutcomes.map(patchReport),
     warnings,
   };
 }
@@ -234,11 +310,13 @@ export function summarizeCampaign(campaign: CampaignDocument) {
     campaignId: campaign.campaignId,
     name: campaign.name,
     revision: campaign.revision,
+    version: campaign.version,
     contentDigest: campaign.contentDigest,
     restrictions: {
       ids: campaign.restrictions.ids.length,
       types: campaign.restrictions.types,
     },
+    patches: campaignPatches(campaign).length,
     houseRules: summarizeContentPack(campaign.houseRules),
     legacyHouseRulesXmlBytes: new TextEncoder().encode(
       campaign.legacyHouseRulesXml,

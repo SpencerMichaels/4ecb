@@ -4713,3 +4713,27 @@ and it stops the browser following server revisions (D004 amendment).
   instead, so a campaign can rename Supernal to "Celestial" and keep "fluent
   in Supernal" met through Celestial's CountsAsLanguage "Supernal". Stock
   prerequisite results are unchanged.
+- **Amendment (2026-11-06): field patches** (owner: a campaign changes one
+  field of a stock record without copying it, since a whole-record override
+  shadows later server fixes to the record's other fields; for Pathfinder,
+  the Languages of about ten races and the names of four "Learn <language>"
+  Background Choices). A campaign carries `patches`, each `{id, field,
+expect, value}`: `field` is "name" or a specific's name; other top-level
+  fields and prose are out of scope, and `_` fields (stored IR) are refused.
+  `composeCampaignProfile` applies them to the composed records before
+  restrictions resolve; a patch whose record is missing, or whose field's
+  current value is not `expect`, is not applied (the server's value stays)
+  and the composed pack records a `campaign.patch-not-applied` warning
+  diagnostic; composition never fails. A patch on a record the campaign's
+  own house rules supply is a build error (edit that record). Patches are
+  in the digest, validated and bounded (10,000 patches, 4,000-character
+  values). They are authored in `campaign.json`, not the house-rule XML,
+  because that XML is the legacy `Houserules` block, kept verbatim for
+  export and limited to RulesElement records. `campaign build --against`
+  reports every patch (applies, target missing, field missing or repeated,
+  stock value differs with both values): the drift guard. Legacy export
+  drops patches silently and legacy import creates none; the invite page's
+  summary shows a "Changed fields" count. The document format is version
+  2, because a version-1 reader would ignore patches; version-1 documents
+  still load as having none and keep their digests
+  (`docs/content-pack-format.md`, Campaign documents).

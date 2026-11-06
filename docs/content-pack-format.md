@@ -83,13 +83,14 @@ optional (identified by magic bytes, as for `.4ecp`):
 
 ```text
 CampaignDocument
-├── format: "4ecb-campaign", version: 1
+├── format: "4ecb-campaign", version: 2 (1 still read)
 ├── campaignId          1-32 pack-ID characters
 ├── name                pack-name rules
 ├── revision            integer 1..999,999; the DM bumps it on every change
 ├── restrictions
 │   ├── ids[]           record IDs not offered (legacy Restricted)
 │   └── types[]         { type, allow: "campaign-only" }
+├── patches[]           { id, field, expect, value }; version 2 only
 ├── houseRules          an embedded ContentPack, packId campaign.<id>.r<revision>
 ├── legacyHouseRulesXml the DM's RulesElement XML verbatim, for legacy export
 └── contentDigest       SHA-256
@@ -99,19 +100,49 @@ The digest covers every other field, in that order, with the overlay standing
 in as its own manifest digest; the overlay pack verifies itself. A campaign's
 identity is `(campaignId, contentDigest)`; `revision` orders its versions, and
 a store refuses the same ID and revision with a different digest.
-`buildCampaign` sorts restricted IDs and type rules ignoring case, so the
-digest does not depend on how they were listed; IDs and types must be unique
-ignoring case.
+`buildCampaign` sorts restricted IDs, type rules and patches (by ID, then
+field) ignoring case, so the digest does not depend on how they were listed;
+IDs, types and patch (ID, field) pairs must be unique ignoring case.
+
+**Versions.** `buildCampaign` writes version 2, which always carries
+`patches` (possibly empty). A version-1 document has no `patches` field and
+reads as having none; its digest input has no `patches` key, so version-1
+documents (installed, in backups, hosted) keep their digests and load
+unchanged. Version 2 exists because a version-1 reader would otherwise
+ignore patches; such a reader refuses it as an unsupported version.
+
+**Field patches.** A patch changes one field of a record the campaign does not
+supply, so the record's other fields keep following server revisions (a
+whole-record override would freeze them). `field` is `"name"` (the record's
+name) or a specific's name (`Languages`, `Short Description`; matched
+ignoring case and surrounding space); other top-level fields (description,
+flavor, rules) are not patchable. `expect` is the value the DM saw and
+`value` the campaign's. Limits: at most 10,000 patches; a field name of 1-120
+trimmed characters that does not start with `_` (stored IR such as
+`_Power Text IR` is built from the content and never patched); `expect` and
+`value` at most 4,000 characters without control characters other than tab
+and newline; `value` differs from `expect`; a name is never empty. A patch
+on a record the campaign's own house rules supply is a build and
+validation error: the DM edits that record instead.
 
 `decodeCampaign` reads at most 16 MiB of input and 16 MiB decoded (streaming,
 before parsing), then checks the shape with counts before contents: at most
-10,000 house-rule records, 50,000 restricted IDs, 32 type rules and 8 MiB of
-legacy XML. It then validates (identity, revision, overlay pack ID, the
-overlay's own validation and both digests) and throws on any error.
+10,000 house-rule records, 50,000 restricted IDs, 32 type rules, 10,000
+patches and 8 MiB of legacy XML. It then validates (identity, revision,
+patches, overlay pack ID, the overlay's own validation and both digests) and
+throws on any error.
 
 `composeCampaignProfile(basePacks, campaign, options)` composes
-`[...basePacks, campaign.houseRules]` with `last-pack-wins-v1` and resolves
-the restrictions against the composed records: an ID rule matches ignoring
+`[...basePacks, campaign.houseRules]` with `last-pack-wins-v1`, then applies
+the patches to the composed records (`applyCampaignPatches`): a patch applies
+only when its record exists (ID ignoring case), the field occurs on it exactly
+once, and its current value is exactly `expect`. Otherwise the record keeps
+the server's value and the composed pack gets a `warning` diagnostic with
+code `campaign.patch-not-applied` (target missing, field missing, field
+repeated, or "the content has X, the patch expects Y"); composition never
+fails over a patch. Patching does not re-run pack-build parses: a patched
+field's stored IR is not rebuilt (hence no `_` fields). It then resolves
+the restrictions against the patched records: an ID rule matches ignoring
 case (in the composed record's spelling; an ID with no record is kept as
 listed, for legacy round trips), and a type rule restricts every record of
 that type whose ID the house rules do not supply, so an overlay record that
@@ -132,7 +163,16 @@ of another.
 manifest and house-rule XML, `campaign inspect` prints one, and
 `advertise-campaign` hosts it (`docs/public-deployment.md`); the browser stores
 installed documents as described in `docs/architecture.md` (Browser
-persistence).
+persistence). Patches are authored in `campaign.json` as
+`patches: [{id, field, expect, value}]`, not in the house-rule XML, which is
+the legacy `Houserules` block (RulesElement records only, exported verbatim).
+`campaign build --against PACK.4ecp` lists every patch with its status
+(`applies`, `target-missing`, `field-missing`, `field-ambiguous`, or
+`stock-differs` with the pack's `current` value beside `expect`) and warns on
+each one that would not apply: the drift guard to run against each new server
+pack. Legacy export drops patches silently (the `D20CampaignSetting` block
+cannot express them) and legacy import creates none. The invite page's
+summary shows the patch count ("Changed fields").
 
 ## Compatibility policy
 

@@ -43,20 +43,23 @@ pnpm content-tool validate "$scratch_dir/first.4ecp"
 pnpm content-tool diff "$scratch_dir/first.4ecp" "$scratch_dir/second.4ecp"
 pnpm benchmark:query "$scratch_dir/first.4ecp"
 
-# Campaign documents (D116): deterministic build, checked against the pack,
-# then decoded and verified again by inspect.
+# Campaign documents (D116): deterministic build, checked against the pack
+# (every field patch must still apply: the drift guard), then decoded and
+# verified again by inspect.
 build_campaign() {
   pnpm --silent content-tool campaign build \
     --manifest fixtures/campaigns/synthetic/campaign.json \
     --output "$1" \
-    --against "$scratch_dir/first.4ecp" >/dev/null
+    --against "$scratch_dir/first.4ecp" >"$1.json"
 }
 
 build_campaign "$scratch_dir/first.4ecc"
 build_campaign "$scratch_dir/second.4ecc"
 cmp "$scratch_dir/first.4ecc" "$scratch_dir/second.4ecc"
+jq -e '.against.patches | length == 1 and all(.status == "applies")' \
+  "$scratch_dir/first.4ecc.json" >/dev/null
 pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
-  jq -e '.validation.valid and .houseRules.recordCount == 4' >/dev/null
+  jq -e '.validation.valid and .houseRules.recordCount == 4 and .patches == 1' >/dev/null
 pnpm --silent content-tool advertise-campaign "$scratch_dir/first.4ecc" \
   --out-dir "$scratch_dir/deploy" >/dev/null
 jq -e '.campaigns | length == 1' "$scratch_dir/deploy/runtime-config.json" >/dev/null

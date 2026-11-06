@@ -144,6 +144,32 @@ describe("legacy campaign export (D116)", () => {
       legacyCampaignSetting(packCampaign(campaign), other),
     ).toBeUndefined();
   });
+
+  it("drops field patches silently: the legacy block cannot carry them", async () => {
+    const plain = await dmCampaign();
+    const patched = await buildCampaign(
+      {
+        campaignId: "tides",
+        name: "Tides",
+        revision: 1,
+        restrictions: plain.restrictions,
+        patches: [
+          {
+            id: "ID_TEST_FEAT_KEPT",
+            field: "name",
+            expect: "Kept Ways",
+            value: "Tidal Ways",
+          },
+        ],
+      },
+      parseHouseRules(houseRulesDocument(HOUSE_RULES), "house-rules.xml"),
+      HOUSE_RULES.trim(),
+    );
+    expect(patched.contentDigest).not.toBe(plain.contentDigest);
+    expect(legacyCampaignSetting(packCampaign(patched), patched)).toEqual(
+      legacyCampaignSetting(packCampaign(plain), plain),
+    );
+  });
 });
 
 describe("legacy campaign import (D116)", () => {
@@ -245,6 +271,8 @@ describe("legacy campaign import (D116)", () => {
         types: [],
       },
       legacyHouseRulesXml: HOUSE_RULES.trim(),
+      // The legacy block has no field patches to bring.
+      patches: [],
     });
     expect(
       created.houseRules.entities.map(({ id, type }) => [id, type]),
