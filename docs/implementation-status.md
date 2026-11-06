@@ -1,5 +1,25 @@
 # Implementation status
 
+## Settings → Campaigns and hosted revisions (2026-11-06)
+
+D116 step 8 (`68af49fc`). `CampaignSettings.tsx` (Settings, after Game
+content; rules in `campaign-settings-ui.ts`): a Name/Revision/Characters
+table over `CampaignRepository.list()` (newest installed revision per
+campaign) and library metadata `campaignId` (metadata v3, rebuilt lazily);
+the empty state is a row inside the table; Import campaign… is always
+present (`.4ecc`, `installEncoded`, errors as toasts); right-click Export
+file / Copy invite link (`#/campaigns/join/<id>`, enabled only when the
+runtime config hosts the newest installed revision's digest) / Remove
+(disabled while any character, trash included, belongs to it).
+`runtime-content.ts` parses `campaigns` (same-origin, at most 64, one per
+campaign); `App.tsx`'s background `refreshInstalledCampaigns` installs only
+newer revisions of installed campaigns (identity and digest checked before
+install, quiet on failure, retried next load) and dispatches
+`CAMPAIGNS_CHANGED_EVENT`. `ItemContextMenu` handles Esc in the capture
+phase so it doesn't also close Settings. Verification:
+`runtime-content.test.ts`, `CampaignSettings.test.tsx`,
+`character-repository.test.ts`; `pnpm test`, typecheck, lint, format:check.
+
 ## Per-character content target (2026-11-06)
 
 D116 step 7. New `apps/web/src/campaign-profile.ts`: `contentTarget(binding,
