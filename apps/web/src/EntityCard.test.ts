@@ -119,6 +119,36 @@ describe("shared entity-card class details", () => {
     expect(render()).not.toContain("Also known as");
   });
 
+  it("says a campaign's alternate name plainly, beside any aliases (D116)", () => {
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: {
+          ...entity("Race", [field("Size", "Medium", 0)]),
+          name: "Shadar-kai",
+          alternateName: "Fetchling",
+          aliases: ["Shadowborn"],
+        },
+        hideFlavortext: false,
+      }),
+    );
+    expect(markup).toMatch(
+      /^<p class="entity-card-aliases entity-card-alternate-name">Called Fetchling in this campaign\.<\/p><p class="entity-card-aliases"><strong>Also known as:<\/strong> Shadowborn<\/p>/,
+    );
+  });
+
+  it("titles a record with its alternate name in parentheses", () => {
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardHeader, {
+        entity: {
+          ...entity("Race", []),
+          name: "Shadar-kai",
+          alternateName: "Fetchling",
+        },
+      }),
+    );
+    expect(markup).toContain("<h4>Shadar-kai (Fetchling)</h4>");
+  });
+
   it("lists non-class specifics as labelled field lines", () => {
     const markup = renderToStaticMarkup(
       createElement(EntityCardBody, {

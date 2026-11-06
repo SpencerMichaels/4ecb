@@ -4865,3 +4865,48 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   them; the invite page shows "Changed rules". Legacy export drops them
   silently and legacy import creates none (`docs/content-pack-format.md`,
   Rule patches).
+- **Amendment (2026-11-06): alternate names replace the race renames**
+  (owner decision, reversing revision 5's five race renames: "keep all
+  the racial stuff pinned to Shadar-Kai (including feats, etc), but just
+  make it known in the race's title and detail card that the Pathfinder
+  race name is an alternate name for the 4e race. Otherwise, we're going
+  to just confuse players with prose mentioning the name in some places,
+  fields mentioning the new name in others … So fetchling would be
+  'Shadar-Kai (Fetchling)'"). Languages keep their renames (owner:
+  languages are names that map 1-to-1; Celestial keeps "Also known as:
+  Supernal"). A campaign gives a stock record a setting name without
+  renaming it with an alternate-name patch `{id, alternateName}`, stored
+  as `ContentEntity.alternateName` (one name; in the entity and the pack
+  digest only when present), distinct from rename aliases because it
+  displays differently: the builder's choice-table row and detail card
+  title the record "Shadar-kai (Fetchling)" (`entityTitle`: the record's
+  own name and capitalization, then the alternate in parentheses), and
+  the card's first line says "Called Fetchling in this campaign."; an
+  alias keeps its "Also known as" line. Name lookups, the builder table
+  filter, the Shop search and the compendium index match an alternate
+  name like an alias (`entityNames`, `entityOtherNames`), so "Fetchling"
+  finds Shadar-kai; prerequisite display lines never change for one
+  (only aliases are old names), and no other rule reads it. The drift
+  guard: a patch applies only when its record exists and none of the
+  record's names already is the alternate name; otherwise the
+  composition keeps the record as it is with a
+  `campaign.patch-not-applied` warning. One per record; on a house-rule
+  record a build error (name it there). It applies after field patches
+  and before rule patches, and `campaign build --against` lists each
+  (`alternateNames`: ID, record name, alternate name, status);
+  `campaign inspect` counts them and the invite page shows "Alternate
+  names". The document format is version 4, because a version-3 reader
+  refuses the patch as malformed; versions 1-3 keep loading with their
+  digests (a recorded version-3 digest is a test golden) and cannot
+  carry one. Legacy export drops it silently (the old builder shows the
+  stock name) and legacy import creates none. Only the choice-table row
+  and the detail card use the title: the builder sidebar subtitle
+  ("Shadar-kai Cleric 7"), the Build tab's summaries, the library's Race
+  column and the sheet's Race line keep the record's name, an owner call
+  if the setting name should show there too. Pathfinder revision 6
+  removes the five race `name` patches and their 49 embedded-name patches
+  (feats, paragon paths, racial traits, powers, items, backgrounds) and
+  gives Genasi, Shadar-kai, Kenku, Vryloka and Warforged the alternate
+  names Geniekin, Fetchling, Tengu, Dhampir and Automaton; its
+  prerequisite-rename report now lists only language lines (6 renamed,
+  none unchanged).

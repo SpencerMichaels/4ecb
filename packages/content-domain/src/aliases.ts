@@ -5,6 +5,11 @@
  * the record's own name. Aliases come from a campaign's `name` field patch
  * (the stock name is kept) or from an authored "Also Known As" specific,
  * parsed once at pack build into `ContentEntity.aliases`.
+ *
+ * An alternate name (`ContentEntity.alternateName`) is a setting's second
+ * name for a record that keeps its own: a campaign's `alternateName` patch
+ * (Shadar-kai, called Fetchling in Pathfinder). Lookups match it like an
+ * alias; the builder titles the record "Shadar-kai (Fetchling)".
  */
 import type { ContentEntity } from "./index";
 
@@ -79,16 +84,75 @@ export function entityAliasErrors(
 }
 
 /**
- * Every name the record is known by: its name, then its aliases. The one
- * place name lookups read names from, so an alias matches wherever a name
- * does.
+ * Problems with a record's alternate name, for pack validation: one name of
+ * 1-120 trimmed characters without control characters, other than the
+ * record's name and aliases (ignoring case).
+ */
+export function entityAlternateNameErrors(
+  entity: Pick<ContentEntity, "id" | "name" | "aliases" | "alternateName">,
+): string[] {
+  const { alternateName } = entity;
+  if (alternateName === undefined) return [];
+  const label = `Entity ${entity.id} alternate name`;
+  if (
+    alternateName.length === 0 ||
+    alternateName.length > MAX_ENTITY_ALIAS_LENGTH ||
+    alternateName !== alternateName.trim() ||
+    /\p{Cc}/u.test(alternateName)
+  )
+    return [
+      `${label} ${JSON.stringify(alternateName)} is not 1-${MAX_ENTITY_ALIAS_LENGTH} trimmed characters without control characters`,
+    ];
+  const folded = alternateName.toLocaleLowerCase();
+  return [entity.name, ...(entity.aliases ?? [])].some(
+    (name) => name.trim().toLocaleLowerCase() === folded,
+  )
+    ? [`${label} ${alternateName} repeats the record's name or an alias`]
+    : [];
+}
+
+/**
+ * Every name the record is known by: its name, then its aliases, then its
+ * alternate name. The one place name lookups read names from, so an alias
+ * or alternate name matches wherever a name does.
  */
 export function entityNames(
-  entity: Pick<ContentEntity, "name" | "aliases">,
+  entity: Pick<ContentEntity, "name" | "aliases" | "alternateName">,
 ): readonly string[] {
-  return entity.aliases === undefined || entity.aliases.length === 0
-    ? [entity.name]
-    : [entity.name, ...entity.aliases];
+  const hasAliases = entity.aliases !== undefined && entity.aliases.length > 0;
+  if (!hasAliases && entity.alternateName === undefined) return [entity.name];
+  return [
+    entity.name,
+    ...(entity.aliases ?? []),
+    ...(entity.alternateName === undefined ? [] : [entity.alternateName]),
+  ];
+}
+
+/** The record's other names (aliases and alternate name), for search. */
+export function entityOtherNames(
+  entity: Pick<ContentEntity, "name" | "aliases" | "alternateName">,
+): readonly string[] {
+  return entityNames(entity).slice(1);
+}
+
+/**
+ * The record's title in builder tables and card headings: its name, with a
+ * campaign's alternate name in parentheses ("Shadar-kai (Fetchling)").
+ */
+export function entityTitle(
+  entity: Pick<ContentEntity, "name" | "alternateName">,
+): string {
+  return entity.alternateName === undefined
+    ? entity.name
+    : `${entity.name} (${entity.alternateName})`;
+}
+
+/** The record with a setting's alternate name (a campaign patch). */
+export function withAlternateName<T extends ContentEntity>(
+  entity: T,
+  alternateName: string,
+): T {
+  return { ...entity, alternateName };
 }
 
 /**

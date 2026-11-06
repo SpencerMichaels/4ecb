@@ -43,22 +43,26 @@ function fnv1a(value: string, seed: number): number {
 
 /**
  * An order-independent stamp of a content set's record IDs (and, for a
- * record that has them, its aliases): its size and two 32-bit sums of
+ * record that has them, its aliases and alternate name): its size and two 32-bit sums of
  * per-record hashes. Profile composition reorders records, which does not
  * change what a prerequisite resolves to; a campaign patch that renames a
  * record adds an alias, which can, so it changes the stamp. Records without
  * aliases hash their ID alone, as before aliases existed.
  */
 export function prerequisiteDefinitionSetStamp(
-  definitions: readonly Pick<ContentEntity, "id" | "aliases">[],
+  definitions: readonly Pick<
+    ContentEntity,
+    "id" | "aliases" | "alternateName"
+  >[],
 ): string {
   let first = 0;
   let second = 0;
-  for (const { id, aliases } of definitions) {
-    const key =
-      aliases === undefined || aliases.length === 0
-        ? id
-        : `${id}\u0000${aliases.join("\u0000")}`;
+  for (const { id, aliases, alternateName } of definitions) {
+    const names = [
+      ...(aliases ?? []),
+      ...(alternateName === undefined ? [] : [alternateName]),
+    ];
+    const key = names.length === 0 ? id : `${id}\u0000${names.join("\u0000")}`;
     first = (first + fnv1a(key, 0x811c9dc5)) >>> 0;
     second = (second + fnv1a(key, 0x050c5d1f)) >>> 0;
   }

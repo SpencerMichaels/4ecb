@@ -1,5 +1,50 @@
 # Implementation status
 
+## Campaign alternate names; Pathfinder revision 6 (2026-11-06)
+
+D116 amendment (owner decision reversing revision 5's race renames). A
+campaign patch `{id, alternateName}` gives a stock record a setting name
+without renaming it, stored as `ContentEntity.alternateName` (content-domain
+`aliases.ts`: `entityTitle`, `entityOtherNames`, `withAlternateName`,
+`entityAlternateNameErrors`; validated by content-pack; in the entity and
+the pack digest only when present). Campaign format version 4
+(content-pack `campaign.ts`: `CampaignAlternateNamePatch`,
+`campaignAlternateNamePatches`, `campaignAlternateNameOutcomes`,
+`applyCampaignAlternateNames`, applied after field patches and before rule
+patches; a missing target or a name the record already has leaves it with
+a `campaign.patch-not-applied` warning; one per record, none on a
+house-rule record); versions 1-3 load with their digests (version-3 golden
+in `campaign.test.ts`). `entityNames` includes the alternate name, so the
+prerequisite name index, `RulesIndex` (`find`, `categoryValues`) and the
+prerequisite IR stamp read it like an alias; prerequisite display lines
+never change for it. UI: the choice-table row (`CandidateSelectionTable`)
+and the detail card headings (`CandidateDetail` reference card,
+`EntityCardHeader`) read "Shadar-kai (Fetchling)", and the card's first
+line "Called Fetchling in this campaign." (`EntityAliases`); the table
+filter, Shop search and compendium index match it. The sidebar subtitle,
+Build summaries, library Race column and sheet Race line keep the record's
+name (owner call). `campaign build --against` reports `alternateNames`,
+`campaign inspect` counts them, the invite page shows "Alternate names".
+
+Pathfinder revision 6 (`content/campaigns/pathfinder/campaign.json`):
+the five race `name` patches and their 49 embedded-name patches are
+removed (142 patches: 36 field, 5 alternate-name, 101 rule); Genasi,
+Shadar-kai, Kenku, Vryloka and Warforged get the alternate names Geniekin,
+Fetchling, Tengu, Dhampir and Automaton. The language renames stay.
+`--against tmp/content/full-local.4ecp`: every patch applies, 6
+prerequisite lines renamed (all language lines), none unchanged.
+
+Verification: synthetic `campaign.test.ts` (applies, drift guard, digest,
+validation, version 3 golden), `campaign-command.test.ts`,
+`CampaignJoinPage.test.tsx`, `EntityCard.test.ts`, `CandidateDetail.test.ts`,
+`CandidateSelectionTable.alternate-names.test.tsx`, `rules-index.test.ts`,
+`prerequisite-display.test.ts`, query-engine `index.test.ts`. Private
+probes: `tmp/probe/pf/rev6.ts` 56/56 (titles, search, Shadar-kai feats and
+paths keep their names and lines, language lines, Valria loads as Vryloka
+(Dhampir), Deva unchanged), `tmp/pf-languages/probe.ts` 62/62,
+`tmp/probe/pf/probe.ts` (deities) all pass. `pnpm test`, `pnpm typecheck`,
+lint, prettier and `scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## In-app Back controls know where the player came from (2026-11-06)
 
 - The print preview's Back button used `history.length > 1` to choose a

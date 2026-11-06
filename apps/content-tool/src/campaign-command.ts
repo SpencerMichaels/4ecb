@@ -9,6 +9,10 @@ import { stderr } from "node:process";
 import type { ContentEntity, ParsedContentSource } from "@4ecb/content-domain";
 import {
   buildCampaign,
+  applyCampaignAlternateNames,
+  campaignAlternateNameOutcomeMessage,
+  campaignAlternateNameOutcomes,
+  campaignAlternateNamePatches,
   campaignPatchOutcomeMessage,
   campaignPatchOutcomes,
   applyCampaignPatches,
@@ -23,6 +27,7 @@ import {
   resolveCampaignRestrictions,
   summarizeContentPack,
   validateCampaign,
+  type CampaignAlternateNameOutcome,
   type CampaignDocument,
   type CampaignManifest,
   type CampaignPatchEntry,
@@ -68,8 +73,9 @@ const MANIFEST_KEYS = new Set([
 const PATCH_KEYS = ["id", "field", "expect", "value"] as const;
 
 /**
- * `patches: [{id, field, expect, value} | {id, rule: {...}}]`: a field
- * patch has string keys and no others; a rule patch is an ID and one rule
+ * `patches: [{id, field, expect, value} | {id, alternateName} | {id, rule:
+ * {...}}]`: a field patch has string keys and no others; an alternate-name
+ * patch is an ID and the name; a rule patch is an ID and one rule
  * operation (`campaignRuleOperationShapeErrors`). Patches live in
  * campaign.json, not the house-rule XML: that XML is the legacy
  * `Houserules` block, RulesElement records only, kept verbatim for export,
@@ -93,6 +99,18 @@ function parsePatches(value: unknown): CampaignPatchEntry[] {
       if (errors.length > 0)
         throw new Error(`${label}.rule ${errors.join("; ")}`);
       return { id: patch.id, rule: patch.rule as CampaignRuleOperation };
+    }
+    if ("alternateName" in patch) {
+      const unknown = Object.keys(patch).filter(
+        (key) => key !== "id" && key !== "alternateName",
+      );
+      if (unknown.length > 0)
+        throw new Error(`${label} has unknown keys: ${unknown.join(", ")}`);
+      if (typeof patch.id !== "string")
+        throw new Error(`${label}.id must be a string`);
+      if (typeof patch.alternateName !== "string")
+        throw new Error(`${label}.alternateName must be a string`);
+      return { id: patch.id, alternateName: patch.alternateName };
     }
     const unknown = Object.keys(patch).filter(
       (key) => !(PATCH_KEYS as readonly string[]).includes(key),
@@ -119,7 +137,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Reads a `campaign.json` value: `{campaignId, name, revision, houseRules?,
  * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}},
- * patches?: [{id, field, expect, value} | {id, rule}]}`. Unknown
+ * patches?: [{id, field, expect, value} | {id, alternateName} | {id, rule}]}`. Unknown
  * keys are refused, so a misspelt restriction never silently restricts
  * nothing. Identity and limit rules are `buildCampaign`'s.
  */
@@ -228,6 +246,8 @@ export interface CampaignAgainstReport {
   readonly overriddenIds: readonly string[];
   /** Each field patch against the pack: the drift guard. */
   readonly patches: readonly CampaignPatchReport[];
+  /** Each alternate-name patch against the pack. */
+  readonly alternateNames: readonly CampaignAlternateNameReport[];
   /** Each rule patch against the pack, in the order they apply. */
   readonly rulePatches: readonly CampaignRulePatchReport[];
   /** Displayed prerequisite lines naming renamed records (D116, record
@@ -250,6 +270,14 @@ export interface PrerequisiteRenameReport {
     readonly occurrences: number;
     readonly references: number;
   }[];
+}
+
+export interface CampaignAlternateNameReport {
+  readonly id: string;
+  /** The record's own name, which the alternate name does not replace. */
+  readonly name?: string;
+  readonly alternateName: string;
+  readonly status: CampaignAlternateNameOutcome["status"];
 }
 
 export interface CampaignRulePatchReport {
@@ -361,6 +389,30 @@ export function campaignAgainstPack(
   for (const outcome of patchOutcomes)
     if (outcome.status !== "applies")
       warnings.push(`${campaignPatchOutcomeMessage(outcome)} (${packId})`);
+  const fieldPatched = applyCampaignPatches(
+    composed,
+    campaignPatches(campaign),
+  ).entities;
+  const alternateNamePatches = campaignAlternateNamePatches(campaign);
+  const names = new Map(
+    fieldPatched.map((entity) => [entity.id.toLocaleLowerCase(), entity.name]),
+  );
+  const alternateNames = campaignAlternateNameOutcomes(
+    fieldPatched,
+    alternateNamePatches,
+  ).map((outcome): CampaignAlternateNameReport => {
+    if (outcome.status !== "applies")
+      warnings.push(
+        `${campaignAlternateNameOutcomeMessage(outcome)} (${packId})`,
+      );
+    const name = names.get(outcome.patch.id.toLocaleLowerCase());
+    return {
+      id: outcome.patch.id,
+      ...(name === undefined ? {} : { name }),
+      alternateName: outcome.patch.alternateName,
+      status: outcome.status,
+    };
+  });
   // Rule patches run in order, each on the record the earlier ones left;
   // field patches never touch rules, so they need not run first here.
   const ruleOutcomes = runCampaignRulePatches(
@@ -372,7 +424,7 @@ export function campaignAgainstPack(
       warnings.push(`${campaignRulePatchOutcomeMessage(outcome)} (${packId})`);
   const prerequisiteRenames = prerequisiteRenameReport(
     runCampaignRulePatches(
-      applyCampaignPatches(composed, campaignPatches(campaign)).entities,
+      applyCampaignAlternateNames(fieldPatched, alternateNamePatches).entities,
       campaignRulePatches(campaign),
     ).entities,
   );
@@ -387,6 +439,7 @@ export function campaignAgainstPack(
     typeRules,
     overriddenIds,
     patches: patchOutcomes.map(patchReport),
+    alternateNames,
     rulePatches: ruleOutcomes.map(rulePatchReport),
     prerequisiteRenames,
     warnings,
@@ -429,6 +482,7 @@ export function summarizeCampaign(campaign: CampaignDocument) {
       types: campaign.restrictions.types,
     },
     patches: campaignPatches(campaign).length,
+    alternateNames: campaignAlternateNamePatches(campaign).length,
     rulePatches: campaignRulePatches(campaign).length,
     houseRules: summarizeContentPack(campaign.houseRules),
     legacyHouseRulesXmlBytes: new TextEncoder().encode(

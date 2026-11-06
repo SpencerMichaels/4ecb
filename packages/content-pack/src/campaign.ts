@@ -10,8 +10,10 @@ import type {
 } from "@4ecb/content-domain";
 import {
   getAttribute,
+  MAX_ENTITY_ALIAS_LENGTH,
   normalizeDisplayText,
   renamedEntity,
+  withAlternateName,
 } from "@4ecb/content-domain";
 
 import {
@@ -33,14 +35,16 @@ import { readLimitedText, sha256 } from "./internal";
 export const CAMPAIGN_FORMAT = "4ecb-campaign";
 /**
  * The version `buildCampaign` writes. Version 2 added field `patches`;
- * version 3 added rule patches and the `prerequisites` field.
+ * version 3 added rule patches and the `prerequisites` field; version 4
+ * added alternate-name patches.
  */
-export const CAMPAIGN_VERSION = 3;
+export const CAMPAIGN_VERSION = 4;
 /**
- * Versions `decodeCampaign` reads; a version-1 document has no patches and
- * a version-2 document only field patches.
+ * Versions `decodeCampaign` reads; a version-1 document has no patches, a
+ * version-2 document only field patches and a version-3 document no
+ * alternate-name patches.
  */
-export const CAMPAIGN_VERSIONS = [1, 2, 3] as const;
+export const CAMPAIGN_VERSIONS = [1, 2, 3, 4] as const;
 export type CampaignVersion = (typeof CAMPAIGN_VERSIONS)[number];
 export const MAX_CAMPAIGN_ENCODED_BYTES = 16 * 1024 * 1024;
 export const MAX_CAMPAIGN_DECODED_BYTES = 16 * 1024 * 1024;
@@ -156,13 +160,41 @@ export interface CampaignRulePatch {
   readonly rule: CampaignRuleOperation;
 }
 
-/** One entry of a campaign's `patches`: a field patch or a rule patch. */
-export type CampaignPatchEntry = CampaignPatch | CampaignRulePatch;
+/**
+ * A setting's second name for a stock record, which keeps its own name
+ * (D116 amendment): Pathfinder's Shadar-kai is "Shadar-kai (Fetchling)" in
+ * the builder, and its feats keep naming shadar-kai. Applied only when the
+ * record exists. Version 4.
+ */
+export interface CampaignAlternateNamePatch {
+  /** The target record's ID (matched ignoring case). */
+  readonly id: string;
+  readonly alternateName: string;
+}
+
+/**
+ * One entry of a campaign's `patches`: a field patch, an alternate-name
+ * patch or a rule patch.
+ */
+export type CampaignPatchEntry =
+  CampaignPatch | CampaignAlternateNamePatch | CampaignRulePatch;
 
 export function isCampaignRulePatch(
   patch: CampaignPatchEntry,
 ): patch is CampaignRulePatch {
   return "rule" in patch;
+}
+
+export function isCampaignAlternateNamePatch(
+  patch: CampaignPatchEntry,
+): patch is CampaignAlternateNamePatch {
+  return "alternateName" in patch;
+}
+
+function isCampaignFieldPatch(
+  patch: CampaignPatchEntry,
+): patch is CampaignPatch {
+  return !isCampaignRulePatch(patch) && !isCampaignAlternateNamePatch(patch);
 }
 
 /** A type rule: every record of `type` not supplied by the campaign. */
@@ -214,9 +246,14 @@ export interface CampaignManifest {
 export function campaignPatches(
   campaign: Pick<CampaignDocument, "patches">,
 ): readonly CampaignPatch[] {
-  return (campaign.patches ?? []).filter(
-    (patch): patch is CampaignPatch => !isCampaignRulePatch(patch),
-  );
+  return (campaign.patches ?? []).filter(isCampaignFieldPatch);
+}
+
+/** A campaign's alternate-name patches; none before version 4. */
+export function campaignAlternateNamePatches(
+  campaign: Pick<CampaignDocument, "patches">,
+): readonly CampaignAlternateNamePatch[] {
+  return (campaign.patches ?? []).filter(isCampaignAlternateNamePatch);
 }
 
 /** A campaign's rule patches, in the order they apply. */
@@ -249,8 +286,8 @@ function campaignDigestInput(
         allow,
       })),
     },
-    // Version 1 has no patches and version 2 only field patches, each
-    // serialized as before, so their documents keep their digests.
+    // Version 1 has no patches and versions 2 and 3 no alternate names,
+    // each serialized as before, so their documents keep their digests.
     ...(campaign.version === 1
       ? {}
       : { patches: (campaign.patches ?? []).map(canonicalPatch) }),
@@ -385,6 +422,8 @@ function canonicalRuleOperation(
 function canonicalPatch(patch: CampaignPatchEntry): CampaignPatchEntry {
   if (isCampaignRulePatch(patch))
     return { id: patch.id, rule: canonicalRuleOperation(patch.rule) };
+  if (isCampaignAlternateNamePatch(patch))
+    return { id: patch.id, alternateName: patch.alternateName };
   const { id, field, expect, value } = patch;
   return { id, field, expect, value };
 }
@@ -487,6 +526,10 @@ function isPatchEntryShape(value: unknown, version: number): boolean {
     return (
       Object.keys(value).length === 2 &&
       campaignRuleOperationShapeErrors(value.rule).length === 0
+    );
+  if (version >= 4 && "alternateName" in value)
+    return (
+      Object.keys(value).length === 2 && typeof value.alternateName === "string"
     );
   return (
     typeof value.field === "string" &&
@@ -683,6 +726,27 @@ function patchErrors(
         );
       continue;
     }
+    if (isCampaignAlternateNamePatch(patch)) {
+      const label = `Alternate name patch ${id}`;
+      const { alternateName } = patch;
+      if (
+        alternateName.length === 0 ||
+        alternateName.length > MAX_ENTITY_ALIAS_LENGTH ||
+        alternateName !== alternateName.trim() ||
+        hasControlCharacters(alternateName)
+      )
+        errors.push(
+          `${label}: alternateName must be 1-${MAX_ENTITY_ALIAS_LENGTH} trimmed characters without control characters`,
+        );
+      if (overlay.has(id.toLocaleLowerCase()))
+        errors.push(
+          `${label}: ${id} is one of the campaign's house rules; give the record the name there instead`,
+        );
+      const key = `${id.toLocaleLowerCase()}\u0000\u0000alternate`;
+      if (seen.has(key)) errors.push(`${label} is listed twice`);
+      seen.add(key);
+      continue;
+    }
     const { field, expect, value } = patch;
     const label = `Patch ${id} ${field}`;
     if (
@@ -732,14 +796,16 @@ function patchVersionErrors(
     return patches === undefined
       ? []
       : ["A version 1 campaign cannot carry patches"];
+  const entries = patches ?? [];
+  if (version <= 3 && entries.some(isCampaignAlternateNamePatch))
+    return [`A version ${version} campaign cannot carry alternate names`];
   if (version === 2) {
-    const entries = patches ?? [];
     if (entries.some(isCampaignRulePatch))
       return ["A version 2 campaign cannot carry rule patches"];
     if (
       entries.some(
         (patch) =>
-          !isCampaignRulePatch(patch) && isPrerequisitesField(patch.field),
+          isCampaignFieldPatch(patch) && isPrerequisitesField(patch.field),
       )
     )
       return ["A version 2 campaign cannot patch prerequisites"];
@@ -814,19 +880,27 @@ export async function buildCampaign(
 
 /**
  * Patches in canonical order and form: by ID ignoring case; a record's
- * field patches by field, then its rule patches in the order authored (the
- * sort is stable), since each rule patch sees the ones before it.
+ * field patches by field, then its alternate name, then its rule patches in
+ * the order authored (the sort is stable), since each rule patch sees the
+ * ones before it.
  */
 function sortedPatches(
   patches: readonly CampaignPatchEntry[],
 ): CampaignPatchEntry[] {
+  const rank = (patch: CampaignPatchEntry) =>
+    isCampaignRulePatch(patch)
+      ? 2
+      : isCampaignAlternateNamePatch(patch)
+        ? 1
+        : 0;
   return patches.map(canonicalPatch).sort((left, right) => {
     const byId = compareIgnoringCase(left.id, right.id);
     if (byId !== 0) return byId;
-    const leftRule = isCampaignRulePatch(left);
-    const rightRule = isCampaignRulePatch(right);
-    if (leftRule || rightRule) return Number(leftRule) - Number(rightRule);
-    return compareIgnoringCase(left.field, right.field);
+    const byKind = rank(left) - rank(right);
+    if (byKind !== 0) return byKind;
+    return isCampaignFieldPatch(left) && isCampaignFieldPatch(right)
+      ? compareIgnoringCase(left.field, right.field)
+      : 0;
   });
 }
 
@@ -1171,6 +1245,105 @@ export function applyCampaignPatches(
         };
       }
       return patched;
+    }),
+    diagnostics,
+  };
+}
+
+/** What an alternate-name patch finds on the records it is applied to. */
+export type CampaignAlternateNameOutcome =
+  | {
+      readonly patch: CampaignAlternateNamePatch;
+      readonly status: "applies";
+    }
+  | {
+      readonly patch: CampaignAlternateNamePatch;
+      readonly status: "target-missing";
+    }
+  /** The record's name or an alias already is the alternate name. */
+  | {
+      readonly patch: CampaignAlternateNamePatch;
+      readonly status: "name-taken";
+      readonly current: string;
+    };
+
+/**
+ * Each alternate-name patch's outcome against `entities` (IDs matched
+ * ignoring case): it applies when the record exists and none of its names
+ * already is the alternate name.
+ */
+export function campaignAlternateNameOutcomes(
+  entities: readonly ContentEntity[],
+  patches: readonly CampaignAlternateNamePatch[],
+): CampaignAlternateNameOutcome[] {
+  if (patches.length === 0) return [];
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  return patches.map((patch): CampaignAlternateNameOutcome => {
+    const entity = byId.get(patch.id.toLocaleLowerCase());
+    if (entity === undefined) return { patch, status: "target-missing" };
+    const folded = patch.alternateName.toLocaleLowerCase();
+    const taken = [entity.name, ...(entity.aliases ?? [])].find(
+      (name) => name.trim().toLocaleLowerCase() === folded,
+    );
+    return taken === undefined
+      ? { patch, status: "applies" }
+      : { patch, status: "name-taken", current: taken };
+  });
+}
+
+/** One line on an alternate-name patch, for diagnostics and reports. */
+export function campaignAlternateNameOutcomeMessage(
+  outcome: CampaignAlternateNameOutcome,
+): string {
+  const { id, alternateName } = outcome.patch;
+  const label = `Alternate name patch ${id} ${JSON.stringify(alternateName)}`;
+  switch (outcome.status) {
+    case "applies":
+      return `${label} applies`;
+    case "target-missing":
+      return `${label} not applied: no record ${id}`;
+    case "name-taken":
+      return `${label} not applied: ${id} is already named ${JSON.stringify(outcome.current)}`;
+  }
+}
+
+/**
+ * Gives records their alternate names and returns a warning diagnostic
+ * (`campaign.patch-not-applied`) for each patch that does not apply; the
+ * record is left as it is, and composition never fails over it.
+ */
+export function applyCampaignAlternateNames(
+  entities: readonly ContentEntity[],
+  patches: readonly CampaignAlternateNamePatch[],
+): {
+  readonly entities: readonly ContentEntity[];
+  readonly diagnostics: readonly ContentDiagnostic[];
+} {
+  const outcomes = campaignAlternateNameOutcomes(entities, patches);
+  if (outcomes.length === 0) return { entities, diagnostics: [] };
+  const diagnostics: ContentDiagnostic[] = [];
+  const applying = new Map<string, string>();
+  for (const outcome of outcomes)
+    if (outcome.status === "applies")
+      applying.set(
+        outcome.patch.id.toLocaleLowerCase(),
+        outcome.patch.alternateName,
+      );
+    else
+      diagnostics.push({
+        severity: "warning",
+        code: "campaign.patch-not-applied",
+        message: campaignAlternateNameOutcomeMessage(outcome),
+        entityId: outcome.patch.id,
+      });
+  return {
+    entities: entities.map((entity) => {
+      const alternateName = applying.get(entity.id.toLocaleLowerCase());
+      return alternateName === undefined
+        ? entity
+        : withAlternateName(entity, alternateName);
     }),
     diagnostics,
   };
@@ -1522,8 +1695,8 @@ export function applyCampaignRulePatches(
 
 /**
  * Composes the base packs with the campaign's house rules on top
- * (`last-pack-wins-v1`), applies the campaign's field patches and then its
- * rule patches to the composed records, and records the campaign and its
+ * (`last-pack-wins-v1`), applies the campaign's field patches, alternate
+ * names and then its rule patches to the composed records, and records the campaign and its
  * resolved restrictions on the materialized pack. Type rules are resolved
  * on every composition, so records added to later base revisions are
  * covered; a patch whose stock value or rule has changed is left out with
@@ -1540,15 +1713,24 @@ export async function composeCampaignProfile(
     [...basePacks, campaign.houseRules],
     options,
     (composed): ComposedCampaignLayer => {
-      // Field patches, then rule patches: they touch different parts of a
-      // record, and restrictions resolve over the result.
+      // Field patches, alternate names, then rule patches: they touch
+      // different parts of a record, and restrictions resolve over the
+      // result.
       const fields = applyCampaignPatches(composed, campaignPatches(campaign));
-      const rules = applyCampaignRulePatches(
+      const names = applyCampaignAlternateNames(
         fields.entities,
+        campaignAlternateNamePatches(campaign),
+      );
+      const rules = applyCampaignRulePatches(
+        names.entities,
         campaignRulePatches(campaign),
       );
       const { entities } = rules;
-      const diagnostics = [...fields.diagnostics, ...rules.diagnostics];
+      const diagnostics = [
+        ...fields.diagnostics,
+        ...names.diagnostics,
+        ...rules.diagnostics,
+      ];
       const packCampaign: ContentPackCampaign = {
         campaignId: campaign.campaignId,
         revision: campaign.revision,

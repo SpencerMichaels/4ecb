@@ -875,8 +875,8 @@ Moradin, or an item a character holds), build and import or advertise it.
     window, and open/close the sidebar drawer below 63rem. Type "Moradin"
     in the filter; then a Pathfinder campaign character's Deity table with
     "Moradin" (and "Pharasma" or another stock name its deities count as),
-    its Race table with a stock race name its renamed or counts-as races
-    stand in for, and a language choice filtered the same way. Also
+    its Race table with a race's Pathfinder name ("Fetchling") or a stock
+    race name its counts-as races stand in for, and a language choice filtered the same way. Also
     "Protection" in a deity filter.
   - **Expect:** with room (table at least 40rem wide), columns read Deity,
     Alignment, Domains, Description; Domains lists the domain names
@@ -991,8 +991,8 @@ Moradin, or an item a character holds), build and import or advertise it.
 - [ ] **Record aliases ("Also known as").** Added 2026-11-06; matching and
       search are unit-tested, this is the card line.
   - **Where:** a campaign with a `name` patch or an "Also Known As" record
-    (the synthetic fixture's Crag Folk race and Tide Mother deity, or a
-    Pathfinder rename once authored): the Race step's card, the Deity
+    (the synthetic fixture's Crag Folk race and Tide Mother deity, or the
+    Pathfinder Celestial language): the Race step's card, the Deity
     step's card, and each table's filter box typed with the old name.
   - **Expect:** the card's first body line reads "**Also known as:**
     Cliffkin" (or "Sea Mother") in the same label style as the
@@ -1002,35 +1002,34 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** the line sits below the fields, uses a different label
     style from "Prerequisite:", or a record without aliases shows an empty
     "Also known as" line.
-- [ ] **Pathfinder renames (campaign revision 5).** Added 2026-11-06; the
-      names, matching and prerequisite lines are checked by private
-      probes, these are the surfaces.
+- [ ] **Pathfinder race alternate names (campaign revision 6).** Added
+      2026-11-06, replacing the revision-5 race renames; the names,
+      matching and prerequisite lines are checked by private probes and
+      the title and card line by unit tests, these are the surfaces.
   - **Where:** a new character in the Pathfinder campaign: the Race table
-    filtered by "warforged", "shadar", "genasi", "kenku" and "vryloka";
-    the Geniekin, Fetchling and Automaton race cards; a Fetchling at 11th
-    level: a feat such as Ghostly Rejuvenation and the paragon path
-    Abiding Reaper (cards and table rows); an Automaton's Automaton
-    Juggernaut card; a Geniekin's manifestation choice and a Firesoul
-    Geniekin's Wildfire Geniekin; the Celestial, Jotun and an elemental
-    tongue's language cards; a background benefit list with Learn
-    Celestial; Valria (Vryloka) moved into the campaign, Build and sheet.
-  - **Expect:** each filter keeps the renamed race (Automaton, Fetchling,
-    Geniekin, Tengu, Dhampir); its card reads "Also known as: Warforged"
-    (etc.) first while its description prose keeps the old name.
-    Prerequisite lines read the new name in the book's case ("11th
-    level, fetchling", "Fetchling", "Automaton", "Geniekin, firesoul
-    elemental manifestation", "Celestial background association"), with
-    no "met through" note. Deva, Cannith Warforged and Warforged
-    Faceplate are unchanged. Language cards read "Also known as:
-    Supernal" (Giant, Deep Speech, Primordial). Rimetongue Caller still
-    reads "Wizard, Primordial language" (the stock Primordial keeps its
-    name; any elemental tongue meets it). Valria's race shows Dhampir on
-    the Build tab and the sheet. Power cards of the renamed races show no
-    old name in their header (their "Racial" class block is unchanged).
-  - **Wrong if:** an old race name shows in a name, prerequisite line or
-    sheet field outside prose and "Also known as", a renamed paragon path
-    or feat is greyed out for its race, or the filter loses a row by its
-    old name.
+    unfiltered, then filtered by "fetchling", "automaton", "geniekin",
+    "tengu", "dhampir" and "shadar"; the Shadar-kai, Warforged and Genasi
+    race cards, with a long name such as "Warforged (Automaton)" at 140%
+    zoom and with the detail pane narrow; a Shadar-kai at 11th level: a
+    feat such as Ghostly Rejuvenation and the paragon path Abiding Reaper
+    (cards and table rows); a Celestial language card; Valria (Vryloka)
+    moved into the campaign, Build tab, sidebar and sheet.
+  - **Expect:** the race rows read "Shadar-kai (Fetchling)", "Warforged
+    (Automaton)", "Genasi (Geniekin)", "Kenku (Tengu)", "Vryloka
+    (Dhampir)", sorted under the stock name; each filter keeps its row.
+    The card's title band reads the same title, and its first body line,
+    above the flavor and stat grid, reads "Called Fetchling in this
+    campaign." in the card's ordinary text style. Feats, paragon paths and
+    prerequisite lines keep the stock names ("11th level, shadar-kai",
+    "Shadar-kai", "Warforged Juggernaut", "Wildfire Genasi") with no "met
+    through" note; Deva is unchanged. Celestial's card still reads "Also
+    known as: Supernal" and Holy Speech "fluent in Celestial". Valria's
+    sidebar and sheet show Vryloka (the title form is only the table and
+    card).
+  - **Wrong if:** a title wraps badly or is clipped in the row or the
+    card's title band, the "Called …" line looks like a label or sits
+    below the fields, a race card shows "Also known as", or a Pathfinder
+    race name shows in a feat, path or prerequisite line.
 
 ## Decisions
 

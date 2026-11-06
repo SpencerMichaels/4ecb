@@ -965,6 +965,11 @@ Follow-ups (not done):
   names, and `campaign build --against` lists prerequisite lines that
   keep an old name (`docs/implementation-status.md`, Pathfinder campaign
   revision 5).
+- Done (2026-11-06): alternate names (owner reversal of the race
+  renames): an `{id, alternateName}` patch, format version 4, titles a
+  record "Shadar-kai (Fetchling)" in the choice table and card; Pathfinder
+  revision 6 drops the 54 race name patches for five alternate names
+  (`docs/implementation-status.md`, Campaign alternate names).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

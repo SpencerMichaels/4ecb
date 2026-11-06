@@ -10,7 +10,12 @@ import {
   type ReactNode,
 } from "react";
 
-import { type ContentEntity, countsAsSearchNames } from "@4ecb/content-domain";
+import {
+  type ContentEntity,
+  countsAsSearchNames,
+  entityOtherNames,
+  entityTitle,
+} from "@4ecb/content-domain";
 import {
   powerAttackProfile,
   type CandidateDecision,
@@ -508,7 +513,7 @@ export function CandidateSelectionTable({
     return [
       label,
       entity?.name,
-      ...(entity?.aliases ?? []),
+      ...(entity === undefined ? [] : entityOtherNames(entity)),
       // Torag is found by "Moradin": the names of the CountsAs* records the
       // option grants (search only; rules keep their own counts-as).
       ...(entity === undefined ? [] : countsAsSearchNames(entity, byId)),
@@ -534,8 +539,11 @@ export function CandidateSelectionTable({
   };
   const isFavorite = (candidate: CandidateDecision) =>
     favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
-  const candidateLabel = (candidate: CandidateDecision) =>
-    entityFor(candidate)?.name ?? candidate.definitionId;
+  // "Shadar-kai (Fetchling)": a campaign's alternate name in the title.
+  const candidateTitle = (candidate: CandidateDecision) => {
+    const entity = entityFor(candidate);
+    return entity === undefined ? candidate.definitionId : entityTitle(entity);
+  };
   useLayoutEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -561,7 +569,7 @@ export function CandidateSelectionTable({
   const sortValue = (
     candidate: CandidateDecision,
     column: CandidateSortColumn,
-    label = candidateLabel(candidate),
+    label = candidateTitle(candidate),
   ): string | number | undefined => {
     const entity = entityFor(candidate);
     if (column === "name") return label;
@@ -589,8 +597,8 @@ export function CandidateSelectionTable({
   const compareCandidates = (
     left: CandidateDecision,
     right: CandidateDecision,
-    leftLabel = candidateLabel(left),
-    rightLabel = candidateLabel(right),
+    leftLabel = candidateTitle(left),
+    rightLabel = candidateTitle(right),
   ) => {
     const leftValue = sortValue(left, sort.column, leftLabel);
     const rightValue = sortValue(right, sort.column, rightLabel);
@@ -914,11 +922,7 @@ export function CandidateSelectionTable({
       ))
         rows.push({
           candidateId: candidate.definitionId,
-          render: () =>
-            candidateRow(
-              candidate,
-              entityFor(candidate)?.name ?? candidate.definitionId,
-            ),
+          render: () => candidateRow(candidate, candidateTitle(candidate)),
         });
     } else if (expanded) {
       for (const group of [...section.featGroups].sort((left, right) =>
@@ -1003,11 +1007,7 @@ export function CandidateSelectionTable({
         .sort((left, right) => compareCandidates(left, right)))
         rows.push({
           candidateId: candidate.definitionId,
-          render: () =>
-            candidateRow(
-              candidate,
-              entityFor(candidate)?.name ?? candidate.definitionId,
-            ),
+          render: () => candidateRow(candidate, candidateTitle(candidate)),
         });
       for (const group of section.featGroups)
         for (const { candidate, label } of group.options)

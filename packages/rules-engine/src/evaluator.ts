@@ -2,6 +2,7 @@ import type { EquipmentSlotAssignment } from "@4ecb/character-domain";
 import {
   contentCache,
   entityNames,
+  entityOtherNames,
   type ContentEntity,
 } from "@4ecb/content-domain";
 
@@ -429,9 +430,9 @@ export class RulesIndex {
         key(`${entity.type} ${name}`),
       ];
       const own = [key(entity.id), ...tokens(entity.name)];
-      // An alias (D116) is one of the record's names; a record that has
-      // the name itself keeps its token.
-      const aliasTokens = (entity.aliases ?? []).flatMap(tokens);
+      // An alias or alternate name (D116) is one of the record's names; a
+      // record that has the name itself keeps its token.
+      const aliasTokens = entityOtherNames(entity).flatMap(tokens);
       const aliases = new Set([...own, ...aliasTokens]);
       for (const value of own) this.categoryAliases.set(value, aliases);
       for (const value of aliasTokens)
@@ -439,7 +440,7 @@ export class RulesIndex {
           this.categoryAliases.set(value, aliases);
     }
     for (const entity of entities)
-      for (const alias of entity.aliases ?? []) {
+      for (const alias of entityOtherNames(entity)) {
         if (!this.#byAlias.has(key(alias)))
           this.#byAlias.set(key(alias), entity);
         const typed = `${key(entity.type)}\0${key(alias)}`;

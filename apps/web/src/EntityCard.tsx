@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import {
   displayPrerequisites,
+  entityTitle,
   isUserFacingSpecific,
   type ContentEntity,
   type SpecificField,
@@ -142,7 +143,7 @@ export function EntityCardHeader({
 }) {
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isItem = isItemEntity(entity);
-  const headingContent = entity.name;
+  const headingContent = entityTitle(entity);
   const heading =
     headingLevel === 2 ? (
       <h2 id={headingId}>{headingContent}</h2>
@@ -436,13 +437,25 @@ function namesWord(text: string, name: string): boolean {
 
 /** "Also known as: Deva": the other names a record is known by (D116), a
  * campaign's renamed record's stock name, labelled like the prerequisite
- * line. Shown first, so a player looking for the old name sees it at once. */
+ * line; and "Called Fetchling in this campaign." for a campaign's
+ * alternate name, which the title also shows ("Shadar-kai (Fetchling)").
+ * Shown first, so a player looking for the other name sees it at once. */
 export function EntityAliases({ entity }: { readonly entity: ContentEntity }) {
   const aliases = entity.aliases ?? [];
-  return aliases.length === 0 ? null : (
-    <p className="entity-card-aliases">
-      <strong>Also known as:</strong> {aliases.join(", ")}
-    </p>
+  const { alternateName } = entity;
+  return (
+    <>
+      {alternateName === undefined ? null : (
+        <p className="entity-card-aliases entity-card-alternate-name">
+          Called {alternateName} in this campaign.
+        </p>
+      )}
+      {aliases.length === 0 ? null : (
+        <p className="entity-card-aliases">
+          <strong>Also known as:</strong> {aliases.join(", ")}
+        </p>
+      )}
+    </>
   );
 }
 
