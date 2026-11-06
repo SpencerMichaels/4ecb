@@ -398,18 +398,54 @@ rule(
   (c) => {
     const five = card(c, "Five Storms")?.text ?? "";
     const tail = card(c, "Dragon's Tail")?.text ?? "";
+    // The body's last parts: free space, then any weapon table, the
+    // technique band and additional effects (owner 2026-11-05).
+    const foot = (name: string) => {
+      const body = elementsWithClass(
+        card(c, name)?.html ?? "",
+        "print-card-body",
+      )[0];
+      return [
+        "print-card-attack-section",
+        "print-card-spacer",
+        "print-card-weapon-variants",
+        "print-card-technique",
+        "print-card-additional",
+      ]
+        .map((part) => [part, body?.lastIndexOf(`class="${part}`) ?? -1])
+        .filter(([, index]) => (index as number) >= 0)
+        .sort(([, a], [, b]) => (a as number) - (b as number))
+        .map(([part]) => part as string);
+    };
     return [
-      inOrder("Five Storms: attack, then the technique", five, [
+      inOrder("Five Storms: attack, then the technique band", five, [
         "Hit:",
-        "Movement Technique",
-        "Move",
+        "Movement Technique · Move Action",
         "Personal",
         "Effect: You shift 2 squares.",
       ]),
-      inOrder("Dragon's Tail: the technique", tail, [
-        "Movement Technique",
+      inOrder("Dragon's Tail: the technique band", tail, [
+        "Movement Technique · Move Action",
         "Melee 1",
       ]),
+      ...["Five Storms", "Dragon's Tail"].map((name) =>
+        equal(
+          `${name}: the technique follows the free space and any weapon table`,
+          foot(name).filter((part) => part !== "print-card-additional"),
+          foot(name).includes("print-card-weapon-variants")
+            ? [
+                "print-card-attack-section",
+                "print-card-spacer",
+                "print-card-weapon-variants",
+                "print-card-technique",
+              ]
+            : [
+                "print-card-attack-section",
+                "print-card-spacer",
+                "print-card-technique",
+              ],
+        ),
+      ),
       truthy(
         'No separate "[Movement Technique]" card',
         !printedDeck(c).some(({ label }) => /movement technique/i.test(label)),

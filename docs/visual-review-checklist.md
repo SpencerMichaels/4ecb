@@ -420,11 +420,16 @@ live site.
   - **Expect:** Destined for Greatness's class block clear of its type label;
     where "ADROIT EXPLORER · LEVEL 12" wraps, "LEVEL 12" starts the second
     line with no "·" (narrow the window or print to see it; the same holds
-    at 140% zoom and in Ctrl+P). On the discipline cards, after the attack
-    and Hit lines, a thin rule, "MOVEMENT TECHNIQUE" and a band ("Move" +
-    "Personal"), all inside the card.
+    at 140% zoom and in Ctrl+P). On Five Storms and Dragon's Tail the free
+    space sits between the attack and, at the card's foot, a full-width
+    tinted band like the attack's action band: "≫ MOVEMENT TECHNIQUE · Move
+    Action" with "Personal" (Five Storms) at its right, then the technique's
+    rules at the body's padding; on the Build tab's panel card the band
+    follows the attack with normal spacing. Both cards still fit (no red
+    outline).
   - **Wrong if:** text collides or clips, a "·" begins or ends a line of
-    the type bar, or the technique's band runs past the card edge.
+    the type bar or band, the band is inset or narrower than the action
+    band above, a timer icon shows, or free space is left below the band.
 
 ## Pass 19: Jim Darkmagic (`jim`)
 

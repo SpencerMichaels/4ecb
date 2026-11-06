@@ -185,6 +185,17 @@ export function powerActionLabel(
   return label || undefined;
 }
 
+/** The action's full name, where a band names the action on its own
+ * ("Movement Technique · Move Action", D079 2026-11-05): a basic action
+ * keeps its "Action"; triggered and No Action names read as labelled. */
+export function powerActionName(value: string | undefined): string | undefined {
+  const label = powerActionLabel(value);
+  return label !== undefined &&
+    /^(?:standard|move|minor|free|opportunity)$/i.test(label)
+    ? `${label} Action`
+    : label;
+}
+
 /** Shared action hierarchy for power tables, cards, and sheet indexes. */
 export function powerActionRank(value: string | undefined): number {
   const normalized = value?.trim().toLocaleLowerCase() ?? "";

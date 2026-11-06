@@ -2247,6 +2247,27 @@ tier-by-level grid keeping the former rail's completion status (a dropdown,
 matching its chevron, rather than a modal). It is not in
 the sidebar and has no extra arrows. The section tabs replace the former
 Next button: level tab tables instead end at the bottom of the window, later
+**Movement technique band (owner, 2026-11-05).** A monk full discipline's
+movement technique sits at the card's foot instead of directly under the
+attack, where it looked cramped while free space was left lower down: the
+body's free space (the `print-card-spacer`) goes above the foot, which is any
+weapon table, then the technique, then Additional effects at the very bottom.
+The technique is headed by a full-width tinted band in the attack action
+band's style: the technique's own action symbol (`ActionTypeIcon`), then
+"MOVEMENT TECHNIQUE · Move Action" (the full action name from
+`powerActionName`, an exception to the short action labels inside cards, and
+no timer icon), with the attack type, if any, in the band's right cell; its
+rules follow at the body's normal padding. The fluid panel card has no free
+space, so there the band simply follows the attack with normal spacing.
+
+**Wrapped "·" lists (owner, 2026-11-05).** Wherever a "·"-separated list on
+a card or pane wraps, the item that starts the new line drops its separator
+(the line break is the separator). Every such list is a `DotList`
+(`apps/web/src/DotList.tsx`, CSS separators) whose line starts are marked by
+`line-starts.ts`, the one mechanism shared with the secondary attack and item
+stat rows (`starts-wrapped-row`), re-run by the card fit loop at each text
+size, by one shared ResizeObserver and before printing.
+
 tables in a tab sharing the first one's height, and short lists shrinking to
 their rows. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above

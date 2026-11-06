@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyPower,
   powerActionLabel,
+  powerActionName,
   powerActionRank,
 } from "./power-classification";
 
@@ -97,6 +98,20 @@ describe("classifyPower", () => {
       compactLabel: "Power 3",
       typeLabel: "Power",
     });
+  });
+});
+
+describe("powerActionName", () => {
+  it.each([
+    ["Move Action", "Move Action"],
+    ["move action", "Move Action"],
+    ["Minor", "Minor Action"],
+    ["Opportunity Action", "Opportunity Action"],
+    ["Immediate interrupt", "Immediate Interrupt"],
+    ["No Action", "No Action"],
+    [undefined, undefined],
+  ])("names the action %s in full as %s", (source, expected) => {
+    expect(powerActionName(source)).toBe(expected);
   });
 });
 

@@ -228,6 +228,7 @@ export {
   type PowerCardTone,
   type PowerClassification,
   type PowerClassificationInput,
+  powerActionName,
   type PowerUsageCategory,
 } from "./power-classification";
 export {

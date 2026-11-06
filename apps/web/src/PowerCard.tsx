@@ -4,6 +4,7 @@ import {
   POWER_CARD_BODY_EXCLUDES,
   classifyPowerCard,
   powerActionLabel,
+  powerActionName,
   type SheetCard,
   type SheetMovementTechnique,
   type SheetPowerAttack,
@@ -78,8 +79,10 @@ function PrintRuleLines({
 
 const isPersonal = (value: string) => /^\s*personal\s*$/i.test(value);
 
-/** A monk full discipline's movement technique, after the attack part, as
- *  legacy appends it (PowerCard.MonkMovementTechnique). */
+/** A monk full discipline's movement technique (legacy
+ *  PowerCard.MonkMovementTechnique), at the foot of the card: a full-width
+ *  band "≫ MOVEMENT TECHNIQUE · Move Action | Personal" in the action band's
+ *  style, then its rules (D079, owner 2026-11-05). */
 function MovementTechnique({
   technique,
   characterLevel,
@@ -89,34 +92,37 @@ function MovementTechnique({
   readonly characterLevel: number;
   readonly textPresentation?: CardTextPresentation | undefined;
 }) {
-  const action = powerActionLabel(technique.actionType);
-  const attackType = technique.attackType ?? "";
+  const attackType = technique.attackType?.trim() ?? "";
   return (
     <section className="print-card-technique">
-      <strong className="print-card-technique-title">Movement Technique</strong>
-      {action === undefined && !attackType ? null : (
-        <div className="print-card-action-band">
-          <span className="print-card-action-types">
-            <span className="print-card-action-line">
-              {action === undefined ? null : <Icon name="timer" />}
-              {action}
-            </span>
+      <div className="print-card-action-band print-card-technique-band">
+        <span className="print-card-action-types">
+          <span className="print-card-action-line">
+            <ActionTypeIcon decorative value={technique.actionType} />
+            <DotList
+              items={[
+                <strong className="print-card-technique-title">
+                  Movement Technique
+                </strong>,
+                powerActionName(technique.actionType),
+              ]}
+            />
           </span>
+        </span>
+        {attackType ? (
           <span>
-            {attackType ? (
-              <Icon
-                name={isPersonal(attackType) ? "attack-personal" : "sword"}
-              />
-            ) : null}
+            <Icon name={isPersonal(attackType) ? "attack-personal" : "sword"} />
             {attackType}
           </span>
-        </div>
-      )}
-      <PrintRuleLines
-        fields={technique.fields}
-        characterLevel={characterLevel}
-        textPresentation={textPresentation}
-      />
+        ) : null}
+      </div>
+      <div className="print-card-technique-rules">
+        <PrintRuleLines
+          fields={technique.fields}
+          characterLevel={characterLevel}
+          textPresentation={textPresentation}
+        />
+      </div>
     </section>
   );
 }
@@ -384,13 +390,6 @@ export function PowerCard({
             </div>
           </section>
         ))}
-        {card.movementTechnique === undefined ? null : (
-          <MovementTechnique
-            technique={card.movementTechnique}
-            characterLevel={characterLevel}
-            textPresentation={textPresentation}
-          />
-        )}
         {rules.length === 0 && card.description !== undefined ? (
           <CardText
             value={card.description}
@@ -398,15 +397,24 @@ export function PowerCard({
             textPresentation={textPresentation}
           />
         ) : null}
+        {card.movementTechnique !== undefined ||
+        ((card.additionalEffects ?? []).length > 0 &&
+          printVariants.length === 0) ? (
+          // Free space goes above the card's foot: the weapon table (which
+          // otherwise sits at the bottom by itself), the movement technique
+          // and additional effects, in that order.
+          <div className="print-card-spacer" aria-hidden="true" />
+        ) : null}
         <PrintPowerVariants
           variants={printVariants}
           attackOrdinals={attacks.map((attack) => attack.ordinal)}
         />
-        {(card.additionalEffects ?? []).length === 0 ||
-        printVariants.length > 0 ? null : (
-          // Without a weapon table (which sits at the bottom), keep additional
-          // effects at the bottom of the card like every other card.
-          <div className="print-card-spacer" aria-hidden="true" />
+        {card.movementTechnique === undefined ? null : (
+          <MovementTechnique
+            technique={card.movementTechnique}
+            characterLevel={characterLevel}
+            textPresentation={textPresentation}
+          />
         )}
         {(card.additionalEffects ?? []).length === 0 ? null : (
           <section className="print-card-additional has-effects">

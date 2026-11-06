@@ -1566,7 +1566,7 @@ const reviews: ReviewCharacter[] = [
               ],
               [
                 "Monk movement technique on the discipline card",
-                "Five Storms and Dragon's Tail: the Movement Technique section inside the card.",
+                'Five Storms and Dragon\'s Tail: the "Movement Technique · Move Action" band at the foot of the card, after the free space.',
               ],
             ],
           },

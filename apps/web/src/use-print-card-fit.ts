@@ -17,8 +17,9 @@ function layoutCardBands(element: HTMLElement) {
   // measure the previously assigned width, which would prevent shrinking.
   element.style.removeProperty("--print-card-header-first-column");
   const firstHeaderCells = [
+    // The movement technique's band at the card's foot has its own columns.
     element.querySelector<HTMLElement>(
-      ".print-card-action-band > span:first-child",
+      ".print-card-action-band:not(.print-card-technique-band) > span:first-child",
     ),
     element.querySelector<HTMLElement>(
       ".print-card-combat-band:not(.is-secondary) > div:first-child",

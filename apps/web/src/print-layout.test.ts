@@ -146,6 +146,26 @@ describe("print layout contract", () => {
       /\.print-utility-usage-badge\.usage-daily\s*\{[^}]*background:\s*#777;/,
     );
   });
+  it("bands a movement technique full width at the card's foot", () => {
+    // Its own columns, not the attack's shared first column, and a wrapping
+    // first cell.
+    expect(styles).toMatch(
+      /\.print-card-technique-band\s*\{[^}]*border-top:[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto;[^}]*margin:\s*0 -0\.035in;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-technique-band > \.print-card-action-types,[^{]*\{[^}]*white-space:\s*normal;/,
+    );
+    expect(styles).toMatch(
+      /\.is-panel \.print-card-technique-band\s*\{[^}]*margin:\s*0 -0\.55rem;/,
+    );
+    // The spacer before it takes the free space on a fixed printed card.
+    expect(styles).toMatch(
+      /\.print-power-card \.print-card-body > \.print-card-spacer\s*\{[^}]*flex:\s*1 0 var\(--print-card-section-gap\);/,
+    );
+    expect(sheetSource).toContain(
+      '".print-card-action-band:not(.print-card-technique-band) > span:first-child"',
+    );
+  });
   it("removes wrapped separators and their space while keeping the target on its aligned row", () => {
     expect(styles).toMatch(/starts-wrapped-row::before[^}]*display:\s*none;/);
     expect(styles).toMatch(

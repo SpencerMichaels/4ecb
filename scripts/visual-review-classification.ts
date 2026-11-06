@@ -445,7 +445,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'Destined for Greatness\'s "Adroit Explorer · Level 12" is one DotList (its "·" is CSS, dropped where "Level 12" wraps to a line start), and no printed type bar or item footer carries a literal "·".',
   ),
   "raidon|0|monk movement technique on the discipline card": auto(
-    "Five Storms and Dragon's Tail carry the Movement Technique section after the attack; no separate technique card.",
+    'Five Storms and Dragon\'s Tail carry the "Movement Technique · Move Action" band after the attack, the free space and any weapon table (additional effects last); no separate technique card.',
   ),
   "jim|0|spellbook subtitle": auto(
     'Expeditious Retreat and Freezing Cloud carry the "Spellbook" subtitle; Sleep does not.',
