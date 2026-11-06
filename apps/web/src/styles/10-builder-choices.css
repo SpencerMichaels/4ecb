@@ -436,9 +436,12 @@
   color: var(--warning);
 }
 
-/* The Overview tab (D113): a section per level, its choices as rows shaped
-   like a folded accordion heading (title, picks, status), which open the
-   choice on its tab. Titles share one column so the picks line up. */
+/* The Overview tab (D113): a section per level under the Inventory's
+   collapsible group band (`table-section-row`, primitives.css), its choices
+   as rows shaped like a folded accordion heading (title, picks, status),
+   which open the choice on its tab. Titles share one column so the picks
+   line up. The band is the only line: rows and kind groups have none, the
+   groups are only spaced apart. */
 .build-overview {
   display: grid;
   gap: 1.1rem;
@@ -446,22 +449,41 @@
 
 .build-overview-level {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .build-overview-level-heading {
-  align-items: baseline;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.75rem;
   margin: 0;
-  padding-bottom: 0.3rem;
+}
+
+.build-overview-level-label {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+/* As the Inventory's band: the count at the label's size, only dimmer. The
+   band text itself stays at the rows' size, above them. */
+.build-overview-level-label .table-section-count {
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+.build-overview-level-choices {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.build-overview-level-choices[hidden] {
+  display: none;
 }
 
 .build-overview-none {
   color: var(--muted);
   font-weight: 600;
+  margin: 0;
+  padding: 0.45rem 0.8rem;
 }
 
 .build-overview-group {
@@ -469,10 +491,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.build-overview-group > li + li {
-  border-top: 1px solid var(--border);
 }
 
 .build-overview-row {

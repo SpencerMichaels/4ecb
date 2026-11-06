@@ -8,7 +8,8 @@ import type {
   EvaluatedChoice,
 } from "@4ecb/rules-engine";
 
-import { buildOverview } from "./build-overview";
+import { buildOverview, buildOverviewLevelChoiceCount } from "./build-overview";
+import { appStyles } from "./test-styles";
 
 const statement = (
   name: string,
@@ -249,5 +250,55 @@ describe("build overview", () => {
       kind: "choice",
       choiceId: choices[10]!.id,
     });
+  });
+});
+
+describe("Overview levels", () => {
+  it("counts a level's choices across its groups", () => {
+    const row = {
+      title: "Feat",
+      picks: undefined,
+      status: "complete",
+      target: { kind: "choice", choiceId: "feat" },
+    } as const;
+    expect(
+      buildOverviewLevelChoiceCount({
+        level: 1,
+        groups: [
+          {
+            kind: "character",
+            title: "Character",
+            rows: [
+              { ...row, key: "a" },
+              { ...row, key: "b" },
+            ],
+          },
+          { kind: "feats", title: "Feats", rows: [{ ...row, key: "c" }] },
+        ],
+      }),
+    ).toBe(3);
+    expect(buildOverviewLevelChoiceCount({ level: 2, groups: [] })).toBe(0);
+  });
+
+  it("draws a line only under the level band, never between rows or groups", () => {
+    const rules = (selector: RegExp) =>
+      [...appStyles.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([, sel]) =>
+        selector.test(sel!),
+      );
+    // The band is the shared table-section-row styling, not a copy.
+    expect(appStyles).toMatch(
+      /\.build-overview \.table-section-row \{[^}]*background: var\(--brand-navy\)/,
+    );
+    expect(appStyles).toMatch(
+      /\.build-overview h4\.table-section-row \{[^}]*border-bottom: 1px solid var\(--border-strong\)/,
+    );
+    const overviewRules = rules(/\.build-overview-(?!level-heading)/);
+    expect(overviewRules.length).toBeGreaterThan(0);
+    for (const [selector, body] of overviewRules)
+      expect(body, selector).not.toMatch(/border(-top|-bottom)?\s*:\s*(?!0)/);
+    // A collapsed level's display:grid body still hides.
+    expect(appStyles).toMatch(
+      /\.build-overview-level-choices\[hidden\] \{\s*display: none;/,
+    );
   });
 });

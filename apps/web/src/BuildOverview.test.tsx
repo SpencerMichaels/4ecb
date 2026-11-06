@@ -58,20 +58,38 @@ function render(onOpen = vi.fn()) {
 }
 
 describe("BuildOverview", () => {
+  const choiceRows = (host: HTMLElement) => [
+    ...host.querySelectorAll<HTMLButtonElement>("button.build-overview-row"),
+  ];
+  const levelToggles = (host: HTMLElement) => [
+    ...host.querySelectorAll<HTMLButtonElement>("h4 > button"),
+  ];
+
   it("shows a section per level, its rows grouped, an empty level compactly", () => {
     const { host } = render();
-    const headings = [...host.querySelectorAll("h4")].map(
-      (heading) => heading.textContent,
+    // Each level's heading is the Inventory's collapsible group band, its
+    // count the level's choices.
+    const headings = [...host.querySelectorAll("h4")];
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      "Level 12",
+      "Level 20",
+    ]);
+    for (const heading of headings)
+      expect(heading.classList.contains("table-section-row")).toBe(true);
+    expect(
+      [...host.querySelectorAll("h4 .table-section-count")].map((count) =>
+        count.getAttribute("aria-label"),
+      ),
+    ).toEqual(["2 choices", "0 choices"]);
+    expect(host.querySelector(".build-overview-none")?.textContent).toBe(
+      "No choices at this level",
     );
-    expect(headings).toEqual(["Level 1", "Level 2No choices at this level"]);
     expect(
       [...host.querySelectorAll("ul")].map((list) =>
         list.getAttribute("aria-label"),
       ),
     ).toEqual(["Level 1 character", "Level 1 feats"]);
-    const rows = [...host.querySelectorAll("button")].map(
-      (row) => row.textContent,
-    );
+    const rows = choiceRows(host).map((row) => row.textContent);
     expect(rows).toEqual([
       "RaceRevenant · Language: ElvenComplete",
       "Featnone chosenIncomplete",
@@ -84,9 +102,42 @@ describe("BuildOverview", () => {
 
   it("opens a row's choice where it is edited", () => {
     const { host, onOpen } = render();
-    const feat = [...host.querySelectorAll("button")][1]!;
+    const feat = choiceRows(host)[1]!;
     act(() => feat.click());
     expect(onOpen).toHaveBeenCalledWith({ kind: "choice", choiceId: "feat" });
+  });
+
+  it("collapses and expands a level from its heading, all expanded at first", () => {
+    const { host } = render();
+    const [first, second] = levelToggles(host);
+    expect(
+      levelToggles(host).map((toggle) => toggle.getAttribute("aria-expanded")),
+    ).toEqual(["true", "true"]);
+    // The heading button controls its level's choices and names it.
+    const body = host.querySelector<HTMLElement>(
+      `#${first!.getAttribute("aria-controls")}`,
+    )!;
+    expect(body.hidden).toBe(false);
+    expect(first!.textContent).toBe("Level 12");
+    expect(first!.querySelector(".icon")).not.toBeNull();
+    expect(first!.type).toBe("button");
+
+    act(() => first!.click());
+    expect(first!.getAttribute("aria-expanded")).toBe("false");
+    expect(body.hidden).toBe(true);
+    expect(choiceRows(host)).toHaveLength(0);
+    // Other levels keep their state; the heading stays.
+    expect(second!.getAttribute("aria-expanded")).toBe("true");
+    expect(host.querySelector("#build-overview-level-1")).not.toBeNull();
+
+    act(() => first!.click());
+    expect(first!.getAttribute("aria-expanded")).toBe("true");
+    expect(body.hidden).toBe(false);
+    expect(choiceRows(host)).toHaveLength(2);
+
+    // An empty level collapses too: its control is always there.
+    act(() => second!.click());
+    expect(host.querySelector(".build-overview-none")).toBeNull();
   });
 
   it("keeps the tab while the evaluation loads", () => {

@@ -112,14 +112,16 @@ button.dialog-close {
 
 .selection-table-scroll .table-section-row,
 .inventory-table .table-section-row,
-.shop-table .table-section-row {
+.shop-table .table-section-row,
+.build-overview .table-section-row {
   background: var(--brand-navy);
   color: white;
 }
 
 .selection-table-scroll .table-section-row th,
 .inventory-table .table-section-row th,
-.shop-table .table-section-row th {
+.shop-table .table-section-row th,
+.build-overview h4.table-section-row {
   border-bottom: 1px solid var(--border-strong);
   padding: 0;
 }

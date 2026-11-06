@@ -237,11 +237,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Build overview rows",
-            "Level 1's rows, grouped Character → Other, each with its Build-tab title and folded picks.",
+            "Level 1's rows, grouped Character → Other, each with its Build-tab title and folded picks; each level band's choice count.",
           ],
           [
             "Beatrix: build overview",
-            "Level sections, row alignment, status icons, clicking a row lands on its choice; 140% zoom and dark theme.",
+            "Navy level bands like the Inventory's groups, no lines between rows or groups, collapsing a level from its band, row alignment, status icons, clicking a row lands on its choice; 140% zoom and dark theme.",
           ],
         ],
       },

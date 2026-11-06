@@ -65,6 +65,13 @@ export interface BuildOverviewLevel {
   readonly groups: readonly BuildOverviewGroup[];
 }
 
+/** The count on a level's heading band: its rows across every group. */
+export function buildOverviewLevelChoiceCount(
+  level: BuildOverviewLevel,
+): number {
+  return level.groups.reduce((total, group) => total + group.rows.length, 0);
+}
+
 export const BUILD_OVERVIEW_GROUPS: readonly {
   readonly kind: BuildOverviewGroupKind;
   readonly title: string;

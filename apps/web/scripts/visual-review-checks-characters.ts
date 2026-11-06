@@ -40,7 +40,10 @@ import {
 import { beastCompanionTitle } from "../src/BeastCompanionCard";
 import { parsePartyPieces } from "../src/BuilderItemSetCard";
 import { builderIssueGroups } from "../src/builder-diagnostics";
-import { buildOverview } from "../src/build-overview";
+import {
+  buildOverview,
+  buildOverviewLevelChoiceCount,
+} from "../src/build-overview";
 import {
   accordionPicksSummary,
   candidateReason,
@@ -1026,6 +1029,11 @@ rule("beatrix", "Overview", "Build overview rows", (c) => {
       "Levels 3 and 7 have no choices",
       [levels[2]?.groups.length, levels[6]?.groups.length],
       [0, 0],
+    ),
+    equal(
+      "Each level band's choice count",
+      levels.map(buildOverviewLevelChoiceCount),
+      [14, 2, 0, 2, 1, 2, 0, 2],
     ),
   ];
 });

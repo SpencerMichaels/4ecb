@@ -172,20 +172,33 @@ live site.
   - **Where:** `edit?tab=overview` (the Overview tab, second in the tab
     bar); scroll levels 1 to 8, then click Level 1's Race row, come back,
     click a Level 4 or 8 row (Ability Increases, a feat), and a Details row
-    (Gender or Alignment). Repeat at 140% zoom and in dark theme.
-  - **Expect:** one "Level N" section per level, each a list of rows in
-    groups (Character, Feats, Powers, Other) with a small gap between
-    groups; each row reads its slot title in bold, then the picks in muted
-    text that wraps rather than clipping, and the Build tab's green check
-    (or amber "?" for an open required choice) at the right edge, aligned
-    across rows. A level with no choices shows "No choices at this level".
-    A row highlights on hover and keyboard focus. Clicking a row opens the
-    Build tab at that level and section with the choice's item expanded,
-    scrolled to and focused (Details rows open Details on that choice).
-  - **Wrong if:** titles and picks don't line up into columns, long picks
-    are cut off or push the status icon out of the row, the list overflows
-    sideways at 140% zoom, the tab's icon looks like another tab's, or a
-    click lands on the wrong level, section or item.
+    (Gender or Alignment). Click the Level 1 and Level 3 headings (and
+    press Enter/Space on a focused heading) to collapse and reopen them,
+    then switch tabs and back. Repeat at 140% zoom and in dark theme.
+  - **Expect:** one "Level N" section per level, each headed by a navy
+    band like the Inventory's item groups (chevron, "Level N", the count
+    of its choices), then a list of rows in groups (Character, Feats,
+    Powers, Other) separated only by a small gap; no line between rows or
+    groups, so the bands are the only breaks. Each row reads its slot
+    title in bold, then the picks in muted text that wraps rather than
+    clipping, and the Build tab's green check (or amber "?" for an open
+    required choice) at the right edge, aligned across rows. A level with
+    no choices shows "No choices at this level" under its band, count 0.
+    Clicking a band (or Enter/Space on it) folds that level to just its
+    band, the chevron turning from down to right, and unfolds it again;
+    the other levels stay as they were; after switching tabs every level
+    is open again. A row highlights on hover and keyboard focus. Clicking
+    a row opens the Build tab at that level and section with the choice's
+    item expanded, scrolled to and focused (Details rows open Details on
+    that choice).
+  - **Wrong if:** any row or group has a line under it (e.g. after Level
+    4's Ability Increases or within Level 1), a band looks different from
+    the Inventory's group bands (colour, height, chevron, count), the
+    band's text is hard to read in dark theme, a collapsed level leaves a
+    gap or stray text, titles and picks don't line up into columns, long
+    picks are cut off or push the status icon out of the row, the list
+    overflows sideways at 140% zoom, the tab's icon looks like another
+    tab's, or a click lands on the wrong level, section or item.
 
 ## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 

@@ -4421,6 +4421,26 @@ Model `apps/web/src/build-overview.ts`, view `BuildOverview.tsx`, styles in
 heading, titles in one column). Supersedes the 2026-10-18 note that
 Overview is removed (D041's navigation cleanup).
 
+Note (2026-11-05, owner feedback on the first build: "Level headings should
+stand out like the inventory/shop tables' group subheadings", "No phantom
+dividers", "Each level section can be collapsed/expanded from its heading,
+using the same collapsible group header behavior as Inventory's groups"):
+
+- **Level bands.** Each "Level N" heading is the Inventory's collapsible
+  group band, the shared `table-section-row` / `table-section-toggle` /
+  `table-section-count` styling (`primitives.css`, which now also selects
+  `.build-overview`), with the level's choice count
+  (`buildOverviewLevelChoiceCount`). "No choices at this level" moves from
+  beside the heading into the level's body.
+- **Collapsible.** The band's button toggles its level (`aria-expanded`,
+  `aria-controls`, the rotating chevron); all levels start expanded and,
+  like the Inventory's groups, collapsed levels are not remembered (the
+  tab reopens expanded). Rows still open their choice on the Build tab.
+- **One line per level.** The divider the first build drew between rows
+  of the same kind group (`li + li` borders), but not between groups,
+  read as stray lines under some rows; rows and groups now have no lines,
+  groups are only spaced apart, and the band is the only break.
+
 ### D114 — Rituals are learned in the Shop and listed in the Inventory
 
 Status: accepted (2026-11-05). Supersedes the Rituals tab of the known
