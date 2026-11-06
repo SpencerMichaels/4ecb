@@ -4522,7 +4522,8 @@ count was much smaller than its word, and the Learn/Known buttons jumped
 position between modes.
 
 - **Shop.** The Type list gains Rituals, Alchemical formulas and Martial
-  practices after the item categories (an optgroup "Rituals and practices",
+  practices after the item categories (ordinary options; the "Rituals and practices"
+  group heading was removed by owner request, 2026-11-06;
   `LEARNING_BROWSE_CATEGORIES` in `equipment-ui.ts`), in the same table,
   toolbar, search, filters and detail pane (the ritual's card, D079).
   Buying one learns it (`learn-known`, wealth deducted at the

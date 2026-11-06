@@ -985,7 +985,7 @@ checklist "Psion: the ritual choice in the Class flow" and the updated
 
 Owner decision D114: the Rituals tab is removed. The Shop's Type list has
 Rituals, Alchemical formulas and Martial practices after the item
-categories ("Rituals and practices"); Buy learns a record at its
+categories, as ordinary options since 2026-11-06 (no group heading); Buy learns a record at its
 ritual-cost price, Learn free uses the allowance it fits (the allowance
 dialog when several do), and a known record reads Known with its buttons
 disabled. All items stays items only, and the toolbar is the same in every

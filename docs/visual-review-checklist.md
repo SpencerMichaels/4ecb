@@ -402,8 +402,8 @@ live site.
     the source for a granted or free ritual), with no quantity buttons or
     trash icon. The detail pane shows the ritual's card. The right-click
     menu has Remove; on the granted ritual it is greyed, its tooltip saying
-    why. In the Type list the three learning categories sit under a
-    "Rituals and practices" heading after the items. In every category the
+    why. In the Type list the three learning categories follow the items as
+    ordinary entries, with no group heading. In every category the
     toolbar (Type, Slot, Subtype, search, Affordable, Proficient, Filters)
     and the table's columns stay in the same places; the Level header is
     on one line; a learned ritual's row reads Known with its buttons

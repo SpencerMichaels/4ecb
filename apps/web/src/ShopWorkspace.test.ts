@@ -397,10 +397,11 @@ describe("Shop workspace", () => {
     );
 
     expect(markup).toContain("All items");
-    // The learning categories follow the items, in their own group (D114).
+    // The learning categories follow the items as ordinary options (D114).
     expect(markup).toContain(
-      '<optgroup label="Rituals and practices"><option value="rituals">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></optgroup>',
+      '<option value="rituals">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></select>',
     );
+    expect(markup).not.toContain("<optgroup");
     expect(markup).toContain("Implement enchantments");
     expect(markup).toMatch(
       /aria-pressed="true"><svg[^>]*lucide-coins[\s\S]*?<\/svg> Affordable/,

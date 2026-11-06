@@ -995,13 +995,11 @@ export function ShopWorkspace({
               </option>
             ))}
             {/* Learned, not held: listed after the items (D114). */}
-            <optgroup label="Rituals and practices">
-              {LEARNING_BROWSE_CATEGORIES.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label}
-                </option>
-              ))}
-            </optgroup>
+            {LEARNING_BROWSE_CATEGORIES.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="inline-field">
