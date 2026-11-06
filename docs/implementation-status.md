@@ -17,6 +17,30 @@ typecheck and lint pass; `review:verify` checks Beatrix's Level 1 rows
 (automatic row `beatrix|6|build overview rows`). Owner visual check pending
 (checklist "Beatrix: build overview").
 
+## Rituals fold into the Shop and Inventory (2026-11-05)
+
+Owner decision D114: the Rituals tab is removed. The Shop's Type list has
+Rituals, Alchemical formulas and Martial practices after the item
+categories ("Rituals and practices"); Buy learns a record at its
+ritual-cost price, Learn free uses the allowance it fits (the allowance
+dialog when several do), and a known record reads Known with its buttons
+disabled. All items stays items only, and the toolbar is the same in every
+category (the learning-only Known chip is gone). The Inventory lists
+"Rituals known (N)" style groups after the items, on the item categories'
+label, each row the name and one muted "Level · Category · Key skill ·
+source" line (no "bought at level"), Remove in the row's right-click menu
+(inert, with the reason, for a granted record), and the free-ritual block
+as a row before the groups. `tab=rituals` and `section=practices`
+canonicalize to the Shop's learning categories. Domain commands and storage
+are unchanged; `RitualsWorkspace.tsx` is deleted and its helpers live in
+`known-records-ui.tsx`.
+
+Verification: `known-records-ui.test.tsx` (groups, allowance row,
+right-click Remove, Buy and Learn free), Shop and route tests;
+`pnpm review:build`: 174 factual rows pass, 0 fail, 43 owner rows; the
+checklist's Psion and Drow invoker ritual entries await the owner's look
+(140% zoom, both themes).
+
 ## M5.7 and M5.75 closed (2026-11-05)
 
 The product owner walked every pass of the visual review
@@ -1454,7 +1478,8 @@ Commits `46621bc`, `f8df178`.
   Bard, Cleric, Druid, Invoker, Psion (plus a named pool), Alchemist,
   Practiced Prodigy and Wild Sage. `rules-engine/src/ritual-allowances.ts`
   counts free-learned entries per pool; granted rituals don't count. The
-  Rituals tab shows "N free … left" under each text. "Learn free" asks which
+  Rituals tab (since D114, the Inventory) shows "N free … left" under each
+  text. "Learn free" asks which
   pool to use when several fit.
 - **Imported characters.** The 8 sample characters are unchanged. Four
   bundled heroes get only the `Given` marker for books they already own.

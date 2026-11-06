@@ -648,7 +648,8 @@ Editor navigation is a typed projection of the character edit hash. Each tab's
 `tab=` slug is its visible name (`inventory`, `loadout`, `shop`, ...; an old
 `tab=equipment[&loadout=1]` canonicalizes to them), and workspace tabs push one
 browser-history entry; Build routes may also encode level and the
-active choice section, and Shop and Rituals routes may encode a category.
+active choice section, and Shop routes may encode a category (an old
+`tab=rituals` canonicalizes to the Shop's learning categories, D114).
 Deep links construct the final Build destination atomically. Route
 parsing removes state that does not apply to the selected workspace, while
 runtime availability checks replace an unavailable Build section with its

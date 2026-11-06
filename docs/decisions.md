@@ -4419,3 +4419,48 @@ Model `apps/web/src/build-overview.ts`, view `BuildOverview.tsx`, styles in
 `styles/10-builder-choices.css` (rows shaped like a folded accordion
 heading, titles in one column). Supersedes the 2026-10-18 note that
 Overview is removed (D041's navigation cleanup).
+
+### D114 — Rituals are learned in the Shop and listed in the Inventory
+
+Status: accepted (2026-11-05). Supersedes the Rituals tab of the known
+rituals proposal (§4; owner answers 1 and 2 of 2026-10-21).
+
+Owner decision (2026-11-05): remove the separate Rituals tab and fold it
+into the existing Shop and Inventory, "the way Loadout/Equipment modes were
+unified". The tab's complaints must not recur in the new places: the Level
+column title broke across two lines, "bought at level X" was unnecessary
+(inventory, loadout and currency are current state in the UI), the Known
+count was much smaller than its word, and the Learn/Known buttons jumped
+position between modes.
+
+- **Shop.** The Type list gains Rituals, Alchemical formulas and Martial
+  practices after the item categories (an optgroup "Rituals and practices",
+  `LEARNING_BROWSE_CATEGORIES` in `equipment-ui.ts`), in the same table,
+  toolbar, search, filters and detail pane (the ritual's card, D079).
+  Buying one learns it (`learn-known`, wealth deducted at the
+  `ritualCostPercent` price, as the tab charged); the gift button is Learn
+  free, through the `AllowanceChoiceDialog` when several allowances fit. A
+  known record (learned or granted) reads Known in the Owned column with
+  Buy and Learn free disabled. "All items" stays the item categories only.
+  The toolbar is the same in every category: the learning-only Known chip
+  is gone (the Inventory is the known list).
+- **Inventory.** After the item categories, "Rituals known",
+  "Alchemical formulas known" and "Martial practices known" groups, each a
+  collapsible group row on the item categories' label (its count the
+  title's size), present when the character knows one of that kind, like
+  an item category with holdings. A row spans the table: the name, then one
+  muted line "Level N · Category · Key skill" and, where it matters, the
+  source ("Granted by Druid", "Learned free (Spellbook)"); no level is
+  named. Remove is the row's right-click menu (`ItemContextMenu`), inert
+  with the reason on a granted record. The compact free-ritual block
+  (`RitualAllowanceSummary`, 139fa6f) is a full-width row before the known
+  groups, absent when nothing is left.
+- **Routes.** `tab=rituals` (with any category, else Rituals) and the old
+  `tab=equipment&section=practices` canonicalize to
+  `tab=shop&category=<learning category>`; `tab=shop&category=rituals` is
+  canonical again.
+- Unchanged: the character-domain known list, allowances and wealth
+  commands (`learn-known`, `remove-known`), `knownRecords` and
+  `ritualAllowanceStatuses`. The shared UI pieces are
+  `apps/web/src/known-records-ui.tsx` (`useKnownRecordsModel`, one model
+  for the Shop's known IDs and price percent and the Inventory's groups).

@@ -262,7 +262,7 @@ build`), and is stored as normalized fields or IR in the pack; the app and
 
 Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 `#/characters` (library), `#/characters/:id/edit?…` (builder workspaces:
-`tab=` build/overview/details/loadout/inventory/shop/rituals/retraining/diagnostics/house-rules, each slug the visible tab name; old `tab=equipment[&loadout=1]` canonicalizes to inventory/loadout;
+`tab=` build/overview/details/loadout/inventory/shop/retraining/diagnostics/house-rules, each slug the visible tab name; old `tab=equipment[&loadout=1]` canonicalizes to inventory/loadout, old `tab=rituals` to the Shop's learning categories (D114: rituals, formulas and practices are learned in the Shop and listed in the Inventory, `known-records-ui.tsx`);
 Diagnostics and House rules open from the status badges; Overview (D113,
 `BuildOverview.tsx` over `build-overview.ts`) lists every level's choices
 as the Build tab's folded items, from the editor's planning evaluation, and

@@ -166,11 +166,16 @@ Open **Equipment** while editing a character. Inventory is the main view;
   Quantity reduction, sale, and loadout displacement immediately apply their
   reversible unequip effects. **Remove** discards a holding without proceeds
   and therefore requires two clicks on the same armed button; Escape or an
-  outside click cancels the armed state.
+  outside click cancels the armed state. After the items, the rituals,
+  alchemical formulas and martial practices the character knows are listed
+  ("Rituals known"), with the free rituals still left above them; right-click
+  a learned one to **Remove** it (a granted one can't be removed).
 - **Shop** is a peer editor tab. Browse by modern role, slot, subtype, source,
   rarity, or tier; the Filters disclosure also exposes the original builder's
   category names. Rituals, alchemical formulas, and martial practices are Browse
-  categories, while ritual scrolls appear under Consumables. Affordable and
+  categories after the items (not in All items): **Buy** learns one, **Learn
+  free** uses a free-ritual allowance (asking which when several fit), and a
+  known one reads Known. Ritual scrolls appear under Consumables. Affordable and
   Proficient filters start enabled; proficiency never prevents acquisition.
   **Buy** spends carried money first and then stored money. **Give** adds the
   exact item without spending money and remains available for items that cannot

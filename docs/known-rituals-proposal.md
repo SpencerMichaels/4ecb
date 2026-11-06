@@ -5,6 +5,12 @@ answers". All sections and the structured allowance counter are implemented (see
 implementation-status.md). The sheet field is named `origin`, since
 `source` is the book source.
 
+**Superseded in part (2026-11-05, D114):** §4's Rituals tab is gone. Rituals,
+formulas and practices are learned from the Shop's learning categories and
+listed in the Inventory's "Rituals known" groups, with the free-ritual
+block beside them and Remove in the row's right-click menu. Owner answers 1
+and 2 below are replaced by that decision; the rest stands.
+
 ## Problem
 
 The product owner asked why rituals and recipes live in inventory, since a
@@ -221,7 +227,7 @@ The recipe class feature is already in the features list.
 Associates are out of scope (companion proposal, step 2). This is a separate
 slice from §1–2 and should be added to the legacy special-case inventory.
 
-### 4. Builder: a Rituals tab
+### 4. Builder: a Rituals tab (superseded by D114)
 
 A peer workspace after Shop: Build · Retraining · Details · Equipment · Shop ·
 **Rituals**. The route is `tab=rituals`. The old `section=practices` deep link
