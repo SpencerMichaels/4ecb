@@ -39,6 +39,24 @@ const levels: readonly BuildOverviewLevel[] = [
     ],
   },
   { level: 2, groups: [] },
+  {
+    level: 3,
+    groups: [
+      {
+        kind: "feats",
+        title: "Feats",
+        rows: [
+          {
+            key: "feat-3",
+            title: "Feat",
+            picks: "Toughness",
+            status: "complete",
+            target: { kind: "choice", choiceId: "feat-3" },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 let root: Root | undefined;
@@ -67,20 +85,17 @@ describe("BuildOverview", () => {
 
   it("shows a section per level, its rows grouped, an empty level compactly", () => {
     const { host } = render();
-    // Each level's heading is the Inventory's collapsible group band, its
-    // count the level's choices.
+    // Each level's heading is the Inventory's collapsible group band, with
+    // no count: the owner found a choice count confusing (D113 note).
     const headings = [...host.querySelectorAll("h4")];
     expect(headings.map((heading) => heading.textContent)).toEqual([
-      "Level 12",
-      "Level 20",
+      "Level 1",
+      "Level 2",
+      "Level 3",
     ]);
     for (const heading of headings)
       expect(heading.classList.contains("table-section-row")).toBe(true);
-    expect(
-      [...host.querySelectorAll("h4 .table-section-count")].map((count) =>
-        count.getAttribute("aria-label"),
-      ),
-    ).toEqual(["2 choices", "0 choices"]);
+    expect(host.querySelector("h4 .table-section-count")).toBeNull();
     expect(host.querySelector(".build-overview-none")?.textContent).toBe(
       "No choices at this level",
     );
@@ -88,16 +103,26 @@ describe("BuildOverview", () => {
       [...host.querySelectorAll("ul")].map((list) =>
         list.getAttribute("aria-label"),
       ),
-    ).toEqual(["Level 1 character", "Level 1 feats"]);
+    ).toEqual(["Level 1 character", "Level 1 feats", "Level 3 feats"]);
     const rows = choiceRows(host).map((row) => row.textContent);
     expect(rows).toEqual([
       "RaceRevenant · Language: ElvenComplete",
       "Featnone chosenIncomplete",
+      "FeatToughnessComplete",
     ]);
     // An open required choice carries the Build tab's status mark.
     expect(
       host.querySelector(".build-overview-row.is-unresolved .icon"),
     ).not.toBeNull();
+  });
+
+  it("stripes a level's rows across its groups, restarting under each band", () => {
+    const { host } = render();
+    expect(
+      [...host.querySelectorAll(".build-overview-group > li")].map((item) =>
+        item.classList.contains("is-striped"),
+      ),
+    ).toEqual([false, true, false]);
   });
 
   it("opens a row's choice where it is edited", () => {
@@ -112,20 +137,20 @@ describe("BuildOverview", () => {
     const [first, second] = levelToggles(host);
     expect(
       levelToggles(host).map((toggle) => toggle.getAttribute("aria-expanded")),
-    ).toEqual(["true", "true"]);
+    ).toEqual(["true", "true", "true"]);
     // The heading button controls its level's choices and names it.
     const body = host.querySelector<HTMLElement>(
       `#${first!.getAttribute("aria-controls")}`,
     )!;
     expect(body.hidden).toBe(false);
-    expect(first!.textContent).toBe("Level 12");
+    expect(first!.textContent).toBe("Level 1");
     expect(first!.querySelector(".icon")).not.toBeNull();
     expect(first!.type).toBe("button");
 
     act(() => first!.click());
     expect(first!.getAttribute("aria-expanded")).toBe("false");
     expect(body.hidden).toBe(true);
-    expect(choiceRows(host)).toHaveLength(0);
+    expect(choiceRows(host)).toHaveLength(1);
     // Other levels keep their state; the heading stays.
     expect(second!.getAttribute("aria-expanded")).toBe("true");
     expect(host.querySelector("#build-overview-level-1")).not.toBeNull();
@@ -133,7 +158,7 @@ describe("BuildOverview", () => {
     act(() => first!.click());
     expect(first!.getAttribute("aria-expanded")).toBe("true");
     expect(body.hidden).toBe(false);
-    expect(choiceRows(host)).toHaveLength(2);
+    expect(choiceRows(host)).toHaveLength(3);
 
     // An empty level collapses too: its control is always there.
     act(() => second!.click());

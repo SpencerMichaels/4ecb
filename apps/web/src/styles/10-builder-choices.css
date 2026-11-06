@@ -440,8 +440,10 @@
    collapsible group band (`table-section-row`, primitives.css), its choices
    as rows shaped like a folded accordion heading (title, picks, status),
    which open the choice on its tab. Titles share one column so the picks
-   line up. The band is the only line: rows and kind groups have none, the
-   groups are only spaced apart. */
+   line up. The band is the only line: rows and kind groups have none, and
+   the rows sit flush under it in the candidate tables' alternating stripes
+   and hover tint (11-selection-tables.css), so a gap between groups would
+   break the stripe rhythm. */
 .build-overview {
   display: grid;
   gap: 1.1rem;
@@ -449,30 +451,14 @@
 
 .build-overview-level {
   display: grid;
-  gap: 0.4rem;
 }
 
 .build-overview-level-heading {
   margin: 0;
 }
 
-.build-overview-level-label {
-  align-items: baseline;
-  display: inline-flex;
-  gap: 0.4rem;
-}
-
-/* As the Inventory's band: the count at the label's size, only dimmer. The
-   band text itself stays at the rows' size, above them. */
-.build-overview-level-label .table-section-count {
-  font-size: inherit;
-  line-height: inherit;
-  margin: 0;
-}
-
 .build-overview-level-choices {
   display: grid;
-  gap: 0.4rem;
 }
 
 .build-overview-level-choices[hidden] {
@@ -506,11 +492,6 @@
   padding: 0.45rem 0.8rem;
   text-align: left;
   width: 100%;
-}
-
-.build-overview-row:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  box-shadow: none;
 }
 
 .build-overview-title {

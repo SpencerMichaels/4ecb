@@ -4441,6 +4441,24 @@ using the same collapsible group header behavior as Inventory's groups"):
   read as stray lines under some rows; rows and groups now have no lines,
   groups are only spaced apart, and the band is the only break.
 
+Note (2026-11-05, second owner pass: drop the bands' choice count, "it's
+just confusing"; "alternate row background colours like the rest of our
+tables"):
+
+- **No count.** A level band reads only its chevron and "Level N";
+  `buildOverviewLevelChoiceCount` is gone.
+- **Table stripes.** The rows take the candidate selection tables' stripe
+  rules themselves (`11-selection-tables.css`: `--surface`, every second
+  row `--surface-subtle`, the 18% accent hover tint, and a focused row
+  underlines its title in `--accent-strong` like a focused table name),
+  by sharing their selectors, not copying their colours. A row's
+  `is-striped` is counted through its level's kind groups and restarts
+  under each band, so every level opens on a plain row.
+- **No gaps.** The 0.4rem gaps between kind groups and under the band
+  broke the stripe rhythm (a gap after a plain row read as a taller row),
+  so the rows now sit flush; groups are no longer visually separated, the
+  bands are the only break.
+
 ### D114 — Rituals are learned in the Shop and listed in the Inventory
 
 Status: accepted (2026-11-05). Supersedes the Rituals tab of the known

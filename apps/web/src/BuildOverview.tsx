@@ -1,10 +1,7 @@
 import { useState } from "react";
 
 import type { BuilderIssueTarget } from "./builder-diagnostics";
-import {
-  buildOverviewLevelChoiceCount,
-  type BuildOverviewLevel,
-} from "./build-overview";
+import type { BuildOverviewLevel } from "./build-overview";
 import { NO_PICKS_LABEL } from "./builder-ui";
 import { ChoiceStatusIcon } from "./ChoiceAccordionItem";
 import { Icon } from "./Icon";
@@ -14,7 +11,8 @@ import { Icon } from "./Icon";
  * level with its rows grouped by kind. Each level's heading is the
  * Inventory's collapsible group band (`table-section-row`); levels start
  * expanded and, like the Inventory's groups, the collapsed ones are not
- * remembered. Each row is the slot's Build-tab heading and folded picks;
+ * remembered. Rows alternate the candidate tables' stripes, counted through
+ * the level's groups and restarting under each band. Each row is the slot's Build-tab heading and folded picks;
  * activating it opens that choice where it is edited, as an issue's Review
  * does.
  */
@@ -47,11 +45,11 @@ export function BuildOverview({
         {levels === undefined ? (
           <p>Evaluating character…</p>
         ) : (
-          levels.map((entry) => {
-            const { level, groups } = entry;
+          levels.map(({ level, groups }) => {
             const expanded = !collapsed.has(level);
             const bodyId = `build-overview-level-${level}-choices`;
-            const count = buildOverviewLevelChoiceCount(entry);
+            // A row's place in its level, across the groups, for the stripes.
+            let rowNumber = 0;
             return (
               <section
                 aria-labelledby={`build-overview-level-${level}`}
@@ -70,15 +68,7 @@ export function BuildOverview({
                     onClick={() => toggle(level)}
                   >
                     <Icon name="chevron" />
-                    <span className="build-overview-level-label">
-                      <span>Level {level}</span>
-                      <small
-                        aria-label={`${count} ${count === 1 ? "choice" : "choices"}`}
-                        className="table-section-count"
-                      >
-                        {count}
-                      </small>
-                    </span>
+                    <span>Level {level}</span>
                   </button>
                 </h4>
                 <div
@@ -98,7 +88,12 @@ export function BuildOverview({
                         key={group.kind}
                       >
                         {group.rows.map((row) => (
-                          <li key={row.key}>
+                          <li
+                            className={
+                              rowNumber++ % 2 === 1 ? "is-striped" : undefined
+                            }
+                            key={row.key}
+                          >
                             <button
                               className={`build-overview-row${row.status === "unresolved" ? " is-unresolved" : ""}`}
                               type="button"

@@ -40,10 +40,8 @@ import {
 import { beastCompanionTitle } from "../src/BeastCompanionCard";
 import { parsePartyPieces } from "../src/BuilderItemSetCard";
 import { builderIssueGroups } from "../src/builder-diagnostics";
-import {
-  buildOverview,
-  buildOverviewLevelChoiceCount,
-} from "../src/build-overview";
+import { BuildOverview } from "../src/BuildOverview";
+import { buildOverview } from "../src/build-overview";
 import {
   accordionPicksSummary,
   candidateReason,
@@ -1030,11 +1028,19 @@ rule("beatrix", "Overview", "Build overview rows", (c) => {
       [levels[2]?.groups.length, levels[6]?.groups.length],
       [0, 0],
     ),
-    equal(
-      "Each level band's choice count",
-      levels.map(buildOverviewLevelChoiceCount),
-      [14, 2, 0, 2, 1, 2, 0, 2],
-    ),
+    ...(() => {
+      const html = markup(
+        createElement(BuildOverview, { levels, onOpen: () => undefined }),
+      );
+      return [
+        equal(
+          "Level bands read only their level (no choice count)",
+          elementsWithClass(html, "build-overview-level-heading").map(textOf),
+          levels.map(({ level }) => `Level ${level}`),
+        ),
+        lacks("No count on the bands", html, "table-section-count"),
+      ];
+    })(),
   ];
 });
 

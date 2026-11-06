@@ -8,7 +8,7 @@ import type {
   EvaluatedChoice,
 } from "@4ecb/rules-engine";
 
-import { buildOverview, buildOverviewLevelChoiceCount } from "./build-overview";
+import { buildOverview } from "./build-overview";
 import { appStyles } from "./test-styles";
 
 const statement = (
@@ -254,37 +254,51 @@ describe("build overview", () => {
 });
 
 describe("Overview levels", () => {
-  it("counts a level's choices across its groups", () => {
-    const row = {
-      title: "Feat",
-      picks: undefined,
-      status: "complete",
-      target: { kind: "choice", choiceId: "feat" },
-    } as const;
-    expect(
-      buildOverviewLevelChoiceCount({
-        level: 1,
-        groups: [
-          {
-            kind: "character",
-            title: "Character",
-            rows: [
-              { ...row, key: "a" },
-              { ...row, key: "b" },
-            ],
-          },
-          { kind: "feats", title: "Feats", rows: [{ ...row, key: "c" }] },
-        ],
-      }),
-    ).toBe(3);
-    expect(buildOverviewLevelChoiceCount({ level: 2, groups: [] })).toBe(0);
+  const rules = (selector: RegExp) =>
+    [...appStyles.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([, sel]) =>
+      selector.test(sel!),
+    );
+  const ruleFor = (selector: string) =>
+    rules(/./).find(([, sel]) =>
+      sel!
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .split(",")
+        .map((part) => part.replace(/\s+/g, " ").trim())
+        .includes(selector),
+    );
+
+  it("styles no count on the level bands", () => {
+    // The owner found the choice count confusing (D113 note, 2026-11-05).
+    expect(rules(/build-overview[^{]*table-section-count/)).toEqual([]);
+    expect(appStyles).not.toMatch(/build-overview-level-label/);
+  });
+
+  it("stripes and tints rows with the candidate tables' own rules", () => {
+    // One rule each, shared with the tables: no Overview copy of the colors.
+    const base = ruleFor(".build-overview-group > li");
+    expect(base?.[2]).toMatch(/background: var\(--surface\);/);
+    expect(base?.[1]).toContain(".selection-table-scroll tbody tr");
+    const stripe = ruleFor(".build-overview-group > li.is-striped");
+    expect(stripe?.[2]).toMatch(/background: var\(--surface-subtle\);/);
+    expect(stripe?.[1]).toContain(
+      ".selection-table-scroll tbody tr:nth-child(even)",
+    );
+    // Hover: the tables' tint, and their cancelled button hover shadow.
+    const hovers = rules(/\.build-overview-row:hover/);
+    expect(hovers).toHaveLength(2);
+    const tint = hovers.find(([, , body]) => /background-image/.test(body!));
+    expect(tint?.[1]).toMatch(/tr\.selection-candidate-row:hover/);
+    expect(tint?.[2]).toMatch(/linear-gradient/);
+    // Rows sit flush in one stripe rhythm: no gap under the band or
+    // between kind groups.
+    for (const selector of [
+      ".build-overview-level",
+      ".build-overview-level-choices",
+    ])
+      expect(ruleFor(selector)?.[2], selector).not.toMatch(/gap/);
   });
 
   it("draws a line only under the level band, never between rows or groups", () => {
-    const rules = (selector: RegExp) =>
-      [...appStyles.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([, sel]) =>
-        selector.test(sel!),
-      );
     // The band is the shared table-section-row styling, not a copy.
     expect(appStyles).toMatch(
       /\.build-overview \.table-section-row \{[^}]*background: var\(--brand-navy\)/,
