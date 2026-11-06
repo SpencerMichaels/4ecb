@@ -47,6 +47,13 @@ const records = [
   entity("ID_COUNTSASDEITY_KELEMVOR", "Kelemvor", "CountsAsDeity"),
   entity("ID_DOMAIN_DEATH", "Death", "Domain"),
   entity("ID_IOUN", "Ioun", "Deity", [["ID_DOMAIN_DEATH", "Domain"]]),
+  // A campaign's Asmodeus counting as the stock Asmodeus, and as Bane.
+  entity("ID_CAMPAIGN_ASMODEUS", "Asmodeus", "Deity", [
+    ["ID_COUNTSASDEITY_ASMODEUS", "CountsAsDeity"],
+    ["ID_COUNTSASDEITY_BANE", "CountsAsDeity"],
+  ]),
+  entity("ID_COUNTSASDEITY_ASMODEUS", "asmodeus", "CountsAsDeity"),
+  entity("ID_COUNTSASDEITY_BANE", "Bane", "CountsAsDeity"),
 ];
 const byId = new Map(
   records.map((record) => [record.id.toLowerCase(), record]),
@@ -68,5 +75,11 @@ describe("deity counts-as (D116)", () => {
   it("is empty for a deity that counts as none", () => {
     expect(deityCountsAs(lookup("ID_IOUN")!, lookup)).toEqual([]);
     expect(deityCountsAsText(lookup("ID_IOUN")!, lookup)).toBeUndefined();
+  });
+
+  it("leaves out a deity counting as one of its own name", () => {
+    expect(deityCountsAsText(lookup("ID_CAMPAIGN_ASMODEUS")!, lookup)).toBe(
+      "Bane",
+    );
   });
 });

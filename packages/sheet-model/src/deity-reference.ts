@@ -48,8 +48,10 @@ export function deityDomainsText(
 
 /**
  * The deities a deity counts as (D116): the CountsAsDeity records its rules
- * grant, by the records' own names, in grant order. Lookups by ID only, so
- * a card reads its own rules, never the pack.
+ * grant, by the records' own names, in grant order. One with the deity's own
+ * name is left out (a campaign's Asmodeus counting as the stock Asmodeus
+ * says nothing). Lookups by ID only, so a card reads its own rules, never
+ * the pack.
  */
 export function deityCountsAs(
   deity: ContentEntity,
@@ -70,6 +72,7 @@ export function deityCountsAs(
     if (
       record === undefined ||
       key(record.type) !== "countsasdeity" ||
+      key(record.name) === key(deity.name) ||
       seen.has(key(record.id))
     )
       return [];

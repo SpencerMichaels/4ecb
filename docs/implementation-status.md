@@ -83,7 +83,11 @@ also under `StructuredEntityBody`) appends "— met through <names>". The
 other direction: a deity's card lists what it counts as after its domains
 ("Counts as: The Raven Queen, Kelemvor", `DeityDomains.tsx` over sheet-model
 `deityCountsAs`, the CountsAsDeity records its rules grant, resolved by ID),
-only when it has any. Evaluation cache bumped to v119; no stored IR changed.
+only when it has any. Same-name equivalents are left out on both sides
+(owner, 2026-11-06): a deity counting as one of its own name (the campaign's
+Asmodeus) shows no "Counts as" for it, and a granter the prerequisite line
+already names as whole words adds no "met through". Evaluation cache bumped
+to v119; no stored IR changed.
 Verification: synthetic `prerequisites.test.ts`,
 `prerequisite-met-through.test.ts` (Torag → Moradin feat, a Warlord feat
 through a hybrid class's CountsAsClass, nothing for a direct or unmet one),

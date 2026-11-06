@@ -422,6 +422,17 @@ export function prerequisiteLine(value: string): string {
     .join("; ");
 }
 
+/** Whether `text` contains `name` as whole words, ignoring case. */
+function namesWord(text: string, name: string): boolean {
+  const escaped = name.trim().replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return (
+    escaped !== "" &&
+    new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "iu").test(
+      text,
+    )
+  );
+}
+
 /** "Prerequisite: Hexblade", labelled like a power card's rule lines; a
  * requirement met only through a counts-as alternate says what met it
  * ("Must worship Moradin — met through Torag"). */
@@ -434,12 +445,15 @@ export function EntityPrerequisites({
   readonly metThrough?: readonly string[];
 }) {
   const line = prerequisiteLine(entity.printPrerequisites ?? "");
+  // A granter the line already names adds nothing: the campaign's Asmodeus
+  // meets "Must worship Asmodeus" through the stock Asmodeus it counts as.
+  const shown = metThrough.filter((name) => !namesWord(line, name));
   return line === "" ? null : (
     <p className="entity-card-prerequisites">
       <strong>Prerequisite:</strong> {line}
-      {metThrough.length === 0 ? null : (
+      {shown.length === 0 ? null : (
         <span className="entity-card-prerequisites-met">
-          {` — met through ${metThrough.join(", ")}`}
+          {` — met through ${shown.join(", ")}`}
         </span>
       )}
     </p>

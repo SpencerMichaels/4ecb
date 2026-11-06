@@ -570,12 +570,17 @@ describe("counts-as on option details (D116)", () => {
     {},
   );
   const plainDeity = entity("ID_IOUN", "Ioun", "Deity", {}, "Knowledge.");
+  // A campaign's own Moradin counting as the stock one of the same name.
+  const campaignMoradin: ContentEntity = {
+    ...entity("ID_CAMPAIGN_MORADIN", "Moradin", "Deity", {}, "The forge god."),
+    rules: [grant("ID_COUNTSASDEITY_MORADIN", "CountsAsDeity", 0)],
+  };
   const feat: ContentEntity = {
     ...entity("ID_MORADIN_FEAT", "Moradin's Blessing", "Feat", {}),
     printPrerequisites: "Must worship Moradin",
   };
   const byId = new Map(
-    [torag, countsAsMoradin, plainDeity, feat].map((item) => [
+    [torag, countsAsMoradin, plainDeity, campaignMoradin, feat].map((item) => [
       item.id.toLowerCase(),
       item,
     ]),
@@ -595,6 +600,16 @@ describe("counts-as on option details (D116)", () => {
     );
   });
 
+  it("adds nothing when what met it has the name the prerequisite gives", () => {
+    const markup = detail(feat, {
+      prerequisiteMetThrough: ["ID_CAMPAIGN_MORADIN"],
+    });
+    expect(markup).toContain(
+      "<strong>Prerequisite:</strong> Must worship Moradin</p>",
+    );
+    expect(markup).not.toContain("met through");
+  });
+
   it("adds nothing to a directly met prerequisite", () => {
     const markup = detail(feat, {});
     expect(markup).toContain(
@@ -608,5 +623,6 @@ describe("counts-as on option details (D116)", () => {
       '<p class="deity-counts-as"><strong>Counts as:</strong> Moradin</p>',
     );
     expect(detail(plainDeity, {})).not.toContain("Counts as");
+    expect(detail(campaignMoradin, {})).not.toContain("Counts as");
   });
 });
