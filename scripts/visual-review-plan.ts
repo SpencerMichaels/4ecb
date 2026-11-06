@@ -428,7 +428,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Free-ritual counter",
-            "The bold line under the druid's Free rituals text.",
+            'The druid\'s free-ritual block: "Free rituals (Druid)" and a line per allowance left, or no block once used; no rule sentence.',
           ],
         ],
       },
@@ -684,7 +684,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Free-ritual counter",
-            'e.g. "2 free 1st-level rituals and 2 free rituals of level 5 or lower left" (one of the 1st-level ones is used).',
+            'Under "Free rituals (Spellbook)": e.g. "2 free 1st-level rituals and 2 free rituals of level 5 or lower" (one of the 1st-level ones is used).',
           ],
           [
             "Known-list source line",
@@ -692,7 +692,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             '"Learn X free" dialog',
-            'Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion: New → Psion class at level 1 → Rituals → Learn rituals → Tenser\'s Floating Disk → Learn free. Each option reads "Psion · …" with what that allowance still covers.',
+            'Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion (the Psion 15 review character\'s Rituals tab). Each option reads "Psion · …" with what that allowance still covers.',
           ],
         ],
       },
@@ -1067,11 +1067,11 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "The Rituals tab",
-            "Tab after Shop with a book-marked icon; Free rituals text with the provider in parentheses, then Known (N) and Learn rituals.",
+            "Tab after Shop with a book-marked icon; no Free rituals rule sentence, then Known (N) and Learn rituals.",
           ],
           [
             "Free-ritual counter",
-            "The bold line under the invoker's Free rituals text (its one free ritual is used: Make Whole).",
+            "Its one free ritual is used (Make Whole), so the tab has no free-ritual block.",
           ],
           [
             "Groups",
@@ -1412,6 +1412,28 @@ const reviews: ReviewCharacter[] = [
           [
             "Psion: the Thought Warrior's shared implement rows",
             'The "Thought Warrior" creature card (or its "— Actions" card).',
+          ],
+        ],
+      },
+      {
+        label: "Rituals tab",
+        path: "tab=rituals",
+        items: [
+          [
+            "Free rituals block",
+            '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
+          ],
+          [
+            "Known table",
+            "Name, Level, Category, Key skill and Remove columns; three padded group rows with their empty states.",
+          ],
+          [
+            "Learn free dialog",
+            "Learn rituals → Tenser's Floating Disk → Learn free: two Psion options and None (a gift).",
+          ],
+          [
+            "Psion: Rituals tab",
+            "The free-rituals block, the Known table's columns and group rows, and the Learn free dialog for Tenser's Floating Disk, at 140% zoom and in both themes.",
           ],
         ],
       },
@@ -1978,10 +2000,6 @@ const general: GeneralSection[] = [
     steps:
       "Open #/characters → New; each check needs a fresh character, so no review character covers it.",
     items: [
-      [
-        "New psion: Learn free dialog",
-        "Psion at level 1, Rituals → Learn rituals, search Tenser, click Learn free.",
-      ],
       [
         "New hybrid: a pick that opens a step",
         "Hybrid Barbarian/Cleric, level 1 Feats: double-click Hybrid Talent; then Review on its issue; Toughness elsewhere.",

@@ -88,7 +88,9 @@ import {
 import {
   KNOWN_RECORD_GROUPS,
   knownRecordKind as knownRecordKindOf,
+  AllowanceChoiceDialog,
   knownRecordSourceLabel,
+  ritualAllowanceGroups,
   ritualAllowanceLabel,
   RitualsWorkspace,
 } from "../src/RitualsWorkspace";
@@ -1312,28 +1314,50 @@ function knownRows(c: ReviewCharacter) {
   }));
 }
 
-/** The counter lines under the provider's Free rituals text. */
+/** The provider's compact free-ritual block: a "Free rituals (Provider)"
+ *  heading and one line per allowance with some left, or no block for it
+ *  once nothing is left; never the class's rule sentence. */
 function ritualCounter(c: ReviewCharacter, provider: string): Check[] {
   const html = ritualsHtml(c);
   const statuses = ritualStatuses(c).filter(
     ({ allowance }) => key(allowance.provider) === key(provider),
   );
   const nameOf = (id: string) => c.context.byId.get(key(id))?.name ?? id;
-  const labels = statuses.map((status) => ritualAllowanceLabel(status, nameOf));
-  const counters = elementsWithClass(html, "rituals-allowance-count").map(
+  const group = ritualAllowanceGroups(statuses, nameOf)[0];
+  const heading = `${group?.heading ?? "Free rituals"} (${provider})`;
+  const headings = elementsWithClass(html, "rituals-allowance-heading").map(
     textOf,
   );
+  const lines = elementsWithClass(html, "rituals-allowance-count").map(textOf);
   return [
     truthy(
-      `${provider} has a free-ritual counter`,
-      labels.length > 0,
-      labels.join(" | ") || "none",
+      `${provider} has a free-ritual allowance`,
+      statuses.length > 0,
+      statuses
+        .map(({ remaining, total }) => `${remaining} of ${total} left`)
+        .join(" | ") || "none",
     ),
-    ...labels.map((label) =>
+    lacks(
+      'The class\'s rule sentence ("Free rituals: …") is not shown',
+      textOf(html),
+      "Free rituals:",
+    ),
+    group === undefined
+      ? truthy(
+          `Nothing is left, so no "${heading}" heading`,
+          !headings.includes(heading),
+          headings.join(" | ") || "none",
+        )
+      : truthy(
+          `The block's heading reads "${heading}"`,
+          headings.includes(heading),
+          headings.join(" | ") || "none",
+        ),
+    ...(group?.lines ?? []).map(({ label }) =>
       truthy(
-        `The Rituals tab shows "${label}" under the Free rituals text`,
-        counters.includes(label),
-        counters.join(" | "),
+        `A line under it reads "${label}"`,
+        lines.includes(label),
+        lines.join(" | ") || "none",
       ),
     ),
   ];
@@ -1416,9 +1440,9 @@ rule("wizard-gnome", "Print preview", "Tome of Binding reminder", (c) => {
 rule("wizard-gnome", "Rituals tab", "Free-ritual counter", (c) => [
   ...ritualCounter(c, "Spellbook"),
   contains(
-    "The Spellbook counter reads as the checklist says",
+    "The Spellbook line reads as the checklist says",
     textOf(ritualsHtml(c)),
-    "free 1st-level rituals and 2 free rituals of level 5 or lower left",
+    "free 1st-level rituals and 2 free rituals of level 5 or lower",
   ),
 ]);
 
@@ -1499,6 +1523,90 @@ rule("wizard-gnome", "Rituals tab", '"Learn X free" dialog', (c) => {
   ];
 });
 
+rule("psion-thought-warrior", "Rituals tab", "Free rituals block", (c) => {
+  // No rituals learned yet, so both of the psion's allowances are left.
+  const lines = elementsWithClass(
+    ritualsHtml(c),
+    "rituals-allowance-count",
+  ).map(textOf);
+  return [
+    ...ritualCounter(c, "Psion"),
+    equal("The block's lines, in order", lines, [
+      "1 free 1st-level ritual",
+      "1 free ritual: Sending or Tenser's Floating Disk",
+    ]),
+  ];
+});
+
+rule("psion-thought-warrior", "Rituals tab", "Known table", (c) => {
+  const html = ritualsHtml(c);
+  const table =
+    /<table class="inventory-table rituals-known-table">[\s\S]*?<\/table>/u.exec(
+      html,
+    )?.[0] ?? "";
+  const headers = /<thead>[\s\S]*?<\/thead>/u.exec(table)?.[0] ?? "";
+  return [
+    contains(
+      "Five columns: Name, Level, Category, Key skill, then the Remove column",
+      headers,
+      '<th>Name</th><th>Level</th><th>Category</th><th>Key skill</th><th><span class="visually-hidden">Actions</span></th>',
+    ),
+    ...KNOWN_RECORD_GROUPS.map(({ label, empty }) =>
+      contains(
+        `The "${label}" group row uses the padded section label, with its empty state`,
+        textOf(table),
+        `${label}0 ${empty}`,
+      ),
+    ),
+    equal(
+      "Every group row's label is a .table-section-label",
+      elementsWithClass(table, "table-section-label").length,
+      KNOWN_RECORD_GROUPS.length,
+    ),
+  ];
+});
+
+rule("psion-thought-warrior", "Rituals tab", "Learn free dialog", (c) => {
+  const disk = c.context.named("Tenser's Floating Disk", "Ritual");
+  const statuses = ritualStatuses(c);
+  const eligible = eligibleRitualAllowances(
+    statuses,
+    disk,
+    c.build.effectiveLevel,
+  );
+  const nameOf = (id: string) => c.context.byId.get(key(id))?.name ?? id;
+  const html = markup(
+    createElement(AllowanceChoiceDialog, {
+      name: disk.name,
+      allowances: eligible,
+      describe: (allowance) => {
+        const status = statuses.find(
+          (candidate) => key(candidate.allowance.key) === key(allowance.key),
+        );
+        return status === undefined
+          ? undefined
+          : ritualAllowanceLabel(status, nameOf);
+      },
+      onLearn: () => undefined,
+      onCancel: () => undefined,
+    }),
+  );
+  const options = elementsWithClass(html, "dialog-choice").map(textOf);
+  return [
+    contains(
+      'Titled "Learn Tenser\'s Floating Disk free"',
+      textOf(html),
+      "Learn Tenser's Floating Disk free",
+    ),
+    equal("Its options, each a radio with hanging text", options, [
+      "Psion · 1 free 1st-level ritual",
+      "Psion · 1 free ritual: Sending or Tenser's Floating Disk",
+      "None (a gift)",
+    ]),
+    inOrder("Cancel, then Learn free", textOf(html), ["Cancel", "Learn free"]),
+  ];
+});
+
 rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
   const source = readFileSync(
     resolve("apps/web/src/CharacterEditorPage.tsx"),
@@ -1510,22 +1618,23 @@ rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
   const text = textOf(html);
   const allowances = freeRitualAllowanceTexts(c.evaluation);
   const records = knownRows(c);
+  const headings = elementsWithClass(html, "rituals-allowance-heading").map(
+    textOf,
+  );
   return [
     truthy(
       "The Rituals tab button (book-marked icon) follows Shop",
       shop >= 0 && rituals > shop,
       `Shop at ${shop}, Rituals at ${rituals} in CharacterEditorPage.tsx`,
     ),
-    ...allowances.map(({ text: allowance, provider }) =>
-      contains(
-        `"Free rituals: …" with the provider (${provider}) in parentheses`,
-        text,
-        `Free rituals: ${allowance} (${provider})`,
-      ),
-    ),
     truthy("The invoker has Free rituals text", allowances.length > 0),
-    inOrder("Then Known (N) and Learn rituals", text, [
-      "Free rituals:",
+    // The block shows only what is left, never the rule sentence; the
+    // invoker's one free ritual is used, so there is no block.
+    ...allowances.map(({ text: allowance }) =>
+      lacks("The Free rituals text is not shown", text, allowance),
+    ),
+    equal("No free-ritual block (nothing left)", headings, []),
+    inOrder("Known (N), then Learn rituals", text, [
       `Known ${records.length}`,
       "Learn rituals",
     ]),
@@ -1534,10 +1643,10 @@ rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
 
 rule("invoker-drow", "Rituals tab", "Free-ritual counter", (c) => [
   ...ritualCounter(c, "Invoker"),
-  contains(
-    "Its one free ritual is used",
-    textOf(ritualsHtml(c)),
-    "All 1 free ritual used",
+  lacks(
+    "Its one free ritual is used, so the tab has no free-ritual block",
+    ritualsHtml(c),
+    'class="rituals-allowance"',
   ),
 ]);
 

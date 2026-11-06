@@ -111,7 +111,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'The druid-granted ritual\'s source line reads "Granted by Druid".',
   ),
   "piri|0|free-ritual counter": auto(
-    "The counter line under the druid's Free rituals text (its text).",
+    'The druid\'s free-ritual block: no rule sentence, and a "Free rituals (Druid)" heading with a line per allowance left (none once used).',
   ),
   "piri|1|printed reference pages": auto(
     'Granted ritual entries show "Granted by: Druid".',
@@ -171,7 +171,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "No class power choice at level 5 offers an Order Adept theme power.",
   ),
   "wizard-gnome|6|free-ritual counter": auto(
-    'The Spellbook counter text ("… free 1st-level rituals and … free rituals of level 5 or lower left").',
+    'The "Free rituals (Spellbook)" block\'s line ("… free 1st-level rituals and … free rituals of level 5 or lower"), with no rule sentence.',
   ),
   "wizard-gnome|6|known-list source line": auto(
     'Comprehend Language reads "Learned free at level 1 (Spellbook)".',
@@ -264,10 +264,10 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Drow invoker
   "invoker-drow|0|the rituals tab": auto(
-    "Rituals tab after Shop with the book-marked icon; Free rituals text with the provider in parentheses, then Known (N) and Learn rituals.",
+    "Rituals tab after Shop with the book-marked icon; no Free rituals rule sentence (its one free ritual is used, so no free-ritual block), then Known (N) and Learn rituals.",
   ),
   "invoker-drow|0|free-ritual counter": auto(
-    "The counter text under the invoker's Free rituals text (its one ritual used).",
+    "The invoker's one free ritual is used, so there is no free-ritual block.",
   ),
   "invoker-drow|0|groups": auto(
     "The three groups are always shown, empty ones with their empty-state text.",
@@ -530,6 +530,15 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The theme-power restriction's reason sentence.",
   ),
   // Added with the 2026-11-04 checklist compression.
+  "psion-thought-warrior|1|free rituals block": auto(
+    '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
+  ),
+  "psion-thought-warrior|1|known table": auto(
+    "The Known table's Name, Level, Category, Key skill and Remove columns, and three group rows on the padded section label with their empty states.",
+  ),
+  "psion-thought-warrior|1|learn free dialog": auto(
+    'Learn Tenser\'s Floating Disk free: "Psion · 1 free 1st-level ritual", "Psion · 1 free ritual: Sending or Tenser\'s Floating Disk", "None (a gift)", each a radio with its text beside it; Cancel, then Learn free.',
+  ),
   "psion-thought-warrior|0|shared implement table (d111)": auto(
     "Thought Warrior: the commands, then one uncaptioned table (no line naming the commands) with one row per implement (orb +1, staff +3, Unarmed), each printed once.",
   ),

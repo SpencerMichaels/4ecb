@@ -327,6 +327,25 @@ live site.
     Attack" line appears, the rows read as belonging to the next command, or
     a card overflows.
 
+- [ ] **Psion: Rituals tab.**
+  - **Where:** `edit?tab=rituals` at 140% zoom, in light and dark theme.
+    Then Learn rituals, search "Tenser", and click Tenser's Floating Disk's
+    gift (Learn free) button.
+  - **Expect:** at the top, a compact block: a bold "Free rituals" with a
+    grey "(Psion)", then two lines indented under it, "1 free 1st-level
+    ritual" and "1 free ritual: Sending or Tenser's Floating Disk". The
+    Known table's header row (Name, Level, Category, Key skill) has the same
+    padding as its cells, its navy group rows (Rituals, Alchemical
+    formulas, Martial practices) have their label and count inset from the
+    row's left edge, and each column's text stays in its own column. The
+    dialog is wide enough that each "Psion · …" option sits on one line
+    beside its radio; the part after "·" grey.
+  - **Wrong if:** the block reads like a paragraph or its lines don't sit
+    under the heading, a group label touches the row's edge, Category or
+    Key skill text runs into the next column or under the Remove button, a
+    dialog option's wrapped line starts under the radio (looking like a new
+    option or a heading), or grey text is unreadable in dark theme.
+
 ## Pass 10: Hu's sheet editing (`hu`)
 
 - [ ] **Hu: sheet Edit mode.**
@@ -518,14 +537,6 @@ Open `#/characters` with the review characters restored.
 
 Library → New; each entry needs a fresh character.
 
-- [ ] **New psion: Learn free dialog.**
-  - **Where:** pick the Psion class at level 1, then Rituals → Learn rituals,
-    search "Tenser", and click the gift (Learn free) button.
-  - **Expect:** a tidy dialog titled "Learn Tenser's Floating Disk free",
-    one radio button per allowance plus "None (a gift)", Cancel and Learn
-    free; the part of each option after "·" grey.
-  - **Wrong if:** the options crowd or wrap badly, or the grey detail is
-    unreadable in dark theme.
 - [ ] **New hybrid: a pick that opens a step.**
   - **Where:** a Hybrid Barbarian/Cleric at level 1, Feats, Feat item:
     double-click Hybrid Talent; before picking the feature, use the
