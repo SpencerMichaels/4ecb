@@ -945,6 +945,33 @@ button.inventory-icon-action:disabled {
   margin: 0;
 }
 
+/* The Known table's five columns: name, Level, Category, Key skill and
+   Remove. Its fixed layout (.inventory-table) takes every column's width
+   from the header row, so each is sized here: the inventory's widths are
+   for its own three columns, and the generic 1% width would let Category
+   and Key skill spill into the next column. Long values wrap in place. */
+.rituals-known-table thead th:nth-child(2) {
+  width: 3.5em;
+}
+
+.rituals-known-table thead th:nth-child(3),
+.rituals-known-table thead th:nth-child(4) {
+  width: 7.5em;
+}
+
+.rituals-known-table thead th:last-child {
+  width: 2rem;
+}
+
+.rituals-known-table :is(th, td):not(:first-child) {
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.rituals-known-table td:nth-child(2) {
+  text-align: center;
+}
+
 .rituals-empty-row td {
   color: var(--muted);
   font-style: italic;

@@ -45,6 +45,28 @@ describe("visual-review facts decided by CSS", () => {
     );
   });
 
+  it("sizes every Known-table column and pads its group labels", () => {
+    // Fixed layout takes widths from the header row: no column is left at
+    // the generic 1%, where text spills into the next column.
+    expect(declarations(".rituals-known-table thead th:nth-child(2)")).toBe(
+      "width: 3.5em;",
+    );
+    expect(
+      declarations(
+        ".rituals-known-table thead th:nth-child(3), .rituals-known-table thead th:nth-child(4)",
+      ),
+    ).toBe("width: 7.5em;");
+    expect(declarations(".rituals-known-table thead th:last-child")).toBe(
+      "width: 2rem;",
+    );
+    expect(
+      declarations(".rituals-known-table :is(th, td):not(:first-child)"),
+    ).toContain("white-space: normal");
+    expect(declarations(".table-section-label")).toContain(
+      "padding: 0.45rem 0.55rem",
+    );
+  });
+
   it("sets the Known table's empty groups in muted italics", () => {
     const empty = declarations(".rituals-empty-row td");
     expect(empty).toContain("font-style: italic");

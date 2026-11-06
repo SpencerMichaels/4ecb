@@ -441,7 +441,7 @@ export function RitualsWorkspace({
                         <tbody>
                           <tr className="inventory-category-row table-section-row">
                             <th colSpan={5} scope="rowgroup">
-                              <span className="inventory-category-label">
+                              <span className="table-section-label">
                                 <span>{label}</span>
                                 <small className="table-section-count">
                                   {group.length}

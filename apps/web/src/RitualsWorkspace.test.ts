@@ -202,7 +202,9 @@ describe("Rituals workspace", () => {
       "Alchemical formulas",
       "Martial practices",
     ])
-      expect(markup).toContain(`<span>${heading}</span>`);
+      expect(markup).toContain(
+        `<span class="table-section-label"><span>${heading}</span>`,
+      );
     expect(markup).toContain("No alchemical formulas known.");
     expect(markup).toContain("No martial practices known.");
     expect(markup).toContain("Granted by Synthetic Druid");
