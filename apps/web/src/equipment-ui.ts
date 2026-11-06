@@ -678,6 +678,39 @@ export function shopBrowseCategory(
   return category;
 }
 
+const offeredEntities = new WeakMap<
+  readonly ContentEntity[],
+  WeakMap<readonly string[], readonly ContentEntity[]>
+>();
+
+/**
+ * The records a campaign lets a character acquire (D116): `entities` less
+ * the pack's `campaign.restrictedIds` (matched case-insensitively, as the
+ * engine does). Cached by content and restriction-list identity, so the
+ * Shop's catalog and item-choice caches keyed on the result stay warm; no
+ * restrictions returns `entities` itself.
+ */
+export function campaignOfferedEntities(
+  entities: readonly ContentEntity[],
+  restrictedIds: readonly string[] | undefined,
+): readonly ContentEntity[] {
+  if (restrictedIds === undefined || restrictedIds.length === 0)
+    return entities;
+  let byRestrictions = offeredEntities.get(entities);
+  if (byRestrictions === undefined) {
+    byRestrictions = new WeakMap();
+    offeredEntities.set(entities, byRestrictions);
+  }
+  const cached = byRestrictions.get(restrictedIds);
+  if (cached !== undefined) return cached;
+  const restricted = new Set(restrictedIds.map((id) => id.toLocaleLowerCase()));
+  const offered = entities.filter(
+    (entity) => !restricted.has(entity.id.toLocaleLowerCase()),
+  );
+  byRestrictions.set(restrictedIds, offered);
+  return offered;
+}
+
 const shopCatalogs = new WeakMap<
   readonly ContentEntity[],
   Map<readonly { readonly id: ShopBrowseId }[], readonly ContentEntity[]>

@@ -1481,6 +1481,7 @@ export function candidateReason(reasons: readonly string[]): string {
     prerequisite: "Does not meet prerequisites",
     "prerequisite-unverified": "Prerequisites could not be verified",
     "source-unentitled": "Not included in this character's allowed sources",
+    "campaign-restricted": "Not used in this campaign",
     self: "A feature cannot select itself",
     duplicate: "Already selected in another slot",
     owned: "Already owned",

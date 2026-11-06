@@ -197,6 +197,10 @@ describe("campaign restrictions (D116)", () => {
       }),
     ]);
     expect(restricted.legal).toBe(false);
+    // The warning speaks for the pick: no second "not eligible" error.
+    expect(restricted.diagnostics.map(({ code }) => code)).not.toContain(
+      "choice.ineligible",
+    );
     // The pick stays owned: the issue is the player's to resolve.
     expect(restricted.occurrences.map(({ id }) => id)).toContain(
       "selected-deity",

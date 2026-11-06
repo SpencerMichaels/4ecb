@@ -40,6 +40,7 @@ import {
   shopAcquireBlockedReason,
   shopAlsoImplementEnchantment,
   shopBrowseCategory,
+  campaignOfferedEntities,
   shopCatalog,
   SHOP_BROWSE_CATEGORIES,
   shopDisplayName,
@@ -1917,6 +1918,21 @@ describe("shop catalog caching", () => {
     ]);
     const warm = scans();
     expect(shopCatalog(content, SHOP_BROWSE_CATEGORIES)).toBe(catalog);
+    expect(scans()).toBe(warm);
+  });
+
+  it("leaves a campaign's restricted records out, once per content and restrictions", () => {
+    // D116: matched case-insensitively, like the engine.
+    const restricted = ["sword", "FLAMING_2"];
+    const { content, scans } = scanCountingContent(records);
+    expect(campaignOfferedEntities(content, undefined)).toBe(content);
+    expect(campaignOfferedEntities(content, [])).toBe(content);
+    const offered = campaignOfferedEntities(content, restricted);
+    expect(
+      shopCatalog(offered, SHOP_BROWSE_CATEGORIES).map(({ id }) => id),
+    ).toEqual(["STAFF", "FLAMING_1"]);
+    const warm = scans();
+    expect(campaignOfferedEntities(content, restricted)).toBe(offered);
     expect(scans()).toBe(warm);
   });
 

@@ -458,6 +458,173 @@ describe("builder issue groups", () => {
     });
   });
 
+  it("lists a pick the campaign doesn't use as a house rule on its choice", () => {
+    const deityChoice = (reasons: string[]): EvaluatedChoice => ({
+      id: "deity-choice",
+      level: 1,
+      providerOccurrenceId: "root",
+      ruleOrdinal: 0,
+      index: 0,
+      type: "Deity",
+      optional: true,
+      selectedOccurrenceId: "selected-deity",
+      candidates: [
+        {
+          definitionId: "ID_DEITY_STOCK",
+          eligible: false,
+          sourceEntitled: false,
+          rulesLegal: !reasons.includes("prerequisite"),
+          activeDefinition: true,
+          activeOccurrenceIds: ["selected-deity"],
+          providerOccurrenceIds: ["root"],
+          reasons,
+        },
+      ],
+    });
+    const restricted = (reasons: string[]) =>
+      builderIssueGroups({
+        ...common,
+        byId: new Map([
+          [
+            "id_deity_stock",
+            { id: "ID_DEITY_STOCK", name: "Stock Deity", type: "Deity" },
+          ],
+        ]) as unknown as ReadonlyMap<string, ContentEntity>,
+        evaluation: evaluation({
+          legal: false,
+          occurrences: [
+            {
+              id: "selected-deity",
+              definitionId: "ID_DEITY_STOCK",
+              acquiredLevel: 1,
+              parentId: "root",
+              kind: "choice",
+            },
+          ],
+          choices: [deityChoice(reasons)],
+          diagnostics: [
+            {
+              severity: "warning",
+              code: "occurrence.campaign-restricted",
+              message: "Stock Deity is not used in this campaign.",
+              occurrenceId: "selected-deity",
+            },
+          ],
+        }),
+      });
+
+    const result = restricted(["campaign-restricted"]);
+    expect(result.warnings).toEqual([]);
+    expect(result.errors).toEqual([]);
+    expect(result.houseRules).toEqual([
+      expect.objectContaining({
+        key: "house-rule:selected-deity",
+        kind: "house-rule",
+        detail: "Stock Deity is not used in this campaign.",
+        target: { kind: "choice", choiceId: "deity-choice" },
+      }),
+    ]);
+    expect(result.houseRules[0]?.title).toMatch(/^Stock Deity — level 1 /);
+
+    // A rule the pick also breaks stays an error, without the campaign reason.
+    const alsoIllegal = restricted(["prerequisite", "campaign-restricted"]);
+    expect(alsoIllegal.houseRules).toHaveLength(1);
+    expect(alsoIllegal.errors.map(({ detail }) => detail)).toEqual([
+      "This selection is not eligible: Does not meet prerequisites.",
+    ]);
+  });
+
+  it("lists a granted occurrence the campaign doesn't use by name", () => {
+    const result = builderIssueGroups({
+      ...common,
+      byId: new Map([
+        [
+          "id_granted",
+          { id: "ID_GRANTED", name: "Granted Feature", type: "Class Feature" },
+        ],
+      ]) as unknown as ReadonlyMap<string, ContentEntity>,
+      evaluation: evaluation({
+        legal: false,
+        occurrences: [
+          {
+            id: "granted",
+            definitionId: "ID_GRANTED",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        diagnostics: [
+          {
+            severity: "warning",
+            code: "occurrence.campaign-restricted",
+            message: "Granted Feature is not used in this campaign.",
+            occurrenceId: "granted",
+          },
+        ],
+      }),
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.houseRules).toEqual([
+      expect.objectContaining({
+        key: "house-rule:granted",
+        title: "Granted Feature",
+      }),
+    ]);
+    expect(result.houseRules[0]?.target).toBeUndefined();
+  });
+
+  it("lists a held item the campaign doesn't use as a house rule on its holding", () => {
+    const sword: BuildInventoryEntry = {
+      id: "legacy:loot:7",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        {
+          definitionId: "ID_ITEM_STOCK",
+          name: "Synthetic Stock Blade",
+          type: "Weapon",
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    const result = builderIssueGroups({
+      ...common,
+      build: {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [],
+        inventory: [sword],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      },
+      evaluation: evaluation({
+        legal: false,
+        diagnostics: [
+          {
+            severity: "warning",
+            code: "item.campaign-restricted",
+            message: "Synthetic Stock Blade is not used in this campaign.",
+            occurrenceId: "legacy:loot:7:definition:0",
+          },
+        ],
+      }),
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.houseRules).toEqual([
+      expect.objectContaining({
+        kind: "house-rule",
+        title: "Synthetic Stock Blade",
+        detail: "Synthetic Stock Blade is not used in this campaign.",
+        target: { kind: "inventory", entryId: "legacy:loot:7" },
+      }),
+    ]);
+  });
+
   it("separates house rules from evaluation warnings and errors", () => {
     const result = builderIssueGroups({
       ...common,

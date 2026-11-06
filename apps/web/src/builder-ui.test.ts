@@ -1998,6 +1998,26 @@ describe("builder planning UI", () => {
     );
   });
 
+  it("treats campaign-restricted options like source-unentitled ones", () => {
+    // D116 owner decision: shown only under Show all, never selectable.
+    const candidate = {
+      definitionId: "ID_DEITY_STOCK",
+      eligible: false,
+      sourceEntitled: false,
+      rulesLegal: true,
+      activeDefinition: false,
+      activeOccurrenceIds: [],
+      providerOccurrenceIds: [],
+      reasons: ["campaign-restricted"],
+    };
+    expect(isCandidateVisible(candidate, false)).toBe(false);
+    expect(isCandidateVisible(candidate, true)).toBe(true);
+    expect(isCandidateSelectable(candidate)).toBe(false);
+    expect(candidateReason(candidate.reasons)).toBe(
+      "Not used in this campaign",
+    );
+  });
+
   it("checks replacement legality only against the selected target", () => {
     const choice = {
       id: "replacement",

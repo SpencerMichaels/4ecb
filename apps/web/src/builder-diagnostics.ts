@@ -589,6 +589,63 @@ export function builderIssueGroups({
       .filter((occurrence) => occurrence.legality === "houserule")
       .map((occurrence) => occurrence.id),
   );
+  // A pick or holding the character's campaign doesn't use (D116) is a house
+  // rule, as legacy listed it. These come first so a pick also saved as a
+  // house rule keeps this more specific issue under the shared key.
+  const campaignRestrictedOccurrenceIds = new Set<string>();
+  const campaignHouseRules: BuilderIssue[] = evaluation.diagnostics.flatMap(
+    (diagnostic): BuilderIssue[] => {
+      if (diagnostic.occurrenceId === undefined) return [];
+      const effect =
+        "It remains on the character and is preserved on export, but the character is marked as using house rules.";
+      if (diagnostic.code === "occurrence.campaign-restricted") {
+        campaignRestrictedOccurrenceIds.add(diagnostic.occurrenceId);
+        const occurrence = evaluation.occurrences.find(
+          (candidate) => candidate.id === diagnostic.occurrenceId,
+        );
+        const choice = evaluation.choices.find(
+          (candidate) =>
+            candidate.selectedOccurrenceId === diagnostic.occurrenceId,
+        );
+        return [
+          {
+            key: `house-rule:${diagnostic.occurrenceId}`,
+            kind: "house-rule",
+            title:
+              choice === undefined
+                ? (occurrenceName(occurrence) ?? "House rule")
+                : label(choice),
+            detail: diagnostic.message,
+            effect,
+            ...(choice === undefined
+              ? occurrenceTarget(diagnostic.occurrenceId)
+              : { target: choiceTarget(choice) }),
+          },
+        ];
+      }
+      if (diagnostic.code === "item.campaign-restricted") {
+        const entry = inventoryEntryOf(
+          diagnostic.occurrenceId,
+          evaluation,
+          build,
+        );
+        return [
+          {
+            key: `house-rule:item-campaign:${diagnostic.occurrenceId}`,
+            kind: "house-rule",
+            title:
+              entry === undefined
+                ? "Item not used in this campaign"
+                : inventoryDisplayName(entry, byId),
+            detail: diagnostic.message,
+            effect,
+            ...occurrenceTarget(diagnostic.occurrenceId),
+          },
+        ];
+      }
+      return [];
+    },
+  );
   const houseRules: BuilderIssue[] = evaluation.occurrences.flatMap(
     (occurrence) => {
       if (!houseRuleOccurrenceIds.has(occurrence.id)) return [];
@@ -684,6 +741,8 @@ export function builderIssueGroups({
       diagnostic.code === "choice.required" ||
       diagnostic.code === "occurrence.houserule" ||
       diagnostic.code === "item.requirement-unmet" ||
+      diagnostic.code === "occurrence.campaign-restricted" ||
+      diagnostic.code === "item.campaign-restricted" ||
       (diagnostic.occurrenceId !== undefined &&
         houseRuleOccurrenceIds.has(diagnostic.occurrenceId) &&
         ignoredHouseRuleDiagnostics.has(diagnostic.code)) ||
@@ -792,9 +851,15 @@ export function builderIssueGroups({
         return [];
       const candidate = selectedCandidateDecision(choice, evaluation);
       if (candidate === undefined || candidate.eligible) return [];
+      // The campaign house-rule issue speaks for a restricted pick.
+      const reasons = campaignRestrictedOccurrenceIds.has(
+        choice.selectedOccurrenceId,
+      )
+        ? candidate.reasons.filter((reason) => reason !== "campaign-restricted")
+        : candidate.reasons;
+      if (reasons.length === 0) return [];
       const unverified =
-        candidate.reasons.length === 1 &&
-        candidate.reasons[0] === "prerequisite-unverified";
+        reasons.length === 1 && reasons[0] === "prerequisite-unverified";
       if (
         unverified &&
         diagnosedUnverifiedOccurrenceIds.has(choice.selectedOccurrenceId)
@@ -802,7 +867,7 @@ export function builderIssueGroups({
         return [];
       // A benefit that adds a class skill the class already has does nothing;
       // offered only alongside illegal options, it counts as a house rule.
-      if (candidate.reasons.every((reason) => reason === "already-class-skill"))
+      if (reasons.every((reason) => reason === "already-class-skill"))
         return [
           {
             key: `selected-redundant:${choice.id}:${choice.selectedOccurrenceId}`,
@@ -820,7 +885,7 @@ export function builderIssueGroups({
           key: `selected-ineligible:${choice.id}:${choice.selectedOccurrenceId}`,
           kind: unverified ? ("warning" as const) : ("error" as const),
           title: label(choice),
-          detail: `This selection is not eligible: ${candidateReason(candidate.reasons)}.`,
+          detail: `This selection is not eligible: ${candidateReason(reasons)}.`,
           effect: unverified
             ? "The selection remains active, but its rules legality cannot be confirmed automatically."
             : "The selection remains present, but the character is not rules-legal until its eligibility is resolved or the selection is changed.",
@@ -841,6 +906,7 @@ export function builderIssueGroups({
       ...selectedIneligibleIssues.filter((issue) => issue.kind === "error"),
     ]),
     houseRules: deduplicate([
+      ...campaignHouseRules,
       ...houseRules,
       ...selectedIneligibleIssues.filter(
         (issue) => issue.kind === "house-rule",

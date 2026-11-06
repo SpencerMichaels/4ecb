@@ -2,7 +2,9 @@
 
 import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentEntity } from "@4ecb/content-domain";
+import type { ContentPack } from "@4ecb/content-pack";
 import {
+  type EvaluationInput,
   evaluateCharacter,
   fillRitualChoicesFromKnown,
   previewProfileMigration,
@@ -22,11 +24,29 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 const worker = self as DedicatedWorkerGlobalScope;
 let entities: readonly ContentEntity[] | undefined;
 let entitiesReady: Promise<readonly ContentEntity[]> | undefined;
+// The loaded pack's campaign restrictions (D116), set with `entities`.
+let restrictedIds: readonly string[] | undefined;
 let initializedProfile:
   { readonly packId: string; readonly contentDigest: string } | undefined;
 
 function respond(message: RulesWorkerResponse): void {
   worker.postMessage(message);
+}
+
+/** `input` evaluated under a pack's campaign restrictions (D116), if any.
+ *  The main-thread evaluation cache keys on the pack ID and digest, and the
+ *  digest covers the pack's `campaign`, so it needs no key of its own. */
+function restricted(
+  input: EvaluationInput,
+  ids: readonly string[] | undefined = restrictedIds,
+): EvaluationInput {
+  return ids === undefined ? input : { ...input, restrictedDefinitionIds: ids };
+}
+
+function packRestrictedIds(
+  pack: Pick<ContentPack, "campaign">,
+): readonly string[] | undefined {
+  return pack.campaign?.restrictedIds;
 }
 
 async function evaluationEntities(): Promise<readonly ContentEntity[]> {
@@ -50,6 +70,7 @@ async function evaluationEntities(): Promise<readonly ContentEntity[]> {
           `Installed content pack ${profile.packId} no longer matches the bound revision`,
         );
       entities = pack.entities;
+      restrictedIds = packRestrictedIds(pack);
       respond({
         type: "content-progress",
         completed: 1,
@@ -97,6 +118,7 @@ async function handle(
       };
       entities = undefined;
       entitiesReady = undefined;
+      restrictedIds = undefined;
       respond({
         type: "initialized",
         requestId: request.requestId,
@@ -113,15 +135,19 @@ async function handle(
       const started = performance.now();
       const evaluationContent = await evaluationEntities();
       const evaluationStarted = performance.now();
-      const result = evaluateCharacter(request.input, evaluationContent, {
-        onProgress: ({ completed, total }) =>
-          respond({
-            type: "evaluation-progress",
-            requestId: request.requestId,
-            completed,
-            total,
-          }),
-      });
+      const result = evaluateCharacter(
+        restricted(request.input),
+        evaluationContent,
+        {
+          onProgress: ({ completed, total }) =>
+            respond({
+              type: "evaluation-progress",
+              requestId: request.requestId,
+              completed,
+              total,
+            }),
+        },
+      );
       const completed = performance.now();
       respond({
         type: "evaluation",
@@ -136,7 +162,7 @@ async function handle(
     case "library-summary": {
       const content = await evaluationEntities();
       const evaluation = evaluateCharacter(
-        libraryEvaluationInput(request.build, content),
+        restricted(libraryEvaluationInput(request.build, content)),
         content,
       );
       respond({
@@ -151,6 +177,7 @@ async function handle(
       const { build, fills } = fillRitualChoicesFromKnown(
         request.build,
         content,
+        restrictedIds,
       );
       respond({
         type: "ritual-choices-filled",
@@ -202,21 +229,27 @@ async function handle(
             sumTotal,
           );
         };
-      const [sourceEntities, target] = await Promise.all([
+      // Each side evaluates under its own pack's campaign restrictions.
+      const [source, target] = await Promise.all([
         reuseSource
-          ? evaluationEntities()
+          ? evaluationEntities().then((loaded) => ({
+              entities: loaded,
+              restrictedIds,
+            }))
           : request.sourcePackId === undefined
             ? Promise.resolve(undefined)
             : repository
                 .get(request.sourcePackId, {
                   onProgress: decodeProgress("source"),
                 })
-                .then((source) =>
-                  source !== undefined &&
+                .then((pack) =>
+                  pack !== undefined &&
                   (request.sourceContentDigest === undefined ||
-                    source.manifest.contentDigest ===
-                      request.sourceContentDigest)
-                    ? source.entities
+                    pack.manifest.contentDigest === request.sourceContentDigest)
+                    ? {
+                        entities: pack.entities,
+                        restrictedIds: packRestrictedIds(pack),
+                      }
                     : undefined,
                 ),
         repository.get(request.targetPackId, {
@@ -228,14 +261,22 @@ async function handle(
           `Installed target content pack ${request.targetPackId} was not found`,
         );
       const started = performance.now();
-      const sourceAvailable = sourceEntities !== undefined;
+      const sourceAvailable = source !== undefined;
+      const sourceRestrictedIds = source?.restrictedIds;
+      const targetRestrictedIds = packRestrictedIds(target);
       const result = previewProfileMigration(
         request.build,
-        sourceEntities,
+        source?.entities,
         target.entities,
         {
           onProgress: ({ evaluation, completed, total }) =>
             progress(evaluation, sourceAvailable, completed, total),
+          ...(sourceRestrictedIds === undefined
+            ? {}
+            : { sourceRestrictedDefinitionIds: sourceRestrictedIds }),
+          ...(targetRestrictedIds === undefined
+            ? {}
+            : { targetRestrictedDefinitionIds: targetRestrictedIds }),
         },
       );
       respond({

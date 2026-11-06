@@ -93,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v117-2026-11-06-campaign-restrictions";
+  "evaluated-character-v118-2026-11-06-campaign-pick-not-ineligible";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -4421,6 +4421,8 @@ function evaluateCharacterInternal(
           reason !== "prerequisite-unverified" &&
           // A redundant pick is harmless, not an error.
           reason !== "already-class-skill" &&
+          // occurrence.campaign-restricted speaks for a restricted pick.
+          reason !== "campaign-restricted" &&
           (reason !== "category" || !exactOwnedPrerequisite),
       )
     )

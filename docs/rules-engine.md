@@ -39,7 +39,8 @@ them: "must worship Moradin" is met through a campaign deity's CountsAsDeity
 while Moradin itself is restricted. Items are restricted the same way (owner,
 2026-11-06): a `select` of an item type marks a restricted item like any
 candidate. An owned restricted occurrence stays active and gets the warning
-`occurrence.campaign-restricted`; a held holding (equipped or not) whose
+`occurrence.campaign-restricted` (a restricted pick gets no
+`choice.ineligible` error besides: the warning speaks for it); a held holding (equipped or not) whose
 item or enchantment is restricted gets `item.campaign-restricted` instead,
 targeted at the holding's `<entry>:definition:<index>` occurrence ID like
 `item.requirement-unmet`. Either makes `legal` false. "Show all" lists in
@@ -48,7 +49,13 @@ the builder show restricted options but they stay unselectable
 (and their cache key) like `sourceEntitlements`;
 `previewProfileMigration` takes `sourceRestrictedDefinitionIds` and
 `targetRestrictedDefinitionIds` so each side evaluates under its own
-campaign, and the target's also reach `evaluateRitualChoiceFills`.
+campaign, and the target's also reach `evaluateRitualChoiceFills`
+(`fillRitualChoicesFromKnown` takes them as an optional third argument).
+The web's rules worker supplies the IDs from the loaded pack's
+`campaign.restrictedIds` for every evaluation, library summary, ritual fill
+and each preview side (from that side's own pack); the main-thread
+evaluation cache keys on pack ID and digest, which covers the pack's
+`campaign`.
 
 ## Recovered rule language
 

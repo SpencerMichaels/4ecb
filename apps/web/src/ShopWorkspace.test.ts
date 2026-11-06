@@ -411,6 +411,30 @@ describe("Shop workspace", () => {
     expect(markup).not.toContain("Acquire");
   });
 
+  it("doesn't offer an item the character's campaign restricts", () => {
+    // D116: the Shop has no "Show all", so a restricted item isn't listed.
+    const markup = (restrictedIds?: readonly string[]) =>
+      renderToStaticMarkup(
+        createElement(ShopWorkspace, {
+          browse: "all",
+          characterLevel: 1,
+          entities: [potion],
+          inventory: [],
+          ownedDefinitions: [],
+          walletCopper: 100_000,
+          onInspect: vi.fn(),
+          onAcquire: vi.fn(),
+          onBrowseChange: vi.fn(),
+          ...(restrictedIds === undefined ? {} : { restrictedIds }),
+        }),
+      );
+    expect(markup()).toContain('aria-label="Buy Public Potion"');
+    const restricted = markup(["public_potion"]);
+    expect(restricted).not.toContain("Public Potion");
+    // The controls stay; only the listing is empty.
+    expect(restricted).toContain("All items");
+  });
+
   it("treats owned quantity-bearing items as holdings rather than known records", () => {
     const markup = renderToStaticMarkup(
       createElement(ShopWorkspace, {

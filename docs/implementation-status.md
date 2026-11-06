@@ -1,5 +1,35 @@
 # Implementation status
 
+## Campaign restrictions in the builder and Shop (2026-11-06)
+
+D116 step 6. `rules.worker.ts` passes the loaded pack's
+`campaign.restrictedIds` as `restrictedDefinitionIds` to evaluate,
+library-summary and fill-ritual-choices, and each migration-preview side
+its own pack's (`source/targetRestrictedDefinitionIds`); the main-thread
+cache key (pack ID + digest) already covers it. `builder-ui.ts` labels
+reason `campaign-restricted` "Not used in this campaign"; such candidates
+are hidden unless Show all and never selectable (`sourceEntitled: false`).
+`builder-diagnostics.ts` raises `occurrence.campaign-restricted` as a
+house-rule issue on the choice (else the occurrence's holding/no target)
+under key `house-rule:<occurrence>` (so a pick also saved as a house rule
+lists once), and `item.campaign-restricted` as a house-rule issue on the
+holding, titled with its display name; neither is a generic warning, and
+`selectedIneligibleIssues` drops the campaign reason (an error only when
+another reason remains). Engine fix: a restricted pick no longer also gets
+`choice.ineligible` (cache v118). The Shop (no Show all) lists no
+restricted record, for purchase or as a purchase's item choice:
+`campaignOfferedEntities(entities, restrictedIds)` in `equipment-ui.ts`,
+cached by content and restriction-list identity, feeds `shopCatalog` and the
+acquisition dialog's item-choice pages; the editor keeps the bound pack's
+restrictions beside its entities and passes them through
+`EquipmentWorkspace`. Not covered: the Inventory tab's right-click
+`ItemChoiceDialog` for an owned item's choice still lists content-wide
+candidates. Nothing creates campaign characters yet (steps 7–9).
+Verification: `rules.worker.campaign.test.ts`, `builder-ui.test.ts`,
+`builder-diagnostics.test.ts`, `equipment-ui.test.ts`,
+`ShopWorkspace.test.ts`, `campaign-restrictions.test.ts`; `pnpm test`,
+`pnpm typecheck`.
+
 ## Campaign membership, storage and backups (2026-11-06)
 
 D116 step 5. character-domain: `CharacterProfileBinding.campaign?:

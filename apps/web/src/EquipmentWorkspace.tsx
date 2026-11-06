@@ -1005,6 +1005,7 @@ export function CharacterWallet({
 export function EquipmentWorkspace({
   build,
   entities,
+  restrictedIds,
   byId,
   wallet,
   activeDefinitionIds,
@@ -1036,6 +1037,9 @@ export function EquipmentWorkspace({
   };
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
+  /** The character's pack's campaign restrictions (D116), which the Shop
+   *  doesn't offer. */
+  readonly restrictedIds?: readonly string[] | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
@@ -2047,6 +2051,7 @@ export function EquipmentWorkspace({
               )}
               characterLevel={build.effectiveLevel}
               entities={entities}
+              {...(restrictedIds === undefined ? {} : { restrictedIds })}
               inventory={inventory}
               ownedDefinitions={ownedDefinitions}
               walletCopper={carriedCopper + storedCopper}

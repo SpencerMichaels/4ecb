@@ -10,6 +10,7 @@ import { EXCEPTION_IDS, itemChoiceSlots } from "@4ecb/rules-engine";
 import { contentSpecificValue } from "./builder-ui";
 import { itemKindLabel } from "./EntityCard";
 import {
+  campaignOfferedEntities,
   compatibleBaseItems,
   lootPriceCopper,
   formatCopperPrice,
@@ -235,6 +236,9 @@ interface ShopWorkspaceProps {
   /** Percent of market price the character pays for a ritual
    * (`ritualCostPercent` of its evaluated stats); 100 by default. */
   readonly ritualCostPercent?: number;
+  /** The character's pack's `campaign.restrictedIds` (D116): never offered,
+   *  for purchase or as an item's choice. */
+  readonly restrictedIds?: readonly string[];
 }
 
 const PAGE_SIZE = 200;
@@ -363,6 +367,7 @@ export function ShopWorkspace({
   knownDefinitionIds = NO_KNOWN_IDS,
   onLearn,
   ritualCostPercent = 100,
+  restrictedIds,
 }: ShopWorkspaceProps) {
   const priceOf = (entity: ContentEntity) =>
     lootPriceCopper(entity, ritualCostPercent);
@@ -442,9 +447,12 @@ export function ShopWorkspace({
     tier,
   ]);
 
+  // What the character's campaign lets it acquire (D116). The Shop has no
+  // "Show all", so restricted records are simply not listed.
+  const offered = campaignOfferedEntities(entities, restrictedIds);
   const catalog = useMemo(
-    () => shopCatalog(entities, categories),
-    [categories, entities],
+    () => shopCatalog(offered, categories),
+    [categories, offered],
   );
   const byId = useMemo(
     () =>
@@ -698,7 +706,7 @@ export function ShopWorkspace({
   const itemChoicePageInfos = acquisition
     ? itemChoicePages(
         acquisition.entity,
-        entities,
+        offered,
         characterLevel,
         itemChoiceSelections,
       )
@@ -735,7 +743,7 @@ export function ShopWorkspace({
       ? []
       : resolveItemChoiceOccurrences(
           acquisition.entity,
-          entities,
+          offered,
           characterLevel,
           itemChoiceSelections,
         );

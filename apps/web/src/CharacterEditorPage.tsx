@@ -321,6 +321,11 @@ export function CharacterEditorPage({
   const [reviewingContentUpdate, setReviewingContentUpdate] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [entities, setEntities] = useState<readonly ContentEntity[]>([]);
+  // The bound pack's campaign restrictions (D116); the rules worker applies
+  // them to evaluation, the Shop to what it offers.
+  const [restrictedIds, setRestrictedIds] = useState<
+    readonly string[] | undefined
+  >();
   const [boundProfileResolution, setBoundProfileResolution] =
     useState<BoundProfileResolution>("pending");
   const [, setRevision] = useState(0);
@@ -459,6 +464,7 @@ export function CharacterEditorPage({
     const startedAt = performance.now();
     setCharacter(undefined);
     setEntities([]);
+    setRestrictedIds(undefined);
     setBoundProfileResolution("pending");
     setLoadError(undefined);
     setInitialLoadSettled(false);
@@ -529,7 +535,10 @@ export function CharacterEditorPage({
           loaded.profileBinding,
           pack?.manifest.contentDigest,
         );
-        if (resolution === "available") setEntities(pack?.entities ?? []);
+        if (resolution === "available") {
+          setEntities(pack?.entities ?? []);
+          setRestrictedIds(pack?.campaign?.restrictedIds);
+        }
         setBoundProfileResolution(resolution);
       })
       .catch((reason: unknown) => {
@@ -2973,6 +2982,7 @@ export function CharacterEditorPage({
                       : { focusRequest: inventoryFocus })}
                     build={build}
                     entities={entities}
+                    restrictedIds={restrictedIds}
                     byId={byId}
                     activeDefinitionIds={
                       currentEvaluation?.activeDefinitionIds ?? []

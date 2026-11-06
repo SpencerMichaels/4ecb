@@ -246,11 +246,17 @@ export function evaluateRitualChoiceFills(
 export function fillRitualChoicesFromKnown(
   build: CharacterBuild,
   entities: readonly ContentEntity[],
+  restrictedDefinitionIds?: readonly string[],
 ): {
   readonly build: CharacterBuild;
   readonly fills: readonly RitualChoiceFill[];
 } {
-  const { fills, command } = evaluateRitualChoiceFills(build, entities);
+  const { fills, command } = evaluateRitualChoiceFills(
+    build,
+    entities,
+    undefined,
+    restrictedDefinitionIds,
+  );
   return command === undefined
     ? { build, fills }
     : { build: applyCharacterCommand(build, command), fills };
