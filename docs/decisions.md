@@ -2358,10 +2358,11 @@ leaves focus where the click landed. Esc inside a dialog opened from the
 sidebar (the portrait editor) stays with that dialog. Wide windows keep the
 always-open docked sidebar with no strip, and widening the window docks it
 again, closed. Each builder tab now puts its detail pane beside its table by
-its own width (a `builder-tab` container query at 43rem: a 22.5rem table,
-the 19.45rem card and the 1rem gap), not the window's, so the drawer's
-extra width keeps tabs side by side down to about a 46rem window while
-docked layouts stay as they were.
+its own width (a `builder-tab` container query at 42rem: a 21.5rem table,
+the 19.45rem card and the 1rem gap, just under what the docked layout
+leaves at its narrowest window), not the window's, so the drawer's extra
+width keeps tabs side by side down to about a 45rem window while docked
+layouts stay as they were.
 
 **Icon-only tabs (2026-11-05).** The owner decided the builder's tab bar
 never scrolls: when the tab labels don't fit beside the status buttons, the

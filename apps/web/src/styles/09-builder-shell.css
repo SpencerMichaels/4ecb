@@ -964,7 +964,7 @@
    Only while the detail pane sits beside the level page (the builder-tab
    container's split, 14-responsive.css). */
 @media (min-height: 30rem) {
-  @container builder-tab (min-width: 43.01rem) {
+  @container builder-tab (min-width: 42.01rem) {
     .level-choice-tab-panel .selection-table-scroll {
       height: var(--fitted-table-height, max(24rem, calc(100dvh - 30rem)));
       max-height: none;
@@ -983,7 +983,7 @@
    content shows above the title or below the type bar.
    Where the two meet (a card scrolling in from below), the title band
    stays on top of the type bar. */
-@container builder-tab (min-width: 43.01rem) {
+@container builder-tab (min-width: 42.01rem) {
   .shared-choice-detail
     :is(.print-reference-card.is-panel, .reference-entity-card)
     > :is(header, .reference-card-title) {

@@ -287,17 +287,18 @@
 /* Each builder tab puts its detail pane beside its table or list only when
    the tab itself has room, so the switch follows the sidebar docking or
    collapsing to its drawer as well as the window. The threshold is a
-   22.5rem table, the 19.45rem detail card (--panel-card-width) and the
-   1rem gap; a wide-detail tab's left column is then 15.75rem, the width
-   the docked layout already gives it at its narrowest (63.01rem) window,
-   so docked layouts are unchanged. Container queries can't read custom
-   properties, so 43rem is written out here and where the split is used
+   21.5rem table, the 19.45rem detail card (--panel-card-width) and the
+   1rem gap, just under the 42.9rem the docked layout leaves at its
+   narrowest (a 63.01rem window with a page scrollbar), so docked layouts
+   are unchanged; a wide-detail tab's left column is then 14.75rem.
+   Container queries can't read custom properties, so 42rem is written
+   out here and where the split is used
    (09-builder-shell.css; use-fitted-table-height.ts reads --builder-split). */
 .builder-tab-content {
   container: builder-tab / inline-size;
 }
 
-@container builder-tab (max-width: 43rem) {
+@container builder-tab (max-width: 42rem) {
   .level-choice-workspace,
   .character-details-workspace,
   .equipment-workspace {
@@ -311,7 +312,7 @@
   }
 }
 
-@container builder-tab (min-width: 43.01rem) {
+@container builder-tab (min-width: 42.01rem) {
   .level-choice-workspace {
     --builder-split: 1;
   }

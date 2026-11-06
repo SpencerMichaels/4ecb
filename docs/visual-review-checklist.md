@@ -127,8 +127,8 @@ live site.
     in a short window the drawer stops at the window's bottom and scrolls
     inside. Hover and keyboard focus on the strip are visible. Widening
     the window brings back the docked sidebar with no strip. Each tab keeps
-    its table and detail pane side by side down to about a 46rem window
-    (about 1030px at 140%, 735px at 100%), then stacks the pane below;
+    its table and detail pane side by side down to about a 45rem window
+    (about 1005px at 140%, 720px at 100%), then stacks the pane below;
     docked windows look as before.
   - **Wrong if:** the sidebar folds above the content, the strip runs the
     full window height when the content is shorter, the drawer pushes the

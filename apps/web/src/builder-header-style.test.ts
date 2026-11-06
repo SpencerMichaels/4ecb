@@ -304,7 +304,7 @@ describe("builder workspace split", () => {
       /\.builder-tab-content\s*\{\s*container: builder-tab \/ inline-size;/,
     );
     const stacked = styles.slice(
-      styles.indexOf("@container builder-tab (max-width: 43rem) {") + 1,
+      styles.indexOf("@container builder-tab (max-width: 42rem) {") + 1,
     );
     expect(stacked).toMatch(
       /^[^@]*\.shared-choice-detail\s*\{[^}]*position: static;/,
@@ -312,13 +312,13 @@ describe("builder workspace split", () => {
     // Side by side just past it: the fitted level tables (only in tall
     // windows), the sticky card headers, and the flag the fitting hook reads.
     expect(styles).toMatch(
-      /@media \(min-height: 30rem\)\s*\{\s*@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.level-choice-tab-panel \.selection-table-scroll\s*\{/,
+      /@media \(min-height: 30rem\)\s*\{\s*@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.level-choice-tab-panel \.selection-table-scroll\s*\{/,
     );
     expect(styles).toMatch(
-      /@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.shared-choice-detail\s*:is/,
+      /@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.shared-choice-detail\s*:is/,
     );
     expect(styles).toMatch(
-      /@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.level-choice-workspace\s*\{\s*--builder-split: 1;/,
+      /@container builder-tab \(min-width: 42\.01rem\)\s*\{\s*\.level-choice-workspace\s*\{\s*--builder-split: 1;/,
     );
     expect(
       readFileSync(

@@ -236,7 +236,7 @@ describe("release accessibility contract", () => {
       /\.builder-tab-content\s*\{\s*container: builder-tab \/ inline-size;/,
     );
     expect(styles).toMatch(
-      /@container builder-tab \(max-width: 43rem\)\s*\{\s*\.level-choice-workspace,\s*\.character-details-workspace,\s*\.equipment-workspace\s*\{\s*grid-template-columns: minmax\(0, 1fr\);/,
+      /@container builder-tab \(max-width: 42rem\)\s*\{\s*\.level-choice-workspace,\s*\.character-details-workspace,\s*\.equipment-workspace\s*\{\s*grid-template-columns: minmax\(0, 1fr\);/,
     );
     expect(styles).not.toMatch(
       /@media \(max-width: 60rem\)[^@]*\.(level-choice|character-details|equipment)-workspace/,
@@ -615,7 +615,7 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspaceRule).toContain("minmax(0, 1fr)");
     expect(equipmentWorkspaceRule).toContain("var(--panel-card-width)");
     expect(styles).toMatch(
-      /@container builder-tab \(max-width: 43rem\)[^@]*\.equipment-workspace\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+      /@container builder-tab \(max-width: 42rem\)[^@]*\.equipment-workspace\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
     );
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
