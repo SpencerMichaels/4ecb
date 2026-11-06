@@ -2,7 +2,6 @@
 // states test without a DOM.
 
 import {
-  campaignAlternateNamePatches,
   campaignPatches,
   campaignRulePatches,
   type CampaignDocument,
@@ -73,7 +72,6 @@ export function campaignSummaryLines(
   const { ids, types } = campaign.restrictions;
   const patches = campaignPatches(campaign).length;
   const rulePatches = campaignRulePatches(campaign).length;
-  const alternateNames = campaignAlternateNamePatches(campaign).length;
   return [
     { label: "Revision", value: String(campaign.revision) },
     {
@@ -97,11 +95,6 @@ export function campaignSummaryLines(
             value: `${patches} ${patches === 1 ? "field" : "fields"}`,
           },
         ]),
-    // Alternate names: a server record shown with a setting name too
-    // ("Shadar-kai (Fetchling)").
-    ...(alternateNames === 0
-      ? []
-      : [{ label: "Alternate names", value: records(alternateNames) }]),
     // Rule patches: what a server record grants or offers (a language).
     ...(rulePatches === 0
       ? []

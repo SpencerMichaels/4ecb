@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  entityNames,
-  entityTitle,
-  type ContentEntity,
-  type ParsedContentEntity,
-  type ParsedContentSource,
+import type {
+  ContentEntity,
+  ParsedContentEntity,
+  ParsedContentSource,
 } from "@4ecb/content-domain";
 
 import {
@@ -27,13 +25,10 @@ import {
   MAX_CAMPAIGN_LEGACY_XML_BYTES,
   MAX_CAMPAIGN_PATCHES,
   MAX_CAMPAIGN_PATCH_VALUE_LENGTH,
-  campaignAlternateNameOutcomes,
-  campaignAlternateNamePatches,
   campaignPatchOutcomes,
   campaignPatches,
   campaignRulePatchOutcomes,
   campaignRulePatches,
-  type CampaignAlternateNamePatch,
   type CampaignPatch,
   type CampaignPatchEntry,
   type CampaignRulePatch,
@@ -520,7 +515,7 @@ describe("campaign field patches", () => {
 
   it("builds patches in canonical order under the digest", async () => {
     const campaign = await buildCampaign(patchedManifest, houseRuleSource, xml);
-    expect(campaign.version).toBe(4);
+    expect(campaign.version).toBe(3);
     expect(campaignPatches(campaign).map(({ id }) => id)).toEqual([
       "id_syn_learn_primordial",
       "ID_SYN_RACE_GENASI",
@@ -971,7 +966,7 @@ describe("campaign rule patches", () => {
 
   it("applies each operation in order and keeps the record's other rules", async () => {
     const campaign = await buildCampaign(ruleManifest, houseRuleSource, xml);
-    expect(campaign.version).toBe(4);
+    expect(campaign.version).toBe(3);
     // Field patches sort before a record's rule patches, which keep their
     // authored order.
     expect(
@@ -1252,42 +1247,86 @@ describe("campaign rule patches", () => {
       ).rejects.toThrow(message);
   });
 
-  it("still decodes version 3 documents with their digests", async () => {
+  it("writes version 3 with the digest version 3 always gave", async () => {
     const built = await buildCampaign(ruleManifest, houseRuleSource, xml);
-    // The digest a version-3 build gave this campaign, before alternate
-    // names.
-    const v3 = {
+    expect(built.version).toBe(3);
+    expect(built.contentDigest).toBe(
+      "ca7762bf183c82973c811695cdf408f871a442fcfb42509b14847de26466e668",
+    );
+    expect((await decodeCampaign(jsonBuffer(built))).version).toBe(3);
+    const named = {
       ...built,
-      version: 3,
-      contentDigest:
-        "ca7762bf183c82973c811695cdf408f871a442fcfb42509b14847de26466e668",
-    } as const;
-    const decoded = await decodeCampaign(jsonBuffer(v3));
-    expect(decoded.version).toBe(3);
-    expect(campaignRulePatches(decoded)).toEqual(campaignRulePatches(built));
-    expect(campaignAlternateNamePatches(decoded)).toEqual([]);
-    await expect(
-      decodeCampaign(
-        jsonBuffer({
-          ...v3,
-          patches: [
-            ...v3.patches!,
-            { id: "ID_SYN_RACE_TIEFLING", alternateName: "Hellspawn" },
-          ],
-        }),
-      ),
-    ).rejects.toThrow("Campaign patches are invalid");
-    const v3WithName = {
-      ...built,
-      version: 3,
       patches: [
         ...built.patches!,
         { id: "ID_SYN_RACE_TIEFLING", alternateName: "Hellspawn" },
       ],
-    } as CampaignDocument;
-    expect((await validateCampaign(v3WithName)).errors).toContain(
-      "A version 3 campaign cannot carry alternate names",
+    };
+    await expect(decodeCampaign(jsonBuffer(named))).rejects.toThrow(
+      "Campaign patches are invalid",
     );
+    expect(
+      (await validateCampaign(named as CampaignDocument)).errors,
+    ).toContain("A version 3 campaign cannot carry alternate names");
+  });
+
+  it("still loads version 4 documents and ignores their alternate names", async () => {
+    // A version-4 build (Pathfinder revision 6) with a since-removed
+    // alternate-name patch, sorted before the record's rule patches, and
+    // the digest it was given.
+    const built = await buildCampaign(ruleManifest, houseRuleSource, xml);
+    const at = built.patches!.findIndex(
+      ({ id }) => id === "ID_SYN_RACE_TIEFLING",
+    );
+    const v4 = {
+      ...built,
+      version: 4,
+      patches: [
+        ...built.patches!.slice(0, at),
+        { id: "ID_SYN_RACE_TIEFLING", alternateName: "Hellspawn" },
+        ...built.patches!.slice(at),
+      ],
+      contentDigest:
+        "86e299b287e77969bbcfd3e47a6aa602ee0d159a681cffdae840ffa61bedc6a4",
+    } as const;
+    const decoded = await decodeCampaign(jsonBuffer(v4));
+    expect(decoded.version).toBe(4);
+    expect((await validateCampaign(decoded)).valid).toBe(true);
+    expect(campaignPatches(decoded)).toEqual(campaignPatches(built));
+    expect(campaignRulePatches(decoded)).toEqual(campaignRulePatches(built));
+    const fromV4 = await composeCampaignProfile(
+      [await base()],
+      decoded,
+      options,
+    );
+    const fromV3 = await composeCampaignProfile([await base()], built, options);
+    // The same records as the version-3 build, and one quiet note.
+    expect(fromV4.pack.entities).toEqual(fromV3.pack.entities);
+    expect(
+      fromV4.pack.entities.some((entity) => "alternateName" in entity),
+    ).toBe(false);
+    expect(
+      fromV4.pack.diagnostics.filter(
+        ({ code }) => code === "campaign.alternate-names-ignored",
+      ),
+    ).toEqual([
+      {
+        severity: "info",
+        code: "campaign.alternate-names-ignored",
+        message: "1 alternate-name patch ignored: alternate names were removed",
+      },
+    ]);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...v4,
+          patches: v4.patches.map((patch) =>
+            "alternateName" in patch
+              ? { ...patch, alternateName: "Fiendborn" }
+              : patch,
+          ),
+        }),
+      ),
+    ).rejects.toThrow(/Digest mismatch/);
   });
 
   it("puts rule patches under the digest", async () => {
@@ -1424,128 +1463,5 @@ describe("campaign rule patches", () => {
         }),
       ),
     ).rejects.toThrow("Campaign patches are invalid");
-  });
-});
-
-describe("campaign alternate names", () => {
-  const races = source([
-    ...stock.entities,
-    entity("ID_SYN_RACE_SHADAR_KAI", "Race", "Shadar-kai"),
-    {
-      ...entity("ID_SYN_RACE_DEVA", "Race", "Deva"),
-      aliases: ["Aasimar"],
-    },
-  ]);
-  const patches: CampaignAlternateNamePatch[] = [
-    { id: "id_syn_race_shadar_kai", alternateName: "Fetchling" },
-    { id: "ID_SYN_RACE_GONE", alternateName: "Gone" },
-    { id: "ID_SYN_RACE_DEVA", alternateName: "aasimar" },
-  ];
-  const named: CampaignManifest = { ...manifest, patches };
-  const options = { packId: "campaign:synthetic-setting:n", name: "S" };
-
-  async function base() {
-    return buildContentPack(races, { packId: "synthetic", name: "S" });
-  }
-
-  it("gives a record a second name without renaming it", async () => {
-    const campaign = await buildCampaign(named, houseRuleSource, xml);
-    expect(campaign.version).toBe(4);
-    expect(campaignAlternateNamePatches(campaign).map(({ id }) => id)).toEqual([
-      "ID_SYN_RACE_DEVA",
-      "ID_SYN_RACE_GONE",
-      "id_syn_race_shadar_kai",
-    ]);
-    expect(campaignPatches(campaign)).toEqual([]);
-    const profile = await composeCampaignProfile(
-      [await base()],
-      campaign,
-      options,
-    );
-    const shadarKai = profile.pack.entities.find(
-      ({ id }) => id === "ID_SYN_RACE_SHADAR_KAI",
-    );
-    expect(shadarKai?.name).toBe("Shadar-kai");
-    expect(shadarKai?.alternateName).toBe("Fetchling");
-    expect(shadarKai).not.toHaveProperty("aliases");
-    expect(entityNames(shadarKai!)).toEqual(["Shadar-kai", "Fetchling"]);
-    expect(entityTitle(shadarKai!)).toBe("Shadar-kai (Fetchling)");
-    // The drift guard: a missing target, and a name the record already has.
-    expect(
-      profile.pack.diagnostics
-        .filter(({ code }) => code === "campaign.patch-not-applied")
-        .map(({ message }) => message),
-    ).toEqual([
-      'Alternate name patch ID_SYN_RACE_DEVA "aasimar" not applied: ID_SYN_RACE_DEVA is already named "Aasimar"',
-      'Alternate name patch ID_SYN_RACE_GONE "Gone" not applied: no record ID_SYN_RACE_GONE',
-    ]);
-    const deva = profile.pack.entities.find(
-      ({ id }) => id === "ID_SYN_RACE_DEVA",
-    );
-    expect(deva).not.toHaveProperty("alternateName");
-    expect(
-      campaignAlternateNameOutcomes(races.entities, patches).map(
-        ({ status }) => status,
-      ),
-    ).toEqual(["applies", "target-missing", "name-taken"]);
-    expect((await validateContentPack(profile.pack)).valid).toBe(true);
-  });
-
-  it("puts alternate names under the digest and validates them", async () => {
-    const campaign = await buildCampaign(named, houseRuleSource, xml);
-    const reordered = await buildCampaign(
-      { ...manifest, patches: [...patches].reverse() },
-      houseRuleSource,
-      xml,
-    );
-    expect(encodeCampaign(reordered)).toEqual(encodeCampaign(campaign));
-    expect(await decodeCampaign(buffer(encodeCampaign(campaign)))).toEqual(
-      campaign,
-    );
-    await expect(
-      decodeCampaign(
-        jsonBuffer({
-          ...campaign,
-          patches: campaign.patches!.map((patch) =>
-            "alternateName" in patch && patch.alternateName === "Fetchling"
-              ? { ...patch, alternateName: "Shadowkin" }
-              : patch,
-          ),
-        }),
-      ),
-    ).rejects.toThrow(/Digest mismatch/);
-    for (const [patch, error] of [
-      [{ id: "ID_SYN_RACE_SHADAR_KAI", alternateName: " Fetchling" }, "1-120"],
-      [{ id: "ID_SYN_RACE_SHADAR_KAI", alternateName: "" }, "1-120"],
-      [{ id: "ID_SYN_DEITY_STONE", alternateName: "Rock" }, "house rules"],
-    ] as const)
-      await expect(
-        buildCampaign({ ...manifest, patches: [patch] }, houseRuleSource, xml),
-      ).rejects.toThrow(error);
-    await expect(
-      buildCampaign(
-        {
-          ...manifest,
-          patches: [
-            { id: "ID_SYN_RACE_SHADAR_KAI", alternateName: "Fetchling" },
-            { id: "id_syn_race_shadar_kai", alternateName: "Shadowkin" },
-          ],
-        },
-        houseRuleSource,
-        xml,
-      ),
-    ).rejects.toThrow("listed twice");
-    const pack = await base();
-    const invalid = {
-      ...pack,
-      entities: pack.entities.map((record) =>
-        record.id === "ID_SYN_RACE_SHADAR_KAI"
-          ? { ...record, alternateName: "shadar-kai" }
-          : record,
-      ),
-    };
-    expect((await validateContentPack(invalid)).errors).toContain(
-      "Entity ID_SYN_RACE_SHADAR_KAI alternate name shadar-kai repeats the record's name or an alias",
-    );
   });
 });

@@ -58,9 +58,6 @@ build_campaign "$scratch_dir/second.4ecc"
 cmp "$scratch_dir/first.4ecc" "$scratch_dir/second.4ecc"
 jq -e '.against.patches | length == 2 and all(.status == "applies")' \
   "$scratch_dir/first.4ecc.json" >/dev/null
-jq -e '.against.alternateNames == [{id: "ID_4ECB_SYNTHETIC_CLASS_1",
-    name: "Boundary Warden", alternateName: "Border Warden", status: "applies"}]' \
-  "$scratch_dir/first.4ecc.json" >/dev/null
 jq -e '.against.rulePatches == [{
     id: "ID_4ECB_SYNTHETIC_RACE_1",
     operation: "set value=\"+5\" on <statadd name=\"Speed\" value=\"+6\" />",
@@ -69,8 +66,8 @@ jq -e '.against.rulePatches == [{
     rule: {match: {name: "statadd", attributes: {name: "Speed", value: "+6"}}, set: {value: "+5"}}
   }]' "$scratch_dir/first.4ecc.json" >/dev/null
 pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
-  jq -e '.validation.valid and .version == 4 and .houseRules.recordCount == 4 and
-    .patches == 2 and .alternateNames == 1 and .rulePatches == 1' >/dev/null
+  jq -e '.validation.valid and .version == 3 and .houseRules.recordCount == 4 and
+    .patches == 2 and .rulePatches == 1' >/dev/null
 # Record aliases (D116): the authored "Also Known As" is parsed at build.
 gzip -dc "$scratch_dir/first.4ecc" |
   jq -e '[.houseRules.entities[] | select(.aliases == ["Sea Mother"])] | length == 1' >/dev/null

@@ -41,18 +41,6 @@ describe("RulesIndex record aliases (D116)", () => {
     expect(new RulesIndex([aasimar]).find("Deva")).toBe(aasimar);
   });
 
-  it("finds a record by a campaign alternate name, as by an alias", () => {
-    const shadarKai = {
-      ...record("ID_RACE_SHADAR_KAI", "Shadar-kai", "Race"),
-      alternateName: "Fetchling",
-    };
-    const named = new RulesIndex([shadarKai, devaFeat]);
-    expect(named.find("Fetchling", "Race")).toBe(shadarKai);
-    expect(named.find("fetchling")).toBe(shadarKai);
-    expect(named.find("Shadar-kai")).toBe(shadarKai);
-    expect(named.categoryValues(shadarKai)).toContain("fetchling race");
-  });
-
   it("matches a category naming a record by its alias", () => {
     expect(index.categoryValues(aasimar)).toContain("deva race");
     expect(index.categoryAliases.get("deva")).toContain("id_feat_deva");

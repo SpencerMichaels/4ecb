@@ -661,24 +661,3 @@ describe("counts-as on option details (D116)", () => {
     );
   });
 });
-
-describe("candidate detail title", () => {
-  it("titles a record with its campaign alternate name (D116)", () => {
-    const race: ContentEntity = {
-      ...alignment,
-      id: "ID_RACE_SHADAR_KAI",
-      name: "Shadar-kai",
-      alternateName: "Fetchling",
-      type: "Race",
-    };
-    const markup = renderToStaticMarkup(
-      createElement(CandidateDetail, {
-        candidate: { ...candidate, definitionId: race.id },
-        entity: race,
-        byId: new Map([[race.id.toLocaleLowerCase(), race]]),
-      }),
-    );
-    expect(markup).toMatch(/<span id="[^"]*">Shadar-kai \(Fetchling\)<\/span>/);
-    expect(markup).toContain("Called Fetchling in this campaign.");
-  });
-});

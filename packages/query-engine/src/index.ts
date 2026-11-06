@@ -3,7 +3,6 @@ import {
   type ContentNode,
   contentEntitiesById,
   countsAsSearchNames,
-  entityOtherNames,
 } from "@4ecb/content-domain";
 
 export const COMPENDIUM_QUERY_VERSION = 1;
@@ -288,7 +287,7 @@ function searchableText(
   return [
     entity.id,
     entity.name,
-    ...entityOtherNames(entity),
+    ...(entity.aliases ?? []),
     ...countsAsSearchNames(entity, byId),
     entity.type,
     entity.source,

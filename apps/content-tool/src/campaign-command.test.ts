@@ -134,23 +134,12 @@ describe("campaign.json", () => {
       parseCampaignManifest({ ...base, patches: [patch, rulePatch] }, "/")
         .manifest.patches,
     ).toEqual([patch, rulePatch]);
-    const alternate = { id: "ID_RACE", alternateName: "Fetchling" };
-    expect(
-      parseCampaignManifest({ ...base, patches: [alternate] }, "/").manifest
-        .patches,
-    ).toEqual([alternate]);
     expect(() =>
       parseCampaignManifest(
-        { ...base, patches: [{ ...alternate, expect: "Shadar-kai" }] },
+        { ...base, patches: [{ id: "ID_RACE", alternateName: "Fetchling" }] },
         "/",
       ),
-    ).toThrow(/patches\[0\] has unknown keys: expect/);
-    expect(() =>
-      parseCampaignManifest(
-        { ...base, patches: [{ id: "ID_RACE", alternateName: 1 }] },
-        "/",
-      ),
-    ).toThrow(/patches\[0\]\.alternateName must be a string/);
+    ).toThrow(/patches\[0\]: alternate names were removed/);
     expect(() =>
       parseCampaignManifest(
         { ...base, patches: [{ ...rulePatch, field: "name" }] },
@@ -203,18 +192,16 @@ describe("campaign build", () => {
     expect(
       campaign.patches?.map((patch) => [
         patch.id,
-        "rule" in patch ? "rule" : "field" in patch ? patch.field : "alternate",
+        "field" in patch ? patch.field : "rule",
       ]),
     ).toEqual([
-      ["ID_4ECB_SYNTHETIC_CLASS_1", "alternate"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "name"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "rule"],
     ]);
     expect(summarizeCampaign(campaign)).toMatchObject({
-      version: 4,
+      version: 3,
       patches: 2,
-      alternateNames: 1,
       rulePatches: 1,
     });
     // An authored "Also Known As" is parsed once, at build, into aliases;
@@ -314,8 +301,6 @@ describe("campaign build", () => {
             value: "Learn Elven (Sylvan)",
           },
           { id: "ID_GONE", field: "name", expect: "Gone", value: "Here" },
-          { id: "ID_GENASI", alternateName: "Geniekin" },
-          { id: "ID_GONE", alternateName: "Elsewhere" },
         ],
       },
       parseHouseRules(xml, "house-rules.xml"),
@@ -346,19 +331,9 @@ describe("campaign build", () => {
         value: "Learn Elven (Sylvan)",
       },
     ]);
-    expect(report.alternateNames).toEqual([
-      {
-        id: "ID_GENASI",
-        name: "Genasi",
-        alternateName: "Geniekin",
-        status: "applies",
-      },
-      { id: "ID_GONE", alternateName: "Elsewhere", status: "target-missing" },
-    ]);
     expect(report.warnings).toEqual([
       'Patch ID_GENASI Languages not applied: the content has "Common, Primordial, Elven", the patch expects "Common, Primordial" (stock)',
       "Patch ID_GONE name not applied: no record ID_GONE (stock)",
-      'Alternate name patch ID_GONE "Elsewhere" not applied: no record ID_GONE (stock)',
     ]);
     // Patches never reach the legacy campaign block.
     expect(campaign.legacyHouseRulesXml).toBe("");

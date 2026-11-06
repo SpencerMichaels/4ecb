@@ -4,11 +4,7 @@ import type {
   BuildInventoryEntry,
   BuildOccurrence,
 } from "@4ecb/character-domain";
-import {
-  type ContentEntity,
-  countsAsSearchNames,
-  entityOtherNames,
-} from "@4ecb/content-domain";
+import { type ContentEntity, countsAsSearchNames } from "@4ecb/content-domain";
 import { EXCEPTION_IDS, itemChoiceSlots } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
@@ -284,7 +280,7 @@ function shopSearchText(
   if (text === undefined) {
     text = [
       entity.name,
-      ...entityOtherNames(entity),
+      ...(entity.aliases ?? []),
       ...countsAsSearchNames(entity, byId),
       shopDisplayName(entity),
       entity.type,

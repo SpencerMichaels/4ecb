@@ -435,11 +435,8 @@ amendment) are its own names, not alternates: a campaign that renames the
 Deva "Aasimar" keeps "Deva" as an alias, and "Deva", "Deva race" and
 "Race Deva" still resolve to that record, for every owner (the name walk's
 CountsAsRace exclusion is about the record's type, so it never touches an
-alias). A campaign's alternate name (`ContentEntity.alternateName`, the
-setting name of a record that keeps its own: Shadar-kai called Fetchling)
-is matched the same way. Every lookup reads names through content-domain
-`entityNames` (name, then aliases, then the alternate name), in one place
-each: the prerequisite name index
+alias). Every lookup reads names through content-domain `entityNames`
+(name, then aliases), in one place each: the prerequisite name index
 (`definitionIndex`, cached by profile array identity, which also feeds
 `resolveDefinitions`, the connector-name spans, the counts-as alternates
 and stand-ins and the "<name> (<variant>)" reading), the owned and
@@ -454,15 +451,13 @@ selections and category values by name (`find`, `categoryValues`); a
 record that has the name itself wins over another's alias. Stock content
 has no aliases, so stock trees are unchanged (the full and stock packs
 internalize byte-identically, 2026-11-06). The stored-IR stamp below hashes
-a record's aliases and alternate name with its ID only when it has some, so a set whose
+a record's aliases with its ID only when it has some, so a set whose
 aliases differ internalizes afresh.
 
 Displayed prerequisite lines name a renamed record by its current name
 (`prerequisite-display.ts`, D116 aliases amendment): "Prerequisite:
 Fetchling", not "Shadar-kai", while descriptions and other prose stay as
-written. (An alternate name never changes a line: Pathfinder revision 6
-titles its races "Shadar-kai (Fetchling)" instead of renaming them, so
-its renamed lines are language lines only.) The displayed line (`displayPrerequisites`: usually the authored
+written. The displayed line (`displayPrerequisites`: usually the authored
 print line, which drops "; Paragon Tier" or rewords a clause in about 15%
 of records) keeps its wording; only an old name that the internalized rule
 text resolves to the renamed record is swapped. `prerequisiteReferences`

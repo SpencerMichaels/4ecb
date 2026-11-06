@@ -1,7 +1,7 @@
 {
   "campaignId": "pathfinder",
   "name": "Pathfinder (Inner Sea)",
-  "revision": 6,
+  "revision": 7,
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": [
@@ -214,26 +214,6 @@
       "field": "name",
       "expect": "Learn Primordial",
       "value": "Learn an elemental tongue"
-    },
-    {
-      "id": "ID_FMP_RACE_33",
-      "alternateName": "Geniekin"
-    },
-    {
-      "id": "ID_FMP_RACE_26",
-      "alternateName": "Fetchling"
-    },
-    {
-      "id": "ID_FMP_RACE_43",
-      "alternateName": "Tengu"
-    },
-    {
-      "id": "ID_FMP_RACE_53",
-      "alternateName": "Dhampir"
-    },
-    {
-      "id": "ID_FMP_RACE_28",
-      "alternateName": "Automaton"
     },
     {
       "id": "ID_FMP_CLASS_FEATURE_1632",

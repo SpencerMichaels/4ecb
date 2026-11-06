@@ -11,7 +11,7 @@ import { CandidateSelectionTable } from "./CandidateSelectionTable";
 function race(
   id: string,
   name: string,
-  names: Pick<ContentEntity, "aliases" | "alternateName"> = {},
+  names: Pick<ContentEntity, "aliases"> = {},
 ): ContentEntity {
   return {
     id,
@@ -30,11 +30,8 @@ function race(
   };
 }
 
-// A campaign's alternate name keeps the record's name (D116): Pathfinder's
-// Shadar-kai is called Fetchling; a rename keeps the stock name as an alias.
-const shadarKai = race("ID_SHADAR_KAI", "Shadar-kai", {
-  alternateName: "Fetchling",
-});
+// A campaign rename keeps the stock name as an alias (D116).
+const shadarKai = race("ID_SHADAR_KAI", "Shadar-kai");
 const aasimar = race("ID_DEVA", "Aasimar", { aliases: ["Deva"] });
 const elf = race("ID_ELF", "Elf");
 const entities = [shadarKai, aasimar, elf];
@@ -55,7 +52,7 @@ function candidate(entity: ContentEntity): CandidateDecision {
   };
 }
 
-describe("choice table alternate names", () => {
+describe("choice table aliases", () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -111,15 +108,13 @@ describe("choice table alternate names", () => {
       (row) => row.querySelector(".selection-table-name button")!.textContent,
     );
 
-  it("titles a row with the record's name and its alternate name", () => {
-    expect(rowNames()).toEqual(["Aasimar", "Elf", "Shadar-kai (Fetchling)"]);
+  it("titles a row with the record's name alone", () => {
+    expect(rowNames()).toEqual(["Aasimar", "Elf", "Shadar-kai"]);
   });
 
-  it("finds a record by its alternate name or an alias", () => {
-    search("fetchling");
-    expect(rowNames()).toEqual(["Shadar-kai (Fetchling)"]);
+  it("finds a record by its name or an alias", () => {
     search("shadar");
-    expect(rowNames()).toEqual(["Shadar-kai (Fetchling)"]);
+    expect(rowNames()).toEqual(["Shadar-kai"]);
     search("deva");
     expect(rowNames()).toEqual(["Aasimar"]);
   });

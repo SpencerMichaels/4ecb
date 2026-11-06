@@ -4917,3 +4917,26 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   names Geniekin, Fetchling, Tengu, Dhampir and Automaton; its
   prerequisite-rename report now lists only language lines (6 renamed,
   none unchanged).
+- **Amendment (2026-11-06): alternate race names dropped entirely**
+  (owner decision: "Drop them entirely"). The parenthetical tags
+  ("Shadar-kai (Fetchling)") are noise: a player reads the 4e race
+  everywhere else (feats, paths, sheet, sidebar), so a second name in only
+  the table and card adds nothing to choose by. Pathfinder races are the
+  plain 4e records, with neither renames nor alternate names, and the
+  feature is removed: no `alternateName` patch kind or
+  `ContentEntity.alternateName`, no title form or "Called … in this
+  campaign." line, no alternate-name search or lookup matching, no
+  `alternateNames` in `campaign build --against` / `campaign inspect`,
+  no "Alternate names" invite line; `content-tool campaign build`
+  refuses an `alternateName` patch. Record aliases ("Also known as", the
+  language renames) and counts-as search are unchanged. Builds write
+  campaign format version 3 again, the lowest version their content
+  needs, so a rebuild gets the digest version 3 always gave. Version-4
+  documents (Pathfinder revision 6, already installed in browsers) keep
+  loading with their digests (a recorded version-4 digest is a test
+  golden): their alternate-name entries stay in `patches` only for the
+  digest, change nothing, and composition notes them with one `info`
+  diagnostic (`campaign.alternate-names-ignored`) that no surface shows.
+  Pathfinder revision 7 removes the five alternate-name patches; languages
+  are unchanged (36 field and 101 rule patches, all applying, 159 records
+  restricted over the full pack).

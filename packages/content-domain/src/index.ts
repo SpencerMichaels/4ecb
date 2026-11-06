@@ -100,13 +100,6 @@ export interface ContentEntity {
    * (see `aliases.ts`), so records without aliases keep their digests.
    */
   readonly aliases?: readonly string[];
-  /**
-   * A setting's second name for the record, which keeps its own name
-   * (D116 amendment, a campaign's `alternateName` patch): shown as
-   * "Shadar-kai (Fetchling)" in builder titles and matched by name lookups
-   * like an alias. Present only when set (see `aliases.ts`).
-   */
-  readonly alternateName?: string;
   readonly type: string;
   readonly source: string;
   readonly sources: readonly string[];

@@ -223,21 +223,6 @@ describe("prerequisite lines with renamed records (D116 aliases)", () => {
     );
   });
 
-  it("leaves every line as written for alternate names (Shadar-kai (Fetchling))", () => {
-    const named = [
-      ...stock.map((entity) =>
-        entity.id === "ID_FMP_RACE_26"
-          ? { ...entity, alternateName: "Fetchling" }
-          : entity,
-      ),
-      ...feats,
-    ];
-    expect(prerequisiteDisplayLines(named)).toEqual({
-      lines: {},
-      diagnostics: [],
-    });
-  });
-
   it("changes nothing for content without aliases (every stock pack)", () => {
     const plain = [...stock, ...feats];
     expect(prerequisiteDisplayLines(plain)).toEqual({

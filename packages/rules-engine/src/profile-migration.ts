@@ -214,7 +214,6 @@ function entityFingerprint(entity: ContentEntity): string {
     id: entity.id,
     name: entity.name,
     aliases: entity.aliases,
-    alternateName: entity.alternateName,
     type: entity.type,
     attributes: entity.attributes,
     categories: entity.categories,

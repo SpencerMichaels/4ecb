@@ -9,7 +9,6 @@ import type {
 } from "@4ecb/content-domain";
 import {
   entityAliasErrors,
-  entityAlternateNameErrors,
   MAX_ENTITY_ALIASES,
   withoutStoredPrerequisiteIr,
   withStoredFormulaItems,
@@ -453,7 +452,6 @@ function isContentEntity(value: unknown): boolean {
     (entity.aliases === undefined ||
       (isStringArray(entity.aliases) &&
         entity.aliases.length <= MAX_ENTITY_ALIASES)) &&
-    isOptionalString(entity.alternateName) &&
     typeof entity.type === "string" &&
     typeof entity.source === "string" &&
     isStringArray(entity.sources) &&
@@ -678,7 +676,6 @@ export async function validateContentPack(
       errors.push(`Entity ${entity.id} has an empty name or type`);
     }
     errors.push(...entityAliasErrors(entity));
-    errors.push(...entityAlternateNameErrors(entity));
   }
 
   const expectedTypeCounts = JSON.stringify(typeCounts(pack.entities));

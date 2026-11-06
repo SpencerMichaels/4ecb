@@ -1,5 +1,53 @@
 # Implementation status
 
+## Campaign alternate names removed; Pathfinder revision 7 (2026-11-06)
+
+D116 amendment (owner: "Drop them entirely"; the parenthetical tags are
+noise). The alternate-name feature of "Campaign alternate names;
+Pathfinder revision 6" below is removed: `ContentEntity.alternateName`,
+content-domain `entityTitle`, `entityOtherNames`, `withAlternateName` and
+`entityAlternateNameErrors`, the content-pack alternate-name patch kind
+and its outcomes, the "Shadar-kai (Fetchling)" title in
+`CandidateSelectionTable`, `CandidateDetail` and `EntityCardHeader`, the
+"Called … in this campaign." line (`EntityAliases` is aliases only again),
+alternate-name matching in `entityNames`, `RulesIndex`, the prerequisite
+IR stamp, the Shop search and the compendium index, `alternateNames` in
+`campaign build --against` and `campaign inspect`, the invite page's
+"Alternate names" line, and the synthetic fixture's alternate name with
+its `check.sh` assertions. `content-tool campaign build` refuses an
+`alternateName` patch ("alternate names were removed"). Record aliases
+("Also known as", the language renames) and counts-as search are
+unchanged (`CandidateSelectionTable.aliases.test.tsx` keeps the alias
+search test).
+
+Compatibility: `buildCampaign` writes format version 3 again (the lowest
+version the content needs), and a rebuilt version-3 campaign keeps the
+digest version 3 always gave (golden in `campaign.test.ts`). Version 4
+stays readable (`CAMPAIGN_VERSIONS` 1-4): a version-4 document's
+`{id, alternateName}` entries are kept in `patches` as
+`RetiredCampaignAlternateNamePatch` so its digest verifies (version-4
+golden), are left out of `campaignPatches` and `campaignRulePatches`,
+change no record, and composition adds one `info` diagnostic,
+`campaign.alternate-names-ignored`, that no surface shows; any other
+version carrying one is refused. A stored profile pack's stale
+`alternateName` entity field is never read.
+
+Pathfinder revision 7 (`content/campaigns/pathfinder/campaign.json`): the
+five alternate-name patches are removed; races are the plain 4e records.
+Rebuilt `tmp/campaigns/pathfinder.4ecc` (version 3) `--against
+tmp/content/full-local.4ecp`: 36 field and 101 rule patches all apply,
+159 records restricted, 6 prerequisite lines renamed (languages), none
+unchanged.
+
+Verification: `campaign.test.ts` (version-3 and version-4 goldens, the
+ignored version-4 entries and their diagnostic, version 3 refusing them),
+`campaign-command.test.ts`, `CandidateSelectionTable.aliases.test.tsx`.
+Private probes: `tmp/probe/pf/rev6.ts` (adapted: races titled plainly,
+"Fetchling" finds no race, no record carries an alternate name) 57/57,
+`tmp/pf-languages/probe.ts` 62/62, `tmp/probe/pf/probe.ts` (deities)
+28/28. `pnpm typecheck`, lint, prettier, `pnpm test`, `pnpm review:verify`
+and `scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## Fitted tables leave room for their pager (2026-11-06)
 
 Follow-up to "Inventory table ends at the window bottom": in the drawer

@@ -970,6 +970,11 @@ Follow-ups (not done):
   record "Shadar-kai (Fetchling)" in the choice table and card; Pathfinder
   revision 6 drops the 54 race name patches for five alternate names
   (`docs/implementation-status.md`, Campaign alternate names).
+- Done (2026-11-06): alternate names removed (owner: drop them
+  entirely): builds write format version 3 again, version 4 stays
+  readable with its alternate names ignored; Pathfinder revision 7 has
+  plain 4e race names (`docs/implementation-status.md`, Campaign
+  alternate names removed).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

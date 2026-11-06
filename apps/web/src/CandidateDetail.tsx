@@ -1,7 +1,7 @@
 import { Fragment, useContext, useState } from "react";
 
 import type { CandidateDecision } from "@4ecb/rules-engine";
-import { entityTitle, type ContentEntity } from "@4ecb/content-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
 import { isFamiliarEntity } from "@4ecb/sheet-model";
 
 import { primaryDetailTypeLabel, themePowerGroups } from "./builder-ui";
@@ -417,7 +417,7 @@ export function CandidateDetailCard({
         <header className="reference-card-title">
           <h3>
             <EntityCardLeadingIcon entity={entity} />
-            <span id={headingId}>{entityTitle(entity)}</span>
+            <span id={headingId}>{entity.name}</span>
           </h3>
           {headerAction}
         </header>

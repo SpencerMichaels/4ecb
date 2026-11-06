@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import {
   displayPrerequisites,
-  entityTitle,
   isUserFacingSpecific,
   type ContentEntity,
   type SpecificField,
@@ -143,7 +142,7 @@ export function EntityCardHeader({
 }) {
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isItem = isItemEntity(entity);
-  const headingContent = entityTitle(entity);
+  const headingContent = entity.name;
   const heading =
     headingLevel === 2 ? (
       <h2 id={headingId}>{headingContent}</h2>
@@ -437,32 +436,20 @@ function namesWord(text: string, name: string): boolean {
 
 /** "Also known as: Deva": the other names a record is known by (D116), a
  * campaign's renamed record's stock name, labelled like the prerequisite
- * line; and "Called Fetchling in this campaign." for a campaign's
- * alternate name, which the title also shows ("Shadar-kai (Fetchling)").
- * Shown first, so a player looking for the other name sees it at once. */
+ * line. Shown first, so a player looking for the old name sees it at once. */
 export function EntityAliases({ entity }: { readonly entity: ContentEntity }) {
   const aliases = entity.aliases ?? [];
-  const { alternateName } = entity;
-  return (
-    <>
-      {alternateName === undefined ? null : (
-        <p className="entity-card-aliases entity-card-alternate-name">
-          Called {alternateName} in this campaign.
-        </p>
-      )}
-      {aliases.length === 0 ? null : (
-        <p className="entity-card-aliases">
-          <strong>Also known as:</strong> {aliases.join(", ")}
-        </p>
-      )}
-    </>
+  return aliases.length === 0 ? null : (
+    <p className="entity-card-aliases">
+      <strong>Also known as:</strong> {aliases.join(", ")}
+    </p>
   );
 }
 
 /** "Prerequisite: Hexblade", labelled like a power card's rule lines; a
  * requirement met only through a counts-as alternate says what met it
  * ("Must worship Moradin — met through Torag"). A renamed record the line
- * names shows by its current name ("Prerequisite: Fetchling", D116). */
+ * names shows by its current name ("fluent in Celestial", D116). */
 export function EntityPrerequisites({
   entity,
   metThrough = [],

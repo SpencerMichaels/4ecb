@@ -116,19 +116,6 @@ describe("CompendiumIndex", () => {
     ]);
   });
 
-  it("finds a record by a campaign alternate name (D116)", () => {
-    const named = new CompendiumIndex([
-      ...entities,
-      {
-        ...entity("ID_RACE_SHADAR_KAI", "Shadar-kai", "Race"),
-        alternateName: "Fetchling",
-      },
-    ]);
-    expect(
-      named.query({ text: "fetchling" }).items.map(({ id }) => id),
-    ).toEqual(["ID_RACE_SHADAR_KAI"]);
-  });
-
   it("finds a record by the names of the CountsAs* records it grants", () => {
     const grant = (name: string, type: string) => ({
       name: "grant",

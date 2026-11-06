@@ -85,16 +85,15 @@ optional (identified by magic bytes, as for `.4ecp`):
 
 ```text
 CampaignDocument
-├── format: "4ecb-campaign", version: 4 (1-3 still read)
+├── format: "4ecb-campaign", version: 3 (1, 2 and 4 still read)
 ├── campaignId          1-32 pack-ID characters
 ├── name                pack-name rules
 ├── revision            integer 1..999,999; the DM bumps it on every change
 ├── restrictions
 │   ├── ids[]           record IDs not offered (legacy Restricted)
 │   └── types[]         { type, allow: "campaign-only" }
-├── patches[]           { id, field, expect, value } | { id, alternateName }
-│                       | { id, rule }; version 2+ (rule patches and
-│                       "prerequisites" from 3, alternate names from 4)
+├── patches[]           { id, field, expect, value } | { id, rule }; version 2+
+│                       (rule patches and "prerequisites" from version 3)
 ├── houseRules          an embedded ContentPack, packId campaign.<id>.r<revision>
 ├── legacyHouseRulesXml the DM's RulesElement XML verbatim, for legacy export
 └── contentDigest       SHA-256
@@ -106,25 +105,41 @@ identity is `(campaignId, contentDigest)`; `revision` orders its versions, and
 a store refuses the same ID and revision with a different digest.
 `buildCampaign` sorts restricted IDs, type rules and patches ignoring case,
 so the digest does not depend on how they were listed: patches by ID, a
-record's field patches (by field), then its alternate name, then its rule
-patches, which keep the order authored because each sees the record the
-earlier ones left. IDs,
+record's field patches (by field) before its rule patches, which keep the
+order authored because each sees the record the earlier ones left. IDs,
 types and field patch (ID, field) pairs must be unique ignoring case.
 
-**Versions.** `buildCampaign` writes version 4, which always carries
+**Versions.** `buildCampaign` writes version 3, which always carries
 `patches` (possibly empty). A version-1 document has no `patches` field and
 reads as having none; its digest input has no `patches` key, so version-1
 documents (installed, in backups, hosted) keep their digests and load
 unchanged. A version-2 document carries field patches only (no rule patches
 and no `prerequisites` field, both refused there); each serializes in the
 digest exactly as before, so version-2 documents keep their digests too.
-A version-3 document cannot carry alternate-name patches, and keeps its
-digest the same way. Each version exists because the previous reader would
-misread the next: a version-1 reader would ignore patches, a version-2
-reader would refuse rule patches as malformed and treat a `prerequisites`
-patch as a specific of that name, and a version-3 reader would refuse an
-alternate-name patch as malformed; such readers refuse the newer document
-as an unsupported version.
+Each version exists because the previous reader would misread the next: a
+version-1 reader would ignore patches, and a version-2 reader would refuse
+rule patches as malformed and treat a `prerequisites` patch as a specific
+of that name; such readers refuse the newer document as an unsupported
+version.
+
+**Version 4 (read-only).** Version 4 added alternate-name patches
+`{id, alternateName}` (a setting's second name shown in a record's title,
+"Shadar-kai (Fetchling)"); the feature was removed (D116 amendment,
+2026-11-06: alternate race names dropped entirely). Builds write version 3
+again, the lowest version their content needs (`content-tool campaign
+build` refuses an `alternateName` patch), so a rebuilt campaign's digest
+is the one version 3 always gave it. Version-4 documents (Pathfinder
+revision 6, installed in browsers, in backups or hosted) still decode: an
+alternate-name entry (exactly `id` and a string `alternateName`) is kept
+in `patches` in its sorted place (a record's field patches, then it, then
+its rule patches) only so the document keeps its digest, typed
+`RetiredCampaignAlternateNamePatch`; `campaignPatches` and
+`campaignRulePatches` leave it out and it changes no record. Composition
+adds one `info` diagnostic, `campaign.alternate-names-ignored` ("N
+alternate-name patches ignored"), which no surface shows. Any other version
+carrying one is refused. An `alternateName` field on a stored entity (a
+profile pack materialized from such a document) is ignored by validation
+and never read.
 
 **Record aliases.** `ContentEntity.aliases` lists other names a record is
 known by ("Also known as"), for a same-thing rename (Deva → Aasimar,
@@ -151,26 +166,6 @@ names a renamed record by its current name where the rule text resolves
 the old name to it, keeping the line's wording; prose is never changed.
 Nothing is stored for this: the rules engine derives the lines per
 content set (`docs/rules-engine.md`, prerequisite display).
-
-**Alternate names** (version 4). `ContentEntity.alternateName` is a
-setting's second name for a record that keeps its own (Pathfinder's
-Shadar-kai, called Fetchling): unlike an alias it is not an old name.
-It is part of an entity, and so of the pack digest, only when present.
-Validation: 1-120 trimmed characters without control characters, not the
-record's name or one of its aliases ignoring case. It comes only from a
-campaign's alternate-name patch `{id, alternateName}` (one per record,
-never on a record the campaign's house rules supply, where the DM names
-the record instead). Composition applies it after the field patches and
-before the rule patches, only when the record exists and none of its
-names already is the alternate name; otherwise the record is left as it
-is with a `campaign.patch-not-applied` warning ("not applied: no record
-ID", "is already named X"). Name lookups and searches match it like an
-alias (content-domain `entityNames`, `entityOtherNames`); displayed
-prerequisite lines never change for it. The builder's choice-table row
-and detail card title the record "Shadar-kai (Fetchling)"
-(`entityTitle`) and the card's first line reads "Called Fetchling in
-this campaign."; other surfaces show the record's name. Legacy export
-drops it silently and legacy import creates none.
 
 **Field patches.** A patch changes one field of a record the campaign does not
 supply, so the record's other fields keep following server revisions (a
@@ -266,9 +261,8 @@ the server's value and the composed pack gets a `warning` diagnostic with
 code `campaign.patch-not-applied` (target missing, field missing, field
 repeated, or "the content has X, the patch expects Y"); composition never
 fails over a patch. An applied `name` patch keeps the stock name as an
-alias (`renamedEntity`, content-domain `aliases.ts`). It then gives
-records their alternate names (`applyCampaignAlternateNames`, above) and
-applies the rule patches (`applyCampaignRulePatches`): one that does not apply (record
+alias (`renamedEntity`, content-domain `aliases.ts`). It then applies the
+rule patches (`applyCampaignRulePatches`): one that does not apply (record
 missing, no element matches, a different number matches than `count`, or
 an `add` element already present) leaves the record's rules as composed
 and records a `warning` with code `campaign.rule-patch-not-applied` naming
@@ -309,16 +303,12 @@ manifest and house-rule XML, `campaign inspect` prints one, and
 `advertise-campaign` hosts it (`docs/public-deployment.md`); the browser stores
 installed documents as described in `docs/architecture.md` (Browser
 persistence). Patches are authored in `campaign.json` as
-`patches: [{id, field, expect, value} | {id, alternateName} | {id, rule}]`,
-not in the house-rule
+`patches: [{id, field, expect, value} | {id, rule}]`, not in the house-rule
 XML, which is the legacy `Houserules` block (RulesElement records only,
 exported verbatim). `campaign build --against PACK.4ecp` lists every field
 patch with its status (`applies`, `target-missing`, `field-missing`,
 `field-ambiguous`, or `stock-differs` with the pack's `current` value beside
-`expect`), under `alternateNames` every alternate-name patch (`id`,
-the record's `name`, `alternateName`, status `applies`,
-`target-missing` or `name-taken`) and, under `rulePatches`, every rule
-patch in order with its
+`expect`) and, under `rulePatches`, every rule patch in order with its
 `operation`, status (`applies`, `target-missing`, `no-match`, `ambiguous`,
 `present`) and the `matched` elements as XML, for example:
 
@@ -337,10 +327,10 @@ prerequisite lines that name a renamed record by its current name
 old name because the rules engine could not swap it safely (`unchanged`:
 ID, record name, line, old name, occurrences and resolved references;
 rules-engine `prerequisiteDisplayLines`). `campaign inspect` prints the version, `patches` (field
-patches), `alternateNames` and `rulePatches` counts. Legacy export drops patches of both kinds
+patches) and `rulePatches` counts. Legacy export drops patches of both kinds
 silently (the `D20CampaignSetting` block cannot express them) and legacy
 import creates none. The invite page's summary shows the counts ("Changed
-fields", "Alternate names", "Changed rules").
+fields", "Changed rules").
 
 ## Compatibility policy
 
