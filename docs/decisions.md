@@ -4585,9 +4585,9 @@ in a later pass): without the guard that build held Ritual Caster twice.
 
 ### D116 — Campaigns layer a DM's content and restrictions over the server's
 
-Status: accepted (2026-11-06, owner); in progress, built ahead of M9
-(owner: "You can build it now. I'm not strict on ordering."); roadmap M8,
-"Campaign slice".
+Status: implemented (2026-11-06); accepted the same day (owner), built
+ahead of M9 (owner: "You can build it now. I'm not strict on ordering.");
+roadmap M8, "Campaign slice".
 
 Owner's user story: "as the DM, I want to use the Pathfinder setting for my
 4e game. For players, the biggest change is that the list of deities
@@ -4640,7 +4640,9 @@ and it stops the browser following server revisions (D004 amendment).
   "Moradin" CountsAsDeity). The engine knows nothing of any setting. One
   deity may count as several, and a deity with no equivalent counts as none
   but still carries mapped domains. The requirement still reads "Moradin";
-  the builder explains it is met through Torag. The type is a modern
+  explaining that it is met through Torag is a follow-up (prerequisite
+  results carry only the clause text and status; CountsAsClass has no such
+  explanation either). The type is a modern
   extension: the old builder ignores it, so an exported character fails
   those prerequisites there (exported silently, below). Stock content uses it
   too: the seven "<Deity> (Forgotten Realms)" duplicates count as their
@@ -4657,3 +4659,27 @@ and it stops the browser following server revisions (D004 amendment).
   counts-as silently (no confirmation; this replaces the lossy-export note
   above). The Pathfinder campaign source is tracked in
   `content/campaigns/pathfinder/`; built `.4ecc` files are ignored.
+- **Implementation notes (2026-11-06).** The document, its codec and
+  limits, restriction resolution and `composeCampaignProfile` are
+  content-pack `campaign.ts` (`.4ecc`: gzip-optional JSON; 16 MiB encoded
+  and decoded, at most 10,000 house-rule records, 50,000 restricted IDs, 32
+  type rules and 8 MiB of legacy house-rule XML; identity is the campaign ID
+  plus content digest, the revision orders them). The legacy block is
+  legacy-dnd4e `campaign-setting.ts`; house-rule XML parsing is legacy-wotc
+  `house-rules.ts`, shared by `content-tool campaign build` and the browser.
+  Installed documents live in the existing IndexedDB `settings` store under
+  `campaign:<id>:<digest>` (browser-storage `campaign-repository.ts`, no
+  schema bump; backups carry them). The web app's per-character target and
+  materializer are `campaign-profile.ts`, the compose running in the content
+  worker, off the main thread; Settings → Campaigns is
+  `CampaignSettings.tsx`, the invite page `CampaignJoinPage.tsx`, legacy
+  import's join-or-create offer `imported-campaign.ts`. An invite link is
+  `<app>#/campaigns/join/<campaignId>`: it carries only the ID, and the
+  revision and digest come from the `campaigns` entry of
+  `runtime-config.json`, so the browser installs only the advertised,
+  digest-checked document. Creating a campaign from a legacy save parses its
+  `Houserules` in the browser, which D082 otherwise leaves to the content
+  tool, because it is a handful of records from a character file the browser
+  already reads, parsed once into the stored document
+  (`campaign-from-setting.ts`, a lazily loaded chunk). Follow-ups are listed
+  under the roadmap's Campaign slice.

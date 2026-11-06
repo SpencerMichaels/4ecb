@@ -271,6 +271,12 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   logical repositories for packs/profiles/characters/play-state/indexes;
   content packs are digest-verified before activation; migrations are
   restartable and never evict user-authored documents.
+- **Campaigns (D116)**: document/compose in content-pack `campaign.ts`,
+  legacy block in legacy-dnd4e `campaign-setting.ts`, storage in
+  browser-storage `campaign-repository.ts` (settings store), engine
+  `restrictedDefinitionIds`; web `campaign-profile.ts` (per-character
+  content target, composed in the content worker), `CampaignSettings.tsx`,
+  `CampaignJoinPage.tsx`, `imported-campaign.ts`.
 
 ### Web app routes (`apps/web`)
 

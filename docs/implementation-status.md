@@ -1,5 +1,39 @@
 # Implementation status
 
+## Campaign slice complete (2026-11-06)
+
+D116 is implemented and the roadmap's Campaign slice (M8, pulled ahead of
+M9) is done. A DM builds a campaign (`.4ecc`: house-rule overlay plus ID and
+type restrictions) with `content-tool campaign build`, shares the file or
+hosts it beside the private packs (`advertise-campaign`, invite link
+`#/campaigns/join/<id>`); players add it in Settings → Campaigns or from the
+invite page and put characters in it from Details, "New character in
+<campaign>" or a legacy save's campaign block. A campaign character's
+content is the active content plus the campaign layer, composed in the
+content worker; restricted choices and items are offered only under Show
+all, unselectable, and an existing restricted pick or holding is a
+house-rule issue; new server or campaign revisions arrive through the
+content-update issue. Legacy `.dnd4e` export writes the campaign as a
+`D20CampaignSetting`. The Pathfinder campaign source
+(`content/campaigns/pathfinder/`) is the first real campaign. The per-step
+entries below, from "Deity equivalents: CountsAsDeity" up to "Campaigns in
+legacy .dnd4e export and import", record each step's code and verification.
+The owner's walk-through is the Campaigns pass of
+`docs/visual-review-checklist.md`.
+
+Verification: `nix develop --command bash scripts/check.sh` and
+`pnpm parity:baseline` (results in this entry's commit message).
+
+Follow-ups (also in the roadmap's Campaign slice): the "met through Torag"
+prerequisite explanation; campaign filtering in the Inventory's right-click
+item-choice dialog (`ItemChoicePicker.tsx`); a possible double report of
+source-unentitled picks; ordinary profile activation still composing on
+the main thread; no garbage collection of materialized campaign packs; an
+owner skim of eight Pathfinder deity descriptions. Owner action outside the
+repo: homenet `apps/4ecb/pack.yml` must copy and keep
+`private-packs/campaigns/`. Seen in passing, unrelated: `pnpm audit:coverage`
+exits 1 on an Associate registry mismatch.
+
 ## Campaigns in legacy .dnd4e export and import (2026-11-06)
 
 D116 step 10. Export (`character-export.ts` `legacyCampaignSetting`): a

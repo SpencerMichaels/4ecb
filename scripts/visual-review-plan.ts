@@ -2092,6 +2092,33 @@ const general: GeneralSection[] = [
       ],
     ],
   },
+  {
+    title: "Campaigns",
+    steps:
+      "Build the Pathfinder (or synthetic) campaign with content-tool campaign build, import it in #/settings → Campaigns, and advertise it with content-tool advertise-campaign for the invite link; see the checklist's Pass 24 setup.",
+    items: [
+      [
+        "Settings → Campaigns: table, menu and remove",
+        "The empty table, an imported row, its right-click menu, the remove confirmation and the copied invite line.",
+      ],
+      [
+        "Invite page: join and new character",
+        "The invite link before and after Add campaign, New character in <campaign>, an unknown ID, and a narrow window.",
+      ],
+      [
+        "Pathfinder character: Details, deity, items and Shop",
+        "Details → Campaign, the Deity choice with Show all off and on, a restricted pick's and holding's issues, and the Shop.",
+      ],
+      [
+        "Content updates: new server and campaign revisions",
+        "The update dialog for a non-campaign character and for a campaign character after a second campaign revision.",
+      ],
+      [
+        "Legacy .dnd4e: campaign export and import",
+        "Export and re-import a campaign character with and without the campaign installed; an unknown restricted deity; Cancel.",
+      ],
+    ],
+  },
 ];
 
 export function reviewPlan(): ReviewPlan {

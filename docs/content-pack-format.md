@@ -128,6 +128,12 @@ keeps its digest. Restricted records stay in the pack; the rules engine
 declines to offer them. A materialized campaign profile is never a base layer
 of another.
 
+`pnpm content-tool campaign build` writes a `.4ecc` from a `campaign.json`
+manifest and house-rule XML, `campaign inspect` prints one, and
+`advertise-campaign` hosts it (`docs/public-deployment.md`); the browser stores
+installed documents as described in `docs/architecture.md` (Browser
+persistence).
+
 ## Compatibility policy
 
 Readers reject unsupported format versions. Any future incompatible shape gets

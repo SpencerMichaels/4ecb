@@ -81,4 +81,8 @@ diagnostic, verbatim `Houserules`, unknown children kept with a diagnostic)
 and `campaignSettingXml` (the legacy `ID_Out` form). `exportEditedDnd4e`
 takes an optional `campaignSetting` that replaces a save's setting; without
 it the fragment is preserved byte-exact. The native campaign document is D116
-(`docs/decisions.md`).
+(`docs/decisions.md`, format in `docs/content-pack-format.md`); the web app
+writes a campaign character's setting in `apps/web/src/character-export.ts`
+and, on import, joins or creates a campaign from a save's setting
+(`apps/web/src/imported-campaign.ts`, `campaign-from-setting.ts`; see
+`docs/character-import-and-sheets.md`).

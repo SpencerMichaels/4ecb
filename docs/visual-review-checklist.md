@@ -42,6 +42,11 @@ reports 38 owner rows. What moved to code:
 
 Every automated check passes (2026-11-04).
 
+**Campaigns (2026-11-06).** Pass 24 adds five walk-through entries for
+D116, folded from the 35 checks of the campaign steps; they need a built
+campaign rather than a review character, so the review page lists them
+under its general sections.
+
 ## How to use this list
 
 **Check every entry in light and dark theme, at 100% and 140% zoom.** For
@@ -777,6 +782,115 @@ These need the deployed app, an installed PWA, or your own content.
     and "Level 7 Improved Disruptive Shot — Use three times per encounter".
   - **Wrong if:** "Disruptive Shot" or "Level 3 Improved Disruptive Shot"
     rows show, or a note ends in "@…".
+
+## Pass 24: Campaigns (D116)
+
+Added 2026-11-06, not yet walked. The campaign UI's labels, states and
+outcomes are checked by its unit tests (`CampaignSettings`,
+`campaign-settings-ui`, `CampaignJoinPage`, `campaign-join-ui`,
+`CharacterCampaignField`, `content-update`, `imported-campaign`,
+`builder-diagnostics`); these entries are the layout and the end-to-end
+flow. No review character covers them.
+
+**Setup.** Build the Pathfinder campaign:
+`pnpm content-tool campaign build --manifest content/campaigns/pathfinder/campaign.json --output tmp/campaigns/pathfinder.4ecc --against tmp/content/full-local.4ecp`
+(or the synthetic one from `fixtures/campaigns/synthetic/campaign.json`).
+For the invite entries, also host it on a local container:
+`pnpm content-tool advertise-campaign tmp/campaigns/pathfinder.4ecc --out-dir deploy`
+and restart it (`docs/public-deployment.md`). For a second revision, bump
+`revision` in a copy of `campaign.json` (restrict another deity, e.g.
+Moradin, or an item a character holds), build and import or advertise it.
+
+- [ ] **Settings → Campaigns: table, menu and remove.**
+  - **Where:** `#/settings` in a browser with no campaigns, then Import
+    campaign… with the built `.4ecc`; right-click its row (Export file,
+    Copy invite link, Remove), with and without a hosted copy and with a
+    character in the campaign. Also import a `.4ecp` or a corrupted file.
+  - **Expect:** the Campaigns panel under Game content spans both columns;
+    the empty table keeps its headers with a muted "No campaigns in this
+    browser." row and Import campaign… below. A row shows the bold name
+    with the muted ID under it; Revision and Characters narrow and
+    right-aligned. The menu's disabled items are greyed with a hover
+    reason; Esc closes only the menu. The inline remove confirmation and
+    the "Copied the invite link…" line sit under the button, a long URL
+    wrapping; a bad file is a "Couldn't import <file>" toast.
+  - **Wrong if:** the table or the button is hidden when empty, the menu
+    or confirmation overlaps the table, Esc also leaves the page, or the
+    URL overflows.
+- [ ] **Invite page: join and new character.**
+  - **Where:** the copied invite link in a browser without the campaign:
+    Add campaign, then New character in <campaign>; reopen the link; then
+    `#/campaigns/join/nope`. Once at a narrow width.
+  - **Expect:** "Join <name>?" with its explanation and a two-column
+    summary (Revision, House rules, Deity "Only the campaign's own", Not
+    offered), Add campaign and Cancel, no second spinner after the details
+    load. After adding, "Added <name> to this browser." with the New
+    character button; "Creating character…" keeps the page responsive and
+    lands on the Build tab. Reopened, "<name> is in this browser." and
+    nothing is downloaded. The unknown ID explains itself with working
+    Settings → Campaigns and Back to characters links. Narrow: 1rem
+    gutters, no horizontal scroll, the summary still two columns.
+  - **Wrong if:** a "Not now"-style button, a layout jump after loading,
+    or a frozen page while creating.
+- [ ] **Pathfinder character: Details, deity, items and Shop.**
+  - **Where:** a character in the campaign: Details → Campaign select;
+    Build → Deity with Show all off and on; a character that worships
+    Moradin (or holds a restricted item) moved into the campaign, its
+    house-rule issue's Review; the Shop's All items, a category and a
+    search; then a character outside any campaign. With no campaigns
+    installed, the Details select once more.
+  - **Expect:** the Campaign select matches the Player/Company inline
+    fields with a muted "Campaign" prefix; with no campaigns it offers only
+    None with a hint and Settings link below. Choosing a campaign asks
+    "Move <name> into <campaign>?" and None asks "Take <name> out of its
+    campaign?"; Cancel leaves the select unchanged. Show all off lists only
+    the campaign's 62 deities; on, the stock ones are greyed and
+    unselectable with "Not used in this campaign". The worshipper has one
+    issue, "Moradin is not used in this campaign.", whose Review opens the
+    Deity choice; a restricted held item stays held, its issue's Review
+    selecting it in the Inventory. The Shop never lists a restricted item,
+    nor offers a restricted base weapon in the purchase dialog. The
+    outside character's Deity list and Shop are unchanged.
+  - **Wrong if:** a restricted option is selectable or worded as an
+    "allowed sources" problem, an issue is reported twice, or greyed rows
+    are illegible at 140% or in dark theme.
+- [ ] **Content updates: new server and campaign revisions.**
+  - **Where:** a non-campaign character after a server content update; a
+    campaign character's editor left open while the second campaign
+    revision is imported or fetched; its update badge → Review, then
+    Update; reopen the dialog later. (A character whose campaign isn't
+    installed staying on its pinned pack with no badge is checked by
+    `campaign-profile.test.ts`.)
+  - **Expect:** the non-campaign dialog reads as before, with no campaign
+    wording. The campaign badge appears without a reload; Review shows
+    "Preparing <campaign>" while the page stays responsive (scroll, close),
+    then the progress; the intro names "the current game content with
+    <campaign> (revision N)". The "Not used in <campaign>" section lists
+    e.g. "Moradin (deity)", styled like "Will be removed"; after Update
+    those are house-rule issues and earlier restrictions aren't repeated.
+    Reopening skips Preparing almost at once.
+  - **Wrong if:** the page freezes while preparing, the badge needs a
+    reload, or the new section looks different from the dialog's others.
+- [ ] **Legacy .dnd4e: campaign export and import.**
+  - **Where:** Export a campaign character and a non-campaign one from the
+    library; import the campaign one with the campaign installed, then in
+    a browser without it; a hand-edited save restricting an unknown
+    `<RulesElement name="Lost God" type="Deity"/>`; an ordinary sample save.
+    Cancel or Esc each dialog once. In the old builder, if available, open
+    the exported campaign character.
+  - **Expect:** with the campaign installed, "Put <name> in <campaign>?"
+    (Cancel, Put in), 34rem wide and laid out like the content-update
+    dialog; Put in goes on to the move review (Preparing…, what the
+    campaign doesn't use), then the library row and Details show the
+    campaign. Without it, "Create a campaign for <name>?" with record
+    counts, "Creating campaign…", the move review, and the campaign in
+    Settings. The unresolved list ("Lost God (Deity)", "and N more") wraps
+    cleanly. Cancel or Esc leaves the character in the library outside any
+    campaign with no leftover dialog or focus trap; the ordinary save shows
+    no campaign dialog. The old builder offers the campaign's deities and
+    hides the stock ones.
+  - **Wrong if:** the dialogs differ in width or button order from the
+    content-update dialog, or focus stays trapped after closing.
 
 ## Decisions
 

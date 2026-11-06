@@ -316,6 +316,14 @@ alone follows a newly advertised server revision (D004). Character
 bindings retain both the materialized ID/digest and ordered source ID/digest
 list, so later downloads cannot alter an existing evaluation.
 
+`campaignRestrictions` exists only on a campaign profile (D116): the
+materialized pack's optional `campaign` field, `{campaignId, revision,
+contentDigest, restrictedIds}`, the campaign's ID and type rules resolved
+against the composed records (type rules re-resolved on every recompose, so
+later server content is covered). It is part of the pack digest only when
+present, so ordinary packs keep their digests. The rules worker passes
+`restrictedIds` to the engine as `EvaluationInput.restrictedDefinitionIds`.
+
 A campaign character's profile (D116) is the browser's active profile layers
 (personal packs included) plus the campaign's house-rule layer, materialized
 by `ContentPackRepository.materializeCampaignProfile` with origin "profile"

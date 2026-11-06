@@ -926,8 +926,8 @@ Make supported customization convenient rather than file-format-only.
 
 ### Campaign slice (D116)
 
-**Status (2026-11-06): in progress, ahead of M9 (owner: "not strict on
-ordering").** A
+**Status (2026-11-06): done, ahead of M9 (owner: "not strict on
+ordering"); D116 implemented, `docs/implementation-status.md`.** A
 narrowed, pulled-forward part of M8: campaign documents (overlay content plus
 ID and type restrictions), per-character campaign membership with the
 profile recomposed over server revisions, file import/export and a
@@ -936,7 +936,32 @@ equivalents for `worship` prerequisites (CountsAsDeity in the engine and
 for the Forgotten Realms duplicates done 2026-11-06), legacy `D20CampaignSetting`
 export/import, and a Pathfinder campaign (Inner Sea major and other deities,
 mapped alignments, domains and equivalents) as the first real campaign. The
-form editor stays in M8.
+form editor stays in M8. The owner's walk-through is the visual-review
+checklist's Campaigns pass.
+
+Follow-ups (not done):
+
+- Explain a `worship` prerequisite met through an equivalent ("met through
+  Torag"): prerequisite results carry only the clause text and status
+  (CountsAsClass has no explanation either).
+- The Inventory's right-click item-choice dialog (`ItemChoicePicker.tsx`)
+  doesn't filter campaign-restricted choices; it needs "keep the current
+  pick, block the rest".
+- A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
+  and `choice.ineligible`), as the campaign one was before `e0d89803`.
+- Ordinary profile activation (Settings' Switch content, the App's
+  advertised-content switch) still composes on the main thread (about 3 s on
+  the real pack); it could use the content-worker request the campaign
+  compose uses.
+- Materialized campaign profile packs are never garbage-collected (about
+  60–75 MB per campaign revision and base revision pair), and a campaign's
+  revisions are removed only all at once.
+- Owner skim of some Pathfinder deity descriptions: Easivra, Erecura,
+  Grundinnar, Kitumu, Alazhra, Feronia, Lissala, Nivi Rhombodazzle.
+
+Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
+keep `private-packs/campaigns/` so hosted campaigns and invite links work on
+the homelab.
 
 ## M9 — 1.0 stabilization
 
