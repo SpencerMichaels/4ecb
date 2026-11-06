@@ -296,7 +296,12 @@ patch with its status (`applies`, `target-missing`, `field-missing`,
 ```
 
 It warns on each patch that would not apply: the drift guard to run against
-each new server pack. `campaign inspect` prints the version, `patches` (field
+each new server pack. Under `prerequisiteRenames` it counts the displayed
+prerequisite lines that name a renamed record by its current name
+(`renamedLines`) and lists, with a warning each, every line that keeps an
+old name because the rules engine could not swap it safely (`unchanged`:
+ID, record name, line, old name, occurrences and resolved references;
+rules-engine `prerequisiteDisplayLines`). `campaign inspect` prints the version, `patches` (field
 patches) and `rulePatches` counts. Legacy export drops patches of both kinds
 silently (the `D20CampaignSetting` block cannot express them) and legacy
 import creates none. The invite page's summary shows the counts ("Changed

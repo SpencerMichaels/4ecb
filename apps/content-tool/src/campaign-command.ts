@@ -6,11 +6,12 @@ import { readFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { stderr } from "node:process";
 
-import type { ParsedContentSource } from "@4ecb/content-domain";
+import type { ContentEntity, ParsedContentSource } from "@4ecb/content-domain";
 import {
   buildCampaign,
   campaignPatchOutcomeMessage,
   campaignPatchOutcomes,
+  applyCampaignPatches,
   campaignPatches,
   campaignRuleOperationShapeErrors,
   campaignRulePatchOutcomeMessage,
@@ -36,6 +37,7 @@ import {
   houseRulesDocument,
   parseHouseRules,
 } from "@4ecb/legacy-wotc";
+import { prerequisiteDisplayLines } from "@4ecb/rules-engine";
 
 import {
   gzip,
@@ -228,7 +230,26 @@ export interface CampaignAgainstReport {
   readonly patches: readonly CampaignPatchReport[];
   /** Each rule patch against the pack, in the order they apply. */
   readonly rulePatches: readonly CampaignRulePatchReport[];
+  /** Displayed prerequisite lines naming renamed records (D116, record
+   *  aliases), over the patched records. */
+  readonly prerequisiteRenames: PrerequisiteRenameReport;
   readonly warnings: readonly string[];
+}
+
+export interface PrerequisiteRenameReport {
+  /** Lines that show a renamed record's current name. */
+  readonly renamedLines: number;
+  /** Lines that keep an old name, because it occurs more often than the
+   *  rule text resolves it to its record (or resolves it to several). */
+  readonly unchanged: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly line: string;
+    /** The old name (an alias) the line keeps. */
+    readonly alias: string;
+    readonly occurrences: number;
+    readonly references: number;
+  }[];
 }
 
 export interface CampaignRulePatchReport {
@@ -349,6 +370,16 @@ export function campaignAgainstPack(
   for (const outcome of ruleOutcomes)
     if (outcome.status !== "applies")
       warnings.push(`${campaignRulePatchOutcomeMessage(outcome)} (${packId})`);
+  const prerequisiteRenames = prerequisiteRenameReport(
+    runCampaignRulePatches(
+      applyCampaignPatches(composed, campaignPatches(campaign)).entities,
+      campaignRulePatches(campaign),
+    ).entities,
+  );
+  for (const { id, name, line, alias } of prerequisiteRenames.unchanged)
+    warnings.push(
+      `Prerequisite line of ${id} ("${name}") keeps the old name "${alias}": ${JSON.stringify(line)}`,
+    );
   return {
     packId,
     contentDigest,
@@ -357,7 +388,31 @@ export function campaignAgainstPack(
     overriddenIds,
     patches: patchOutcomes.map(patchReport),
     rulePatches: ruleOutcomes.map(rulePatchReport),
+    prerequisiteRenames,
     warnings,
+  };
+}
+
+/**
+ * What the rules engine makes of the composed records' prerequisite lines:
+ * how many name a renamed record by its current name, and each line that
+ * keeps an old name because swapping it would not be safe.
+ */
+function prerequisiteRenameReport(
+  entities: readonly ContentEntity[],
+): PrerequisiteRenameReport {
+  const { lines, diagnostics } = prerequisiteDisplayLines(entities);
+  const names = new Map(entities.map((entity) => [entity.id, entity.name]));
+  return {
+    renamedLines: Object.keys(lines).length,
+    unchanged: diagnostics.map((diagnostic) => ({
+      id: diagnostic.entityId,
+      name: names.get(diagnostic.entityId) ?? diagnostic.entityId,
+      line: diagnostic.line,
+      alias: diagnostic.name,
+      occurrences: diagnostic.occurrences,
+      references: diagnostic.references,
+    })),
   };
 }
 

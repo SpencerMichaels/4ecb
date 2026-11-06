@@ -434,7 +434,63 @@ describe("campaign build", () => {
     expect(report.warnings).toEqual([
       'Rule patch ID_FEAT_FEY: remove <grant type="Language" /> not applied: ID_FEAT_FEY has no matching rule element (stock)',
     ]);
+    expect(report.prerequisiteRenames).toEqual({
+      renamedLines: 0,
+      unchanged: [],
+    });
     expect(campaign.legacyHouseRulesXml).toBe("");
+  });
+
+  it("lists prerequisite lines that keep a renamed record's old name", async () => {
+    const pack = await buildContentPack(
+      parseD20Rules(
+        rules(
+          [
+            '<RulesElement internal-id="ID_FMP_RACE_26" name="Shadar-kai" type="Race" />',
+            '<RulesElement internal-id="ID_FEAT_GHOSTLY" name="Ghostly Vengeance" type="Feat"><Prereqs>11th level, Shadar-kai</Prereqs><print-prereqs>11th level, shadar-kai</print-prereqs></RulesElement>',
+            '<RulesElement internal-id="ID_FEAT_TWICE" name="Shadow Twin" type="Feat"><Prereqs>Shadar-kai</Prereqs><print-prereqs>Shadar-kai; you must look like a shadar-kai elder</print-prereqs></RulesElement>',
+          ].join("\n"),
+        ),
+        "stock.xml",
+      ),
+      { packId: "stock", name: "Stock" },
+    );
+    const xml = rules("");
+    const campaign = await buildCampaign(
+      {
+        campaignId: "test-setting",
+        name: "Test Setting",
+        revision: 1,
+        restrictions: { ids: [], types: [] },
+        patches: [
+          {
+            id: "ID_FMP_RACE_26",
+            field: "name",
+            expect: "Shadar-kai",
+            value: "Fetchling",
+          },
+        ],
+      },
+      parseHouseRules(xml, "house-rules.xml"),
+      houseRulesChildrenXml(xml),
+    );
+    const report = campaignAgainstPack(campaign, pack);
+    expect(report.prerequisiteRenames).toEqual({
+      renamedLines: 1,
+      unchanged: [
+        {
+          id: "ID_FEAT_TWICE",
+          name: "Shadow Twin",
+          line: "Shadar-kai; you must look like a shadar-kai elder",
+          alias: "Shadar-kai",
+          occurrences: 2,
+          references: 1,
+        },
+      ],
+    });
+    expect(report.warnings).toEqual([
+      'Prerequisite line of ID_FEAT_TWICE ("Shadow Twin") keeps the old name "Shadar-kai": "Shadar-kai; you must look like a shadar-kai elder"',
+    ]);
   });
 });
 
