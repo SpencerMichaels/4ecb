@@ -14,9 +14,9 @@ content's first mention of each pantheon, cached per entity map
 field, after Alignment. Stock content: `content/corrections/9I-deity-pantheons.part`
 (generated from the pack) gives all 135 stock deities a Pantheon: Core 20,
 Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (none missing on the
-rebuilt full pack). Pathfinder campaign revision 2: Inner Sea major deities
-20, Other deities 28, Dwarven 9, Elven 3, Eldest 1, Archdevils 1
-(`tmp/campaigns/pathfinder.4ecc` rebuilt against the full pack, 0
+rebuilt full pack). Pathfinder campaign revision 3: Inner Sea major deities
+20, Other deities 28, Elven 3, Dwarven 9, Eldest 1, Archdevils 1, in that
+band order (`tmp/campaigns/pathfinder.4ecc` rebuilt against the full pack, 0
 warnings; not advertised). Verification: synthetic
 `CandidateSelectionTable.deity-bands.test.tsx` (grouping, order, fallback
 band, collapse, filtering across bands, Show all under a campaign, card

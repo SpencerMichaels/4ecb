@@ -787,35 +787,6 @@
     The Guiding Hand, elven goddess of architecture, art and twilight. She inspires graceful works that blend with the land.
   </RulesElement>
 
-  <!-- Chaotic neutral -->
-  <RulesElement name="The Lantern King" type="Deity" internal-id="ID_4ECB_PF_DEITY_LANTERN_KING" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
-    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
-    <specific name="Alignment"> Unaligned </specific>
-    <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_17 </specific>
-    <specific name="Pantheon"> Eldest </specific>
-    <rules>
-      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
-      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
-      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
-      <grant name="ID_4ECB_PF_COUNTSASDEITY_TRAVELER" type="CountsAsDeity" />
-    </rules>
-    An Eldest of the First World, the trickster of laughter and transformation. He delights in pranks, mischief and the chaos they cause.
-  </RulesElement>
-
-  <!-- Lawful evil -->
-  <RulesElement name="Moloch" type="Deity" internal-id="ID_4ECB_PF_DEITY_MOLOCH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
-    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
-    <specific name="Alignment"> Evil </specific>
-    <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_29 </specific>
-    <specific name="Pantheon"> Archdevils </specific>
-    <rules>
-      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
-      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
-      <grant name="ID_4ECB_PF_COUNTSASDEITY_BANE" type="CountsAsDeity" />
-    </rules>
-    The Ruler of the Sixth, an archdevil of fire, obedience and war. He commands Hell's armies and demands absolute discipline.
-  </RulesElement>
-
   <!-- Lawful good -->
   <RulesElement name="Folgrit" type="Deity" internal-id="ID_4ECB_PF_DEITY_FOLGRIT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
     <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
@@ -946,6 +917,35 @@
       <grant name="ID_FMP_DOMAIN_11" type="Domain" />
     </rules>
     The Mighty, dwarven god of courage, physical strength and defense. He stands as the first line of protection for his people.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="The Lantern King" type="Deity" internal-id="ID_4ECB_PF_DEITY_LANTERN_KING" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_17 </specific>
+    <specific name="Pantheon"> Eldest </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TRAVELER" type="CountsAsDeity" />
+    </rules>
+    An Eldest of the First World, the trickster of laughter and transformation. He delights in pranks, mischief and the chaos they cause.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Moloch" type="Deity" internal-id="ID_4ECB_PF_DEITY_MOLOCH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_29 </specific>
+    <specific name="Pantheon"> Archdevils </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BANE" type="CountsAsDeity" />
+    </rules>
+    The Ruler of the Sixth, an archdevil of fire, obedience and war. He commands Hell's armies and demands absolute discipline.
   </RulesElement>
 
   <!-- Equivalents granted above, one per 4e deity name. -->
