@@ -6,12 +6,12 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-import { PWA_ICONS } from "./src/pwa-icons";
 import { themeBackgrounds } from "./src/theme-tokens";
+import { WEB_MANIFEST, WEB_MANIFEST_FILENAME } from "./src/web-manifest";
 
 /** Page backgrounds from the theme definitions, the one source for the
  *  browser/installed-app chrome colors (theme.ts keeps them in sync at run
- *  time). */
+ *  time; the manifest has none, see web-manifest.ts). */
 const backgrounds = themeBackgrounds(
   readFileSync(join(import.meta.dirname, "src/styles/01-base.css"), "utf8"),
 );
@@ -102,32 +102,42 @@ export default defineConfig({
           injectTo: "head" as const,
         })),
     },
+    {
+      // The installed app's manifest (web-manifest.ts). vite-plugin-pwa's own
+      // manifest option fills a missing theme_color/background_color with its
+      // defaults, and this one must have neither.
+      name: "web-manifest",
+      apply: "build",
+      transformIndexHtml: () => [
+        {
+          tag: "link",
+          attrs: { rel: "manifest", href: `/${WEB_MANIFEST_FILENAME}` },
+          injectTo: "head" as const,
+        },
+      ],
+      generateBundle() {
+        this.emitFile({
+          type: "asset",
+          fileName: WEB_MANIFEST_FILENAME,
+          source: JSON.stringify(WEB_MANIFEST),
+        });
+      },
+    },
     developmentDeployDirectory(),
     react(),
     VitePWA({
       injectRegister: "auto",
       registerType: "prompt",
-      // globPatterns already precaches public/icons/ and icon.svg; the plugin's
-      // own manifest-icon entries would list them twice.
-      includeManifestIcons: false,
-      manifest: {
-        name: "4E Character Builder",
-        short_name: "4E Builder",
-        description: "Offline-first D&D 4E character builder",
-        // Manifest colors cannot follow the theme: light is the default, and
-        // the page's theme-color meta overrides it once loaded.
-        theme_color: backgrounds.light,
-        background_color: backgrounds.light,
-        display: "standalone",
-        icons: [...PWA_ICONS],
-      },
+      // The "web-manifest" plugin above emits the manifest; globPatterns
+      // precaches it with public/icons/ and icon.svg.
+      manifest: false,
       workbox: {
         // Routing lives in the hash, so "/" is the app's only document URL. Serve
         // the cached app for that alone; any other path (e.g. a hosting proxy's
         // /enter/<invite> link, which sets a cookie and redirects to "/") must reach
         // the server, or the app would boot at that path and keep it in the URL.
         navigateFallbackAllowlist: [/^\/$/],
-        globPatterns: ["**/*.{css,html,js,json,png,svg,woff2}"],
+        globPatterns: ["**/*.{css,html,js,json,png,svg,webmanifest,woff2}"],
         globIgnores: ["runtime-config.json"],
         runtimeCaching: [
           {

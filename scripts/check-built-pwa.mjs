@@ -39,7 +39,9 @@ console.log(
 );
 
 // The installed app's title bar follows the page theme: the first paint carries
-// one theme-color per prefers-color-scheme, light matching the manifest default.
+// one theme-color per prefers-color-scheme, and the manifest has no colors, which
+// would pin Chromium's title bar to one scheme before the page loads
+// (apps/web/src/web-manifest.ts).
 const manifest = JSON.parse(
   await readFile("apps/web/dist/manifest.webmanifest", "utf8"),
 );
@@ -52,8 +54,13 @@ const themeColors = Object.fromEntries(
 );
 if (!themeColors.light || !themeColors.dark)
   throw new Error("index.html needs light and dark theme-color metas");
-if (themeColors.light !== manifest.theme_color)
-  throw new Error("manifest theme_color must match the light theme-color");
+for (const member of ["theme_color", "background_color"])
+  if (member in manifest)
+    throw new Error(`manifest must not set ${member} (see web-manifest.ts)`);
+if (!html.includes('<link rel="manifest" href="/manifest.webmanifest">'))
+  throw new Error("index.html must link the manifest");
+if (!precacheManifest.includes("manifest.webmanifest"))
+  throw new Error("manifest.webmanifest must be precached");
 console.log("theme-color follows prefers-color-scheme on first paint.");
 
 // Chrome on desktop installs without an icon unless the manifest has PNGs; every

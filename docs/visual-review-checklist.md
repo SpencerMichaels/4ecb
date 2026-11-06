@@ -579,19 +579,27 @@ Library → New; each entry needs a fresh character.
 
 These need the deployed app, an installed PWA, or your own content.
 
-- [x] **Installed app: title bar and icon.**
-  - **Where:** in Chrome on macOS, uninstall and reinstall the PWA (address
-    bar install icon) and open it. Settings → Display → theme System, Light
-    and Dark in turn, and under System switch macOS between Light and Dark.
-    Then the Dock while it runs, Launchpad and Cmd-Tab.
+- [ ] **Installed app: title bar and icon.**
+  - **Where:** in Chrome on macOS, first check the library shows a build
+    commit from 2026-11-05 or later (accept **Reload and update** if
+    offered), then uninstall and reinstall the PWA (address bar install
+    icon; the manifest's colors only change on reinstall) and open it.
+    Settings → Display → theme System, Light and Dark in turn, and under
+    System switch macOS between Light and Dark. Then the Dock while it runs,
+    Launchpad and Cmd-Tab. Repeat the title bar part in Safari (File → Add
+    to Dock).
   - **Expect:** the title bar matches the page background (dark navy in
-    dark mode, light grey-blue in light), switching at once, dark from the
-    first frame when opened in dark mode. The "4E" tile sharp, the size of
+    dark mode, light grey-blue in light), switching at once. At launch,
+    before the page loads, Chrome may briefly show its own default frame
+    (dark grey in dark mode), never white. The "4E" tile sharp, the size of
     other app icons, with the 4's left corner and the E's right edge
     visible.
   - **Wrong if:** the title bar stays white or cream in dark mode, lags a
     reload behind, or ignores the macOS switch; the icon is generic, blank,
-    blurry, cropped by the macOS mask, or sits in a white square.
+    blurry, cropped by the macOS mask, or sits in a white square. If the
+    bar stays white, note the browser and the app window's DevTools
+    (Cmd-Opt-I) Console result of
+    `document.querySelector('meta[name=theme-color]')?.content`.
 - [x] **Browser tab: favicon.**
   - **Where:** the app in a normal Chrome tab with the tab strip light (macOS
     Light) and dark (macOS Dark); hard-reload once (Cmd-Shift-R).

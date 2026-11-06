@@ -2,7 +2,7 @@
  * The page background of each theme, read from the theme definitions in
  * `styles/01-base.css` (`--background` on `:root` and on
  * `:root[data-theme="dark"]`), so the browser/installed-app chrome
- * (`<meta name="theme-color">`, the manifest) matches the page without a
+ * (`<meta name="theme-color">`) matches the page without a
  * second copy of the colors. DOM-free: vite.config.ts uses it at build time.
  */
 export interface ThemeBackgrounds {

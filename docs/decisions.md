@@ -31,6 +31,22 @@ and browser View target desktop/tablet. Beyond parity, Play first establishes a
 desktop/tablet sheet-shaped interaction before a separate purpose-built phone
 surface adapts the same state and commands.
 
+Amended 2026-11-05: the installed app's title bar follows the page theme only
+through the page's `theme-color` meta, so the web manifest sets no
+`theme_color` or `background_color`. A manifest holds one color for every
+color scheme: Chromium parses no dark-mode override (its `user_preferences`
+experiment is obsolete; the spec's `color_scheme_dark`, merged April 2026, is
+not implemented). Chromium desktop, macOS included, colors an app window from
+the page's meta, then the manifest `theme_color`, then a shade of the page or
+manifest background, else its default frame, which follows Chrome's own
+light/dark mode; a light manifest color therefore showed a light bar at every
+launch and wherever the page's meta was not in effect. `index.html` keeps one
+meta per `prefers-color-scheme` for the first paint and Safari's Add to Dock;
+`theme.ts` `syncThemeColor` then tracks the Display setting. The manifest is
+`src/web-manifest.ts`, emitted by `vite.config.ts` rather than
+vite-plugin-pwa, which fills missing colors with its own defaults. Installed
+copies keep the old manifest colors until reinstalled.
+
 ### D003 — Normalized native model with legacy adapters
 
 `.dnd4e`, `.dndcamp`, WotC indexes/containers, and CBLoader formats are
