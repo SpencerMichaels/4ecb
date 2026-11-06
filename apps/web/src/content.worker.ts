@@ -1,23 +1,38 @@
 /// <reference lib="webworker" />
 
+import { ContentPackRepository } from "@4ecb/browser-storage";
 import {
   decodeAndValidateContentPackForStorage,
   storeAlreadyValidatedContentPack,
 } from "@4ecb/browser-storage/validated-pack-storage";
+import type { CampaignDocument } from "@4ecb/content-pack";
 
 import type {
-  ContentImportRequest,
+  ContentWorkerRequest,
   ImportPackResponse,
+  MaterializeCampaignProfileResponse,
 } from "./worker-messages";
+
+// Heavy pack work (decode, validate, compose, encode, store) runs here so the
+// page never freezes on a large pack.
 
 const worker = self as DedicatedWorkerGlobalScope;
 
-function respond(message: ImportPackResponse): void {
+function respond(
+  message: ImportPackResponse | MaterializeCampaignProfileResponse,
+): void {
   worker.postMessage(message);
 }
 
-worker.onmessage = (event: MessageEvent<ContentImportRequest>) => {
-  void importPack(event.data.buffer);
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+worker.onmessage = (event: MessageEvent<ContentWorkerRequest>) => {
+  const request = event.data;
+  if (request.type === "materialize-campaign-profile")
+    void materializeCampaignProfile(request.baseLayerPackIds, request.campaign);
+  else void importPack(request.buffer);
 };
 
 async function importPack(buffer: ArrayBuffer): Promise<void> {
@@ -32,9 +47,22 @@ async function importPack(buffer: ArrayBuffer): Promise<void> {
     const manifest = await storeAlreadyValidatedContentPack(validated);
     respond({ type: "complete", manifest });
   } catch (error: unknown) {
-    respond({
-      type: "error",
-      message: error instanceof Error ? error.message : String(error),
-    });
+    respond({ type: "error", message: errorMessage(error) });
+  }
+}
+
+async function materializeCampaignProfile(
+  baseLayerPackIds: readonly string[],
+  campaign: CampaignDocument,
+): Promise<void> {
+  try {
+    const definition =
+      await new ContentPackRepository().materializeCampaignProfile(
+        baseLayerPackIds,
+        campaign,
+      );
+    respond({ type: "campaign-profile", definition });
+  } catch (error: unknown) {
+    respond({ type: "error", message: errorMessage(error) });
   }
 }

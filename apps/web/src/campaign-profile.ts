@@ -3,7 +3,8 @@
 // follows the active content's layers plus the newest installed revision of
 // its campaign. The target's identity is known without composing anything,
 // so the content-update issue can be raised cheaply; the campaign profile is
-// composed (or its stored copy reused) only when the update is reviewed.
+// composed (or its stored copy reused) only when the update is reviewed,
+// and the compose runs in the content worker.
 
 import {
   ContentPackRepository,
@@ -15,6 +16,7 @@ import {
 import type { CharacterProfileBinding } from "@4ecb/character-domain";
 import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
 
+import { composeCampaignProfileInWorker } from "./content-worker-client";
 import { contentProfileMatchesRevision } from "./profile-migration";
 
 /** Dispatched on `window` after campaigns are installed or removed, so open
@@ -77,8 +79,25 @@ export function activeProfileBinding(
   };
 }
 
+/**
+ * The materializer the app uses: the stored campaign profile when one exists
+ * (a manifest lookup), else a compose in the content worker. The page never
+ * composes a pack itself.
+ */
+export function campaignProfileMaterializer(
+  repository: Pick<
+    ContentPackRepository,
+    "storedCampaignProfile"
+  > = new ContentPackRepository(),
+  composeInWorker: CampaignProfileMaterializer = composeCampaignProfileInWorker,
+): CampaignProfileMaterializer {
+  return async (ids, campaign) =>
+    (await repository.storedCampaignProfile(ids, campaign)) ??
+    composeInWorker(ids, campaign);
+}
+
 const defaultMaterializer: CampaignProfileMaterializer = (ids, campaign) =>
-  new ContentPackRepository().materializeCampaignProfile(ids, campaign);
+  campaignProfileMaterializer()(ids, campaign);
 
 /** The active content's source layers: the active profile's, or the active
  *  pack itself when no composed profile is active. */

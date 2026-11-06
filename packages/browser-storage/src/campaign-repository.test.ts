@@ -230,7 +230,14 @@ describe("ContentPackRepository.materializeCampaignProfile", () => {
     await packs.activate(base.manifest.packId);
     const document = await campaign();
 
+    // Nothing stored yet: the cheap lookup finds nothing.
+    expect(
+      await packs.storedCampaignProfile(["base"], document),
+    ).toBeUndefined();
     const profile = await packs.materializeCampaignProfile(["base"], document);
+    expect(await packs.storedCampaignProfile(["base"], document)).toEqual(
+      profile,
+    );
     expect(profile).toMatchObject({
       profileId: "campaign:synthetic-setting",
       name: "Synthetic Setting",

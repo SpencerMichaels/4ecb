@@ -45,10 +45,20 @@ character's campaign revisions (re-read on the window event
 the update issue against the target. A campaign with no installed revision
 leaves the character on its pinned pack silently (nothing to do that keeps
 it in its campaign); with its pinned pack missing too, the not-installed
-issue points to Settings. Known limit: composing a campaign profile runs on
-the main thread when the dialog opens. Verification:
-`campaign-profile.test.ts`, `content-update.test.tsx`,
-`campaign-restrictions.test.ts`; `pnpm test`, `pnpm typecheck`.
+issue points to Settings. The compose never runs on the page:
+`campaignProfileMaterializer` looks up the stored pack
+(`ContentPackRepository.storedCampaignProfile`, manifests only) and
+otherwise sends a `materialize-campaign-profile` request to the content
+worker (`content.worker.ts`, the pack-import worker;
+`content-worker-client.ts`), which composes, validates, encodes and stores
+it; the dialog shows "Preparing <campaign>" meanwhile. Measured outside the
+browser on the full local pack plus the Pathfinder campaign (38,493
+records, 74.7 MB encoded): about 0.8 s decode, 0.9 s compose, 0.8 s
+validate and 0.7 s encode, so roughly 3 s plus IndexedDB on first open,
+then a lookup. Verification: `campaign-profile.test.ts`,
+`content-update.test.tsx`, `campaign-restrictions.test.ts`,
+`content-worker-client.test.ts`, `ContentUpdateDialog.prepare.test.tsx`,
+`campaign-repository.test.ts`; `pnpm test`, `pnpm typecheck`.
 
 ## Pathfinder campaign source (2026-11-06)
 

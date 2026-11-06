@@ -1,4 +1,5 @@
-import type { ContentPackManifest } from "@4ecb/content-pack";
+import type { CampaignProfileDefinition } from "@4ecb/browser-storage";
+import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
 
 export interface ImportPackRequest {
   readonly type: "import-pack";
@@ -14,3 +15,22 @@ export type ImportPackResponse =
   | { readonly type: "progress"; readonly phase: ImportPackProgressPhase }
   | { readonly type: "complete"; readonly manifest: ContentPackManifest }
   | { readonly type: "error"; readonly message: string };
+
+/** Composes and stores a campaign character's profile (D116) off the main
+ *  thread: `ContentPackRepository.materializeCampaignProfile`. */
+export interface MaterializeCampaignProfileRequest {
+  readonly type: "materialize-campaign-profile";
+  readonly baseLayerPackIds: readonly string[];
+  readonly campaign: CampaignDocument;
+}
+
+export type MaterializeCampaignProfileResponse =
+  | {
+      readonly type: "campaign-profile";
+      readonly definition: CampaignProfileDefinition;
+    }
+  | { readonly type: "error"; readonly message: string };
+
+/** Everything the content worker accepts; one worker serves one request. */
+export type ContentWorkerRequest =
+  ContentImportRequest | MaterializeCampaignProfileRequest;

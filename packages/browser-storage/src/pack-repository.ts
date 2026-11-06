@@ -639,30 +639,8 @@ export class ContentPackRepository {
     baseLayerPackIds: readonly string[],
     campaign: CampaignDocument,
   ): Promise<CampaignProfileDefinition> {
-    const base = await this.#sourceLayers(baseLayerPackIds);
-    const layers: ContentProfileLayer[] = [
-      ...base,
-      campaign.houseRules.manifest,
-    ].map(({ packId, contentDigest }) => ({ packId, contentDigest }));
-    const profileId = `campaign:${campaign.campaignId}`;
-    const materializedPackId = await materializedProfilePackId(
-      profileId,
-      layers,
-      campaign,
-    );
-    const definition = (contentDigest: string): CampaignProfileDefinition => ({
-      profileId,
-      name: campaign.name,
-      layers,
-      resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
-      materializedPackId,
-      contentDigest,
-      campaign: {
-        campaignId: campaign.campaignId,
-        revision: campaign.revision,
-        contentDigest: campaign.contentDigest,
-      },
-    });
+    const { base, materializedPackId, definition } =
+      await this.#campaignProfilePlan(baseLayerPackIds, campaign);
     const stored = await this.manifest(materializedPackId);
     if (stored !== undefined) return definition(stored.contentDigest);
     const validation = await validateCampaign(campaign);
@@ -681,6 +659,63 @@ export class ContentPackRepository {
       { origin: "profile" },
     );
     return definition(composed.pack.manifest.contentDigest);
+  }
+
+  /**
+   * The profile `materializeCampaignProfile` would return, when its pack is
+   * already stored; undefined when it still has to be composed. It reads
+   * manifests only, so it is cheap on the main thread; the compose itself
+   * runs in the content worker.
+   */
+  async storedCampaignProfile(
+    baseLayerPackIds: readonly string[],
+    campaign: CampaignDocument,
+  ): Promise<CampaignProfileDefinition | undefined> {
+    const { materializedPackId, definition } = await this.#campaignProfilePlan(
+      baseLayerPackIds,
+      campaign,
+    );
+    const stored = await this.manifest(materializedPackId);
+    return stored === undefined ? undefined : definition(stored.contentDigest);
+  }
+
+  /** A campaign profile's checked base layers, pack ID and definition. */
+  async #campaignProfilePlan(
+    baseLayerPackIds: readonly string[],
+    campaign: CampaignDocument,
+  ): Promise<{
+    readonly base: readonly ContentPackManifest[];
+    readonly materializedPackId: string;
+    readonly definition: (contentDigest: string) => CampaignProfileDefinition;
+  }> {
+    const base = await this.#sourceLayers(baseLayerPackIds);
+    const layers: ContentProfileLayer[] = [
+      ...base,
+      campaign.houseRules.manifest,
+    ].map(({ packId, contentDigest }) => ({ packId, contentDigest }));
+    const profileId = `campaign:${campaign.campaignId}`;
+    const materializedPackId = await materializedProfilePackId(
+      profileId,
+      layers,
+      campaign,
+    );
+    return {
+      base,
+      materializedPackId,
+      definition: (contentDigest) => ({
+        profileId,
+        name: campaign.name,
+        layers,
+        resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
+        materializedPackId,
+        contentDigest,
+        campaign: {
+          campaignId: campaign.campaignId,
+          revision: campaign.revision,
+          contentDigest: campaign.contentDigest,
+        },
+      }),
+    };
   }
 
   /** Checks profile source layers (installed, not materialized, server
