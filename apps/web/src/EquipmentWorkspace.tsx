@@ -2110,6 +2110,7 @@ export function EquipmentWorkspace({
           itemName={inventoryDisplayName(choosing.entry, byId)}
           entities={entities}
           characterLevel={build.effectiveLevel}
+          restrictedIds={restrictedIds}
           initialSelections={itemChoiceSelectionsFrom(
             choosing.entity,
             choosing.entry.elements[choosing.elementIndex]?.children ?? [],

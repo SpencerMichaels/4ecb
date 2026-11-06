@@ -25,8 +25,7 @@ Verification: `nix develop --command bash scripts/check.sh` and
 `pnpm parity:baseline` (results in this entry's commit message).
 
 Follow-ups (also in the roadmap's Campaign slice): the "met through Torag"
-prerequisite explanation; campaign filtering in the Inventory's right-click
-item-choice dialog (`ItemChoicePicker.tsx`); a possible double report of
+prerequisite explanation; a possible double report of
 source-unentitled picks; ordinary profile activation still composing on
 the main thread; no garbage collection of materialized campaign packs; an
 owner skim of eight Pathfinder deity descriptions. Owner action outside the
@@ -216,9 +215,15 @@ restricted record, for purchase or as a purchase's item choice:
 cached by content and restriction-list identity, feeds `shopCatalog` and the
 acquisition dialog's item-choice pages; the editor keeps the bound pack's
 restrictions beside its entities and passes them through
-`EquipmentWorkspace`. Not covered: the Inventory tab's right-click
-`ItemChoiceDialog` for an owned item's choice still lists content-wide
-candidates. Nothing creates campaign characters yet (steps 7–9).
+`EquipmentWorkspace`. The Inventory tab's right-click `ItemChoiceDialog`
+for an owned item's choice takes the same `restrictedIds` (follow-up,
+2026-11-06): `campaignItemChoicePages` (`item-choice-pages.ts`, over
+`campaignRestricted` in `equipment-ui.ts`, the per-ID test
+`campaignOfferedEntities` uses) drops restricted candidates (the dialog
+has no Show all) except the holding's saved pick at that path, kept listed,
+selected and choosable again, marked "Not used in this campaign", while the
+picks above it are the saved ones; it is already the holding's house-rule
+issue. Verification: `ShopWorkspace.test.ts`. Nothing creates campaign characters yet (steps 7–9).
 Verification: `rules.worker.campaign.test.ts`, `builder-ui.test.ts`,
 `builder-diagnostics.test.ts`, `equipment-ui.test.ts`,
 `ShopWorkspace.test.ts`, `campaign-restrictions.test.ts`; `pnpm test`,

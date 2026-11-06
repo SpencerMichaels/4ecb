@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import type { BuildOccurrence } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { itemChoiceLabel } from "./builder-ui";
+import { candidateReason, itemChoiceLabel } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
 import { CompactChoiceButtons } from "./ChoiceEditors";
 import { Icon } from "./Icon";
 import {
+  campaignItemChoicePages,
   chooseItemChoice,
   isComplexItemChoice,
   itemChoiceHeading,
@@ -41,6 +42,9 @@ export function ItemChoicePicker({
         id: candidate.id,
         label: itemChoiceLabel(candidate.name),
         selectable: true,
+        ...(candidate.id === page.keptRestrictedId
+          ? { unavailableReason: candidateReason(["campaign-restricted"]) }
+          : {}),
       }))}
       selectedId={selectedId}
       disabled={false}
@@ -73,6 +77,7 @@ export function ItemChoiceDialog({
   itemName,
   entities,
   characterLevel,
+  restrictedIds,
   initialSelections,
   onSave,
   onClose,
@@ -81,6 +86,9 @@ export function ItemChoiceDialog({
   readonly itemName: string;
   readonly entities: readonly ContentEntity[];
   readonly characterLevel: number;
+  /** The character's pack's `campaign.restrictedIds` (D116): not offered as
+   * new picks; the holding's saved pick stays listed and selected. */
+  readonly restrictedIds?: readonly string[] | undefined;
   readonly initialSelections: ReadonlyMap<string, string>;
   readonly onSave: (children: readonly BuildOccurrence[]) => void;
   readonly onClose: () => void;
@@ -91,7 +99,12 @@ export function ItemChoiceDialog({
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
-  const pages = itemChoicePages(entity, entities, characterLevel, selections);
+  const pages = campaignItemChoicePages(
+    itemChoicePages(entity, entities, characterLevel, selections),
+    restrictedIds,
+    initialSelections,
+    selections,
+  );
   const page = pages[Math.min(pageIndex, pages.length - 1)];
   const complete = (info: ItemChoicePageInfo) =>
     selections.has(itemChoicePathKey(info.path));

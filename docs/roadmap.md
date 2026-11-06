@@ -944,9 +944,6 @@ Follow-ups (not done):
 - Explain a `worship` prerequisite met through an equivalent ("met through
   Torag"): prerequisite results carry only the clause text and status
   (CountsAsClass has no explanation either).
-- The Inventory's right-click item-choice dialog (`ItemChoicePicker.tsx`)
-  doesn't filter campaign-restricted choices; it needs "keep the current
-  pick, block the rest".
 - A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
   and `choice.ineligible`), as the campaign one was before `e0d89803`.
 - Ordinary profile activation (Settings' Switch content, the App's

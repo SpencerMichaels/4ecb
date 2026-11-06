@@ -2,7 +2,7 @@ import type { BuildOccurrence } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { itemChoiceSlots, type ItemChoiceSlot } from "@4ecb/rules-engine";
 
-import { itemChoiceCandidates } from "./equipment-ui";
+import { campaignRestricted, itemChoiceCandidates } from "./equipment-ui";
 
 /** A dot-joined `slotPath` — the map key `itemChoiceSelections` uses. */
 export function itemChoicePathKey(path: readonly number[]): string {
@@ -13,6 +13,9 @@ export interface ItemChoicePageInfo {
   readonly path: readonly number[];
   readonly slot: ItemChoiceSlot;
   readonly candidates: readonly ContentEntity[];
+  /** A saved pick kept listed though its campaign restricts it
+   * (`campaignItemChoicePages`). */
+  readonly keptRestrictedId?: string;
 }
 
 /**
@@ -172,4 +175,45 @@ export function itemChoiceSelectionsFrom(
       selections.set(key, value);
   });
   return selections;
+}
+
+/**
+ * An owned holding's choice pages under its campaign's restrictions (D116):
+ * a restricted candidate is not offered as a new pick (the dialog has no
+ * "Show all", so it is left out), but the holding's saved pick at that path
+ * stays listed and selected as `keptRestrictedId` while the choices above it
+ * are unchanged — it is already a house-rule issue on the holding. No
+ * restrictions returns `pages` itself.
+ */
+export function campaignItemChoicePages(
+  pages: readonly ItemChoicePageInfo[],
+  restrictedIds: readonly string[] | undefined,
+  savedSelections: ReadonlyMap<string, string>,
+  selections: ReadonlyMap<string, string>,
+): readonly ItemChoicePageInfo[] {
+  if (restrictedIds === undefined || restrictedIds.length === 0) return pages;
+  return pages.map((page) => {
+    const ancestorsSaved = page.path
+      .slice(0, -1)
+      .every(
+        (_, index) =>
+          selections.get(itemChoicePathKey(page.path.slice(0, index + 1))) ===
+          savedSelections.get(itemChoicePathKey(page.path.slice(0, index + 1))),
+      );
+    const savedId = ancestorsSaved
+      ? savedSelections.get(itemChoicePathKey(page.path))
+      : undefined;
+    let keptRestrictedId: string | undefined;
+    const candidates = page.candidates.filter((candidate) => {
+      if (!campaignRestricted(candidate.id, restrictedIds)) return true;
+      if (candidate.id !== savedId) return false;
+      keptRestrictedId = candidate.id;
+      return true;
+    });
+    return {
+      ...page,
+      candidates,
+      ...(keptRestrictedId === undefined ? {} : { keptRestrictedId }),
+    };
+  });
 }

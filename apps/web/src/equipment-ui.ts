@@ -703,12 +703,34 @@ export function campaignOfferedEntities(
   }
   const cached = byRestrictions.get(restrictedIds);
   if (cached !== undefined) return cached;
-  const restricted = new Set(restrictedIds.map((id) => id.toLocaleLowerCase()));
   const offered = entities.filter(
-    (entity) => !restricted.has(entity.id.toLocaleLowerCase()),
+    (entity) => !campaignRestricted(entity.id, restrictedIds),
   );
   byRestrictions.set(restrictedIds, offered);
   return offered;
+}
+
+const restrictedIdSets = new WeakMap<readonly string[], ReadonlySet<string>>();
+
+/**
+ * Whether a campaign's `restrictedIds` (D116) exclude record `id`, matched
+ * case-insensitively as the engine does; `campaignOfferedEntities` is this
+ * test over the whole content. The lowercased set is built once per
+ * restriction list.
+ */
+export function campaignRestricted(
+  id: string,
+  restrictedIds: readonly string[] | undefined,
+): boolean {
+  if (restrictedIds === undefined || restrictedIds.length === 0) return false;
+  let restricted = restrictedIdSets.get(restrictedIds);
+  if (restricted === undefined) {
+    restricted = new Set(
+      restrictedIds.map((value) => value.toLocaleLowerCase()),
+    );
+    restrictedIdSets.set(restrictedIds, restricted);
+  }
+  return restricted.has(id.toLocaleLowerCase());
 }
 
 const shopCatalogs = new WeakMap<

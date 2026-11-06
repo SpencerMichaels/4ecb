@@ -6,12 +6,14 @@ import type { BuildInventoryEntry } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import {
+  campaignItemChoicePages,
   chooseItemChoice,
   isComplexItemChoice,
   itemChoicePages,
   itemChoiceSelectionsFrom,
   resolveItemChoiceOccurrences,
 } from "./item-choice-pages";
+import { ItemChoiceDialog } from "./ItemChoicePicker";
 import {
   acquisitionDialogPages,
   compatibleChoiceType,
@@ -582,5 +584,112 @@ describe("Shop learning categories", () => {
     expect(markup).toContain(">Known</td>");
     expect(markup).toMatch(/aria-label="Buy Public Rite"[^>]*disabled/);
     expect(markup).toMatch(/aria-label="Learn Public Rite free"[^>]*disabled/);
+  });
+});
+
+describe("Owned-item choices under campaign restrictions (D116)", () => {
+  const pagesFor = (
+    restrictedIds: readonly string[] | undefined,
+    saved: ReadonlyMap<string, string>,
+    selections: ReadonlyMap<string, string> = saved,
+  ) =>
+    campaignItemChoicePages(
+      itemChoicePages(soulArmor, nestedChoiceEntities, 1, selections),
+      restrictedIds,
+      saved,
+      selections,
+    );
+  const ids = (page: { readonly candidates: readonly ContentEntity[] }) =>
+    page.candidates.map(({ id }) => id);
+
+  it("does not offer a restricted option as a new pick", () => {
+    const [page] = pagesFor(["public_simple_power"], new Map());
+    expect(page === undefined ? [] : ids(page)).toEqual([ashfallEvasion.id]);
+    expect(page?.keptRestrictedId).toBeUndefined();
+  });
+
+  it("keeps the holding's restricted saved pick listed, at every depth", () => {
+    const saved = new Map([
+      ["0", ashfallEvasion.id],
+      ["0.0", ashfallCharisma.id],
+    ]);
+    const restricted = [ashfallEvasion.id, ashfallCharisma.id, simplePower.id];
+    const [top, nested] = pagesFor(restricted, saved);
+    expect(top === undefined ? [] : ids(top)).toEqual([ashfallEvasion.id]);
+    expect(top?.keptRestrictedId).toBe(ashfallEvasion.id);
+    expect(nested === undefined ? [] : ids(nested)).toEqual([
+      ashfallCharisma.id,
+      ashfallWisdom.id,
+    ]);
+    expect(nested?.keptRestrictedId).toBe(ashfallCharisma.id);
+
+    // Re-choosing elsewhere still lists the saved pick so it can be restored.
+    const [retopped] = pagesFor(
+      [ashfallEvasion.id, simplePower.id],
+      new Map([["0", ashfallEvasion.id]]),
+      new Map([["0", "PUBLIC_OTHER"]]),
+    );
+    expect(retopped === undefined ? [] : ids(retopped)).toEqual([
+      ashfallEvasion.id,
+    ]);
+  });
+
+  it("offers a nested saved pick only beneath its saved parent", () => {
+    const saved = new Map([
+      ["0", ashfallEvasion.id],
+      ["0.0", ashfallCharisma.id],
+    ]);
+    const pages = pagesFor(
+      [ashfallCharisma.id],
+      saved,
+      new Map([["0", ashfallEvasion.id]]),
+    );
+    expect(pages[1]?.keptRestrictedId).toBe(ashfallCharisma.id);
+    expect(
+      pagesFor(
+        [ashfallCharisma.id],
+        new Map(),
+        new Map([["0", ashfallEvasion.id]]),
+      )[1]?.candidates.map(({ id }) => id),
+    ).toEqual([ashfallWisdom.id]);
+  });
+
+  it("leaves a non-campaign character's pages untouched", () => {
+    const pages = itemChoicePages(
+      soulArmor,
+      nestedChoiceEntities,
+      1,
+      new Map(),
+    );
+    expect(
+      campaignItemChoicePages(pages, undefined, new Map(), new Map()),
+    ).toBe(pages);
+    expect(campaignItemChoicePages(pages, [], new Map(), new Map())).toBe(
+      pages,
+    );
+  });
+
+  it("shows the saved restricted pick selected in the dialog, with its reason", () => {
+    const render = (restrictedIds?: readonly string[]) =>
+      renderToStaticMarkup(
+        createElement(ItemChoiceDialog, {
+          entity: soulArmor,
+          itemName: soulArmor.name,
+          entities: nestedChoiceEntities,
+          characterLevel: 1,
+          ...(restrictedIds === undefined ? {} : { restrictedIds }),
+          initialSelections: new Map([["0", ashfallEvasion.id]]),
+          onSave: () => undefined,
+          onClose: () => undefined,
+        }),
+      );
+    const campaign = render([ashfallEvasion.id, simplePower.id]);
+    expect(campaign).not.toContain(simplePower.name);
+    expect(campaign).toMatch(
+      /aria-checked="true"[^>]*>(?:(?!<\/button>).)*Ashfall Evasion(?:(?!<\/button>).)*Not used in this campaign/s,
+    );
+    const plain = render();
+    expect(plain).toContain(simplePower.name);
+    expect(plain).not.toContain("Not used in this campaign");
   });
 });
