@@ -45,13 +45,12 @@ import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
   refreshInstalledCampaigns,
-  shouldActivateAdvertisedContent,
   type AdvertisedCampaign,
   type AdvertisedContentPack,
 } from "./runtime-content";
 import { appContentRuntime } from "./app-runtime";
 import { CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
-import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME } from "./content-profile-ui";
+import { followAdvertisedContent } from "./profile-activation";
 import {
   applyThemePreference,
   parseThemePreference,
@@ -529,36 +528,10 @@ export function App() {
       );
       for (const advertised of configured.contentPacks)
         await installAdvertisedPack(advertised, installed);
-      // The browser follows the group's content: it starts on it, and moves
-      // to a newly advertised revision unless the user assembled content of
-      // their own. Characters stay pinned until the user reviews the update.
-      const available = await repository.listInstalled();
-      if (
-        shouldActivateAdvertisedContent(
-          await repository.activeProfile(),
-          configured.contentPacks,
-          (packId) =>
-            available.find(({ manifest }) => manifest.packId === packId)
-              ?.origin,
-        )
-      ) {
-        if (
-          configured.contentPacks.every((advertised) =>
-            available.some(
-              ({ manifest }) =>
-                manifest.packId === advertised.packId &&
-                manifest.contentDigest === advertised.contentDigest,
-            ),
-          )
-        ) {
-          await repository.activateProfile(
-            ACTIVE_PROFILE_ID,
-            ACTIVE_PROFILE_NAME,
-            configured.contentPacks.map(({ packId }) => packId),
-          );
-          await refreshAfterContentChange();
-        }
-      }
+      // The browser follows the group's content (D004); the profile is
+      // composed in the content worker, and awaited so screens open on it.
+      if (await followAdvertisedContent(repository, configured.contentPacks))
+        await refreshAfterContentChange();
       // In the background, newer hosted revisions of the campaigns this
       // browser has (never one it hasn't added); they reach characters as
       // the content-update issue. Failures are quiet and retried next load.

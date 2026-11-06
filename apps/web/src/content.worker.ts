@@ -11,6 +11,7 @@ import type {
   ContentWorkerRequest,
   ImportPackResponse,
   MaterializeCampaignProfileResponse,
+  MaterializeProfileResponse,
 } from "./worker-messages";
 
 // Heavy pack work (decode, validate, compose, encode, store) runs here so the
@@ -19,7 +20,10 @@ import type {
 const worker = self as DedicatedWorkerGlobalScope;
 
 function respond(
-  message: ImportPackResponse | MaterializeCampaignProfileResponse,
+  message:
+    | ImportPackResponse
+    | MaterializeCampaignProfileResponse
+    | MaterializeProfileResponse,
 ): void {
   worker.postMessage(message);
 }
@@ -32,6 +36,12 @@ worker.onmessage = (event: MessageEvent<ContentWorkerRequest>) => {
   const request = event.data;
   if (request.type === "materialize-campaign-profile")
     void materializeCampaignProfile(request.baseLayerPackIds, request.campaign);
+  else if (request.type === "materialize-profile")
+    void materializeProfile(
+      request.profileId,
+      request.name,
+      request.layerPackIds,
+    );
   else void importPack(request.buffer);
 };
 
@@ -62,6 +72,23 @@ async function materializeCampaignProfile(
         campaign,
       );
     respond({ type: "campaign-profile", definition });
+  } catch (error: unknown) {
+    respond({ type: "error", message: errorMessage(error) });
+  }
+}
+
+async function materializeProfile(
+  profileId: string,
+  name: string,
+  layerPackIds: readonly string[],
+): Promise<void> {
+  try {
+    const definition = await new ContentPackRepository().materializeProfile(
+      profileId,
+      name,
+      layerPackIds,
+    );
+    respond({ type: "profile", definition });
   } catch (error: unknown) {
     respond({ type: "error", message: errorMessage(error) });
   }

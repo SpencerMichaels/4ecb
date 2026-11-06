@@ -1,4 +1,7 @@
-import type { CampaignProfileDefinition } from "@4ecb/browser-storage";
+import type {
+  CampaignProfileDefinition,
+  ContentProfileDefinition,
+} from "@4ecb/browser-storage";
 import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
 
 export interface ImportPackRequest {
@@ -31,6 +34,25 @@ export type MaterializeCampaignProfileResponse =
     }
   | { readonly type: "error"; readonly message: string };
 
+/** Composes and stores an ordinary content profile (the browser's active
+ *  content) off the main thread: `ContentPackRepository.materializeProfile`.
+ *  The page activates the returned definition itself. */
+export interface MaterializeProfileRequest {
+  readonly type: "materialize-profile";
+  readonly profileId: string;
+  readonly name: string;
+  readonly layerPackIds: readonly string[];
+}
+
+export type MaterializeProfileResponse =
+  | {
+      readonly type: "profile";
+      readonly definition: ContentProfileDefinition;
+    }
+  | { readonly type: "error"; readonly message: string };
+
 /** Everything the content worker accepts; one worker serves one request. */
 export type ContentWorkerRequest =
-  ContentImportRequest | MaterializeCampaignProfileRequest;
+  | ContentImportRequest
+  | MaterializeCampaignProfileRequest
+  | MaterializeProfileRequest;

@@ -577,22 +577,27 @@ export class ContentPackRepository {
     };
   }
 
-  async activateProfile(
+  /**
+   * Composes the profile of `layerPackIds` (in order) and stores its pack
+   * with origin "profile", without activating it. The pack ID hashes the
+   * layers, so a stored pack with that ID is reused as is. Composing,
+   * validating and encoding a large pack takes seconds of CPU: the app runs
+   * this in the content worker and looks for a stored copy first
+   * (`storedProfile`), then activates the result with `setActiveProfile`.
+   */
+  async materializeProfile(
     profileId: string,
     name: string,
     layerPackIds: readonly string[],
   ): Promise<ContentProfileDefinition> {
-    const packs = await this.#sourceLayerPacks(
-      await this.#sourceLayers(layerPackIds),
+    const { manifests, materializedPackId, definition } =
+      await this.#profilePlan(profileId, name, layerPackIds);
+    const stored = await this.manifest(materializedPackId);
+    if (stored !== undefined) return definition(stored.contentDigest);
+    const composed = await composeContentPacks(
+      await this.#sourceLayerPacks(manifests),
+      { packId: materializedPackId, name },
     );
-    const materializedPackId = await materializedProfilePackId(
-      profileId,
-      packs.map(({ manifest }) => manifest),
-    );
-    const composed = await composeContentPacks(packs, {
-      packId: materializedPackId,
-      name,
-    });
     await assertValidPack(composed.pack);
     await storeValidatedContentPack(
       this.#databaseName,
@@ -600,30 +605,85 @@ export class ContentPackRepository {
       new TextEncoder().encode(encodeContentPack(composed.pack)).buffer,
       { origin: "profile" },
     );
-    const definition: ContentProfileDefinition = {
+    return definition(composed.pack.manifest.contentDigest);
+  }
+
+  /**
+   * The profile `materializeProfile` would return, when its pack is already
+   * stored; undefined when it still has to be composed. It reads manifests
+   * only, so it is cheap on the main thread.
+   */
+  async storedProfile(
+    profileId: string,
+    name: string,
+    layerPackIds: readonly string[],
+  ): Promise<ContentProfileDefinition | undefined> {
+    const { materializedPackId, definition } = await this.#profilePlan(
       profileId,
       name,
-      layers: composed.layers,
-      resolutionPolicy: composed.resolutionPolicy,
-      materializedPackId,
-      contentDigest: composed.pack.manifest.contentDigest,
-    };
+      layerPackIds,
+    );
+    const stored = await this.manifest(materializedPackId);
+    return stored === undefined ? undefined : definition(stored.contentDigest);
+  }
+
+  /** Makes a materialized profile the active content (a settings write). */
+  async setActiveProfile(definition: ContentProfileDefinition): Promise<void> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      const transaction = database.transaction("settings", "readwrite");
-      await transaction.store.put({
-        key: ACTIVE_PROFILE_KEY,
-        value: definition,
-      });
-      await transaction.store.put({
+      const transaction = database.transaction(
+        ["contentPacks", "settings"],
+        "readwrite",
+      );
+      const storedKey = await transaction
+        .objectStore("contentPacks")
+        .getKey(definition.materializedPackId);
+      if (storedKey === undefined)
+        throw new Error(
+          `Cannot activate missing content pack ${definition.materializedPackId}`,
+        );
+      const settings = transaction.objectStore("settings");
+      await settings.put({ key: ACTIVE_PROFILE_KEY, value: definition });
+      await settings.put({
         key: ACTIVE_PACK_KEY,
-        value: materializedPackId,
+        value: definition.materializedPackId,
       });
       await transaction.done;
     } finally {
       database.close();
     }
-    return definition;
+  }
+
+  /** An ordinary profile's checked layers, pack ID and definition. */
+  async #profilePlan(
+    profileId: string,
+    name: string,
+    layerPackIds: readonly string[],
+  ): Promise<{
+    readonly manifests: readonly ContentPackManifest[];
+    readonly materializedPackId: string;
+    readonly definition: (contentDigest: string) => ContentProfileDefinition;
+  }> {
+    const manifests = await this.#sourceLayers(layerPackIds);
+    const layers: ContentProfileLayer[] = manifests.map(
+      ({ packId, contentDigest }) => ({ packId, contentDigest }),
+    );
+    const materializedPackId = await materializedProfilePackId(
+      profileId,
+      layers,
+    );
+    return {
+      manifests,
+      materializedPackId,
+      definition: (contentDigest) => ({
+        profileId,
+        name,
+        layers,
+        resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
+        materializedPackId,
+        contentDigest,
+      }),
+    };
   }
 
   /**

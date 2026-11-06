@@ -172,10 +172,23 @@ describe("ContentPackRepository", () => {
     ]);
     expect(await storage.activePackId()).toBe("baseline");
     expect(preview.collisions).toEqual(["ID_TEST"]);
-    const active = await storage.activateProfile("table", "Table", [
+    expect(
+      await storage.storedProfile("table", "Table", ["baseline", "personal"]),
+    ).toBeUndefined();
+    const active = await storage.materializeProfile("table", "Table", [
       "baseline",
       "personal",
     ]);
+    // Materializing stores the pack without activating it.
+    expect(await storage.activePackId()).toBe("baseline");
+    expect(
+      await storage.storedProfile("table", "Table", ["baseline", "personal"]),
+    ).toEqual(active);
+    expect(active.contentDigest).toBe(
+      (await storage.manifest(active.materializedPackId))?.contentDigest,
+    );
+    await storage.setActiveProfile(active);
+    expect(await storage.activeProfile()).toEqual(active);
     expect(active.layers.map(({ packId }) => packId)).toEqual([
       "baseline",
       "personal",
@@ -187,13 +200,21 @@ describe("ContentPackRepository", () => {
     await expect(storage.remove("baseline")).rejects.toThrow("active profile");
     const secondOverlay = await makePack("second-overlay", "second override");
     await storage.install(secondOverlay);
-    const revised = await storage.activateProfile("table", "Table", [
+    const revised = await storage.materializeProfile("table", "Table", [
       "baseline",
       "personal",
       "second-overlay",
     ]);
+    await storage.setActiveProfile(revised);
     expect(revised.materializedPackId).not.toBe(active.materializedPackId);
     await expect(storage.get(active.materializedPackId)).resolves.toBeDefined();
+    await expect(
+      storage.setActiveProfile({
+        ...revised,
+        materializedPackId: "profile:table:missing",
+      }),
+    ).rejects.toThrow("Cannot activate missing content pack");
+    expect(await storage.activePackId()).toBe(revised.materializedPackId);
   });
 
   it("revalidates encoded profile metadata at the storage boundary", async () => {

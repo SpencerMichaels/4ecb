@@ -36,9 +36,8 @@ import { RestoreBackupDialog, restoreSuccessText } from "./RestoreBackupDialog";
 import type { PaperSize } from "./paper-size";
 import { SegmentedControl } from "./SegmentedControl";
 import { ToastRegion, useToasts } from "./Toasts";
+import { activateContentProfile } from "./profile-activation";
 import {
-  ACTIVE_PROFILE_ID,
-  ACTIVE_PROFILE_NAME,
   contentRows,
   enabledLayers,
   layerKey,
@@ -304,9 +303,8 @@ export function SettingsPage({
     try {
       if (layers.length === 0) await repository.deactivate();
       else
-        await repository.activateProfile(
-          ACTIVE_PROFILE_ID,
-          ACTIVE_PROFILE_NAME,
+        await activateContentProfile(
+          repository,
           layers.map(({ packId }) => packId),
         );
       await onChanged();

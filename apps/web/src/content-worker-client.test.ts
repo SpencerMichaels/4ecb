@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CampaignProfileDefinition } from "@4ecb/browser-storage";
+import type {
+  CampaignProfileDefinition,
+  ContentProfileDefinition,
+} from "@4ecb/browser-storage";
 import type { CampaignDocument } from "@4ecb/content-pack";
 
 import { campaignProfileMaterializer } from "./campaign-profile";
 import {
   composeCampaignProfileInWorker,
+  composeProfileInWorker,
   type ContentWorkerPort,
 } from "./content-worker-client";
 import type { ContentWorkerRequest } from "./worker-messages";
@@ -14,6 +18,11 @@ import type { ContentWorkerRequest } from "./worker-messages";
 // page; a profile already stored is only looked up.
 const storage = vi.hoisted(() => ({
   calls: [] as { ids: readonly string[]; campaignId: string }[],
+  profileCalls: [] as {
+    profileId: string;
+    name: string;
+    ids: readonly string[];
+  }[],
   failure: undefined as string | undefined,
 }));
 
@@ -45,9 +54,27 @@ const definition: CampaignProfileDefinition = {
   campaign: { campaignId: "golarion", revision: 2, contentDigest: "doc-2" },
 };
 
+const profile: ContentProfileDefinition = {
+  profileId: "browser-active-profile",
+  name: "Active browser content profile",
+  layers: [{ packId: "server", contentDigest: "server-digest" }],
+  resolutionPolicy: "last-pack-wins-v1",
+  materializedPackId: "profile:browser-active-profile:def",
+  contentDigest: "composed-active",
+};
+
 vi.mock("@4ecb/browser-storage", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ContentPackRepository: class {
+    async materializeProfile(
+      profileId: string,
+      name: string,
+      ids: readonly string[],
+    ) {
+      storage.profileCalls.push({ profileId, name, ids });
+      if (storage.failure !== undefined) throw new Error(storage.failure);
+      return profile;
+    }
     async materializeCampaignProfile(
       ids: readonly string[],
       document: CampaignDocument,
@@ -59,15 +86,18 @@ vi.mock("@4ecb/browser-storage", async (importOriginal) => ({
   },
 }));
 
+// The worker module's global scope; the module is imported once, so every
+// in-process worker shares it.
+const scope: {
+  onmessage?: (event: MessageEvent<ContentWorkerRequest>) => void;
+  postMessage: (message: unknown) => void;
+} = { postMessage: () => undefined };
+
 /** Runs the worker module in process behind a `Worker`-shaped port. */
 async function inProcessWorker(): Promise<{
   readonly create: () => ContentWorkerPort;
   readonly terminated: () => number;
 }> {
-  const scope: {
-    onmessage?: (event: MessageEvent<ContentWorkerRequest>) => void;
-    postMessage: (message: unknown) => void;
-  } = { postMessage: () => undefined };
   vi.stubGlobal("self", scope);
   await import("./content.worker");
   let terminated = 0;
@@ -130,5 +160,36 @@ describe("campaign profile compose in the content worker", () => {
     stored.mockResolvedValueOnce(undefined as never);
     await expect(materialize(["server"], campaign)).resolves.toBe(definition);
     expect(compose).toHaveBeenCalledWith(["server"], campaign);
+  });
+});
+
+describe("content profile compose in the content worker", () => {
+  it("sends the request through the worker and returns its definition", async () => {
+    const worker = await inProcessWorker();
+    storage.profileCalls.length = 0;
+    storage.failure = undefined;
+    await expect(
+      composeProfileInWorker(
+        "browser-active-profile",
+        "Active browser content profile",
+        ["server", "personal"],
+        worker.create,
+      ),
+    ).resolves.toEqual(profile);
+    expect(storage.profileCalls).toEqual([
+      {
+        profileId: "browser-active-profile",
+        name: "Active browser content profile",
+        ids: ["server", "personal"],
+      },
+    ]);
+    expect(worker.terminated()).toBe(1);
+
+    storage.failure = "Missing content profile layer personal";
+    await expect(
+      composeProfileInWorker("p", "P", ["personal"], worker.create),
+    ).rejects.toThrow("Missing content profile layer personal");
+    expect(worker.terminated()).toBe(2);
+    storage.failure = undefined;
   });
 });

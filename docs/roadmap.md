@@ -946,10 +946,6 @@ Follow-ups (not done):
   (CountsAsClass has no explanation either).
 - A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
   and `choice.ineligible`), as the campaign one was before `e0d89803`.
-- Ordinary profile activation (Settings' Switch content, the App's
-  advertised-content switch) still composes on the main thread (about 3 s on
-  the real pack); it could use the content-worker request the campaign
-  compose uses.
 - Materialized campaign profile packs are never garbage-collected (about
   60–75 MB per campaign revision and base revision pair), and a campaign's
   revisions are removed only all at once.

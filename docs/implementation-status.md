@@ -26,11 +26,33 @@ Verification: `nix develop --command bash scripts/check.sh` and
 
 Follow-ups (also in the roadmap's Campaign slice): the "met through Torag"
 prerequisite explanation; a possible double report of
-source-unentitled picks; ordinary profile activation still composing on
-the main thread; no garbage collection of materialized campaign packs; an
+source-unentitled picks; no garbage collection of materialized campaign
+packs (ordinary profile activation now composes in the content worker, see
+"Content profile activation in the content worker" below); an
 owner skim of eight Pathfinder deity descriptions. Owner action outside the
 repo: homenet `apps/4ecb/pack.yml` must copy and keep
 `private-packs/campaigns/`.
+
+## Content profile activation in the content worker (2026-11-06)
+
+Campaign follow-up. Switching the active content (Settings' content table,
+"Switching content…") and the startup move to newly advertised server
+content (D004) no longer compose on the page. `profile-activation.ts`
+(`activateContentProfile`, `followAdvertisedContent`) looks up a stored
+profile pack (`ContentPackRepository.storedProfile`, manifests only) and
+otherwise sends a `materialize-profile` request to the content worker
+(`composeProfileInWorker`, the same client as the campaign compose), which
+runs `materializeProfile` (compose, validate, encode, store, without
+activating); the page then writes the active-profile setting
+(`setActiveProfile`, which refuses a pack that isn't stored).
+`activateProfile` is gone. App startup still awaits the follow before
+refreshing, so screens open on the new content as before; Settings keeps its
+progress line and error toast. Measured in Node (fake-indexeddb) on
+`tmp/content/full-local.4ecp`: materializing about 3.3 s (now in the
+worker); the stored lookup and the activation about 2 ms each on the page.
+Verification: `pack-repository.test.ts`, `content-worker-client.test.ts`,
+`profile-activation.test.ts`, `SettingsPage.content-switch.test.tsx`;
+`pnpm test`, `pnpm typecheck`, `pnpm lint`.
 
 ## Campaigns in legacy .dnd4e export and import (2026-11-06)
 

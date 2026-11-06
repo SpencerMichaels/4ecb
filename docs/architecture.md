@@ -312,7 +312,14 @@ pack so query and rules workers retain one immutable input. Server-advertised
 packs form a fixed ordered prefix; personal packs may be reordered only above
 it. Stable-ID collisions resolve from first to last (`last-pack-wins-v1`) and
 remain visible in preview diagnostics. Activation is explicit, except that a browser on the server's content
-alone follows a newly advertised server revision (D004). Character
+alone follows a newly advertised server revision (D004). The page never
+composes a profile: `apps/web/src/profile-activation.ts` (Settings' content
+table and the D004 follow) looks up a stored pack for the layers
+(`ContentPackRepository.storedProfile`, manifests only; the pack ID hashes
+the layers) and otherwise sends a `materialize-profile` request to the
+content worker, which composes, validates, encodes and stores it
+(`materializeProfile`); activation is then a settings write on the page
+(`setActiveProfile`). Character
 bindings retain both the materialized ID/digest and ordered source ID/digest
 list, so later downloads cannot alter an existing evaluation.
 
