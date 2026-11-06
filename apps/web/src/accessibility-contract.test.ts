@@ -59,6 +59,10 @@ const builderChoiceContext = readFileSync(
   "utf8",
 );
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+const builderUi = readFileSync(
+  new URL("./builder-ui.ts", import.meta.url),
+  "utf8",
+);
 const characterLibrary = readFileSync(
   new URL("./CharacterLibraryPage.tsx", import.meta.url),
   "utf8",
@@ -273,7 +277,10 @@ describe("release accessibility contract", () => {
     // Level navigation is one picker in the character sidebar (all tabs).
     expect(characterEditor).toContain("<LevelPicker");
     expect(characterEditor).not.toContain('className="level-rail"');
-    expect(characterEditor).not.toContain('workspaceTab === "overview"');
+    // The build overview (D113) is its own tab, built on the Build tab's
+    // shared presentation helpers rather than a level-rail checklist.
+    expect(characterEditor).toContain('<Icon name="list-checks" /> Overview');
+    expect(characterEditor).toContain("<BuildOverview");
     expect(characterEditor).toContain('navigation.workspace === "equipment"');
     // Diagnostics opens from the status badges, not a tab.
     expect(characterEditor).toContain('workspace: "diagnostics"');
@@ -318,7 +325,6 @@ describe("release accessibility contract", () => {
     expect(candidateDetailRule).not.toContain("max-height");
     expect(candidateDetailRule).not.toContain("overflow:");
     expect(styles).not.toMatch(/\.candidate-flavor\s*\{[^}]*border-bottom:/);
-    expect(styles).not.toContain(".build-overview");
     expect(styles).toMatch(
       /\.selection-table-scroll\s*\{[^}]*max-height:[^}]*overflow: auto/,
     );
@@ -361,7 +367,9 @@ describe("release accessibility contract", () => {
     expect(classPanel).toContain("renderPrimaryChoice(");
     expect(classPanel).toContain("deityChoice");
     expect(characterEditor).toContain("choices={characterDetailChoices}");
-    expect(characterEditor).toContain(
+    // The Build tab and the Overview share one section grouping.
+    expect(characterEditor).toContain("levelChoiceSections(");
+    expect(builderUi).toContain(
       '{ section: "Class" as const, choices: requiredClassDeityChoices }',
     );
   });

@@ -1,5 +1,22 @@
 # Implementation status
 
+## Build overview tab (2026-11-05)
+
+The builder has an **Overview** tab again (D113, a player request): beside
+Build, at `tab=overview`, one list of every level from 1 to the
+character's, each level's choices grouped Character → Feats → Powers
+(at-will, encounter, daily, utility) → Other, each row the Build tab's
+folded item (slot heading and picks; retrains "old → new"; open required
+choices marked). A row opens its choice on Build (or Details/Retraining)
+through the Review landing. The Build tab's folded-item title, picks and
+status and its section grouping moved into shared `builder-ui.ts` helpers
+that both tabs use; the overview reads the editor's planning evaluation and
+adds no evaluation. Verification: `build-overview.test.ts`,
+`BuildOverview.test.tsx`, route and contract tests, the full app suite,
+typecheck and lint pass; `review:verify` checks Beatrix's Level 1 rows
+(automatic row `beatrix|6|build overview rows`). Owner visual check pending
+(checklist "Beatrix: build overview").
+
 ## M5.7 and M5.75 closed (2026-11-05)
 
 The product owner walked every pass of the visual review

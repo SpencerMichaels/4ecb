@@ -431,8 +431,83 @@
 }
 
 .choice-accordion-item.is-unresolved .choice-accordion-status,
+.choice-accordion-status.is-unresolved,
 .choice-accordion-status.is-house-rule {
   color: var(--warning);
+}
+
+/* The Overview tab (D113): a section per level, its choices as rows shaped
+   like a folded accordion heading (title, picks, status), which open the
+   choice on its tab. Titles share one column so the picks line up. */
+.build-overview {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.build-overview-level {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.build-overview-level-heading {
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding-bottom: 0.3rem;
+}
+
+.build-overview-none {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.build-overview-group {
+  display: grid;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.build-overview-group > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.build-overview-row {
+  align-items: baseline;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  column-gap: 0.75rem;
+  display: grid;
+  font: inherit;
+  grid-template-columns: minmax(7rem, 15rem) minmax(0, 1fr) 1rem;
+  padding: 0.45rem 0.8rem;
+  text-align: left;
+  width: 100%;
+}
+
+.build-overview-row:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: none;
+}
+
+.build-overview-title {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.build-overview-picks {
+  color: var(--muted);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.build-overview-row > .choice-accordion-status {
+  align-self: center;
 }
 
 .choice-accordion-status .icon {

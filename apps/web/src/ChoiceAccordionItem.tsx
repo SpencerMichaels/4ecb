@@ -33,29 +33,40 @@ export function ChoiceAccordionItem({
           <Icon name="chevron" />
           <span className="choice-accordion-title">{title}</span>
           <span className="choice-accordion-picks">{picks}</span>
-          <span
-            className={`choice-accordion-status${status === "house-rule" ? " is-house-rule" : ""}`}
-          >
-            {status === "house-rule" ? (
-              <>
-                <Icon name="house" />
-                <span className="visually-hidden">House rule</span>
-              </>
-            ) : status === "unresolved" ? (
-              <>
-                <Icon name="circle-help" />
-                <span className="visually-hidden">Incomplete</span>
-              </>
-            ) : status === "complete" ? (
-              <>
-                <Icon name="check" />
-                <span className="visually-hidden">Complete</span>
-              </>
-            ) : null}
-          </span>
+          <ChoiceStatusIcon status={status} />
         </button>
       </h4>
       {open ? children : null}
     </div>
+  );
+}
+
+/** A folded choice's status mark: house rule, incomplete or complete. */
+export function ChoiceStatusIcon({
+  status,
+}: {
+  readonly status: ChoiceAccordionStatus | undefined;
+}) {
+  return (
+    <span
+      className={`choice-accordion-status${status === "house-rule" ? " is-house-rule" : ""}${status === "unresolved" ? " is-unresolved" : ""}`}
+    >
+      {status === "house-rule" ? (
+        <>
+          <Icon name="house" />
+          <span className="visually-hidden">House rule</span>
+        </>
+      ) : status === "unresolved" ? (
+        <>
+          <Icon name="circle-help" />
+          <span className="visually-hidden">Incomplete</span>
+        </>
+      ) : status === "complete" ? (
+        <>
+          <Icon name="check" />
+          <span className="visually-hidden">Complete</span>
+        </>
+      ) : null}
+    </span>
   );
 }

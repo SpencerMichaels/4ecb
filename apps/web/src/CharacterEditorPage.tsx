@@ -36,6 +36,7 @@ import {
   unwieldableWeaponIssues,
   withCharacterIssues,
   type BuilderIssue,
+  type BuilderIssueTarget,
 } from "./builder-diagnostics";
 import { recordLoadDuration } from "./load-performance";
 import {
@@ -99,7 +100,12 @@ import {
   presentationUnitRoot,
   reviewLandingElementIds,
   BASE_ABILITIES_SECTION_ID,
-  accordionPicksSummary,
+  NO_PICKS_LABEL,
+  levelChoiceSections,
+  presentationUnit,
+  presentationUnitPicks,
+  presentationUnitStatus,
+  presentationUnitTitle,
   dependentFlowStepIds,
   openedFlowStepId,
   isPrimaryBuildChoice,
@@ -109,8 +115,6 @@ import {
   legacyChoiceSection,
   planningEvaluationHorizon,
   planningHorizonCommand,
-  repeatedChoiceGroupTitle,
-  replacementPickSummary,
   selectedDefinitionId,
   selectedChoiceIsHouseRule,
   shouldOmitIndividualChoiceHeading,
@@ -122,6 +126,8 @@ import { Icon, type IconName } from "./Icon";
 import { UpdateButton } from "./PwaUpdate";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
 import { BuilderSidebar } from "./BuilderSidebar";
+import { BuildOverview } from "./BuildOverview";
+import { buildOverview } from "./build-overview";
 import { LevelGainsList } from "./LevelGainsList";
 import { levelGains } from "./level-gains";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
@@ -888,6 +894,17 @@ export function CharacterEditorPage({
     () => choicesAtLevel(selectedLevel, planningEvaluation),
     [planningEvaluation, selectedLevel],
   );
+  // The Overview tab reads the planning evaluation the editor already holds
+  // (it covers every level up to the character's); no evaluation of its own.
+  const overviewLevels = useMemo(
+    () =>
+      workspaceTab !== "overview" ||
+      build === undefined ||
+      planningEvaluation === undefined
+        ? undefined
+        : buildOverview(planningEvaluation, build, byId),
+    [build, byId, planningEvaluation, workspaceTab],
+  );
   const characterDetailChoices = useMemo(
     () =>
       groupChoicesByLegacyWorkflow(
@@ -1024,24 +1041,10 @@ export function CharacterEditorPage({
     dependentFlowByChoiceId,
     presentationChoices,
   } = levelChoicePresentation;
-  const legacyChoiceSections = (() => {
-    const sections = groupChoicesByLegacyWorkflow(presentationChoices);
-    if (requiredClassDeityChoices.length === 0) return sections;
-    const hasClassSection = sections.some(({ section }) => section === "Class");
-    if (!hasClassSection)
-      return [
-        { section: "Class" as const, choices: requiredClassDeityChoices },
-        ...sections,
-      ];
-    return sections.map((group) =>
-      group.section === "Class"
-        ? {
-            ...group,
-            choices: [...group.choices, ...requiredClassDeityChoices],
-          }
-        : group,
-    );
-  })();
+  const legacyChoiceSections = levelChoiceSections(
+    presentationChoices,
+    requiredClassDeityChoices,
+  );
   const abilitySectionIndex = legacyChoiceSections.findIndex(({ section }) =>
     [
       "Ability Scores",
@@ -1480,19 +1483,23 @@ export function CharacterEditorPage({
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
   const contentUpdate = builderIssues.updates[0];
-  const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
+  const navigateToDiagnosticIssue = (issue: BuilderIssue): void =>
+    navigateToTarget(issue.target);
+  // Where an issue's Review or an Overview row leads: the choice's own
+  // tab, level and section, landing on it (review-landing.ts).
+  const navigateToTarget = (target: BuilderIssueTarget | undefined): void => {
     setAccordionOverride(undefined);
-    if (issue.target?.kind === "settings") {
+    if (target?.kind === "settings") {
       window.location.hash = "#/settings";
       return;
     }
-    if (issue.target?.kind === "content-update") {
+    if (target?.kind === "content-update") {
       setReviewingContentUpdate(true);
       return;
     }
     setBuildLanding(undefined);
-    if (issue.target?.kind === "inventory") {
-      const { entryId } = issue.target;
+    if (target?.kind === "inventory") {
+      const { entryId } = target;
       setInventoryFocus((current) => ({
         entryId,
         request: (current?.request ?? 0) + 1,
@@ -1500,7 +1507,7 @@ export function CharacterEditorPage({
       onNavigate(characterId, { workspace: "equipment" });
       return;
     }
-    if (issue.target?.kind === "abilities") {
+    if (target?.kind === "abilities") {
       setSelectedLevel(1);
       setSelectedSectionByLevel((current) => ({
         ...current,
@@ -1517,8 +1524,8 @@ export function CharacterEditorPage({
       });
       return;
     }
-    if (issue.target?.kind === "level-section") {
-      const { level, section } = issue.target;
+    if (target?.kind === "level-section") {
+      const { level, section } = target;
       setSelectedLevel(level);
       setSelectedSectionByLevel((current) => ({
         ...current,
@@ -1532,7 +1539,6 @@ export function CharacterEditorPage({
       });
       return;
     }
-    const target = issue.target;
     if (target?.kind !== "choice") return;
     const choice = planningEvaluation?.choices.find(
       (candidate) => candidate.id === target.choiceId,
@@ -1693,16 +1699,8 @@ export function CharacterEditorPage({
   // one table, a dependent flow one section…), keyed by its first choice.
   const unitChoicesFor = (
     choice: EvaluatedChoice,
-  ): readonly EvaluatedChoice[] => {
-    if (groupedLevelChoices.backgrounds.includes(choice))
-      return groupedLevelChoices.backgrounds;
-    if (groupedLevelChoices.skillTraining.includes(choice))
-      return groupedLevelChoices.skillTraining;
-    return (
-      repeatedGroupByChoiceId.get(choice.id) ??
-      dependentFlowByChoiceId.get(choice.id) ?? [choice]
-    );
-  };
+  ): readonly EvaluatedChoice[] =>
+    presentationUnit(choice, levelChoicePresentation);
   // A tab shows at most one table at a time: each table unit (even a tab's
   // only one) folds to an accordion heading (title, picks, status), and the
   // open heading folds away again. Unless the user picks a heading, the open
@@ -1799,39 +1797,28 @@ export function CharacterEditorPage({
     if (element === null || planningEvaluation === undefined) return element;
     const unit = accordionUnits.find((candidate) => candidate.includes(choice));
     if (unit === undefined) return element;
-    const picks = accordionPicksSummary(
+    const picks = presentationUnitPicks(
       unit,
       levelChoicePresentation,
-      (item) => {
-        // A swap folds to what it traded: "Press of Steel → Hurricane Strike".
-        if (item.type === "Replacement")
-          return replacementPickSummary(item, planningEvaluation, byId, build);
-        const definitionId = selectedDefinitionId(item, planningEvaluation);
-        return definitionId === undefined
-          ? undefined
-          : (byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId);
-      },
-      // Each step's heading in the open flow (ChoiceFlowSection).
-      (item) => contextualChoiceTitle(item, planningEvaluation, byId),
+      planningEvaluation,
+      byId,
+      build,
     );
     return renderAccordionItem({
       key: unit[0]!.id,
-      title:
-        unit === groupedLevelChoices.backgrounds
-          ? "Background"
-          : repeatedGroupByChoiceId.has(unit[0]!.id)
-            ? repeatedChoiceGroupTitle(unit, byId)
-            : contextualChoiceTitle(unit[0]!, planningEvaluation, byId),
-      picks: picks ?? "none chosen",
-      status: unit.some((item) =>
-        selectedChoiceIsHouseRule(item, planningEvaluation),
-      )
-        ? "house-rule"
-        : unitUnresolved(unit)
-          ? "unresolved"
-          : picks !== undefined
-            ? "complete"
-            : undefined,
+      title: presentationUnitTitle(
+        unit,
+        levelChoicePresentation,
+        planningEvaluation,
+        byId,
+      ),
+      picks: picks ?? NO_PICKS_LABEL,
+      status: presentationUnitStatus(
+        unit,
+        planningEvaluation,
+        build.effectiveLevel,
+        picks,
+      ),
       onToggle: () => toggleAccordion(unit[0]!.id, unit[0]!.id),
       children: element,
     });
@@ -2313,6 +2300,16 @@ export function CharacterEditorPage({
                 >
                   <Icon name="level" />
                   <span className="builder-tab-label">Build</span>
+                </button>
+                <button
+                  aria-selected={workspaceTab === "overview"}
+                  role="tab"
+                  type="button"
+                  onClick={() =>
+                    onNavigate(characterId, { workspace: "overview" })
+                  }
+                >
+                  <Icon name="list-checks" /> Overview
                 </button>
                 <button
                   aria-selected={workspaceTab === "details"}
@@ -2852,6 +2849,18 @@ export function CharacterEditorPage({
                   </div>
                 )}
               </section>
+            </div>
+
+            <div
+              className="builder-tab-content"
+              hidden={workspaceTab !== "overview"}
+            >
+              {workspaceTab === "overview" ? (
+                <BuildOverview
+                  levels={overviewLevels}
+                  onOpen={navigateToTarget}
+                />
+              ) : null}
             </div>
 
             <div

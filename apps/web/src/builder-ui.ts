@@ -27,6 +27,7 @@ import type {
   EvaluatedStat,
 } from "@4ecb/rules-engine";
 
+import type { ChoiceAccordionStatus } from "./ChoiceAccordionItem";
 import type { IconName } from "./Icon";
 import { createLevelFrame } from "./new-character";
 import { entityVisualTone, type LegacyVisualTone } from "./visual-language";
@@ -2032,6 +2033,113 @@ export function openedFlowStepId(
       if (!previousStepIds.has(step.id) && isUnresolvedChoice(step))
         return step.id;
   return undefined;
+}
+
+/**
+ * A level's Build-tab section tabs: the presentation choices by legacy
+ * section, with a required class deity choice joining the Class tab (adding
+ * it when the level has none).
+ */
+export function levelChoiceSections(
+  presentationChoices: readonly EvaluatedChoice[],
+  requiredClassDeityChoices: readonly EvaluatedChoice[],
+): readonly LegacyChoiceSectionGroup[] {
+  const sections = groupChoicesByLegacyWorkflow(presentationChoices);
+  if (requiredClassDeityChoices.length === 0) return sections;
+  if (!sections.some(({ section }) => section === "Class"))
+    return [
+      { section: "Class" as const, choices: requiredClassDeityChoices },
+      ...sections,
+    ];
+  return sections.map((group) =>
+    group.section === "Class"
+      ? { ...group, choices: [...group.choices, ...requiredClassDeityChoices] }
+      : group,
+  );
+}
+
+/**
+ * Every choice a level tab shows together with `choice`: the backgrounds'
+ * or skill training's shared editor, a repeated slot group's table or a
+ * dependent flow, else the choice alone.
+ */
+export function presentationUnit(
+  choice: EvaluatedChoice,
+  presentation: LevelChoicePresentation,
+): readonly EvaluatedChoice[] {
+  const { backgrounds, skillTraining } = presentation.grouped;
+  if (backgrounds.includes(choice)) return backgrounds;
+  if (skillTraining.includes(choice)) return skillTraining;
+  return (
+    presentation.repeatedGroupByChoiceId.get(choice.id) ??
+    presentation.dependentFlowByChoiceId.get(choice.id) ?? [choice]
+  );
+}
+
+/** The heading a presentation unit folds to on its level tab. */
+export function presentationUnitTitle(
+  unit: readonly EvaluatedChoice[],
+  presentation: LevelChoicePresentation,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  const root = unit[0]!;
+  if (unit === presentation.grouped.backgrounds) return "Background";
+  if (presentation.repeatedGroupByChoiceId.has(root.id))
+    return repeatedChoiceGroupTitle(unit, byId);
+  return contextualChoiceTitle(root, evaluation, byId);
+}
+
+/**
+ * What a presentation unit folds to on its level tab (accordionPicksSummary
+ * over the unit's picks; a swap reads "Press of Steel → Hurricane Strike"),
+ * or undefined when nothing is picked.
+ */
+export function presentationUnitPicks(
+  unit: readonly EvaluatedChoice[],
+  presentation: LevelChoicePresentation,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+  build: CharacterBuild | undefined,
+): string | undefined {
+  return accordionPicksSummary(
+    unit,
+    presentation,
+    (item) => {
+      if (item.type === "Replacement")
+        return replacementPickSummary(item, evaluation, byId, build);
+      const definitionId = selectedDefinitionId(item, evaluation);
+      return definitionId === undefined
+        ? undefined
+        : (byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId);
+    },
+    // Each step's heading in the open flow (ChoiceFlowSection).
+    (item) => contextualChoiceTitle(item, evaluation, byId),
+  );
+}
+
+/** What a folded unit with no picks reads. */
+export const NO_PICKS_LABEL = "none chosen";
+
+/**
+ * A folded unit's status: a house-ruled pick, else an open required slot
+ * at a reached level, else complete once something is picked.
+ */
+export function presentationUnitStatus(
+  unit: readonly EvaluatedChoice[],
+  evaluation: EvaluatedCharacter,
+  effectiveLevel: number,
+  picks: string | undefined,
+): ChoiceAccordionStatus | undefined {
+  if (unit.some((item) => selectedChoiceIsHouseRule(item, evaluation)))
+    return "house-rule";
+  if (
+    unit.some(
+      (item) => item.level <= effectiveLevel && isUnresolvedChoice(item),
+    )
+  )
+    return "unresolved";
+  return picks === undefined ? undefined : "complete";
 }
 
 /** The presentation choice standing for the unit that shows `choice`. */

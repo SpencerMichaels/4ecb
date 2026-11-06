@@ -148,15 +148,25 @@ describe("hash routes", () => {
         workspace: "details",
       }),
     ).toBe("#/characters/one/edit?tab=details");
-    // The removed Overview tab falls back to Build.
+    // The build overview (D113) reuses the old Overview tab's slug.
     expect(parseHashRoute("#/characters/one/edit?tab=overview")).toMatchObject({
-      builder: { workspace: "build" },
+      builder: { workspace: "overview" },
     });
+    // The old Overview's level and section parameters are dropped.
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=overview&level=3&section=feats",
+      ),
+    ).toBe("#/characters/one/edit?tab=overview");
+    expect(
+      canonicalHashRedirect("#/characters/one/edit?tab=overview"),
+    ).toBeUndefined();
   });
 
   it("names each builder tab's URL slug after the visible tab", () => {
     const slugs = [
       [{ workspace: "build" as const }, "build"],
+      [{ workspace: "overview" as const }, "overview"],
       [{ workspace: "details" as const }, "details"],
       [{ workspace: "equipment" as const, loadout: true }, "loadout"],
       [{ workspace: "equipment" as const }, "inventory"],

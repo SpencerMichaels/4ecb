@@ -227,6 +227,20 @@ const reviews: ReviewCharacter[] = [
           ],
         ],
       },
+      {
+        label: "Overview",
+        path: "tab=overview",
+        items: [
+          [
+            "Build overview rows",
+            "Level 1's rows, grouped Character → Other, each with its Build-tab title and folded picks.",
+          ],
+          [
+            "Beatrix: build overview",
+            "Level sections, row alignment, status icons, clicking a row lands on its choice; 140% zoom and dark theme.",
+          ],
+        ],
+      },
     ],
   },
   {

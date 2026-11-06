@@ -1,5 +1,6 @@
 export type BuilderWorkspaceTab =
   | "build"
+  | "overview"
   | "retraining"
   | "details"
   | "equipment"
@@ -51,7 +52,10 @@ export type BuilderNavigation =
       readonly section?: BuilderSectionSlug;
     }
   | { readonly workspace: "retraining"; readonly level?: number }
-  | { readonly workspace: "details" | "diagnostics" | "house-rules" }
+  | {
+      readonly workspace:
+        "overview" | "details" | "diagnostics" | "house-rules";
+    }
   | { readonly workspace: "equipment"; readonly loadout?: boolean }
   | { readonly workspace: "shop"; readonly category?: ShopCategory }
   | { readonly workspace: "rituals"; readonly category?: RitualCategory };
@@ -71,6 +75,7 @@ export type AppRoute =
 
 const BUILDER_WORKSPACES: readonly BuilderWorkspaceTab[] = [
   "build",
+  "overview",
   "retraining",
   "details",
   "equipment",

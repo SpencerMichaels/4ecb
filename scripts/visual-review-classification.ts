@@ -70,6 +70,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "beatrix|5|granted aliases on feature rows": auto(
     "The on-screen feature list shows the same alias text.",
   ),
+  "beatrix|6|build overview rows": auto(
+    'The Overview tab lists levels 1 to 8 (3 and 7 without choices); Level 1\'s rows in order: Character (Class, Pact Choice, "Race — Revenant · Language: Elven", Past life, both Background rows, Theme), Feats, Powers ("Daily power — Crown of Stars"), then Other (Ability Scores as the point-buy scores, "Race Ability Bonus — +2 CHA", Skill Training, Deity, Gender), each with the Build tab\'s title and folded picks, all complete; Level 4\'s ability increase reads "+1 CHA, +1 DEX".',
+  ),
   // White Well hexblade (level 25)
   "hexblade-white-well|0|benefits by level": auto(
     "With Legendary Hexblade chosen, only its path section remains, with Level 11 / 12 / 16 / 20 subheadings, and the sections at or below the viewed level (1, 11, 25) start open.",

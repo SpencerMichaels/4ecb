@@ -40,6 +40,7 @@ import {
 import { beastCompanionTitle } from "../src/BeastCompanionCard";
 import { parsePartyPieces } from "../src/BuilderItemSetCard";
 import { builderIssueGroups } from "../src/builder-diagnostics";
+import { buildOverview } from "../src/build-overview";
 import {
   accordionPicksSummary,
   candidateReason,
@@ -982,6 +983,53 @@ rule("beatrix", "Print preview", "Concrete reminders", (c) => {
 rule("beatrix", "Sheet (on screen)", "Granted aliases on feature rows", (c) => [
   onScreenFeature(c, "Fey Pact of the White Well Boon: counts as Fey Pact"),
 ]);
+
+// The Overview tab reads the editor's planning evaluation, which off the
+// Build tab lists no candidate details: the sheet's evaluation is the same.
+rule("beatrix", "Overview", "Build overview rows", (c) => {
+  const levels = buildOverview(c.evaluation, c.build, c.context.byId);
+  const rows = (levels[0]?.groups ?? []).flatMap((group) =>
+    group.rows.map(
+      (row) =>
+        `${group.title} | ${row.title} — ${row.picks ?? "none chosen"} | ${row.status ?? ""}`,
+    ),
+  );
+  return [
+    equal(
+      "Levels",
+      levels.map(({ level }) => level),
+      [1, 2, 3, 4, 5, 6, 7, 8],
+    ),
+    equal("Level 1 rows", rows, [
+      "Character | Class — Hexblade | complete",
+      "Character | Pact Choice — Fey Pact of the White Well | complete",
+      "Character | Race — Revenant · Language: Elven | complete",
+      "Character | Past life — Eladrin | complete",
+      "Character | Background — Luskan | complete",
+      "Character | Background — Luskan Benefit | complete",
+      "Character | Theme — Guardian | complete",
+      "Feats | Feat — Starfire Womb | complete",
+      "Powers | Daily power — Crown of Stars | complete",
+      "Other | Ability Scores — STR 8, CON 13, DEX 16, INT 11, WIS 10, CHA 16 | complete",
+      "Other | Race Ability Bonus — +2 CHA | complete",
+      "Other | Skill Training — Stealth, Thievery, Bluff, Arcana | complete",
+      "Other | Deity — Sehanine | complete",
+      "Other | Gender — Female | complete",
+    ]),
+    equal(
+      "Level 4 rows (an ability increase as its bonuses)",
+      levels[3]?.groups.flatMap((group) =>
+        group.rows.map((row) => `${row.title} — ${row.picks ?? ""}`),
+      ),
+      ["Feat — Superior Will", "Ability Increases — +1 CHA, +1 DEX"],
+    ),
+    equal(
+      "Levels 3 and 7 have no choices",
+      [levels[2]?.groups.length, levels[6]?.groups.length],
+      [0, 0],
+    ),
+  ];
+});
 
 /* ------------------------------------------------------------------ */
 /* White Well hexblade (level 25)                                      */

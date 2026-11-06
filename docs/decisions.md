@@ -4355,3 +4355,64 @@ Amended (2026-11-05, owner decisions):
   ends foe's movement (if any) this action." (Wisdom 0) and YoungRaistlin's
   Staff of Defense keeps "With staff, +1 AC." Of the review characters only
   natan changes.
+
+### D113 — The build overview is a builder tab again
+
+Status: accepted (2026-11-05).
+
+Owner decision (2026-11-05, a player request): a **build overview** that
+lists, in one place, every choice the character has made, level by level.
+It is a builder tab, **Overview**, beside Build (icon `list-checks`, the
+`CandidateSelectionTable` checklist icon, so it reads in the coming
+icon-only tab bar), at `tab=overview`. The slug is the old Overview tab's
+(D041), which the 2026-10-18 navigation cleanup removed because it had
+fallen behind the Build tab; old `tab=overview` links now open the new tab
+(their `level`/`section` parameters are dropped). Nothing of the old tab is
+resurrected:
+
+- **One list, divided by level.** A section per level from 1 to the
+  character's level. A level without choices keeps its "Level N" heading
+  with "No choices at this level" beside it, so the sequence has no gaps.
+  Planned levels above the character's level are not listed.
+- **Grouped by kind, in a fixed order.** Character (the Class, Race,
+  Background and Theme tabs' choices, in the Build tab's order: a starting
+  build preset, class, its features and pact, paragon path, epic destiny,
+  race and its flow, past life, backgrounds, theme), then Feats, then
+  Powers (and Spellbook) by the classification of the picks (else of the
+  offered powers): at-will, encounter, daily, then utility; then Other: the
+  level-1 point-buy scores, ability bonuses and increases, companion,
+  skills, the Other tab's choices, the Details tab's choices, and a used
+  retrain. Unused optional retrains are no decision and are left out; any
+  other empty optional slot reads "none chosen" unflagged, once per title
+  per level (a background's own sub-choice doesn't repeat "Background —
+  none chosen").
+- **Rows are the Build tab's folded items.** Each row is the slot's
+  Build-tab heading and its folded picks, from the same single sources the
+  Build tab now shares with it (`builder-ui.ts`: `levelChoiceSections`,
+  `presentationUnit`, `presentationUnitTitle`, `presentationUnitPicks` over
+  `accordionPicksSummary`, `presentationUnitStatus`): "Race — Revenant ·
+  Language: Elven", retrains and swaps "old → new". Three readings are the
+  overview's own, from existing sources: a lone power slot whose heading is
+  the bare "Power" reads as its pick's card type (`classifyPowerEntity`'s
+  `typeLabel`, "Daily power"); ability increases and the racial ability
+  bonus read as their bonuses ("+1 CHA, +1 DEX", via
+  `abilityScoreAdjustment`); and level 1 adds "Ability Scores — STR 10, …"
+  for the point-buy scores (status from `assessAbilityPointBuy`, as the
+  ability-score issue). An open required choice at a reached level carries
+  the Build tab's incomplete mark, a house-ruled pick its house mark.
+- **Each row opens its choice.** Activating a row follows the same path as
+  an issue's Review (`navigateToTarget` in `CharacterEditorPage.tsx`, the
+  row's `BuilderIssueTarget`): the Build tab at the choice's level and
+  section, landing on it through `review-landing.ts` (expanded, scrolled,
+  focused); Details and Retraining choices open those tabs; the point-buy
+  row opens Level 1's Ability Scores, a build preset the Class tab. No
+  per-row menu.
+- **No evaluation of its own.** The overview is computed from the editor's
+  planning evaluation (it covers every level up to the character's), only
+  while the tab is open; off the Build tab that evaluation lists no full
+  candidate lists, which the rows don't need.
+
+Model `apps/web/src/build-overview.ts`, view `BuildOverview.tsx`, styles in
+`styles/10-builder-choices.css` (rows shaped like a folded accordion
+heading, titles in one column). Supersedes the 2026-10-18 note that
+Overview is removed (D041's navigation cleanup).

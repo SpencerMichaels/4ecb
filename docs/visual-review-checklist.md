@@ -156,6 +156,25 @@ live site.
     flickers between modes, the selected tab loses its label, or the
     status row sits left or below the rule.
 
+- [ ] **Beatrix: build overview.**
+  - **Where:** `edit?tab=overview` (the Overview tab, second in the tab
+    bar); scroll levels 1 to 8, then click Level 1's Race row, come back,
+    click a Level 4 or 8 row (Ability Increases, a feat), and a Details row
+    (Gender or Alignment). Repeat at 140% zoom and in dark theme.
+  - **Expect:** one "Level N" section per level, each a list of rows in
+    groups (Character, Feats, Powers, Other) with a small gap between
+    groups; each row reads its slot title in bold, then the picks in muted
+    text that wraps rather than clipping, and the Build tab's green check
+    (or amber "?" for an open required choice) at the right edge, aligned
+    across rows. A level with no choices shows "No choices at this level".
+    A row highlights on hover and keyboard focus. Clicking a row opens the
+    Build tab at that level and section with the choice's item expanded,
+    scrolled to and focused (Details rows open Details on that choice).
+  - **Wrong if:** titles and picks don't line up into columns, long picks
+    are cut off or push the status icon out of the row, the list overflows
+    sideways at 140% zoom, the tab's icon looks like another tab's, or a
+    click lands on the wrong level, section or item.
+
 ## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 
 - [x] **White Well hexblade: the Legendary Hexblade section.**
