@@ -365,13 +365,24 @@ const COUNTS_AS_ALTERNATES: Readonly<Record<string, string>> = {
   class: "CountsAsClass",
   "class feature": "CountsAsFeature",
   race: "CountsAsRace",
+  // A modern extension (D116): the old builder has no CountsAsDeity.
+  deity: "CountsAsDeity",
 };
+
+/** What a `worship` clause matches by name: a Deity or its alternate. */
+const WORSHIPPED_TYPES: readonly string[] = [
+  "deity",
+  normalized(COUNTS_AS_ALTERNATES["deity"] ?? "deity"),
+];
 
 /**
  * Legacy CreateElementPrereq (ConnectAlternate): a class, class feature or
  * race requirement is also met by the same-named CountsAsClass,
  * CountsAsFeature or CountsAsRace element, which hybrid classes and their
- * hybrid class features grant. Negated requirements take no alternate.
+ * hybrid class features grant. A deity requirement is likewise met by a
+ * same-named CountsAsDeity, which a deity grants to count as another (D116:
+ * Torag counts as Moradin); it brings no domains or alignment. Negated
+ * requirements take no alternate.
  */
 function withCountsAsAlternates(
   matches: readonly ContentEntity[],
@@ -2080,9 +2091,10 @@ export function evaluatePrerequisiteIr(
         ? "satisfied"
         : "failed";
     case "worship":
+      // The deity, or its same-named CountsAsDeity alternate (D116).
       return context.owned.some(
         (entity) =>
-          normalized(entity.type) === "deity" &&
+          WORSHIPPED_TYPES.includes(normalized(entity.type)) &&
           normalized(entity.name) === normalized(ir.value),
       )
         ? "satisfied"

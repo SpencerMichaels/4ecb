@@ -1,5 +1,30 @@
 # Implementation status
 
+## Deity equivalents: CountsAsDeity (2026-11-06)
+
+D116's `CountsAsDeity` alternate is built. `COUNTS_AS_ALTERNATES`
+(rules-engine `prerequisites.ts`, legacy ConnectAlternate) gains
+`deity: "CountsAsDeity"`, and the `worship` clause ("must worship
+Moradin") is met by an owned Deity or same-named CountsAsDeity, both read
+from that one table. Negated requirements take no alternate, and a
+CountsAsDeity brings no domains or alignment: domain requirements and the
+deity-alignment issue still read only the Deity record. The new
+`content/corrections/9H-deity-equivalents.part` gives the seven
+"<Deity> (Forgotten Realms)" duplicates a CountsAsDeity of their base deity
+(`_SupportsID` names it, like `ID_INTERNAL_COUNTSASCLASS_CLERIC`). Before
+the change they failed all 24 name-matched "must worship <Deity>"
+requirements (Bahamut 10, Bane 5, Corellon 5, one each for Asmodeus,
+Gruumsh, Lolth and Tiamat). The builder still does not say how a
+requirement is met (prerequisite clauses carry only text and status, as
+for CountsAsClass), and `.dnd4e` export does not yet note the alternate
+as lossy. Evaluation cache bumped to v116; the stored `_Prerequisite IR`
+version is unchanged, because its parse changes only for record sets that
+contain CountsAsDeity records, and those sets are new. Verification:
+synthetic `prerequisites.test.ts` case, rules-engine suite, typecheck and
+lint pass; on the rebuilt private pack, an evaluated character holding each
+FR deity owns its CountsAsDeity and meets every one of the 24 clauses
+(each fails without the grant); `parity:baseline` shows no new mismatches.
+
 ## Build overview tab (2026-11-05)
 
 The builder has an **Overview** tab again (D113, a player request): beside

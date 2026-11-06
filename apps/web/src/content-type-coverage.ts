@@ -125,6 +125,7 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Internal: internal("Engine flags (No Encounter Powers, Ki Focus User…)."),
   Grants: internal("Grant bundles for races and classes."),
   CountsAsFeature: internal("Aliases matched by prerequisites."),
+  CountsAsDeity: internal("Deity aliases matched by prerequisites (D116)."),
   Level1Rules: internal("Character-creation rule bundles."),
   "Build Suggestions": internal("Suggested builds per class."),
   "Background Association": internal("Background skill/language links."),

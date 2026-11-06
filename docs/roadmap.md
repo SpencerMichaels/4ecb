@@ -932,7 +932,8 @@ narrowed, pulled-forward part of M8: campaign documents (overlay content plus
 ID and type restrictions), per-character campaign membership with the
 profile recomposed over server revisions, file import/export and a
 `deploy/`-hosted invite link, `content-tool` authoring, deity "counts as"
-equivalents for `worship` prerequisites, legacy `D20CampaignSetting`
+equivalents for `worship` prerequisites (CountsAsDeity in the engine and
+for the Forgotten Realms duplicates done 2026-11-06), legacy `D20CampaignSetting`
 export/import, and a Pathfinder campaign (Inner Sea major and other deities,
 mapped alignments, domains and equivalents) as the first real campaign. The
 form editor stays in M8.

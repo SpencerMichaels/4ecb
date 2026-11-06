@@ -119,6 +119,75 @@ describe("legacy prerequisites", () => {
     );
   });
 
+  it("meets a named-deity requirement through an owned CountsAsDeity (D116)", () => {
+    const deity = (id: string, name: string, domains: string) => ({
+      id,
+      name,
+      type: "Deity",
+      categories: [],
+      specifics: [
+        { name: "Domains", value: domains, extraAttributes: [], ordinal: 0 },
+      ],
+    });
+    const torag = deity("ID_TORAG", "Torag", "ID_DOMAIN_PROTECTION");
+    const moradin = deity("ID_FMP_DEITY_9", "Moradin", "ID_DOMAIN_EARTH");
+    const countsAsMoradin = {
+      id: "ID_INTERNAL_COUNTSASDEITY_MORADIN",
+      name: "Moradin",
+      type: "CountsAsDeity",
+      categories: [],
+      specifics: [
+        {
+          name: "_SupportsID",
+          value: "ID_FMP_DEITY_9",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const channelDivinity = {
+      id: "ID_CHANNEL_DIVINITY",
+      name: "Channel Divinity",
+      type: "Class Feature",
+    };
+    const deityDefinitions = [
+      torag,
+      moradin,
+      countsAsMoradin,
+      channelDivinity,
+      { id: "ID_POLYTHEIST", name: "Polytheist", type: "Feat" },
+      { id: "ID_DOMAIN_EARTH", name: "Earth", type: "Domain" },
+      { id: "ID_DOMAIN_PROTECTION", name: "Protection", type: "Domain" },
+    ] as unknown as ContentEntity[];
+    const statusOf = (prerequisite: string, worshipped: readonly object[]) =>
+      evaluatePrerequisite(prerequisite, {
+        owned: [channelDivinity, ...worshipped] as ContentEntity[],
+        definitions: deityDefinitions,
+        level: 8,
+        abilities: {},
+      }).status;
+    const withGrant = [torag, countsAsMoradin];
+
+    for (const prerequisite of [
+      "must worship Moradin",
+      "Channel Divinity class feature, Polytheist or must worship Moradin",
+      "follower of Moradin",
+    ]) {
+      expect(statusOf(prerequisite, withGrant), prerequisite).toBe("satisfied");
+      expect(statusOf(prerequisite, [torag]), prerequisite).toBe("failed");
+    }
+    // Negated requirements take no alternate.
+    expect(statusOf("!ID_FMP_DEITY_9", withGrant)).toBe("satisfied");
+    expect(statusOf("!ID_FMP_DEITY_9", [moradin])).toBe("failed");
+    // The alternate brings no domains: those are the worshipped deity's.
+    expect(
+      statusOf("must worship a deity of the Earth domain", withGrant),
+    ).toBe("failed");
+    expect(
+      statusOf("must worship a deity of the Protection domain", withGrant),
+    ).toBe("satisfied");
+  });
+
   it("reads a bare Shifter as either shifter race (SpecialCase)", () => {
     // -Module-.cs ~29551: when no record is named "Shifter", native
     // SpecialCase reads it as Razorclaw Shifter or Longtooth Shifter, for a

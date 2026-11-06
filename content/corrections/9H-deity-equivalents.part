@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Deity equivalents (D116). A "must worship <Deity>" requirement matches the
+  deity by name, so the seven "<Deity> (Forgotten Realms)" duplicates fail
+  every requirement naming their base deity (Bahamut's Vessel, Corellon's
+  Grace, Soldier of Conquest, ...). Each grants a CountsAsDeity named after
+  the base deity, which the rules engine reads as that deity's alternate
+  (COUNTS_AS_ALTERNATES, rules-engine prerequisites.ts), the way the legacy
+  CountsAsClass records stand for a class; `_SupportsID` names the base
+  deity, as ID_INTERNAL_COUNTSASCLASS_CLERIC's names the Cleric class. The
+  alternate brings no domains or alignment: those stay the FR record's.
+  CountsAsDeity is a modern type the old builder ignores. Merged after the
+  CBLoader parts by scripts/build-private-content.sh. Structure only; no
+  official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <RulesElement name="Bahamut" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_BAHAMUT" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_2 </specific>
+    You count as a worshiper of Bahamut for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_136">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_BAHAMUT" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Asmodeus" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_ASMODEUS" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_15 </specific>
+    You count as a worshiper of Asmodeus for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_137">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_ASMODEUS" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Bane" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_BANE" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_16 </specific>
+    You count as a worshiper of Bane for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_138">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_BANE" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Gruumsh" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_GRUUMSH" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_20 </specific>
+    You count as a worshiper of Gruumsh for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_139">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_GRUUMSH" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Lolth" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_LOLTH" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_22 </specific>
+    You count as a worshiper of Lolth for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_140">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_LOLTH" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Tiamat" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_TIAMAT" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_43 </specific>
+    You count as a worshiper of Tiamat for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_141">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_TIAMAT" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+
+  <RulesElement name="Corellon" type="CountsAsDeity" internal-id="ID_INTERNAL_COUNTSASDEITY_CORELLON" source="Forgotten Realms Campaign Guide">
+    <specific name="_SupportsID"> ID_FMP_DEITY_3 </specific>
+    You count as a worshiper of Corellon for meeting prerequisites.
+  </RulesElement>
+  <AppendNodes internal-id="ID_FMP_DEITY_142">
+    <rules>
+      <grant name="ID_INTERNAL_COUNTSASDEITY_CORELLON" type="CountsAsDeity" />
+    </rules>
+  </AppendNodes>
+</D20Rules>

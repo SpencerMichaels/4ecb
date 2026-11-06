@@ -365,6 +365,19 @@ cached by profile array identity, then owner record identity (its type steers
 the walk), then text, and is shared by every caller and character
 (`prerequisiteIrCache`); ownership is read only when the tree is evaluated.
 
+Native CreateElementPrereq (ConnectAlternate) also accepts an alternate for
+a class, class feature or race requirement: the same-named CountsAsClass,
+CountsAsFeature or CountsAsRace record (`COUNTS_AS_ALTERNATES`). 4ecb adds
+one modern entry, a Deity requirement's CountsAsDeity (D116). The `worship`
+clause ("must worship Moradin") reads the same table, so it is met by an
+owned Deity or CountsAsDeity of that name. A deity grants the CountsAsDeity
+to count as another: the Forgotten Realms duplicates count as their base
+deity (`content/corrections/9H-deity-equivalents.part`), and a campaign
+deity can count as a stock one. Negated requirements take no alternate. A
+CountsAsDeity brings no domains or alignment, so domain requirements and
+the deity-alignment issue read only the Deity record. The old builder
+ignores the type.
+
 Because the tree depends only on the profile, the owner and the text,
 `content-tool build` internalizes every record's prerequisites once against
 the finished record set (`withStoredPrerequisiteIr`) and stores the tree as
