@@ -315,13 +315,13 @@ live site.
 - [ ] **Psion: the Thought Warrior's shared implement rows.**
   - **Where:** `?preview=1`, the two "Thought Warrior" creature cards after
     Skills.
-  - **Expect:** under the Opportunity Attack, the italic caption "Standard
-    Action · Immediate Interrupt · Opportunity Attack" aligned with the
-    rows' left edge, then the rows, striped and divided like a power card's
-    weapon table.
-  - **Wrong if:** the caption reads as part of the command text or as a
-    heading of the next command, it isn't aligned with the rows, or a card
-    overflows.
+  - **Expect:** the Standard Action and Immediate Interrupt print their text
+    only; directly under the Opportunity Attack's text, the implement rows
+    (no caption line naming the commands, owner 2026-11-05), striped and
+    divided like a power card's weapon table.
+  - **Wrong if:** a "Standard Action · Immediate Interrupt · Opportunity
+    Attack" line appears, the rows read as belonging to the next command, or
+    a card overflows.
 
 ## Pass 10: Hu's sheet editing (`hu`)
 

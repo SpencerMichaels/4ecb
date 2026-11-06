@@ -1601,12 +1601,6 @@ rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
           `${entry.name}: no roll beside the rows`,
           entry.roll === undefined,
         ),
-        // The two commands roll different numbers, so neither shares the
-        // other's rows (adjacent commands that agree print one table).
-        truthy(
-          `${entry.name}: its rows are its own, with no shared caption`,
-          entry.variantsFor === undefined,
-        ),
         inOrder(
           `${entry.name}'s rows print, equipped first`,
           creature?.text ?? "",
@@ -1930,8 +1924,6 @@ rule(
   "Print preview",
   "Shared implement table (D111)",
   (c) => {
-    const caption =
-      "Standard Action · Immediate Interrupt · Opportunity Attack";
     const creatures = printedDeck(c).filter(
       ({ kind, label }) => kind === "creature" && label === "Thought Warrior",
     );
@@ -1942,20 +1934,26 @@ rule(
         creatures.length === 2,
         `${creatures.length}`,
       ),
-      equal("One shared caption", count(first, caption), 1),
-      inOrder(
-        "The commands, then the caption and one row per implement",
-        first,
-        [
-          "Standard Action",
-          "Immediate Interrupt",
-          "Opportunity Attack",
-          caption,
-          "Accurate orb of Inevitable Continuance +1",
-          "Accurate staff of the War Mage +3",
-          "No implement",
-        ],
+      // The shared rows carry no caption naming the commands (owner,
+      // 2026-11-05).
+      equal(
+        "No caption over the shared rows",
+        count(first, "Standard Action · Immediate Interrupt"),
+        0,
       ),
+      equal(
+        "One shared implement table",
+        count(first, "Accurate staff of the War Mage +3"),
+        1,
+      ),
+      inOrder("The commands, then one row per implement", first, [
+        "Standard Action",
+        "Immediate Interrupt",
+        "Opportunity Attack",
+        "Accurate orb of Inevitable Continuance +1",
+        "Accurate staff of the War Mage +3",
+        "No implement",
+      ]),
       equal(
         "The orb's row is printed once",
         count(first, "Accurate orb of Inevitable Continuance +1"),

@@ -237,7 +237,7 @@ describe("CreatureCard", () => {
     );
   });
 
-  it("captions rows that adjacent commands share with those commands (D111)", () => {
+  it("prints rows that adjacent commands share once, uncaptioned (D111)", () => {
     const rows = [
       {
         id: "rod",
@@ -274,16 +274,15 @@ describe("CreatureCard", () => {
               action: "Opportunity",
               lines: [{ text: "Melee 1; Wisdom vs. Reflex." }],
               variants: rows,
-              variantsFor: ["Standard Action", "Opportunity Attack"],
             },
           ],
         }}
       />,
     );
     expect(html.split('class="print-card-variant-table"').length - 1).toBe(1);
-    expect(html).toContain(
-      '<caption class="print-creature-variants-for">Standard Action · Opportunity Attack</caption>',
-    );
+    // No caption names the commands (owner, 2026-11-05).
+    expect(html).not.toContain("<caption");
+    expect(html).not.toContain("Standard Action · Opportunity Attack");
     // The command text is unchanged and the table follows the last command.
     expect(html.indexOf("print-card-variant-table")).toBeGreaterThan(
       html.lastIndexOf("Melee 1; Wisdom vs. Reflex."),

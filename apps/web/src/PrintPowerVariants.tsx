@@ -112,14 +112,11 @@ export function PrintPowerVariants({
   variants,
   attackOrdinals,
   columnHeadings = true,
-  caption,
 }: {
   readonly variants: readonly SheetPowerVariant[];
   readonly attackOrdinals: readonly number[];
   /** False for the rows alone, under a creature's command (D111). */
   readonly columnHeadings?: boolean;
-  /** The commands a creature's shared rows serve (D111). */
-  readonly caption?: string;
 }) {
   if (variants.length === 0) return null;
   // A beast companion's attack uses none of your weapons: no weapon table,
@@ -170,9 +167,6 @@ export function PrintPowerVariants({
         className="print-card-variant-table"
         aria-label="Weapon calculations by attack"
       >
-        {caption === undefined ? null : (
-          <caption className="print-creature-variants-for">{caption}</caption>
-        )}
         {columnHeadings ? (
           <thead>
             <tr>

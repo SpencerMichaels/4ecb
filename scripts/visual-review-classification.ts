@@ -507,7 +507,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Added with the 2026-11-04 checklist compression.
   "psion-thought-warrior|0|shared implement table (d111)": auto(
-    'Thought Warrior: one "Standard Action · Immediate Interrupt · Opportunity Attack" caption under the commands, then one row per implement (orb +1, staff +3, Unarmed), each printed once.',
+    "Thought Warrior: the commands, then one uncaptioned table (no line naming the commands) with one row per implement (orb +1, staff +3, Unarmed), each printed once.",
   ),
   "lily|0|skald training swaps majestic word on its own": auto(
     "The level-4 replacement gives up Majestic Word and is filled with Skald's Aura, with no issue; Skald's Aura prints, Majestic Word does not.",

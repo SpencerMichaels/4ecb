@@ -1385,7 +1385,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Shared implement table (D111)",
-            'Thought Warrior: the Standard Action and Immediate Interrupt commands print text only, then one table under the Opportunity Attack captioned "Standard Action · Immediate Interrupt · Opportunity Attack", one row per implement.',
+            "Thought Warrior: the Standard Action and Immediate Interrupt commands print text only, then one uncaptioned table under the Opportunity Attack, one row per implement.",
           ],
           [
             "Psion: the Thought Warrior's shared implement rows",

@@ -75,13 +75,11 @@ export interface SheetCreatureEntry extends AssociateStatisticsEntry {
   readonly roll?: SheetCreatureRoll;
   /** A command's numbers per implement or weapon (D111), when the summoner
    *  has more than one row and they differ, in place of `roll`; a
-   *  stat-block line keeps the power card's leading row's numbers. */
+   *  stat-block line keeps the power card's leading row's numbers. When
+   *  adjacent commands give the same numbers, the rows print once,
+   *  uncaptioned, on the run's last command; the others carry no rows and
+   *  no roll (D111, amended 2026-11-05). */
   readonly variants?: readonly SheetCreatureCommandVariant[];
-  /** When adjacent commands give the same numbers per implement, their
-   *  rows print once, on the group's last command: the names of every
-   *  command they serve, for the rows' caption. The others carry no
-   *  rows and no roll. */
-  readonly variantsFor?: readonly string[];
 }
 
 /**
@@ -425,19 +423,9 @@ function withCommandRows(
     );
     if (variants === undefined) return withRow;
     // Adjacent commands with the same rows share one table, under the
-    // last of them (D111).
+    // last of them, with no caption (D111, amended 2026-11-05).
     if (sameVariantRows(variants, rows[index + 1])) return withRow;
-    let first = index;
-    while (sameVariantRows(variants, rows[first - 1])) first -= 1;
-    return first === index
-      ? { ...withRow, variants }
-      : {
-          ...withRow,
-          variants,
-          variantsFor: entries
-            .slice(first, index + 1)
-            .map((member) => member.name),
-        };
+    return { ...withRow, variants };
   });
 }
 

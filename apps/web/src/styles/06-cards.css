@@ -1096,13 +1096,6 @@
 .print-associate-entry .print-card-weapon-variants {
   margin-top: 0;
 }
-/* The commands one shared set of rows serves (D111). */
-.print-associate-entry .print-creature-variants-for {
-  caption-side: top;
-  font-style: italic;
-  padding: 0.0125in 0.02in;
-  text-align: left;
-}
 .print-card-body .print-creature-description {
   display: grid;
   gap: 0.03in;

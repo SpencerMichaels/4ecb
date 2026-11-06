@@ -4087,6 +4087,22 @@ rows, but drops the power card's table look), one card-level table with a
 column per command (needs new column headings, and commands often share a
 name), merging tied implements (fits nothing on its own).
 
+Amended (2026-11-05, owner decision): **the shared table has no caption.**
+The owner, on the Thought Warrior card's "Standard Action · Immediate
+Interrupt · Opportunity Attack" caption: "Which is it? why is that line
+even there?" It read as one attack with three action types. The shared
+rows still print once, after the run's last command, and the other
+commands still print their text with no rows and no roll; nothing names
+the commands the rows serve. Generic for every creature card on every
+surface (print, builder panel): `SheetCreatureEntry.variantsFor` and the
+`PrintPowerVariants` `caption` prop are gone (no other consumer), so a
+card with a run is one line shorter. Reach: with two or more differing
+implement rows, 12 of the full pack's 106 summon powers with rolled
+commands have adjacent commands with identical attack and hit text, and
+26 whose attack and damage lines agree (e.g. Summon Thought Warrior,
+Phantasmist Stalker, Summon Angel of Fire); mount creature cards carry no
+implement rows, so none.
+
 Amended (2026-11-04, owner decision): **an implement power's no-implement
 row reads "No implement".** The owner's visual review of the Blade Angel
 card: "I'm seeing weapon tables listed for its attacks; but its attacks

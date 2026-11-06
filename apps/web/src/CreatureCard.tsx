@@ -99,14 +99,11 @@ export function CreatureEntrySection({
       {entry.variants === undefined ? null : (
         // A command per implement or weapon (D111): the power card's
         // weapon-table rows, without its column headings; rows adjacent
-        // commands share print once, captioned with the commands.
+        // commands share print once, after the last of them, uncaptioned.
         <PrintPowerVariants
           variants={entry.variants}
           attackOrdinals={[1]}
           columnHeadings={false}
-          {...(entry.variantsFor === undefined
-            ? {}
-            : { caption: entry.variantsFor.join(" · ") })}
         />
       )}
     </section>

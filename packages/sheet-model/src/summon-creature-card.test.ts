@@ -583,18 +583,15 @@ describe("summoned creature commands (D111)", () => {
       "+10 vs Will",
       "+12 vs Will",
     ]);
-    expect(blast?.variantsFor).toBeUndefined();
-    // The melee and opportunity attacks share one set, on the last.
+    // The melee and opportunity attacks share one set, on the last, with
+    // no caption naming them (D111, amended 2026-11-05).
     expect(standard?.variants).toBeUndefined();
     expect(standard?.roll).toBeUndefined();
     expect(opportunity?.variants?.map(({ attack }) => attack)).toEqual([
       "+10 vs Reflex",
       "+12 vs Reflex",
     ]);
-    expect(opportunity?.variantsFor).toEqual([
-      "Standard Action",
-      "Opportunity Attack",
-    ]);
+    expect(Object.keys(opportunity ?? {})).not.toContain("variantsFor");
     expect(minor?.variants).toBeUndefined();
     // The card's text still names every row once.
     expect(
