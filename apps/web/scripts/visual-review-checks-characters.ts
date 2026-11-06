@@ -90,10 +90,9 @@ import {
 import {
   KNOWN_RECORD_GROUPS,
   knownRecordKind as knownRecordKindOf,
-  AllowanceChoiceDialog,
+  knownRecordKey,
   knownRecordSourceLabel,
   ritualAllowanceGroups,
-  ritualAllowanceLabel,
 } from "../src/known-records-ui";
 import { canonicalHashRedirect } from "../src/routes";
 
@@ -1395,8 +1394,7 @@ function ritualCounter(c: ReviewCharacter, provider: string): Check[] {
   const statuses = ritualStatuses(c).filter(
     ({ allowance }) => key(allowance.provider) === key(provider),
   );
-  const nameOf = (id: string) => c.context.byId.get(key(id))?.name ?? id;
-  const group = ritualAllowanceGroups(statuses, nameOf)[0];
+  const group = ritualAllowanceGroups(statuses)[0];
   const heading = `${group?.heading ?? "Free rituals"} (${provider})`;
   const headings = elementsWithClass(html, "rituals-allowance-heading").map(
     textOf,
@@ -1602,19 +1600,71 @@ rule("wizard-gnome", "Inventory", '"Learn X free" dialog', (c) => {
 });
 
 rule("psion-thought-warrior", "Inventory", "Free rituals block", (c) => {
-  // No rituals learned yet, so both of the psion's allowances are left.
+  // Nothing learned free yet; the Sending or Tenser's Floating Disk choice
+  // is a Build-tab choice (D115), not an allowance.
   const lines = elementsWithClass(
     inventoryHtml(c),
     "rituals-allowance-count",
   ).map(textOf);
   return [
     ...ritualCounter(c, "Psion"),
-    equal("The block's lines, in order", lines, [
-      "1 free 1st-level ritual",
-      "1 free ritual: Sending or Tenser's Floating Disk",
-    ]),
+    equal("The block's lines, in order", lines, ["1 free 1st-level ritual"]),
   ];
 });
+
+rule(
+  "psion-thought-warrior",
+  "Build, level 1: Class",
+  "Psion ritual choice (D115)",
+  (c) => {
+    // The review evaluation lists no candidate details; ask for level 1's.
+    const detailed = evaluate(c.build, c.context.entities, {
+      candidateDetailLevels: [1],
+    });
+    const choice = detailed.choices.find(
+      ({ type, level }) => type === "Ritual" && level === 1,
+    );
+    const picked = detailed.occurrences.find(
+      ({ id }) => id === choice?.selectedOccurrenceId,
+    );
+    const rows = (
+      buildOverview(c.evaluation, c.build, c.context.byId)[0]?.groups ?? []
+    ).flatMap((group) =>
+      group.rows.map(
+        (row) => `${group.title} | ${row.title} — ${row.picks ?? ""}`,
+      ),
+    );
+    const classRow = rows.find((row) => row.startsWith("Character | Class — "));
+    return [
+      equal(
+        "The choice offers Sending and Tenser's Floating Disk",
+        (choice?.candidates ?? [])
+          .filter(({ reasons }) => !reasons.includes("category"))
+          .map(
+            ({ definitionId }) => c.context.byId.get(key(definitionId))?.name,
+          ),
+        ["Sending", "Tenser's Floating Disk"],
+      ),
+      equal(
+        "Tenser's Floating Disk is chosen",
+        picked === undefined
+          ? undefined
+          : c.context.byId.get(key(picked.definitionId))?.name,
+        "Tenser's Floating Disk",
+      ),
+      contains(
+        "The folded Class heading ends with the ritual",
+        classRow ?? "",
+        "Ritual: Tenser's Floating Disk",
+      ),
+      truthy(
+        "No Other section row for it",
+        !rows.some((row) => row.startsWith("Other | Ritual")),
+        rows.filter((row) => row.includes("Ritual")).join(" | "),
+      ),
+    ];
+  },
+);
 
 rule("psion-thought-warrior", "Inventory", "Known groups", (c) => {
   const html = inventoryHtml(c);
@@ -1643,53 +1693,32 @@ rule("psion-thought-warrior", "Inventory", "Known groups", (c) => {
   ];
 });
 
-rule("psion-thought-warrior", "Inventory", "Learn free dialog", (c) => {
-  const disk = c.context.named("Tenser's Floating Disk", "Ritual");
-  const statuses = ritualStatuses(c);
-  const eligible = eligibleRitualAllowances(
-    statuses,
-    disk,
-    c.build.effectiveLevel,
+rule("psion-thought-warrior", "Inventory", "Chosen ritual", (c) => {
+  const rows = knownRows(c).filter(
+    ({ name }) => name === "Tenser's Floating Disk",
   );
-  const nameOf = (id: string) => c.context.byId.get(key(id))?.name ?? id;
-  const html = markup(
-    createElement(AllowanceChoiceDialog, {
-      name: disk.name,
-      allowances: eligible,
-      describe: (allowance) => {
-        const status = statuses.find(
-          (candidate) => key(candidate.allowance.key) === key(allowance.key),
-        );
-        return status === undefined
-          ? undefined
-          : ritualAllowanceLabel(status, nameOf);
-      },
-      onLearn: () => undefined,
-      onCancel: () => undefined,
-    }),
-  );
-  const options = elementsWithClass(html, "dialog-choice").map(textOf);
+  const html = inventoryHtml(c);
   return [
-    contains(
-      'Titled "Learn Tenser\'s Floating Disk free"',
-      textOf(html),
-      "Learn Tenser's Floating Disk free",
-    ),
-    equal("Its options, each a radio with hanging text", options, [
-      "Psion · 1 free 1st-level ritual",
-      "Psion · 1 free ritual: Sending or Tenser's Floating Disk",
-      "None (a gift)",
-    ]),
-    inOrder("Cancel, then Learn free", textOf(html), ["Cancel", "Learn free"]),
     equal(
-      "Tenser's Floating Disk is in the Shop's Rituals category",
-      shopBrowseCategory(disk),
-      "rituals",
+      "Listed once, chosen for the Psion",
+      rows.map(({ source }) => source),
+      ["Chosen for Psion"],
     ),
     contains(
-      "… whose rows have the Learn free (gift) button",
-      knownWorkspaceHtml(c, "shop"),
-      'title="Learn free"',
+      "The Inventory row shows it under the name",
+      textOf(knownRowHtml(html, "Tenser's Floating Disk") ?? ""),
+      "Chosen for Psion",
+    ),
+    equal(
+      "It uses no free-ritual allowance",
+      ritualStatuses(c).map(({ used }) => used),
+      [0],
+    ),
+    // The Shop marks a row Known by this key (useKnownRecordsModel).
+    equal(
+      "The Shop knows it by its content ID",
+      rows.map(({ record }) => knownRecordKey(record)),
+      ["id_fmp_ritual_60"],
     ),
   ];
 });

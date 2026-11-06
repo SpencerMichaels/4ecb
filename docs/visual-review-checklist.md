@@ -432,21 +432,30 @@ live site.
     Attack" line appears, the rows read as belonging to the next command, or
     a card overflows.
 
+- [ ] **Psion: the ritual choice in the Class flow.**
+  - **Where:** `edit?tab=build&level=1&section=class` at 140% zoom.
+  - **Expect:** the Psion flow's last step is a Ritual choice (D115): a
+    two-row table, Sending and Tenser's Floating Disk, with Tenser's
+    Floating Disk chosen; folded, the Class heading reads "Psion · … ·
+    Ritual: Tenser's Floating Disk". There is no Ritual row in Other.
+  - **Wrong if:** the step sits in its own section or under Other, the table
+    lists other rituals, or its heading reads oddly (a bare "Ritual" with no
+    context is acceptable only inside the Psion flow).
+
 - [ ] **Psion: free rituals in the Inventory and Shop.**
   - **Where:** `edit?tab=inventory` at 140% zoom, in light and dark theme,
-    below the items. Then the Shop: Type → Rituals, search "Tenser", and
-    click Tenser's Floating Disk's gift (Learn free) button.
+    below the items. Then the Shop: Type → Rituals, search "Tenser".
   - **Expect:** after the item groups, a full-width row holding a compact
-    block: a bold "Free rituals" with a grey "(Psion)", then two lines
-    indented under it, "1 free 1st-level ritual" and "1 free ritual:
-    Sending or Tenser's Floating Disk", inset like the cells above. The
-    dialog is wide enough that each "Psion · …" option sits on one line
-    beside its radio; the part after "·" grey; Cancel, then Learn free.
+    block: a bold "Free rituals" with a grey "(Psion)", then one line
+    indented under it, "1 free 1st-level ritual", inset like the cells
+    above. Under "Rituals known", Tenser's Floating Disk once, its muted
+    line ending "Chosen for Psion"; right-click → Remove is inert with the
+    reason. In the Shop its row reads Known with Buy and Learn free
+    disabled.
   - **Wrong if:** the block reads like a paragraph or its lines don't sit
     under the heading, it touches the table's edge or squeezes into the
-    Item column, a dialog option's wrapped line starts under the radio
-    (looking like a new option or a heading), or grey text is unreadable
-    in dark theme.
+    Item column, Tenser's Floating Disk is listed twice or as "Learned
+    free", or grey text is unreadable in dark theme.
 
 ## Pass 10: Hu's sheet editing (`hu`)
 

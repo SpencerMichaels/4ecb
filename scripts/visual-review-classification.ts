@@ -540,13 +540,16 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Added with the 2026-11-04 checklist compression.
   "psion-thought-warrior|1|free rituals block": auto(
-    '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
+    '"Free rituals (Psion)", then only "1 free 1st-level ritual" (Sending or Tenser\'s Floating Disk is a Build-tab choice, D115); no rule sentence.',
   ),
   "psion-thought-warrior|1|known groups": auto(
     "The Inventory keeps its Item, Quantity and actions columns; a known group only for a kind the psion knows.",
   ),
-  "psion-thought-warrior|1|learn free dialog": auto(
-    'Learn Tenser\'s Floating Disk free (offered in the Shop\'s Rituals category): "Psion · 1 free 1st-level ritual", "Psion · 1 free ritual: Sending or Tenser\'s Floating Disk", "None (a gift)", each a radio with its text beside it; Cancel, then Learn free.',
+  "psion-thought-warrior|1|chosen ritual": auto(
+    'Tenser\'s Floating Disk is listed once, "Chosen for Psion", uses no free-ritual allowance, and reads Known in the Shop with Buy disabled.',
+  ),
+  "psion-thought-warrior|2|psion ritual choice (d115)": auto(
+    "The level-1 Ritual choice offers Sending and Tenser's Floating Disk, Tenser's Floating Disk chosen; the folded Class row ends \"Ritual: Tenser's Floating Disk\", and no Other row lists it.",
   ),
   "psion-thought-warrior|0|shared implement table (d111)": auto(
     "Thought Warrior: the commands, then one uncaptioned table (no line naming the commands) with one row per implement (orb +1, staff +3, Unarmed), each printed once.",

@@ -718,7 +718,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             '"Learn X free" dialog',
-            'In the Shop\'s Rituals category, Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion (the Psion 15 review character). Each option reads "Psion · …" with what that allowance still covers.',
+            "In the Shop's Rituals category, Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog appears only when two allowances fit (a wizard who also has a psion's or cleric's free ritual); no review character has two, so it is checked factually.",
           ],
         ],
       },
@@ -1413,6 +1413,8 @@ const reviews: ReviewCharacter[] = [
       preferred: [
         "ID_FMP_RACE_7",
         "ID_FMP_CLASS_437",
+        // The Psion's Build-tab ritual choice (D115).
+        "ID_FMP_RITUAL_60",
         // Augmentable summon whose adjacent commands share one implement
         // table on the creature card (D111).
         { id: SUMMON_THOUGHT_WARRIOR, from: 15 },
@@ -1423,10 +1425,10 @@ const reviews: ReviewCharacter[] = [
         { id: "ID_FMP_MAGIC_ITEM_924" },
       ],
       expectLegal: true,
-      required: [SUMMON_THOUGHT_WARRIOR],
+      required: [SUMMON_THOUGHT_WARRIOR, "ID_FMP_RITUAL_60"],
     },
     purpose:
-      "Human psion with Summon Thought Warrior and two implements (an orb +1 and a staff +3): one shared implement table under adjacent creature commands.",
+      "Human psion with Summon Thought Warrior and two implements (an orb +1 and a staff +3): one shared implement table under adjacent creature commands; Tenser's Floating Disk chosen in the Class flow.",
     links: [
       {
         label: "Print preview",
@@ -1448,19 +1450,33 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Free rituals block",
-            '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
+            '"Free rituals (Psion)", then only "1 free 1st-level ritual" (the Sending or Tenser\'s Floating Disk choice is in the Build tab); no rule sentence.',
           ],
           [
             "Known groups",
             "The Inventory's three columns; a known group only for a kind the psion knows.",
           ],
           [
-            "Learn free dialog",
-            "Shop → Rituals → Tenser's Floating Disk → Learn free: two Psion options and None (a gift).",
+            "Chosen ritual",
+            'Tenser\'s Floating Disk is listed once under "Rituals known", "Chosen for Psion", with Remove inert; the Shop marks it Known.',
           ],
           [
             "Psion: free rituals in the Inventory and Shop",
-            "The free-rituals block in the Inventory, and the Learn free dialog for Tenser's Floating Disk from the Shop's Rituals category, at 140% zoom and in both themes.",
+            "The free-rituals block and the chosen Tenser's Floating Disk row in the Inventory, and the Shop's Rituals category marking it Known, at 140% zoom and in both themes.",
+          ],
+        ],
+      },
+      {
+        label: "Build, level 1: Class",
+        path: build(1, "class"),
+        items: [
+          [
+            "Psion ritual choice (D115)",
+            "The Psion flow ends with a Ritual step: Sending or Tenser's Floating Disk, Tenser's Floating Disk chosen; folded, the Class heading reads \"Psion · … · Ritual: Tenser's Floating Disk\".",
+          ],
+          [
+            "Psion: the ritual choice in the Class flow",
+            "The Class section at level 1: the Ritual step after the augmented at-wills, its two-row table and the folded Class heading, at 140% zoom.",
           ],
         ],
       },
