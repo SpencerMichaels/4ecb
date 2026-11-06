@@ -1,5 +1,15 @@
 # Implementation status
 
+## M5.7 and M5.75 closed (2026-11-05)
+
+The product owner walked every pass of the visual review
+([`visual-review-checklist.md`](visual-review-checklist.md), 2026-11-04/05)
+and approved the parity-surface cleanup (M5.7) and the editable printed sheet
+(M5.75, phases 0–3; phase 4 optional and unscheduled). Feedback raised during
+the review was fixed in the same session. Next by owner decision: M9's
+stabilization work; the play milestones M5.8–M7 are deferred (roadmap, "How
+milestones are used").
+
 ## M5.7 beta deployment checkpoint (2026-10-31)
 
 The invited beta is live at `https://4ecb.spencermichaels.net`: CI-published
@@ -11,8 +21,8 @@ extension-injected code), offline reload and backup/restore (restore dialog
 simplified per owner feedback, below). Rollback is not rehearsed by owner
 decision: it isn't expected in normal operation, the procedure stays in the
 homenet README, and restoring an older build over data a newer one wrote is
-untested. Only "Record and close" remains, with the owner's approval of the
-parity-surface cleanup; see [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
+untested. Closed 2026-11-05 with the owner's approval of the parity-surface
+cleanup (above); see [`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
 
 ## Backup restore asks only on conflict (2026-11-04)
 

@@ -670,7 +670,9 @@ dashes and authored rules rather than acquiring inferred totals.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 
-**Status (2026-10-31): in progress; the beta is live.** The hardened image is
+**Status (2026-11-05): complete.** The product owner approved the final
+parity-surface cleanup after the 2026-11-04/05 visual review (every pass of
+[`visual-review-checklist.md`](visual-review-checklist.md)). History: (2026-10-31) in progress; the beta is live. The hardened image is
 published from `main` and deployed automatically to the product owner's homelab
 (`https://4ecb.spencermichaels.net`, HTTPS behind Caddy, invite-cookie access
 control), and the D&D group uses it. The owner verified the invite gate,
@@ -740,6 +742,10 @@ builder; the container foundation predates this milestone and broader 1.0
 hardening remains in M9.
 
 ## M5.75 — Editable printed sheet
+
+**Status (2026-11-05): complete.** Phases 0–3 are built and the product owner
+approved them in the 2026-11-04/05 visual review; optional phase 4 stays
+unscheduled.
 
 ### Goal
 
