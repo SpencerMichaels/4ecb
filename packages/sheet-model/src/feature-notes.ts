@@ -1,5 +1,9 @@
 import { readNoteValues, type ContentEntity } from "@4ecb/content-domain";
-import { noteValueText, type EvaluatedStat } from "@4ecb/rules-engine";
+import {
+  noteValueAmount,
+  noteValueText,
+  type EvaluatedStat,
+} from "@4ecb/rules-engine";
 
 /**
  * The sheet's one-line note for a feature, feat or racial trait, as the
@@ -61,8 +65,13 @@ export function featureNoteHidden(
  * and ability modifiers ("+1/+2/+3 (by tier) to damage" at 12th level is
  * "+2 to damage"), and without the clauses the record's own stat additions
  * already put on the sheet ("+2/+3/+4 (by tier) to Will; make saving
- * throw…" is "Make saving throw…"). A note without parsed values is
- * unchanged; every number comes from rules-engine `noteValueText`.
+ * throw…" is "Make saving throw…"). A clause whose bonus works out at 0
+ * or less goes too: it does nothing at the current numbers (Player's
+ * Handbook: "A bonus refers to positive values. If a feat adds your
+ * Dexterity modifier to damage, it won't do anything if your Dexterity
+ * modifier isn't positive."; owner, 2026-11-05), so a note left with no
+ * clause is no reminder (""). A note without parsed values is unchanged;
+ * every number comes from rules-engine `noteValueText`.
  */
 export function featureReminderText(
   entity: ContentEntity,
@@ -72,18 +81,35 @@ export function featureReminderText(
 ): string {
   const note = readNoteValues(entity.specifics, text);
   if (note === undefined) return text;
-  const resolved = note.segments
-    .map((segment) =>
-      segment.kind === "text"
-        ? segment.text
-        : segment.kind === "value"
-          ? noteValueText(segment.value, level, stats)
-          : "",
-    )
+  // Clauses end at a semicolon or a sentence's full stop ("Add Wis mod to
+  // opportunity attacks. Hit ends foe's movement …" keeps its second
+  // sentence); an applied clause is one of its own.
+  const clauses: { text: string; dropped: boolean }[] = [
+    { text: "", dropped: false },
+  ];
+  const current = () => clauses[clauses.length - 1]!;
+  for (const segment of note.segments) {
+    if (segment.kind === "applied") {
+      clauses.push({ text: "", dropped: true }, { text: "", dropped: false });
+    } else if (segment.kind === "value") {
+      const amount = noteValueAmount(segment.value, level, stats);
+      if (amount !== undefined && amount <= 0) current().dropped = true;
+      current().text += noteValueText(segment.value, level, stats);
+    } else
+      for (const [index, part] of segment.text
+        .split(/(?<=;)|(?<=\.)(?=\s+[A-Z])/)
+        .entries()) {
+        if (index > 0) clauses.push({ text: "", dropped: false });
+        current().text += part;
+      }
+  }
+  const kept = clauses.filter((clause) => !clause.dropped);
+  const resolved = kept
+    .map((clause) => clause.text)
     .join("")
     .replace(/^[\s;,]+/, "")
     .replace(/[\s;,]+$/, "");
-  return note.segments[0]?.kind === "applied"
+  return kept[0] !== clauses[0] || clauses[0]!.text.trim() === ""
     ? resolved.charAt(0).toLocaleUpperCase() + resolved.slice(1)
     : resolved;
 }

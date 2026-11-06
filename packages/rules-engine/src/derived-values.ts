@@ -853,19 +853,12 @@ export function levelTier(level: number): 0 | 1 | 2 {
   return level >= 21 ? 2 : level >= 11 ? 1 : 0;
 }
 
-/**
- * A feature note's value (D112, parsed at pack build into content-domain
- * `NoteValue`) at the character's level and ability modifiers: the level
- * step in force (a replacement, or an addition to the base), tier tables
- * and per-tier multiples, one-half the level and the highest of the named
- * ability modifiers, summed after any dice ("2d8 + 3"). A signed value
- * prints its sign ("+3").
- */
-export function noteValueText(
+/** A note value's fixed sum and dice at the level and modifiers. */
+function resolvedNoteValue(
   value: NoteValue,
   level: number,
   stats: Readonly<Record<string, EvaluatedStat>>,
-): string {
+): { readonly fixed: number; readonly dice: ReadonlyMap<string, number> } {
   const step = [...(value.steps ?? [])]
     .sort((a, b) => a.level - b.level)
     .reverse()
@@ -894,6 +887,37 @@ export function noteValueText(
     else if (term.kind === "half-level") fixed += halfLevel(level);
     else fixed += highestAbilityModifier(term.abilities, stats);
   }
+  return { fixed, dice };
+}
+
+/**
+ * A note value's amount when it is a plain number (no dice), else
+ * undefined. A bonus of 0 or less does nothing (Player's Handbook: "A
+ * bonus refers to positive values"), so the sheet drops its clause (D112).
+ */
+export function noteValueAmount(
+  value: NoteValue,
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): number | undefined {
+  const { fixed, dice } = resolvedNoteValue(value, level, stats);
+  return dice.size === 0 ? fixed : undefined;
+}
+
+/**
+ * A feature note's value (D112, parsed at pack build into content-domain
+ * `NoteValue`) at the character's level and ability modifiers: the level
+ * step in force (a replacement, or an addition to the base), tier tables
+ * and per-tier multiples, one-half the level and the highest of the named
+ * ability modifiers, summed after any dice ("2d8 + 3"). A signed value
+ * prints its sign ("+3").
+ */
+export function noteValueText(
+  value: NoteValue,
+  level: number,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): string {
+  const { fixed, dice } = resolvedNoteValue(value, level, stats);
   const base = [...dice].map(([die, count]) => `${count}${die}`).join(" + ");
   if (base === "")
     return value.signed && fixed >= 0 ? `+${fixed}` : String(fixed);

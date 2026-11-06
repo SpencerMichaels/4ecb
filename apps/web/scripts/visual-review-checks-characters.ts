@@ -3957,3 +3957,28 @@ rule("monk", "Equipment", "A free item appears", (c) => {
 });
 
 export const CHARACTER_RULES: readonly Rule[] = rules;
+
+rule("natan", "Print preview", "Militant Dawn not reminded", (c) => {
+  // A bonus of 0 or less does nothing (PHB "A bonus refers to positive
+  // values"; owner 2026-11-05, D112): its reminder goes.
+  const modifier = Number(c.evaluation.stats["Charisma modifier"]?.value);
+  return [
+    truthy(
+      "Natan's Charisma modifier is not positive",
+      modifier <= 0,
+      String(modifier),
+    ),
+    equal(
+      "No Militant Dawn reminder candidate",
+      reminderText(c, "Militant Dawn"),
+      undefined,
+    ),
+    equal(
+      "… nor among page 1's default reminders",
+      (c.sheet.overview?.reminders ?? []).some(
+        ({ label }) => label === "Militant Dawn",
+      ),
+      false,
+    ),
+  ];
+});

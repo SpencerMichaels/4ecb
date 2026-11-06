@@ -9,6 +9,7 @@ import {
   halfLevel,
   healingSurgeValue,
   levelTier,
+  noteValueAmount,
   noteValueText,
   ritualCostPercent,
 } from "./derived-values";
@@ -183,5 +184,14 @@ describe("feature note values (D112)", () => {
       signed: false,
     } as const;
     expect(noteValueText(added, 11, stats)).toBe("8");
+    // A plain amount (no dice), for the 0-or-less rule.
+    expect(noteValueAmount(added, 1, stats)).toBe(3);
+    expect(
+      noteValueAmount(
+        { terms: [{ kind: "dice", count: 1, die: "d6" }], signed: false },
+        1,
+        stats,
+      ),
+    ).toBeUndefined();
   });
 });

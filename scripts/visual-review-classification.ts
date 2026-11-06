@@ -498,6 +498,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "natan|0|play data defenses line": auto(
     'The Play data card\'s one Defenses line reads "Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers"; page 1\'s Conditional modifiers pane has the three "… to all defenses …" rows; no reminder repeats them.',
   ),
+  "natan|0|militant dawn not reminded": auto(
+    "No Militant Dawn reminder candidate or printed reminder: Natan's Charisma modifier is not positive (D112).",
+  ),
   "sample-beatrix|0|wallet at a lowered level": auto(
     'Carried money reads "1 pp; 48 gp", not 37 pp.',
   ),

@@ -181,8 +181,75 @@ const stat = (name: string, value: number): [string, EvaluatedStat] => [
   { name, value, contributions: [] },
 ];
 
-function reminders(level: number) {
-  const content = [tome, will, finesse, reward, moil, rod, crossbow];
+// An ability-modifier bonus (D112 amendment): nothing at a modifier of 0
+// or less.
+const charisma = () =>
+  ({
+    kind: "value",
+    value: {
+      terms: [{ kind: "ability", abilities: ["Charisma"] }],
+      signed: false,
+    },
+  }) as const;
+const dawn = feature(
+  "class:dawn",
+  "Dawn Strike",
+  "Class Feature",
+  "When you use Channel Divinity power, deal radiant damage equal to Charisma modifier to enemy within 5 squares of you.",
+  "When you use a Channel Divinity power, one enemy within 5 squares of you takes radiant damage equal to your Charisma modifier.",
+  {
+    segments: [
+      text(
+        "When you use Channel Divinity power, deal radiant damage equal to ",
+      ),
+      charisma(),
+      text(" to enemy within 5 squares of you."),
+    ],
+  },
+);
+const mantle = feature(
+  "class:mantle",
+  "Bright Mantle",
+  "Class Feature",
+  "Gain 2 healing surges; add Cha modifier to healing surge value when an ally is bloodied",
+  "You gain two healing surges. When an ally is bloodied, add your Charisma modifier to your healing surge value.",
+  {
+    segments: [
+      text("Gain 2 healing surges; add "),
+      charisma(),
+      text(" to healing surge value when an ally is bloodied"),
+    ],
+  },
+);
+
+const rebuke = feature(
+  "class:rebuke",
+  "Bright Rebuke",
+  "Class Feature",
+  "Add Cha mod to opportunity attacks. Hit ends foe's movement.",
+  "Whenever an enemy provokes an opportunity attack from you, add your Charisma modifier to the attack roll. If you hit, the enemy stops moving.",
+  {
+    segments: [
+      text("Add "),
+      charisma(),
+      text(" to opportunity attacks. Hit ends foe's movement."),
+    ],
+  },
+);
+
+function reminders(level: number, charismaModifier = 2) {
+  const content = [
+    rebuke,
+    tome,
+    will,
+    finesse,
+    reward,
+    moil,
+    rod,
+    crossbow,
+    dawn,
+    mantle,
+  ];
   const selections = content.map(({ id, name, type }) => ({ id, name, type }));
   const model = buildSheetModel(
     {
@@ -204,6 +271,8 @@ function reminders(level: number) {
     evaluatedStats: Object.fromEntries([
       stat("Constitution", 16),
       stat("Constitution modifier", 3),
+      stat("Charisma", 10 + 2 * charismaModifier),
+      stat("Charisma modifier", charismaModifier),
     ]),
     selections,
     content,
@@ -213,7 +282,8 @@ function reminders(level: number) {
 
 describe("concrete reminder values (D112)", () => {
   it("prints each note value at the character's level and abilities", () => {
-    expect(reminders(12)).toEqual([
+    const positive = new Set(["Dawn Strike", "Bright Mantle", "Bright Rebuke"]);
+    expect(reminders(12).filter(([label]) => !positive.has(label!))).toEqual([
       [
         "Tome Binding",
         "Encounter, free; with tome, creatures summoned gain a +3 bonus to damage rolls.",
@@ -235,5 +305,21 @@ describe("concrete reminder values (D112)", () => {
       "Blade Finesse",
       "1/turn, deal 3d8 extra dmg with a weapon attack using a one-handed weapon.",
     ]);
+  });
+});
+
+describe("bonuses of 0 or less (D112, owner 2026-11-05)", () => {
+  it("drops the clause, and a reminder with no clause left", () => {
+    const labels = (modifier: number) =>
+      Object.fromEntries(reminders(12, modifier));
+    expect(labels(2)["Dawn Strike"]).toBe(
+      "When you use Channel Divinity power, deal radiant damage equal to 2 to enemy within 5 squares of you.",
+    );
+    expect(labels(2)["Bright Mantle"]).toBe(
+      "Gain 2 healing surges; add 2 to healing surge value when an ally is bloodied",
+    );
+    expect(labels(-1)["Dawn Strike"]).toBeUndefined();
+    expect(labels(0)["Bright Mantle"]).toBe("Gain 2 healing surges");
+    expect(labels(0)["Bright Rebuke"]).toBe("Hit ends foe's movement.");
   });
 });

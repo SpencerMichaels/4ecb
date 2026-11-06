@@ -4271,3 +4271,27 @@ and Fey Pact of the White Well Reward ("Gain tiered damage bonus").
   never a value. Of the pack's notes that are reminders, 690 now print
   fully resolved values and 19 partly, 14 vague ones went as already
   applied, and 46 keep vague wording (version 2 also reads "1/2 level").
+
+Amended (2026-11-05, owner decisions):
+
+- **Conditional summoner bonuses stay page-1 reminders.** Tome of Binding
+  and the other text-only bonuses to summoned creatures (Careful Summoner,
+  Durable Artifice, Demonic Summons …) are not folded into creature-card
+  rows or riders for now: most hold only for one power source, once per
+  encounter or for instinctive actions.
+- **A bonus of 0 or less is no reminder.** Player's Handbook: "A bonus
+  refers to positive values. If a feat adds your Dexterity modifier to
+  damage, it won't do anything if your Dexterity modifier isn't positive."
+  The owner chose to drop such a reminder from page 1: it does nothing at
+  the current numbers and returns by itself when the value turns positive.
+  `featureReminderText` drops each clause (split at a semicolon or a
+  sentence's full stop) holding a note value that works out, without dice,
+  at 0 or less (rules-engine `noteValueAmount`); a note with no clause left
+  is no reminder. It applies only to values parsed from feature notes,
+  never to a power's own damage expression, and the reference pages keep
+  the full text. On the 67 evaluable player and SampleHero saves it
+  affects 5 reminders: Militant Dawn on Natan 12, KrizDevvon and
+  KrizDevvon15 (Charisma −1) goes; bannor's Combat Superiority keeps "Hit
+  ends foe's movement (if any) this action." (Wisdom 0) and YoungRaistlin's
+  Staff of Defense keeps "With staff, +1 AC." Of the review characters only
+  natan changes.

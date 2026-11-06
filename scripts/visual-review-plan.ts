@@ -1806,6 +1806,10 @@ const reviews: ReviewCharacter[] = [
                 "Natan: page 1 and the Play data card",
                 "The Conditional modifiers pane and the Play data card's note lines.",
               ],
+              [
+                "Militant Dawn not reminded",
+                "No Militant Dawn reminder on page 1: its radiant damage equals Natan's Charisma modifier (−1), a bonus that does nothing (D112).",
+              ],
             ],
           },
         ],
