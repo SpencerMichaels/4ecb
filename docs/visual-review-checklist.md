@@ -498,6 +498,24 @@ live site.
   - **Wrong if:** the stat tiles or note lines run past the card's right
     border or are cut off there, the name wraps onto a second line, or the
     card is wider than its neighbours.
+- [ ] **Drow invoker: Spiderling speed on one line (2026-11-06).**
+  - **Where:** `?preview=1`, the Spiderling of Lolth familiar card; then in
+    the builder open the familiar choice from `edit?tab=overview` (the
+    familiar feat's row) and select Spiderling of Lolth for its pane card. Also
+    the Blade Angel creature card's Speed/senses line. At 140% zoom and in
+    both themes.
+  - **Expect:** the Speed tile's "6, climb 6 (spider climb)" (or the
+    record's speed) sits on one line, a little smaller than the HP number
+    if it has to be; the Senses line stays on one line. On the creature
+    (and any beast or associate) card the Speed and senses items each stay
+    whole: senses may move to the next line, but "climb"/"fly" never
+    breaks away from its speed. The printed card still fits with no red
+    "Text exceeds card" outline.
+  - **Wrong if:** the speed wraps between words while still larger than
+    the card's small text, the value is cut off or runs past the tile's
+    edge, it shrinks far more than needed (much smaller than the senses
+    text when there is room), or the card's other text shrinks
+    noticeably compared with before.
 
 ## Pass 8: Arena fighter 11 (`fighter-arena`)
 

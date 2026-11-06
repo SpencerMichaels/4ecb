@@ -1,5 +1,33 @@
 # Implementation status
 
+## Companion speed shrinks instead of wrapping (2026-11-06)
+
+Owner: "The speed text in the familiar cards (and maybe analogous
+companion etc cards) should shrink rather than wrap" (Spiderling of Lolth
+broke between "spider" and "climb"). One shrink-to-fit mechanism,
+`apps/web/src/one-line-fit.ts`: `fittingOneLineSize` (the page-1 name's
+binary search, moved from `SheetOverview.tsx`) and `fitOneLineText(s)`,
+which shrinks a `.one-line-fit` element from its stylesheet size to its
+floor (`data-fit-min`, "7pt"/"9px"/"0.75em"; default the 6pt print
+floor), then wraps (`is-wrapped`) or, with `data-fit-overflow="ellipsis"`,
+truncates (`is-truncated`). `usePrintCardFit`'s `layoutCardBands` fits
+every marked element in a card at each fitted text size (print) and on
+resize (builder pane), before line starts and the card's own fit are
+measured, so the measuring probes see the fitted width. Marked: the
+familiar's Speed tile (`StatTileValue.oneLine`) and Senses line; the
+beast's speed and vision; the associate's and creature's speed and senses
+(creature initiative/perception too) as whole "·" items (an inline-block
+`span.one-line-fit` moves to its own line before shrinking). Defense and
+HP tiles are numbers and need no fit. CSS in `primitives.css`.
+
+Verification: `one-line-fit.test.tsx` (search, shrink, wrap at floor,
+per-element floor, ellipsis, a panel familiar card fits its speed),
+`one-line-fit.style.test.ts` (nowrap/inline-block/wrap/ellipsis rules via
+`appStyles`), card tests for each kind's marked speed; a scratch Chromium
+render (`tmp/speed-fit/`) confirmed a 160px tile shrinks "6, climb 6
+(spider climb)" from 22px to 14px on one line, and a far longer speed
+wraps at 8px.
+
 ## Sheet toolbar cleanup (2026-11-06)
 
 D099 amendment (owner: mismatched button heights, an irrelevant "Sheet"
