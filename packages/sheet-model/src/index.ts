@@ -77,7 +77,12 @@ import {
   type SheetOverview,
   type OverviewInventory,
 } from "./overview";
-import { featureChoices, type SheetFeatureChoice } from "./feature-choices";
+import {
+  featureChoices,
+  markChoicesShownElsewhere,
+  type SheetFeatureChoice,
+} from "./feature-choices";
+import { sheetDeckRecordIds } from "./card-deck";
 import {
   sheetDeityReference,
   type SheetDeityReference,
@@ -2488,6 +2493,18 @@ export function buildEvaluatedSheetModel(
         .find((candidate) => candidate !== undefined);
       return value === undefined ? [] : [{ label, value }];
     });
+  const companions = [...companionCards, ...creatureCards, ...summonCards];
+  // A pick the sheet prints on its own (a card, or a listed feature's
+  // reference entry) is not named again on its feature's heading or row.
+  const printedRecords = new Set([
+    ...sheetDeckRecordIds({
+      powers: powerCards,
+      items: itemCards,
+      companions,
+      itemSets,
+    }),
+    ...[...seenFeatures].map((id) => id.trim().toLocaleLowerCase()),
+  ]);
 
   const model: CharacterSheetModel = {
     source: "authoritative-evaluation",
@@ -2586,11 +2603,14 @@ export function buildEvaluatedSheetModel(
           ]
         : [],
     ),
-    features: [...features].map(([group, entries]) => ({ group, entries })),
+    features: [...features].map(([group, entries]) => ({
+      group,
+      entries: markChoicesShownElsewhere(entries, printedRecords),
+    })),
     proficiencies: sheetProficiencies(active),
     powers: powerCards,
     items: itemCards,
-    companions: [...companionCards, ...creatureCards, ...summonCards],
+    companions,
     ...(itemSets.length === 0 ? {} : { itemSets }),
     ...(deityEntity === undefined
       ? {}

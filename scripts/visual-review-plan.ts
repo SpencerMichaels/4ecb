@@ -590,8 +590,12 @@ const reviews: ReviewCharacter[] = [
             "Melee Basic Attack: one Back to the Wall line for attack and damage.",
           ],
           [
-            "Sub-choices on reminder rows",
-            "Page-1 reminder labels with a choice: Druid Wilderness Knacks shows Beast Empathy, Mountain Guide.",
+            "Listed picks left off reminder rows",
+            "Page-1 reminder: Druid Wilderness Knacks names no knack (each has its own reference entry).",
+          ],
+          [
+            "Reference heading drops listed picks",
+            'Character Reference pages: the heading reads "Druid Wilderness Knacks"; Beast Empathy and Mountain Guide are entries of their own.',
           ],
         ],
       },
@@ -1497,6 +1501,10 @@ const reviews: ReviewCharacter[] = [
             "Older native characters",
             "Opening it gives the missing gifts (watch the Equipment tab next).",
           ],
+          [
+            "Sub-choices on reminder rows",
+            'Page-1 reminder "Level 5 Scholar Feature: Dungeoneering" and reference heading "Scholar Feature: Dungeoneering": a pick with no card or entry of its own stays named.',
+          ],
         ],
       },
       {
@@ -1608,7 +1616,7 @@ const reviews: ReviewCharacter[] = [
             items: [
               [
                 "Jim: Spellbook subtitle",
-                "Expeditious Retreat and Freezing Cloud; then their panel cards.",
+                "Expeditious Retreat and Freezing Cloud; then their panel cards; the Spellbook heading on the Character Reference pages.",
               ],
               [
                 "Spellbook subtitle",
@@ -1636,6 +1644,10 @@ const reviews: ReviewCharacter[] = [
               [
                 "Associate card",
                 "The Trained Blink Dog card after Skills and the Arcane Wisp.",
+              ],
+              [
+                "Spellbook reference heading",
+                'Character Reference pages: the Spellbook heading reads just "Spellbook"; its spells are power cards, so it does not name them.',
               ],
             ],
           },

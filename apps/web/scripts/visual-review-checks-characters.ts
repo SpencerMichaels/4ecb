@@ -2094,21 +2094,83 @@ rule("ranger-beast", "Print preview", "Beast power cards", (c) => {
   ];
 });
 
-rule("sentinel-bear", "Print preview", "Sub-choices on reminder rows", (c) => {
-  const reminder = c.sheet.overview?.reminders.find(
-    ({ label }) => label === "Druid Wilderness Knacks",
-  );
+rule(
+  "sentinel-bear",
+  "Print preview",
+  "Listed picks left off reminder rows",
+  (c) => {
+    // Each knack has its own reference entry, so the row names none of them
+    // (owner, 2026-11-05; "Scholar Feature: Dungeoneering" keeps its pick).
+    const reminder = c.sheet.overview?.reminders.find(
+      ({ label }) => label === "Druid Wilderness Knacks",
+    );
+    return [
+      truthy("A Druid Wilderness Knacks reminder", reminder !== undefined),
+      equal("… naming no knack", reminder?.choice, undefined),
+      lacks(
+        "… nor on the printed page 1",
+        printedPagesFor(c).text,
+        "Druid Wilderness Knacks: ",
+      ),
+    ];
+  },
+);
+
+rule(
+  "sentinel-bear",
+  "Print preview",
+  "Reference heading drops listed picks",
+  (c) => {
+    // The knacks print as reference entries of their own (owner, 2026-11-05).
+    const headings = referenceHeadings(c);
+    return [
+      ...printedHeading(c, "Druid Wilderness Knacks"),
+      truthy(
+        "Beast Empathy and Mountain Guide have entries of their own",
+        headings.includes("Beast Empathy") &&
+          headings.includes("Mountain Guide"),
+        headings.join(" | "),
+      ),
+    ];
+  },
+);
+
+rule(
+  "runepriest-scholar",
+  "Print preview",
+  "Sub-choices on reminder rows",
+  (c) => {
+    // A trained skill has no card or entry of its own, so it stays named.
+    const reminder = c.sheet.overview?.reminders.find(
+      ({ label }) => label === "Level 5 Scholar Feature",
+    );
+    return [
+      equal(
+        "The Level 5 Scholar Feature reminder names its skill",
+        reminder?.choice,
+        "Dungeoneering",
+      ),
+      contains(
+        "… printed on page 1",
+        printedPagesFor(c).text,
+        "Level 5 Scholar Feature: Dungeoneering",
+      ),
+      ...printedHeading(c, "Scholar Feature: Dungeoneering"),
+    ];
+  },
+);
+
+rule("jim", "Print preview", "Spellbook reference heading", (c) => {
+  // Its picks are power cards, so the heading drops them (owner, 2026-11-05).
+  const headings = referenceHeadings(c);
   return [
-    equal(
-      "The Druid Wilderness Knacks reminder names its choices",
-      reminder?.choice,
-      "Beast Empathy, Mountain Guide",
+    ...printedHeading(c, "Spellbook"),
+    truthy(
+      "No heading names the spellbook's spells",
+      !headings.some((heading) => heading.startsWith("Spellbook:")),
+      headings.filter((heading) => heading.startsWith("Spellbook")).join(" | "),
     ),
-    contains(
-      "… printed on page 1",
-      printedPagesFor(c).text,
-      `${reminder?.label}: ${reminder?.choice}`,
-    ),
+    lacks('No printed "Spellbook: …"', printedPagesFor(c).text, "Spellbook: "),
   ];
 });
 

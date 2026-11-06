@@ -8,6 +8,13 @@ export interface SheetFeatureChoice {
   readonly type: string;
   /** Granted, not chosen: an alias the feature makes the character count as. */
   readonly granted?: true;
+  /**
+   * The sheet prints the pick on its own, as a card (a Spellbook's daily
+   * spells are power cards) or a reference entry of its own (each wilderness
+   * knack), so the feature's heading and reminder row leave its name out
+   * (`featureChoiceText`); owner, 2026-11-05.
+   */
+  readonly shownElsewhere?: true;
 }
 
 /**
@@ -139,15 +146,46 @@ function sentenceCase(name: string): string {
 }
 
 /**
+ * The feature rows with each pick the sheet prints on its own flagged
+ * `shownElsewhere`: its record is in `printed` (trimmed, lowercased IDs: the
+ * deck's cards, `sheetDeckRecordIds`, and the listed features, each with a
+ * reference entry of its own). A granted alias is never flagged. By
+ * provenance only, never by name.
+ */
+export function markChoicesShownElsewhere<
+  Entry extends { readonly choices?: readonly SheetFeatureChoice[] },
+>(entries: readonly Entry[], printed: ReadonlySet<string>): Entry[] {
+  const elsewhere = (choice: SheetFeatureChoice) =>
+    choice.granted !== true &&
+    printed.has(choice.id.trim().toLocaleLowerCase());
+  return entries.map((entry) =>
+    entry.choices?.some(elsewhere)
+      ? {
+          ...entry,
+          choices: entry.choices.map((choice) =>
+            elsewhere(choice)
+              ? { ...choice, shownElsewhere: true as const }
+              : choice,
+          ),
+        }
+      : entry,
+  );
+}
+
+/**
  * What a feature's row shows after its name: the chosen names, then the
- * granted aliases ("Eladrin", "counts as Elf, Human").
+ * granted aliases ("Eladrin", "counts as Elf, Human"). A pick the sheet
+ * prints on its own (`shownElsewhere`) is left out.
  */
 export function featureChoiceText(
   choices: readonly SheetFeatureChoice[] | undefined,
 ): string | undefined {
   const names = (granted: boolean) =>
     (choices ?? [])
-      .filter((choice) => (choice.granted === true) === granted)
+      .filter(
+        (choice) =>
+          (choice.granted === true) === granted && !choice.shownElsewhere,
+      )
       .map(({ name }) => name.trim())
       .filter(Boolean)
       .join(", ");

@@ -437,7 +437,10 @@ live site.
   - **Where:** `?preview=1`: Expeditious Retreat and Freezing Cloud; then
     their panel cards on the Build tab.
   - **Expect:** a small uppercase "SPELLBOOK" at the right of the title band.
-  - **Wrong if:** it wraps under the name or pushes the name off.
+    On the Character Reference pages the Spellbook heading reads just
+    "Spellbook", with no spell names after it (they are power cards).
+  - **Wrong if:** it wraps under the name or pushes the name off, or the
+    reference heading still reads "Spellbook: Expeditious Retreat, …".
 
 ## Pass 20: Sylestine (`sylestine`)
 

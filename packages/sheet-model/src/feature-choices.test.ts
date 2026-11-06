@@ -4,7 +4,7 @@ import type {
   LegacyCharacterSnapshot,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { EvaluatedCharacter } from "@4ecb/rules-engine";
+import type { EvaluatedCharacter, EvaluatedPower } from "@4ecb/rules-engine";
 
 import { buildEvaluatedSheetModel, featureChoiceText } from "./index";
 
@@ -75,6 +75,7 @@ const build: CharacterBuild = {
 function sheet(
   content: readonly ContentEntity[],
   occurrences: readonly Occurrence[],
+  powers: readonly EvaluatedPower[] = [],
 ) {
   const evaluation = {
     level: 1,
@@ -92,7 +93,7 @@ function sheet(
     textStrings: {},
     textContributions: [],
     diagnostics: [],
-    powers: [],
+    powers,
   } as unknown as EvaluatedCharacter;
   return buildEvaluatedSheetModel(snapshot, build, evaluation, content);
 }
@@ -379,5 +380,92 @@ describe("proficiency summary", () => {
     expect(
       model.proficiencies?.flatMap(({ definitionIds }) => definitionIds),
     ).not.toContain("NOTHING");
+  });
+});
+
+describe("picks shown elsewhere on the sheet", () => {
+  const content = [
+    entity("LEVEL", "1", "Level"),
+    entity("CLASS", "Synthetic Class", "Class"),
+    entity("BOOK", "Spellbook", "Class Feature"),
+    entity("SPELL_A", "Freezing Cloud", "Power"),
+    entity("SPELL_B", "Expeditious Retreat", "Power"),
+    entity("PACT", "Pact Choice", "Class Feature"),
+    entity("FEY", "Fey Pact", "Class Feature"),
+    entity("KNACKS", "Wilderness Knacks", "Class Feature"),
+    entity("KNACK", "Beast Empathy", "Class Feature"),
+    entity("SCHOLAR", "Scholar Feature", "Class Feature"),
+    entity("SKILL", "Dungeoneering", "Skill Training"),
+  ];
+  const occurrences = [
+    occurrence("level", "LEVEL", undefined, "root"),
+    occurrence("class", "CLASS", "level", "choice"),
+    occurrence("book", "BOOK", "class"),
+    occurrence("spell-a", "SPELL_A", "book", "choice"),
+    occurrence("spell-b", "SPELL_B", "book", "choice"),
+    occurrence("pact", "PACT", "class"),
+    occurrence("fey", "FEY", "pact", "choice"),
+    occurrence("knacks", "KNACKS", "class"),
+    occurrence("knack", "KNACK", "knacks", "choice"),
+    occurrence("scholar", "SCHOLAR", "class"),
+    occurrence("skill", "SKILL", "scholar", "choice"),
+  ];
+  const power = (definitionId: string, name: string): EvaluatedPower => ({
+    definitionId,
+    name,
+    usage: "Daily",
+    keywords: [],
+    recoveries: [],
+    unsupported: [],
+    variants: [],
+  });
+
+  it("drops a pick the sheet prints as a card or entry of its own", () => {
+    const model = sheet(content, occurrences, [
+      power("SPELL_A", "Freezing Cloud"),
+      power("SPELL_B", "Expeditious Retreat"),
+    ]);
+    // The spells are power cards.
+    expect(featureChoiceText(row(model, "Spellbook")?.choices)).toBeUndefined();
+    // Fey Pact and the knack are listed features: reference entries of
+    // their own.
+    expect(
+      featureChoiceText(row(model, "Pact Choice")?.choices),
+    ).toBeUndefined();
+    expect(
+      featureChoiceText(row(model, "Wilderness Knacks")?.choices),
+    ).toBeUndefined();
+    // A trained skill has neither, so its feature keeps naming it.
+    expect(featureChoiceText(row(model, "Scholar Feature")?.choices)).toBe(
+      "Dungeoneering",
+    );
+    // The pick itself stays on the model, only flagged.
+    expect(row(model, "Spellbook")?.choices).toEqual([
+      expect.objectContaining({ id: "SPELL_A", shownElsewhere: true }),
+      expect.objectContaining({ id: "SPELL_B", shownElsewhere: true }),
+    ]);
+    const reference = model.overview?.features.find(
+      ({ name }) => name === "Spellbook",
+    );
+    expect(featureChoiceText(reference?.choices)).toBeUndefined();
+  });
+
+  it("names a pick with no card of its own", () => {
+    // Only one spell has a card: the other is still named.
+    const model = sheet(content, occurrences, [
+      power("SPELL_A", "Freezing Cloud"),
+    ]);
+    expect(featureChoiceText(row(model, "Spellbook")?.choices)).toBe(
+      "Expeditious Retreat",
+    );
+  });
+
+  it("never drops a granted alias", () => {
+    expect(
+      featureChoiceText([
+        { id: "A", name: "Elf", type: "CountsAsRace", granted: true },
+        { id: "B", name: "Eladrin", type: "Race", shownElsewhere: true },
+      ]),
+    ).toBe("counts as Elf");
   });
 });

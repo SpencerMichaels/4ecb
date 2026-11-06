@@ -6,6 +6,7 @@ import {
   isSheetPlayCard,
   deckPowerCards,
   sheetCardDeck,
+  sheetDeckRecordIds,
   sortedPowerCards,
   type SheetDeckCard,
 } from "./card-deck";
@@ -257,5 +258,22 @@ describe("sheet card deck", () => {
       items: [item("A", { holdingId: "a", hiddenByDefault: true })],
     });
     expect(deck.at(-1)).toMatchObject({ key: "item:a", defaultShown: false });
+  });
+
+  it("names the records the deck prints a card for", () => {
+    const technique = { id: "TECHNIQUE", name: "Storms [MT]", fields: [] };
+    const ids = sheetDeckRecordIds({
+      powers: [
+        power("Storms", { id: "DISCIPLINE", movementTechnique: technique }),
+        power("Storms [MT]", { id: "technique" }),
+      ],
+      companions: [],
+      items: [
+        item("Shown", { id: "SHOWN", holdingId: "s" }),
+        item("Hidden", { id: "HIDDEN", holdingId: "h", hiddenByDefault: true }),
+      ],
+    });
+    // The technique prints on its discipline's card; a hidden item prints none.
+    expect([...ids].sort()).toEqual(["discipline", "shown", "technique"]);
   });
 });

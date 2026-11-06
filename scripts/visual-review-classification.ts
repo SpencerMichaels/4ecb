@@ -385,6 +385,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "runepriest-scholar|2|serene blade runepriest": auto(
     'Proficiencies reads "military heavy blades".',
   ),
+  "runepriest-scholar|2|sub-choices on reminder rows": auto(
+    'The page-1 reminder reads "Level 5 Scholar Feature: Dungeoneering" and the reference heading "Scholar Feature: Dungeoneering" (a skill has no card or entry of its own).',
+  ),
   // Monk
   "monk|0|older native characters": auto(
     "Opening the character gives the missing gifts (the app's first-open gift command).",
@@ -416,8 +419,11 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "hexblade-white-well|2|paired attack and damage effects": auto(
     "Melee Basic Attack has one Back to the Wall line for attack and damage, under Additional effects.",
   ),
-  "sentinel-bear|2|sub-choices on reminder rows": auto(
-    "The Druid Wilderness Knacks reminder names its knacks (Beast Empathy, Mountain Guide), on the printed page 1.",
+  "sentinel-bear|2|listed picks left off reminder rows": auto(
+    "The Druid Wilderness Knacks reminder names no knack (each has its own reference entry), on the printed page 1 too.",
+  ),
+  "sentinel-bear|2|reference heading drops listed picks": auto(
+    'The reference heading reads "Druid Wilderness Knacks"; Beast Empathy and Mountain Guide have entries of their own.',
   ),
   "sentinel-bear|2|paired attack and damage effects": auto(
     "Melee Basic Attack has one Back to the Wall line for attack and damage, under Additional effects.",
@@ -455,6 +461,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   "jim|0|spellbook subtitle": auto(
     'Expeditious Retreat and Freezing Cloud carry the "Spellbook" subtitle; Sleep does not.',
+  ),
+  "jim|0|spellbook reference heading": auto(
+    'The Spellbook reference heading reads "Spellbook", naming none of its spells (they are power cards).',
   ),
   "sylestine|0|associate card (d107)": auto(
     "The Trained Blink Dog card after Skills and the familiar: its type, bar, defenses, HP, speed, aura, Blinking Bite; no power card for it; page 1 reminders as specified.",

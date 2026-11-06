@@ -226,3 +226,22 @@ export function sheetCardDeck(
     ...trailing,
   ];
 }
+
+/**
+ * The content records the default deck prints as cards of their own, as
+ * lowercased IDs: each shown power, item, item set and companion or creature
+ * card's record, and a movement technique its discipline's card prints. A
+ * feature's pick among them is shown elsewhere (`markChoicesShownElsewhere`).
+ */
+export function sheetDeckRecordIds(
+  model: Parameters<typeof sheetCardDeck>[0],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const { card, defaultShown } of sheetCardDeck(model)) {
+    if (!defaultShown || isSheetPlayCard(card)) continue;
+    if (card.id !== undefined) ids.add(keyPart(card.id));
+    if ("movementTechnique" in card && card.movementTechnique !== undefined)
+      ids.add(keyPart(card.movementTechnique.id));
+  }
+  return ids;
+}

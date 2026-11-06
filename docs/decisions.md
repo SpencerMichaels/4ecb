@@ -2163,6 +2163,26 @@ a specific Channel Divinity field even when their Keywords contain only Divine;
 recognition must preserve that authored distinction rather than add a fake
 keyword or infer shared usage from a power's name.
 
+Picks shown elsewhere (owner, 2026-11-05): a feature's heading names its
+sub-choices ("Scholar Feature: Dungeoneering") only when the sheet does not
+print those picks on their own. A pick whose record the default card deck
+prints (a power, item, item set, companion or creature card, or a movement
+technique on its discipline's card: `sheetDeckRecordIds`), or that is itself
+a listed feature with a reference entry of its own, is flagged
+`shownElsewhere` on the `SheetFeatureChoice` (`markChoicesShownElsewhere`,
+by record ID, never by name), and `featureChoiceText` leaves it out. Jim
+Darkmagic's "Spellbook: Expeditious Retreat, Freezing Cloud" therefore reads
+"Spellbook", since both spells are power cards, and "Druid Wilderness
+Knacks: Beast Empathy, Mountain Guide" reads "Druid Wilderness Knacks",
+since each knack has its own entry. The one rule covers every
+place that names picks: the Character Reference headings, a feat's "Choices"
+line there, page-1 reminder rows (the no-duplicate rule: a reminder never
+repeats what a more specific surface prints) and the screen sheet's feature
+list. Granted aliases ("counts as Fey Pact") are never cards and always show;
+the pick stays on the model for other uses (a god fragment's constant
+benefit). The test is the default deck, not the character's edited layout:
+hiding a card does not bring its name back to the heading.
+
 ### Basic-attack alternatives (2026-10-16)
 
 Status: accepted.
