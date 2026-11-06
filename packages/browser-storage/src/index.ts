@@ -1,12 +1,15 @@
 export {
   ContentPackRepository,
+  campaignProfileBinding,
   deleteContentDatabase,
   type AdvertisedPackSource,
+  type CampaignProfileDefinition,
   type ContentProfileDefinition,
   type ContentProfilePreview,
   type InstalledContentPack,
   type InstalledPackOrigin,
 } from "./pack-repository";
+export { CampaignRepository } from "./campaign-repository";
 export type { ContentProfileLayer } from "@4ecb/content-pack";
 export {
   CharacterRepository,

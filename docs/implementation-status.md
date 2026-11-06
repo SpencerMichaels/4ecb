@@ -1,5 +1,29 @@
 # Implementation status
 
+## Campaign membership, storage and backups (2026-11-06)
+
+D116 step 5. character-domain: `CharacterProfileBinding.campaign?:
+{campaignId, revision, contentDigest}` (`CharacterCampaignMembership`),
+validated in `characterRecordBase`; `CharacterBackup<Campaign>` gains an
+optional `campaigns`. browser-storage: `CampaignRepository`
+(`campaign-repository.ts`: `install`, `installEncoded`, `list`,
+`revisions`, `latest`, `get`, `remove`) stores documents in the
+`settings` store under `campaign:<id>:<digest>` with no schema bump;
+`ContentPackRepository.materializeCampaignProfile(baseLayerPackIds,
+campaign)` → `CampaignProfileDefinition` (reused by its hashed ID, else
+composed and stored with origin "profile"; never activated) and
+`campaignProfileBinding`; full backups carry every installed campaign, a
+character package its bound revision, and restore/import/keep-both verify
+and install them in the same transaction (`payloadDigest` still covers
+characters only). apps/web `contentProfileRevisionKey` includes the
+campaign (unchanged keys without one). Nothing in the UI uses these yet
+(steps 6–9). Not built: GC of materialized campaign packs; the library
+metadata row does not carry the campaign (a "Characters" count per campaign
+needs it or a records scan). Verification: `campaign-repository.test.ts`
+(6) and 4 new `character-repository.test.ts` cases with fake-indexeddb, a
+binding validation test, a migration-key test; `pnpm typecheck`, lint,
+prettier and full `pnpm test`.
+
 ## Campaign restrictions in the rules engine (2026-11-06)
 
 D116 step 2 is built: `EvaluationInput.restrictedDefinitionIds` (rules-engine

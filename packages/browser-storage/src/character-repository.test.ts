@@ -7,9 +7,14 @@ import {
   newCharacterRecord,
   type BuildOccurrence,
 } from "@4ecb/character-domain";
-import { buildContentPack } from "@4ecb/content-pack";
+import {
+  buildCampaign,
+  buildContentPack,
+  type CampaignDocument,
+} from "@4ecb/content-pack";
 import type { ParsedContentSource } from "@4ecb/content-domain";
 
+import { CampaignRepository } from "./campaign-repository";
 import { CharacterRepository } from "./character-repository";
 import {
   ContentPackRepository,
@@ -87,6 +92,43 @@ async function payloadDigest(characters: readonly unknown[]): Promise<string> {
   return [...digest]
     .map((value) => value.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function campaignStorage() {
+  const name = `4ecb-character-test-${crypto.randomUUID()}`;
+  databases.push(name);
+  return {
+    characters: new CharacterRepository(name),
+    campaigns: new CampaignRepository(name),
+  };
+}
+
+function campaign(revision: number, campaignId = "synthetic-setting") {
+  return buildCampaign(
+    {
+      campaignId,
+      name: "Synthetic Setting",
+      revision,
+      restrictions: { ids: ["ID_SYN_FEAT_OLD"], types: [] },
+    },
+    { ...emptyContentSource, sourceKey: "house-rules.xml" },
+    "",
+  );
+}
+
+function memberOf(id: string, document: CampaignDocument) {
+  return {
+    ...character(id),
+    profileBinding: {
+      packId: "profile:campaign:synthetic-setting:abc",
+      contentDigest: "materialized",
+      campaign: {
+        campaignId: document.campaignId,
+        revision: document.revision,
+        contentDigest: document.contentDigest,
+      },
+    },
+  };
 }
 
 afterEach(async () => {
@@ -947,5 +989,122 @@ describe("CharacterRepository", () => {
       textStrings: { Name: "Renamed" },
     });
     expect(await listed()).toBeUndefined();
+  });
+
+  it("carries installed campaigns in backups and installs them on restore", async () => {
+    const source = campaignStorage();
+    const first = await campaign(1);
+    const second = await campaign(2);
+    const other = await campaign(1, "other-setting");
+    for (const document of [first, second, other])
+      await source.campaigns.install(document);
+    await source.characters.put(memberOf("member", first));
+    await source.characters.put(character("outsider"));
+
+    const backup = await source.characters.exportBackup();
+    expect(
+      backup.campaigns?.map(({ campaignId, revision }) => [
+        campaignId,
+        revision,
+      ]),
+    ).toEqual([
+      ["other-setting", 1],
+      ["synthetic-setting", 1],
+      ["synthetic-setting", 2],
+    ]);
+    // The payload digest covers the characters only.
+    expect(backup.payloadDigest).toBe(await payloadDigest(backup.characters));
+
+    const destination = campaignStorage();
+    await destination.campaigns.install(first);
+    expect(await destination.characters.restoreBackup(backup)).toBe(2);
+    expect(await destination.campaigns.list()).toHaveLength(3);
+    await expect(destination.characters.get("member")).resolves.toEqual(
+      memberOf("member", first),
+    );
+    // Restoring again is idempotent.
+    expect(await destination.characters.restoreBackup(backup)).toBe(2);
+    expect(await destination.campaigns.list()).toHaveLength(3);
+  });
+
+  it("exports a character with only its bound campaign revision", async () => {
+    const source = campaignStorage();
+    const first = await campaign(1);
+    await source.campaigns.install(first);
+    await source.campaigns.install(await campaign(2));
+    await source.characters.put(memberOf("member", first));
+    await source.characters.put(character("outsider"));
+
+    const exported = await source.characters.exportCharacter("member");
+    expect(
+      exported.campaigns?.map(({ contentDigest }) => contentDigest),
+    ).toEqual([first.contentDigest]);
+    expect(
+      await source.characters.exportCharacter("outsider"),
+    ).not.toHaveProperty("campaigns");
+
+    const imported = campaignStorage();
+    const [copy] = await imported.characters.importCharacters(exported);
+    expect(copy?.profileBinding?.campaign?.contentDigest).toBe(
+      first.contentDigest,
+    );
+    expect(
+      (await imported.campaigns.list()).map(({ revision }) => revision),
+    ).toEqual([1]);
+
+    const keptBoth = campaignStorage();
+    await keptBoth.characters.restoreBackupKeepingBoth(exported);
+    expect(await keptBoth.campaigns.list()).toHaveLength(1);
+  });
+
+  it("restores a backup made before campaigns", async () => {
+    const source = repository();
+    await source.put(character());
+    const backup = await source.exportBackup();
+    expect(backup).not.toHaveProperty("campaigns");
+    const destination = campaignStorage();
+    expect(await destination.characters.restoreBackup(backup)).toBe(1);
+    expect(await destination.campaigns.list()).toEqual([]);
+  });
+
+  it("rejects a tampered or conflicting campaign before writing anything", async () => {
+    const source = campaignStorage();
+    const first = await campaign(1);
+    await source.campaigns.install(first);
+    await source.characters.put(memberOf("member", first));
+    const backup = await source.characters.exportBackup();
+
+    const tampered = {
+      ...backup,
+      campaigns: [{ ...first, name: "Tampered" }],
+    };
+    const destination = campaignStorage();
+    await expect(
+      destination.characters.restoreBackup(tampered),
+    ).rejects.toThrow(/Invalid campaign: .*Digest mismatch/);
+    await expect(
+      destination.characters.inspectBackup({ ...backup, campaigns: {} }),
+    ).rejects.toThrow("Character backup campaigns are invalid");
+
+    // The same revision with different content is refused, atomically.
+    const conflicting = await buildCampaign(
+      {
+        campaignId: "synthetic-setting",
+        name: "Synthetic Setting",
+        revision: 1,
+        restrictions: { ids: ["ID_SYN_FEAT_OTHER"], types: [] },
+      },
+      { ...emptyContentSource, sourceKey: "house-rules.xml" },
+      "",
+    );
+    await destination.campaigns.install(conflicting);
+    await expect(destination.characters.restoreBackup(backup)).rejects.toThrow(
+      /bump the revision/,
+    );
+    await expect(
+      destination.characters.importCharacters(backup),
+    ).rejects.toThrow(/bump the revision/);
+    expect(await destination.characters.list()).toEqual([]);
+    expect(await destination.campaigns.list()).toEqual([conflicting]);
   });
 });

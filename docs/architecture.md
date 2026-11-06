@@ -316,6 +316,20 @@ alone follows a newly advertised server revision (D004). Character
 bindings retain both the materialized ID/digest and ordered source ID/digest
 list, so later downloads cannot alter an existing evaluation.
 
+A campaign character's profile (D116) is the browser's active profile layers
+(personal packs included) plus the campaign's house-rule layer, materialized
+by `ContentPackRepository.materializeCampaignProfile` with origin "profile"
+and profile ID `campaign:<campaignId>`. Its pack ID hashes the base layers,
+the overlay layer and `campaign:<campaignId>:<contentDigest>`, so an
+existing stored pack is reused as is; it is composed by content-pack
+`composeCampaignProfile`, whose `campaign` field carries the resolved
+restricted IDs (`campaignRestrictions` above). It is never the active
+profile. The character binding adds `campaign: {campaignId, revision,
+contentDigest}` (at most one campaign), and its `layers` end with the overlay;
+the web migration key (`contentProfileRevisionKey`) includes the campaign.
+Materialized campaign packs are not garbage-collected yet (one per base and
+campaign revision pair).
+
 Characters pin a resolved profile revision. Installing a newer pack does not
 alter them. Profile migration produces a preview of missing IDs, changed rules,
 new diagnostics, and calculated differences before the user accepts it.
@@ -606,7 +620,18 @@ Storage rules:
 - the application requests persistent storage where supported and explains the
   browser's decision; and
 - native backup bundles are versioned, checksummed, and inspectable before
-  restore.
+  restore;
+- installed campaign documents (D116) live in the `settings` store under
+  `campaign:<campaignId>:<contentDigest>`, listed by key prefix, so no
+  schema bump; every revision is kept, installing is idempotent, the same
+  campaign ID and revision with different content is refused ("bump the
+  revision"), and removal is refused while any character, trashed ones
+  included, belongs to the campaign (`CampaignRepository`); and
+- a backup v2 may carry `campaigns` (a full backup every installed
+  revision, a single-character package its bound revision), outside
+  `payloadDigest`: each document is re-verified by its own digest and
+  installed idempotently in the restore's transaction, a conflict aborting
+  the whole restore; backups without the field restore unchanged.
 
 The service worker precaches the application shell and manages versioned static
 assets. It does not cache user content through ordinary HTTP cache semantics.

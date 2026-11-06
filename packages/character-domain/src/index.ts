@@ -28,6 +28,19 @@ export interface CharacterProfileBinding {
     readonly contentDigest: string;
   }[];
   readonly resolutionPolicy?: "last-pack-wins-v1";
+  /**
+   * The campaign the character belongs to (D116; at most one). Its profile
+   * is the base layers plus the campaign's house-rule layer, so `layers`
+   * then ends with that overlay.
+   */
+  readonly campaign?: CharacterCampaignMembership;
+}
+
+/** A campaign revision; its identity is campaignId + contentDigest. */
+export interface CharacterCampaignMembership {
+  readonly campaignId: string;
+  readonly revision: number;
+  readonly contentDigest: string;
 }
 
 export interface LegacyEnvelope {
@@ -190,13 +203,21 @@ export function isCurrentStoredRecord(
   );
 }
 
-export interface CharacterBackup {
+/**
+ * A native backup or single-character package. `Campaign` is the campaign
+ * document type (content-pack's `CampaignDocument`; this package does not
+ * depend on it). `campaigns` is optional and each document verifies itself
+ * by its own digest; `payloadDigest` covers `characters` only, so a backup
+ * without campaigns is unchanged.
+ */
+export interface CharacterBackup<Campaign = unknown> {
   readonly format: "4ecb-character-backup";
   readonly version: 2;
   readonly exportedAt: string;
   readonly characterCount: number;
   readonly payloadDigest: string;
   readonly characters: readonly CharacterRecord[];
+  readonly campaigns?: readonly Campaign[];
 }
 
 export interface LegacyCharacterBackup {
@@ -206,7 +227,8 @@ export interface LegacyCharacterBackup {
   readonly characters: readonly StoredCharacterRecord[];
 }
 
-export type SupportedCharacterBackup = CharacterBackup | LegacyCharacterBackup;
+export type SupportedCharacterBackup<Campaign = unknown> =
+  CharacterBackup<Campaign> | LegacyCharacterBackup;
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object"
@@ -564,6 +586,20 @@ function characterBuild(value: unknown, formatVersion: 1 | 2 | 3): boolean {
   );
 }
 
+function campaignMembership(value: unknown): boolean {
+  const campaign = object(value);
+  return (
+    campaign !== undefined &&
+    typeof campaign.campaignId === "string" &&
+    campaign.campaignId.length > 0 &&
+    typeof campaign.revision === "number" &&
+    Number.isInteger(campaign.revision) &&
+    campaign.revision >= 1 &&
+    typeof campaign.contentDigest === "string" &&
+    campaign.contentDigest.length > 0
+  );
+}
+
 function characterRecordBase(
   value: unknown,
 ): Record<string, unknown> | undefined {
@@ -602,7 +638,9 @@ function characterRecordBase(
               );
             }))) ||
         (profile.resolutionPolicy !== undefined &&
-          profile.resolutionPolicy !== "last-pack-wins-v1"))) ||
+          profile.resolutionPolicy !== "last-pack-wins-v1") ||
+        (profile.campaign !== undefined &&
+          !campaignMembership(profile.campaign)))) ||
     legacy === undefined ||
     legacy.format !== "dnd4e" ||
     (legacy.origin !== undefined &&

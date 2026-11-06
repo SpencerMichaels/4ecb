@@ -21,9 +21,18 @@ import {
   type SheetLayout,
   type SheetSettings,
 } from "@4ecb/character-domain";
-import type { ContentPack } from "@4ecb/content-pack";
+import type { CampaignDocument, ContentPack } from "@4ecb/content-pack";
 import { importDnd4e } from "@4ecb/legacy-dnd4e";
 import { openDB, unwrap, type DBSchema, type IDBPTransaction } from "idb";
+
+import {
+  abort,
+  campaignKeyRange,
+  campaignSettingKey,
+  putCampaign,
+  storedCampaigns,
+  verifyCampaign,
+} from "./campaign-repository";
 
 interface CharacterDatabase extends DBSchema {
   contentPacks: {
@@ -381,6 +390,7 @@ async function writeStoredCharacter(
       | "characterMetadata"
       | "characterPortraits"
       | "characterMigrations"
+      | "settings"
     )[],
     "readwrite"
   >,
@@ -697,7 +707,8 @@ export class CharacterRepository {
     }
   }
 
-  async exportBackup(): Promise<CharacterBackup> {
+  /** Every character, and every installed campaign revision (D116). */
+  async exportBackup(): Promise<CharacterBackup<CampaignDocument>> {
     const db = await database(this.#databaseName);
     try {
       await recoverCharacterMigrations(db);
@@ -706,6 +717,9 @@ export class CharacterRepository {
           migrateStoredRecord(db, record),
         ),
       );
+      const campaigns = storedCampaigns(
+        await db.getAll("settings", campaignKeyRange()),
+      );
       return {
         format: "4ecb-character-backup",
         version: 2,
@@ -713,15 +727,34 @@ export class CharacterRepository {
         characterCount: characters.length,
         payloadDigest: await characterPayloadDigest(characters),
         characters,
+        ...(campaigns.length === 0 ? {} : { campaigns }),
       };
     } finally {
       db.close();
     }
   }
 
-  async exportCharacter(id: string): Promise<CharacterBackup> {
+  /** One character, with the campaign revision it is bound to when that
+   *  revision is installed (D116). */
+  async exportCharacter(
+    id: string,
+  ): Promise<CharacterBackup<CampaignDocument>> {
     const character = await this.required(id);
     const characters = [character];
+    const membership = character.profileBinding?.campaign;
+    let campaigns: CampaignDocument[] = [];
+    if (membership !== undefined) {
+      const db = await database(this.#databaseName);
+      try {
+        const row = await db.get(
+          "settings",
+          campaignSettingKey(membership.campaignId, membership.contentDigest),
+        );
+        campaigns = row === undefined ? [] : storedCampaigns([row]);
+      } finally {
+        db.close();
+      }
+    }
     return {
       format: "4ecb-character-backup",
       version: 2,
@@ -729,6 +762,7 @@ export class CharacterRepository {
       characterCount: 1,
       payloadDigest: await characterPayloadDigest(characters),
       characters,
+      ...(campaigns.length === 0 ? {} : { campaigns }),
     };
   }
 
@@ -765,9 +799,10 @@ export class CharacterRepository {
     const db = await database(this.#databaseName);
     try {
       const transaction = db.transaction(
-        ["characters", "characterMetadata", "characterPortraits"],
+        ["characters", "characterMetadata", "characterPortraits", "settings"],
         "readwrite",
       );
+      await writeBackupCampaigns(transaction, supported.campaigns);
       await Promise.all(
         characters.map((character) =>
           writeStoredCharacter(transaction, character),
@@ -789,9 +824,10 @@ export class CharacterRepository {
     const db = await database(this.#databaseName);
     try {
       const transaction = db.transaction(
-        ["characters", "characterMetadata", "characterPortraits"],
+        ["characters", "characterMetadata", "characterPortraits", "settings"],
         "readwrite",
       );
+      await writeBackupCampaigns(transaction, supported.campaigns);
       const existing = new Set(
         await transaction.objectStore("characters").getAllKeys(),
       );
@@ -830,9 +866,10 @@ export class CharacterRepository {
         return { ...record, id: importedId };
       });
       const transaction = db.transaction(
-        ["characters", "characterMetadata", "characterPortraits"],
+        ["characters", "characterMetadata", "characterPortraits", "settings"],
         "readwrite",
       );
+      await writeBackupCampaigns(transaction, supported.campaigns);
       await Promise.all(
         characters.map((character) =>
           writeStoredCharacter(transaction, character),
@@ -852,9 +889,33 @@ export class CharacterRepository {
   }
 }
 
-async function validateBackup(
-  backup: unknown,
-): Promise<SupportedCharacterBackup> {
+/** A checked backup; `campaigns` holds the verified campaign documents. */
+type VerifiedBackup = SupportedCharacterBackup & {
+  readonly campaigns: readonly CampaignDocument[];
+};
+
+/**
+ * Installs a backup's campaigns (idempotent) in the restore's transaction,
+ * before its characters: a conflicting campaign aborts the whole restore.
+ */
+async function writeBackupCampaigns(
+  transaction: IDBPTransaction<
+    CharacterDatabase,
+    ("characters" | "characterMetadata" | "characterPortraits" | "settings")[],
+    "readwrite"
+  >,
+  campaigns: readonly CampaignDocument[],
+): Promise<void> {
+  try {
+    for (const campaign of campaigns)
+      await putCampaign(transaction.objectStore("settings"), campaign);
+  } catch (error) {
+    abort(transaction);
+    throw error;
+  }
+}
+
+async function validateBackup(backup: unknown): Promise<VerifiedBackup> {
   if (backup === null || typeof backup !== "object")
     throw new Error("Unsupported character backup");
   const candidate = backup as Partial<SupportedCharacterBackup>;
@@ -876,7 +937,17 @@ async function validateBackup(
     if (digest !== candidate.payloadDigest)
       throw new Error("Character backup checksum verification failed");
   }
-  return candidate as SupportedCharacterBackup;
+  // Campaigns are outside payloadDigest: each verifies itself by digest.
+  const campaignValues: unknown = (backup as { campaigns?: unknown }).campaigns;
+  if (
+    campaignValues !== undefined &&
+    (candidate.version !== 2 || !Array.isArray(campaignValues))
+  )
+    throw new Error("Character backup campaigns are invalid");
+  const campaigns: CampaignDocument[] = [];
+  for (const value of (campaignValues ?? []) as unknown[])
+    campaigns.push(await verifyCampaign(value));
+  return { ...(candidate as SupportedCharacterBackup), campaigns };
 }
 
 function isStoredCharacter(value: unknown): value is StoredCharacterRecord {

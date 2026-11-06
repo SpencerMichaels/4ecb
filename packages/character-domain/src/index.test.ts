@@ -244,6 +244,47 @@ describe("character records", () => {
     expect(isCharacterRecord(record)).toBe(true);
   });
 
+  it("validates a campaign membership on the profile binding", () => {
+    const campaign = {
+      campaignId: "synthetic-setting",
+      revision: 2,
+      contentDigest: "campaign-digest",
+    };
+    const record = newNativeCharacterRecord(
+      "Campaign Hero",
+      { name: "Level 1", type: "Level", definitionId: "ID_INTERNAL_LEVEL_1" },
+      {
+        packId: "profile:campaign:synthetic-setting:abc",
+        contentDigest: "digest-1",
+        layers: [
+          { packId: "base", contentDigest: "base-digest" },
+          {
+            packId: "campaign.synthetic-setting.r2",
+            contentDigest: "overlay-digest",
+          },
+        ],
+        resolutionPolicy: "last-pack-wins-v1",
+        campaign,
+      },
+    );
+    expect(isCharacterRecord(record)).toBe(true);
+    for (const invalid of [
+      null,
+      { ...campaign, campaignId: "" },
+      { ...campaign, revision: 0 },
+      { ...campaign, revision: 1.5 },
+      { ...campaign, revision: "2" },
+      { ...campaign, contentDigest: "" },
+      { campaignId: "synthetic-setting", revision: 2 },
+    ])
+      expect(
+        isCharacterRecord({
+          ...record,
+          profileBinding: { ...record.profileBinding, campaign: invalid },
+        }),
+      ).toBe(false);
+  });
+
   it("projects edited legacy detail text into the derived sheet fields", () => {
     expect(
       detailsWithLegacyTextStrings(

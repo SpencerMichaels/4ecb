@@ -1,15 +1,22 @@
 import {
   decodeContentPackBytes,
   encodeContentPack,
+  composeCampaignProfile,
   composeContentPacks,
   CONTENT_PROFILE_RESOLUTION_POLICY,
+  validateCampaign,
   validateContentPack,
+  type CampaignDocument,
   type ContentPack,
   type ContentPackDecodeOptions,
   type ContentProfileLayer,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
-import type { StoredCharacterRecord } from "@4ecb/character-domain";
+import type {
+  CharacterCampaignMembership,
+  CharacterProfileBinding,
+  StoredCharacterRecord,
+} from "@4ecb/character-domain";
 import {
   deleteDB,
   openDB,
@@ -40,7 +47,8 @@ interface Setting<Value> {
   readonly value: Value;
 }
 
-interface CharacterBuilderDatabase extends DBSchema {
+/** @internal */
+export interface CharacterBuilderDatabase extends DBSchema {
   contentPacks: {
     key: string;
     value: StoredContentPack;
@@ -105,14 +113,24 @@ const DEFAULT_DATABASE_NAME = "4ecb";
 const ACTIVE_PACK_KEY = "active-content-pack";
 const ACTIVE_PROFILE_KEY = "active-content-profile";
 
+/**
+ * A materialized profile's pack ID: the profile ID and a hash of its layers
+ * (and, for a campaign profile, `campaign:<id>:<digest>` after them).
+ */
 async function materializedProfilePackId(
   profileId: string,
-  packs: readonly ContentPack[],
+  layers: readonly ContentProfileLayer[],
+  campaign?: Pick<CampaignDocument, "campaignId" | "contentDigest">,
 ): Promise<string> {
   const input = new TextEncoder().encode(
-    packs
-      .map(({ manifest }) => `${manifest.packId}:${manifest.contentDigest}`)
-      .join(">"),
+    [
+      ...layers.map(
+        ({ packId, contentDigest }) => `${packId}:${contentDigest}`,
+      ),
+      ...(campaign === undefined
+        ? []
+        : [`campaign:${campaign.campaignId}:${campaign.contentDigest}`]),
+    ].join(">"),
   );
   const hash = await crypto.subtle.digest("SHA-256", input);
   const suffix = [...new Uint8Array(hash)]
@@ -144,13 +162,35 @@ export interface ContentProfilePreview {
   readonly definition: ContentProfileDefinition;
   readonly collisions: readonly string[];
 }
+/**
+ * A campaign character's profile (D116): base layers plus the campaign's
+ * house-rule layer, materialized as its own stored pack. `profileId` is
+ * `campaign:<campaignId>`; it is never the active profile.
+ */
+export interface CampaignProfileDefinition extends ContentProfileDefinition {
+  readonly campaign: CharacterCampaignMembership;
+}
+
+/** The character binding for a materialized campaign profile. */
+export function campaignProfileBinding(
+  definition: CampaignProfileDefinition,
+): CharacterProfileBinding {
+  return {
+    packId: definition.materializedPackId,
+    contentDigest: definition.contentDigest,
+    layers: definition.layers,
+    resolutionPolicy: definition.resolutionPolicy,
+    campaign: definition.campaign,
+  };
+}
 
 export interface ValidatedPackStorageMetadata {
   readonly origin?: InstalledPackOrigin;
   readonly advertised?: AdvertisedPackSource;
 }
 
-async function openContentDatabase(
+/** @internal Opens the shared database (also used by the campaign repository). */
+export async function openContentDatabase(
   databaseName: string,
 ): Promise<IDBPDatabase<CharacterBuilderDatabase>> {
   return openDB<CharacterBuilderDatabase>(databaseName, 5, {
@@ -508,31 +548,12 @@ export class ContentPackRepository {
     name: string,
     layerPackIds: readonly string[],
   ): Promise<ContentProfilePreview> {
-    const packs: ContentPack[] = [];
-    const installed = new Map(
-      (await this.listInstalled()).map((entry) => [
-        entry.manifest.packId,
-        entry,
-      ]),
+    const packs = await this.#sourceLayerPacks(
+      await this.#sourceLayers(layerPackIds),
     );
-    let personalSeen = false;
-    for (const packId of layerPackIds) {
-      const origin = installed.get(packId)?.origin;
-      if (origin === "profile")
-        throw new Error(
-          "A materialized profile cannot be used as a source layer",
-        );
-      if (origin === "personal") personalSeen = true;
-      if (origin === "server" && personalSeen)
-        throw new Error("Server baseline layers must precede personal layers");
-      const pack = await this.get(packId);
-      if (pack === undefined)
-        throw new Error(`Missing content profile layer ${packId}`);
-      packs.push(pack);
-    }
     const materializedPackId = await materializedProfilePackId(
       profileId,
-      packs,
+      packs.map(({ manifest }) => manifest),
     );
     const composed = await composeContentPacks(packs, {
       packId: materializedPackId,
@@ -561,31 +582,12 @@ export class ContentPackRepository {
     name: string,
     layerPackIds: readonly string[],
   ): Promise<ContentProfileDefinition> {
-    const packs: ContentPack[] = [];
-    const installed = new Map(
-      (await this.listInstalled()).map((entry) => [
-        entry.manifest.packId,
-        entry,
-      ]),
+    const packs = await this.#sourceLayerPacks(
+      await this.#sourceLayers(layerPackIds),
     );
-    let personalSeen = false;
-    for (const packId of layerPackIds) {
-      const origin = installed.get(packId)?.origin;
-      if (origin === "profile")
-        throw new Error(
-          "A materialized profile cannot be used as a source layer",
-        );
-      if (origin === "personal") personalSeen = true;
-      if (origin === "server" && personalSeen)
-        throw new Error("Server baseline layers must precede personal layers");
-      const pack = await this.get(packId);
-      if (pack === undefined)
-        throw new Error(`Missing content profile layer ${packId}`);
-      packs.push(pack);
-    }
     const materializedPackId = await materializedProfilePackId(
       profileId,
-      packs,
+      packs.map(({ manifest }) => manifest),
     );
     const composed = await composeContentPacks(packs, {
       packId: materializedPackId,
@@ -622,6 +624,105 @@ export class ContentPackRepository {
       database.close();
     }
     return definition;
+  }
+
+  /**
+   * Materializes a campaign character's profile (D116): `baseLayerPackIds`
+   * (the browser's active profile layers, personal packs included) with the
+   * campaign's house rules on top. The pack ID hashes the base layers, the
+   * overlay layer and the campaign's identity, so a stored pack with that ID
+   * is reused as is; otherwise the profile is composed, its restrictions
+   * resolved, and stored with origin "profile". The active profile is never
+   * changed.
+   */
+  async materializeCampaignProfile(
+    baseLayerPackIds: readonly string[],
+    campaign: CampaignDocument,
+  ): Promise<CampaignProfileDefinition> {
+    const base = await this.#sourceLayers(baseLayerPackIds);
+    const layers: ContentProfileLayer[] = [
+      ...base,
+      campaign.houseRules.manifest,
+    ].map(({ packId, contentDigest }) => ({ packId, contentDigest }));
+    const profileId = `campaign:${campaign.campaignId}`;
+    const materializedPackId = await materializedProfilePackId(
+      profileId,
+      layers,
+      campaign,
+    );
+    const definition = (contentDigest: string): CampaignProfileDefinition => ({
+      profileId,
+      name: campaign.name,
+      layers,
+      resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
+      materializedPackId,
+      contentDigest,
+      campaign: {
+        campaignId: campaign.campaignId,
+        revision: campaign.revision,
+        contentDigest: campaign.contentDigest,
+      },
+    });
+    const stored = await this.manifest(materializedPackId);
+    if (stored !== undefined) return definition(stored.contentDigest);
+    const validation = await validateCampaign(campaign);
+    if (!validation.valid)
+      throw new Error(`Invalid campaign: ${validation.errors.join("; ")}`);
+    const composed = await composeCampaignProfile(
+      await this.#sourceLayerPacks(base),
+      campaign,
+      { packId: materializedPackId, name: campaign.name },
+    );
+    await assertValidPack(composed.pack);
+    await storeValidatedContentPack(
+      this.#databaseName,
+      composed.pack,
+      new TextEncoder().encode(encodeContentPack(composed.pack)).buffer,
+      { origin: "profile" },
+    );
+    return definition(composed.pack.manifest.contentDigest);
+  }
+
+  /** Checks profile source layers (installed, not materialized, server
+   *  before personal) and returns their manifests in order. */
+  async #sourceLayers(
+    layerPackIds: readonly string[],
+  ): Promise<ContentPackManifest[]> {
+    const installed = new Map(
+      (await this.listInstalled()).map((entry) => [
+        entry.manifest.packId,
+        entry,
+      ]),
+    );
+    const manifests: ContentPackManifest[] = [];
+    let personalSeen = false;
+    for (const packId of layerPackIds) {
+      const entry = installed.get(packId);
+      if (entry?.origin === "profile")
+        throw new Error(
+          "A materialized profile cannot be used as a source layer",
+        );
+      if (entry?.origin === "personal") personalSeen = true;
+      if (entry?.origin === "server" && personalSeen)
+        throw new Error("Server baseline layers must precede personal layers");
+      if (entry === undefined)
+        throw new Error(`Missing content profile layer ${packId}`);
+      manifests.push(entry.manifest);
+    }
+    return manifests;
+  }
+
+  async #sourceLayerPacks(
+    manifests: readonly ContentPackManifest[],
+  ): Promise<ContentPack[]> {
+    const packs: ContentPack[] = [];
+    for (const { packId } of manifests) {
+      const pack = await this.get(packId);
+      if (pack === undefined)
+        throw new Error(`Missing content profile layer ${packId}`);
+      packs.push(pack);
+    }
+    return packs;
   }
 
   async activeProfile(): Promise<ContentProfileDefinition | undefined> {

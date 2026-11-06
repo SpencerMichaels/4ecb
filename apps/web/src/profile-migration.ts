@@ -6,19 +6,29 @@ export interface ContentProfileRevision {
     readonly contentDigest: string;
   }[];
   readonly resolutionPolicy?: "last-pack-wins-v1";
+  /** The campaign revision the profile composes (D116). */
+  readonly campaign?: {
+    readonly campaignId: string;
+    readonly revision: number;
+    readonly contentDigest: string;
+  };
 }
 
 export function contentProfileRevisionKey(
   revision: ContentProfileRevision,
 ): string {
+  // A campaign is appended only when present, so existing keys are unchanged.
+  const campaign =
+    revision.campaign === undefined
+      ? ""
+      : `:campaign:${revision.campaign.campaignId}:${revision.campaign.revision}:${revision.campaign.contentDigest}`;
   if (revision.layers === undefined && revision.resolutionPolicy === undefined)
-    return `${revision.packId}:${revision.contentDigest ?? "unknown"}`;
+    return `${revision.packId}:${revision.contentDigest ?? "unknown"}${campaign}`;
   const layers = revision.layers
     ?.map(({ packId, contentDigest }) => `${packId}:${contentDigest}`)
     .join(">");
-  return `${revision.packId}:${revision.contentDigest ?? "unknown"}:${revision.resolutionPolicy ?? "single-pack"}:${layers ?? ""}`;
+  return `${revision.packId}:${revision.contentDigest ?? "unknown"}:${revision.resolutionPolicy ?? "single-pack"}:${layers ?? ""}${campaign}`;
 }
-
 export function previewMatchesTargetRevision(
   previewRevision: string | undefined,
   target: ContentProfileRevision | undefined,
