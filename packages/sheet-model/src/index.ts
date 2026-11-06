@@ -406,8 +406,9 @@ export const LEARNED_REFERENCE_KINDS: readonly SheetLearnedReferenceKind[] = [
 
 /** Why an evaluated sheet knows a record. Legacy caches can't tell. */
 export interface SheetLearnedReferenceOrigin {
-  readonly kind: "learned" | "granted";
-  /** The granting element ("Druid") for a granted record. */
+  /** `chosen`: picked in a Build-tab Ritual choice (D115). */
+  readonly kind: "learned" | "granted" | "chosen";
+  /** The granting or choosing element ("Druid", "Psion"). */
   readonly provider?: string;
 }
 
@@ -2439,7 +2440,10 @@ export function buildEvaluatedSheetModel(
         record.entity?.name ?? record.element.name,
         record.entity,
         record.source.kind === "granted"
-          ? { kind: "granted", provider: record.source.provider }
+          ? {
+              kind: record.source.via === "choice" ? "chosen" : "granted",
+              provider: record.source.provider,
+            }
           : { kind: "learned" },
       ),
     )

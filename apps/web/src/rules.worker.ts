@@ -2,7 +2,11 @@
 
 import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { evaluateCharacter, previewProfileMigration } from "@4ecb/rules-engine";
+import {
+  evaluateCharacter,
+  fillRitualChoicesFromKnown,
+  previewProfileMigration,
+} from "@4ecb/rules-engine";
 
 import type {
   ProfileMigrationPreviewProgress,
@@ -139,6 +143,20 @@ async function handle(
         type: "library-summary",
         requestId: request.requestId,
         result: libraryCharacterSummary(evaluation, content),
+      });
+      break;
+    }
+    case "fill-ritual-choices": {
+      const content = await evaluationEntities();
+      const { build, fills } = fillRitualChoicesFromKnown(
+        request.build,
+        content,
+      );
+      respond({
+        type: "ritual-choices-filled",
+        requestId: request.requestId,
+        build,
+        fills,
       });
       break;
     }

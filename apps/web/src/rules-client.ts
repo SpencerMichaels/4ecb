@@ -46,6 +46,10 @@ type RequestWithoutId =
   | Omit<Extract<RulesWorkerRequest, { type: "evaluate" }>, "requestId">
   | Omit<Extract<RulesWorkerRequest, { type: "library-summary" }>, "requestId">
   | Omit<
+      Extract<RulesWorkerRequest, { type: "fill-ritual-choices" }>,
+      "requestId"
+    >
+  | Omit<
       Extract<RulesWorkerRequest, { type: "preview-profile-migration" }>,
       "requestId"
     >;
@@ -166,6 +170,18 @@ export class RulesWorkerClient {
     if (response.type !== "library-summary")
       throw new Error("Unexpected rules-worker library summary response");
     return response.result;
+  }
+
+  /** Fills an imported build's open Ritual choices from its known rituals
+   *  in the worker (D115); the build unchanged when there are none. */
+  async fillRitualChoices(build: CharacterBuild): Promise<CharacterBuild> {
+    const response = await this.#request({
+      type: "fill-ritual-choices",
+      build,
+    });
+    if (response.type !== "ritual-choices-filled")
+      throw new Error("Unexpected rules-worker ritual choices response");
+    return response.build;
   }
 
   async previewProfileMigration(

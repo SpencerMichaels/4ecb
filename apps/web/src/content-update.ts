@@ -1,3 +1,4 @@
+import type { CharacterCommand } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import type { ContentProfileDefinition } from "@4ecb/browser-storage";
 import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
@@ -128,6 +129,11 @@ export interface ContentUpdateSummary {
   readonly updatedRules: readonly string[];
   /** Plain lines for selections the new content no longer grants. */
   readonly removals: readonly string[];
+  /** Plain lines for new choices a known ritual fills ("Sending: now chosen
+   *  under Psion", D115). */
+  readonly filledChoices: readonly string[];
+  /** The command making those choices, applied on update. */
+  readonly fillCommand?: CharacterCommand;
   /** Saved selections to remove when the player updates. */
   readonly removedOccurrenceIds: readonly string[];
   /** False when the character cannot be calculated with the new content. */
@@ -172,6 +178,14 @@ export function describeContentUpdate(
     removedOccurrenceIds: preview.removedSelections.map(
       (selection) => selection.occurrenceId,
     ),
+    filledChoices: preview.ritualChoiceFills.map(({ name, provider }) =>
+      provider === ""
+        ? `${name}: now chosen`
+        : `${name}: now chosen under ${provider}`,
+    ),
+    ...(preview.ritualChoiceCommand === undefined
+      ? {}
+      : { fillCommand: preview.ritualChoiceCommand }),
     canUpdate: preview.target.converged,
     changesKnown: preview.sourceAvailable,
   };

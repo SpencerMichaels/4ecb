@@ -19,8 +19,10 @@ import {
   legacyEquipmentIdentityMatches,
   legacyPowerValueMatches,
 } from "@4ecb/legacy-dnd4e";
+import { applyCharacterCommand } from "@4ecb/character-domain";
 import {
   evaluateCharacter,
+  evaluateRitualChoiceFills,
   projectBuildForEvaluation,
 } from "@4ecb/rules-engine";
 import {
@@ -109,7 +111,7 @@ export function compareCharacterParity(
   entities: readonly ContentEntity[],
   options: CharacterParityOptions = {},
 ) {
-  const imported = importDnd4e(
+  const parsed = importDnd4e(
     xml,
     options.matchMissingByName === false
       ? {}
@@ -117,13 +119,32 @@ export function compareCharacterParity(
   );
   // Scoped like the app's sheet: parity compares stats, powers, the sheet and
   // diagnostics, never candidate catalogs.
-  const input = {
-    ...projectBuildForEvaluation(imported.build, entities),
+  const inputFor = (build: typeof parsed.build) => ({
+    ...projectBuildForEvaluation(build, entities),
     candidateDetailLevels: [],
-  };
+  });
+  let input = inputFor(parsed.build);
   const started = performance.now();
-  const evaluated = evaluateCharacter(input, entities);
+  let evaluated = evaluateCharacter(input, entities);
   const elapsedMilliseconds = performance.now() - started;
+  // As the app's import does: an open Ritual choice (a psion's Sending or
+  // Tenser's Floating Disk, D115) is filled from the save's known loot.
+  const ritualChoices = evaluateRitualChoiceFills(
+    parsed.build,
+    entities,
+    evaluated,
+  );
+  const imported =
+    ritualChoices.command === undefined
+      ? parsed
+      : {
+          ...parsed,
+          build: applyCharacterCommand(parsed.build, ritualChoices.command),
+        };
+  if (ritualChoices.command !== undefined) {
+    input = inputFor(imported.build);
+    evaluated = evaluateCharacter(input, entities);
+  }
   // Legacy's Weight stat is TallyLoot's inventory weight plus rule
   // contributions. The evaluated stat holds only the rules; the sheet adds
   // the inventory, so compare what the sheet shows (without coins). Items the

@@ -6,7 +6,10 @@ import {
   type CharacterLibraryEntry,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import { newCharacterRecord } from "@4ecb/character-domain";
+import {
+  newCharacterRecord,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import { importDnd4e } from "@4ecb/legacy-dnd4e";
 
@@ -29,6 +32,7 @@ import {
 } from "./character-library-ui";
 import { CharacterLibraryDetail } from "./CharacterLibraryDetail";
 import { CharacterLibraryTable } from "./CharacterLibraryTable";
+import { RulesWorkerClient } from "./rules-client";
 import {
   exportCharacterBackup,
   exportCharacterDnd4e,
@@ -40,6 +44,34 @@ import { useArmedAction } from "./useArmedAction";
 import { useLibrarySummary } from "./use-library-summary";
 
 const repository = new CharacterRepository();
+
+/**
+ * An imported save keeps a psion's Sending or a Wild Sage's ritual as known
+ * loot; the active content asks for it as a Ritual choice (D115), so the
+ * import fills that choice from the loot (rules worker). Only a save with
+ * free known loot needs the worker; a failure keeps the choice open.
+ */
+async function withImportedRitualChoices(
+  build: CharacterBuild,
+  manifest: ContentPackManifest,
+): Promise<CharacterBuild> {
+  if (
+    !build.known.some(
+      ({ acquisition, legacyLoot }) =>
+        acquisition === "free" && legacyLoot !== undefined,
+    )
+  )
+    return build;
+  const client = new RulesWorkerClient();
+  try {
+    await client.initialize(manifest.packId, manifest.contentDigest);
+    return await client.fillRitualChoices(build);
+  } catch {
+    return build;
+  } finally {
+    client.terminate();
+  }
+}
 const contentRepository = new ContentPackRepository();
 
 export interface CharacterLibraryPageProps {
@@ -159,7 +191,9 @@ export function CharacterLibraryPage({
     const character = newCharacterRecord(
       imported.envelope,
       imported.snapshot,
-      imported.build,
+      manifest === undefined
+        ? imported.build
+        : await withImportedRitualChoices(imported.build, manifest),
       {
         ...(manifest === undefined
           ? {}

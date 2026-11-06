@@ -40,6 +40,16 @@ describe("content update summary", () => {
           providerType: "Racial Trait",
         },
       ],
+      ritualChoiceFills: [
+        {
+          choiceId: "choice",
+          entryId: "sending",
+          definitionId: "ID_FMP_RITUAL_55",
+          name: "Sending",
+          provider: "Psion",
+        },
+      ],
+      ritualChoiceCommand: { kind: "batch", commands: [] },
       source: summary,
       target: summary,
       statChanges: [
@@ -78,6 +88,8 @@ describe("content update summary", () => {
         "Dwarven Resilience (power) — no longer included by Dwarven Resilience (racial trait)",
       ],
       removedOccurrenceIds: ["occ-dr"],
+      filledChoices: ["Sending: now chosen under Psion"],
+      fillCommand: { kind: "batch", commands: [] },
       canUpdate: true,
       changesKnown: true,
     });

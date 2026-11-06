@@ -103,16 +103,22 @@ export function ContentUpdateDialog({
     setUpdating(true);
     try {
       const removed = summary?.removedOccurrenceIds ?? [];
-      if (removed.length > 0) {
+      const fill = summary?.fillCommand;
+      if (removed.length > 0 || fill !== undefined) {
         const current = await repository.required(character.id);
         await repository.updateBuild(
           character.id,
           applyCharacterCommand(current.build, {
             kind: "batch",
-            commands: removed.map((occurrenceId) => ({
-              kind: "remove-occurrence" as const,
-              occurrenceId,
-            })),
+            commands: [
+              // New choices first: they name occurrences a removal could
+              // take with it.
+              ...(fill === undefined ? [] : [fill]),
+              ...removed.map((occurrenceId) => ({
+                kind: "remove-occurrence" as const,
+                occurrenceId,
+              })),
+            ],
           }),
         );
       }
@@ -169,6 +175,7 @@ export function ContentUpdateDialog({
             ) : summary.changes.length +
                 summary.updatedRules.length +
                 summary.removals.length +
+                summary.filledChoices.length +
                 summary.missing.length ===
               0 ? (
               <p>Nothing on {name}&apos;s sheet will change.</p>
@@ -197,6 +204,16 @@ export function ContentUpdateDialog({
                 <ul className="content-update-changes">
                   {summary.removals.map((removal) => (
                     <li key={removal}>{removal}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {summary.filledChoices.length === 0 ? null : (
+              <>
+                <h3>New choices, already made</h3>
+                <ul className="content-update-changes">
+                  {summary.filledChoices.map((line) => (
+                    <li key={line}>{line}</li>
                   ))}
                 </ul>
               </>

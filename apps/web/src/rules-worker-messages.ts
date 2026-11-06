@@ -3,6 +3,7 @@ import type {
   EvaluatedCharacter,
   EvaluationInput,
   ProfileMigrationPreview,
+  RitualChoiceFill,
 } from "@4ecb/rules-engine";
 
 import type { LibrarySummaryValue } from "./library-summary";
@@ -41,6 +42,13 @@ export type RulesWorkerRequest =
       /** Evaluates a stored character and returns only its library summary,
        *  so the library never decodes content on the main thread. */
       readonly type: "library-summary";
+      readonly requestId: number;
+      readonly build: CharacterBuild;
+    }
+  | {
+      /** Fills an imported build's open Ritual choices from its known
+       *  rituals (a psion's Sending loot, D115). */
+      readonly type: "fill-ritual-choices";
       readonly requestId: number;
       readonly build: CharacterBuild;
     }
@@ -99,6 +107,12 @@ export type RulesWorkerResponse =
       readonly type: "library-summary";
       readonly requestId: number;
       readonly result: LibrarySummaryValue;
+    }
+  | {
+      readonly type: "ritual-choices-filled";
+      readonly requestId: number;
+      readonly build: CharacterBuild;
+      readonly fills: readonly RitualChoiceFill[];
     }
   | {
       readonly type: "error";
