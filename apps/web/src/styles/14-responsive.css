@@ -318,12 +318,19 @@
   }
 }
 
-/* Four shop filters need 4 × 8rem plus gaps; fewer fit two per row. */
+/* The catalog column's own width decides the shop's toolbar: its Type,
+   Slot and Subtype row needs about 34rem (Type's longest value and two
+   8rem fields), and so do four filters (4 × 8rem plus gaps); narrower, the
+   fields stack and the filters go two to a row. */
 .equipment-primary {
   container: builder-primary / inline-size;
 }
 
 @container builder-primary (max-width: 34rem) {
+  .shop-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .shop-advanced-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -425,10 +432,6 @@
   .builder-tabs-bar > .builder-status {
     align-self: stretch;
     margin-inline-start: 0;
-  }
-
-  .shop-toolbar {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .builder-status {

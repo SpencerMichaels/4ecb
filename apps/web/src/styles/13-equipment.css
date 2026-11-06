@@ -295,8 +295,13 @@ label.inline-field > select:disabled {
   max-block-size: max(32rem, calc(100vh - 19rem));
 }
 
+/* Fixed-layout tables give their name column the rest of the width; a
+   minimum width keeps at least 9rem for it (the fixed columns take
+   20.75rem), so in a narrow catalog column the table scrolls sideways, as
+   the builder's selection tables do, instead of its headers overlapping. */
 .shop-table {
   font-size: 0.78rem;
+  min-inline-size: 30rem;
   table-layout: fixed;
 }
 
@@ -696,8 +701,11 @@ label.inline-field > select:disabled {
   overflow: auto;
 }
 
+/* As the shop table: at least 7.5rem for the name beside the 14.5rem of
+   quantity and action columns. */
 .inventory-table {
   font-size: 0.78rem;
+  min-inline-size: 22rem;
   table-layout: fixed;
 }
 

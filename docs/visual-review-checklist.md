@@ -155,6 +155,17 @@ live site.
     is cut off, icon-only tabs are cramped or unevenly spaced, the bar
     flickers between modes, the selected tab loses its label, or the
     status row sits left or below the rule.
+- [ ] **Beatrix: narrow Shop and Inventory tables.**
+  - **Where:** `edit?tab=shop`, then Inventory, in a window just above
+    63rem (about 1411px at 140%, 1010px at 100%) with the sidebar docked,
+    and again at 140% zoom on your usual window.
+  - **Expect:** the Shop's Type, Slot and Subtype fields stack when the
+    catalog column is narrow, and its search row wraps, all inside the
+    column; the table headers (Name, Level, Price, Owned; Item, Quantity)
+    each sit over their own column, and a too-narrow table scrolls
+    sideways inside its frame with the item names still readable.
+  - **Wrong if:** two headers overlap, a field or button runs under the
+    detail pane, or the name column is only a few letters wide.
 
 - [ ] **Beatrix: build overview.**
   - **Where:** `edit?tab=overview` (the Overview tab, second in the tab

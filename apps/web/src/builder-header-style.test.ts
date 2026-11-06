@@ -329,12 +329,37 @@ describe("builder workspace split", () => {
     expect(styles).not.toContain("60.01rem");
   });
 
-  it("puts shop filters two to a row when the catalog column is narrow", () => {
+  it("stacks the shop toolbar and pairs its filters when the catalog column is narrow", () => {
     expect(styles).toMatch(
       /\.equipment-primary\s*\{\s*container: builder-primary \/ inline-size;/,
     );
-    expect(styles).toMatch(
-      /@container builder-primary \(max-width: 34rem\)\s*\{\s*\.shop-advanced-filters\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+    const narrow = styles.slice(
+      styles.indexOf("@container builder-primary (max-width: 34rem) {") + 1,
+    );
+    const block = narrow.slice(0, narrow.indexOf("\n}\n"));
+    expect(block).toMatch(
+      /\.shop-toolbar\s*\{\s*grid-template-columns: minmax\(0, 1fr\);/,
+    );
+    expect(block).toMatch(
+      /\.shop-advanced-filters\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+    );
+    // The window no longer decides it.
+    expect(styles).not.toMatch(
+      /@media \(max-width: 48rem\)[^@]*\.shop-toolbar\s*\{/,
+    );
+  });
+
+  it("keeps a name column in narrow shop and inventory tables, scrolling sideways instead of overlapping headers", () => {
+    expect(declarationsFor(".shop-table")).toContain("min-inline-size: 30rem");
+    expect(declarationsFor(".inventory-table")).toContain(
+      "min-inline-size: 22rem",
+    );
+    // Like the builder's selection tables, inside a scroller.
+    expect(declarationsFor(".selection-table-scroll table")).toContain(
+      "min-width: 34rem",
+    );
+    expect(declarationsFor(".equipment-table-scroll")).toContain(
+      "overflow: auto",
     );
   });
 });
