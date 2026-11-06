@@ -25,12 +25,43 @@ Verification: `nix develop --command bash scripts/check.sh` and
 `pnpm parity:baseline` (results in this entry's commit message).
 
 Follow-ups (also in the roadmap's Campaign slice): a possible double report of
-source-unentitled picks; no garbage collection of materialized campaign
-packs (ordinary profile activation now composes in the content worker, see
-"Content profile activation in the content worker" below); an
+source-unentitled picks; an
 owner skim of eight Pathfinder deity descriptions. Owner action outside the
 repo: homenet `apps/4ecb/pack.yml` must copy and keep
 `private-packs/campaigns/`.
+
+## Garbage collection of profile packs and campaign revisions (2026-11-06)
+
+Campaign follow-up (D116, D004). Every composed profile (origin "profile":
+`profile:<id>:<hash>` and `profile:campaign:<id>:<hash>`, 60–75 MB each on
+the full corpus) used to stay in IndexedDB forever, one more per server
+revision × campaign revision, and old campaign revisions piled up beside
+them. New browser-storage `content-collection.ts`,
+`collectUnusedContent(databaseName?, {now, graceMs})`, the single entry
+point: candidates are origin-"profile" packs and campaign revisions older
+than their campaign's newest; it keeps the active pack and profile, every
+character's bound pack and campaign revision (trash and pending
+`characterMigrations` journals included) and each campaign's current
+target pack (active base layers + newest revision: kept as a cache, the
+pack the next update or join dialog composes); server and personal packs
+and each campaign's newest revision are never candidates. Concurrency rule:
+a candidate is removed only when it was already unreferenced on an earlier
+run at least 24 hours before (`CONTENT_COLLECTION_GRACE_MS`; first
+sightings in the `settings` row `content-collection-marks`, cleared when
+the candidate is referenced again), which covers a pack another tab or an
+open dialog composed but hasn't bound; references are read and removals
+made in one readwrite transaction. Web: `apps/web/src/content-collection.ts`
+`scheduleContentCollection()` (2 s debounce, single-flight, quiet failures)
+runs after load, in `refreshAfterContentChange` (Settings switch, D004
+follow), on `CAMPAIGNS_CHANGED_EVENT` (install, remove, join-page add,
+legacy-save create) and after the content-update dialog applies. Stale
+evaluation-cache entries for removed packs are left to that cache's own
+bound. Verification: `content-collection.test.ts` (4, fake-indexeddb:
+referenced packs kept incl. trash, journal and active pack alone;
+unreferenced profile packs and old unbound campaign revisions removed only
+past the grace period; server/personal packs and the newest revision kept;
+a referenced-in-between candidate restarts its grace; a second run is a
+no-op); `pnpm test`, `pnpm typecheck`, lint, prettier.
 
 ## Prerequisites met through counts-as alternates (2026-11-06)
 

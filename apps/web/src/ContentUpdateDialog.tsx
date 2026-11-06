@@ -17,6 +17,7 @@ import {
   describeContentUpdate,
   type ContentUpdateSummary,
 } from "./content-update";
+import { scheduleContentCollection } from "./content-collection";
 import type { RulesRuntimeClient } from "./app-runtime";
 import { download } from "./download";
 import { Icon } from "./Icon";
@@ -277,6 +278,8 @@ export function ContentUpdateDialog({
       await repository.updateMetadata(character.id, {
         profileBinding: materialized.binding,
       });
+      // The pack it was on may now be unused.
+      scheduleContentCollection();
       dialog.current?.close();
       onUpdated();
     } finally {

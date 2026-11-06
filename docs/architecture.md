@@ -344,8 +344,8 @@ restricted IDs (`campaignRestrictions` above). It is never the active
 profile. The character binding adds `campaign: {campaignId, revision,
 contentDigest}` (at most one campaign), and its `layers` end with the overlay;
 the web migration key (`contentProfileRevisionKey`) includes the campaign.
-Materialized campaign packs are not garbage-collected yet (one per base and
-campaign revision pair).
+Materialized profile packs, ordinary and campaign, are collected once
+nothing uses them (Browser persistence, below).
 
 Each character has a content target (`apps/web/src/campaign-profile.ts`,
 `contentTarget`): outside a campaign, the active content, as before; in one,
@@ -664,7 +664,27 @@ Storage rules:
   schema bump; every revision is kept, installing is idempotent, the same
   campaign ID and revision with different content is refused ("bump the
   revision"), and removal is refused while any character, trashed ones
-  included, belongs to the campaign (`CampaignRepository`); and
+  included, belongs to the campaign (`CampaignRepository`);
+- materialized profile packs and superseded campaign revisions are
+  garbage-collected (browser-storage `collectUnusedContent`, the one entry
+  point; the web app's `content-collection.ts` runs it in the background a
+  moment after load, after a content change and after a campaign change or
+  content update, coalescing repeated calls). Only origin-"profile" packs
+  (re-composable from their layers) and campaign revisions older than their
+  campaign's newest are candidates; server and personal packs and each
+  installed campaign's newest revision are never removed. Kept: the active
+  pack and profile, every character's bound pack and campaign revision
+  (trashed characters and pending migration journals included), and each
+  campaign's current target pack (the active base layers plus its newest
+  revision) as a cache, since the next update or join dialog would compose
+  exactly that. A candidate is removed only when it was already
+  unreferenced on an earlier run at least 24 hours before
+  (`CONTENT_COLLECTION_GRACE_MS`; first sightings are kept in the
+  `settings` row `content-collection-marks`, and a candidate referenced in
+  between starts over). That covers a pack another tab, or an open
+  content-update dialog, has composed but not yet bound; the references
+  are read and the removals made in one transaction, so a binding
+  committed earlier is always seen; and
 - a backup v2 may carry `campaigns` (a full backup every installed
   revision, a single-character package its bound revision), outside
   `payloadDigest`: each document is re-verified by its own digest and

@@ -110,14 +110,17 @@ interface InstalledContentPackMetadata {
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
-const ACTIVE_PACK_KEY = "active-content-pack";
-const ACTIVE_PROFILE_KEY = "active-content-profile";
+/** @internal Settings keys of the active content (also read by content GC). */
+export const ACTIVE_PACK_KEY = "active-content-pack";
+/** @internal */
+export const ACTIVE_PROFILE_KEY = "active-content-profile";
 
 /**
- * A materialized profile's pack ID: the profile ID and a hash of its layers
- * (and, for a campaign profile, `campaign:<id>:<digest>` after them).
+ * @internal A materialized profile's pack ID: the profile ID and a hash of
+ * its layers (and, for a campaign profile, `campaign:<id>:<digest>` after
+ * them).
  */
-async function materializedProfilePackId(
+export async function materializedProfilePackId(
   profileId: string,
   layers: readonly ContentProfileLayer[],
   campaign?: Pick<CampaignDocument, "campaignId" | "contentDigest">,

@@ -10,6 +10,12 @@ export {
   type InstalledPackOrigin,
 } from "./pack-repository";
 export { CampaignRepository } from "./campaign-repository";
+export {
+  collectUnusedContent,
+  CONTENT_COLLECTION_GRACE_MS,
+  type ContentCollectionOptions,
+  type ContentCollectionResult,
+} from "./content-collection";
 export type { ContentProfileLayer } from "@4ecb/content-pack";
 export {
   CharacterRepository,

@@ -50,6 +50,7 @@ import {
 } from "./runtime-content";
 import { appContentRuntime } from "./app-runtime";
 import { CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
+import { scheduleContentCollection } from "./content-collection";
 import { followAdvertisedContent } from "./profile-activation";
 import {
   applyThemePreference,
@@ -424,6 +425,9 @@ export function App() {
   const refreshAfterContentChange = useCallback(async () => {
     appContentRuntime.clear();
     await refresh();
+    // Superseded profile packs go in the background (browser-storage
+    // `collectUnusedContent`).
+    scheduleContentCollection();
   }, [refresh]);
 
   const installAdvertisedPack = useCallback(
@@ -558,9 +562,18 @@ export function App() {
     });
     if (!runtimeContentStarted.current) {
       runtimeContentStarted.current = true;
-      void loadRuntimeContent();
+      // After load, unused profile packs and campaign revisions are
+      // collected in the background; again whenever campaigns change.
+      void loadRuntimeContent().then(scheduleContentCollection);
     }
-    return () => window.removeEventListener("hashchange", onHashChange);
+    window.addEventListener(CAMPAIGNS_CHANGED_EVENT, scheduleContentCollection);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener(
+        CAMPAIGNS_CHANGED_EVENT,
+        scheduleContentCollection,
+      );
+    };
   }, [loadRuntimeContent, refresh]);
 
   useEffect(() => {

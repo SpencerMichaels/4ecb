@@ -945,9 +945,6 @@ Follow-ups (not done):
 
 - A source-unentitled pick may be reported twice (`occurrence.source-unentitled`
   and `choice.ineligible`), as the campaign one was before `e0d89803`.
-- Materialized campaign profile packs are never garbage-collected (about
-  60–75 MB per campaign revision and base revision pair), and a campaign's
-  revisions are removed only all at once.
 - Owner skim of some Pathfinder deity descriptions: Easivra, Erecura,
   Grundinnar, Kitumu, Alazhra, Feronia, Lissala, Nivi Rhombodazzle.
 
