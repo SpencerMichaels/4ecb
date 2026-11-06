@@ -15,6 +15,7 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   evaluateCharacter,
+  fillRitualChoicesFromKnown,
   legacyLoadoutHints,
   legacyLoadoutState,
   projectBuildForEvaluation,
@@ -34,6 +35,7 @@ import {
   savedCharacterRules,
   withLegacyFreebeeRituals,
   withLegacyAugmentState,
+  withLegacyRitualChoices,
   withLegacyLoadoutState,
 } from ".";
 
@@ -421,6 +423,100 @@ describe("legacy .dnd4e import", () => {
     expect(
       importDnd4e(again).build.known.map(({ element }) => element.definitionId),
     ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
+  });
+
+  it("writes a Ritual choice's pick as loot, never as an element (D115)", () => {
+    const select = {
+      name: "select",
+      attributes: [
+        { name: "type", value: "Ritual" },
+        { name: "number", value: "1" },
+        { name: "Category", value: "ID_FMP_RITUAL_55|ID_FMP_RITUAL_60" },
+      ],
+      text: "",
+      children: [],
+      ordinal: 0,
+    };
+    const content = [
+      entity("L1", "1", "Level"),
+      { ...entity("ID_FMP_CLASS_437", "Psion", "Class"), rules: [select] },
+      entity("ID_FMP_RITUAL_55", "Sending", "Ritual"),
+      entity("ID_FMP_RITUAL_60", "Tenser's Floating Disk", "Ritual"),
+    ];
+    const evaluate = (build: ReturnType<typeof importDnd4e>["build"]) =>
+      evaluateCharacter(projectBuildForEvaluation(build, content), content);
+    const exported = (
+      imported: ReturnType<typeof importDnd4e>,
+      build: ReturnType<typeof importDnd4e>["build"],
+    ) =>
+      exportEditedDnd4e({
+        target: "legacy-builder-0.07a",
+        envelope: imported.envelope,
+        snapshot: imported.snapshot,
+        build,
+        evaluation: evaluate(build),
+        content,
+      });
+    const levelXml = (xml: string) =>
+      /<Level><RulesElement.*?<\/Level>/su.exec(xml)?.[0] ?? "";
+
+    // An old builder's save holds the psion's Sending as loot; import fills
+    // the choice from it, and export writes the same loot back.
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Psion" type="Class" internal-id="ID_FMP_CLASS_437" charelem="class"/></RulesElement><loot count="1" equip-count="0" ShowPowerCard="1"><RulesElement name="Sending" type="Ritual" internal-id="ID_FMP_RITUAL_55"/></loot></Level></D20Character>`,
+    );
+    const filled = fillRitualChoicesFromKnown(imported.build, content);
+    expect(filled.fills.map(({ name }) => name)).toEqual(["Sending"]);
+    const xml = exported(imported, filled.build);
+    expect(levelXml(xml)).toContain(
+      '<loot count="1" equip-count="0" ShowPowerCard="1"><RulesElement name="Sending" type="Ritual" internal-id="ID_FMP_RITUAL_55"',
+    );
+    expect(
+      levelXml(xml).match(/internal-id="ID_FMP_RITUAL_55"/gu),
+    ).toHaveLength(1);
+    const reimported = importDnd4e(xml);
+    expect(
+      reimported.build.known.map(({ element }) => element.definitionId),
+    ).toEqual(["ID_FMP_RITUAL_55"]);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(
+          withLegacyRitualChoices(
+            filled.build,
+            evaluate(filled.build),
+            content,
+          ),
+        ),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+
+    // A pick made in the app writes new loot at its level.
+    const native = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Psion" type="Class" internal-id="ID_FMP_CLASS_437" charelem="class"/></RulesElement></Level></D20Character>`,
+    );
+    const picked = applyCharacterCommand(native.build, {
+      kind: "choose",
+      parentId: native.build.levels[0]!.root.children[0]!.id,
+      index: 0,
+      occurrence: {
+        id: "web:disk",
+        identity: {
+          definitionId: "ID_FMP_RITUAL_60",
+          name: "Tenser's Floating Disk",
+          type: "Ritual",
+        },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+    });
+    const nativeXml = levelXml(exported(native, picked));
+    expect(nativeXml).toContain(
+      '<loot count="1" equip-count="0" ShowPowerCard="1"><RulesElement name="Tenser&apos;s Floating Disk" type="Ritual" internal-id="ID_FMP_RITUAL_60"',
+    );
+    expect(nativeXml.match(/internal-id="ID_FMP_RITUAL_60"/gu)).toHaveLength(1);
   });
 
   it("writes the loadout as legacy _AlternateSlot and hand text strings, and reads them back (D101)", () => {

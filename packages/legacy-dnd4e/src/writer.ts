@@ -1070,9 +1070,9 @@ function withTextString(
 }
 
 /**
- * The build as the old builder stores it: FREEBEE rituals as known loot and
- * the loadout as its legacy flags and text strings. Export writes it, and a
- * re-import is compared with it.
+ * The build as the old builder stores it: FREEBEE and chosen rituals as
+ * known loot and the loadout as its legacy flags and text strings. Export
+ * writes it, and a re-import is compared with it.
  */
 export function legacyExportedBuild(
   build: CharacterBuild,
@@ -1081,10 +1081,76 @@ export function legacyExportedBuild(
 ): CharacterBuild {
   return withLegacyAugmentState(
     withLegacyLoadoutState(
-      withLegacyFreebeeRituals(build, evaluation, content),
+      withLegacyRitualChoices(
+        withLegacyFreebeeRituals(build, evaluation, content),
+        evaluation,
+        content,
+      ),
       content,
     ),
   );
+}
+
+/**
+ * A ritual picked in a Ritual select (a Psion's Sending or Tenser's Floating
+ * Disk, D115) is this app's choice; the old builder has no such select and
+ * holds the ritual as loot. Export drops the pick from the element tree
+ * and writes the ritual as a known entry at its level: the stored copy it
+ * was filled from (an imported save's loot, re-emitted as it was), else a
+ * new one. A re-import fills the choice from that loot again.
+ */
+export function withLegacyRitualChoices(
+  build: CharacterBuild,
+  evaluation: Pick<EvaluatedCharacter, "occurrences">,
+  content: readonly ContentEntity[],
+): CharacterBuild {
+  const entities = contentMap(content);
+  const picks = evaluation.occurrences.filter(
+    (occurrence) =>
+      occurrence.kind === "choice" &&
+      key(entities.get(key(occurrence.definitionId))?.type ?? "") === "ritual",
+  );
+  if (picks.length === 0) return build;
+  const pickIds = new Set(picks.map(({ id }) => id));
+  const prune = (occurrence: BuildOccurrence): BuildOccurrence => {
+    const children = occurrence.children
+      .filter((child) => !pickIds.has(child.id))
+      .map(prune);
+    return children.length === occurrence.children.length &&
+      children.every((child, index) => child === occurrence.children[index])
+      ? occurrence
+      : { ...occurrence, children };
+  };
+  const additions = picks.flatMap((pick): BuildKnownEntry[] => {
+    const entity = entities.get(key(pick.definitionId));
+    if (entity === undefined) return [];
+    const element = {
+      definitionId: entity.id,
+      name: entity.name,
+      type: entity.type,
+    };
+    if (isKnownElementStored(build, element)) return [];
+    return [
+      {
+        id: `export:ritual-choice:${pick.id}`,
+        acquiredLevel: Math.min(
+          build.effectiveLevel,
+          Math.max(1, pick.acquiredLevel),
+        ),
+        element,
+        acquisition: "free",
+      },
+    ];
+  });
+  return {
+    ...build,
+    levels: build.levels.map((frame) => {
+      const root = prune(frame.root);
+      return root === frame.root ? frame : { ...frame, root };
+    }),
+    grabbag: build.grabbag.map(prune),
+    known: [...build.known, ...additions],
+  };
 }
 
 function holdingDefinitionIds(entry: BuildInventoryEntry): readonly string[] {
