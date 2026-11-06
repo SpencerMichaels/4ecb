@@ -27,6 +27,7 @@ import {
   type MatchableDefinition,
 } from "./definition-matching";
 
+export * from "./campaign-setting";
 export * from "./definition-matching";
 export * from "./saved-selection-audit";
 export * from "./writer";

@@ -31,6 +31,10 @@ import {
   type EvaluatedCharacter,
 } from "@4ecb/rules-engine";
 import { SaxesParser } from "saxes";
+import {
+  campaignSettingXml,
+  type CampaignSettingInput,
+} from "./campaign-setting";
 
 export const DND4E_EXPORT_TARGETS = [
   {
@@ -52,6 +56,11 @@ export interface EditedDnd4eExportInput {
   readonly build: CharacterBuild;
   readonly evaluation: EvaluatedCharacter;
   readonly content: readonly ContentEntity[];
+  /**
+   * Replaces the save's `D20CampaignSetting` (at its original position, else
+   * after the CharacterSheet). Absent, the source fragment is kept byte-exact.
+   */
+  readonly campaignSetting?: CampaignSettingInput;
 }
 
 export interface Dnd4eRoundTripComparison {
@@ -1506,6 +1515,24 @@ function characterSheetXml(
   );
 }
 
+/** The preserved root children with the campaign setting replaced (first position wins). */
+function withCampaignSetting(
+  fragments: readonly RootFragment[],
+  settingXml: string,
+): string[] {
+  const isSetting = (fragment: RootFragment) =>
+    key(fragment.name) === "d20campaignsetting";
+  if (!fragments.some(isSetting))
+    return [settingXml, ...fragments.map((fragment) => fragment.raw)];
+  let written = false;
+  return fragments.flatMap((fragment) => {
+    if (!isSetting(fragment)) return [fragment.raw];
+    if (written) return [];
+    written = true;
+    return [settingXml];
+  });
+}
+
 export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
   if (input.target !== "legacy-builder-0.07a")
     throw new Error(
@@ -1538,9 +1565,13 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     "charactersheet",
     "abilityscores",
   ]);
-  const preserved = childFragments(sourceXml, "D20Character")
-    .filter((fragment) => !replaced.has(key(fragment.name)))
-    .map((fragment) => fragment.raw);
+  const kept = childFragments(sourceXml, "D20Character").filter(
+    (fragment) => !replaced.has(key(fragment.name)),
+  );
+  const preserved =
+    input.campaignSetting === undefined
+      ? kept.map((fragment) => fragment.raw)
+      : withCampaignSetting(kept, campaignSettingXml(input.campaignSetting));
   const tokens = occurrenceTokens(build);
   const textStrings = Object.entries(build.textStrings).map(([name, value]) =>
     element("textstring", { name }, escapeText(value)),

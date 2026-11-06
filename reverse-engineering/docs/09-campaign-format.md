@@ -71,3 +71,14 @@ Loading a campaign triggers a complete character update. Importing a campaign fr
 a character temporarily loads that character, extracts/relinks its setting, then
 restores the current workspace—another reason campaign policy must be independent
 of derived character caches.
+
+## Native implementation
+
+`packages/legacy-dnd4e/src/campaign-setting.ts` implements this format:
+`readCampaignSetting` (ID-as-tag decoding as the legacy `ID_In`, the
+`RulesElement` identity form, the `Restricted`-only repair pass recorded as a
+diagnostic, verbatim `Houserules`, unknown children kept with a diagnostic)
+and `campaignSettingXml` (the legacy `ID_Out` form). `exportEditedDnd4e`
+takes an optional `campaignSetting` that replaces a save's setting; without
+it the fragment is preserved byte-exact. The native campaign document is D116
+(`docs/decisions.md`).

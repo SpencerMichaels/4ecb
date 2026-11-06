@@ -1,5 +1,31 @@
 # Implementation status
 
+## Legacy campaign setting read/write (2026-11-06)
+
+D116 step 4: `packages/legacy-dnd4e/src/campaign-setting.ts` reads and
+writes the legacy `D20CampaignSetting` (`reverse-engineering/docs/09-campaign-format.md`).
+`readCampaignSetting(sourceXml)` takes a `.dndcamp` root or a `.dnd4e`
+save's direct child and returns `{name, restrictedIds, restrictedIdentities,
+houseRulesXml, unknownXml, empty, diagnostics}`: ID-as-tag children decoded
+with the legacy `ID_In` substitutions (`_LPAREN_`, `_RPAREN_`, `_APOS_`),
+the `RulesElement` identity form by `internal-id` (one without an ID is kept
+as `restrictedIdentities` with a diagnostic for name/type resolution),
+`Houserules` children verbatim, unknown children kept with a diagnostic and
+never written back. Input that is not well-formed is rejected, except that
+literal `(`, `)`, `'` in tag names inside `Restricted` are repaired and
+reported (`campaign.restricted-repaired`); the parser is the package's
+saxes parser (no DTD/external entities). `campaignSettingXml` writes the
+ID-as-tag form (the `RulesElement internal-id` form for an ID that is not a
+plain XML name) and omits empty containers. `exportEditedDnd4e` takes an
+optional `campaignSetting` that replaces the save's setting in place; without
+it the source fragment stays byte-exact as before. Verification: 11
+synthetic tests (`campaign-setting.test.ts`), package suite, typecheck and
+lint; privately, all 58 `sample-chars/*.dnd4e` (52 carrying the empty
+`<D20CampaignSetting name="" >` form) read as empty with no diagnostics,
+the RPGA General campaign reads 347 IDs, and the LFR campaign reads 814
+with its 3 literal-parenthesis/apostrophe tags repaired; both round-trip
+through the writer.
+
 ## Deity equivalents: CountsAsDeity (2026-11-06)
 
 D116's `CountsAsDeity` alternate is built. `COUNTS_AS_ALTERNATES`
