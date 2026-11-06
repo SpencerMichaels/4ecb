@@ -87,15 +87,14 @@ export interface SheetLayout {
   and take none, and their rows have a − [n] + copies stepper (at least 1;
   the whole page set repeats at its place in the order). The menu closes on Escape (focus back to the button),
   an outside click or tabbing out.
-- The toolbar packs from the start (Back, View | Edit, then Edit's Sections
-  and Reset), so View | Edit never moves between modes; Print stays at the
-  end.
+- The toolbar packs from the start (Back, Print, View | Edit, then Edit's
+  Sections and hint), so nothing before Edit's tools moves between modes
+  (D099 toolbar-cleanup amendment, 2026-11-06).
 - Silent saves via a serialized queue (no "Saved" notice, D098; failures show
   an actionable error). Keep layout in its own state so layout edits never
   re-evaluate the character.
-- Global **Reset** in the toolbar (arm-then-confirm: "Reset", then "Confirm
-  reset"; its accessible name says "Reset sheet layout to defaults"). It
-  clears card and section choices.
+- No global Reset: it was built (arm-then-confirm) and removed by the
+  owner on 2026-11-06, since players edit the sheet progressively.
 
 ## 3. Controls
 

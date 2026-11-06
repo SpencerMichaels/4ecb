@@ -3074,14 +3074,12 @@ Decision:
   only above 1 (the normalizer drops non-integers and counts below 1); the
   section prints its whole page set that many times, one after another, at
   its place in the order. Only the grip drags a row, so the checkbox and
-  field keep ordinary pointer input. Reset restores one copy.
+  field keep ordinary pointer input.
 - The toolbar packs from the start (Back, View | Edit, then Edit's
-  Sections and Reset; Print at the end), and each View | Edit option
-  reserves its bold width, so the control never moves between modes. Reset
-  is an arm-then-confirm "Reset" / "Confirm reset" button (accessible name
-  "Reset sheet layout to defaults"): layout cleared (default order, every
-  section and card shown), every holding prints its card; disabled at the
-  defaults. Bulk group toggles were dropped. Saves are silent and
+  Sections and Reset; Print at the end; reordered and Reset removed by the
+  2026-11-06 toolbar-cleanup amendment below), and each View | Edit option
+  reserves its bold width, so the control never moves between modes. Bulk
+  group toggles were dropped. Saves are silent and
   serialized (D098); only a failure shows, with a retry.
 - Cards reorder (phase 3, owner decision 4 "cards move anywhere in the
   deck"; built before phase 2, which the owner postponed): in Edit mode,
@@ -3227,9 +3225,33 @@ Decision:
   No layout version bump: the field is optional and an older reader's
   `normalizeSheetLayout` drops it (it would just print its own defaults).
   Existing characters are not migrated (owner): one without explicit
-  choices switches to the new defaults, and Reset returns to them. Copies
-  steppers are unchanged; the layout stays native-only, so `.dnd4e`
-  export is unaffected.
+  choices switches to the new defaults, and Reset returned to them (Reset
+  is removed below). Copies steppers are unchanged; the layout stays
+  native-only, so `.dnd4e` export is unaffected.
+- Amendment (owner, 2026-11-06, toolbar cleanup): "The sections and reset
+  buttons in the statusbar are a different height than the view/edit
+  buttons", "the word 'sheet' on the top left is kind of irrelevant", "the
+  'print' icon is way off on the right side, and it wraps around due to
+  the 'right click a card...' text". The toolbar is now, from the start,
+  Back, Print, View | Edit, then in Edit mode Sections and the hint. Print
+  sits beside Back: both are page actions (leave, print) as icon buttons,
+  and View | Edit stays next to the Sections menu and hint it reveals, so
+  Edit's tools appear right after the control that brings them and nothing
+  before them moves between modes. The hint takes the rest of the row and
+  drops to its own line when narrow, never pushing a button. Back, Print
+  and Sections share `.sheet-toolbar-button`, sized with the View | Edit
+  options by one rule (`--sheet-toolbar-control-height`, block padding
+  0); before, each had its own padding and line height (base button,
+  2rem icon-only button, 2.1rem segmented option). The visible "Sheet"
+  legend is gone (the group keeps "Sheet mode" as its accessible name).
+  Back's tooltip and accessible name name its destination
+  (`sheetBackLabel` in `routes.ts`, from the entry's `previousHash`
+  record): "Return to builder" (any character's builder, or the
+  direct-open fallback to this character's builder), "Return to library",
+  "Return to settings", "Return to sheet". The global Reset is removed
+  with its arm-then-confirm handler (owner: players edit the sheet
+  progressively, so resetting to defaults is not a real use case); undo a
+  choice by toggling it back.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

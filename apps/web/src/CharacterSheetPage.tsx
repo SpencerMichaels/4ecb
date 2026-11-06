@@ -70,7 +70,6 @@ import { SheetSectionsMenu } from "./SheetSectionsMenu";
 import { SegmentedControl } from "./SegmentedControl";
 import { movedBefore, SheetEditTarget, usePrinting } from "./SheetEditTarget";
 import { sheetCardLabel } from "./sheet-edit-labels";
-import { useArmedAction } from "./useArmedAction";
 
 const characters = new CharacterRepository();
 
@@ -154,6 +153,7 @@ export function CharacterSheetPage({
   sheetEditing = false,
   onSheetModeChange,
   onBack,
+  backLabel = "Return to builder",
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -172,6 +172,9 @@ export function CharacterSheetPage({
   /** The toolbar Back: the app returns to this character's builder (a real
    *  Back when the builder is the previous entry). */
   readonly onBack?: () => void;
+  /** Back's tooltip and accessible name, naming where it leads
+   *  (`sheetBackLabel`); opened directly, this character's builder. */
+  readonly backLabel?: string;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(openPrintPreview);
   useEffect(() => {
@@ -197,7 +200,6 @@ export function CharacterSheetPage({
     ReadonlyMap<string, boolean>
   >(() => new Map());
   const printing = usePrinting();
-  const resetAction = useArmedAction("sheet-reset-trigger");
   const [saveError, setSaveError] = useState<string>();
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const latestPresentation = useRef({ sheetLayout, itemCardsShown });
@@ -427,18 +429,6 @@ export function CharacterSheetPage({
     },
     [savePresentation],
   );
-  // Defaults: no layout deltas, and every holding prints its card.
-  const resetPresentation = useCallback(() => {
-    const flags = latestPresentation.current.itemCardsShown;
-    setSheetLayout(undefined);
-    setItemCardsShown(new Map([...flags.keys()].map((id) => [id, true])));
-    savePresentation({
-      sheetLayout: null,
-      itemCardsShown: Object.fromEntries(
-        [...flags.keys()].map((id) => [id, true]),
-      ),
-    });
-  }, [savePresentation]);
   // Creatures, beasts and familiars whose whole card overflows the printed
   // card at the minimum text size, as their measuring copies report: each
   // prints as a stats card and an actions (creature) or notes (beast,
@@ -689,10 +679,6 @@ export function CharacterSheetPage({
           : resolvedLayout.cards.filter((card) => card.shown),
         9,
       );
-  const resetArmed = resetAction.isArmed("sheet");
-  const resettable =
-    sheetLayout !== undefined ||
-    [...itemCardsShown.values()].some((shown) => !shown);
   const characterLevel =
     Number(
       model.identity.find((entry) => entry.label === "Level")?.value ??
@@ -714,9 +700,9 @@ export function CharacterSheetPage({
         <div className="print-preview-toolbar page-actions">
           {openPrintPreview ? (
             <button
-              aria-label="Back"
-              className="icon-only-button button-icon"
-              title="Back"
+              aria-label={backLabel}
+              className="icon-only-button button-icon sheet-toolbar-button"
+              title={backLabel}
               type="button"
               onClick={() => {
                 if (onBack !== undefined) onBack();
@@ -731,7 +717,7 @@ export function CharacterSheetPage({
           ) : (
             <button
               aria-label="Back to character view"
-              className="icon-only-button button-icon"
+              className="icon-only-button button-icon sheet-toolbar-button"
               title="Back to character view"
               type="button"
               onClick={() => setShowPrintPreview(false)}
@@ -739,8 +725,18 @@ export function CharacterSheetPage({
               <Icon name="back" />
             </button>
           )}
+          <button
+            aria-label="Print or save as PDF"
+            className="icon-only-button button-icon sheet-toolbar-button"
+            title="Print or save as PDF"
+            type="button"
+            onClick={print}
+          >
+            <Icon name="print" />
+          </button>
           <SegmentedControl
-            label="Sheet"
+            label="Sheet mode"
+            labelHidden
             options={[
               ["view", "View"],
               ["edit", "Edit"],
@@ -749,7 +745,7 @@ export function CharacterSheetPage({
             onChange={(mode) => onSheetModeChange?.(mode === "edit")}
           />
           {editing ? (
-            <span className="sheet-edit-tools">
+            <>
               <SheetSectionsMenu
                 hiddenSections={resolvedLayout.hiddenSections}
                 sectionCopies={resolvedLayout.sectionCopies}
@@ -758,50 +754,12 @@ export function CharacterSheetPage({
                 onReorder={reorderSections}
                 onShowSection={showSection}
               />
-              <button
-                aria-label={
-                  resetArmed
-                    ? "Confirm resetting the sheet layout"
-                    : "Reset sheet layout to defaults"
-                }
-                title={
-                  resetArmed
-                    ? "Confirm resetting the sheet layout"
-                    : "Reset sheet layout to defaults"
-                }
-                className="danger-action"
-                data-armed={resetArmed || undefined}
-                data-sheet-reset-trigger="sheet"
-                disabled={!resettable}
-                type="button"
-                onClick={() => {
-                  if (!resetArmed) {
-                    resetAction.arm("sheet");
-                    return;
-                  }
-                  resetAction.disarm();
-                  resetPresentation();
-                }}
-              >
-                {resetArmed ? "Confirm reset" : "Reset"}
-              </button>
               <span className="sheet-edit-hint">
                 Right-click a card or reminder to hide or show it; drag cards to
                 reorder.
               </span>
-            </span>
+            </>
           ) : null}
-          <span className="print-preview-toolbar-end">
-            <button
-              aria-label="Print or save as PDF"
-              className="icon-only-button button-icon"
-              title="Print or save as PDF"
-              type="button"
-              onClick={print}
-            >
-              <Icon name="print" />
-            </button>
-          </span>
           {saveError === undefined ? null : (
             <div className="error sheet-layout-save-error" role="alert">
               <span>Couldn't save the sheet layout: {saveError}</span>

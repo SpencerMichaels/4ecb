@@ -92,7 +92,7 @@ export function SheetSectionsMenu({
       <button
         aria-controls={menuId}
         aria-expanded={open}
-        className="sheet-sections-trigger"
+        className="sheet-sections-trigger sheet-toolbar-button"
         ref={trigger}
         type="button"
         onClick={() => setOpen((current) => !current)}

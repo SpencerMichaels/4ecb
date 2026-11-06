@@ -369,6 +369,24 @@ export function backToPreviousRoute(target: HashHistoryTarget): boolean {
 }
 
 /**
+ * The sheet's Back label (tooltip and accessible name): where Back lands.
+ * `previousHash` is the entry's record (`previousRouteHash`); a real Back
+ * returns to that page, and with no in-app page before (`null`/`undefined`)
+ * the sheet falls back to this character's builder.
+ */
+export function sheetBackLabel(
+  previousHash: string | null | undefined,
+): string {
+  if (previousHash === null || previousHash === undefined)
+    return "Return to builder";
+  const route = parseHashRoute(previousHash);
+  if (route.page === "settings") return "Return to settings";
+  if (route.page === "campaign-join") return "Return to campaign invite";
+  if (route.characterId === undefined) return "Return to library";
+  return route.mode === "edit" ? "Return to builder" : "Return to sheet";
+}
+
+/**
  * Moves to `next`. A push records the entry it came from; a replace keeps
  * the replaced entry's record, since the entry before it is unchanged.
  */

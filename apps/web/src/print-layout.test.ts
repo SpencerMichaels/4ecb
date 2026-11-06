@@ -510,20 +510,39 @@ describe("print layout contract", () => {
     expect(appStyles).not.toMatch(/\.ov-reminder-probe[^{]*sheet-reminder/);
   });
 
-  it("styles Edit mode's toolbar hint as muted helper text", () => {
+  it("styles Edit mode's toolbar hint as muted helper text that wraps alone", () => {
+    // It takes the rest of the row and drops to its own line when narrow,
+    // so it never pushes a toolbar button along.
     expect(appStyles).toMatch(
-      /\.sheet-edit-hint \{\s*color: var\(--muted\);\s*font-size: 0\.8rem;\s*\}/,
+      /\.sheet-edit-hint \{\s*color: var\(--muted\);\s*flex: 1 1 16rem;\s*font-size: 0\.8rem;\s*\}/,
+    );
+  });
+
+  it("gives the toolbar's buttons and View | Edit options one height", () => {
+    expect(appStyles).toMatch(
+      /\.sheet-page\.is-print-preview \.print-preview-toolbar \{[^}]*--sheet-toolbar-control-height: 2\.25rem;/,
+    );
+    // One rule sizes both the shared button class and the segmented options.
+    expect(appStyles).toMatch(
+      /\.print-preview-toolbar \.sheet-toolbar-button,\s*\.print-preview-toolbar \.segmented-control-options > label \{[^}]*box-sizing: border-box;[^}]*height: var\(--sheet-toolbar-control-height\);[^}]*min-height: 0;[^}]*padding-block: 0;/,
+    );
+    expect(appStyles).toMatch(
+      /\.print-preview-toolbar \.sheet-toolbar-button\.icon-only-button \{\s*width: var\(--sheet-toolbar-control-height\);/,
+    );
+    // No other toolbar rule sets a height or block padding of its own.
+    expect(appStyles).not.toMatch(
+      /\.sheet-sections-trigger \{[^}]*(height|padding)/,
+    );
+    expect(appStyles).not.toMatch(
+      /\.sheet-edit-tools|print-preview-toolbar-end/,
     );
   });
 
   it("keeps View | Edit in place whether or not Edit mode's tools show", () => {
     // Packed from the start (not space-between), so the tools that follow the
-    // control in Edit mode never move it; Print is pushed to the end.
+    // control in Edit mode never move it.
     expect(styles).toMatch(
       /\.sheet-page\.is-print-preview \.print-preview-toolbar \{[^}]*justify-content: flex-start;/,
-    );
-    expect(styles).toMatch(
-      /\.print-preview-toolbar-end \{[^}]*margin-inline-start: auto;/,
     );
     // Each segmented option reserves its bold (selected) width.
     expect(styles).toMatch(

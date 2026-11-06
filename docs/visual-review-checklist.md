@@ -9,7 +9,7 @@ amendment).** A sheet without layout choices prints only the overview, the
 play scratchpad and the cards. For an entry on the Character Reference
 pages or Session notes, first turn them on: `?preview=1` → Edit →
 **Sections**, tick the reference groups (or Session notes), then back to
-View. Reset turns them off again.
+View. Untick them to turn them off again.
 
 **Summary (2026-11-04 compression).** Since the 2026-10-29 pare-down (121
 items to 45 over 13 passes) the list had grown back to 55 items over 18
@@ -586,8 +586,8 @@ live site.
     & item cards to the top by its grip, click + on Play scratchpad twice
     and type 3 into Session notes' field. Right-click a power card and an
     item card. Then the browser's print preview.
-  - **Expect:** Back and View | Edit stay put; Sections and Reset appear after
-    them, Print stays at the right end, and cards look as in View. The
+  - **Expect:** Back, Print and View | Edit stay put; Sections and the
+    hint appear after them, and cards look as in View. The
     Sections panel sits right under its button in the app's colours, each
     row with a faint grip, and pages go or move at once. While dragging,
     the row dims and a thin focus-coloured line marks where it will drop.
@@ -606,14 +606,26 @@ live site.
     power card's top-right corner and page 1's reminder panels. Right-click
     a card and a reminder row. Switch to View, then open the browser's
     print preview from Edit. At 140% zoom and in both themes.
-  - **Expect:** after Sections and Reset, small muted text "Right-click a
+  - **Expect:** after Sections, small muted text "Right-click a
     card or reminder to hide or show it; drag cards to reorder."; no eye
     icons anywhere, so the power card's [E] [D] [W] usage icons are fully
     visible; right-click flips a card or row as before. The hint is gone in
     View and in the print preview.
   - **Wrong if:** the hint is too faint to read or louder than the
-    buttons, it pushes Print off the toolbar's end or makes View | Edit
-    move, it wraps awkwardly at 140% zoom, or an eye icon remains.
+    buttons, it moves a button, it wraps awkwardly at 140% zoom, or an eye
+    icon remains.
+- [ ] **Hu: sheet toolbar (D099 amendment, 2026-11-06, toolbar cleanup).**
+  - **Where:** `?preview=1` then `?preview=1&edit=1`, at 140% zoom and
+    in both themes; narrow the window until the toolbar wraps.
+  - **Expect:** Back, Print, View | Edit (and in Edit, Sections) are one
+    height in one row, with no "Sheet" label and no Reset; in Edit the
+    hint fills the rest of the row and, when narrow, drops to its own line
+    under the buttons. Back's tooltip reads "Return to builder" from the
+    builder (or opened directly), "Return to library" from the library.
+  - **Wrong if:** any of the four controls is taller or shorter than the
+    others, their text or icons sit off-centre, Print or Sections moves
+    between View and Edit, or the hint's wrapping pushes a button onto a
+    new line.
 
 ## Pass 11: Natan (`natan`)
 

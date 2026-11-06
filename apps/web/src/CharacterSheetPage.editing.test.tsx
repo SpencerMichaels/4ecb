@@ -230,7 +230,7 @@ async function tick(label: string) {
 }
 
 const onSheetModeChange = vi.fn();
-async function renderSheet(sheetEditing: boolean) {
+async function renderSheet(sheetEditing: boolean, backLabel?: string) {
   await act(async () =>
     root.render(
       <CharacterSheetPage
@@ -239,6 +239,7 @@ async function renderSheet(sheetEditing: boolean) {
         openPrintPreview
         sheetEditing={sheetEditing}
         onSheetModeChange={onSheetModeChange}
+        {...(backLabel === undefined ? {} : { backLabel })}
       />,
     ),
   );
@@ -282,9 +283,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       "Edit",
     ]);
     expect(modes[0]?.checked).toBe(true);
-    expect(
-      container.querySelector(".segmented-control legend")?.textContent,
-    ).toBe("Sheet");
+    // No visible "Sheet" label: the legend only names the group.
+    const legend = container.querySelector(".segmented-control legend");
+    expect(legend?.textContent).toBe("Sheet mode");
+    expect(legend?.className).toBe("visually-hidden");
     expect(container.querySelector(".sheet-edit-target")).toBeNull();
     expect(editHint()).toBeNull();
     expect(sectionsTrigger()).toBeUndefined();
@@ -306,7 +308,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(editHint()?.textContent).toBe(
       "Right-click a card or reminder to hide or show it; drag cards to reorder.",
     );
-    expect(editHint()?.closest(".sheet-edit-tools")).not.toBeNull();
+    expect(editHint()?.parentElement?.className).toBe(
+      "print-preview-toolbar page-actions",
+    );
     // Overlays never sit inside the measured probe copies.
     expect(
       container.querySelector(".ov-measure .sheet-edit-target"),
@@ -320,28 +324,73 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       container.querySelector('.print-preview-toolbar input[type="checkbox"]'),
     ).toBeNull();
     expect(sectionsTrigger()?.getAttribute("aria-expanded")).toBe("false");
-    const reset = container.querySelector<HTMLButtonElement>(
-      "[data-sheet-reset-trigger]",
-    );
-    expect(reset?.textContent).toBe("Reset");
-    expect(reset?.getAttribute("aria-label")).toBe(
-      "Reset sheet layout to defaults",
-    );
-    expect(reset?.title).toBe("Reset sheet layout to defaults");
-    // Always present; disabled while the sheet is at its defaults.
-    expect(reset?.disabled).toBe(true);
+    // There is no Reset: players edit the sheet progressively.
+    expect(container.querySelector("[data-sheet-reset-trigger]")).toBeNull();
+    expect(
+      [...container.querySelectorAll(".print-preview-toolbar button")].some(
+        (button) => /reset/i.test(button.textContent ?? ""),
+      ),
+    ).toBe(false);
   });
 
-  it("keeps View | Edit in place: Edit's tools follow it, Print stays last", async () => {
+  it("names Back's destination in its tooltip and accessible name", async () => {
+    const back = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".print-preview-toolbar > button",
+      )!;
+    // Opened directly, Back goes to this character's builder.
+    await renderSheet(false);
+    expect(back().title).toBe("Return to builder");
+    expect(back().getAttribute("aria-label")).toBe("Return to builder");
+    for (const label of [
+      "Return to library",
+      "Return to settings",
+      "Return to builder",
+    ]) {
+      await renderSheet(false, label);
+      expect(back().title).toBe(label);
+      expect(back().getAttribute("aria-label")).toBe(label);
+    }
+  });
+
+  it("packs Back, Print, View | Edit, then Edit's Sections and hint, in one button style", async () => {
+    const toolbarOrder = () =>
+      [...container.querySelector(".print-preview-toolbar")!.children].map(
+        (child) =>
+          child.getAttribute("aria-label") ??
+          child.className
+            .split(" ")
+            .find((name) =>
+              [
+                "segmented-control",
+                "sheet-sections",
+                "sheet-edit-hint",
+              ].includes(name),
+            ),
+      );
+    await renderSheet(false);
+    expect(toolbarOrder()).toEqual([
+      "Return to builder",
+      "Print or save as PDF",
+      "segmented-control",
+    ]);
     await renderSheet(true);
+    expect(toolbarOrder()).toEqual([
+      "Return to builder",
+      "Print or save as PDF",
+      "segmented-control",
+      "sheet-sections",
+      "sheet-edit-hint",
+    ]);
     const toolbar = container.querySelector(".print-preview-toolbar")!;
-    const order = [...toolbar.children].map((child) => child.className);
-    const segmented = order.findIndex((name) =>
-      name.includes("segmented-control"),
+    // Every toolbar button outside the Sections panel shares one class (its
+    // height matches the View | Edit options; print-layout.test.ts).
+    const buttons = [...toolbar.querySelectorAll("button")].filter(
+      (button) => button.closest(".sheet-sections-menu") === null,
     );
-    expect(segmented).toBe(1);
-    expect(order[segmented + 1]).toBe("sheet-edit-tools");
-    expect(order.at(-1)).toBe("print-preview-toolbar-end");
+    expect(buttons).toHaveLength(3);
+    for (const button of buttons)
+      expect(button.classList.contains("sheet-toolbar-button")).toBe(true);
     // Each option reserves its bold, selected width (print-layout.test.ts
     // checks the CSS that packs the toolbar from the start).
     expect(
@@ -454,7 +503,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await act(async () => window.dispatchEvent(new Event("beforeprint")));
     expect(cardPageText()).not.toContain("Arc Strike");
     expect(container.querySelector(".sheet-edit-target")).toBeNull();
-    expect(container.querySelector(".sheet-edit-tools")).not.toBeNull();
+    expect(
+      container.querySelector(".print-preview-toolbar .sheet-sections"),
+    ).not.toBeNull();
     await act(async () => window.dispatchEvent(new Event("afterprint")));
     expect(cardPageText()).toContain("Arc Strike");
 
@@ -591,7 +642,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       inside.dispatchEvent(
         new FocusEvent("focusout", {
           bubbles: true,
-          relatedTarget: container.querySelector("[data-sheet-reset-trigger]"),
+          relatedTarget: container.querySelector(
+            '.print-preview-toolbar > button[aria-label="Print or save as PDF"]',
+          ),
         }),
       ),
     );
@@ -723,40 +776,6 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(document.body.textContent).not.toMatch(/\bSaved\b/);
   });
 
-  it("arms, then confirms, a reset to the default sheet", async () => {
-    runtime.record = {
-      ...record(),
-      sheetLayout: {
-        version: 1,
-        hiddenSections: ["scratchpad"],
-        shownSections: ["session-notes", "reference:features"],
-      },
-    };
-    await renderSheet(true);
-    expect(pageText("Session notes")).not.toBe("");
-    expect(pageText("Play scratchpad")).toBe("");
-    expect(pageText("Character reference")).not.toBe("");
-    const reset = () =>
-      container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
-    expect(reset().disabled).toBe(false);
-    await act(async () => reset().click());
-    expect(reset().textContent).toBe("Confirm reset");
-    expect(reset().getAttribute("aria-label")).toBe(
-      "Confirm resetting the sheet layout",
-    );
-    expect(runtime.updateMetadata).not.toHaveBeenCalled();
-    await act(async () => reset().click());
-    await settle();
-    // Back to the defaults: both delta lists cleared.
-    expect(pageText("Session notes")).toBe("");
-    expect(pageText("Character reference")).toBe("");
-    expect(pageText("Play scratchpad")).toContain("Arc Strike");
-    expect(runtime.updateMetadata).toHaveBeenCalledWith("ada", {
-      sheetLayout: null,
-      itemCardsShown: { "holding-cloak": true },
-    });
-    expect(runtime.evaluate).toHaveBeenCalledTimes(1);
-  });
   it("hides every card page with the Power & item cards row", async () => {
     await renderSheet(true);
     expect(cardPageText()).toContain("Arc Strike");
@@ -990,7 +1009,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
-  it("chains page numbers through a hidden, reordered layout and resets both", async () => {
+  it("chains page numbers through a hidden, reordered layout", async () => {
     runtime.record = {
       ...record(),
       sheetLayout: {
@@ -1020,20 +1039,6 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       "Session notes",
     ]);
     expect(sectionCheckbox("Overview")?.checked).toBe(false);
-    const reset = () =>
-      container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
-    await act(async () => reset().click());
-    await act(async () => reset().click());
-    await settle();
-    expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
-      sheetLayout: null,
-      itemCardsShown: { "holding-cloak": true },
-    });
-    expect(printedPages()[0]).toBe("Character summary");
-    expect(pageNumber('[aria-label="Character summary"]')).toBe("1");
-    // The open menu follows the reset order.
-    expect(menuOrder()[0]).toBe("Overview");
-    expect(menuOrder().at(-2)).toBe("Power & item cards");
   });
 
   it("sets scratchpad and session notes copies with − / + or a typed number", async () => {
@@ -1132,18 +1137,6 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     });
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
     expect(document.body.textContent).not.toMatch(/\bSaved\b/);
-
-    // Reset restores one copy of each, and Session notes' default (hidden).
-    const reset = () =>
-      container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
-    await act(async () => reset().click());
-    await act(async () => reset().click());
-    await settle();
-    expect(papers("Play scratchpad")).toBe(single);
-    expect(papers("Session notes")).toBe(0);
-    await tick("Session notes");
-    expect(papers("Session notes")).toBe(1);
-    expect(field().value).toBe("1");
   });
 
   it("numbers only the numbered sections around copies in a custom order", async () => {

@@ -7,6 +7,7 @@ import {
   commitHashNavigation,
   previousRouteHash,
   recordRouteEntry,
+  sheetBackLabel,
 } from "./routes";
 
 /** A session history with the browser's push/replace/back semantics. */
@@ -200,5 +201,28 @@ describe("back to the previous in-app route", () => {
 
     const direct = fakeBrowser("#/settings");
     expect(backToPreviousRoute(direct.target)).toBe(false);
+  });
+});
+
+describe("the sheet's Back label", () => {
+  it("names the page a real Back returns to", () => {
+    expect(sheetBackLabel(defaultBuilder)).toBe("Return to builder");
+    expect(
+      sheetBackLabel(characterEditorHash("other", { workspace: "shop" })),
+    ).toBe("Return to builder");
+    expect(sheetBackLabel("#/characters")).toBe("Return to library");
+    expect(sheetBackLabel("#/settings")).toBe("Return to settings");
+    expect(sheetBackLabel(characterSheetHash("other", { preview: true }))).toBe(
+      "Return to sheet",
+    );
+  });
+
+  it("names this character's builder when the sheet was opened directly", () => {
+    expect(sheetBackLabel(null)).toBe("Return to builder");
+    expect(sheetBackLabel(undefined)).toBe("Return to builder");
+    const browser = fakeBrowser(preview);
+    expect(sheetBackLabel(previousRouteHash(browser.target))).toBe(
+      "Return to builder",
+    );
   });
 });

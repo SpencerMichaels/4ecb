@@ -332,7 +332,9 @@ On **View sheet**, select Letter or A4, optional blank hit points, power/item
 cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
-The print preview's toolbar switches **Sheet: View | Edit**. **Edit** keeps
+The print preview's toolbar starts with Back (its tooltip says where it
+goes: the builder, the library, Settings, or this character's builder when
+the sheet was opened directly), Print, and **View | Edit**. **Edit** keeps
 the paper preview and lets you right-click any card to hide it, and
 right-click a hidden one to show it again. From the keyboard, Tab to a card
 and press Enter, Space, the Menu key or Shift+F10. In Edit mode a hidden card
@@ -374,11 +376,9 @@ numbers follow it. The play scratchpad and session notes print without page
 numbers, so you can print extra copies: use the − and + buttons on their
 rows, or type a number. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
-exported to the original Character Builder. **Reset** (click again to
-confirm) goes back to the default sections (Overview, play scratchpad and
-cards), in the default order, with the default reminders. Changes save automatically, are
+exported to the original Character Builder. Changes save automatically, are
 kept per character in backups and copies, and don't change the character's
-"last modified" time; printing (**Print or save PDF**, or **PDF** from the
+"last modified" time; printing (the toolbar's Print, or **PDF** from the
 library) always uses the saved choices.
 
 The sheet's **Worn/Held Items** pane lists equipped gear by loadout slot, and

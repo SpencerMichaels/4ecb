@@ -34,7 +34,9 @@ import {
   characterSheetHash,
   commitHashNavigation,
   parseHashRoute,
+  previousRouteHash,
   recordRouteEntry,
+  sheetBackLabel,
   type BuilderNavigation,
 } from "./routes";
 import {
@@ -596,9 +598,15 @@ export function App() {
 
   // Each entry remembers the in-app entry before it (`backToPreviousRoute`).
   const lastRecordedHash = useRef<string | undefined>(undefined);
+  // The current entry's record, read once it exists: the sheet's Back names
+  // where it leads (`sheetBackLabel`).
+  const [entryPreviousHash, setEntryPreviousHash] = useState<
+    string | null | undefined
+  >(undefined);
   useEffect(() => {
     recordRouteEntry(window, lastRecordedHash.current);
     lastRecordedHash.current = hash;
+    setEntryPreviousHash(previousRouteHash(window));
   }, [hash]);
 
   useEffect(() => {
@@ -742,6 +750,7 @@ export function App() {
                         navigateSheet(route.characterId!, editing)
                       }
                       onBack={() => returnFromSheet(route.characterId!)}
+                      backLabel={sheetBackLabel(entryPreviousHash)}
                       countCoinWeight={countCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}

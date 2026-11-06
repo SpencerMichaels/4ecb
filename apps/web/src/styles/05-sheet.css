@@ -547,37 +547,46 @@
    flow and screen-only, so they never change what prints or fits. The paper
    is white in both themes, so on-paper controls use paper ink.
 
-   The toolbar packs from the start, so Back and View | Edit keep their place
-   whether or not Edit mode's tools follow them; Print stays at the end. */
+   The toolbar packs from the start: Back, Print, View | Edit, then Edit
+   mode's Sections and hint, so nothing before the hint moves between
+   modes. Its buttons and the View | Edit options share one height; the
+   hint takes the rest of the row and drops to its own line (wrapping
+   there) when the row is too narrow, never pushing a button along. */
 .sheet-page.is-print-preview .print-preview-toolbar {
+  --sheet-toolbar-control-height: 2.25rem;
+  gap: 0.5rem 0.75rem;
   flex-wrap: wrap;
   justify-content: flex-start;
 }
 
-.print-preview-toolbar-end {
+.print-preview-toolbar .sheet-toolbar-button,
+.print-preview-toolbar .segmented-control-options > label {
   align-items: center;
+  box-sizing: border-box;
   display: inline-flex;
-  gap: 0.5rem;
-  margin-inline-start: auto;
+  height: var(--sheet-toolbar-control-height);
+  min-height: 0;
+  padding-block: 0;
 }
 
-.sheet-edit-tools {
-  align-items: center;
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+.print-preview-toolbar .sheet-toolbar-button {
+  flex: none;
+  justify-content: center;
+}
+
+.print-preview-toolbar .sheet-toolbar-button.icon-only-button {
+  width: var(--sheet-toolbar-control-height);
 }
 
 /* Edit mode says how to hide, show and reorder: on-paper controls would
    cover the cards (owner, 2026-11-06). */
 .sheet-edit-hint {
   color: var(--muted);
+  flex: 1 1 16rem;
   font-size: 0.8rem;
 }
 
 .sheet-sections-trigger {
-  align-items: center;
-  display: inline-flex;
   gap: 0.35rem;
 }
 
@@ -674,16 +683,6 @@
 .sheet-sections-copies > input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-.sheet-edit-tools .danger-action {
-  color: var(--danger);
-}
-
-.sheet-edit-tools .danger-action[data-armed="true"] {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: var(--surface);
 }
 
 .sheet-layout-save-error {

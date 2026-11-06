@@ -1,5 +1,28 @@
 # Implementation status
 
+## Sheet toolbar cleanup (2026-11-06)
+
+D099 amendment (owner: mismatched button heights, an irrelevant "Sheet"
+label, Print pushed off and wrapped by the Edit hint, Reset not a real use
+case). The print preview toolbar is Back, Print, View | Edit, then in Edit
+mode Sections and the hint, which takes the rest of the row and drops to
+its own line when narrow. Back, Print and Sections share
+`.sheet-toolbar-button`, one height with the View | Edit options
+(`--sheet-toolbar-control-height`, `05-sheet.css`). The "Sheet" legend is
+visually hidden ("Sheet mode", `SegmentedControl`'s `labelHidden`).
+Back's tooltip and accessible name come from `sheetBackLabel`
+(`routes.ts`, from the entry's `previousHash`; App reads the record after
+`recordRouteEntry`): "Return to builder" / "library" / "settings" /
+"sheet", "Return to builder" when opened directly. The Reset button, its
+arm-then-confirm state and `resetPresentation` are removed; the
+repository's `sheetLayout: null` stays (a layout edit back to no deltas
+still writes it).
+
+Verification: `route-history.test.ts` (labels per previous route and the
+direct-open fallback), `CharacterSheetPage.editing.test.tsx` (toolbar order
+in View and Edit, one button class, hidden legend, no Reset, Back label
+prop), `print-layout.test.ts` (one shared height rule, hint wraps alone).
+
 ## Only the overview, scratchpad and cards print by default (2026-11-06)
 
 D099 amendment (owner: "Enabled by default: overview, scratchpad, power and
