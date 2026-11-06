@@ -542,16 +542,16 @@
 
 /* The tabs take the width the status badges leave them (an inline-size
    container, so the badges, the window and the sidebar drawer all count).
-   Below the width of every label (seven tabs, gaps and the Details
-   attention mark measure about 45.5rem), only the selected tab keeps its
+   Below the width of every label (eight tabs, gaps and the Details
+   attention mark measure about 52.9rem), only the selected tab keeps its
    label; the others show their icon, keeping their name for screen readers
    and as a tooltip. The overflow is only a fallback for windows too narrow
-   even for that (under about 26rem). */
+   even for that (under about 29rem). */
 .builder-tabs {
   container: builder-tabs / inline-size;
   display: flex;
   /* The icon-only tabs with the longest selected label (Retraining). */
-  flex: 1 1 23.5rem;
+  flex: 1 1 26.5rem;
   gap: 0.25rem;
   margin-bottom: -1px;
   min-width: 0;
@@ -559,7 +559,7 @@
   overflow-y: hidden;
 }
 
-@container builder-tabs (max-width: 46rem) {
+@container builder-tabs (max-width: 53rem) {
   .builder-tabs
     :is(button, .builder-tab):not([aria-selected="true"])
     .builder-tab-label {

@@ -279,7 +279,9 @@ describe("release accessibility contract", () => {
     expect(characterEditor).not.toContain('className="level-rail"');
     // The build overview (D113) is its own tab, built on the Build tab's
     // shared presentation helpers rather than a level-rail checklist.
-    expect(characterEditor).toContain('<Icon name="list-checks" /> Overview');
+    expect(characterEditor).toMatch(
+      /<Icon name="list-checks" \/>\s*<span className="builder-tab-label">Overview<\/span>/,
+    );
     expect(characterEditor).toContain("<BuildOverview");
     expect(characterEditor).toContain('navigation.workspace === "equipment"');
     // Diagnostics opens from the status badges, not a tab.

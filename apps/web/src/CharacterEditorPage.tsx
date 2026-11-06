@@ -2304,12 +2304,14 @@ export function CharacterEditorPage({
                 <button
                   aria-selected={workspaceTab === "overview"}
                   role="tab"
+                  title="Overview"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, { workspace: "overview" })
                   }
                 >
-                  <Icon name="list-checks" /> Overview
+                  <Icon name="list-checks" />
+                  <span className="builder-tab-label">Overview</span>
                 </button>
                 <button
                   aria-selected={workspaceTab === "details"}

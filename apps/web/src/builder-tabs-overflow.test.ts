@@ -25,7 +25,7 @@ describe("character editor tab overflow", () => {
   it("keeps the workspace tabs horizontally responsive without vertical scrolling", () => {
     const workspaceTabs = declarationsFor(".builder-tabs");
 
-    // Only a fallback: icon-only tabs fit down to about a 26rem window.
+    // Only a fallback: icon-only tabs fit down to about a 29rem window.
     expect(workspaceTabs).toContain("overflow-x: auto");
     expect(workspaceTabs).toContain("overflow-y: hidden");
   });
@@ -45,6 +45,7 @@ describe("icon-only builder tabs", () => {
   );
   const labels = [
     "Build",
+    "Overview",
     "Details",
     "Loadout",
     "Inventory",
@@ -72,9 +73,9 @@ describe("icon-only builder tabs", () => {
       "container: builder-tabs / inline-size",
     );
     // The tabs grow from the width the icon-only strip needs.
-    expect(declarationsFor(".builder-tabs")).toContain("flex: 1 1 23.5rem");
+    expect(declarationsFor(".builder-tabs")).toContain("flex: 1 1 26.5rem");
     const compact = styles.slice(
-      styles.indexOf("@container builder-tabs (max-width: 46rem) {") + 1,
+      styles.indexOf("@container builder-tabs (max-width: 53rem) {") + 1,
     );
     // Visually hidden, so screen readers keep the name.
     expect(compact).toMatch(
