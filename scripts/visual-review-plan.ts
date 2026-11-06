@@ -132,6 +132,10 @@ const reviews: ReviewCharacter[] = [
             "Just above 63rem docked and at 140%: the Shop toolbar stacking inside the catalog column, headers over their own columns, a narrow table scrolling sideways.",
           ],
           [
+            "Beatrix: striped tables",
+            "Inventory, Shop (items and rituals) and Retraining rows in the feat table's alternating stripes, restarting under each group band; hover tint and selected rows over the stripes; light and dark, 140% zoom.",
+          ],
+          [
             "Beatrix: icon-only builder tabs",
             "Narrowing the window docked and with the drawer: icon-only tabs but the selected one, tooltips, no scrolling; Zilvra's status row wrapping above the tabs at the narrowest docked width.",
           ],

@@ -4458,6 +4458,13 @@ tables"):
   broke the stripe rhythm (a gap after a plain row read as a taller row),
   so the rows now sit flush; groups are no longer visually separated, the
   bands are the only break.
+- **Every table.** The Inventory and Shop tables had no stripes ("That
+  was an oversight"), so the same rule now also selects them
+  (`.equipment-table-scroll`, rituals and other known records included)
+  and Retraining (`.retraining-levels`); the library already shared it.
+  Each Inventory/Shop group band has its own `<tbody>`, so the stripes
+  restart under every band as the Overview's do. Selected rows and the
+  hover tint draw over the stripes.
 
 ### D114 — Rituals are learned in the Shop and listed in the Inventory
 

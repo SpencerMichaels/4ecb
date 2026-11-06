@@ -64,15 +64,24 @@
   --tone: var(--accent);
 }
 
-/* The table stripes, which the Overview tab's rows share (D113): there a
-   row's `is-striped` counts through its level's kind groups and restarts
-   under each level band. */
+/* The one row-stripe rule for every builder and library table: the
+   candidate tables and the library (.selection-table-scroll), the Inventory
+   and Shop (.equipment-table-scroll, rituals and other known records
+   included) and Retraining. Each Inventory/Shop group band sits in its own
+   <tbody> before its rows' <tbody>, so the stripes restart under every
+   band, as the Overview tab's rows do (D113): there a row's `is-striped`
+   counts through its level's kind groups. Selected rows' tints and the
+   hover tint (a background-image) are drawn over the stripes. */
 .selection-table-scroll tbody tr,
+.equipment-table-scroll tbody tr,
+.retraining-levels tbody tr,
 .build-overview-group > li {
   background: var(--surface);
 }
 
 .selection-table-scroll tbody tr:nth-child(even),
+.equipment-table-scroll tbody tr:nth-child(even),
+.retraining-levels tbody tr:nth-child(even),
 .build-overview-group > li.is-striped {
   background: var(--surface-subtle);
 }

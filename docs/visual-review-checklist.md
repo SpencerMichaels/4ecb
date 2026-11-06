@@ -168,6 +168,26 @@ live site.
   - **Wrong if:** two headers overlap, a field or button runs under the
     detail pane, or the name column is only a few letters wide.
 
+- [ ] **Beatrix: striped tables.**
+  - **Where:** `edit?tab=inventory` (scroll through Worn items), then the
+    Shop (All items, then Type → Rituals), then Retraining; compare each
+    with the Build tab's feat table (`edit?tab=build&level=2`, Feat).
+    Hover a few rows, click one to select it in the Shop and Retraining,
+    and Tab onto a row's name. Light and dark theme, at 140% zoom.
+  - **Expect:** every table's rows alternate plain and shaded in the same
+    two colours as the feat table; under each navy group band (Armor &
+    shields, Worn items, Adventuring gear, …) the first row is plain and
+    the shading alternates from there. Hovering a row tints it blue over
+    either shade; a selected Shop or Retraining row keeps its blue
+    selection tint and accent bar on a shaded row too; a focused name
+    still shows its focus ring/underline.
+  - **Wrong if:** two neighbouring rows share a shade inside one group, a
+    group's first row is shaded, a band takes a stripe colour, a table's
+    shades differ from the feat table's, the hover tint or a selection
+    disappears on a shaded row, the disabled "−" quantity button or muted
+    text becomes hard to read on a shaded row, or the stripes are
+    invisible in dark theme.
+
 - [ ] **Beatrix: build overview.**
   - **Where:** `edit?tab=overview` (the Overview tab, second in the tab
     bar); scroll levels 1 to 8, hover a few rows and Tab through them,
