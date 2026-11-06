@@ -4569,6 +4569,13 @@ Prerequisite each on its own line ("don't put a field with a short
 fixed(ish) size value after a variable length one"); its level stays in
 the type bar, its price in the footer, and its description is the body.
 
+Amendment (2026-11-06, owner): the sheet follows the same rule as the
+Inventory, showing what the character knows, not where it came from. The
+on-screen sheet's ritual cards lose their "Granted by X" / "Chosen for X"
+heading and the printed reference pages their "Granted by: X" first line;
+`SheetLearnedReference` no longer carries an `origin`. The Inventory's
+inert Remove still says why a grant can't be removed.
+
 ### D115 — A choice among named rituals is a Build-tab choice
 
 Status: accepted (2026-11-05, owner). Amends D114's allowances.

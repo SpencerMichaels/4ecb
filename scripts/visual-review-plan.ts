@@ -476,7 +476,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Printed reference pages",
-            'Granted ritual entries show "Granted by: Druid".',
+            'Granted ritual entries print like any other, with no "Granted by: Druid" line.',
           ],
         ],
       },
@@ -1159,7 +1159,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Printed reference pages",
-            'Granted ritual entries show "Granted by: Invoker".',
+            'Granted ritual entries print like any other, with no "Granted by: Invoker" line.',
           ],
         ],
       },

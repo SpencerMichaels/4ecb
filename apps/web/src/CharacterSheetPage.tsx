@@ -965,22 +965,6 @@ export function CharacterSheetPage({
                   card={reference.card}
                   layout="panel"
                   panel={{
-                    ...(reference.origin?.kind === "granted" ||
-                    reference.origin?.kind === "chosen"
-                      ? {
-                          subheading: (
-                            <p className="candidate-relationship">
-                              {reference.origin.kind === "chosen"
-                                ? reference.origin.provider
-                                  ? `Chosen for ${reference.origin.provider}`
-                                  : "Chosen"
-                                : reference.origin.provider
-                                  ? `Granted by ${reference.origin.provider}`
-                                  : "Granted"}
-                            </p>
-                          ),
-                        }
-                      : {}),
                     textPresentation: cardTextPresentation(
                       abbreviateAbilityValues,
                     ),

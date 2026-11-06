@@ -1,5 +1,22 @@
 # Implementation status
 
+## No ritual provenance on the sheet (2026-11-06)
+
+D114 amendment (owner: same rule as the Inventory). The on-screen sheet's
+"Rituals & practices" cards (`CharacterSheetPage.tsx`) no longer have a
+"Granted by X" / "Chosen for X" heading, and a granted ritual's printed
+reference entry (`SheetOverview.tsx` `references`) starts with its
+description instead of "Granted by: X". `SheetLearnedReference.origin`
+(and `SheetLearnedReferenceOrigin`) is gone from sheet-model, which had
+no other reader; the Inventory's known-record source
+(`knownRecordGrantLabel`) is unchanged.
+
+Verification: `sheet-model/src/index.test.ts` (no origin on learned or
+granted references), `SheetOverview.test.tsx` (a ritual's printed parts),
+`pnpm review:verify` (Piri's and the drow invoker's printed reference
+pages have no "Granted by:" line; the on-screen ritual cards have no
+source heading). Owner check: the checklist's "Piri: rituals on the sheet".
+
 ## Inventory table ends at the window bottom (2026-11-06)
 
 Owner feedback: the Inventory table grew taller than the window, so the

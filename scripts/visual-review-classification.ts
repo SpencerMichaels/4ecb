@@ -117,7 +117,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'The druid\'s free-ritual block in the Inventory, before the known groups: no rule sentence, and a "Free rituals (Druid)" heading with a line per allowance left (none once used).',
   ),
   "piri|1|printed reference pages": auto(
-    'Granted ritual entries show "Granted by: Druid".',
+    'Granted ritual entries print like any other, with no "Granted by: Druid" line.',
   ),
   // Beast Mastery ranger
   "ranger-beast|0|builder companion pane": auto(
@@ -297,10 +297,10 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "tab=equipment&section=practices canonicalizes to the Shop's Rituals category.",
   ),
   "invoker-drow|5|printed reference pages": auto(
-    'Granted ritual entries show "Granted by: Invoker".',
+    'Granted ritual entries print like any other, with no "Granted by: Invoker" line.',
   ),
   "invoker-drow|6|on-screen sheet": auto(
-    '"Rituals & practices" renders the learned references as panel item cards.',
+    '"Rituals & practices" renders the learned references as panel item cards, with no "Granted by"/"Chosen for" heading.',
   ),
   "invoker-drow|7|builder deity card": auto(
     'Avandra\'s card: "Domains: …" above the description, domain cards below.',

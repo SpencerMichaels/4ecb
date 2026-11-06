@@ -117,6 +117,25 @@ describe("real-data sheet overview", () => {
       false,
     );
   });
+  it("prints a known ritual by what it does, not where it came from", () => {
+    const [entry] = references({
+      ...model,
+      learnedReferences: [
+        {
+          id: "ID_RITUAL",
+          kind: "ritual",
+          name: "Synthetic Rite",
+          card: { kind: "item", name: "Synthetic Rite", fields: [] },
+          fields: [{ label: "Category", value: "Exploration" }],
+          description: "The rite works.",
+        },
+      ],
+    }).filter(({ group }) => group === "Rituals & practices");
+    expect(entry?.parts.map(({ label }) => label ?? null)).toEqual([
+      null,
+      "Category",
+    ]);
+  });
   it("keeps feat choices in reference text instead of the heading", () => {
     const entry = references({
       ...model,

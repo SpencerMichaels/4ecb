@@ -1615,32 +1615,23 @@ describe("sheet model", () => {
       content,
     );
     expect(
-      evaluated.learnedReferences.map(({ name, kind, origin }) => ({
-        name,
-        kind,
-        origin,
-      })),
+      evaluated.learnedReferences.map(({ name, kind }) => ({ name, kind })),
     ).toEqual([
-      { name: ritual.name, kind: "ritual", origin: { kind: "learned" } },
-      {
-        name: formula.name,
-        kind: "alchemical-formula",
-        origin: { kind: "learned" },
-      },
-      {
-        name: practice.name,
-        kind: "martial-practice",
-        origin: { kind: "learned" },
-      },
+      { name: ritual.name, kind: "ritual" },
+      { name: formula.name, kind: "alchemical-formula" },
+      { name: practice.name, kind: "martial-practice" },
     ]);
+    // The sheet shows what the character knows, not where it came from.
+    for (const reference of evaluated.learnedReferences)
+      expect(reference).not.toHaveProperty("origin");
     // The on-screen sheet renders each with the one card format (D079).
     expect(evaluated.learnedReferences[0]?.card).toMatchObject({
       kind: "item",
       name: ritual.name,
       itemType: "Ritual",
     });
-    // A record the evaluation grants joins the list once, with its provider,
-    // even when an imported copy of it is also stored.
+    // A record the evaluation grants joins the list once, even when an
+    // imported copy of it is also stored, without its provider.
     const provider = {
       ...ritual,
       id: "PROVIDER",
@@ -1677,11 +1668,11 @@ describe("sheet model", () => {
       },
       [...content, provider],
     );
-    expect(
-      granted.learnedReferences
-        .filter(({ name }) => name === ritual.name)
-        .map(({ origin }) => origin),
-    ).toEqual([{ kind: "granted", provider: "Synthetic Feature" }]);
+    const grantedRitual = granted.learnedReferences.filter(
+      ({ name }) => name === ritual.name,
+    );
+    expect(grantedRitual).toHaveLength(1);
+    expect(JSON.stringify(grantedRitual)).not.toContain("Synthetic Feature");
     expect(evaluated.equipment.map(({ label }) => label)).toEqual([
       scroll.name,
       "Unresolved custom keepsake",

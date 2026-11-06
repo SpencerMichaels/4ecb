@@ -596,6 +596,17 @@ live site.
 
 ## Pass 15: Piri (`piri`)
 
+- [ ] **Piri: rituals on the sheet.** Added 2026-11-06; that no source
+      line remains is verified automatically, this is the look.
+  - **Where:** `?preview=1`, the reference pages' "Rituals & practices"
+    entries (Animal Messenger is druid-granted); then the on-screen sheet's
+    Rituals & practices cards, light and dark theme.
+  - **Expect:** each entry starts with the ritual's description, then its
+    fields; each card starts with its subheader right under the name, no
+    gap where a heading line was.
+  - **Wrong if:** "Granted by" or "Chosen for" shows anywhere, or a card
+    keeps an empty band above its subheader.
+
 - [x] **Piri: Play data card.**
   - **Where:** `?preview=1`, the Play data card.
   - **Expect and wrong if:** as for Natan's Play data card (Piri has

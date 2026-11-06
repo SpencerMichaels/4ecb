@@ -1469,36 +1469,41 @@ rule("piri", "Inventory", "Free-ritual counter", (c) =>
   ritualCounter(c, "Druid"),
 );
 
+/** Granted rituals print like any other: the sheet shows what the
+ *  character knows, not where it came from (D114 amendment). */
 function printedGrantedRituals(c: ReviewCharacter, provider: string): Check[] {
   const entries = printedPagesFor(c).references.filter(
     (entry) => entry.group === "Rituals & practices",
   );
-  const granted = c.sheet.learnedReferences.filter(
-    ({ origin }) => origin?.kind === "granted",
+  const granted = knownRows(c).filter(
+    ({ record }) =>
+      record.source.kind === "granted" && record.source.provider === provider,
   );
   return [
     truthy(
-      `The sheet has rituals granted by ${provider}`,
-      granted.some(({ origin }) => origin?.provider === provider),
-      granted
-        .map(({ name, origin }) => `${name} (${origin?.provider})`)
+      `The character has rituals granted by ${provider}`,
+      granted.length > 0,
+      knownRows(c)
+        .map(({ name, grant }) => `${name}: ${grant ?? "learned"}`)
         .join("; "),
     ),
-    ...granted.map(({ name, origin }) => {
+    ...granted.map(({ name }) => {
       const entry = entries.find((value) => value.name === name);
-      const first = entry?.parts[0];
-      return equal(
-        `${name}'s printed entry starts "Granted by: ${origin?.provider}"`,
-        first === undefined
-          ? undefined
-          : `${first.label}: ${first.block.kind === "paragraph" ? first.block.text : ""}`,
-        `Granted by: ${origin?.provider}`,
+      return truthy(
+        `${name} has a printed entry without a "Granted by"/"Chosen for" line`,
+        entry !== undefined &&
+          !entry.parts.some(
+            ({ label }) => label === "Granted by" || label === "Chosen for",
+          ),
+        entry === undefined
+          ? "no entry"
+          : entry.parts.map(({ label }) => label ?? "-").join(" | "),
       );
     }),
-    contains(
-      "The printed pages show it",
+    lacks(
+      "The printed pages name no ritual source",
       printedPagesFor(c).text,
-      `Granted by: ${provider}`,
+      "Granted by:",
     ),
   ];
 }
@@ -2030,6 +2035,12 @@ rule("invoker-drow", "Sheet (on screen)", "On-screen sheet", (c) => {
       ),
       "CharacterSheetPage.tsx",
     ),
+    lacks(
+      'No ritual card names its source ("Granted by", "Chosen for")',
+      section.slice(0, 1500),
+      "Granted by",
+    ),
+    lacks("… nor a chosen one's", section.slice(0, 1500), "Chosen for"),
     ...c.sheet.learnedReferences.map((reference) =>
       contains(
         `${reference.name} renders as a panel item card`,

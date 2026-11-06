@@ -2356,12 +2356,8 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       name: learned.name,
       group: "Rituals & practices",
       source: learned.source ?? "",
+      // What the character knows, not where it came from (D114 amendment).
       parts: [
-        ...(learned.origin?.kind === "granted"
-          ? referenceParts(learned.origin.provider || "—", "Granted by")
-          : learned.origin?.kind === "chosen"
-            ? referenceParts(learned.origin.provider || "—", "Chosen for")
-            : []),
         ...referenceParts(learned.description ?? ""),
         ...learned.fields.flatMap((field) =>
           referenceParts(field.value, field.label),

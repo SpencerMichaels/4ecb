@@ -407,20 +407,15 @@ export const LEARNED_REFERENCE_KINDS: readonly SheetLearnedReferenceKind[] = [
 ];
 
 /** Why an evaluated sheet knows a record. Legacy caches can't tell. */
-export interface SheetLearnedReferenceOrigin {
-  /** `chosen`: picked in a Build-tab Ritual choice (D115). */
-  readonly kind: "learned" | "granted" | "chosen";
-  /** The granting or choosing element ("Druid", "Psion"). */
-  readonly provider?: string;
-}
-
-/** A known rules reference, distinct from quantity-bearing physical gear. */
+/**
+ * A known rules reference, distinct from quantity-bearing physical gear.
+ * The sheet shows what the character knows, not where it came from (D114
+ * amendment): no learned/granted/chosen provenance.
+ */
 export interface SheetLearnedReference {
   readonly id?: string;
   readonly kind: SheetLearnedReferenceKind;
   readonly name: string;
-  /** Learned or granted (evaluated sheets only). */
-  readonly origin?: SheetLearnedReferenceOrigin;
   /** The one card format (D079) for on-screen surfaces. */
   readonly card: SheetCard;
   readonly fields: readonly SheetValue[];
@@ -847,14 +842,12 @@ function learnedReference(
   kind: SheetLearnedReferenceKind,
   name: string,
   entity: ContentEntity | undefined,
-  origin?: SheetLearnedReferenceOrigin,
   prerequisiteLines?: Readonly<Record<string, string>>,
 ): SheetLearnedReference {
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
     kind,
     name,
-    ...(origin === undefined ? {} : { origin }),
     card: sheetItemCard({
       name,
       entities: entity === undefined ? [] : [entity],
@@ -2445,7 +2438,7 @@ export function buildEvaluatedSheetModel(
     },
   );
   // Known records: the build's learned entries plus what the evaluation
-  // grants (`grant type="Ritual"`, `FREEBEE:`), once each, with their source.
+  // grants (`grant type="Ritual"`, `FREEBEE:`), once each.
   const learnedReferences = knownRecords(build, evaluation, (id) =>
     entities.get(id.toLocaleLowerCase()),
   )
@@ -2454,12 +2447,6 @@ export function buildEvaluatedSheetModel(
         learnedReferenceKind(record.entity, [record.element.type]) ?? "ritual",
         record.entity?.name ?? record.element.name,
         record.entity,
-        record.source.kind === "granted"
-          ? {
-              kind: record.source.via === "choice" ? "chosen" : "granted",
-              provider: record.source.provider,
-            }
-          : { kind: "learned" },
         evaluation.prerequisiteLines,
       ),
     )
