@@ -279,7 +279,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "Each row has the book icon and the name alone, in the item rows' three cells (no colspan).",
   ),
   "invoker-drow|0|remove": auto(
-    "Known rows have no buttons besides the name; their right-click menu's Remove is inert, with the reason, for a granted ritual.",
+    "Known rows have the item rows' trash Remove after the name; it and the right-click menu's Remove are inert, with the reason, for a granted ritual.",
   ),
   "invoker-drow|0|detail card": auto(
     "A selected row's card has the ritual subheader (one-word labels) and its description as the body, with no source note.",

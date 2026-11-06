@@ -1,5 +1,27 @@
 # Implementation status
 
+## Known records have a visible Remove again (2026-11-06)
+
+D114 amendment (owner: "it looks like we lost the 'Remove' button for
+known stuff (rituals etc) in the inventory table"). Every Inventory row of
+a ritual, alchemical formula or martial practice has the item rows' trash
+Remove in its actions cell: both now render one `InventoryRemoveButton`
+(`EquipmentWorkspace.tsx`), with the same markup, classes and two-click
+arm/confirm (`useArmedAction`'s `inventory-remove-trigger`, a known
+record's arm ID prefixed `known:`). A learned record's Remove calls
+`onRemoveKnown`; a granted or chosen record's stays visible but
+aria-disabled, its tooltip the reason the right-click menu gives
+(`knownRecordRemoveBlockedReason` in `known-records-ui.tsx`, shared by
+both). Clicks in the cell don't select the row. The right-click Remove is
+unchanged. `13-equipment.css` greys an aria-disabled inventory icon
+action like a disabled one.
+
+Verification: `known-records-ui.test.tsx` (learned Remove's two-click
+confirm calls `onRemoveKnown` without inspecting the row; a grant's is
+aria-disabled with the reason and never arms; the known and item rows'
+buttons have identical markup); the drow invoker's `review:verify` Remove
+row now checks each known row's button and its reason.
+
 ## Campaign alternate names removed; Pathfinder revision 7 (2026-11-06)
 
 D116 amendment (owner: "Drop them entirely"; the parenthetical tags are

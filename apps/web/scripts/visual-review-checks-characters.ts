@@ -93,6 +93,7 @@ import {
   knownRecordKind as knownRecordKindOf,
   knownRecordKey,
   knownRecordGrantLabel,
+  knownRecordRemoveBlockedReason,
   ritualAllowanceGroups,
 } from "../src/known-records-ui";
 import { canonicalHashRedirect } from "../src/routes";
@@ -1859,13 +1860,32 @@ rule("invoker-drow", "Inventory", "Remove", (c) => {
     "utf8",
   );
   return [
-    ...rows.map(({ name }) => {
+    ...rows.flatMap(({ name, record }) => {
       const row = knownRowHtml(html, name) ?? "";
-      return equal(
-        `${name}'s row has no buttons besides its name (Remove is the right-click menu)`,
-        row.match(/<button/gu)?.length ?? 0,
-        1,
-      );
+      const remove =
+        row.match(
+          /<button[^>]*class="inventory-icon-action inventory-remove-action button-icon"[^>]*>/u,
+        )?.[0] ?? "";
+      const reason = knownRecordRemoveBlockedReason(record);
+      return [
+        equal(
+          `${name}'s row has its name and the item rows' trash Remove`,
+          row.match(/<button/gu)?.length ?? 0,
+          2,
+        ),
+        equal(
+          reason === undefined
+            ? `… enabled for a learned record`
+            : `… inert for a grant, saying why`,
+          {
+            disabled: remove.includes('aria-disabled="true"'),
+            title: remove
+              .match(/title="([^"]*)"/u)?.[1]
+              ?.replaceAll("&#x27;", "'"),
+          },
+          { disabled: reason !== undefined, title: reason ?? "Remove" },
+        ),
+      ];
     }),
     contains(
       "Known rows open the right-click menu",
@@ -1873,9 +1893,9 @@ rule("invoker-drow", "Inventory", "Remove", (c) => {
       "openKnownContextMenu(event, record, name)",
     ),
     contains(
-      "… whose Remove is inert for a granted record, saying why",
+      "… whose Remove gives the button's reason (inert for a grant)",
       source,
-      "it can't be removed.",
+      "const blockedReason = knownRecordRemoveBlockedReason(record);",
     ),
     truthy(
       "There are both learned and granted entries",

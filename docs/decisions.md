@@ -4576,6 +4576,15 @@ heading and the printed reference pages their "Granted by: X" first line;
 `SheetLearnedReference` no longer carries an `origin`. The Inventory's
 inert Remove still says why a grant can't be removed.
 
+Amendment (2026-11-06, owner: "it looks like we lost the 'Remove' button
+for known stuff (rituals etc) in the inventory table"): a known row's
+actions cell has the item rows' trash Remove again, the same button
+(`InventoryRemoveButton` in `EquipmentWorkspace.tsx`) with the same
+click-to-arm, click-again confirm. On a granted or chosen record it stays
+in place, aria-disabled, its tooltip the right-click menu's reason
+(`knownRecordRemoveBlockedReason`: "Granted by Druid; it can't be
+removed."). The right-click Remove stays.
+
 ### D115 — A choice among named rituals is a Build-tab choice
 
 Status: accepted (2026-11-05, owner). Amends D114's allowances.

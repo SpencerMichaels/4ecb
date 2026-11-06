@@ -416,15 +416,18 @@ live site.
 
 - [ ] **Drow invoker: rituals in the Inventory and Shop.**
   - **Where:** `edit?tab=inventory` at 140% zoom, in light and dark theme:
-    scroll to "Rituals" below the items, click a ritual, right-click
-    it, then right-click a granted one (its greyed Remove says "Granted
-    by Invoker; it can't be removed."). Then the Shop: open the Type
+    scroll to "Rituals" below the items, click a ritual, click its trash
+    Remove once (it arms; press Escape), right-click it, then hover and
+    right-click a granted one (its greyed Remove button and menu item say
+    "Granted by Invoker; it can't be removed."). Then the Shop: open the Type
     list, choose Rituals, then Alchemical formulas and back to All items.
   - **Expect:** "Rituals" (no "known") reads like the item groups above
     it, its count the same size and weight as the word; each row is the
     book icon and the name alone, left-aligned in the Item column exactly
     where item names sit (no subtitle line, no "Learned free"/"Granted
-    by"), with the Quantity and actions columns empty. The detail pane
+    by"), the Quantity column empty and the actions column holding the
+    same trash Remove as the item rows, in the same place; the first click
+    arms it (red, warning icon) and a second removes a learned ritual. The detail pane
     shows the ritual's card: under the name a shaded subheader, one line
     "CATEGORY Exploration · TIME 10 minutes · SKILL Nature", then
     "DURATION …" and "COST …" each on its own line (and a "PREREQUISITE …"
@@ -440,8 +443,8 @@ live site.
     description a "Creates:" line lists the versions ("Acidic Fire — level
     5 (50 gp), 10 (200 gp), …, 30 (125,000 gp)"; Woundpatch's three
     levels) in the body's rule style, wrapping within the card. The
-    right-click menu has Remove; on the granted ritual it is greyed, its
-    tooltip saying why. In the Type list the three learning categories
+    right-click menu has Remove; on the granted ritual both Removes are
+    greyed, their tooltip saying why. In the Type list the three learning categories
     follow the items as ordinary entries, with no group heading. In every
     category the toolbar (Type, Slot, Subtype, search, Affordable,
     Proficient, Filters) and the table's columns stay in the same places;
@@ -452,7 +455,9 @@ live site.
     card has no description or repeats the subheader fields in its body,
     a formula's card shows a book or "See below", the Creates line is
     clipped, cramped or styled unlike the body text,
-    a row has a visible Remove/⋮ button, the menu is clipped, a toolbar
+    a known row has no Remove button or one out of line with the item
+    rows', a granted ritual's Remove arms or looks enabled, a ⋮ button
+    appears, the menu is clipped, a toolbar
     control moves or disappears between categories, "Level" breaks onto
     two lines, or grey text is unreadable in dark theme.
 

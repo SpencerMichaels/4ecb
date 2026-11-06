@@ -1118,7 +1118,7 @@ const reviews: ReviewCharacter[] = [
           ["Rows", "Book icon and name alone, in the item rows' three cells."],
           [
             "Remove",
-            "No per-row buttons: Remove is the right-click menu, inert with the reason on a granted ritual.",
+            "Each row has the item rows' trash Remove (two clicks: arm, then confirm); on a granted ritual it and the right-click menu's Remove are greyed, the tooltip saying why.",
           ],
           ["Detail card", "Select a row: the source as the card's subheading."],
         ],

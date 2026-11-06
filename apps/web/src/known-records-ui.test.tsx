@@ -301,8 +301,96 @@ describe("Known records in the Inventory (D114)", () => {
       null,
     ]);
     expect(cells[2]?.className).toBe("inventory-actions-cell");
-    // No per-row buttons: Remove is in the right-click menu.
-    expect(rowNamed("Bought Rite").querySelectorAll("button")).toHaveLength(1);
+    // The name's inspect button, then the item rows' Remove in the
+    // actions cell.
+    expect(rowNamed("Bought Rite").querySelectorAll("button")).toHaveLength(2);
+    expect(
+      cells[2]?.querySelector(":scope > .inventory-row-actions > button")
+        ?.className,
+    ).toBe("inventory-icon-action inventory-remove-action button-icon");
+  });
+
+  it("removes a learned record with the item rows' two-click Remove", () => {
+    const onRemoveKnown = vi.fn();
+    renderWorkspace({ onRemoveKnown });
+    const remove = () =>
+      rowNamed("Bought Rite").querySelector<HTMLButtonElement>(
+        ".inventory-remove-action",
+      )!;
+    expect(remove().getAttribute("aria-disabled")).toBeNull();
+    expect(remove().getAttribute("aria-label")).toBe("Remove Bought Rite");
+    expect(remove().title).toBe("Remove");
+    // The first click arms it, without inspecting the row.
+    const detail = () =>
+      container.querySelector(".shared-choice-detail")?.textContent;
+    const before = detail();
+    act(() => remove().click());
+    expect(onRemoveKnown).not.toHaveBeenCalled();
+    expect(detail()).toBe(before);
+    expect(before).toContain("Choose an item to inspect it");
+    expect(remove().dataset.armed).toBe("true");
+    expect(remove().getAttribute("aria-label")).toBe(
+      "Confirm removing Bought Rite",
+    );
+    expect(remove().title).toBe("Click again to remove");
+    act(() => remove().click());
+    expect(onRemoveKnown).toHaveBeenCalledWith("bought");
+  });
+
+  it("keeps a granted record's Remove in place, inert, saying why", () => {
+    const onRemoveKnown = vi.fn();
+    renderWorkspace({ onRemoveKnown });
+    const remove = rowNamed("Gifted Rite").querySelector<HTMLButtonElement>(
+      ".inventory-remove-action",
+    )!;
+    expect(remove.className).toBe(
+      "inventory-icon-action inventory-remove-action button-icon",
+    );
+    expect(remove.disabled).toBe(false);
+    expect(remove.getAttribute("aria-disabled")).toBe("true");
+    expect(remove.title).toBe(
+      "Granted by Synthetic Druid; it can't be removed.",
+    );
+    act(() => remove.click());
+    act(() => remove.click());
+    expect(remove.dataset.armed).toBeUndefined();
+    expect(onRemoveKnown).not.toHaveBeenCalled();
+  });
+
+  it("gives known records the item rows' Remove markup", () => {
+    const sword = entity("SWORD", "Plain sword", "Weapon", {
+      specifics: { "Item Slot": "One-hand" },
+    });
+    const withItem: CharacterBuild = {
+      ...build,
+      inventory: [
+        {
+          id: "sword",
+          acquiredLevel: 1,
+          quantity: 1,
+          equippedQuantity: 0,
+          elements: [
+            { definitionId: "SWORD", name: "Plain sword", type: "Weapon" },
+          ],
+          overrides: {},
+          legality: "rules-legal",
+        },
+      ],
+    };
+    content.push(sword);
+    byId.set("sword", sword);
+    try {
+      renderWorkspace({ build: withItem });
+      const markup = (name: string) =>
+        rowNamed(name)
+          .querySelector(".inventory-remove-action")!
+          .outerHTML.replace(/data-inventory-remove-trigger="[^"]*"/, "")
+          .replaceAll(name, "NAME");
+      expect(markup("Bought Rite")).toBe(markup("Plain sword"));
+    } finally {
+      content.pop();
+      byId.delete("sword");
+    }
   });
 
   it("keeps the known lists in the Inventory's fitted scroll container", () => {

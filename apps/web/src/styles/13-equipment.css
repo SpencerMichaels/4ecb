@@ -894,6 +894,13 @@ button.inventory-icon-action:disabled {
   cursor: not-allowed;
 }
 
+/* Inert but still focusable, so its tooltip says why (a granted known
+ * record's Remove); looks like the disabled ones. */
+button.inventory-icon-action[aria-disabled="true"] {
+  color: var(--muted);
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inventory-wallet-denominations > div.is-adjusted,
   .funds-adjust-form input.is-error {

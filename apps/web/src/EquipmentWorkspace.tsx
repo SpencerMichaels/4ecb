@@ -87,7 +87,7 @@ import {
   KNOWN_RECORD_GROUPS,
   knownEntryForEntity,
   knownRecordKey,
-  knownRecordGrantLabel,
+  knownRecordRemoveBlockedReason,
   RitualAllowanceSummary,
   useKnownRecordsModel,
   type KnownRecordKind,
@@ -991,6 +991,54 @@ export function CharacterWallet({
   );
 }
 
+/**
+ * An Inventory row's trash Remove (item holdings and known records alike):
+ * the first click arms it, a second confirms (`useArmedAction`'s
+ * `inventory-remove-trigger`). With a `disabledReason` it stays in place,
+ * inert (aria-disabled, so the tooltip saying why shows).
+ */
+function InventoryRemoveButton({
+  armId,
+  name,
+  armed,
+  armedTitle = "Click again to remove",
+  disabledReason,
+  onArm,
+  onConfirm,
+}: {
+  readonly armId: string;
+  readonly name: string;
+  readonly armed: boolean;
+  readonly armedTitle?: string;
+  readonly disabledReason?: string | undefined;
+  readonly onArm: () => void;
+  readonly onConfirm: () => void;
+}) {
+  const inert = disabledReason !== undefined;
+  const showArmed = armed && !inert;
+  return (
+    <button
+      type="button"
+      className="inventory-icon-action inventory-remove-action button-icon"
+      data-inventory-remove-trigger={armId}
+      data-armed={showArmed || undefined}
+      aria-disabled={inert || undefined}
+      aria-label={showArmed ? `Confirm removing ${name}` : `Remove ${name}`}
+      title={inert ? disabledReason : showArmed ? armedTitle : "Remove"}
+      onClick={() => {
+        if (inert) return;
+        if (!showArmed) {
+          onArm();
+          return;
+        }
+        onConfirm();
+      }}
+    >
+      <Icon name={showArmed ? "warning" : "trash"} />
+    </button>
+  );
+}
+
 export function EquipmentWorkspace({
   build,
   entities,
@@ -1286,14 +1334,13 @@ export function EquipmentWorkspace({
     name: string,
   ) => {
     const { source } = record;
+    const blockedReason = knownRecordRemoveBlockedReason(record);
     const menu = itemContextMenuAt(event, `${name} actions`, [
       {
         label: "Remove",
-        ...(source.kind === "granted"
-          ? {
-              disabledReason: `${knownRecordGrantLabel(record) ?? "Granted"}; it can't be removed.`,
-            }
-          : {}),
+        ...(blockedReason === undefined
+          ? {}
+          : { disabledReason: blockedReason }),
         onSelect: () => {
           if (source.kind === "learned") onRemoveKnown(source.entryId);
         },
@@ -1390,6 +1437,8 @@ export function EquipmentWorkspace({
               {expanded
                 ? records.map((record) => {
                     const name = record.entity?.name ?? record.element.name;
+                    // Apart from holding IDs: one armed Remove at a time.
+                    const removeArmId = `known:${knownRecordKey(record)}`;
                     return (
                       <tr
                         className="table-clickable-row"
@@ -1425,11 +1474,32 @@ export function EquipmentWorkspace({
                             </span>
                           </button>
                         </th>
-                        {/* The item rows' quantity and actions columns: a
-                            known record has neither (Remove is its
-                            right-click menu). */}
+                        {/* The item rows' quantity column: a known record
+                            has none. Its actions cell holds the item rows'
+                            Remove, inert with the reason on a grant. */}
                         <td />
-                        <td className="inventory-actions-cell" />
+                        <td className="inventory-actions-cell">
+                          <div
+                            className="inventory-row-actions"
+                            onClick={(event) => event.stopPropagation()}
+                            onDoubleClick={(event) => event.stopPropagation()}
+                          >
+                            <InventoryRemoveButton
+                              armId={removeArmId}
+                              name={name}
+                              armed={removeAction.isArmed(removeArmId)}
+                              disabledReason={knownRecordRemoveBlockedReason(
+                                record,
+                              )}
+                              onArm={() => removeAction.arm(removeArmId)}
+                              onConfirm={() => {
+                                removeAction.disarm();
+                                if (record.source.kind === "learned")
+                                  onRemoveKnown(record.source.entryId);
+                              }}
+                            />
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
@@ -1962,47 +2032,23 @@ export function EquipmentWorkspace({
                                                     ) : null}
                                                   </div>
                                                 )}
-                                                <button
-                                                  type="button"
-                                                  className="inventory-icon-action inventory-remove-action button-icon"
-                                                  data-inventory-remove-trigger={
-                                                    entry.id
+                                                <InventoryRemoveButton
+                                                  armId={entry.id}
+                                                  name={displayName}
+                                                  armed={removalArmed}
+                                                  armedTitle={
+                                                    entry.equippedQuantity > 0
+                                                      ? "Click again to remove and unequip"
+                                                      : "Click again to remove"
                                                   }
-                                                  data-armed={
-                                                    removalArmed || undefined
+                                                  onArm={() =>
+                                                    removeAction.arm(entry.id)
                                                   }
-                                                  aria-label={
-                                                    removalArmed
-                                                      ? `Confirm removing ${displayName}`
-                                                      : `Remove ${displayName}`
-                                                  }
-                                                  title={
-                                                    removalArmed
-                                                      ? entry.equippedQuantity >
-                                                        0
-                                                        ? "Click again to remove and unequip"
-                                                        : "Click again to remove"
-                                                      : "Remove"
-                                                  }
-                                                  onClick={() => {
-                                                    if (!removalArmed) {
-                                                      removeAction.arm(
-                                                        entry.id,
-                                                      );
-                                                      return;
-                                                    }
+                                                  onConfirm={() => {
                                                     removeAction.disarm();
                                                     setQuantity(0);
                                                   }}
-                                                >
-                                                  <Icon
-                                                    name={
-                                                      removalArmed
-                                                        ? "warning"
-                                                        : "trash"
-                                                    }
-                                                  />
-                                                </button>
+                                                />
                                               </div>
                                             </td>
                                           </tr>

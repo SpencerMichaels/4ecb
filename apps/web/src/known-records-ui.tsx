@@ -60,6 +60,15 @@ export function knownRecordGrantLabel(record: KnownRecord): string | undefined {
   return source.provider === "" ? "Granted" : `Granted by ${source.provider}`;
 }
 
+/** Why the Inventory's Remove (button and right-click menu) is inert on
+ *  a known record, or undefined when the player can remove it. */
+export function knownRecordRemoveBlockedReason(
+  record: KnownRecord,
+): string | undefined {
+  if (record.source.kind !== "granted") return undefined;
+  return `${knownRecordGrantLabel(record) ?? "Granted"}; it can't be removed.`;
+}
+
 const ALLOWANCE_NOUNS: Readonly<
   Record<RitualAllowanceKind, readonly [string, string]>
 > = {
