@@ -501,7 +501,7 @@ live site.
 
 Open `#/characters` with the review characters restored.
 
-- [x] **Library: header and table.**
+- [ ] **Library: header and table.**
   - **Where:** the top of `#/characters` and its table; narrow the window
     below 36rem (about 800px at 140%) and below 60rem (about 1344px at
     140%). For the empty state, open the app in a private window before
@@ -511,7 +511,7 @@ Open `#/characters` with the review characters restored.
     Rows striped and tinted on hover, the selected row tinted with a thick
     accent bar on its left; portraits about 36px; the table's top border
     level with the top of the navy pane. Below 36rem only the icons remain;
-    below 60rem the pane sits under the full-width table. The empty library
+    below 60rem the pane sits above the full-width table (2026-11-05). The empty library
     reads "No characters yet." centred inside the table. Use the keyboard
     on the table: there is a visible focus ring and the selection moves,
     not the page. With the default sort (Edited, newest first), scroll to

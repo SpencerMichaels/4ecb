@@ -233,10 +233,13 @@
   .timeline-heading {
     position: static;
   }
-  /* The library pane drops below the table, which keeps Name, Level and
-     Class. */
+  /* The library pane moves above the table (owner, 2026-11-05), which keeps
+     Name, Level and Class. */
   .library-workspace {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .library-workspace > :is(.library-detail, .library-empty) {
+    order: -1;
   }
   .library-detail {
     position: static;

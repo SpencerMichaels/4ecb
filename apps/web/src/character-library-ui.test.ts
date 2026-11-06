@@ -80,10 +80,13 @@ describe("character library table and detail pane", () => {
     expect(table).toContain("aria-current={selected || undefined}");
   });
 
-  it("hides Race and Edited and stacks the pane below the builder breakpoint", () => {
+  it("hides Race and Edited and stacks the pane above the table below the builder breakpoint", () => {
     const narrow = styles.slice(styles.indexOf("@media (max-width: 60rem)"));
     expect(narrow).toMatch(
       /\.library-workspace \{\s*grid-template-columns: minmax\(0, 1fr\);/,
+    );
+    expect(narrow).toMatch(
+      /\.library-workspace > :is\(\.library-detail, \.library-empty\) \{\s*order: -1;/,
     );
     expect(narrow).toContain(
       ".library-table :is(.library-col-race, .library-col-edited)",
