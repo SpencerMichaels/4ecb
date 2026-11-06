@@ -410,7 +410,17 @@ the walk), then text, and is shared by every caller and character
 Native CreateElementPrereq (ConnectAlternate) also accepts an alternate for
 a class, class feature or race requirement: the same-named CountsAsClass,
 CountsAsFeature or CountsAsRace record (`COUNTS_AS_ALTERNATES`). 4ecb adds
-one modern entry, a Deity requirement's CountsAsDeity (D116). The `worship`
+two modern entries (D116): a Deity requirement's CountsAsDeity and a
+Language requirement's CountsAsLanguage ("fluent in Supernal", "Primordial
+language"). 4ecb also adds stand-ins: when a typed requirement's name
+resolves to no record of its type (the `fluent in` prefix, a `<name> <type>`
+token, an inherited prefix type), that type's same-named counts-as records
+become the requirement (`countsAsStandIns`). So a campaign that renames
+Supernal to "Celestial" and has Celestial grant a CountsAsLanguage
+"Supernal" keeps "fluent in Supernal" verifiable and met, "met through
+Celestial". The stand-ins come last, after the type's article-stripped and
+"<name> (<variant>)" readings, and change no stock prerequisite tree (the
+full and stock packs internalize identically). The `worship`
 clause ("must worship Moradin") reads the same table, so it is met by an
 owned Deity or CountsAsDeity of that name. A deity grants the CountsAsDeity
 to count as another: the Forgotten Realms duplicates count as their base

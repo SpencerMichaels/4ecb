@@ -126,6 +126,9 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Grants: internal("Grant bundles for races and classes."),
   CountsAsFeature: internal("Aliases matched by prerequisites."),
   CountsAsDeity: internal("Deity aliases matched by prerequisites (D116)."),
+  CountsAsLanguage: internal(
+    "Language aliases matched by prerequisites (D116).",
+  ),
   Level1Rules: internal("Character-creation rule bundles."),
   "Build Suggestions": internal("Suggested builds per class."),
   "Background Association": internal("Background skill/language links."),

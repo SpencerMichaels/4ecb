@@ -114,8 +114,8 @@ export interface PrerequisiteClauseResult {
   readonly status: PrerequisiteStatus;
   /**
    * The owned counts-as alternates (CountsAsClass, CountsAsRace,
-   * CountsAsFeature, CountsAsDeity, CountsAsPact) a satisfied clause is met
-   * through, by ID; absent when it is met directly.
+   * CountsAsFeature, CountsAsDeity, CountsAsLanguage, CountsAsPact) a
+   * satisfied clause is met through, by ID; absent when it is met directly.
    */
   readonly alternateIds?: readonly string[];
 }
@@ -373,9 +373,14 @@ const COUNTS_AS_ALTERNATES: Readonly<Record<string, string>> = {
   class: "CountsAsClass",
   "class feature": "CountsAsFeature",
   race: "CountsAsRace",
-  // A modern extension (D116): the old builder has no CountsAsDeity.
+  // Modern extensions (D116): the old builder has neither type.
   deity: "CountsAsDeity",
+  language: "CountsAsLanguage",
 };
+
+/** The counts-as types a typed requirement reads (CountsAsClass, ...). */
+export const COUNTS_AS_ALTERNATE_TYPES: readonly string[] =
+  Object.values(COUNTS_AS_ALTERNATES);
 
 /** What a `worship` clause matches by name: a Deity or its alternate. */
 const WORSHIPPED_TYPES: readonly string[] = [
@@ -389,8 +394,9 @@ const WORSHIPPED_TYPES: readonly string[] = [
  * CountsAsFeature or CountsAsRace element, which hybrid classes and their
  * hybrid class features grant. A deity requirement is likewise met by a
  * same-named CountsAsDeity, which a deity grants to count as another (D116:
- * Torag counts as Moradin); it brings no domains or alignment. Negated
- * requirements take no alternate.
+ * Torag counts as Moradin); it brings no domains or alignment. A language
+ * requirement is met by a same-named CountsAsLanguage (a campaign's
+ * Celestial counts as Supernal). Negated requirements take no alternate.
  */
 function withCountsAsAlternates(
   matches: readonly ContentEntity[],
@@ -406,6 +412,34 @@ function withCountsAsAlternates(
     ...matches,
     ...alternates.filter((alternate) => !matches.includes(alternate)),
   ];
+}
+
+/**
+ * A modern extension (D116) of the typed lookup: when no record of a type
+ * in `COUNTS_AS_ALTERNATES` has the name, that type's same-named counts-as
+ * records stand in for it, so a requirement naming a record a campaign
+ * renamed ("fluent in Supernal" once Supernal is "Celestial") is met by an
+ * owned alternate of the old name. [] for any other type.
+ */
+function countsAsStandIns(
+  name: string,
+  context: PrerequisiteContext,
+  type: string,
+): readonly ContentEntity[] {
+  const alternate = COUNTS_AS_ALTERNATES[normalized(type)];
+  return alternate === undefined
+    ? []
+    : resolveDefinitions(name, context, alternate);
+}
+
+/** Records of a type by name, else their counts-as stand-ins. */
+function typedDefinitions(
+  name: string,
+  context: PrerequisiteContext,
+  type: string,
+): readonly ContentEntity[] {
+  const matches = resolveDefinitions(name, context, type);
+  return matches.length > 0 ? matches : countsAsStandIns(name, context, type);
 }
 
 function typedReference(
@@ -584,21 +618,29 @@ function compositeElement(
 ): PrerequisiteIr | undefined {
   return elementOf(
     text,
-    withCountsAsAlternates(resolveDefinitions(name, context, type), context),
+    withCountsAsAlternates(typedDefinitions(name, context, type), context),
   );
 }
 
-/** Legacy InternalizeElement: every same-named record plus its CountsAs alternate. */
+/**
+ * Legacy InternalizeElement: every same-named record plus its CountsAs
+ * alternate; for a type, else the type's counts-as stand-ins
+ * (`countsAsStandIns`) unless `standIns` is false.
+ */
 function namedElement(
   text: string,
   name: string,
   context: PrerequisiteContext,
   type?: string,
+  standIns = true,
 ): PrerequisiteIr | undefined {
+  const matches = internalizedDefinitions(name, context, type);
   return elementOf(
     text,
     withCountsAsAlternates(
-      internalizedDefinitions(name, context, type),
+      matches.length > 0 || type === undefined || !standIns
+        ? matches
+        : countsAsStandIns(name, context, type),
       context,
     ),
   );
@@ -610,7 +652,7 @@ const LEADING_ARTICLE = /^(?:the|an?)\s+/i;
  * A record of that type by name, else without a leading article ("the
  * Dalelands"), else, when no record has the name, every "<name> (<variant>)"
  * record of the type: legacy SpecialCase reads "Cormyr" as either Cormyr
- * background, generalized.
+ * background, generalized. Only then the type's counts-as stand-ins.
  */
 function typedElement(
   text: string,
@@ -618,20 +660,28 @@ function typedElement(
   context: PrerequisiteContext,
   type: string,
 ): PrerequisiteIr | undefined {
-  const exact = namedElement(text, name, context, type);
+  const exact = namedElement(text, name, context, type, false);
   if (exact !== undefined) return exact;
   const bare = name.trim().replace(LEADING_ARTICLE, "").trim();
   if (bare !== name.trim()) {
-    const stripped = namedElement(text, bare, context, type);
+    const stripped = namedElement(text, bare, context, type, false);
     if (stripped !== undefined) return stripped;
   }
   const variant = `${normalized(bare)} (`;
-  return elementOf(
-    text,
-    definitionsOfType(context, type).filter((definition) => {
-      const candidate = normalized(definition.name);
-      return candidate.startsWith(variant) && candidate.endsWith(")");
-    }),
+  return (
+    elementOf(
+      text,
+      definitionsOfType(context, type).filter((definition) => {
+        const candidate = normalized(definition.name);
+        return candidate.startsWith(variant) && candidate.endsWith(")");
+      }),
+    ) ??
+    elementOf(
+      text,
+      [...new Set([name, bare])].flatMap((candidate) =>
+        countsAsStandIns(candidate, context, type),
+      ),
+    )
   );
 }
 
@@ -1382,7 +1432,9 @@ function internalizeLeaf(
   const resolved =
     reference.type === undefined
       ? internalizedDefinitions(reference.name, context)
-      : resolveDefinitions(reference.name, context, reference.type);
+      : negated
+        ? resolveDefinitions(reference.name, context, reference.type)
+        : typedDefinitions(reference.name, context, reference.type);
   const matches = negated
     ? resolved
     : withCountsAsAlternates(resolved, context);

@@ -60,6 +60,7 @@ const definitions = [
       rule("select", { type: "Deity", optional: "true" }, 0),
       rule("select", { type: "Class", optional: "true" }, 1),
       rule("select", { type: "Feat", optional: "true" }, 2),
+      rule("select", { type: "Language", optional: "true" }, 3),
     ],
   }),
   entity("ID_MORADIN", "Moradin", "Deity"),
@@ -91,6 +92,20 @@ const definitions = [
     ],
   }),
   entity("ID_COUNTSASCLASS_WARLORD", "Warlord", "CountsAsClass"),
+  // A campaign's Celestial counts as Supernal, which no Language is named.
+  entity("ID_CELESTIAL", "Celestial", "Language", {
+    rules: [
+      rule(
+        "grant",
+        { name: "ID_COUNTSASLANGUAGE_SUPERNAL", type: "CountsAsLanguage" },
+        0,
+      ),
+    ],
+  }),
+  entity("ID_COUNTSASLANGUAGE_SUPERNAL", "Supernal", "CountsAsLanguage"),
+  entity("ID_SUPERNAL_FEAT", "Synthetic Holy Speech", "Feat", {
+    prerequisites: "fluent in Supernal",
+  }),
   entity("ID_MORADIN_FEAT", "Moradin's Synthetic Blessing", "Feat", {
     prerequisites: "must worship Moradin",
   }),
@@ -151,6 +166,16 @@ describe("prerequisite met through a counts-as alternate", () => {
       eligible: true,
       prerequisiteMetThrough: ["ID_HYBRID_WARLORD"],
     });
+  });
+
+  it("names the language whose CountsAsLanguage meets a fluency requirement", () => {
+    expect(
+      feat([pick("language", "ID_CELESTIAL", 3)], "ID_SUPERNAL_FEAT"),
+    ).toMatchObject({
+      eligible: true,
+      prerequisiteMetThrough: ["ID_CELESTIAL"],
+    });
+    expect(feat([], "ID_SUPERNAL_FEAT")?.eligible).toBe(false);
   });
 
   it("adds nothing for a directly met or unmet prerequisite", () => {

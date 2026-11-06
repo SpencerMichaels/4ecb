@@ -4706,3 +4706,10 @@ and it stops the browser following server revisions (D004 amendment).
   already reads, parsed once into the stored document
   (`campaign-from-setting.ts`, a lazily loaded chunk). Follow-ups are listed
   under the roadmap's Campaign slice.
+- **Amendment (2026-11-06): `CountsAsLanguage` and counts-as stand-ins**
+  (owner: "General engine rule"). The alternate table gains
+  `language: "CountsAsLanguage"`, and a typed requirement whose name no
+  record of its type carries reads that type's same-named counts-as records
+  instead, so a campaign can rename Supernal to "Celestial" and keep "fluent
+  in Supernal" met through Celestial's CountsAsLanguage "Supernal". Stock
+  prerequisite results are unchanged.

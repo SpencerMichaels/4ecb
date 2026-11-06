@@ -16,6 +16,7 @@ import { promisify } from "node:util";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { decodeContentPack } from "@4ecb/content-pack";
 import {
+  COUNTS_AS_ALTERNATE_TYPES,
   RulesIndex,
   isBeastCompanionEntity,
   parseRules,
@@ -270,8 +271,10 @@ async function main(): Promise<void> {
         problems: registryProblems(type, sample, coverage, selectRules),
       };
     });
+  // A counts-as alternate the engine reads by name (CountsAsLanguage) may
+  // come only from a campaign's house rules, so the pack need not have one.
   const staleRegistry = Object.keys(CONTENT_TYPE_COVERAGE).filter(
-    (type) => !types.has(type),
+    (type) => !types.has(type) && !COUNTS_AS_ALTERNATE_TYPES.includes(type),
   );
 
   // Step 2: reference fields (ID-valued specific fields).

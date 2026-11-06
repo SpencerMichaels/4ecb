@@ -1,5 +1,33 @@
 # Implementation status
 
+## CountsAsLanguage and counts-as stand-ins (2026-11-06)
+
+Campaign follow-up (D116 amendment; owner: "General engine rule").
+`COUNTS_AS_ALTERNATES` (rules-engine `prerequisites.ts`) gains
+`language: "CountsAsLanguage"`, and a typed requirement whose name no record
+of its type carries now reads that type's same-named counts-as records
+(`countsAsStandIns`, for every type in the table: class, class feature,
+race, deity, language; negated requirements take none). The five stock
+language prerequisites parse as typed Language elements: Holy Speech, Sivis
+Truenamer and Traveler's Unpredictable Power (Utterance of Domination)
+through the `fluent in ` → Language prefix (`typedElement`), Rimetongue
+Caller and Traveler's Unpredictable Power (Summon Rimefire Brute) as the
+`<name> <type>` token "Primordial language". Both paths now fall back to
+the stand-ins, so a campaign that renames Supernal to "Celestial" keeps
+"fluent in Supernal" met through Celestial's CountsAsLanguage, and the
+builder says "met through Celestial". `COUNTS_AS_ALTERNATE_TYPES` is
+exported so `audit:coverage` accepts a registry entry for a counts-as type
+the pack lacks (CountsAsLanguage comes only from campaigns);
+`content-type-coverage.ts` lists CountsAsLanguage as internal. Evaluation
+cache v121. `_Prerequisite IR` is unchanged (no version bump): every
+prerequisite of the full and stock packs internalizes byte-identically
+before and after. Verification: synthetic `prerequisites.test.ts` (renamed
+and kept Supernal, no grant, "Primordial language" through an elemental
+tongue, met-through IDs, negation, a deity stand-in, no cross-type
+stand-in) and `prerequisite-met-through.test.ts` (names Celestial);
+`pnpm test`, `pnpm typecheck`, lint, prettier, `pnpm audit:coverage`, and
+`pnpm parity:baseline` with no new mismatches.
+
 ## One issue for a pick outside the allowed sources (2026-11-06)
 
 Campaign follow-up (D116). A pick whose source the character isn't entitled

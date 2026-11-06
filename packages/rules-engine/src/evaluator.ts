@@ -94,7 +94,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v120-2026-11-06-permission-pick-not-ineligible";
+  "evaluated-character-v121-2026-11-06-counts-as-language";
 
 export interface CharacterOccurrence {
   readonly id: string;

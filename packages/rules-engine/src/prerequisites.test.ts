@@ -250,6 +250,125 @@ describe("legacy prerequisites", () => {
     ).toEqual(["ID_INTERNAL_COUNTSASDEITY_MORADIN"]);
   });
 
+  it("meets a language requirement through an owned CountsAsLanguage (D116)", () => {
+    const language = (id: string, name: string) =>
+      ({ id, name, type: "Language" }) as ContentEntity;
+    const countsAs = (id: string, name: string) =>
+      ({ id, name, type: "CountsAsLanguage" }) as ContentEntity;
+    const celestial = language("ID_PF_CELESTIAL", "Celestial");
+    const supernal = language("ID_FMP_LANGUAGE_8", "Supernal");
+    const countsAsSupernal = countsAs("ID_COUNTSAS_SUPERNAL", "Supernal");
+    const aquan = language("ID_PF_AQUAN", "Aquan");
+    const countsAsPrimordial = countsAs("ID_COUNTSAS_PRIMORDIAL", "Primordial");
+    const wizard = { id: "ID_WIZARD", name: "Wizard", type: "Class" };
+    const holySpeech = {
+      id: "ID_HOLY_SPEECH",
+      name: "Holy Speech",
+      type: "Feat",
+    } as ContentEntity;
+    const contextOf = (
+      languages: readonly ContentEntity[],
+      known: readonly object[],
+    ) => ({
+      owned: [wizard, ...known] as ContentEntity[],
+      definitions: [
+        wizard,
+        holySpeech,
+        ...languages,
+        countsAsSupernal,
+        countsAsPrimordial,
+      ] as ContentEntity[],
+      subject: holySpeech,
+      level: 8,
+      abilities: {},
+    });
+    const statusOf = (
+      prerequisite: string,
+      languages: readonly ContentEntity[],
+      known: readonly object[],
+    ) => evaluatePrerequisite(prerequisite, contextOf(languages, known)).status;
+    const alternatesOf = (
+      prerequisite: string,
+      languages: readonly ContentEntity[],
+      known: readonly object[],
+    ) =>
+      prerequisiteAlternates(prerequisite, contextOf(languages, known)).map(
+        ({ id }) => id,
+      );
+    const speaksCelestial = [celestial, countsAsSupernal];
+
+    // A campaign renamed Supernal: no Language has the name, so its
+    // CountsAsLanguage stands in for it.
+    const renamed = [celestial, aquan];
+    expect(
+      internalizePrerequisite("fluent in Supernal", contextOf(renamed, [])),
+    ).toMatchObject({
+      kind: "element",
+      definitionIds: ["ID_COUNTSAS_SUPERNAL"],
+    });
+    expect(statusOf("fluent in Supernal", renamed, speaksCelestial)).toBe(
+      "satisfied",
+    );
+    expect(statusOf("fluent in Supernal", renamed, [celestial])).toBe("failed");
+    expect(
+      alternatesOf("fluent in Supernal", renamed, speaksCelestial),
+    ).toEqual(["ID_COUNTSAS_SUPERNAL"]);
+    // The stock Supernal kept beside it: the alternate path.
+    const kept = [supernal, celestial, aquan];
+    expect(statusOf("fluent in Supernal", kept, speaksCelestial)).toBe(
+      "satisfied",
+    );
+    expect(statusOf("fluent in Supernal", kept, [celestial])).toBe("failed");
+    expect(statusOf("fluent in Supernal", kept, [supernal])).toBe("satisfied");
+    expect(alternatesOf("fluent in Supernal", kept, [supernal])).toEqual([]);
+    // "<name> language", the "<name> <type>" link: an elemental tongue
+    // counting as Primordial.
+    const elemental = [aquan, countsAsPrimordial];
+    expect(statusOf("Wizard, Primordial language", renamed, elemental)).toBe(
+      "satisfied",
+    );
+    expect(statusOf("Wizard, Primordial language", renamed, [aquan])).toBe(
+      "failed",
+    );
+    expect(
+      alternatesOf("Wizard, Primordial language", renamed, elemental),
+    ).toEqual(["ID_COUNTSAS_PRIMORDIAL"]);
+    // Negated requirements take no alternate.
+    expect(statusOf("!ID_FMP_LANGUAGE_8", kept, speaksCelestial)).toBe(
+      "satisfied",
+    );
+    expect(statusOf("!ID_FMP_LANGUAGE_8", kept, [supernal])).toBe("failed");
+  });
+
+  it("stands a counts-as record in for any typed name no record has (D116)", () => {
+    const torag = { id: "ID_TORAG", name: "Torag", type: "Deity" };
+    const countsAsMoradin = {
+      id: "ID_COUNTSAS_MORADIN",
+      name: "Moradin",
+      type: "CountsAsDeity",
+    };
+    const deityContext = (worshipped: readonly object[]) => ({
+      owned: worshipped as ContentEntity[],
+      definitions: [torag, countsAsMoradin] as ContentEntity[],
+      level: 8,
+      abilities: {},
+    });
+    expect(
+      evaluatePrerequisite(
+        "follower of Moradin",
+        deityContext([torag, countsAsMoradin]),
+      ).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("follower of Moradin", deityContext([torag])).status,
+    ).toBe("failed");
+    // Only the typed requirement's own alternate stands in: a language
+    // requirement never reads a CountsAsDeity.
+    expect(
+      internalizePrerequisite("fluent in Moradin", deityContext([]))?.kind,
+    ).toBe("unverified");
+  });
+
   it("reads a bare Shifter as either shifter race (SpecialCase)", () => {
     // -Module-.cs ~29551: when no record is named "Shifter", native
     // SpecialCase reads it as Razorclaw Shifter or Longtooth Shifter, for a
