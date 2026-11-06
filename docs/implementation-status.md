@@ -360,6 +360,28 @@ change. Script: ignored `tmp/probe/timing/time.ts`.
 Verification: `pnpm typecheck`, `pnpm test`, eslint/prettier on the changed
 files, `pnpm parity:baseline` (no new mismatches).
 
+## Full-width choice tables beside a shared detail pane (2026-11-06)
+
+Owner report: the Details tab's Deity table filled only about a third of
+its section. Cause (since the Details redesign, d95e252d): a choice
+editor's `.choice-selection-layout` is a fields-beside-card grid
+(`minmax(15rem, 0.6fr) minmax(20rem, 1fr)`); where a shared pane shows
+the inspected option (`CandidateInspectionScope`: Build, Details,
+Retraining) the editor drops its own card but kept both columns, so its
+fields sat in the narrow first one. Only the Build tab
+(`.level-choice-workspace`) and Details' button choices
+(`.character-detail-choice`) overrode it; Details' table choices (Deity)
+and the Retraining dialog's tables did not. `ChoiceEditor` and the
+replacement editor now build their class with
+`choiceSelectionLayoutClass` (`ChoiceEditors.tsx`), adding
+`is-detail-shared` whenever the detail is shown elsewhere, styled as one
+full-width column (`12-choice-details.css`; compact editors keep their
+32rem cap); the Details-only override is gone. `ItemChoicePicker` always
+renders its own card and keeps two columns. Verification:
+`choice-selection-layout-style.test.ts`; measured in headless Chromium
+(table scroll width 418 px of a 1136 px section before, the 58rem
+`.choice-editor-fields` cap after, as on the Build tab).
+
 ## Deity table bands by pantheon (2026-11-06)
 
 The builder's Deity table bands its rows by an authored `Pantheon`

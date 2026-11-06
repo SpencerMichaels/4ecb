@@ -596,7 +596,11 @@ function ReplacementEditor({
   );
 
   return (
-    <div className="choice-selection-layout">
+    <div
+      className={choiceSelectionLayoutClass({
+        detailShared: inspectCandidate !== undefined,
+      })}
+    >
       <div className="choice-editor-fields">
         {swap === undefined ? null : (
           <p className="field-help">{swap.explanation}</p>
@@ -693,6 +697,25 @@ function ReplacementEditor({
       ) : null}
     </div>
   );
+}
+
+/**
+ * A choice editor's layout: its fields beside its own detail card, or the
+ * fields alone (one full-width column) when a shared detail pane shows the
+ * inspected option (Build, Details, Retraining).
+ */
+export function choiceSelectionLayoutClass({
+  compact = false,
+  detailShared,
+}: {
+  readonly compact?: boolean;
+  readonly detailShared: boolean;
+}): string {
+  return [
+    "choice-selection-layout",
+    ...(detailShared ? ["is-detail-shared"] : []),
+    ...(compact ? ["choice-selection-compact"] : []),
+  ].join(" ");
 }
 
 export function ChoiceEditor({
@@ -904,7 +927,10 @@ export function ChoiceEditor({
 
   return (
     <div
-      className={`choice-selection-layout${compact ? " choice-selection-compact" : ""}`}
+      className={choiceSelectionLayoutClass({
+        compact,
+        detailShared: inspectCandidate !== undefined,
+      })}
     >
       <div className="choice-editor-fields">
         {selectionTableKind !== undefined ? (
