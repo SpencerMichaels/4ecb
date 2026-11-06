@@ -113,8 +113,10 @@ live site.
   - **Where:** `edit?tab=build&level=1&section=class`; narrow the window
     below 63rem (about 1411px at 140% zoom, 1008px at 100%), then click the
     strip at the window's left edge, click it again, reopen it and press
-    Esc, reopen it and click the level page. Also try Inventory, a tall
-    window, and a short one (at 140% zoom).
+    Esc, reopen it and click the level page. Also try a tall window and a
+    short one (at 140% zoom), and with the drawer closed narrow the window
+    step by step on Build (Class and Feats), Details, Inventory, Shop,
+    Rituals and Retraining.
   - **Expect:** closed, only a slim strip with a ">" shows at the window's
     left edge, as tall as the sidebar's content, and the tab bar starts
     just right of it; no space opens above or below. Clicking it slides the
@@ -124,13 +126,18 @@ live site.
     sidebar's portrait, name, stats and funds look exactly as when docked;
     in a short window the drawer stops at the window's bottom and scrolls
     inside. Hover and keyboard focus on the strip are visible. Widening
-    the window brings back the docked sidebar with no strip.
+    the window brings back the docked sidebar with no strip. Each tab keeps
+    its table and detail pane side by side down to about a 46rem window
+    (about 1030px at 140%, 735px at 100%), then stacks the pane below;
+    docked windows look as before.
   - **Wrong if:** the sidebar folds above the content, the strip runs the
     full window height when the content is shorter, the drawer pushes the
     workspace aside or slides under the tab bar, a horizontal scrollbar
     appears, the sidebar's stats wrap differently from the docked
     sidebar, the strip and panel look like two separate controls, the
-    chevron doesn't flip, or the strip is hard to see in dark theme.
+    chevron doesn't flip, the strip is hard to see in dark theme, or a
+    side-by-side tab's left column is so narrow its rows or filters
+    overlap.
 
 ## Pass 2: White Well hexblade 25 (`hexblade-white-well`)
 

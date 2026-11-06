@@ -284,6 +284,50 @@
   }
 }
 
+/* Each builder tab puts its detail pane beside its table or list only when
+   the tab itself has room, so the switch follows the sidebar docking or
+   collapsing to its drawer as well as the window. The threshold is a
+   22.5rem table, the 19.45rem detail card (--panel-card-width) and the
+   1rem gap; a wide-detail tab's left column is then 15.75rem, the width
+   the docked layout already gives it at its narrowest (63.01rem) window,
+   so docked layouts are unchanged. Container queries can't read custom
+   properties, so 43rem is written out here and where the split is used
+   (09-builder-shell.css; use-fitted-table-height.ts reads --builder-split). */
+.builder-tab-content {
+  container: builder-tab / inline-size;
+}
+
+@container builder-tab (max-width: 43rem) {
+  .level-choice-workspace,
+  .character-details-workspace,
+  .equipment-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shared-choice-detail {
+    max-height: none;
+    overflow-y: visible;
+    position: static;
+  }
+}
+
+@container builder-tab (min-width: 43.01rem) {
+  .level-choice-workspace {
+    --builder-split: 1;
+  }
+}
+
+/* Four shop filters need 4 × 8rem plus gaps; fewer fit two per row. */
+.equipment-primary {
+  container: builder-primary / inline-size;
+}
+
+@container builder-primary (max-width: 34rem) {
+  .shop-advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 60rem) {
   .page-heading {
     align-items: start;
@@ -292,14 +336,6 @@
   }
   .unofficial {
     text-align: left;
-  }
-
-  .equipment-workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .shop-advanced-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .settings-subheading {
@@ -311,14 +347,6 @@
   .sheet-page {
     padding-inline: 1rem;
   }
-  .shared-choice-detail {
-    max-height: none;
-    overflow-y: visible;
-    position: static;
-  }
-  .builder-workspace,
-  .level-choice-workspace,
-  .character-details-workspace,
   .profile-composer-heading,
   .profile-preview {
     grid-template-columns: 1fr;

@@ -297,3 +297,44 @@ describe("BuilderSidebar styles", () => {
     );
   });
 });
+
+describe("builder workspace split", () => {
+  it("switches every tab's detail pane by the tab's own width", () => {
+    expect(styles).toMatch(
+      /\.builder-tab-content\s*\{\s*container: builder-tab \/ inline-size;/,
+    );
+    const stacked = styles.slice(
+      styles.indexOf("@container builder-tab (max-width: 43rem) {") + 1,
+    );
+    expect(stacked).toMatch(
+      /^[^@]*\.shared-choice-detail\s*\{[^}]*position: static;/,
+    );
+    // Side by side just past it: the fitted level tables (only in tall
+    // windows), the sticky card headers, and the flag the fitting hook reads.
+    expect(styles).toMatch(
+      /@media \(min-height: 30rem\)\s*\{\s*@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.level-choice-tab-panel \.selection-table-scroll\s*\{/,
+    );
+    expect(styles).toMatch(
+      /@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.shared-choice-detail\s*:is/,
+    );
+    expect(styles).toMatch(
+      /@container builder-tab \(min-width: 43\.01rem\)\s*\{\s*\.level-choice-workspace\s*\{\s*--builder-split: 1;/,
+    );
+    expect(
+      readFileSync(
+        new URL("./use-fitted-table-height.ts", import.meta.url),
+        "utf8",
+      ),
+    ).toContain('getPropertyValue("--builder-split")');
+    expect(styles).not.toContain("60.01rem");
+  });
+
+  it("puts shop filters two to a row when the catalog column is narrow", () => {
+    expect(styles).toMatch(
+      /\.equipment-primary\s*\{\s*container: builder-primary \/ inline-size;/,
+    );
+    expect(styles).toMatch(
+      /@container builder-primary \(max-width: 34rem\)\s*\{\s*\.shop-advanced-filters\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+    );
+  });
+});

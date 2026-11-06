@@ -1,7 +1,7 @@
 import { useLayoutEffect, type RefObject } from "react";
 
-/** Below this width the level page stacks and tables keep their own height. */
-const WIDE_LAYOUT = "(min-width: 60.01rem) and (min-height: 30rem)";
+/** Shorter windows keep the tables' own height. */
+const TALL_LAYOUT = "(min-height: 30rem)";
 const BOTTOM_GAP_PX = 16;
 const MIN_HEIGHT_PX = 256;
 
@@ -18,12 +18,18 @@ export function useFittedTableHeight(
   useLayoutEffect(() => {
     const element = container.current;
     if (element === null) return;
-    const wide = window.matchMedia(WIDE_LAYOUT);
+    const tall = window.matchMedia(TALL_LAYOUT);
+    // The level page stacks above its detail pane when the tab is narrow
+    // (a container query, 14-responsive.css); then tables keep their own
+    // height. The stylesheet flags the side-by-side layout.
+    const split = () =>
+      getComputedStyle(element).getPropertyValue("--builder-split").trim() ===
+      "1";
     const fit = () => {
       const first = element.querySelector<HTMLElement>(
         ".selection-table-scroll",
       );
-      if (!wide.matches || first === null) {
+      if (!tall.matches || !split() || first === null) {
         element.style.removeProperty("--fitted-table-height");
         return;
       }
@@ -76,12 +82,12 @@ export function useFittedTableHeight(
     observer.observe(element);
     for (const child of element.children) observer.observe(child);
     window.addEventListener("resize", fit);
-    wide.addEventListener("change", fit);
+    tall.addEventListener("change", fit);
     fit();
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", fit);
-      wide.removeEventListener("change", fit);
+      tall.removeEventListener("change", fit);
     };
   });
 }

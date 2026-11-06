@@ -276,7 +276,9 @@ changes move focus to the new main landmark. Every builder tab shares the
 sticky character sidebar (`builder-layout`/`builder-sidebar` in
 `CharacterEditorPage.tsx`: portrait, name, `BuilderCharacterStats`; below
 63rem `BuilderSidebar.tsx` parks it as a left drawer whose right-edge
-chevron strip slides it out over the workspace, a non-modal disclosure) and the
+chevron strip slides it out over the workspace, a non-modal disclosure; each
+tab's table/detail split is a `builder-tab` container query, not a media
+query, so it follows the sidebar's width too) and the
 Build tab's "Level N" heading is the `LevelPicker` modal — D080; there is no
 separate header or level rail.
 

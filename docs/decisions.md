@@ -2357,7 +2357,11 @@ strip closes it with focus back on the strip; a click outside closes it and
 leaves focus where the click landed. Esc inside a dialog opened from the
 sidebar (the portrait editor) stays with that dialog. Wide windows keep the
 always-open docked sidebar with no strip, and widening the window docks it
-again, closed.
+again, closed. Each builder tab now puts its detail pane beside its table by
+its own width (a `builder-tab` container query at 43rem: a 22.5rem table,
+the 19.45rem card and the 1rem gap), not the window's, so the drawer's
+extra width keeps tabs side by side down to about a 46rem window while
+docked layouts stay as they were.
 
 ### D081 — Implement powers list only usable implements (rules over legacy)
 

@@ -930,16 +930,20 @@
 
 /* Level tab tables end at the bottom of the window; later tables in a tab
    share the first one's height (--fitted-table-height, measured by
-   use-fitted-table-height.ts). Short lists still shrink to their rows. */
-@media (min-width: 60.01rem) and (min-height: 30rem) {
-  .level-choice-tab-panel .selection-table-scroll {
-    height: var(--fitted-table-height, max(24rem, calc(100dvh - 30rem)));
-    max-height: none;
-  }
+   use-fitted-table-height.ts). Short lists still shrink to their rows.
+   Only while the detail pane sits beside the level page (the builder-tab
+   container's split, 14-responsive.css). */
+@media (min-height: 30rem) {
+  @container builder-tab (min-width: 43.01rem) {
+    .level-choice-tab-panel .selection-table-scroll {
+      height: var(--fitted-table-height, max(24rem, calc(100dvh - 30rem)));
+      max-height: none;
+    }
 
-  .level-choice-tab-panel .candidate-selection-short .selection-table-scroll {
-    height: auto;
-    max-height: var(--fitted-table-height, calc(100dvh - 30rem));
+    .level-choice-tab-panel .candidate-selection-short .selection-table-scroll {
+      height: auto;
+      max-height: var(--fitted-table-height, calc(100dvh - 30rem));
+    }
   }
 }
 
@@ -949,7 +953,7 @@
    content shows above the title or below the type bar.
    Where the two meet (a card scrolling in from below), the title band
    stays on top of the type bar. */
-@media (min-width: 60.01rem) {
+@container builder-tab (min-width: 43.01rem) {
   .shared-choice-detail
     :is(.print-reference-card.is-panel, .reference-entity-card)
     > :is(header, .reference-card-title) {

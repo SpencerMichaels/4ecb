@@ -125,7 +125,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Beatrix: narrow-window sidebar drawer",
-            "Below 63rem (about 1411px at 140%): the left-edge strip, sliding the sidebar out and back (strip, Esc, outside click), content height, scrolling in a short window.",
+            "Below 63rem (about 1411px at 140%): the left-edge strip, sliding the sidebar out and back (strip, Esc, outside click), content height, scrolling in a short window; each tab side by side down to about a 46rem window.",
           ],
           [
             "Class detail card",
