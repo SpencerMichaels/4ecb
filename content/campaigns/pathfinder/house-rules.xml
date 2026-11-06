@@ -1,0 +1,1140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pathfinder (Inner Sea) deities for a D&D 4e campaign (D116). The campaign
+  restricts every stock Deity (campaign.json: "Deity": "campaign-only") and
+  supplies these instead.
+
+  Each deity follows the stock Deity shape: its 4e alignment (LG -> Lawful
+  Good; NG, CG -> Good; LN, N, CN -> Unaligned; LE, NE -> Evil; CE -> Chaotic
+  Evil; the Pathfinder alignment is the comment above each record), its
+  Pathfinder domains mapped onto the 4e Domain records (Domains field and
+  grants), and the "!Deity of the <Domain> domain" prerequisite for every
+  domain it lacks, as stock deities carry, so a class feature requiring a
+  deity of a domain offers only deities of that domain. A deity that counts
+  as a 4e deity grants a CountsAsDeity named exactly as that stock Deity
+  record, so "must worship <Deity>" requirements are met through it;
+  _SupportsID names the stock deity. The list (alignments, domains,
+  equivalents) is owner-approved, 2026-11-06; descriptions are original.
+  CountsAsDeity is a modern type the old builder ignores.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Abadar" type="Deity" internal-id="ID_4ECB_PF_DEITY_ABADAR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_12" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ERATHIS" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_WAUKEEN" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_KOL_KORRAN" type="CountsAsDeity" />
+    </rules>
+    Master of the First Vault and god of cities, commerce, law and wealth. He favors those who build lasting civilization through fair trade and sound laws.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Asmodeus" type="Deity" internal-id="ID_4ECB_PF_DEITY_ASMODEUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_1 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_1" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ASMODEUS" type="CountsAsDeity" />
+    </rules>
+    Prince of Darkness and ruler of Hell, god of contracts, pride, slavery and tyranny. His faithful prize order, bargains kept to the letter, and power over others.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="Calistria" type="Deity" internal-id="ID_4ECB_PF_DEITY_CALISTRIA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_31 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_15" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_31" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ANGHARRADH" type="CountsAsDeity" />
+    </rules>
+    The Savored Sting, goddess of lust, revenge and trickery. Elves in particular honor her, and she teaches that no slight should go unanswered.
+  </RulesElement>
+
+  <!-- Chaotic good -->
+  <RulesElement name="Cayden Cailean" type="Deity" internal-id="ID_4ECB_PF_DEITY_CAYDEN_CAILEAN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_2 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_10" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_AVANDRA" type="CountsAsDeity" />
+    </rules>
+    The Drunken Hero, a mortal who ascended on a dare. God of ale, bravery, freedom and wine, he champions those who stand up for others and enjoy life.
+  </RulesElement>
+
+  <!-- Chaotic good -->
+  <RulesElement name="Desna" type="Deity" internal-id="ID_4ECB_PF_DEITY_DESNA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_16 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_10" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_16" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_AVANDRA" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TYMORA" type="CountsAsDeity" />
+    </rules>
+    The Song of the Spheres, goddess of dreams, luck, stars and travelers. Wanderers, dreamers and free spirits look to her.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Erastil" type="Deity" internal-id="ID_4ECB_PF_DEITY_ERASTIL" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_33 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_CHAUNTEA" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BALINOR" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ARAWAI" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SHEELA_PERYROYL" type="CountsAsDeity" />
+    </rules>
+    Old Deadeye, god of farming, family, hunting and trade in small communities. He values duty, honest work and the safety of the homestead.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="Gorum" type="Deity" internal-id="ID_4ECB_PF_DEITY_GORUM" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_7 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_KORD" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TEMPUS" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_DOL_DORN" type="CountsAsDeity" />
+    </rules>
+    Our Lord in Iron, god of battle, strength and weapons. He is worshiped in the clash of arms and cares for the fight itself more than its cause.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Gozreh" type="Deity" internal-id="ID_4ECB_PF_DEITY_GOZREH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_34 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_21" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_23" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_34" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_MELORA" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SILVANUS" type="CountsAsDeity" />
+    </rules>
+    The Wind and the Waves, a dual deity of nature, the sea and the weather. Sailors, druids and farmers alike pray for its calm.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Iomedae" type="Deity" internal-id="ID_4ECB_PF_DEITY_IOMEDAE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_26, ID_FMP_DOMAIN_32 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_12" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_26" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BAHAMUT" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SILVER_FLAME" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TORM" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_DOL_ARRAH" type="CountsAsDeity" />
+    </rules>
+    The Inheritor, goddess of honor, justice, rulership and valor. A mortal knight who ascended, she leads crusaders against evil.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Irori" type="Deity" internal-id="ID_4ECB_PF_DEITY_IRORI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_22, ID_FMP_DOMAIN_24 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_22" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_IOUN" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_PATH_OF_LIGHT" type="CountsAsDeity" />
+    </rules>
+    Master of Masters, god of history, knowledge and self-perfection. Monks and scholars follow his path of discipline toward enlightenment.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Lamashtu" type="Deity" internal-id="ID_4ECB_PF_DEITY_LAMASHTU" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_17, ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_28 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+    </rules>
+    Mother of Monsters, goddess of madness, monsters and nightmares. She delights in corrupting the pure and birthing abominations.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Nethys" type="Deity" internal-id="ID_4ECB_PF_DEITY_NETHYS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_1" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_AUREON" type="CountsAsDeity" />
+    </rules>
+    The All-Seeing Eye, god of magic in both its creative and destructive forms. His faithful pursue arcane power for its own sake.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Norgorber" type="Deity" internal-id="ID_4ECB_PF_DEITY_NORGORBER" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_13 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_19" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ZEHIR" type="CountsAsDeity" />
+    </rules>
+    The Reaper of Reputation, god of greed, murder, poison and secrets. Thieves, assassins and spies each worship one of his masks.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Pharasma" type="Deity" internal-id="ID_4ECB_PF_DEITY_PHARASMA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_9, ID_FMP_DOMAIN_14 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_9" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_RAVEN_QUEEN" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_KELEMVOR" type="CountsAsDeity" />
+    </rules>
+    The Lady of Graves, goddess of birth, death, fate and prophecy. She judges every soul and abhors the undead, who escape her judgment.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Rovagug" type="Deity" internal-id="ID_4ECB_PF_DEITY_ROVAGUG" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_32 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_23" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_GRUUMSH" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_THARIZDUN" type="CountsAsDeity" />
+    </rules>
+    The Rough Beast, god of destruction and disaster, imprisoned at the heart of the world. His cultists work to free him so he may unmake creation.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Sarenrae" type="Deity" internal-id="ID_4ECB_PF_DEITY_SARENRAE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_11, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_26 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_11" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_26" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_PELOR" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_AMAUNATOR" type="CountsAsDeity" />
+    </rules>
+    The Dawnflower, goddess of healing, honesty, redemption and the sun. She offers mercy to those who repent and fire to those who will not.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Shelyn" type="Deity" internal-id="ID_4ECB_PF_DEITY_SHELYN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_15" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SUNE" type="CountsAsDeity" />
+    </rules>
+    The Eternal Rose, goddess of art, beauty, love and music. She inspires creation and hopes to redeem her fallen brother.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Torag" type="Deity" internal-id="ID_4ECB_PF_DEITY_TORAG" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_8, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_8" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_MORADIN" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ONATAR" type="CountsAsDeity" />
+    </rules>
+    Father of Creation, the dwarven god of the forge, protection and strategy. He watches over clan and hearth and rewards craft and steadfast defense.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Urgathoa" type="Deity" internal-id="ID_4ECB_PF_DEITY_URGATHOA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_30, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_19 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_30" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_19" type="Domain" />
+    </rules>
+    The Pallid Princess, goddess of disease, gluttony and undeath. She rejected death itself, and her faithful seek endless indulgence beyond the grave.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Zon-Kuthon" type="Deity" internal-id="ID_4ECB_PF_DEITY_ZON_KUTHON" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_27, ID_FMP_DOMAIN_6 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_5" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_27" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SHAR" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TOROG" type="CountsAsDeity" />
+    </rules>
+    The Midnight Lord, god of darkness, envy, loss and pain. His followers seek transcendence through suffering.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Achaekek" type="Deity" internal-id="ID_4ECB_PF_DEITY_ACHAEKEK" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_31 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_31" type="Domain" />
+    </rules>
+    He Who Walks in Blood, the mantis god of assassins and divine punishment. The gods themselves employ him to slay those who would rise against them.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Ahriman" type="Deity" internal-id="ID_4ECB_PF_DEITY_AHRIMAN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_7 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_5" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+    </rules>
+    The Lord of Divs, a fallen power of destruction, despair and nightmares. His servants spread ruin and hopelessness.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Alazhra" type="Deity" internal-id="ID_4ECB_PF_DEITY_ALAZHRA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_2 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_5" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+    </rules>
+    The Shrouded Lady, an evil power of dreams, darkness and stolen identities. Her followers wear the faces of others to carry out their schemes.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Alseta" type="Deity" internal-id="ID_4ECB_PF_DEITY_ALSETA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+    </rules>
+    The Welcomer, goddess of doors, transitions and the passage of years. She watches over thresholds, journeys and changes of every kind.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Apsu" type="Deity" internal-id="ID_4ECB_PF_DEITY_APSU" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_12 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_12" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BAHAMUT" type="CountsAsDeity" />
+    </rules>
+    The Waybringer, father of good dragons and god of order and creation. He opposes his monstrous son Dahak.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Arazni" type="Deity" internal-id="ID_4ECB_PF_DEITY_ARAZNI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_30, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_29 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_30" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+    </rules>
+    The Harlot Queen, a demigoddess of undeath and lost causes. Once a hero, she is a lich who rules through grim endurance and defiance.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="Besmara" type="Deity" internal-id="ID_4ECB_PF_DEITY_BESMARA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_23, ID_FMP_DOMAIN_28 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_21" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_23" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+    </rules>
+    The Pirate Queen, goddess of piracy, sea monsters and strife at sea. Buccaneers offer her plunder for fair winds and fortune in battle.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Brigh" type="Deity" internal-id="ID_4ECB_PF_DEITY_BRIGH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_8 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_8" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_GOND" type="CountsAsDeity" />
+    </rules>
+    The Whisper in the Bronze, goddess of clockwork, invention and time. Artificers and engineers seek her inspiration.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Camazotz" type="Deity" internal-id="ID_4ECB_PF_DEITY_CAMAZOTZ" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_33 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_5" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+    </rules>
+    The Bat-Winged Lord, a demon lord of bats, caverns and blood sacrifice. He lurks in the dark places beneath the jungle.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Casandalee" type="Deity" internal-id="ID_4ECB_PF_DEITY_CASANDALEE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_10 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_10" type="Domain" />
+    </rules>
+    The Iron Goddess, a new deity of artificial life, free thought and intellectual pursuits. She was once a mind made by others and now inspires freedom of thought.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Chaldira" type="Deity" internal-id="ID_4ECB_PF_DEITY_CHALDIRA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_16, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_32 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_16" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_AVANDRA" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TYMORA" type="CountsAsDeity" />
+    </rules>
+    The Calamitous Turn, halfling goddess of battle, luck and mischief. Her followers trust in fortune and quick wits to turn a fight.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Dahak" type="Deity" internal-id="ID_4ECB_PF_DEITY_DAHAK" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_25 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_25" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TIAMAT" type="CountsAsDeity" />
+    </rules>
+    The Endless Destruction, god of destruction, evil dragons and greed. He hates his father Apsu and all creation.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Easivra" type="Deity" internal-id="ID_4ECB_PF_DEITY_EASIVRA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_26, ID_FMP_DOMAIN_33 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_26" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+    </rules>
+    A lawful good power of the sun and of the wild places it lights, honored by those who tend the living land.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Erecura" type="Deity" internal-id="ID_4ECB_PF_DEITY_ERECURA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_3 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+    </rules>
+    A goddess of hidden knowledge and of the laws and bargains that hold a society together. She guards secrets and rewards those who keep them.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Feronia" type="Deity" internal-id="ID_4ECB_PF_DEITY_FERONIA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_10" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+    </rules>
+    Goddess of hearths, freedom and fertility. She shelters the oppressed and keeps the home fires burning.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Ghlaunder" type="Deity" internal-id="ID_4ECB_PF_DEITY_GHLAUNDER" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_33 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_19" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+    </rules>
+    The Gossamer King, god of infection, parasites and stagnation. He thrives on weakening and draining the strong.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Gyronna" type="Deity" internal-id="ID_4ECB_PF_DEITY_GYRONNA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_17, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_31 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_31" type="Domain" />
+    </rules>
+    The Angry Hag, goddess of extreme hatred, spite and vengeance. Her followers are often bitter, vengeful old women.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="Groetus" type="Deity" internal-id="ID_4ECB_PF_DEITY_GROETUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Death domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_5, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_17 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_5" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+    </rules>
+    The God of the End Times, who waits above the Boneyard for the end of all things. Few worship him, and those few are rarely sane.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="Hanspur" type="Deity" internal-id="ID_4ECB_PF_DEITY_HANSPUR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_6 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_21" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+    </rules>
+    The Water Rat, god of rivers, river travel and smugglers. He watches over drowned souls and those who make their way on the water.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Kitumu" type="Deity" internal-id="ID_4ECB_PF_DEITY_KITUMU" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_33, ID_FMP_DOMAIN_32 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+    </rules>
+    A savage power of jungle predators and the hunt. He rewards those who live by tooth and claw.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Kurgess" type="Deity" internal-id="ID_4ECB_PF_DEITY_KURGESS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_22, ID_FMP_DOMAIN_16 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_22" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_16" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_KORD" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_DOL_DORN" type="CountsAsDeity" />
+    </rules>
+    The Strong Man, god of competition, sport and strength. Athletes and those who test themselves against others honor him.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Lissala" type="Deity" internal-id="ID_4ECB_PF_DEITY_LISSALA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_13, ID_FMP_DOMAIN_1 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_1" type="Domain" />
+    </rules>
+    Goddess of duty, obedience and rune magic, once patron of an ancient empire's ruling wizards.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Naderi" type="Deity" internal-id="ID_4ECB_PF_DEITY_NADERI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_21, ID_FMP_DOMAIN_6 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_15" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_21" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+    </rules>
+    The Lady of Despair, goddess of drowning, romantic tragedy and suicide. She mourns lost love and offers solace to the heartbroken.
+  </RulesElement>
+
+  <!-- Chaotic good -->
+  <RulesElement name="Milani" type="Deity" internal-id="ID_4ECB_PF_DEITY_MILANI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_10, ID_FMP_DOMAIN_11, ID_FMP_DOMAIN_14 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_10" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_11" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+    </rules>
+    The Everbloom, goddess of devotion, hope and uprisings. She aids those who rise against tyranny.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Nivi Rhombodazzle" type="Deity" internal-id="ID_4ECB_PF_DEITY_NIVI_RHOMBODAZZLE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_8, ID_FMP_DOMAIN_16, ID_FMP_DOMAIN_28 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_8" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_16" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_GARL_GLITTERGOLD" type="CountsAsDeity" />
+    </rules>
+    Gnomish goddess of gems, gambling and stealth. She favors clever risk-takers and those who keep their secrets.
+  </RulesElement>
+
+  <!-- Neutral -->
+  <RulesElement name="Sivanah" type="Deity" internal-id="ID_4ECB_PF_DEITY_SIVANAH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_17 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_1" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+    </rules>
+    The Seventh Veil, goddess of illusions, mystery and reflections. Illusionists and those who live behind masks look to her.
+  </RulesElement>
+
+  <!-- Chaotic evil -->
+  <RulesElement name="Ydersius" type="Deity" internal-id="ID_4ECB_PF_DEITY_YDERSIUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Chaotic Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_19, ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_32 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_19" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ZEHIR" type="CountsAsDeity" />
+    </rules>
+    The Headless King, the shattered serpentfolk god of poison and tyranny. His remaining worshipers seek to restore his lost head.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Zyphus" type="Deity" internal-id="ID_4ECB_PF_DEITY_ZYPHUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_7, ID_FMP_DOMAIN_30 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_7" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_30" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_NERULL" type="CountsAsDeity" />
+    </rules>
+    The Grim Harvestman, god of accidental death, graveyards and tragedy. He resents fate and spreads misfortune to prove its cruelty.
+  </RulesElement>
+
+  <!-- Chaotic good -->
+  <RulesElement name="Ketephys" type="Deity" internal-id="ID_4ECB_PF_DEITY_KETEPHYS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_18, ID_FMP_DOMAIN_33, ID_FMP_DOMAIN_23 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_18" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_33" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_23" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SEHANINE" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_MIELIKKI" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SELUNE" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SOLONOR_THELANDIRA" type="CountsAsDeity" />
+    </rules>
+    The Hunter, elven god of hunting, forests and the moon. He guides those who track their prey by moonlight.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Yuelral" type="Deity" internal-id="ID_4ECB_PF_DEITY_YUELRAL" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_1, ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_13 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_1" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_13" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_CORELLON" type="CountsAsDeity" />
+    </rules>
+    The Wise, elven goddess of crafts, gems and magic. She teaches the elven arts and the secrets of the wild.
+  </RulesElement>
+
+  <!-- Chaotic good -->
+  <RulesElement name="Findeladlara" type="Deity" internal-id="ID_4ECB_PF_DEITY_FINDELADLARA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_4, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_22 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_22" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_CORELLON" type="CountsAsDeity" />
+    </rules>
+    The Guiding Hand, elven goddess of architecture, art and twilight. She inspires graceful works that blend with the land.
+  </RulesElement>
+
+  <!-- Chaotic neutral -->
+  <RulesElement name="The Lantern King" type="Deity" internal-id="ID_4ECB_PF_DEITY_LANTERN_KING" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_2, ID_FMP_DOMAIN_17 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_2" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_17" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TRAVELER" type="CountsAsDeity" />
+    </rules>
+    An Eldest of the First World, the trickster of laughter and transformation. He delights in pranks, mischief and the chaos they cause.
+  </RulesElement>
+
+  <!-- Lawful evil -->
+  <RulesElement name="Moloch" type="Deity" internal-id="ID_4ECB_PF_DEITY_MOLOCH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_29 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BANE" type="CountsAsDeity" />
+    </rules>
+    The Ruler of the Sixth, an archdevil of fire, obedience and war. He commands Hell's armies and demands absolute discipline.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Folgrit" type="Deity" internal-id="ID_4ECB_PF_DEITY_FOLGRIT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BERRONAR_TRUESILVER" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_BOLDREI" type="CountsAsDeity" />
+    </rules>
+    The Watchful Mother, dwarven goddess of children, hearth and motherhood. She protects families and the young.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Angradd" type="Deity" internal-id="ID_4ECB_PF_DEITY_ANGRADD" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_32, ID_FMP_DOMAIN_20 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_32" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_CLANGEDDIN_SILVERBEARD" type="CountsAsDeity" />
+    </rules>
+    The Forge Fire, dwarven god of fire, war and tradition. He leads dwarves into battle against their ancient enemies.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Bolka" type="Deity" internal-id="ID_4ECB_PF_DEITY_BOLKA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_15, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_14 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_15" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_14" type="Domain" />
+    </rules>
+    The Golden Goddess, dwarven goddess of beauty, love and marriage. She blesses lasting unions and fine craft.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Dranngvit" type="Deity" internal-id="ID_4ECB_PF_DEITY_DRANNGVIT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_31, ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_24 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_31" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_12" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+    </rules>
+    The Debt Minder, dwarven god of debt, revenge and the keeping of accounts. He sees that every debt is paid.
+  </RulesElement>
+
+  <!-- Neutral evil -->
+  <RulesElement name="Droskar" type="Deity" internal-id="ID_4ECB_PF_DEITY_DROSKAR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Evil </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_28, ID_FMP_DOMAIN_29, ID_FMP_DOMAIN_4 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_28" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_29" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_4" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_ABBATHOR" type="CountsAsDeity" />
+    </rules>
+    The Dark Smith, dwarven god of toil, slavery and deceit. He rewards relentless work and cunning at others' expense.
+  </RulesElement>
+
+  <!-- Lawful good -->
+  <RulesElement name="Grundinnar" type="Deity" internal-id="ID_4ECB_PF_DEITY_GRUNDINNAR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Lawful Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_11 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_11" type="Domain" />
+    </rules>
+    Dwarven god of friendship, leadership and hope. He binds clans together with loyalty and honest promises.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Kols" type="Deity" internal-id="ID_4ECB_PF_DEITY_KOLS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_12, ID_FMP_DOMAIN_3, ID_FMP_DOMAIN_24 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_12" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_3" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_TORM" type="CountsAsDeity" />
+    </rules>
+    The Oathkeeper of duty, dwarven god of law, obedience and oaths. He holds his followers to every vow they make.
+  </RulesElement>
+
+  <!-- Lawful neutral -->
+  <RulesElement name="Magrim" type="Deity" internal-id="ID_4ECB_PF_DEITY_MAGRIM" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Destruction domain,!Deity of the Freedom domain,!Deity of the Hope domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Protection domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strength domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Unaligned </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_6, ID_FMP_DOMAIN_9, ID_FMP_DOMAIN_8 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_6" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_9" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_8" type="Domain" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_RAVEN_QUEEN" type="CountsAsDeity" />
+      <grant name="ID_4ECB_PF_COUNTSASDEITY_SPIRITS_OF_THE_PAST" type="CountsAsDeity" />
+    </rules>
+    The Taskmaster, dwarven god of death, duty and fate. He guides dwarven souls to their reward for a life of honest toil.
+  </RulesElement>
+
+  <!-- Neutral good -->
+  <RulesElement name="Trudd" type="Deity" internal-id="ID_4ECB_PF_DEITY_TRUDD" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <Prereqs> !Deity of the Arcana domain,!Deity of the Change domain,!Deity of the Civilization domain,!Deity of the Creation domain,!Deity of the Darkness domain,!Deity of the Death domain,!Deity of the Destruction domain,!Deity of the Earth domain,!Deity of the Fate domain,!Deity of the Freedom domain,!Deity of the Justice domain,!Deity of the Knowledge domain,!Deity of the Life domain,!Deity of the Love domain,!Deity of the Luck domain,!Deity of the Madness domain,!Deity of the Moon domain,!Deity of the Poison domain,!Deity of the Sea domain,!Deity of the Skill domain,!Deity of the Storm domain,!Deity of the Strife domain,!Deity of the Sun domain,!Deity of the Torment domain,!Deity of the Trickery domain,!Deity of the Tyranny domain,!Deity of the Undeath domain,!Deity of the Vengeance domain,!Deity of the War domain,!Deity of the Wilderness domain,!Deity of the Winter domain </Prereqs>
+    <specific name="Alignment"> Good </specific>
+    <specific name="Domains"> ID_FMP_DOMAIN_24, ID_FMP_DOMAIN_20, ID_FMP_DOMAIN_11 </specific>
+    <rules>
+      <grant name="ID_FMP_DOMAIN_24" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_20" type="Domain" />
+      <grant name="ID_FMP_DOMAIN_11" type="Domain" />
+    </rules>
+    The Mighty, dwarven god of courage, physical strength and defense. He stands as the first line of protection for his people.
+  </RulesElement>
+
+  <!-- Equivalents granted above, one per 4e deity name. -->
+  <RulesElement name="Abbathor" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ABBATHOR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_52 </specific>
+    You count as a worshiper of Abbathor for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Amaunator" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_AMAUNATOR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_14 </specific>
+    You count as a worshiper of Amaunator for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Angharradh" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ANGHARRADH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_30 </specific>
+    You count as a worshiper of Angharradh for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Arawai" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ARAWAI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_107 </specific>
+    You count as a worshiper of Arawai for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Asmodeus" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ASMODEUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_15 </specific>
+    You count as a worshiper of Asmodeus for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Aureon" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_AUREON" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_108 </specific>
+    You count as a worshiper of Aureon for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Avandra" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_AVANDRA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_1 </specific>
+    You count as a worshiper of Avandra for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Bahamut" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_BAHAMUT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_2 </specific>
+    You count as a worshiper of Bahamut for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Balinor" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_BALINOR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_109 </specific>
+    You count as a worshiper of Balinor for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Bane" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_BANE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_16 </specific>
+    You count as a worshiper of Bane for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Berronar Truesilver" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_BERRONAR_TRUESILVER" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_32 </specific>
+    You count as a worshiper of Berronar Truesilver for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Boldrei" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_BOLDREI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_110 </specific>
+    You count as a worshiper of Boldrei for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Chauntea" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_CHAUNTEA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_17 </specific>
+    You count as a worshiper of Chauntea for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Clangeddin Silverbeard" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_CLANGEDDIN_SILVERBEARD" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_59 </specific>
+    You count as a worshiper of Clangeddin Silverbeard for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Corellon" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_CORELLON" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_3 </specific>
+    You count as a worshiper of Corellon for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Dol Arrah" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_DOL_ARRAH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_111 </specific>
+    You count as a worshiper of Dol Arrah for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Dol Dorn" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_DOL_DORN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_112 </specific>
+    You count as a worshiper of Dol Dorn for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Erathis" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ERATHIS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_4 </specific>
+    You count as a worshiper of Erathis for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Garl Glittergold" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_GARL_GLITTERGOLD" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_34 </specific>
+    You count as a worshiper of Garl Glittergold for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Gond" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_GOND" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_35 </specific>
+    You count as a worshiper of Gond for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Gruumsh" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_GRUUMSH" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_20 </specific>
+    You count as a worshiper of Gruumsh for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Ioun" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_IOUN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_5 </specific>
+    You count as a worshiper of Ioun for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Kelemvor" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_KELEMVOR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_21 </specific>
+    You count as a worshiper of Kelemvor for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Kol Korran" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_KOL_KORRAN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_113 </specific>
+    You count as a worshiper of Kol Korran for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Kord" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_KORD" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_6 </specific>
+    You count as a worshiper of Kord for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Melora" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_MELORA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_7 </specific>
+    You count as a worshiper of Melora for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Mielikki" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_MIELIKKI" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_39 </specific>
+    You count as a worshiper of Mielikki for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Moradin" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_MORADIN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_8 </specific>
+    You count as a worshiper of Moradin for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Nerull" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_NERULL" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_DRAG427_GOD </specific>
+    You count as a worshiper of Nerull for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Onatar" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ONATAR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_115 </specific>
+    You count as a worshiper of Onatar for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Pelor" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_PELOR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_9 </specific>
+    You count as a worshiper of Pelor for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Sehanine" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SEHANINE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_11 </specific>
+    You count as a worshiper of Sehanine for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Selûne" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SELUNE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_24 </specific>
+    You count as a worshiper of Selûne for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Shar" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SHAR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_25 </specific>
+    You count as a worshiper of Shar for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Sheela Peryroyl" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SHEELA_PERYROYL" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_40 </specific>
+    You count as a worshiper of Sheela Peryroyl for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Silvanus" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SILVANUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_26 </specific>
+    You count as a worshiper of Silvanus for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Solonor Thelandira" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SOLONOR_THELANDIRA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_83 </specific>
+    You count as a worshiper of Solonor Thelandira for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Sune" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SUNE" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_27 </specific>
+    You count as a worshiper of Sune for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Tempus" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TEMPUS" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_28 </specific>
+    You count as a worshiper of Tempus for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Tharizdun" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_THARIZDUN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_100 </specific>
+    You count as a worshiper of Tharizdun for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="The Path of Light" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_PATH_OF_LIGHT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_129 </specific>
+    You count as a worshiper of The Path of Light for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="The Raven Queen" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_RAVEN_QUEEN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_10 </specific>
+    You count as a worshiper of The Raven Queen for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="The Silver Flame" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SILVER_FLAME" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_127 </specific>
+    You count as a worshiper of The Silver Flame for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="The Spirits of the Past" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_SPIRITS_OF_THE_PAST" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_130 </specific>
+    You count as a worshiper of The Spirits of the Past for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="The Traveler" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TRAVELER" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_116 </specific>
+    You count as a worshiper of The Traveler for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Tiamat" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TIAMAT" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_43 </specific>
+    You count as a worshiper of Tiamat for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Torm" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TORM" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_29 </specific>
+    You count as a worshiper of Torm for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Torog" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TOROG" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_99 </specific>
+    You count as a worshiper of Torog for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Tymora" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_TYMORA" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_13 </specific>
+    You count as a worshiper of Tymora for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Waukeen" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_WAUKEEN" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_45 </specific>
+    You count as a worshiper of Waukeen for meeting prerequisites.
+  </RulesElement>
+
+  <RulesElement name="Zehir" type="CountsAsDeity" internal-id="ID_4ECB_PF_COUNTSASDEITY_ZEHIR" source="Pathfinder (Inner Sea)" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="_SupportsID"> ID_FMP_DEITY_46 </specific>
+    You count as a worshiper of Zehir for meeting prerequisites.
+  </RulesElement>
+</D20Rules>

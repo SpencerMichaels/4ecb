@@ -1,0 +1,9 @@
+{
+  "campaignId": "pathfinder",
+  "name": "Pathfinder (Inner Sea)",
+  "revision": 1,
+  "houseRules": "house-rules.xml",
+  "restrict": {
+    "types": { "Deity": "campaign-only" }
+  }
+}

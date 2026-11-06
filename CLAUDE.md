@@ -74,7 +74,9 @@ houseRules: "<xml path>", restrict: {ids, types: {"Deity": "campaign-only"}}}`;
 the house-rule XML is parsed at build (same parser as `build`), and
 `--against` only warns. `advertise` and `advertise-campaign` read-modify-write
 `runtime-config.json`, each changing only its own key. Built `.4ecc` files are
-ignored; the public example source is `fixtures/campaigns/synthetic/`.
+ignored; the public example source is `fixtures/campaigns/synthetic/`. The
+Pathfinder campaign's source is `content/campaigns/pathfinder/`, built with
+`pnpm content-tool campaign build --manifest content/campaigns/pathfinder/campaign.json --output tmp/campaigns/pathfinder.4ecc --against tmp/content/full-local.4ecp`.
 
 Print/PDF check:
 

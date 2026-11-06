@@ -1,5 +1,46 @@
 # Implementation status
 
+## Pathfinder campaign source (2026-11-06)
+
+D116 step 11. `content/campaigns/pathfinder/campaign.json` (campaignId
+`pathfinder`, "Pathfinder (Inner Sea)", revision 1, restricts `Deity`
+campaign-only) and `house-rules.xml`: the owner-approved table of 62
+Pathfinder deities (Inner Sea major deities, other deities, and the elven,
+dwarven, Eldest and archdevil entries), IDs `ID_4ECB_PF_DEITY_<NAME>`, source
+"Pathfinder (Inner Sea)". Each has the stock Deity shape: `Alignment` (the
+D116 9 → 5 mapping; the Pathfinder alignment is a comment on the record),
+`Domains` (the mapped `ID_FMP_DOMAIN_*` IDs) with matching Domain grants, the
+"!Deity of the <Domain> domain" `Prereqs` for every domain it lacks (as stock
+deities carry, authored; `_Prerequisite IR` is generated at pack build and
+dropped on composition, so it is not authored), and a short original
+description. 51 `CountsAsDeity` records (`ID_4ECB_PF_COUNTSASDEITY_<NAME>`,
+named exactly as the stock Deity, `_SupportsID` its ID) are granted by each
+deity that counts as one; 14 deities count as none. The campaign does not use
+the corrections pack's FR CountsAsDeity records. The XML is the source (it
+was generated once from the approved table with every ID checked against the
+full pack; edit it directly). No 4e equivalent: Vecna, Lolth, Oghma, Ilmater,
+the Sovereign Host and the Undying Court (owner decision / no fit).
+
+Verification (private, full pack 945c723d…): `campaign build --against
+tmp/content/full-local.4ecp` → 113 records, 0 warnings, 135 stock deities
+restricted. A probe (ignored `tmp/probe/pf/probe.ts`) composes the campaign
+over the full pack with `composeCampaignProfile` and evaluates the
+`irina at 6th` paladin with its deity swapped: the Deity choice offers
+exactly the 62 Pathfinder deities and every one of the 135 stock candidates
+is `campaign-restricted`; Torag meets "must worship Moradin" (Moradin's
+Resolve eligible, Hammer of Moradin's clause met); Pharasma meets "must
+worship the Raven Queen" (lowercase "the" and "you must worship the Raven
+Queen." both match the "The Raven Queen" record; Raven Queen's Blessing
+eligible) and Kelemvor; Ketephys meets Sehanine's Reversal and Moon Strike
+and "must worship Selûne"; Gozreh meets "a deity of the winter domain" (Path
+of Winter, Power of Winter eligible) while Torag does not; the paladin's
+deity alignment check reads Lawful Good for Torag (no issue) and Unaligned
+for Gozreh (house-rule issue); the save left on Ilmater gets
+`occurrence.campaign-restricted` ("Ilmater is not used in this campaign.")
+and `legal` false; all 62 deities grant their domains and counts-as records
+with no restriction warning, and each counts-as name meets its worship
+clause. The campaign is not advertised or published (owner).
+
 ## Campaign restrictions in the builder and Shop (2026-11-06)
 
 D116 step 6. `rules.worker.ts` passes the loaded pack's
