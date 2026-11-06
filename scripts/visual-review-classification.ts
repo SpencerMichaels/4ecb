@@ -492,6 +492,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "trey|1|holy symbol slot": auto(
     "Abjure Undead, Radiant Vengeance and Divine Rage have Beacon of Erathis +1 rows.",
   ),
+  "natan|0|play data defenses line": auto(
+    'The Play data card\'s one Defenses line reads "Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers"; page 1\'s Conditional modifiers pane has the three "… to all defenses …" rows; no reminder repeats them.',
+  ),
   "sample-beatrix|0|wallet at a lowered level": auto(
     'Carried money reads "1 pp; 48 gp", not 37 pp.',
   ),

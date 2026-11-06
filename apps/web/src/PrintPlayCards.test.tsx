@@ -35,7 +35,12 @@ const model = {
       { label: "Resistance", value: "Fire 5", source: "Cloak" },
       { label: "Resistance", value: "Cold 7", source: "Feat" },
       { label: "Vulnerability", value: "Radiant 5", source: "Curse" },
-      { label: "Saving throws", value: "+2 against poison", source: "Dwarf" },
+      {
+        label: "Saving throws",
+        value: "+2 to saves against poison",
+        source: "Dwarf",
+        conditional: true,
+      },
     ],
     abilities: [{ name: "Strength", score: "16", modifier: "+3", check: "+6" }],
     skills: [
@@ -61,10 +66,13 @@ describe("printed play-data cards", () => {
     );
     expect(html).toContain('class="print-play-portrait"');
     expect(html).toContain("<strong>Senses</strong> Low-light vision");
-    expect(html).toContain("<strong>Saves</strong> +1; +2 vs poison");
-    expect(html).toContain("<strong>Resistances</strong> 5 fire, 7 cold");
-    expect(html).toContain("<strong>Vulnerabilities</strong> 5 radiant");
-    expect(html).not.toContain("Immunities");
+    // Only defenses that always apply, then the pointer to page 1's pane
+    // for the conditional save bonus (owner decision, 2026-11-05).
+    expect(html).toContain(
+      "<strong>Defenses</strong> Resist 5 fire, 7 cold; Vulnerable 5 radiant; +1 to saves; conditional defenses in Conditional modifiers",
+    );
+    expect(html).not.toContain("against poison");
+    expect(html).not.toContain("Resistances");
     expect(html).toContain("<dt>AC</dt><dd>24</dd>");
     expect(html).toContain("<dt>Bloodied</dt><dd>35</dd>");
     expect(html).toContain("<dt>Surge HP</dt><dd>17</dd>");

@@ -617,8 +617,9 @@ export function withSheetOverview(
   const selfDefense =
     /\byou (?:are|become) immune\b|\byou (?:have|gain) (?:immunity|vulnerability)\b/i;
   const pushTextTrait = (trait: DefensiveTrait, sources: readonly string[]) => {
-    defensiveTraits.push(trait);
-    textTraitSources.set(trait, sources);
+    const authored: DefensiveTrait = { ...trait, authored: true };
+    defensiveTraits.push(authored);
+    textTraitSources.set(authored, sources);
   };
   for (const feature of features) {
     if (selfDefense.test(feature.description))

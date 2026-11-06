@@ -3048,6 +3048,33 @@ Decision:
   stays in `model.powers`, so page-1 lists and the power index are
   unchanged. Builder detail panes already show it only inside the
   discipline's card.
+- The Play data card's Defenses line shows only defenses that always apply
+  (owner decision 2026-11-05, on Natan, whose defenses ran off the card;
+  for every character, not only on overflow): "the card's Defenses line
+  shows only unconditional defenses: resistances, immunities,
+  vulnerabilities, save bonuses that always apply … Conditional defenses …
+  go to page 1 … once … When the character has any conditional defenses,
+  the card's line ends with a short pointer." One line replaces the
+  Defenses, Saves, Resistances, Vulnerabilities, Immunities and Other
+  lines: each kind keeps its leading word once ("Resist 11 necrotic, 11
+  radiant"), then the evaluated save total ("+1 to saves") and death-save
+  total, then "conditional defenses in Conditional modifiers" (the page-1
+  pane's heading, `CONDITIONAL_MODIFIERS_HEADING`); a line with only
+  conditional defenses is just the pointer, capitalized. The page-1
+  destination is the existing Conditional modifiers pane, which already
+  lists every resistance, save bonus and conditional defense bonus with its
+  value and source, above the reminders: no reminder rows are added, since
+  they would repeat the pane on the same page. Conditional means the
+  evaluated contribution is a conditional statadd
+  (`DefensiveTrait.conditional`, from `defensiveStatTraits`) or a
+  `defenses`-surface conditional modifier; a feature's or item's own
+  defense clause (`DefensiveTrait.authored`, e.g. Timeless Body, Child of
+  the Night) has no evaluated condition, so it also stays on page 1 behind
+  the pointer. `playDataDefenseLine` (`sheet-model/src/play-data-defenses.ts`)
+  builds the line; Initiative, Speed and Allies lines are unchanged. With
+  it, the reminder dedup reads a pane bonus to all four defenses as one to
+  "defenses" (`reminder-coverage.ts`), so Natan's Astral Majesty, Aversion
+  staff and Cloak of Distortion reminders no longer repeat the pane.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

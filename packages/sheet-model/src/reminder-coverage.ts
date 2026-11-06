@@ -206,6 +206,7 @@ export function reminderCovered(
   if (entries.length === 0) return false;
   const text = withoutLevelScaling(reminder);
   const available = entries.flatMap(amounts);
+  entries.push(...allDefenseEntries(entries));
   for (const amount of amounts(text)) {
     const index = available.indexOf(amount);
     if (index < 0) return false;
@@ -226,6 +227,27 @@ export function reminderCovered(
         [...clause].filter((word) => vocabulary.has(word)).length >=
         CLAUSE_COVERAGE * clause.size,
     );
+}
+
+const DEFENSE_NAMES = ["AC", "Fortitude", "Reflex", "Will"] as const;
+
+/** The pane's per-defense rows of one bonus ("+1 to AC against …", "+1 to
+ *  Fortitude against …", …) as the one "+1 to all defenses against …" a
+ *  reminder says, when all four defenses carry the same text (the pane
+ *  shows them combined, `combinedDefenseModifiers`). Words only: amounts
+ *  still count once per row. */
+function allDefenseEntries(entries: readonly string[]): string[] {
+  const pattern = new RegExp(`\\bto (${DEFENSE_NAMES.join("|")})\\b`);
+  const targets = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    const match = pattern.exec(entry);
+    if (match === null) continue;
+    const template = entry.replace(pattern, "to all defenses");
+    targets.set(template, (targets.get(template) ?? new Set()).add(match[1]!));
+  }
+  return [...targets]
+    .filter(([, found]) => found.size === DEFENSE_NAMES.length)
+    .map(([template]) => template);
 }
 
 /** Whether a reminder names any game term (an action, a defense, a

@@ -1,5 +1,6 @@
 import {
   combinedDefenseModifiers,
+  playDataDefenseLine,
   type CharacterSheetModel,
   type SheetValue,
 } from "@4ecb/sheet-model";
@@ -7,11 +8,8 @@ import {
 import type { StatTileValue } from "./StatTiles";
 import {
   conditionalModifierText,
-  defensiveBonusText,
-  isSavingThrowTrait,
   type OverviewConditionalModifier,
 } from "./defensive-text";
-
 /**
  * The Play data card's stat body as display-ready strings: the ability
  * scores, defenses, health, the Init | Speed | Passive senses row and the
@@ -44,39 +42,16 @@ const signed = (value: string) =>
  *  calculates. */
 export function playData(model: CharacterSheetModel): PlayData {
   const overview = model.overview;
-  const traits = overview?.defensiveTraits ?? [];
-  const saves = [
-    /^[+-]?0?$/.test(overview?.saves.trim() ?? "")
-      ? ""
-      : overview?.saves.trim(),
-    ...traits.filter(isSavingThrowTrait).map(defensiveBonusText),
-  ]
-    .filter(Boolean)
-    .join("; ");
-  // Group by kind and drop the repeated word: "Resistances 5 fire, 7 cold".
-  const defenseGroups = [
-    ["Resistances", /^Resist\s+/i],
-    ["Vulnerabilities", /^Vulnerable\s+/i],
-    ["Immunities", /^Immune(?:\s+to)?\s+/i],
-  ] as const;
-  const defenseTexts = traits
-    .filter((trait) => !isSavingThrowTrait(trait))
-    .map(defensiveBonusText);
-  const defenseLines = defenseGroups.map(
-    ([label, prefix]) =>
-      [
-        label,
-        defenseTexts
-          .filter((text) => prefix.test(text))
-          .map((text) => text.replace(prefix, ""))
-          .join(", "),
-      ] as const,
-  );
-  const otherDefenses = defenseTexts
-    .filter((text) => !defenseGroups.some(([, prefix]) => prefix.test(text)))
-    .join("; ");
-  // Conditional modifiers beside the stat they modify, as legacy CharTracker
-  // printed them under each stat; skills, checks and health stay on page 1.
+  // Only the defenses that always apply, then a pointer to page 1's
+  // Conditional modifiers pane for the rest (owner decision, 2026-11-05).
+  const defenses = playDataDefenseLine({
+    saves: overview?.saves ?? "",
+    defensiveTraits: overview?.defensiveTraits ?? [],
+    conditionalModifiers: overview?.conditionalModifiers ?? [],
+  });
+  // Initiative, speed and ally bonuses beside the stat they modify, as
+  // legacy CharTracker printed them under each stat; skills, checks and
+  // health stay on page 1.
   const conditional = (
     surface: OverviewConditionalModifier["surface"],
   ): string =>
@@ -122,10 +97,7 @@ export function playData(model: CharacterSheetModel): PlayData {
     notes: (
       [
         ["Senses", overview?.vision ?? ""],
-        ["Defenses", conditional("defenses")],
-        ["Saves", saves],
-        ...defenseLines,
-        ["Other", otherDefenses],
+        ["Defenses", defenses],
         ["Initiative", conditional("initiative")],
         ["Speed", conditional("speed")],
         ["Allies", conditional("allies")],

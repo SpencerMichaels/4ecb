@@ -506,6 +506,9 @@ describe("printed overview data", () => {
       value: immune.description,
       source: immune.name,
       group: "Immunities",
+      // Whether an authored clause always applies is its own text's to
+      // say ("While transformed"): the Play data card leaves it to page 1.
+      authored: true,
     });
     expect(
       buildSheetModel(snapshot, [

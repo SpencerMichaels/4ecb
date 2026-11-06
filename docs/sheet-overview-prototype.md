@@ -329,8 +329,11 @@ visible headings: most groups hold one row, so labels would roughly double the
 pane's height, and each row's text already names its stat (owner decision,
 2026-10-23); the pane shows when either list has
 entries and keeps its place above reminders (its height still comes out of
-the reminder space). The Play data card adds Defenses, Initiative, Speed and
-Allies note lines from the same data, and the builder sidebar's stat-tile
+the reminder space). The Play data card adds Initiative, Speed and Allies
+note lines from the same data and one Defenses line of only the defenses
+that always apply, ending "conditional defenses in Conditional modifiers"
+when this pane holds any conditional ones (owner decision 2026-11-05,
+`playDataDefenseLine`, D099); the builder sidebar's stat-tile
 tooltips end with a "Conditional:" list of that stat's own entries.
 No duplicates: Remember in play drops a reminder when everything it says is
 shown in a more specific place (this pane, power-card reminder lines, the

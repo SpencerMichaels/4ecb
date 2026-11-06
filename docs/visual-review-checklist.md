@@ -361,11 +361,13 @@ live site.
     wrap inside the Effect column and the Source column stays readable;
     reminders below fill the remaining space and overflow to page 2 with
     the "N more reminders" caption. The Play data card's note lines
-    (Defenses, Saves, Resistances…, Other, Initiative, Speed, Allies) sit
-    inside the card at its 7pt note size.
+    (Senses, then one Defenses line ending "conditional defenses in
+    Conditional modifiers", 2026-11-05) sit inside the card at its 7pt note
+    size, with room to spare below.
   - **Wrong if:** the pane pushes reminders off the page without a caption,
-    rows overlap the footer, the Source column is crushed, or the notes
-    overflow or clip.
+    rows overlap the footer, the Source column is crushed, the notes
+    overflow or clip, or the Defenses line wraps awkwardly (a lone word on
+    its last line is fine).
 
 ## Pass 12: Trey Spectre (`trey`)
 
@@ -390,7 +392,8 @@ live site.
 
 - [ ] **Piri: Play data card.**
   - **Where:** `?preview=1`, the Play data card.
-  - **Expect and wrong if:** as for Natan's Play data card.
+  - **Expect and wrong if:** as for Natan's Play data card (Piri has
+    no Defenses line: no resistances or conditional defenses).
 
 ## Pass 16: Hystan (`hystan`)
 

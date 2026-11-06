@@ -6,6 +6,13 @@ export interface DefensiveTrait extends SheetValue {
   /** The evaluated contributions the entry shows, for matching it to the
    *  reminders it makes redundant. */
   readonly provenanceIds?: readonly string[];
+  /** Applies only in a situation: the evaluated contribution is a
+   *  conditional statadd (its condition is in `value`). Totals, which
+   *  always apply, leave it unset. */
+  readonly conditional?: true;
+  /** A feature's or item's own clause ("you gain immunity to …"), which no
+   *  evaluated stat represents: when it applies is the text's to say. */
+  readonly authored?: true;
 }
 
 /** Legacy BasicUtils projects signed resist:* stats and separate save conditions.
@@ -22,6 +29,7 @@ export function defensiveStatTraits(
     value: string,
     source: string,
     provenanceIds: readonly string[] = [],
+    conditional = false,
   ) => {
     const identity = `${label}:${value}:${source}`;
     const index = seen.get(identity);
@@ -32,6 +40,7 @@ export function defensiveStatTraits(
         value,
         source,
         ...(provenanceIds.length ? { provenanceIds } : {}),
+        ...(conditional ? { conditional: true as const } : {}),
       });
       return;
     }
@@ -70,6 +79,7 @@ export function defensiveStatTraits(
           `${label} ${Math.abs(n)}${condition ? ` ${condition}` : ""}`,
           provider,
           ids,
+          Boolean(condition),
         );
     };
     if (Number.isFinite(total) && total !== 0) {
@@ -100,6 +110,7 @@ export function defensiveStatTraits(
           `${resist ? `${label}: ${contribution.value}` : `${contribution.value} to ${/^death /i.test(name.trim()) ? "death saves" : "saves"}`} ${condition} (unresolved)`,
           contribution.providerName,
           [contribution.id],
+          true,
         );
       } else if (resist)
         resistance(numeric, condition, contribution.providerName, [
@@ -111,6 +122,7 @@ export function defensiveStatTraits(
           `${signed(numeric)} ${contribution.bonusType ? `${contribution.bonusType.toLowerCase()} ${numeric < 0 ? "penalty" : "bonus"} ` : ""}to ${/^death /i.test(name.trim()) ? "death saves" : "saves"} ${condition}`,
           contribution.providerName,
           [contribution.id],
+          true,
         );
     }
   }

@@ -60,15 +60,15 @@ describe("Play data stat body", () => {
     ]);
     expect(data.initiative).toEqual([{ label: "Init", value: "+2" }]);
     expect(data.passives.map(({ value }) => value)).toEqual(["18", "13"]);
-    // A +0 save line is dropped; the rest keep the card's order.
+    // A +0 save total is dropped; the always-applying defenses share one
+    // line.
     expect(data.notes.map(({ label }) => label)).toEqual([
       "Senses",
-      "Resistances",
-      "Immunities",
+      "Defenses",
     ]);
   });
 
-  it("adds conditional defense, initiative, speed and ally lines beside the saves", () => {
+  it("points to page 1 for conditional defenses and keeps initiative, speed and ally lines", () => {
     const modifier = (
       surface: string,
       target: string,
@@ -106,11 +106,8 @@ describe("Play data stat body", () => {
       { label: "Senses", text: "Low-light vision" },
       {
         label: "Defenses",
-        text: "+4 to AC against opportunity attacks; +2 to Will against fear",
+        text: "Resist 5 fire; Immune to Disease; +1 to saves; conditional defenses in Conditional modifiers",
       },
-      { label: "Saves", text: "+1" },
-      { label: "Resistances", text: "5 fire" },
-      { label: "Immunities", text: "Disease" },
       { label: "Initiative", text: "+2 to initiative" },
       { label: "Speed", text: "+2 to speed when charging" },
       { label: "Allies", text: "Allies gain +1 to AC while adjacent to you" },

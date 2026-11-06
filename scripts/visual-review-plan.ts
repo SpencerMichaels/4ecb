@@ -1798,6 +1798,10 @@ const reviews: ReviewCharacter[] = [
             ],
           },
         ],
+              [
+                "Play data Defenses line",
+                'One Defenses line, "Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers"; the conditional defense bonuses are in page 1\'s Conditional modifiers pane, and no reminder repeats them.',
+              ],
       },
       {
         slug: "skye",

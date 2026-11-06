@@ -22,6 +22,23 @@ describe("reminder coverage", () => {
       ]),
     ).toBe(true);
   });
+  it("reads one bonus to each of the four defenses as one to all defenses", () => {
+    // Natan's Astral Majesty: the pane's per-defense rows of one bonus.
+    const rows = ["AC", "Fortitude", "Reflex", "Will"].map(
+      (defense) =>
+        `+1 to ${defense} against attacks made by bloodied creatures`,
+    );
+    expect(
+      reminderCovered("+1 to defenses against bloodied creatures", rows),
+    ).toBe(true);
+    // Fewer than all four defenses are not "defenses".
+    expect(
+      reminderCovered(
+        "+1 to defenses against bloodied creatures",
+        rows.slice(0, 3),
+      ),
+    ).toBe(false);
+  });
   it("keeps a reminder that says more than the entries", () => {
     // A bonus feat and a free action nothing else represents.
     expect(

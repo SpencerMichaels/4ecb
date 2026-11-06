@@ -265,6 +265,16 @@ export {
   type ConditionalModifier,
   type ConditionalModifierSurface,
 } from "./conditional-modifiers";
+export type { DefensiveTrait } from "./defensive-traits";
+export {
+  CONDITIONAL_DEFENSES_POINTER,
+  CONDITIONAL_MODIFIERS_HEADING,
+  defensiveTraitText,
+  hasConditionalDefenses,
+  isSavingThrowTrait,
+  playDataDefenseLine,
+  type PlayDataDefensesInput,
+} from "./play-data-defenses";
 
 /** Content types listed by name in the sheet's features section. */
 export const SHEET_FEATURE_TYPES: readonly string[] = [

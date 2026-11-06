@@ -21,6 +21,7 @@ import {
 } from "@4ecb/character-domain";
 import {
   combinedDefenseModifiers,
+  CONDITIONAL_MODIFIERS_HEADING,
   featureChoiceText,
   powerActionRank,
   withoutDanglingChoiceLeadIn,
@@ -1079,7 +1080,7 @@ function Summary({
           {overview.defensiveTraits?.length ||
           overview.conditionalModifiers?.length ? (
             <Panel
-              title="Conditional modifiers"
+              title={CONDITIONAL_MODIFIERS_HEADING}
               icon="shield"
               className="ov-defensive-traits"
             >

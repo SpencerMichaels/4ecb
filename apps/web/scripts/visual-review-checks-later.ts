@@ -9,6 +9,7 @@ import { CharacterTransaction } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   applySheetLayout,
+  combinedDefenseModifiers,
   sheetCreatureCardKeyBase,
   summonCommandRows,
   summonCommandVariants,
@@ -271,6 +272,50 @@ rule("beatrix", "Print preview", "Print Play data card", (c) => {
       6,
     ),
     contains("A Play data type bar", play?.html ?? "", "Play data"),
+  ];
+});
+
+/* ------------------------------------------------------------------ */
+/* Natan: the Play data card's Defenses line (owner, 2026-11-05)        */
+/* ------------------------------------------------------------------ */
+
+rule("natan", "Print preview", "Play data Defenses line", (c) => {
+  const play = printedDeck(c)[0];
+  const html = play?.html ?? "";
+  const pane = combinedDefenseModifiers(c.sheet.overview.conditionalModifiers)
+    .filter(({ surface }) => surface === "defenses")
+    .map(({ text, source }) => `${text} (${source})`);
+  const reminders = c.sheet.overview.reminders.map(
+    ({ label, value }) => `${label}: ${value}`,
+  );
+  return [
+    equal("The first card is Play data", play?.label, "Play data"),
+    contains(
+      "The Defenses line: unconditional defenses, then the pointer",
+      html,
+      "<strong>Defenses</strong> Resist 11 necrotic, 11 radiant; conditional defenses in Conditional modifiers",
+    ),
+    ...[
+      "Resistances",
+      "against attacks made by bloodied",
+      "ranged attacks",
+    ].map((text) => lacks(`The card has no "${text}"`, play?.text ?? "", text)),
+    equal("Page 1's Conditional modifiers pane's defense rows", pane, [
+      "+1 to all defenses against attacks made by bloodied creatures (Astral Majesty)",
+      "+2 item bonus to all defenses against attacks from enemies that are subject to effects caused by you (Aversion Staff +3)",
+      "+2 item bonus to all defenses against ranged attacks from more than 5 squares away (Cloak of Distortion +2)",
+    ]),
+    ...[
+      "Astral Majesty",
+      "Aversion Accurate staff +3",
+      "Cloak of Distortion +2",
+    ].map((label) =>
+      truthy(
+        `No ${label} reminder repeats the pane`,
+        !reminders.some((reminder) => reminder.startsWith(`${label}:`)),
+        reminders.join(" | "),
+      ),
+    ),
   ];
 });
 

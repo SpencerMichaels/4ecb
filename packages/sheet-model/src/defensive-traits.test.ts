@@ -47,6 +47,8 @@ describe("defensive stat projection", () => {
       )[0]?.value,
     ).toBe(expected);
   });
+  // Conditional contributions say so: the Play data card leaves them to
+  // page 1 (owner decision, 2026-11-05); totals always apply.
   it("projects signed resist stats, separate conditional saves and death saves", () => {
     const accumulator = new StatAccumulator();
     const additions = [
@@ -98,6 +100,7 @@ describe("defensive stat projection", () => {
         value: "Fire 10 while bloodied",
         source: "Synthetic trait",
         provenanceIds: ["7"],
+        conditional: true,
       },
       {
         label: "Vulnerability",
@@ -110,12 +113,14 @@ describe("defensive stat projection", () => {
         value: "+2 feat bonus to saves against poison",
         source: "Synthetic trait",
         provenanceIds: ["3"],
+        conditional: true,
       },
       {
         label: "Saving throws",
         value: "+3 to saves while bloodied",
         source: "Synthetic trait",
         provenanceIds: ["4"],
+        conditional: true,
       },
       {
         label: "Death saves",
@@ -163,6 +168,7 @@ describe("defensive stat projection", () => {
         value: "Custom modifier to saves against fear (unresolved)",
         source: "Custom trait",
         provenanceIds: ["custom"],
+        conditional: true,
       },
     ]);
   });

@@ -1079,6 +1079,7 @@ describe("sheet model", () => {
       value: "+2 to saves against poison",
       source: "Synthetic saving feat",
       provenanceIds: [expect.any(String)],
+      conditional: true,
     });
     expect(model.powers[0]?.additionalEffects).toEqual([
       {
