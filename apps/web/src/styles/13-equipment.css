@@ -891,10 +891,17 @@ button.inventory-icon-action:disabled {
 
 /* Rituals tab: known rituals, formulas and practices and the learning
  * catalog, which reuses the Shop table in learning mode. */
+/* Free rituals left: per provider a "Free rituals (Psion)" heading, then
+   one indented line per allowance that still has some. */
 .rituals-allowance {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.rituals-allowance-group {
+  display: grid;
+  gap: 0.15rem;
 }
 
 .rituals-allowance p {
@@ -902,7 +909,7 @@ button.inventory-icon-action:disabled {
 }
 
 .rituals-allowance-count {
-  font-weight: 600;
+  padding-inline-start: 1rem;
 }
 
 /* Wide enough for "Psion · 1 free ritual: Sending or Tenser's Floating

@@ -196,11 +196,14 @@ Animal Messenger), the list shows it once with the grant as its source. The
 stored copy is kept, so it stays known if the grant later disappears, matching
 legacy.
 
-The "Free Rituals" text that classes emit is shown at the top of the tab, for
-example: "As a wizard, you are entitled to three 1st-level rituals… At 5th,
-11th, 15th, 21st and 25th level you gain two more". This is the
-`textContributions` text. The allowance is shown, not enforced (see open
-questions).
+The top of the tab says what is still free, one compact block per provider:
+a "Free rituals (Psion)" heading, then one line per allowance with some left
+("1 free 1st-level ritual", "1 free ritual: Sending or Tenser's Floating
+Disk"), counted by `ritualAllowanceStatuses` (owner, 2026-11-05). The
+class's "Free Rituals" rule sentence (the `textContributions` text) is not
+repeated there; a used-up allowance's line goes, and the block goes once
+nothing is left (it is status, not a control). The allowance is shown, not
+enforced (see open questions).
 
 ### 3. Free items (`FREEBEE` items) stay inventory gifts
 
@@ -229,8 +232,8 @@ Ritual Scrolls under Consumables.
 
 ```
 ┌ Rituals ───────────────────────────────────────┬──────────────────────┐
-│ Free rituals: As a druid you have been given   │  ┌ Animal Messenger ┐ │
-│ Animal Messenger and one more 1st-level ritual.│  │ Ritual · Level 1  │ │
+│ Free rituals (Druid)                           │  ┌ Animal Messenger ┐ │
+│   1 free 1st-level ritual                      │  │ Ritual · Level 1  │ │
 │                                                │  │ Exploration       │ │
 │ Known (4)                    [+ Learn rituals] │  │ Time 10 minutes   │ │
 │ Rituals                                        │  │ Duration Special  │ │

@@ -4,7 +4,6 @@ import type { BuildKnownEntry, CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   eligibleRitualAllowances,
-  freeRitualAllowanceTexts,
   knownRecords,
   ritualAllowanceStatuses,
   ritualCostPercent,
@@ -89,19 +88,17 @@ function listNames(names: readonly string[]): string {
 }
 
 /**
- * The counter shown beside an allowance's text: "2 free 1st-level rituals
- * left", "1 free ritual of level 5 or lower left: …", "All 3 free rituals
- * used".
+ * What an allowance still covers: "2 free 1st-level rituals", "1 free
+ * ritual of level 5 or lower", "1 free ritual: Sending or Tenser's Floating
+ * Disk". Undefined once nothing remains (used up, or not yet earned).
  */
 export function ritualAllowanceLabel(
   status: RitualAllowanceStatus,
   nameOf: (id: string) => string = (id) => id,
-): string {
+): string | undefined {
+  if (status.remaining <= 0) return undefined;
   const [one, many] = ALLOWANCE_NOUNS[status.allowance.kind];
   const noun = (count: number) => (count === 1 ? one : many);
-  if (status.total === 0) return `No free ${many} yet`;
-  if (status.remaining === 0)
-    return `All ${status.total} free ${noun(status.total)} used`;
   const parts = status.remainders.map(({ count, maxLevel }) =>
     maxLevel === undefined
       ? `${count} free ${noun(count)}`
@@ -113,7 +110,56 @@ export function ritualAllowanceLabel(
     status.allowance.from === undefined
       ? ""
       : `: ${listNames(status.allowance.from.map(nameOf))}`;
-  return `${parts.join(" and ")} left${from}`;
+  return `${parts.join(" and ")}${from}`;
+}
+
+/** One provider's remaining free-ritual allowances, as the Rituals tab
+ *  shows them: a "Free rituals (Psion)" heading, then a line each. */
+export interface RitualAllowanceGroup {
+  readonly providerId: string;
+  /** "Free rituals", or the provider's one other kind ("Free martial
+   *  practices"). */
+  readonly heading: string;
+  readonly provider: string;
+  readonly lines: readonly { readonly key: string; readonly label: string }[];
+}
+
+/** The allowance statuses grouped by provider, in order, keeping only what
+ *  remains: a used-up allowance has no line, and a provider with none left
+ *  has no group. */
+export function ritualAllowanceGroups(
+  statuses: readonly RitualAllowanceStatus[],
+  nameOf: (id: string) => string = (id) => id,
+): readonly RitualAllowanceGroup[] {
+  const byProvider = new Map<string, RitualAllowanceStatus[]>();
+  for (const status of statuses) {
+    const providerKey = status.allowance.providerId.toLocaleLowerCase();
+    const group = byProvider.get(providerKey);
+    if (group === undefined) byProvider.set(providerKey, [status]);
+    else group.push(status);
+  }
+  return [...byProvider.values()].flatMap((group) => {
+    const lines = group.flatMap((status) => {
+      const label = ritualAllowanceLabel(status, nameOf);
+      return label === undefined ? [] : [{ key: status.allowance.key, label }];
+    });
+    if (lines.length === 0) return [];
+    const kinds = new Set(group.map(({ allowance }) => allowance.kind));
+    const [kind] = kinds;
+    const plural =
+      kinds.size === 1 && kind !== undefined
+        ? ALLOWANCE_NOUNS[kind][1]
+        : ALLOWANCE_NOUNS.Ritual[1];
+    const first = group[0]!.allowance;
+    return [
+      {
+        providerId: first.providerId,
+        heading: `Free ${plural}`,
+        provider: first.provider,
+        lines,
+      },
+    ];
+  });
 }
 
 /** Chooses the allowance a free ritual uses when several fit (Learn free).
@@ -275,7 +321,6 @@ export function RitualsWorkspace({
   );
   const groups = useMemo(() => groupKnownRecords(records), [records]);
   const knownIds = useMemo(() => new Set(records.map(recordKey)), [records]);
-  const allowances = freeRitualAllowanceTexts(evaluation);
   const statuses = useMemo(
     () =>
       evaluation === undefined
@@ -294,21 +339,7 @@ export function RitualsWorkspace({
       ({ allowance }) =>
         allowance.key.toLocaleLowerCase() === allowanceKey.toLocaleLowerCase(),
     )?.allowance.provider;
-  // Counters without a "Free Rituals" text of their own are listed after.
-  const untexted = statuses.filter(
-    ({ allowance }) =>
-      !allowances.some(
-        ({ providerId }) =>
-          providerId.toLocaleLowerCase() ===
-          allowance.providerId.toLocaleLowerCase(),
-      ),
-  );
-  const counters = (providerId: string) =>
-    statuses.filter(
-      ({ allowance }) =>
-        allowance.providerId.toLocaleLowerCase() ===
-        providerId.toLocaleLowerCase(),
-    );
+  const allowanceGroups = ritualAllowanceGroups(statuses, nameOf);
   const learn = (
     entity: ContentEntity,
     priceCopper: number,
@@ -370,41 +401,30 @@ export function RitualsWorkspace({
             category === undefined ? "Known rituals" : "Learn rituals"
           }
         >
-          {allowances.length === 0 && untexted.length === 0 ? null : (
+          {/* Status, not a control: it holds only what is still free, so
+              it goes once every allowance is used. */}
+          {allowanceGroups.length === 0 ? null : (
             <div className="rituals-allowance">
-              {allowances.map(({ text, provider, providerId }) => (
-                <div key={text}>
-                  <p>
-                    <strong>Free rituals:</strong> {text}
-                    {provider === "" ? null : (
-                      <span className="rituals-allowance-source">
-                        {" "}
-                        ({provider})
-                      </span>
-                    )}
-                  </p>
-                  {counters(providerId).map((status) => (
-                    <p
-                      className="rituals-allowance-count"
-                      key={status.allowance.key}
-                    >
-                      {ritualAllowanceLabel(status, nameOf)}
+              {allowanceGroups.map(
+                ({ providerId, heading, provider, lines }) => (
+                  <div className="rituals-allowance-group" key={providerId}>
+                    <p className="rituals-allowance-heading">
+                      <strong>{heading}</strong>
+                      {provider === "" ? null : (
+                        <span className="rituals-allowance-source">
+                          {" "}
+                          ({provider})
+                        </span>
+                      )}
                     </p>
-                  ))}
-                </div>
-              ))}
-              {untexted.map((status) => (
-                <p
-                  className="rituals-allowance-count"
-                  key={status.allowance.key}
-                >
-                  {ritualAllowanceLabel(status, nameOf)}
-                  <span className="rituals-allowance-source">
-                    {" "}
-                    ({status.allowance.provider})
-                  </span>
-                </p>
-              ))}
+                    {lines.map(({ key, label }) => (
+                      <p className="rituals-allowance-count" key={key}>
+                        {label}
+                      </p>
+                    ))}
+                  </div>
+                ),
+              )}
             </div>
           )}
           {category === undefined ? (

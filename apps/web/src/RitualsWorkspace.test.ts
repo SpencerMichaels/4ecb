@@ -15,6 +15,7 @@ import {
   AllowanceChoiceDialog,
   groupKnownRecords,
   knownRecordSourceLabel,
+  ritualAllowanceGroups,
   ritualAllowanceLabel,
   RitualsWorkspace,
 } from "./RitualsWorkspace";
@@ -191,10 +192,13 @@ describe("Rituals workspace", () => {
     expect(groups.get("martial-practice")).toEqual([]);
   });
 
-  it("shows the allowance text, every group, and Remove only for learned records", () => {
+  it("shows what is still free, every group, and Remove only for learned records", () => {
     const markup = render();
+    // The class's rule sentence is not repeated: a heading naming the
+    // provider, then a line per allowance with some left.
+    expect(markup).not.toContain("As a druid you have been given");
     expect(markup).toContain(
-      "<strong>Free rituals:</strong> As a druid you have been given the Gifted Rite.",
+      '<div class="rituals-allowance"><div class="rituals-allowance-group"><p class="rituals-allowance-heading"><strong>Free rituals</strong><span class="rituals-allowance-source"> (Synthetic Druid)</span></p><p class="rituals-allowance-count">1 free 1st-level ritual</p></div></div>',
     );
     expect(markup).toContain("Learn rituals");
     for (const heading of [
@@ -212,11 +216,52 @@ describe("Rituals workspace", () => {
     // A granted record has no Remove, even with an imported stored copy.
     expect(markup).not.toContain('aria-label="Remove Gifted Rite"');
     expect(markup).toContain("<td>Exploration</td><td>Nature</td>");
-    // The structured allowance's counter sits under its text; the granted
-    // and bought rituals don't use it.
-    expect(markup).toContain(
-      '<p class="rituals-allowance-count">1 free 1st-level ritual left</p>',
+  });
+
+  it("drops the free-ritual block once every allowance is used", () => {
+    const withFree = [
+      ...content,
+      entity("RITUAL_FREE", "Free Rite", "Ritual", {
+        specifics: { Category: "Travel", Level: "1", type: "Ritual" },
+      }),
+    ];
+    const used: CharacterBuild = {
+      ...build,
+      known: [
+        ...build.known,
+        {
+          id: "free-pick",
+          acquiredLevel: 1,
+          element: {
+            definitionId: "RITUAL_FREE",
+            name: "Free Rite",
+            type: "Ritual",
+          },
+          acquisition: "free",
+          allowance: "CLASS",
+        },
+      ],
+    };
+    const markup = renderToStaticMarkup(
+      createElement(RitualsWorkspace, {
+        build: used,
+        entities: withFree,
+        byId: new Map(withFree.map((value) => [value.id.toLowerCase(), value])),
+        evaluation: evaluateCharacter(
+          projectBuildForEvaluation(used, withFree),
+          withFree,
+        ),
+        walletCopper: 10_000,
+        category: undefined,
+        onCategoryChange: vi.fn(),
+        onLearn: vi.fn(),
+        onRemove: vi.fn(),
+      }),
     );
+    expect(markup).not.toContain("rituals-allowance");
+    // The Known table and Learn rituals stay.
+    expect(markup).toContain("Learn rituals");
+    expect(markup).toContain("Free Rite");
   });
 
   it("labels allowance counters and the allowance a ritual used", () => {
@@ -249,24 +294,86 @@ describe("Rituals workspace", () => {
           ],
         }),
       ),
-    ).toBe(
-      "3 free 1st-level rituals and 2 free rituals of level 5 or lower left",
+    ).toBe("3 free 1st-level rituals and 2 free rituals of level 5 or lower");
+    const choice = status(
+      { total: 1, remaining: 1, remainders: [{ count: 1 }] },
+      "Ritual",
+      ["a", "b", "c"],
     );
+    expect(ritualAllowanceLabel(choice, (id) => id.toUpperCase())).toBe(
+      "1 free ritual: A, B or C",
+    );
+    // Nothing left (used up, or not earned yet): no line.
+    const usedUp = status(
+      { total: 2, remaining: 0, remainders: [] },
+      "Martial Practice",
+    );
+    expect(ritualAllowanceLabel(usedUp)).toBeUndefined();
     expect(
-      ritualAllowanceLabel(
-        status({ remaining: 1, remainders: [{ count: 1 }] }, "Ritual", [
-          "a",
-          "b",
-          "c",
-        ]),
+      ritualAllowanceLabel(status({ total: 0, remaining: 0, remainders: [] })),
+    ).toBeUndefined();
+
+    // Grouped by provider, in order: a psion's two allowances under one
+    // heading; a provider with nothing left has no group.
+    const as = (
+      value: RitualAllowanceStatus,
+      providerId: string,
+      provider: string,
+      suffix = "",
+    ): RitualAllowanceStatus => ({
+      ...value,
+      allowance: {
+        ...value.allowance,
+        key: `${providerId}${suffix}`,
+        providerId,
+        provider,
+      },
+    });
+    const firstLevel = status({
+      total: 1,
+      remaining: 1,
+      remainders: [{ count: 1, maxLevel: 1 }],
+    });
+    expect(
+      ritualAllowanceGroups(
+        [
+          as(usedUp, "MARTIAL", "Martial Training"),
+          as(firstLevel, "PSION", "Psion"),
+          as(choice, "PSION", "Psion", "#2"),
+          as(
+            status(
+              {
+                total: 1,
+                remaining: 1,
+                remainders: [{ count: 1, maxLevel: 1 }],
+              },
+              "Alchemical Formula",
+            ),
+            "ALCHEMIST",
+            "Alchemist",
+          ),
+        ],
         (id) => id.toUpperCase(),
       ),
-    ).toBe("1 free ritual left: A, B or C");
-    expect(
-      ritualAllowanceLabel(
-        status({ total: 2, remaining: 0, remainders: [] }, "Martial Practice"),
-      ),
-    ).toBe("All 2 free martial practices used");
+    ).toEqual([
+      {
+        providerId: "PSION",
+        heading: "Free rituals",
+        provider: "Psion",
+        lines: [
+          { key: "PSION", label: "1 free 1st-level ritual" },
+          { key: "PSION#2", label: "1 free ritual: A, B or C" },
+        ],
+      },
+      {
+        providerId: "ALCHEMIST",
+        heading: "Free alchemical formulas",
+        provider: "Alchemist",
+        lines: [
+          { key: "ALCHEMIST", label: "1 free 1st-level alchemical formula" },
+        ],
+      },
+    ]);
     const [record] = knownRecords(
       {
         known: [

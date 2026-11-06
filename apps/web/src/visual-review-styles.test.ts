@@ -22,9 +22,9 @@ function declarations(selector: string): string {
 }
 
 describe("visual-review facts decided by CSS", () => {
-  it("sets the Rituals tab's counter semi-bold under the free-ritual text", () => {
+  it("indents the Rituals tab's free-ritual lines under their heading", () => {
     expect(declarations(".rituals-allowance-count")).toContain(
-      "font-weight: 600",
+      "padding-inline-start: 1rem",
     );
   });
 
