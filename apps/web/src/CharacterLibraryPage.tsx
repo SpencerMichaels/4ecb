@@ -18,8 +18,7 @@ import { Icon } from "./Icon";
 import { importReportToast } from "./import-report";
 import { UpdateButton } from "./PwaUpdate";
 import { BuildVersion } from "./BuildVersion";
-import { createNativeCharacter } from "./new-character";
-import { holdCharacterDraft } from "./character-drafts";
+import { startNewCharacter } from "./create-character";
 import {
   characterCount,
   firstImportedRow,
@@ -224,33 +223,13 @@ export function CharacterLibraryPage({
   }
 
   async function createCharacter(): Promise<void> {
-    if (activePackId === undefined)
-      throw new Error(
-        "Activate a content profile before creating a character.",
-      );
-    const pack = await contentRepository.get(activePackId);
-    if (pack === undefined)
-      throw new Error("The active content profile is not installed.");
     setCreatingCharacter(true);
     try {
-      const character = createNativeCharacter(
-        "New Character",
-        pack.manifest,
-        pack.entities,
-        activeProfile === undefined
-          ? {}
-          : {
-              profileBinding: {
-                packId: activeProfile.materializedPackId,
-                contentDigest: activeProfile.contentDigest,
-                layers: activeProfile.layers,
-                resolutionPolicy: activeProfile.resolutionPolicy,
-              },
-            },
-      );
-      // Held unsaved until its first change, so closing it adds nothing.
-      holdCharacterDraft(character);
-      window.location.hash = `#/characters/${encodeURIComponent(character.id)}/edit`;
+      await startNewCharacter({
+        activePackId,
+        activeProfile,
+        loadPack: (packId) => contentRepository.get(packId),
+      });
     } finally {
       setCreatingCharacter(false);
     }

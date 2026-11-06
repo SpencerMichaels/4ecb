@@ -35,6 +35,17 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Campaign (D116): a full-width inline select; with no campaigns, a hint
+   below it says where to get one. */
+.character-campaign-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.character-campaign-field > .field-help {
+  margin: 0;
+}
+
 /* Deity: a collapsible section whose heading shows the current pick. */
 .character-detail-group > h4:has(> .character-detail-toggle) {
   padding: 0;

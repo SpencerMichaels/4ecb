@@ -222,32 +222,64 @@ describe("runtime campaigns", () => {
     expect(parseRuntimeContentConfig({}).campaigns).toEqual([]);
   });
 
-  it("rejects malformed, cross-origin, duplicate, or too many campaigns", () => {
+  it("drops malformed, cross-origin, duplicate, or too many campaigns", () => {
+    const other = { ...entry, campaignId: "eberron", name: "Eberron" };
     const parse = (campaigns: unknown) =>
       parseRuntimeContentConfig({ campaigns }, "https://group.test/");
-    expect(() => parse({})).toThrow("must be an array");
-    expect(() =>
-      parse([{ ...entry, url: "https://elsewhere.test/x.4ecc" }]),
-    ).toThrow("same-origin");
-    expect(() => parse([{ ...entry, contentDigest: "short" }])).toThrow(
-      "SHA-256",
+    const kept = (campaigns: unknown) =>
+      parse(campaigns).campaigns.map(({ campaignId }) => campaignId);
+    const problems = (campaigns: unknown) =>
+      parse(campaigns).campaignProblems.join("\n");
+    expect(kept({})).toEqual([]);
+    expect(problems({})).toContain("must be an array");
+    // A bad entry drops only itself.
+    for (const [bad, reason] of [
+      [{ ...entry, url: "https://elsewhere.test/x.4ecc" }, "same-origin"],
+      [{ ...entry, url: "http://[bad" }, "Invalid URL"],
+      [{ ...entry, contentDigest: "short" }, "SHA-256"],
+      [{ ...entry, revision: 1.5 }, "revision"],
+      [{ ...entry, campaignId: "-bad" }, "campaignId"],
+      [{ ...entry, name: " " }, "name"],
+      ["not an object", "must be an object"],
+    ] as const) {
+      expect(kept([bad, other])).toEqual(["eberron"]);
+      expect(problems([bad, other])).toContain(reason);
+    }
+    // Two copies of one campaign: neither is offered.
+    expect(kept([entry, other, { ...entry, revision: 3 }])).toEqual([
+      "eberron",
+    ]);
+    expect(problems([entry, { ...entry, revision: 3 }])).toContain("duplicate");
+    const tooMany = Array.from(
+      { length: MAX_ADVERTISED_CAMPAIGNS + 1 },
+      (_, index) => ({ ...entry, campaignId: `campaign-${index}` }),
     );
-    expect(() => parse([{ ...entry, revision: 1.5 }])).toThrow("revision");
-    expect(() => parse([{ ...entry, campaignId: "-bad" }])).toThrow(
-      "campaignId",
-    );
-    expect(() => parse([{ ...entry, name: " " }])).toThrow("name");
-    expect(() => parse([entry, { ...entry, revision: 3 }])).toThrow(
-      "duplicate",
-    );
-    expect(() =>
-      parse(
-        Array.from({ length: MAX_ADVERTISED_CAMPAIGNS + 1 }, (_, index) => ({
-          ...entry,
-          campaignId: `campaign-${index}`,
-        })),
-      ),
-    ).toThrow("more than");
+    expect(kept(tooMany)).toEqual([]);
+    expect(problems(tooMany)).toContain("more than");
+    expect(parse([entry]).campaignProblems).toEqual([]);
+  });
+
+  it("keeps the content packs when the campaigns are malformed", () => {
+    const pack = {
+      packId: "server.content",
+      contentDigest: "a".repeat(64),
+      url: "/private-packs/server.4ecp",
+    };
+    for (const campaigns of [
+      "nope",
+      [{ ...entry, url: "https://elsewhere.test/x.4ecc" }],
+      [entry, entry],
+    ]) {
+      const config = parseRuntimeContentConfig(
+        { contentPacks: [pack], campaigns },
+        "https://group.test/",
+      );
+      expect(config.contentPacks.map(({ packId }) => packId)).toEqual([
+        "server.content",
+      ]);
+      expect(config.campaigns).toEqual([]);
+      expect(config.campaignProblems.length).toBeGreaterThan(0);
+    }
   });
 
   it("selects only newer revisions of installed campaigns", async () => {

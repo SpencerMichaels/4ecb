@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { CharacterCommand, CharacterRecord } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import type { CampaignDocument } from "@4ecb/content-pack";
 import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
 
 import {
@@ -12,6 +13,7 @@ import {
 import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import { CandidateInspectionScope } from "./builder-choice-context";
 import { CandidateDetail } from "./CandidateDetail";
+import { CharacterCampaignField } from "./CharacterCampaignField";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { ChoiceEditor } from "./ChoiceEditors";
 import { Icon } from "./Icon";
@@ -167,6 +169,9 @@ export function CharacterDetailsEditor({
   deityAlignment,
   alignmentHouseRuled,
   review,
+  campaignId,
+  campaignDisabledReason,
+  onChooseCampaign = () => undefined,
   onDispatch,
 }: {
   readonly active: boolean;
@@ -189,6 +194,11 @@ export function CharacterDetailsEditor({
       }
     | undefined;
   readonly alignmentHouseRuled: boolean;
+  /** The character's campaign (D116), and why it can't change now. */
+  readonly campaignId?: string | undefined;
+  readonly campaignDisabledReason?: string | undefined;
+  /** Asks to move the character into a campaign (or out, undefined). */
+  readonly onChooseCampaign?: (campaign: CampaignDocument | undefined) => void;
   /** The choice an issue's Review leads to; `request` changes per ask. */
   readonly review?: { readonly choiceId: string; readonly request: number };
   readonly onDispatch: (command: CharacterCommand) => void;
@@ -346,6 +356,11 @@ export function CharacterDetailsEditor({
                     />
                   ))}
                 </div>
+                <CharacterCampaignField
+                  campaignId={campaignId}
+                  disabledReason={campaignDisabledReason}
+                  onChoose={onChooseCampaign}
+                />
                 {evaluation === undefined ? (
                   <p className="field-help">
                     Rules content is unavailable for gender, alignment, and

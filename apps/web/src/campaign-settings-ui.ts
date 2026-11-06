@@ -3,6 +3,7 @@
 
 import type { CampaignDocument } from "@4ecb/content-pack";
 
+import { campaignJoinHash } from "./routes";
 import type { AdvertisedCampaign } from "./runtime-content";
 
 /** One installed campaign: its newest revision, and who uses it. */
@@ -70,14 +71,14 @@ export function campaignRows(
     );
 }
 
-/** The invite link players open to join (the join route is
- *  `#/campaigns/join/<campaignId>`; the runtime config pins the digest). */
+/** The invite link players open to join (`campaignJoinHash`; the runtime
+ *  config pins the digest). */
 export function campaignInviteUrl(
   campaignId: string,
   base: string = globalThis.location?.href ?? "https://localhost/",
 ): string {
   const url = new URL(base);
-  url.hash = `#/campaigns/join/${encodeURIComponent(campaignId)}`;
+  url.hash = campaignJoinHash(campaignId);
   url.search = "";
   return url.href;
 }

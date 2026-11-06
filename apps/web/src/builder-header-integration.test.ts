@@ -255,3 +255,15 @@ describe("one table or none at a time", () => {
     expect(source).not.toContain('behavior: "smooth"');
   });
 });
+
+describe("Details campaign select (D116)", () => {
+  it("reviews a campaign change in the content-update dialog", () => {
+    expect(characterDetailsEditor).toContain("<CharacterCampaignField");
+    expect(source).toContain(
+      "setCampaignChange(\n                    campaignChangeTarget(campaign, {",
+    );
+    expect(source).toContain("target={campaignChange}");
+    // Cancel closes the dialog; the select keeps the character's campaign.
+    expect(source).toContain("onClose={() => setCampaignChange(undefined)}");
+  });
+});

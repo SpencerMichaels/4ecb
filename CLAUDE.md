@@ -280,7 +280,10 @@ Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 Diagnostics and House rules open from the status badges; Overview (D113,
 `BuildOverview.tsx` over `build-overview.ts`) lists every level's choices
 as the Build tab's folded items, from the editor's planning evaluation, and
-each row opens its choice the way an issue's Review does), `#/characters/:id`
+each row opens its choice the way an issue's Review does), `#/campaigns/join/:campaignId` (a campaign invite, D116:
+`CampaignJoinPage.tsx` adds the hosted campaign, then offers "New
+character in <campaign>"; a character's campaign is the Details tab's
+Campaign select), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
 for the per-character sheet layout: right-click hide/show and drag-to-reorder on cards
 (`SheetEditTarget.tsx`), right-click hide/show on page-1 reminder rows

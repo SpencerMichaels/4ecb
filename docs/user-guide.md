@@ -133,7 +133,7 @@ installed revision, and how many library characters belong to it.
 - Right-click a campaign for **Export file** (the newest revision as
   `.4ecc`), **Copy invite link** and **Remove**. Copy invite link is
   available only when your group's server hosts that exact revision; the
-  link is for players to join (the join page itself is not built yet).
+  link opens the campaign's invite page (below).
   Remove deletes every revision and is unavailable while any character,
   including one in the trash, belongs to the campaign.
 
@@ -141,6 +141,32 @@ When the group's server hosts a newer revision of a campaign you have, the
 browser fetches and verifies it in the background after the app loads; a
 campaign you haven't added is never downloaded. Characters in the campaign
 then offer the update the same way as a content update.
+
+### Joining a campaign
+
+An invite link (`#/campaigns/join/<campaign ID>`) opens the campaign's
+invite page. It shows the hosted campaign's name, revision, how many
+house-rule records it adds and what it limits (types where only the
+campaign's own records are offered, and how many other records it doesn't
+offer). **Add campaign** downloads it, checks it is exactly the copy the
+server advertises, and puts it in this browser; **Cancel** returns to the
+characters. Adding a campaign changes no character. Then **New character in
+<campaign>** starts a level-1 character in it (the campaign's content is
+prepared first, so the button shows "Creating character…" for a moment). If
+the campaign is already in this browser the page says so and offers the same
+button. A link to a campaign the server doesn't host leads back to the
+characters and to **Settings → Campaigns**, where a campaign file from the
+DM can be imported instead.
+
+### Choosing a character's campaign
+
+The **Campaign** select in a character's **Details** tab shows its campaign
+(None, or one of the campaigns in this browser; with none installed, a hint
+says where to get one). Choosing another opens the same review as a content
+update: what would change, and what the campaign doesn't use (kept, marked as
+a house rule). The select changes only once you confirm; **Cancel** keeps the
+character where it was. Choosing None takes the character out of its
+campaign. The library's New character never puts a character in a campaign.
 
 ## Create, import, and manage characters
 

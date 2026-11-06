@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  campaignJoinHash,
   canonicalHashRedirect,
   characterEditorHash,
   characterSheetHash,
@@ -333,6 +334,29 @@ describe("hash routes", () => {
       canonicalHashRedirect("#/characters/character%201/edit?tab=build"),
     ).toBeUndefined();
     expect(canonicalHashRedirect("#/settings")).toBe(undefined);
+  });
+  it("parses and canonicalizes the campaign invite route (D116)", () => {
+    expect(parseHashRoute("#/campaigns/join/pathfinder")).toEqual({
+      page: "campaign-join",
+      campaignId: "pathfinder",
+    });
+    expect(parseHashRoute("#/campaigns/join/my%20game")).toEqual({
+      page: "campaign-join",
+      campaignId: "my game",
+    });
+    expect(campaignJoinHash("my game")).toBe("#/campaigns/join/my%20game");
+    expect(canonicalHashRedirect("#/campaigns/join/pathfinder")).toBe(
+      undefined,
+    );
+    // A query is dropped; a missing or undecodable ID is the library.
+    expect(canonicalHashRedirect("#/campaigns/join/pathfinder?x=1")).toBe(
+      "#/campaigns/join/pathfinder",
+    );
+    expect(canonicalHashRedirect("#/campaigns/join/")).toBe("#/characters");
+    expect(canonicalHashRedirect("#/campaigns/join/%E0%A4%A")).toBe(
+      "#/characters",
+    );
+    expect(canonicalHashRedirect("#/campaigns/join/a/b")).toBe("#/characters");
   });
   it("gives Retraining its own builder tab, redirecting the old Build section", () => {
     expect(

@@ -138,7 +138,12 @@ import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
-import { CAMPAIGNS_CHANGED_EVENT, contentTarget } from "./campaign-profile";
+import {
+  CAMPAIGNS_CHANGED_EVENT,
+  campaignChangeTarget,
+  contentTarget,
+  type ContentTarget,
+} from "./campaign-profile";
 import {
   acquisitionCommands,
   loadoutChangeCommand,
@@ -321,6 +326,8 @@ export function CharacterEditorPage({
 }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [reviewingContentUpdate, setReviewingContentUpdate] = useState(false);
+  // A move into or out of a campaign chosen in Details (D116), under review.
+  const [campaignChange, setCampaignChange] = useState<ContentTarget>();
   const [character, setCharacter] = useState<CharacterRecord>();
   const [entities, setEntities] = useState<readonly ContentEntity[]>([]);
   // The bound pack's campaign restrictions (D116); the rules worker applies
@@ -2329,6 +2336,18 @@ export function CharacterEditorPage({
                 }}
               />
             ) : null}
+            {campaignChange !== undefined && character !== undefined ? (
+              <ContentUpdateDialog
+                character={character}
+                target={campaignChange}
+                rulesClient={readyRulesClient}
+                onClose={() => setCampaignChange(undefined)}
+                onUpdated={() => {
+                  setCampaignChange(undefined);
+                  setReloadKey((key) => key + 1);
+                }}
+              />
+            ) : null}
 
             <div className="builder-tabs-bar">
               <div
@@ -2948,6 +2967,20 @@ export function CharacterEditorPage({
                 effectiveLevel={build.effectiveLevel}
                 deityAlignment={deityAlignment}
                 alignmentHouseRuled={alignmentIssue !== undefined}
+                campaignId={campaignId}
+                campaignDisabledReason={
+                  activeManifest === undefined
+                    ? "Turn on game content in Settings to choose a campaign"
+                    : undefined
+                }
+                onChooseCampaign={(campaign) =>
+                  setCampaignChange(
+                    campaignChangeTarget(campaign, {
+                      manifest: activeManifest,
+                      profile: activeProfile,
+                    }),
+                  )
+                }
                 {...(detailsReview === undefined
                   ? {}
                   : { review: detailsReview })}

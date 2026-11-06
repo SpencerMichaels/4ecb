@@ -37,6 +37,8 @@ export const MAX_ADVERTISED_CAMPAIGNS = 64;
 export interface RuntimeContentConfig {
   readonly contentPacks: readonly AdvertisedContentPack[];
   readonly campaigns: readonly AdvertisedCampaign[];
+  /** Why advertised campaign entries were dropped (the packs never are). */
+  readonly campaignProblems: readonly string[];
 }
 
 /**
@@ -80,9 +82,15 @@ export function parseRuntimeContentConfig(
     typeof value === "object" && value !== null
       ? (value as Record<string, unknown>)
       : {};
+  const campaignProblems: string[] = [];
   return {
     contentPacks: parseAdvertisedPacks(record.contentPacks, baseUrl),
-    campaigns: parseAdvertisedCampaigns(record.campaigns, baseUrl),
+    campaigns: parseAdvertisedCampaigns(
+      record.campaigns,
+      baseUrl,
+      campaignProblems,
+    ),
+    campaignProblems,
   };
 }
 
@@ -129,53 +137,80 @@ function parseAdvertisedPacks(
   return contentPacks;
 }
 
+/**
+ * The advertised campaigns. A campaign entry the server got wrong drops only
+ * itself (a duplicated ID drops every copy of it; a non-list or oversized
+ * value, the whole list), never the content packs: campaigns are optional,
+ * and a broken invite must not stop the group's content loading. Each drop is
+ * named in `problems`, for the administrator.
+ */
 function parseAdvertisedCampaigns(
   candidates: unknown,
   baseUrl: string,
+  problems: string[],
 ): AdvertisedCampaign[] {
   if (candidates === undefined) return [];
-  if (!Array.isArray(candidates))
-    throw new Error("runtime campaigns must be an array");
-  if (candidates.length > MAX_ADVERTISED_CAMPAIGNS)
-    throw new Error(
+  if (!Array.isArray(candidates)) {
+    problems.push("runtime campaigns must be an array");
+    return [];
+  }
+  if (candidates.length > MAX_ADVERTISED_CAMPAIGNS) {
+    problems.push(
       `runtime campaigns list more than ${MAX_ADVERTISED_CAMPAIGNS} campaigns`,
     );
-  const seen = new Set<string>();
-  return candidates.map((candidate) => {
-    if (typeof candidate !== "object" || candidate === null)
-      throw new Error("runtime campaign entry must be an object");
-    const entry = candidate as Record<string, unknown>;
-    const { campaignId, name, revision, contentDigest, url } = entry;
-    if (
-      typeof campaignId !== "string" ||
-      campaignId.length > MAX_CAMPAIGN_ID_LENGTH ||
-      contentPackIdentityErrors(campaignId, "-").length > 0 ||
-      typeof name !== "string" ||
-      name.trim() === "" ||
-      name.length > 200 ||
-      typeof revision !== "number" ||
-      !Number.isInteger(revision) ||
-      revision < 1 ||
-      revision > MAX_CAMPAIGN_REVISION ||
-      typeof contentDigest !== "string" ||
-      !/^[a-f0-9]{64}$/.test(contentDigest) ||
-      typeof url !== "string"
-    )
-      throw new Error(
-        "runtime campaign requires campaignId, name, revision, same-origin URL, and SHA-256 contentDigest",
-      );
-    // One hosted copy per campaign: its newest revision.
-    if (seen.has(campaignId))
-      throw new Error(`duplicate advertised campaign ${campaignId}`);
-    seen.add(campaignId);
-    return {
-      campaignId,
-      name,
-      revision,
-      contentDigest,
-      url: sameOriginUrl(url, baseUrl, "runtime campaign"),
-    };
-  });
+    return [];
+  }
+  const parsed: AdvertisedCampaign[] = [];
+  for (const candidate of candidates) {
+    try {
+      parsed.push(parseAdvertisedCampaign(candidate, baseUrl));
+    } catch (reason: unknown) {
+      problems.push(reason instanceof Error ? reason.message : String(reason));
+    }
+  }
+  // One hosted copy per campaign: its newest revision. Which of two copies
+  // is meant is unknown, so neither is offered.
+  const counts = new Map<string, number>();
+  for (const { campaignId } of parsed)
+    counts.set(campaignId, (counts.get(campaignId) ?? 0) + 1);
+  for (const [campaignId, count] of counts)
+    if (count > 1) problems.push(`duplicate advertised campaign ${campaignId}`);
+  return parsed.filter(({ campaignId }) => counts.get(campaignId) === 1);
+}
+
+function parseAdvertisedCampaign(
+  candidate: unknown,
+  baseUrl: string,
+): AdvertisedCampaign {
+  if (typeof candidate !== "object" || candidate === null)
+    throw new Error("runtime campaign entry must be an object");
+  const entry = candidate as Record<string, unknown>;
+  const { campaignId, name, revision, contentDigest, url } = entry;
+  if (
+    typeof campaignId !== "string" ||
+    campaignId.length > MAX_CAMPAIGN_ID_LENGTH ||
+    contentPackIdentityErrors(campaignId, "-").length > 0 ||
+    typeof name !== "string" ||
+    name.trim() === "" ||
+    name.length > 200 ||
+    typeof revision !== "number" ||
+    !Number.isInteger(revision) ||
+    revision < 1 ||
+    revision > MAX_CAMPAIGN_REVISION ||
+    typeof contentDigest !== "string" ||
+    !/^[a-f0-9]{64}$/.test(contentDigest) ||
+    typeof url !== "string"
+  )
+    throw new Error(
+      "runtime campaign requires campaignId, name, revision, same-origin URL, and SHA-256 contentDigest",
+    );
+  return {
+    campaignId,
+    name,
+    revision,
+    contentDigest,
+    url: sameOriginUrl(url, baseUrl, "runtime campaign"),
+  };
 }
 
 export async function downloadAdvertisedPack(

@@ -286,6 +286,48 @@
   overflow-wrap: anywhere;
 }
 
+/* The campaign invite page (D116): one narrow panel, what the campaign is
+   above its actions. */
+.campaign-join-page {
+  margin: 0 auto;
+  max-width: 48rem;
+  padding: 1.5rem 2rem 3rem;
+}
+
+.campaign-join-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.campaign-join-panel p,
+.campaign-join-empty h3 {
+  margin: 0;
+}
+
+.campaign-join-empty {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.campaign-join-summary {
+  display: grid;
+  gap: 0.3rem 1rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.campaign-join-summary > div {
+  display: contents;
+}
+
+.campaign-join-summary dt {
+  color: var(--muted);
+}
+
+.campaign-join-summary dd {
+  margin: 0;
+}
+
 .settings-options {
   display: grid;
   gap: 1rem;

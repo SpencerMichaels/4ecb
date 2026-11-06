@@ -1,5 +1,33 @@
 # Implementation status
 
+## Joining a campaign and choosing a character's campaign (2026-11-06)
+
+D116 step 9. Route `#/campaigns/join/<campaignId>` (`routes.ts`
+`campaignJoinHash`, also used by the invite link; code-split
+`CampaignJoinPage.tsx`, states in `campaign-join-ui.ts`): waits for the
+runtime config before calling an ID unknown; a hosted campaign the browser
+lacks (or has an older revision of) is fetched with
+`downloadAdvertisedCampaign` (size-limited, identity and digest checked) to
+show revision, house-rule record count and restrictions, then Add campaign
+installs it and dispatches `CAMPAIGNS_CHANGED_EVENT`; Cancel returns to the
+library; a failed fetch offers Try again. An installed campaign offers "New
+character in <name>" (`create-character.ts` `startNewCharacter`, shared with
+the library's New character: the campaign target is materialized, busy label
+"Creating character…"). An unknown ID explains itself and links back and to
+Settings → Campaigns. Details has an always-present Campaign select
+(`CharacterCampaignField.tsx`: None + installed campaigns, the character's
+missing campaign shown disabled, an empty-state hint linking to Settings);
+choosing opens `ContentUpdateDialog` with `campaignChangeTarget(...)` from
+`CharacterEditorPage.tsx`, and the controlled select changes only after the
+move is applied. `runtime-content.ts`: a malformed campaign entry now drops
+only itself (a duplicated ID drops each copy; a non-list or over-64 value the
+list), never the content packs; drops are listed in `campaignProblems` and
+logged by `App.tsx`. Verification: `routes.test.ts`,
+`runtime-content.test.ts`, `CampaignJoinPage.test.tsx`,
+`create-character.test.ts`, `CharacterCampaignField.test.tsx`,
+`builder-header-integration.test.ts`; `pnpm test`, typecheck, lint,
+format:check.
+
 ## Settings → Campaigns and hosted revisions (2026-11-06)
 
 D116 step 8 (`68af49fc`). `CampaignSettings.tsx` (Settings, after Game
