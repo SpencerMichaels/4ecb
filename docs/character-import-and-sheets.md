@@ -201,9 +201,17 @@ exact bound pack revision, allocates fresh
 document-local occurrence tokens, repairs representable replacement links,
 serializes level history (including typed `UserEdit` payloads), grabbag,
 inventory, alternates, and text values, and
-regenerates the `CharacterSheet` calculation caches. Campaign and unknown root
-elements are copied from the source envelope; companion, journal, and unknown
-sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code point blocks the
+regenerates the `CharacterSheet` calculation caches. Unknown root elements are
+copied from the source envelope; companion, journal, and unknown sheet blocks
+are retained. The `D20CampaignSetting` is copied too, except for a character
+in a campaign (D116): it then gets the campaign's name, its restrictions as the
+bound pack resolved them (type rules expanded to IDs, as legacy `Restricted`
+needs) and the DM's house-rule XML verbatim (`legacyCampaignSetting` in
+`apps/web/src/character-export.ts`). CountsAsDeity records go out inside that
+XML without comment; the old builder ignores the type (owner decision). When
+the bound campaign document isn't installed the save's own setting is kept:
+restrictions without the house rules that replace them would describe a
+different campaign. XML user content is escaped; an invalid XML 1.0 code point blocks the
 export rather than being silently changed or producing a malformed document.
 Spellbook edits update the existing alternate envelope—or create one for a
 native character—rather than inserting the extra known spell into ordinary
@@ -216,6 +224,24 @@ single base-allocation `AbilityScores` block inside the leading
 follows that native order before campaign data, level history, grabbag, and text
 state. Import still tolerates root-level scores from non-native producers, but
 the legacy-builder target does not emit that alternate form.
+
+On import, a save whose `D20CampaignSetting` is not empty (`readCampaignSetting`)
+is offered to a campaign once it is in the library (`imported-campaign.ts`,
+`ImportedCampaignDialog.tsx`). An installed campaign matches when, over the
+active content, it restricts the same records (its rules resolved, type rules
+expanded; IDs ignoring case; `RulesElement` identities without an ID resolved
+by name and type) and its house-rule records have the same IDs; any installed
+revision may match and the offer is "Put in <campaign>", its newest revision.
+Otherwise the offer is "Create campaign <name>": revision 1 with an ID derived
+from the name (made unique), the restricted IDs, no type rules, and the
+`Houserules` records parsed with the content tool's parser
+(`parseHouseRules`, now in `legacy-wotc`) into the overlay, the XML kept for
+export. That parse is a separate chunk (`campaign-from-setting.ts`) loaded only
+on Create. It is consistent with D082: no rules XML is installed as content, the
+fragment is part of the character file and is parsed once into a campaign
+document, as `content-tool campaign build` does. Either way the move is then
+reviewed in `ContentUpdateDialog`; Cancel leaves the character outside any
+campaign. An empty setting offers nothing and reads no campaign or content.
 
 Before download, edited output is re-imported and compared to the authoritative
 level, selection, replacement, inventory, alternate, ability, and text

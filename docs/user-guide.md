@@ -168,6 +168,31 @@ a house rule). The select changes only once you confirm; **Cancel** keeps the
 character where it was. Choosing None takes the character out of its
 campaign. The library's New character never puts a character in a campaign.
 
+### Campaigns in legacy .dnd4e files
+
+Exporting a campaign character as `.dnd4e` writes the campaign into the file
+the way the old Character Builder stores one: its name, every record it
+doesn't offer (a rule like "Deity: campaign only" is written out as the list
+of those deities) and the DM's house-rule records. The old builder then shows
+the campaign's deities and hides the restricted ones. It doesn't know
+"counts as" deities, so there a feat that needs, say, Moradin isn't met
+through Torag. A character outside a campaign exports exactly as before.
+
+Importing a `.dnd4e` saved in a campaign adds the character as usual, then
+asks what to do with its campaign:
+
+- **Put in <campaign>** when a campaign in this browser matches the file (the
+  same restricted records and house-rule records); or
+- **Create campaign <name>** when none does. This adds the campaign to
+  **Settings → Campaigns** (revision 1, from the file's restrictions and
+  house rules); records the file restricts by name that this content doesn't
+  have are listed and left out.
+
+Either choice then shows the usual review of what changes before the
+character moves in. **Cancel** keeps the character outside any campaign; you
+can still choose one in **Details** later. A save made outside any campaign
+asks nothing.
+
 ## Create, import, and manage characters
 
 1. To start without the old application, choose **New Character** on the

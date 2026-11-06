@@ -72,6 +72,7 @@ describe("legacy D20CampaignSetting", () => {
       ],
       restrictedIdentities: [],
       houseRulesXml: HOUSE_RULES,
+      houseRuleIds: ["ID_EXAMPLE_DEITY"],
       unknownXml: [],
       empty: false,
       diagnostics: [],

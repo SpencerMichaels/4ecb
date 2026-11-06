@@ -1,5 +1,10 @@
 export { D20RulesParser, parseD20Rules } from "./parser";
 export {
+  houseRulesChildrenXml,
+  houseRulesDocument,
+  parseHouseRules,
+} from "./house-rules";
+export {
   parseAssociateStatBlock,
   parseAssociateDamage,
 } from "./associate-stat-block";

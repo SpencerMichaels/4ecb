@@ -357,15 +357,18 @@
   overflow: hidden;
   width: fit-content;
 }
-.content-update-dialog {
+.content-update-dialog,
+.imported-campaign-dialog {
   width: 34rem;
 }
-.content-update-body {
+.content-update-body,
+.imported-campaign-body {
   display: grid;
   gap: 0.6rem;
   padding: 1rem;
 }
-.content-update-body :is(h3, p, ul) {
+.content-update-body :is(h3, p, ul),
+.imported-campaign-body :is(p, ul) {
   margin: 0;
 }
 .content-update-body > .loading-pane {

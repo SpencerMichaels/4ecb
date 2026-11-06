@@ -19,7 +19,11 @@ import {
   type CampaignTypeRestriction,
   type ContentPack,
 } from "@4ecb/content-pack";
-import { parseD20Rules } from "@4ecb/legacy-wotc";
+import {
+  houseRulesChildrenXml,
+  houseRulesDocument,
+  parseHouseRules,
+} from "@4ecb/legacy-wotc";
 
 import {
   gzip,
@@ -114,51 +118,8 @@ export function parseCampaignManifest(
   };
 }
 
-const D20_RULES_OPEN = /<D20Rules\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
-
-/**
- * The root's children verbatim (trimmed): the RulesElement definitions a
- * legacy export writes inside `Houserules`. The parser has already checked
- * the document is well formed with a D20Rules root.
- */
-export function houseRulesChildrenXml(xml: string): string {
-  const open = D20_RULES_OPEN.exec(xml);
-  if (open === null) throw new Error("House-rule XML has no D20Rules root");
-  if (open[0].endsWith("/>")) return "";
-  const start = open.index + open[0].length;
-  const end = xml.toLocaleLowerCase().lastIndexOf("</d20rules");
-  if (end < start) throw new Error("House-rule XML has no closing D20Rules");
-  return xml.slice(start, end).trim();
-}
-
-const EMPTY_HOUSE_RULES = '<D20Rules game-system="D&amp;D4E" />';
-
-/**
- * Parses house-rule XML with the parser `content-tool build` uses. Records
- * the parser rejects, and top-level elements other than RulesElement (which
- * the legacy `Houserules` block cannot carry), are errors.
- */
-export function parseHouseRules(
-  xml: string,
-  sourceKey: string,
-): ParsedContentSource {
-  const parsed = parseD20Rules(xml, sourceKey);
-  const errors = [
-    ...parsed.rejected.map(
-      (record) =>
-        `House-rule record ${record.ordinal + 1} was rejected: ${record.reason}`,
-    ),
-    ...parsed.rawTopLevel.flatMap((node) =>
-      node.kind === "element"
-        ? [
-            `House-rule XML may hold only RulesElement records, not <${node.name}>`,
-          ]
-        : [],
-    ),
-  ];
-  if (errors.length > 0) throw new Error(errors.join("; "));
-  return parsed;
-}
+// The house-rule parse is shared with the browser's legacy import (D116).
+export { houseRulesChildrenXml, parseHouseRules };
 
 /** Builds the campaign a `campaign.json` describes. */
 export async function buildCampaignFromManifest(
@@ -171,7 +132,7 @@ export async function buildCampaignFromManifest(
   );
   const xml =
     houseRulesPath === undefined
-      ? EMPTY_HOUSE_RULES
+      ? houseRulesDocument("")
       : (await readFile(houseRulesPath, "utf8")).replace(/^﻿/, "");
   const source = parseHouseRules(
     xml,

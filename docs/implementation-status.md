@@ -1,5 +1,37 @@
 # Implementation status
 
+## Campaigns in legacy .dnd4e export and import (2026-11-06)
+
+D116 step 10. Export (`character-export.ts` `legacyCampaignSetting`): a
+campaign character's `.dnd4e` gets `campaignSetting` = the campaign's name,
+the bound pack's `campaign.restrictedIds` (type rules expanded) and the
+installed document's `legacyHouseRulesXml` (CountsAsDeity included, no
+confirmation, owner decision); outside a campaign, or when the bound document
+isn't installed, the save's own setting is preserved byte for byte. Import
+(`CharacterLibraryPage.tsx`): after the import, `campaignOfferForSave`
+(`imported-campaign.ts`) reads `readCampaignSetting` (now also
+`houseRuleIds`); an empty setting reads no campaigns or content. A matching
+installed campaign (same resolved restricted IDs over the active content and
+same house-rule IDs, any revision) offers "Put in <campaign>"; otherwise
+"Create campaign <name>" builds revision 1 in the browser
+(`campaign-from-setting.ts`, its own lazily loaded chunk with the legacy
+rules parser; `parseHouseRules`/`houseRulesChildrenXml`/`houseRulesDocument`
+moved from content-tool to `legacy-wotc`), installs it and dispatches
+`CAMPAIGNS_CHANGED_EVENT`. Both go on to `ContentUpdateDialog` with
+`campaignChangeTarget` (`ImportedCampaignDialog.tsx`, Cancel keeps the
+character outside). Verification: `imported-campaign.test.ts` (expanded IDs
+and house-rule XML in the export, preservation cases, empty setting reads
+nothing, join incl. older revision and case/order, create on differing
+restrictions or house rules, created campaign validates and then matches, ID
+derivation, parser kept out of static imports, dialog labels),
+`campaign-setting.test.ts`, `campaign-command.test.ts`; `pnpm build` emits
+`campaign-from-setting-*.js` (47 kB) holding the parser; `pnpm test`,
+typecheck, lint, format:check. Private (`tmp/probe/pf/export-roundtrip.ts`): a
+Torag Irina on the Pathfinder campaign exports 135 restricted IDs and 113
+house-rule records, passes the re-import check, and re-imports offering to join
+Pathfinder; with no campaign installed it offers create, which builds a valid
+campaign (12 ms) the save then matches.
+
 ## Joining a campaign and choosing a character's campaign (2026-11-06)
 
 D116 step 9. Route `#/campaigns/join/<campaignId>` (`routes.ts`

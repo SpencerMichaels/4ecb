@@ -33,6 +33,8 @@ export interface LegacyCampaignSetting {
   readonly restrictedIdentities: readonly CampaignSettingIdentity[];
   /** The `Houserules` children verbatim ("" when there are none). */
   readonly houseRulesXml: string;
+  /** The `internal-id` of each `Houserules` RulesElement, in file order, without duplicates. */
+  readonly houseRuleIds: readonly string[];
   /** Unknown direct children, verbatim; the legacy parser rejects them, so the writer never emits them. */
   readonly unknownXml: readonly string[];
   /** No name, restrictions, house rules or unknown children (the legacy `<D20CampaignSetting name="">` form, or no setting at all). */
@@ -167,6 +169,7 @@ const EMPTY_SETTING: LegacyCampaignSetting = {
   restrictedIds: [],
   restrictedIdentities: [],
   houseRulesXml: "",
+  houseRuleIds: [],
   unknownXml: [],
   empty: true,
   diagnostics: [],
@@ -208,6 +211,7 @@ function parseSetting(fragment: string): LegacyCampaignSetting {
   const seen = new Set<string>();
   const restrictedIdentities: CampaignSettingIdentity[] = [];
   const houseRules: string[] = [];
+  const houseRuleIds: string[] = [];
   const unknownXml: string[] = [];
   let houseRuleElements = 0;
   let name = "";
@@ -231,8 +235,17 @@ function parseSetting(fragment: string): LegacyCampaignSetting {
       child.innerStart = parser.position;
     else if (depth === 3 && child !== undefined) {
       const container = key(child.name);
-      if (container === "houserules") houseRuleElements += 1;
-      else if (container === "restricted") {
+      if (container === "houserules") {
+        houseRuleElements += 1;
+        const id = tag.attributes["internal-id"];
+        if (
+          key(tag.name) === "ruleselement" &&
+          id !== undefined &&
+          id.trim() !== "" &&
+          !houseRuleIds.includes(id)
+        )
+          houseRuleIds.push(id);
+      } else if (container === "restricted") {
         if (key(tag.name) === "ruleselement") {
           const id = tag.attributes["internal-id"];
           if (id !== undefined && id.trim() !== "") {
@@ -286,6 +299,7 @@ function parseSetting(fragment: string): LegacyCampaignSetting {
     restrictedIds,
     restrictedIdentities,
     houseRulesXml,
+    houseRuleIds,
     unknownXml,
     empty:
       name.trim() === "" &&

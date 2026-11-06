@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  CampaignRepository,
   CharacterRepository,
   ContentPackRepository,
   type CharacterLibraryEntry,
@@ -9,11 +10,25 @@ import {
 import {
   newCharacterRecord,
   type CharacterBuild,
+  type CharacterRecord,
 } from "@4ecb/character-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
-import { importDnd4e } from "@4ecb/legacy-dnd4e";
+import { importDnd4e, readCampaignSetting } from "@4ecb/legacy-dnd4e";
 
+import {
+  CAMPAIGNS_CHANGED_EVENT,
+  campaignChangeTarget,
+  type ContentTarget,
+} from "./campaign-profile";
 import { activeProfileBinding } from "./content-update";
+import { ContentUpdateDialog } from "./ContentUpdateDialog";
+import { ImportedCampaignDialog } from "./ImportedCampaignDialog";
+import {
+  campaignOfferForSave,
+  createImportedCampaign,
+  type ImportedCampaignOffer,
+} from "./imported-campaign";
 import { Icon } from "./Icon";
 import { importReportToast } from "./import-report";
 import { UpdateButton } from "./PwaUpdate";
@@ -72,6 +87,7 @@ async function withImportedRitualChoices(
   }
 }
 const contentRepository = new ContentPackRepository();
+const campaignRepository = new CampaignRepository();
 
 export interface CharacterLibraryPageProps {
   readonly manifests: readonly ContentPackManifest[];
@@ -103,6 +119,16 @@ export function CharacterLibraryPage({
     [pushToast],
   );
   const [creatingCharacter, setCreatingCharacter] = useState(false);
+  // A legacy save made in a campaign (D116): first the offer to join or
+  // create its campaign, then the move's review in the update dialog.
+  const [campaignOffer, setCampaignOffer] = useState<{
+    readonly character: CharacterRecord;
+    readonly offer: ImportedCampaignOffer;
+  }>();
+  const [campaignMove, setCampaignMove] = useState<{
+    readonly character: CharacterRecord;
+    readonly target: ContentTarget;
+  }>();
   // A "Move to trash"/"Delete permanently" click arms the button (a second
   // click confirms) instead of a native confirm() dialog; clicking
   // elsewhere or pressing Escape disarms it.
@@ -176,10 +202,19 @@ export function CharacterLibraryPage({
     if (file.size > 10 * 1024 * 1024)
       throw new Error("Character file exceeds the 10 MiB import limit");
     const text = await file.text();
-    const content =
-      matchMissingContentByName && activePackId !== undefined
-        ? (await contentRepository.get(activePackId))?.entities
-        : undefined;
+    let activeEntities: Promise<readonly ContentEntity[]> | undefined;
+    const loadActiveEntities = () =>
+      (activeEntities ??=
+        activePackId === undefined
+          ? Promise.resolve([])
+          : contentRepository
+              .get(activePackId)
+              .then((pack) => pack?.entities ?? []));
+    const content = matchMissingContentByName
+      ? activePackId === undefined
+        ? undefined
+        : await loadActiveEntities()
+      : undefined;
     const imported = importDnd4e(
       text,
       content === undefined ? {} : { matchMissingDefinitionsIn: content },
@@ -205,6 +240,14 @@ export function CharacterLibraryPage({
     await refreshRevealing([character.id]);
     const toast = importReportToast(character.title, imported.report);
     if (toast !== undefined) pushToast(toast);
+    // A campaign block is offered only once the character is on content it
+    // can move from.
+    if (manifest === undefined) return;
+    const offer = await campaignOfferForSave(readCampaignSetting(text), {
+      installed: () => campaignRepository.list(),
+      baseEntities: loadActiveEntities,
+    });
+    if (offer !== undefined) setCampaignOffer({ character, offer });
   }
 
   /** A .4ecb package keeps its own content binding and portrait; it is
@@ -397,6 +440,45 @@ export function CharacterLibraryPage({
           />
         )}
       </div>
+      {campaignOffer === undefined ? null : (
+        <ImportedCampaignDialog
+          characterName={campaignOffer.character.title || "This character"}
+          offer={campaignOffer.offer}
+          onCancel={() => setCampaignOffer(undefined)}
+          onCreate={async () => {
+            const { offer } = campaignOffer;
+            if (offer.kind !== "create") throw new Error("Nothing to create");
+            const campaign = await createImportedCampaign(offer, (document) =>
+              campaignRepository.install(document),
+            );
+            window.dispatchEvent(new Event(CAMPAIGNS_CHANGED_EVENT));
+            return campaign;
+          }}
+          onJoin={(campaign) => {
+            const { character } = campaignOffer;
+            setCampaignOffer(undefined);
+            const manifest = manifests.find(
+              (candidate) => candidate.packId === activePackId,
+            );
+            const target = campaignChangeTarget(campaign, {
+              manifest,
+              profile: activeProfile,
+            });
+            if (target !== undefined) setCampaignMove({ character, target });
+          }}
+        />
+      )}
+      {campaignMove === undefined ? null : (
+        <ContentUpdateDialog
+          character={campaignMove.character}
+          target={campaignMove.target}
+          onClose={() => setCampaignMove(undefined)}
+          onUpdated={() => {
+            setCampaignMove(undefined);
+            void refresh().catch((reason: unknown) => reportFailure(reason));
+          }}
+        />
+      )}
       {trashOpen ? (
         <TrashDialog
           characters={trash}
