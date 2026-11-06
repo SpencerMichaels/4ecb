@@ -568,6 +568,13 @@
   gap: 0.5rem 1rem;
 }
 
+/* Edit mode says how to hide, show and reorder: on-paper controls would
+   cover the cards (owner, 2026-11-06). */
+.sheet-edit-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .sheet-sections-trigger {
   align-items: center;
   display: inline-flex;
@@ -762,74 +769,18 @@
   text-transform: uppercase;
 }
 
-/* A page-1 reminder row in Edit mode: its eye toggle (or a right-click)
-   shows or hides it (D099). A hidden row stays in place, faded. The row
-   anchors its out-of-flow toggle without changing its own size. */
-.sheet-reminder-edit {
-  position: relative;
-}
-
-.sheet-reminder-edit[data-hidden] > :not(.sheet-edit-toggle) {
+/* A page-1 reminder row in Edit mode toggles on right-click (D099). A hidden
+   row stays in place, faded. */
+.sheet-reminder-edit[data-hidden] {
   opacity: 0.35;
 }
 
-/* Edit mode's visible show/hide control (owner, 2026-11-06): a small eye at
-   a card's top-right corner or a reminder row's end, out of flow so nothing
-   it sits on moves or refits. The card paper stays light in dark mode, so
-   its colours are the paper's own. */
-button.sheet-edit-toggle {
-  align-items: center;
-  background: rgb(255 255 255 / 88%);
-  border: 1px solid rgb(32 39 42 / 35%);
-  border-radius: 50%;
-  color: rgb(32 39 42 / 80%);
-  display: inline-flex;
-  justify-content: center;
-  margin: 0;
-  min-block-size: 0;
-  min-inline-size: 0;
-  padding: 0;
-  position: absolute;
-  z-index: 3;
-}
-
-button.sheet-edit-toggle:hover {
-  background: #fff;
-  border-color: rgb(32 39 42 / 70%);
-  color: rgb(32 39 42);
-}
-
-button.sheet-edit-toggle:focus {
+/* No visible control: a focus ring only while tabbing between overlays. */
+.sheet-edit-target:focus {
   outline: none;
 }
 
-button.sheet-edit-toggle:focus-visible {
+.sheet-edit-target:focus-visible {
   outline: 3px solid var(--focus);
-  outline-offset: 1px;
-}
-
-/* A card's toggle shares its overlay's grid area, so the area is its
-   containing block and the offsets put it at the card's corner. */
-button.sheet-card-toggle {
-  block-size: 1.6rem;
-  inline-size: 1.6rem;
-  inset-block-start: 0.25rem;
-  inset-inline-end: 0.25rem;
-}
-
-button.sheet-card-toggle .icon {
-  block-size: 0.95rem;
-  inline-size: 0.95rem;
-}
-
-button.sheet-reminder-toggle {
-  block-size: 1.25rem;
-  inline-size: 1.25rem;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-}
-
-button.sheet-reminder-toggle .icon {
-  block-size: 0.8rem;
-  inline-size: 0.8rem;
+  outline-offset: -3px;
 }

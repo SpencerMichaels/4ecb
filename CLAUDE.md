@@ -311,12 +311,12 @@ each row opens its choice the way an issue's Review does), `#/campaigns/join/:ca
 character in <campaign>"; a character's campaign is the Details tab's
 Campaign select), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
-for the per-character sheet layout: an eye toggle (eye shown, eye-off
-hidden; `SheetEditToggle`, out of flow, Edit mode only) with right-click as
-its shortcut, and drag-to-reorder, on cards (`SheetEditTarget.tsx`; the
-toggle is the overlay's sibling, so it never starts a drag), the same eye
-toggle and right-click on page-1 reminder rows
-(`SheetOverview.tsx`; power-card riders offered off by default) and the
+for the per-character sheet layout: right-click hide/show and drag-to-reorder on cards
+(`SheetEditTarget.tsx`; the overlay is focusable, Enter/Space/Menu
+key/Shift+F10 toggle it), right-click hide/show on page-1 reminder rows
+(`SheetOverview.tsx`; power-card riders offered off by default), a muted
+toolbar hint saying so (`sheet-edit-hint`; no on-card controls, which
+would cover the power cards' usage icons) and the
 toolbar Sections menu of sections
 (`SheetSectionsMenu.tsx`: hide/show and reorder) — D099, `?print=1` auto-opens the print
 dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,

@@ -1,27 +1,23 @@
 # Implementation status
 
-## Sheet Edit mode has visible eye toggles (2026-11-06)
+## Sheet Edit mode explains hide/show in its toolbar (2026-11-06)
 
-D099 amendment under D117 (owner rule: right-click is a shortcut, never
-the only way in). In the print preview's Edit mode every card has a small
-eye toggle at its top-right corner and every page-1 (and continuation)
-reminder row one at its end, riders that are off by default included: eye
-while it prints, eye-off while hidden, labelled "Hide <name>" / "Show
-<name>" (`SheetEditToggle` in `SheetEditTarget.tsx`, `eye-off` added to
-`Icon.tsx`, styles in `05-sheet.css`). It calls the same `onToggle` as the
-right-click shortcut, which stays. The card overlay is no longer a
-focusable `role="button"`; the toggle is the one keyboard control, and
-reminder rows gain a keyboard path. A card's toggle is a sibling of its
-draggable overlay in the same grid area, so pressing it starts no drag.
-Both are absolutely positioned and `print-excluded`, render only in Edit
-mode while not printing and never in probe copies, so card fitting and
-page-1 measuring are unchanged.
+D099 amendment (owner, replacing the same day's eye toggles, which covered
+power cards' [E] [D] [W] usage icons). Cards and page-1 reminder rows have
+no on-paper toggle again; Edit mode's toolbar tools end with a muted hint,
+"Right-click a card or reminder to hide or show it; drag cards to
+reorder." (`.sheet-edit-hint` in `CharacterSheetPage.tsx`, styled in
+`05-sheet.css` like the app's other muted hints). It shows only while Edit
+is on, never in View, and the toolbar never prints. The card overlay is the
+focusable `role="button"` again (Enter, Space, the Menu key and Shift+F10
+toggle it, `aria-pressed` follows the state); reminder rows are
+right-click only, as before. `SheetEditToggle`, its CSS and the `eye-off`
+icon are removed.
 
-Verification: `CharacterSheetPage.editing.test.tsx` (toggles only in Edit,
-eye/eye-off and labels follow the state, a click saves the same layout
-change as a right-click, a right-click on the toggle toggles once, no
-dragstart, none in probes or after `beforeprint`; the off-by-default
-Action Point rider's row), `print-layout.test.ts` (toggles out of flow),
+Verification: `CharacterSheetPage.editing.test.tsx` (no buttons on cards
+or reminder rows, hint present in Edit only, overlay role/tabIndex and the
+four toggle keys, right-click hide/show of cards and the off-by-default
+Action Point rider), `print-layout.test.ts` (hint style),
 `pnpm vitest run packages apps`, typecheck, lint, format:check,
 `review:verify`.
 

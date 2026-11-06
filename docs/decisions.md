@@ -3196,6 +3196,20 @@ Decision:
   flow), `print-excluded`, exist only while Edit mode is on and not
   printing, and never appear in probe copies, so card fitting and page-1
   measuring are unchanged.
+- Amendment (owner, 2026-11-06, later the same day): "The eye icon in
+  sheet edit hides the [E] [D] [W] icons in the top right of utility
+  powers. I think we could remove those icons, and just put a 'right click
+  to hide card' note somewhere in the top bar in edit mode." The eye
+  toggles are removed from cards and reminder rows (and the `eye-off`
+  icon with them). Instead Edit mode's toolbar tools end with muted helper
+  text, "Right-click a card or reminder to hide or show it; drag cards to
+  reorder." (`.sheet-edit-hint`; the toolbar is screen-only, so it never
+  prints; drag-to-reorder was explained nowhere visible, so the hint names
+  it). The card overlay is again the focusable `role="button"` it was
+  before (Enter, Space, the Menu key or Shift+F10 toggle it; focus stays on
+  the sheet). Reminder rows are right-click only again, as before the eye
+  toggles. This is D117's main-UI alternative for sheet Edit mode: the
+  action is still right-click, but the visible UI says so.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,
@@ -4998,4 +5012,7 @@ selected holding's actions are buttons in its detail pane.
 - **Wording.** An item-choice issue now says to make the choice "from its
   detail pane on the Inventory tab", not to right-click.
 - **Sheet Edit mode.** Its right-click hide/show on cards and page-1
-  reminder rows now has visible eye toggles (D099 amendment, 2026-11-06).
+  reminder rows briefly had visible eye toggles; the owner replaced them
+  with a toolbar hint the same day, because a card's toggle covered the
+  power card's usage icons (D099 amendments, 2026-11-06). The hint is the
+  main-UI pointer to the right-click action there.

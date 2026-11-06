@@ -38,7 +38,6 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { StatGroup } from "./StatTiles";
-import { SheetEditToggle } from "./SheetEditTarget";
 import { WritingLines } from "./WritingLines";
 import {
   CONDITIONAL_MODIFIER_GROUPS,
@@ -444,17 +443,6 @@ function Reminders({
             ) : (
               <Prose value={entry.value} />
             )}
-            {/* Edit mode's visible toggle, out of flow at the row's end, so
-                the row (and the probe copy it was fitted from) keeps its
-                size. */}
-            {id === undefined ? null : (
-              <SheetEditToggle
-                className="sheet-reminder-toggle"
-                hidden={entry.shown === false}
-                name={entry.choice ? `${label}: ${entry.choice}` : label}
-                onToggle={() => onToggle!(id)}
-              />
-            )}
           </div>
         );
       })}
@@ -474,8 +462,7 @@ function ReminderPanels({
 }: {
   values: readonly ReminderEntry[];
   visibleIndices?: readonly number[] | undefined;
-  /** Edit mode's eye toggle and right-click shortcut; never on measured
-   *  probe copies. */
+  /** Edit mode's right-click toggle; never on measured probe copies. */
   onToggle?: ((id: string) => void) | undefined;
 }) {
   const categories = [
@@ -3597,7 +3584,7 @@ export function SheetOverview({
   /** Page 1's reminder rows from the sheet layout (D099), in page order;
    *  Edit mode includes hidden rows. Defaults to the model's own. */
   reminders?: readonly ReminderEntry[];
-  /** Edit mode: a reminder row's eye toggle (or a right-click) toggles it. */
+  /** Edit mode: right-clicking a reminder row toggles it. */
   onToggleReminder?: (id: string) => void;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {

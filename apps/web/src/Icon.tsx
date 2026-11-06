@@ -38,7 +38,6 @@ import {
   Coins,
   Download,
   Eye,
-  EyeOff,
   FileText,
   FolderInput,
   HandFist,
@@ -164,7 +163,6 @@ export type IconName =
   | "dumbbell"
   | "edit"
   | "eye"
-  | "eye-off"
   | "favorite"
   | "feat"
   | "flask-conical"
@@ -279,7 +277,6 @@ const icons: Record<IconName, LucideIcon> = {
   dumbbell: Dumbbell,
   edit: Pencil,
   eye: Eye,
-  "eye-off": EyeOff,
   favorite: Star,
   feat: Sparkles,
   "flask-conical": FlaskConical,
