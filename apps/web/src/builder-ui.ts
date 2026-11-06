@@ -1057,6 +1057,60 @@ export function candidateTableTypeGroup(
   return tableTypeGroup("General");
 }
 
+/** The Deity table's band for deities without an authored Pantheon. */
+export const DEITY_PANTHEON_FALLBACK = "Other";
+
+const deityPantheonOrders = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  ReadonlyMap<string, number>
+>();
+
+function pantheonKey(pantheon: string): string {
+  return `pantheon:${pantheon.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
+}
+
+/**
+ * Each authored deity Pantheon's band position: where the content first
+ * names it (stock content lists its Player's Handbook deities first, so
+ * Core leads). Computed once per content, by its immutable entity map.
+ */
+function deityPantheonOrder(
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlyMap<string, number> {
+  const cached = deityPantheonOrders.get(byId);
+  if (cached !== undefined) return cached;
+  const order = new Map<string, number>();
+  for (const entity of byId.values()) {
+    if (entity.type.trim().toLocaleLowerCase() !== "deity") continue;
+    const pantheon = contentSpecificValue(entity, "Pantheon");
+    if (pantheon === undefined) continue;
+    const key = pantheonKey(pantheon);
+    if (!order.has(key)) order.set(key, order.size);
+  }
+  deityPantheonOrders.set(byId, order);
+  return order;
+}
+
+/**
+ * The Deity table's band (D042 amendment): the deity's authored Pantheon
+ * (a setting for stock deities, a source table for a campaign's), in
+ * content order; deities without one share a final "Other" band.
+ */
+export function deityTableGroup(
+  entity: ContentEntity | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+): CandidateTableTypeGroup {
+  const pantheon =
+    entity === undefined ? undefined : contentSpecificValue(entity, "Pantheon");
+  const key = pantheonKey(pantheon ?? DEITY_PANTHEON_FALLBACK);
+  const order = deityPantheonOrder(byId).get(key);
+  return {
+    key,
+    label: pantheon ?? DEITY_PANTHEON_FALLBACK,
+    order: order ?? Number.MAX_SAFE_INTEGER,
+  };
+}
+
 export function buildPresetSuggestionNames(
   preset: ContentEntity,
 ): readonly string[] {

@@ -827,6 +827,28 @@ stat progression; granted companion/familiar powers remain grants rather than
 new player choices. Mounts remain equipment, while shaman spirit-companion
 features and powers remain in their authored Class/Power/Feat categories.
 
+Amendment (2026-11-06, owner: "for the deities list in the builder … add
+subsections to it? collapsible just like … the shop or inventory tab"): the
+Deity table bands its rows by an authored `Pantheon` specific, using the
+shell's existing type-section bands (the feat/power `selection-type-row`,
+the same `table-section-row`/`table-section-toggle` band as the Inventory's
+and Shop's groups; no new look). Stock deities get a Pantheon by setting
+from a corrections part (`9I-deity-pantheons.part`: Core for the Player's
+Handbook and Dungeon Master's Guide, then Forgotten Realms, Eberron, Dragon
+Magazine, by each record's first source); a campaign's deities carry their
+own (the Pathfinder campaign's are the wiki tables they came from).
+Deities without one share a final "Other" band. Bands follow the order in
+which the content first names each pantheon (Core first for stock),
+computed once per content (`deityTableGroup` in `builder-ui.ts`, keyed by
+the entity map). Unlike the feat/power bands, which open only the first
+band and any holding a selection, deity bands all start open, as the
+Inventory's and Shop's do; folding is not remembered. Filters and search
+span every band; a band with no visible row is not shown; under a campaign
+the restricted stock deities appear in their bands only under Show all.
+The deity card shows the Pantheon as an ordinary authored field beside
+Alignment. Only the Deity table is grouped this way; grouping another
+choice table needs the owner's OK.
+
 ### D043 — Inactive provider rules preserve but suppress their saved children
 
 Statement-level `requires` controls whether a `select`, `grant`, or other rule

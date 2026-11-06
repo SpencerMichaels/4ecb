@@ -26,6 +26,7 @@ import {
   classTableMetadata,
   contentSpecificValue,
   deityTableDescription,
+  deityTableGroup,
   type groupParameterizedCandidates,
   isCandidateSelectable,
   powerTableActionLabel,
@@ -195,6 +196,19 @@ function cachedTypeGroup(
 type FeatPresentationGroup = ReturnType<
   typeof groupParameterizedCandidates
 >[number];
+
+/** Kinds whose rows the table bands into collapsible sections: feats and
+ *  powers by type, deities by authored Pantheon (D042 amendment). */
+function candidateTableHasSections(kind: ChoiceSelectionTableKind): boolean {
+  return kind === "feat" || kind === "power" || kind === "deity";
+}
+
+function candidateTableColumnCount(kind: ChoiceSelectionTableKind): number {
+  if (kind === "power") return 6;
+  if (kind === "class") return 4;
+  if (kind === "background" || kind === "deity") return 3;
+  return 2;
+}
 
 function candidateTableNoun(
   kind: ChoiceSelectionTableKind,
@@ -471,6 +485,7 @@ export function CandidateSelectionTable({
     });
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
+    if (kind === "deity") return deityTableGroup(entity, byId);
     return entity === undefined || (kind !== "feat" && kind !== "power")
       ? { key: "other", label: "Other", order: 900 }
       : cachedTypeGroup(entity, kind, byId);
@@ -852,7 +867,11 @@ export function CandidateSelectionTable({
     const expanded =
       normalizedFilter !== "" ||
       (typeExpansion.get(section.key) ??
-        (expandSections || selected || sectionIndex === 0));
+        (expandSections ||
+          // Deity bands all start open, as the Inventory's and Shop's do.
+          kind === "deity" ||
+          selected ||
+          sectionIndex === 0));
     const rows: ResultRow[] = [];
     if (expanded && kind !== "feat") {
       for (const candidate of [...section.candidates].sort((left, right) =>
@@ -1314,9 +1333,12 @@ export function CandidateSelectionTable({
                 );
                 return (
                   <Fragment key={section.key}>
-                    {kind === "feat" || kind === "power" ? (
+                    {candidateTableHasSections(kind) ? (
                       <tr className="selection-type-row table-section-row">
-                        <th colSpan={kind === "power" ? 6 : 2} scope="rowgroup">
+                        <th
+                          colSpan={candidateTableColumnCount(kind)}
+                          scope="rowgroup"
+                        >
                           <button
                             className="table-section-toggle"
                             aria-expanded={expanded}
@@ -1332,9 +1354,9 @@ export function CandidateSelectionTable({
                             <Icon name="chevron" />
                             <span>{section.label}</span>
                             <small className="table-section-count">
-                              {kind === "power"
-                                ? section.candidates.length
-                                : section.featGroups.length}
+                              {kind === "feat"
+                                ? section.featGroups.length
+                                : section.candidates.length}
                             </small>
                           </button>
                         </th>
@@ -1350,17 +1372,7 @@ export function CandidateSelectionTable({
               ? visibleFeatGroups.length
               : visibleCandidates.length) === 0 ? (
               <tr>
-                <td
-                  colSpan={
-                    kind === "power"
-                      ? 6
-                      : kind === "class"
-                        ? 4
-                        : kind === "background"
-                          ? 3
-                          : 2
-                  }
-                >
+                <td colSpan={candidateTableColumnCount(kind)}>
                   No matching {candidateTableNoun(kind, true)}.
                 </td>
               </tr>

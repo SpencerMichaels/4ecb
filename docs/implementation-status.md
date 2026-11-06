@@ -1,5 +1,28 @@
 # Implementation status
 
+## Deity table bands by pantheon (2026-11-06)
+
+The builder's Deity table bands its rows by an authored `Pantheon`
+specific (D042 amendment), reusing the choice-table shell's feat/power
+type-section bands (`selection-type-row table-section-row`, the
+Inventory's and Shop's band). Deity bands all start open; a band with no
+visible row under the filter is not drawn; under a campaign the restricted
+stock deities appear in their bands only under Show all. Band order is the
+content's first mention of each pantheon, cached per entity map
+(`deityTableGroup`, `builder-ui.ts`); deities without one share a final
+"Other" band. The deity card shows "Pantheon" as an ordinary authored
+field, after Alignment. Stock content: `content/corrections/9I-deity-pantheons.part`
+(generated from the pack) gives all 135 stock deities a Pantheon: Core 20,
+Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (none missing on the
+rebuilt full pack). Pathfinder campaign revision 2: Inner Sea major deities
+20, Other deities 28, Dwarven 9, Elven 3, Eldest 1, Archdevils 1
+(`tmp/campaigns/pathfinder.4ecc` rebuilt against the full pack, 0
+warnings; not advertised). Verification: synthetic
+`CandidateSelectionTable.deity-bands.test.tsx` (grouping, order, fallback
+band, collapse, filtering across bands, Show all under a campaign, card
+field); `pnpm test`, typecheck, lint and format:check pass;
+`parity:baseline` shows no new mismatches. Owner visual check pending.
+
 ## Campaign slice complete (2026-11-06)
 
 D116 is implemented and the roadmap's Campaign slice (M8, pulled ahead of
