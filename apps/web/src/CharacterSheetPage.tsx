@@ -727,7 +727,7 @@ export function CharacterSheetPage({
           )}
           <button
             aria-label="Print or save as PDF"
-            className="icon-only-button button-icon sheet-toolbar-button"
+            className="icon-only-button button-icon sheet-toolbar-button sheet-toolbar-print"
             title="Print or save as PDF"
             type="button"
             onClick={print}

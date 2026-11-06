@@ -542,6 +542,10 @@ describe("print layout contract", () => {
     expect(appStyles).toMatch(
       /\.print-preview-toolbar \.sheet-toolbar-button\.icon-only-button \{\s*width: var\(--sheet-toolbar-control-height\);/,
     );
+    // Print keeps the bordered button frame of its neighbours; Back is bare.
+    expect(appStyles).toMatch(
+      /\.page-actions > \.sheet-toolbar-print \{[^}]*border: 1px solid var\(--border-strong\);/,
+    );
     // No other toolbar rule sets a height or block padding of its own.
     expect(appStyles).not.toMatch(
       /\.sheet-sections-trigger \{[^}]*(height|padding)/,

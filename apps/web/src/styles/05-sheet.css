@@ -582,6 +582,23 @@
   width: var(--sheet-toolbar-control-height);
 }
 
+/* Print is a toolbar action beside the bordered View | Edit and Sections,
+   so it keeps the ordinary button frame; Back stays a bare navigation
+   arrow (owner, 2026-11-06: a borderless Print "looks unbalanced"). */
+.page-actions > .sheet-toolbar-print {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  color: var(--text);
+}
+
+.page-actions
+  > .sheet-toolbar-print:not(:disabled):not([aria-disabled="true"]):hover {
+  background: var(--surface-raised);
+  border-color: var(--focus);
+  box-shadow: inset 0 -2px var(--focus);
+}
+
 /* Edit mode says how to hide, show and reorder: on-paper controls would
    cover the cards (owner, 2026-11-06). */
 .sheet-edit-hint {
