@@ -1923,7 +1923,7 @@ rule("invoker-drow", "Shop: Rituals", "Rituals category", (c) => {
     contains(
       "The Type select lists the three learning categories after the items",
       html,
-      '<optgroup label="Rituals and practices"><option value="rituals" selected="">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></optgroup>',
+      '<option value="rituals" selected="">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></select>',
     ),
     contains(
       'A "Search rituals…" placeholder',
