@@ -72,10 +72,15 @@ the app (`syncThemeColor` in `theme.ts`, from `App.tsx`) collapses them into one
 that tracks the effective theme: the Display setting, and system preference
 changes under System. The colors are the page background token `--background`:
 `vite.config.ts` reads the light and dark values from `styles/01-base.css`
-(`theme-tokens.ts`) for the metas and the manifest's `theme_color` and
-`background_color`, and the runtime reads the resolved token, so there is no
-second copy. `scripts/check-built-pwa.mjs` checks the built metas against the
-manifest. Visual check: Pass 16 in `visual-review-checklist.md`.
+(`theme-tokens.ts`) for the metas, and the runtime reads the resolved token,
+so there is no second copy. Amended 2026-11-05 (`db79449`, D002): the
+manifest (`web-manifest.ts`, emitted by its own build plugin) has no
+`theme_color` or `background_color`, because Chromium pins an installed
+window's frame to them whenever the page meta isn't in effect (at launch, or
+on a stale build); without them the frame falls back to the page background or
+the browser's own light/dark frame. `scripts/check-built-pwa.mjs` checks the
+built metas and that the manifest has no colors. Visual check: Pass 23 in
+`visual-review-checklist.md`.
 
 ## Power swaps: augmentable at-will targets (2026-10-31)
 
