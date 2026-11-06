@@ -64,7 +64,17 @@ Content tool CLI (legacy import/merge/compile/inspect):
 
 ```sh
 pnpm content-tool <args>          # tsx apps/content-tool/src/main.ts
+pnpm content-tool campaign build --manifest campaign.json --output x.4ecc [--against PACK.4ecp]
+pnpm content-tool campaign inspect x.4ecc
+pnpm content-tool advertise-campaign x.4ecc [--out-dir deploy]   # private-packs/campaigns/ + runtime-config campaigns
 ```
+
+Campaigns (D116): `campaign.json` is `{campaignId, name, revision,
+houseRules: "<xml path>", restrict: {ids, types: {"Deity": "campaign-only"}}}`;
+the house-rule XML is parsed at build (same parser as `build`), and
+`--against` only warns. `advertise` and `advertise-campaign` read-modify-write
+`runtime-config.json`, each changing only its own key. Built `.4ecc` files are
+ignored; the public example source is `fixtures/campaigns/synthetic/`.
 
 Print/PDF check:
 
@@ -90,8 +100,9 @@ CI splits it: `public-checks` runs it with `FOURECB_SKIP_PRINT_CHECK=1` (and gat
 image publishing), and a separate `print-checks` job runs `check:print`.
 
 This runs format:check, lint, test, build, check:print, PWA artifact checks,
-and a deterministic content-pack build/validate/diff/benchmark round-trip
-against `fixtures/content/synthetic.dnd40.xml`.
+a deterministic content-pack build/validate/diff/benchmark round-trip
+against `fixtures/content/synthetic.dnd40.xml`, and a deterministic campaign
+build/inspect/advertise round-trip of `fixtures/campaigns/synthetic/`.
 
 Release (push to GitHub `main` and wait for the published image; the homelab
 deploys it automatically — see `docs/public-deployment.md`):
@@ -139,7 +150,8 @@ unmapped saves (`docs/rules-engine.md`).
 Small-group deployment (static PWA container, no backend):
 
 ```sh
-pnpm content-tool advertise /path/to/pack.4ecp   # writes ignored deploy/ (pack copy + runtime-config.json)
+pnpm content-tool advertise /path/to/pack.4ecp   # writes ignored deploy/ (pack copy + runtime-config.json contentPacks)
+pnpm content-tool advertise-campaign x.4ecc      # deploy/private-packs/campaigns/ + runtime-config.json campaigns
 FOURECB_TAG=$(git rev-parse --short HEAD) docker compose up -d --build
 ```
 

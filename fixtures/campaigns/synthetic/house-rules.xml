@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Invented, public campaign house rules for the content-tool campaign round
+     trip (scripts/check.sh). The synthetic content fixture has no deity, so
+     "Hearthfather" names a base deity that only a richer pack would supply:
+     the Anvil Warden still counts as it (CountsAsDeity, D116). -->
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_4ECB_CAMPAIGN_DEITY_ANVIL" name="Anvil Warden" type="Deity" source="4ECB Synthetic Campaign" revision-date="2026-11-06">
+    <Category>Lawful Good</Category>
+    <specific name="Alignment">Lawful Good</specific>
+    <rules>
+      <grant name="ID_4ECB_CAMPAIGN_COUNTSASDEITY_HEARTHFATHER" type="CountsAsDeity" />
+    </rules>
+    A synthetic forge deity that counts as the Hearthfather.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CAMPAIGN_DEITY_TIDE" name="Tide Mother" type="Deity" source="4ECB Synthetic Campaign" revision-date="2026-11-06">
+    <Category>Unaligned</Category>
+    <specific name="Alignment">Unaligned</specific>
+    <rules />
+    A synthetic sea deity with no equivalent.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CAMPAIGN_DEITY_LANTERN" name="Ash Lantern" type="Deity" source="4ECB Synthetic Campaign" revision-date="2026-11-06">
+    <Category>Good</Category>
+    <specific name="Alignment">Good</specific>
+    <rules />
+    A synthetic deity of hearth fires and the dead.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CAMPAIGN_COUNTSASDEITY_HEARTHFATHER" name="Hearthfather" type="CountsAsDeity" source="4ECB Synthetic Campaign" revision-date="2026-11-06">
+    <rules />
+  </RulesElement>
+</D20Rules>

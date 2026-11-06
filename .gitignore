@@ -11,6 +11,9 @@
 /data/private/
 *.4ecp
 *.4ecp.gz
+# Built campaign documents (D116); their sources (campaign.json + XML) are tracked
+*.4ecc
+*.4ecc.gz
 
 # Operator deployment inputs (runtime config and private packs)
 /deploy/

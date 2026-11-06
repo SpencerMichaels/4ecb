@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
 import { createReadStream } from "node:fs";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { basename, dirname, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { basename, resolve } from "node:path";
 import { stderr, stdout } from "node:process";
-import { promisify } from "node:util";
-import { gunzip as gunzipCallback, gzip as gzipCallback } from "node:zlib";
 
 import {
   buildContentPack,
@@ -14,70 +12,23 @@ import {
   encodeContentPack,
   summarizeContentPack,
   validateContentPack,
-  type ContentPack,
 } from "@4ecb/content-pack";
 import { D20RulesParser } from "@4ecb/legacy-wotc";
 import { withStoredPrerequisiteIr } from "@4ecb/rules-engine";
 
-const gzip = promisify(gzipCallback);
-const gunzip = promisify(gunzipCallback);
-
-interface ParsedArguments {
-  readonly positionals: readonly string[];
-  readonly options: ReadonlyMap<string, string>;
-}
-
-function parseArguments(values: readonly string[]): ParsedArguments {
-  const positionals: string[] = [];
-  const options = new Map<string, string>();
-  for (let index = 0; index < values.length; index += 1) {
-    const value = values[index];
-    if (value === undefined) continue;
-    if (!value.startsWith("--")) {
-      positionals.push(value);
-      continue;
-    }
-    const name = value.slice(2);
-    const optionValue = values[index + 1];
-    if (optionValue === undefined || optionValue.startsWith("--")) {
-      throw new Error(`Option --${name} requires a value`);
-    }
-    options.set(name, optionValue);
-    index += 1;
-  }
-  return { positionals, options };
-}
-
-function requireOption(arguments_: ParsedArguments, name: string): string {
-  const value = arguments_.options.get(name);
-  if (value === undefined || value.trim().length === 0) {
-    throw new Error(`Missing required option --${name}`);
-  }
-  return value;
-}
-
-function printJson(value: unknown): void {
-  stdout.write(`${JSON.stringify(value, null, 2)}\n`);
-}
-
-async function readPack(path: string): Promise<ContentPack> {
-  const bytes = await readFile(path);
-  const decoded =
-    bytes[0] === 0x1f && bytes[1] === 0x8b ? await gunzip(bytes) : bytes;
-  return decodeContentPack(decoded.toString("utf8"));
-}
-
-async function writeAtomically(
-  path: string,
-  value: string | Uint8Array,
-): Promise<void> {
-  const absolutePath = resolve(path);
-  await mkdir(dirname(absolutePath), { recursive: true });
-  const temporaryPath = `${absolutePath}.tmp`;
-  if (typeof value === "string") await writeFile(temporaryPath, value, "utf8");
-  else await writeFile(temporaryPath, value);
-  await rename(temporaryPath, absolutePath);
-}
+import { advertiseCampaignCommand, campaignCommand } from "./campaign-command";
+import {
+  gunzip,
+  gzip,
+  isGzip,
+  parseArguments,
+  printJson,
+  readPack,
+  requireOption,
+  writeAtomically,
+  type ParsedArguments,
+} from "./cli";
+import { updateRuntimeConfig, withAdvertisedPack } from "./runtime-config";
 
 async function build(arguments_: ParsedArguments): Promise<void> {
   const input = resolve(requireOption(arguments_, "input"));
@@ -144,7 +95,7 @@ async function advertise(arguments_: ParsedArguments): Promise<void> {
   if (source === undefined) throw new Error("advertise requires a pack path");
   const outDir = resolve(arguments_.options.get("out-dir") ?? "deploy");
   const bytes = await readFile(resolve(source));
-  const gzipped = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  const gzipped = isGzip(bytes);
   const pack = decodeContentPack(
     (gzipped ? await gunzip(bytes) : bytes).toString("utf8"),
   );
@@ -159,16 +110,17 @@ async function advertise(arguments_: ParsedArguments): Promise<void> {
   const packPath = resolve(outDir, "private-packs", fileName);
   await writeAtomically(packPath, gzipped ? bytes : await gzip(bytes));
   const configPath = resolve(outDir, "runtime-config.json");
-  const config = {
-    relayUrl: null,
-    defaultPackUrl: null,
-    contentPacks: [
-      { packId, name, contentDigest, url: `/private-packs/${fileName}` },
-    ],
-    features: { playMode: false, sessionRelay: false },
+  const advertised = {
+    packId,
+    name,
+    contentDigest,
+    url: `/private-packs/${fileName}`,
   };
-  await writeAtomically(configPath, `${JSON.stringify(config, null, 2)}\n`);
-  printJson({ packPath, configPath, advertised: config.contentPacks[0] });
+  // Only contentPacks changes: campaigns and operator settings are kept.
+  await updateRuntimeConfig(configPath, (config) =>
+    withAdvertisedPack(config, advertised),
+  );
+  printJson({ packPath, configPath, advertised });
 }
 
 function printHelp(): void {
@@ -180,6 +132,9 @@ Usage:
   content-tool validate PACK.4ecp
   content-tool diff BEFORE.4ecp AFTER.4ecp
   content-tool advertise PACK.4ecp [--out-dir deploy]
+  content-tool campaign build --manifest campaign.json --output CAMPAIGN.4ecc [--against PACK.4ecp]
+  content-tool campaign inspect CAMPAIGN.4ecc
+  content-tool advertise-campaign CAMPAIGN.4ecc [--out-dir deploy]
 `);
 }
 
@@ -201,6 +156,12 @@ async function main(): Promise<void> {
       break;
     case "advertise":
       await advertise(arguments_);
+      break;
+    case "campaign":
+      await campaignCommand(arguments_);
+      break;
+    case "advertise-campaign":
+      await advertiseCampaignCommand(arguments_);
       break;
     case "help":
     case "--help":

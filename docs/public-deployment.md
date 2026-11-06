@@ -174,10 +174,11 @@ missing file is 404), so no proxy configuration is needed to advertise a pack.
    ```
 
    This validates the pack, writes
-   `deploy/private-packs/<packId>-<digest prefix>.4ecp`, and writes
-   `deploy/runtime-config.json` advertising exactly that pack. Rerun it after
-   building a new pack. `deploy/` is ignored by git and by the Docker build
-   context, so private content never enters a commit or the image.
+   `deploy/private-packs/<packId>-<digest prefix>.4ecp`, and sets
+   `contentPacks` in `deploy/runtime-config.json` to exactly that pack,
+   keeping the file's other keys (advertised campaigns, relay, features).
+   Rerun it after building a new pack. `deploy/` is ignored by git and by the
+   Docker build context, so private content never enters a commit or the image.
 
 2. Build, tag and start:
 
@@ -206,6 +207,36 @@ missing file is 404), so no proxy configuration is needed to advertise a pack.
    through without credentials: browsers fetch the manifest and the app icons
    without cookies or other credentials, and an install from a gated manifest or
    icon ends up with no icon or no install at all.
+
+**Campaigns (D116).** A DM's campaign is hosted beside the private packs.
+Build it from its tracked source (a `campaign.json` naming a house-rule XML
+file; `fixtures/campaigns/synthetic/` is a public example) and advertise it:
+
+```sh
+nix develop --command pnpm content-tool campaign build \
+  --manifest content/campaigns/<id>/campaign.json \
+  --output tmp/content/<id>.4ecc --against /path/to/pack.4ecp
+nix develop --command pnpm content-tool advertise-campaign tmp/content/<id>.4ecc
+```
+
+`campaign.json` is `{campaignId, name, revision, houseRules: "<xml path,
+relative to it>", restrict: {ids: [...], types: {"Deity": "campaign-only"}}}`.
+The build parses the XML with the same parser as `content-tool build` (it
+holds only `RulesElement` records) and keeps its records verbatim for legacy
+export; `--against` prints warnings only (restricted IDs the pack lacks, house
+rules replacing pack records, type rules matching nothing) and how many
+records each type rule restricts. `campaign inspect FILE.4ecc` decodes and
+verifies a built file. `advertise-campaign` verifies the file, copies it to
+`deploy/private-packs/campaigns/<campaignId>-<digest prefix>.4ecc` and adds
+`{campaignId, name, revision, contentDigest, url}` to `campaigns` in
+`deploy/runtime-config.json`, replacing that campaign's older revision and
+keeping everything else. It refuses an older revision, or the same revision
+with different content: bump `revision` on every change. Hosting a campaign
+applies it to nobody; players join it. Older campaign files stay in
+`deploy/private-packs/campaigns/` until the operator removes them. Whatever
+copies `deploy/` to the server must copy and keep
+`private-packs/campaigns/` (for the homelab, homenet's `apps/4ecb/pack.yml`;
+that change is made in the homenet repo).
 
 **Updates.** Ask testers to back up their libraries before significant changes,
 then rebuild with a new tag as in step 2. Testers see **Reload and update**;

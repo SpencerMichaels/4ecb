@@ -24,6 +24,40 @@ needs it or a records scan). Verification: `campaign-repository.test.ts`
 binding validation test, a migration-key test; `pnpm typecheck`, lint,
 prettier and full `pnpm test`.
 
+## Campaign authoring and hosting in content-tool (2026-11-06)
+
+D116 step 3: `apps/content-tool/src/campaign-command.ts`.
+`content-tool campaign build --manifest campaign.json --output x.4ecc
+[--against PACK.4ecp]` reads `{campaignId, name, revision, houseRules,
+restrict: {ids, types: {"Deity": "campaign-only"}}}` (unknown keys refused),
+parses the house-rule XML with `parseD20Rules` (the `build` parser; a
+rejected record or a non-RulesElement top-level element is an error), keeps
+the root's children verbatim as `legacyHouseRulesXml` and writes a gzipped
+`.4ecc` through content-pack `buildCampaign`/`encodeCampaign`. The overlay
+stores no `_Prerequisite IR`: composition strips it from a multi-pack
+profile anyway. `--against` warns only: restricted IDs the pack lacks (or
+that name the campaign's own records), house rules replacing pack records,
+type rules matching nothing; it reports each type rule's restricted count
+and the total. `campaign inspect` decodes, verifies and summarizes a file.
+`advertise-campaign FILE [--out-dir deploy]` copies it to
+`private-packs/campaigns/<id>-<digest12>.4ecc` and merges
+`{campaignId, name, revision, contentDigest, url}` into `campaigns` in
+`runtime-config.json` (an older revision of the same campaign is replaced;
+an older revision, or the same revision with other content, is refused).
+`advertise` now read-modify-writes the config too: it still sets
+`contentPacks` to exactly the one pack (rebuilt packs get a new packId) but
+keeps `campaigns` and every other key (`runtime-config.ts`). `*.4ecc` is
+ignored. Public fixture `fixtures/campaigns/synthetic/`: three invented
+deities, one granting a `CountsAsDeity` "Hearthfather" (the synthetic
+content has no deity, so the base deity it names is absent there), a
+`Deity: campaign-only` rule and one restricted synthetic feat;
+`scripts/check.sh` builds it twice (byte-identical), inspects and
+advertises it. Verification: 11 synthetic tests
+(`campaign-command.test.ts`, `runtime-config.test.ts`), content-tool
+typecheck, lint, prettier, full `pnpm test` and `scripts/check.sh`. Open:
+homenet's `apps/4ecb/pack.yml` must copy and keep `private-packs/campaigns/`
+(owner, other repo).
+
 ## Campaign restrictions in the rules engine (2026-11-06)
 
 D116 step 2 is built: `EvaluationInput.restrictedDefinitionIds` (rules-engine

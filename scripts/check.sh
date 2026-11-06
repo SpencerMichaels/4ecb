@@ -21,7 +21,7 @@ test -f apps/web/dist/manifest.webmanifest
 test -f apps/web/dist/runtime-config.json
 jq -e '.display == "standalone"' apps/web/dist/manifest.webmanifest >/dev/null
 node scripts/check-built-pwa.mjs
-if find apps/web/dist -type f \( -name '*.4ecp' -o -name '*.dnd4e' \) \
+if find apps/web/dist -type f \( -name '*.4ecp' -o -name '*.4ecc' -o -name '*.dnd4e' \) \
   -print -quit | grep -q .; then
   echo "Private content artifact found in public web build" >&2
   exit 1
@@ -42,5 +42,23 @@ cmp "$scratch_dir/first.4ecp" "$scratch_dir/second.4ecp"
 pnpm content-tool validate "$scratch_dir/first.4ecp"
 pnpm content-tool diff "$scratch_dir/first.4ecp" "$scratch_dir/second.4ecp"
 pnpm benchmark:query "$scratch_dir/first.4ecp"
+
+# Campaign documents (D116): deterministic build, checked against the pack,
+# then decoded and verified again by inspect.
+build_campaign() {
+  pnpm --silent content-tool campaign build \
+    --manifest fixtures/campaigns/synthetic/campaign.json \
+    --output "$1" \
+    --against "$scratch_dir/first.4ecp" >/dev/null
+}
+
+build_campaign "$scratch_dir/first.4ecc"
+build_campaign "$scratch_dir/second.4ecc"
+cmp "$scratch_dir/first.4ecc" "$scratch_dir/second.4ecc"
+pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
+  jq -e '.validation.valid and .houseRules.recordCount == 4' >/dev/null
+pnpm --silent content-tool advertise-campaign "$scratch_dir/first.4ecc" \
+  --out-dir "$scratch_dir/deploy" >/dev/null
+jq -e '.campaigns | length == 1' "$scratch_dir/deploy/runtime-config.json" >/dev/null
 
 echo "All public checks passed."

@@ -1,0 +1,10 @@
+{
+  "campaignId": "synthetic-setting",
+  "name": "Synthetic Setting",
+  "revision": 1,
+  "houseRules": "house-rules.xml",
+  "restrict": {
+    "ids": ["ID_4ECB_SYNTHETIC_FEAT_1"],
+    "types": { "Deity": "campaign-only" }
+  }
+}
