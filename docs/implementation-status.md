@@ -1,5 +1,25 @@
 # Implementation status
 
+## Campaign restrictions in the rules engine (2026-11-06)
+
+D116 step 2 is built: `EvaluationInput.restrictedDefinitionIds` (rules-engine
+`evaluator.ts`), modelled on `sourceEntitlements` and threaded into nested
+prerequisite evaluations. A restricted candidate reads reason
+`campaign-restricted` and `sourceEntitled: false` at every entitlement site
+(choices, defaults, replacements/retraining, archery mastery); restricted
+records stay indexed, so prerequisite and worship names still resolve; an
+owned restricted occurrence is a warning `occurrence.campaign-restricted`
+and makes `legal` false. `previewProfileMigration` takes source and target
+restricted IDs (`ProfileMigrationOptions`), and `evaluateRitualChoiceFills`
+an optional list. Nothing supplies the IDs yet: the worker and builder issue
+are step 6. Evaluation cache bumped to v117. Verification: synthetic
+`campaign-restrictions.test.ts` (restricted deity not offered; a worship
+feat met through Torag's CountsAsDeity while Moradin is restricted; an
+existing restricted pick → diagnostic and `legal: false`; an empty list
+changes nothing; migration preview applies each side's restrictions), full
+`pnpm test` (2091 passing), rules-engine typecheck, lint and prettier;
+`parity:baseline` shows no new mismatches.
+
 ## Legacy campaign setting read/write (2026-11-06)
 
 D116 step 4: `packages/legacy-dnd4e/src/campaign-setting.ts` reads and

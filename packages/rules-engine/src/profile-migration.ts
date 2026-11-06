@@ -92,6 +92,10 @@ export interface ProfileMigrationProgress extends EvaluationProgress {
 
 export interface ProfileMigrationOptions {
   readonly onProgress?: (progress: ProfileMigrationProgress) => void;
+  /** Definition IDs the source profile's campaign restricts (D116). */
+  readonly sourceRestrictedDefinitionIds?: readonly string[];
+  /** Definition IDs the target profile's campaign restricts (D116). */
+  readonly targetRestrictedDefinitionIds?: readonly string[];
 }
 
 function key(value: string): string {
@@ -281,6 +285,11 @@ export function previewProfileMigration(
     {
       ...projectBuildForEvaluation(build, targetEntities),
       candidateDetailLevels: [],
+      ...(options.targetRestrictedDefinitionIds === undefined
+        ? {}
+        : {
+            restrictedDefinitionIds: options.targetRestrictedDefinitionIds,
+          }),
     },
     targetEntities,
     {
@@ -295,6 +304,12 @@ export function previewProfileMigration(
           {
             ...projectBuildForEvaluation(build, sourceEntities),
             candidateDetailLevels: [],
+            ...(options.sourceRestrictedDefinitionIds === undefined
+              ? {}
+              : {
+                  restrictedDefinitionIds:
+                    options.sourceRestrictedDefinitionIds,
+                }),
           },
           sourceEntities,
           {
@@ -356,7 +371,12 @@ export function previewProfileMigration(
       : diagnosticCodes(sourceEvaluation);
   const targetCodes = diagnosticCodes(targetEvaluation);
   const ritualChoices = targetEvaluation.converged
-    ? evaluateRitualChoiceFills(build, targetEntities, targetEvaluation)
+    ? evaluateRitualChoiceFills(
+        build,
+        targetEntities,
+        targetEvaluation,
+        options.targetRestrictedDefinitionIds,
+      )
     : { fills: [] };
 
   return {

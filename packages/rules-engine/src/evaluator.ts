@@ -93,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v116-2026-11-06-counts-as-deity";
+  "evaluated-character-v117-2026-11-06-campaign-restrictions";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -141,6 +141,15 @@ export interface EvaluationInput {
    * source-entitled. A configured list always includes Core implicitly.
    */
   readonly sourceEntitlements?: readonly string[];
+  /**
+   * Definition IDs a campaign does not use (D116), matched
+   * case-insensitively. They stay in the content (prerequisites and
+   * worship names still resolve them) but are never offered: a candidate
+   * gets reason `campaign-restricted` and `sourceEntitled: false`, and an
+   * owned one is an `occurrence.campaign-restricted` warning that makes the
+   * character not legal. Undefined or empty restricts nothing.
+   */
+  readonly restrictedDefinitionIds?: readonly string[];
   /**
    * Levels whose choices need complete candidate lists. Undefined preserves
    * the exhaustive compatibility/reporting result; presentation-scoped lists
@@ -358,6 +367,22 @@ function sourceEntitlementChecker(
   return check;
 }
 
+/** Whether a campaign restricts a definition (D116); by ID only. */
+function campaignRestrictionChecker(
+  restricted: readonly string[] | undefined,
+): (entity: ContentEntity) => boolean {
+  if (restricted === undefined || restricted.length === 0) return () => false;
+  const ids = new Set(restricted.map(key));
+  return (entity) => ids.has(key(entity.id));
+}
+
+/** Candidate reasons that are policy, not rules: they clear
+ *  `sourceEntitled`, never `rulesLegal`. */
+const PERMISSION_REASONS: ReadonlySet<string> = new Set([
+  "source-unentitled",
+  "campaign-restricted",
+]);
+
 export class RulesIndex {
   readonly entities: readonly ContentEntity[];
   readonly #byId = new Map<string, ContentEntity>();
@@ -559,6 +584,9 @@ function earlierLevelPrerequisiteInput(
     ...(input.sourceEntitlements === undefined
       ? {}
       : { sourceEntitlements: input.sourceEntitlements }),
+    ...(input.restrictedDefinitionIds === undefined
+      ? {}
+      : { restrictedDefinitionIds: input.restrictedDefinitionIds }),
   };
 }
 
@@ -584,6 +612,7 @@ function prerequisiteSnapshotKey(
     textStrings: input.textStrings,
     localEntities: input.localEntities,
     sourceEntitlements: input.sourceEntitlements,
+    restrictedDefinitionIds: input.restrictedDefinitionIds,
   });
 }
 
@@ -1177,10 +1206,24 @@ function evaluateCharacterInternal(
     prepared?.evaluationEntities ??
     contentWithLocalEntities(entities, localEntities);
   const index = prepared?.index ?? sharedRulesIndex(evaluationEntities);
-  const isSourceEntitled = sourceEntitlementChecker(
+  const isEntitledBySource = sourceEntitlementChecker(
     input.sourceEntitlements,
     index,
   );
+  const isCampaignRestricted = campaignRestrictionChecker(
+    input.restrictedDefinitionIds,
+  );
+  /** Why source or campaign policy does not permit choosing a definition. */
+  const permissionReasons = (entity: ContentEntity | undefined): string[] => {
+    if (entity === undefined) return [];
+    const reasons: string[] = [];
+    if (!isEntitledBySource(entity)) reasons.push("source-unentitled");
+    if (isCampaignRestricted(entity)) reasons.push("campaign-restricted");
+    return reasons;
+  };
+  /** Source entitlement and campaign restrictions together. */
+  const isSourceEntitled = (entity: ContentEntity): boolean =>
+    isEntitledBySource(entity) && !isCampaignRestricted(entity);
   const diagnostics: EngineDiagnostic[] = [];
   const inventory = aggregateInventory(input.inventory, input.level);
   const adjustedMagicArmorBonuses = essentialsMagicArmorBonuses(
@@ -2060,11 +2103,18 @@ function evaluateCharacterInternal(
       membership.providerOccurrenceIds.push(occurrence.parentId);
     memberships.set(definitionKey, membership);
     const definition = index.get(occurrence.definitionId);
-    if (definition !== undefined && !isSourceEntitled(definition))
+    if (definition !== undefined && !isEntitledBySource(definition))
       diagnostics.push({
         severity: "error",
         code: "occurrence.source-unentitled",
         message: `${definition.name} is not included in the configured source entitlements.`,
+        occurrenceId: occurrence.id,
+      });
+    if (definition !== undefined && isCampaignRestricted(definition))
+      diagnostics.push({
+        severity: "warning",
+        code: "occurrence.campaign-restricted",
+        message: `${definition.name} is not used in this campaign.`,
         occurrenceId: occurrence.id,
       });
   }
@@ -2524,10 +2574,11 @@ function evaluateCharacterInternal(
       reasons.push("already-class-skill");
     const membership = memberships.get(key(candidate.id));
     if (rule.existing && membership === undefined) reasons.push("existing");
-    const sourceEntitled = isSourceEntitled(candidate);
-    if (!sourceEntitled) reasons.push("source-unentitled");
+    const permission = permissionReasons(candidate);
+    const sourceEntitled = permission.length === 0;
+    reasons.push(...permission);
     const rulesLegal = !reasons.some(
-      (reason) => reason !== "source-unentitled",
+      (reason) => !PERMISSION_REASONS.has(reason),
     );
     return {
       definitionId: candidate.id,
@@ -3632,11 +3683,11 @@ function evaluateCharacterInternal(
                 {
                   definitionId: option.definitionId,
                   eligible:
-                    index.get(option.definitionId) === undefined ||
-                    isSourceEntitled(index.get(option.definitionId)!),
+                    permissionReasons(index.get(option.definitionId)).length ===
+                    0,
                   sourceEntitled:
-                    index.get(option.definitionId) === undefined ||
-                    isSourceEntitled(index.get(option.definitionId)!),
+                    permissionReasons(index.get(option.definitionId)).length ===
+                    0,
                   rulesLegal: true,
                   activeDefinition: memberships.has(key(option.definitionId)),
                   activeOccurrenceIds:
@@ -3645,11 +3696,7 @@ function evaluateCharacterInternal(
                   providerOccurrenceIds:
                     memberships.get(key(option.definitionId))
                       ?.providerOccurrenceIds ?? [],
-                  reasons:
-                    index.get(option.definitionId) !== undefined &&
-                    !isSourceEntitled(index.get(option.definitionId)!)
-                      ? ["source-unentitled"]
-                      : [],
+                  reasons: permissionReasons(index.get(option.definitionId)),
                 },
                 option.targetReasons,
               ),
@@ -3721,8 +3768,9 @@ function evaluateCharacterInternal(
                 candidates: [
                   {
                     definitionId: masteryPower.id,
-                    eligible: isSourceEntitled(masteryPower),
-                    sourceEntitled: isSourceEntitled(masteryPower),
+                    eligible: permissionReasons(masteryPower).length === 0,
+                    sourceEntitled:
+                      permissionReasons(masteryPower).length === 0,
                     rulesLegal: true,
                     activeDefinition: memberships.has(key(masteryPower.id)),
                     activeOccurrenceIds:
@@ -3731,9 +3779,7 @@ function evaluateCharacterInternal(
                     providerOccurrenceIds:
                       memberships.get(key(masteryPower.id))
                         ?.providerOccurrenceIds ?? [],
-                    reasons: isSourceEntitled(masteryPower)
-                      ? []
-                      : ["source-unentitled"],
+                    reasons: permissionReasons(masteryPower),
                   },
                 ],
               },
@@ -3755,11 +3801,9 @@ function evaluateCharacterInternal(
         candidates: replacementOptions.map((option) => ({
           definitionId: option.definitionId,
           eligible:
-            index.get(option.definitionId) === undefined ||
-            isSourceEntitled(index.get(option.definitionId)!),
+            permissionReasons(index.get(option.definitionId)).length === 0,
           sourceEntitled:
-            index.get(option.definitionId) === undefined ||
-            isSourceEntitled(index.get(option.definitionId)!),
+            permissionReasons(index.get(option.definitionId)).length === 0,
           rulesLegal: true,
           activeDefinition: memberships.has(key(option.definitionId)),
           activeOccurrenceIds:
@@ -3767,11 +3811,7 @@ function evaluateCharacterInternal(
           providerOccurrenceIds:
             memberships.get(key(option.definitionId))?.providerOccurrenceIds ??
             [],
-          reasons:
-            index.get(option.definitionId) !== undefined &&
-            !isSourceEntitled(index.get(option.definitionId)!)
-              ? ["source-unentitled"]
-              : [],
+          reasons: permissionReasons(index.get(option.definitionId)),
         })),
         replacementOptions,
       });
@@ -4446,7 +4486,8 @@ function evaluateCharacterInternal(
       (diagnostic) =>
         (diagnostic.severity === "error" &&
           diagnostic.code !== "choice.required") ||
-        diagnostic.code === "prerequisite.unverified",
+        diagnostic.code === "prerequisite.unverified" ||
+        diagnostic.code === "occurrence.campaign-restricted",
     ) &&
     !itemRequirementUnmet &&
     !occurrences.some((occurrence) => occurrence.legality === "houserule");

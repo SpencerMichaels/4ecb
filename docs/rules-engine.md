@@ -26,6 +26,24 @@ recoverable and diagnostic, but the ordinary choose command does not turn them
 into house rules. Rules-illegal same-category candidates remain revealable and
 selectable through the explicit unavailable/house-rule workflow.
 
+Campaign restrictions (D116) are the other half of that access policy.
+`EvaluationInput.restrictedDefinitionIds` lists the definition IDs a
+campaign does not use (matched case-insensitively; undefined or empty
+restricts nothing); the engine only receives the IDs and knows nothing of
+campaign documents. A restricted candidate gets reason `campaign-restricted`
+and `sourceEntitled: false` (its `rulesLegal` is unaffected) at every
+entitlement site: ordinary choices, rule defaults, replacement and
+retraining options, and the archery-mastery replacement. Restricted records
+stay in the rules index, so prerequisite and worship names still resolve
+them: "must worship Moradin" is met through a campaign deity's CountsAsDeity
+while Moradin itself is restricted. An owned restricted occurrence stays
+active and gets the warning `occurrence.campaign-restricted`, which makes
+`legal` false. The input is threaded into the nested prerequisite snapshots
+(and their cache key) like `sourceEntitlements`;
+`previewProfileMigration` takes `sourceRestrictedDefinitionIds` and
+`targetRestrictedDefinitionIds` so each side evaluates under its own
+campaign, and the target's also reach `evaluateRitualChoiceFills`.
+
 ## Recovered rule language
 
 Content statements are parsed into a typed IR for `select`, `grant`, `modify`,

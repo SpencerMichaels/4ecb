@@ -198,11 +198,13 @@ export function ritualChoiceFills(
  * detail only at those choices' levels. `evaluation`, when given (one
  * evaluated without candidate lists, like a migration preview's), only
  * tells whether there is an open Ritual choice at all.
+ * `restrictedDefinitionIds` are the campaign's (D116), as evaluated.
  */
 export function evaluateRitualChoiceFills(
   build: CharacterBuild,
   entities: readonly ContentEntity[],
   evaluation?: Pick<EvaluatedCharacter, "choices" | "level">,
+  restrictedDefinitionIds?: readonly string[],
 ): RitualChoiceFills {
   const hasFreeEntry = build.known.some(
     ({ acquisition }) => acquisition === "free",
@@ -224,7 +226,11 @@ export function evaluateRitualChoiceFills(
   ];
   if (evaluation !== undefined && openLevels(evaluation).length === 0)
     return { fills: [] };
-  const input = projectBuildForEvaluation(build, entities);
+  const projected = projectBuildForEvaluation(build, entities);
+  const input =
+    restrictedDefinitionIds === undefined
+      ? projected
+      : { ...projected, restrictedDefinitionIds };
   const levels = evaluation === undefined ? undefined : openLevels(evaluation);
   const detailed = evaluateCharacter(
     levels === undefined ? input : { ...input, candidateDetailLevels: levels },
