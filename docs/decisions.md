@@ -3433,6 +3433,22 @@ Kept modern, where native contradicts the text or nullifies the feature:
   power; the prerequisite limits picking it as a class power. Lily (a
   Cunning Bard with Skald Training) is the one sample it touches: her swap
   raises no prerequisite error.
+- **Hybrid Arena Training gets the improvised-weapon rules** (Dark Sun
+  Campaign Setting p. 85, Arena Training: "You treat all weapons with which
+  you are not proficient as improvised weapons. You gain a +2 proficiency
+  bonus to attack rolls with improvised weapons. Your attacks with
+  one-handed improvised weapons deal 1d8 damage, and your attacks with
+  two-handed improvised weapons deal 1d10 damage"; PHB3: a "(hybrid)"
+  feature counts as the full feature; owner-approved 2026-11-05, cache
+  v111). Native `ArenaTrainingImprovisedWeapon` (`-Module-.cs` ~23941-23962)
+  keys only on the class feature `ID_FMP_CLASS_FEATURE_2893`, so the
+  community "Arena Training (Hybrid)" / "Expanded Arena Training (Hybrid)"
+  records (which copy the text, AC statadd and arena weapon picks and grant
+  the `ID_INTERNAL_COUNTSASFEATURE_ARENA_TRAINING` CountsAsFeature) got
+  only the AC bonus. `powers.ts` `hasArenaTraining` also matches that
+  CountsAsFeature (`EXCEPTION_IDS.arenaTrainingCountsAs`); a character with
+  both applies the rule once. No sample character owns either hybrid
+  record; parity is unchanged.
 - **Former-class picks stay dormant (owner, 2026-10-29).** The legacy builder
   keeps a house-rule pick active after a class change even when its slot is
   switched off and not shown in its power list (Erdan 11: seven Invoker powers

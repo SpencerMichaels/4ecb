@@ -635,6 +635,108 @@ describe("character evaluator", () => {
       "+1d6 to damage rolls when charging - Synthetic Helm.",
     ]);
   });
+  it.each([false, true])(
+    "gives hybrid Arena Training's CountsAsFeature the improvised-weapon rules and its AC (D105; with the class feature too: %s)",
+    (withClassFeature) => {
+      const arenaRules = [
+        rule("statadd", { name: "Arena Training", value: "+1" }, 0),
+        rule(
+          "statadd",
+          {
+            name: "AC",
+            value: "+Arena Training",
+            "not-wearing": "armor:heavy",
+          },
+          1,
+        ),
+        rule(
+          "grant",
+          {
+            name: EXCEPTION_IDS.arenaTrainingCountsAs,
+            type: "CountsAsFeature",
+          },
+          2,
+        ),
+      ];
+      const entities = [
+        entity("ROOT", "Character", "Root"),
+        entity("HYBRID_ARENA", "Arena Training (Hybrid)", "Class Feature", {
+          rules: arenaRules,
+        }),
+        entity(
+          EXCEPTION_IDS.arenaTrainingCountsAs,
+          "Arena Training",
+          "CountsAsFeature",
+        ),
+        entity(EXCEPTION_IDS.arenaTraining, "Arena Training", "Class Feature"),
+        entity("LONG_PROF", "Weapon Proficiency (Longsword)", "Proficiency"),
+        entity("MBA", "Melee Basic Attack", "Power", {
+          specifics: {
+            "Attack Type": "Melee weapon",
+            Keywords: "Weapon",
+            Attack: "Strength vs. AC",
+            Hit: "1[W] damage.",
+          },
+        }),
+        entity("LONG", "Longsword", "Weapon", {
+          specifics: { Damage: "1d8", "Proficiency Bonus": "3" },
+        }),
+        entity("DAGGER", "Dagger", "Weapon", {
+          specifics: { Damage: "1d4", "Proficiency Bonus": "3" },
+        }),
+        entity("MAUL", "Maul", "Weapon", {
+          specifics: { Damage: "2d6", "Hands Required": "Two-Handed" },
+        }),
+      ];
+      const evaluated = evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            ...[
+              "HYBRID_ARENA",
+              "LONG_PROF",
+              "MBA",
+              ...(withClassFeature ? [EXCEPTION_IDS.arenaTraining] : []),
+            ].map((definitionId) => ({
+              id: definitionId.toLowerCase(),
+              definitionId,
+              acquiredLevel: 1,
+              kind: "grabbag" as const,
+            })),
+          ],
+          inventory: ["LONG", "DAGGER", "MAUL"].map((definitionId) => ({
+            id: definitionId.toLowerCase(),
+            definitionIds: [definitionId],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+          })),
+          candidateDetailLevels: [],
+        },
+        entities,
+      );
+      expect(evaluated.activeDefinitionIds).toContain(
+        EXCEPTION_IDS.arenaTrainingCountsAs,
+      );
+      expect(
+        evaluated.stats["AC"]?.contributions.find(
+          (contribution) =>
+            contribution.providerName === "Arena Training (Hybrid)",
+        ),
+      ).toMatchObject({ applied: true, numericValue: 1 });
+      const variants =
+        evaluated.powers.find((power) => power.definitionId === "MBA")
+          ?.variants ?? [];
+      const row = (id: string) =>
+        variants.find((variant) => variant.equipmentId === id);
+      // Proficient: the longsword keeps its own die and +3, applied once.
+      expect(row("long")).toMatchObject({ attackBonus: 3, damage: "1d8" });
+      expect(row("dagger")).toMatchObject({ attackBonus: 2, damage: "1d8" });
+      expect(row("maul")).toMatchObject({ attackBonus: 2, damage: "1d10" });
+    },
+  );
   it.each([
     [false, false],
     [true, false],

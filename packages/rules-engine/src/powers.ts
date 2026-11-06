@@ -3178,9 +3178,13 @@ export function evaluatePowers(input: {
       item.proficiencyNames.some((name) => weaponProficiencies.has(key(name))));
   // Native ArenaTrainingImprovisedWeapon: with Arena Training, no weapon, a
   // weapon the character is not proficient with, or an improvised weapon
-  // deals 1d8 (1d10 two-handed) with a +2 proficiency bonus.
-  const hasArenaTraining = input.activeDefinitionIds.some(
-    (id) => key(id) === key(EXCEPTION_IDS.arenaTraining),
+  // deals 1d8 (1d10 two-handed) with a +2 proficiency bonus. Unlike native,
+  // the hybrid features' Arena Training CountsAsFeature counts too (D105).
+  const arenaTrainingIds = new Set(
+    [EXCEPTION_IDS.arenaTraining, EXCEPTION_IDS.arenaTrainingCountsAs].map(key),
+  );
+  const hasArenaTraining = input.activeDefinitionIds.some((id) =>
+    arenaTrainingIds.has(key(id)),
   );
   const arenaImprovised = (item: Loadout) =>
     hasArenaTraining &&

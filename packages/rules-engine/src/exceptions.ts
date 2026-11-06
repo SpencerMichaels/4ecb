@@ -43,6 +43,12 @@ export const EXCEPTION_IDS = {
   largeRapier: "ID_INTERNAL_WEAPON_LARGE_RAPIER",
   /** ArenaTrainingImprovisedWeapon: the Arena Training class feature. */
   arenaTraining: "ID_FMP_CLASS_FEATURE_2893",
+  /** Rules-required departure from native ArenaTrainingImprovisedWeapon,
+   *  which keys only on the class feature (D105): the CountsAsFeature that
+   *  "Arena Training (Hybrid)" and "Expanded Arena Training (Hybrid)" grant
+   *  also gets the improvised-weapon rules. DSCS p. 85 gives no hybrid
+   *  wording, and PHB3 treats a "(hybrid)" feature as the full feature. */
+  arenaTrainingCountsAs: "ID_INTERNAL_COUNTSASFEATURE_ARENA_TRAINING",
   /** MeetsItemRequirement: the Internal records two item Requirements need. */
   canUseComponents: "ID_INTERNAL_INTERNAL_CAN_USE_COMPONENTS",
   kiFocusUser: "ID_INTERNAL_INTERNAL_KI_FOCUS_USER",

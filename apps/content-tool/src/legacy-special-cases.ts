@@ -1336,10 +1336,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.ArenaTrainingImprovisedWeapon": code(
       "Arena Training (ID_FMP_CLASS_FEATURE_2893) lets non-proficient and improvised weapons use the improvised-weapon rules.",
-      "powers.ts arenaImprovised: Unarmed without a base, a weapon, staff or unarmed base (the Unarmed attack record is Improvised) the character is not proficient with, or an Improvised one deals 1d8 (1d10 two-handed) with a +2 proficiency bonus",
+      "powers.ts arenaImprovised: Unarmed without a base, a weapon, staff or unarmed base (the Unarmed attack record is Improvised) the character is not proficient with, or an Improvised one deals 1d8 (1d10 two-handed) with a +2 proficiency bonus. Rules-required departure (D105): the hybrid features' ID_INTERNAL_COUNTSASFEATURE_ARENA_TRAINING also qualifies, applied once alongside the class feature",
       test(
         POWERS,
         "gives Arena Training improvised weapons 1d8 or 1d10 and +2 proficiency",
+      ),
+      test(
+        EVALUATOR,
+        "gives hybrid Arena Training's CountsAsFeature the improvised-weapon rules and its AC (D105; with the class feature too: %s)",
       ),
     ),
     "?A0x0bed2cbe.WieldingDefensive": code(
