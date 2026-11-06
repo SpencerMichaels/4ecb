@@ -9,11 +9,17 @@ import {
   isUnresolvedChoice,
   selectedDefinitionId,
 } from "./builder-ui";
+import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import { CandidateInspectionScope } from "./builder-choice-context";
 import { CandidateDetail } from "./CandidateDetail";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { ChoiceEditor } from "./ChoiceEditors";
 import { Icon } from "./Icon";
+
+/** The element holding a Details choice, where its issue's Review lands. */
+export function detailChoiceElementId(choiceId: string): string {
+  return `character-detail-choice-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
 
 /** Typing pause after which a text field saves. Every save re-evaluates the
  *  character, so it waits for a real pause, not a gap between words. */
@@ -149,6 +155,7 @@ export function CharacterTextField({
 
 export function CharacterDetailsEditor({
   active,
+  candidatesListed = true,
   choices,
   evaluation,
   build,
@@ -159,9 +166,13 @@ export function CharacterDetailsEditor({
   effectiveLevel,
   deityAlignment,
   alignmentHouseRuled,
+  review,
   onDispatch,
 }: {
   readonly active: boolean;
+  /** Whether `evaluation` lists every option (not only the picks), so the
+   *  page has its final layout for a Review to land in. */
+  readonly candidatesListed?: boolean;
   readonly choices: readonly EvaluatedChoice[];
   readonly evaluation: EvaluatedCharacter | undefined;
   readonly build: CharacterRecord["build"];
@@ -178,6 +189,8 @@ export function CharacterDetailsEditor({
       }
     | undefined;
   readonly alignmentHouseRuled: boolean;
+  /** The choice an issue's Review leads to; `request` changes per ask. */
+  readonly review?: { readonly choiceId: string; readonly request: number };
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
@@ -186,6 +199,29 @@ export function CharacterDetailsEditor({
   // table doesn't crowd out the rest of the page.
   const [expandedTables, setExpandedTables] = useState<ReadonlySet<string>>(
     new Set(),
+  );
+  // A Review opens the choice's table if it is folded, then lands on it.
+  const [landing, setLanding] = useState<ReviewLanding>();
+  const handledReview = useRef<number>(undefined);
+  useEffect(() => {
+    if (review === undefined || handledReview.current === review.request)
+      return;
+    handledReview.current = review.request;
+    const choice = choices.find(({ id }) => id === review.choiceId);
+    if (choice === undefined) return;
+    if (choiceSelectionTableKind(choice) !== undefined)
+      setExpandedTables((current) => new Set(current).add(choice.id));
+    setLanding({
+      elementIds: [detailChoiceElementId(choice.id)],
+      block: "start",
+      focus: true,
+      request: review.request,
+    });
+  }, [choices, review]);
+  useReviewLanding(
+    landing,
+    active && evaluation !== undefined && candidatesListed,
+    () => setLanding(undefined),
   );
   const textValue = (name: string, detailName?: string) =>
     Object.hasOwn(build.textStrings, name)
@@ -319,7 +355,9 @@ export function CharacterDetailsEditor({
                   buttonChoices.map((choice) => (
                     <div
                       className={`character-detail-choice${unresolved(choice) ? " is-unresolved" : ""}`}
+                      id={detailChoiceElementId(choice.id)}
                       key={choice.id}
+                      tabIndex={-1}
                     >
                       {choiceEditor(choice)}
                       {attention(choice)}
@@ -367,7 +405,9 @@ export function CharacterDetailsEditor({
                   return (
                     <section
                       className={`character-detail-group${unresolved(choice) ? " is-unresolved" : ""}`}
+                      id={detailChoiceElementId(choice.id)}
                       key={choice.id}
+                      tabIndex={-1}
                     >
                       <h4 className="selection-section-heading selection-section-heading--panel">
                         <button

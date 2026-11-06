@@ -77,12 +77,18 @@ import { ItemChoiceDialog } from "./ItemChoicePicker";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
+import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import {
   BuilderCreatureCard,
   BuilderItemCard,
   BuilderPowerCard,
 } from "./BuilderCards";
 import { BuilderItemSetCard } from "./BuilderItemSetCard";
+
+/** An inventory row's id, where a holding's Review lands. */
+function inventoryRowId(entryId: string): string {
+  return `inventory-entry-${entryId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -1086,8 +1092,11 @@ export function EquipmentWorkspace({
   );
   const loadoutHints = loadoutContext(build.textStrings, loadoutSlotContext);
   // Select the requested holding once per request: inspect it, expand its
-  // category and bring its row into view.
+  // category, then land on its row (scrolled into view, its button
+  // focused) once the expanded category renders it.
   const handledFocusRequest = useRef<number>(undefined);
+  const [rowLanding, setRowLanding] = useState<ReviewLanding>();
+  useReviewLanding(rowLanding, true, () => setRowLanding(undefined));
   useEffect(() => {
     if (
       focusRequest === undefined ||
@@ -1106,11 +1115,13 @@ export function EquipmentWorkspace({
       setInventoryCategoryExpansion((current) =>
         new Map(current).set(category, true),
       );
-    requestAnimationFrame(() =>
-      [...document.querySelectorAll<HTMLElement>("[data-inventory-entry]")]
-        .find((row) => row.dataset.inventoryEntry === entry.id)
-        ?.scrollIntoView?.({ block: "nearest" }),
-    );
+    setRowLanding({
+      elementIds: [inventoryRowId(entry.id)],
+      block: "nearest",
+      focus: true,
+      focusSelector: ".inventory-item-button",
+      request: focusRequest.request,
+    });
   }, [focusRequest, build.inventory, byId, packageGroups]);
   // Per-item right-click actions, as in the legacy builder (no menu button).
   const augmentActions = (
@@ -1495,6 +1506,7 @@ export function EquipmentWorkspace({
                                           <tr
                                             className="table-clickable-row"
                                             data-inventory-entry={entry.id}
+                                            id={inventoryRowId(entry.id)}
                                             key={entry.id}
                                             title={loadoutToggleDescription}
                                             onClick={() =>

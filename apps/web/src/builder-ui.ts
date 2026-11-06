@@ -2049,6 +2049,39 @@ export function presentationUnitRoot(
   );
 }
 
+/**
+ * The DOM ids an issue's Review tries, most exact first: the choice's own
+ * section (a flow's later step, a repeated slot's item), then the group
+ * that shows it when its slot has no element of its own (repeated feat or
+ * power slots share one table; ability increases, backgrounds and skill
+ * training are one editor each), then the level tab's panel.
+ */
+export function reviewLandingElementIds(
+  choice: EvaluatedChoice,
+  presentation: LevelChoicePresentation,
+  panelId: string,
+): readonly string[] {
+  const root = presentationUnitRoot(choice, presentation);
+  const repeated = presentation.repeatedGroupByChoiceId.get(choice.id);
+  const kind =
+    repeated === undefined ? undefined : choiceSelectionTableKind(repeated[0]!);
+  const sharedTable =
+    presentation.grouped.backgrounds.includes(choice) ||
+    presentation.grouped.skillTraining.includes(choice) ||
+    (repeated !== undefined &&
+      (kind === "feat" ||
+        kind === "power" ||
+        kind === "feature" ||
+        repeated.every((item) => isAbilityIncreaseChoiceType(item.type))));
+  return [
+    ...new Set([
+      ...(sharedTable ? [] : [choiceSectionId(choice.id)]),
+      choiceSectionId(root.id),
+      panelId,
+    ]),
+  ];
+}
+
 export function selectedDefinitionId(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
@@ -2521,6 +2554,9 @@ export function isCompanionOwnedChoice(
   }
   return false;
 }
+
+/** The level 1 point-buy editor, where an ability-score issue lands. */
+export const BASE_ABILITIES_SECTION_ID = "choice-section-base-abilities";
 
 export function choiceSectionId(choiceId: string): string {
   return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;

@@ -84,6 +84,8 @@ import {
   presentedChoiceSection,
   presentationUnitRoot,
   primaryDetailTypeLabel,
+  reviewLandingElementIds,
+  choiceSectionId,
   selectedCandidateDecision,
   shouldOmitIndividualChoiceHeading,
   splitLabeledDescription,
@@ -2303,6 +2305,21 @@ describe("builder planning UI", () => {
     expect(
       openedFlowStepId(dependentFlowStepIds(presentation), presentation),
     ).toBeUndefined();
+    // Review lands on the exact step (step 2's own section), falling back to
+    // the flow, then the tab; repeated feature slots share one table, so
+    // theirs lands on the group.
+    expect(reviewLandingElementIds(granted!, presentation, "panel")).toEqual([
+      choiceSectionId(granted!.id),
+      choiceSectionId(flow[0]!.id),
+      "panel",
+    ]);
+    expect(
+      reviewLandingElementIds(twofoldSlots[1]!, presentation, "panel"),
+    ).toEqual([choiceSectionId(twofoldSlots[0]!.id), "panel"]);
+    expect(reviewLandingElementIds(flow[0]!, presentation, "panel")).toEqual([
+      choiceSectionId(flow[0]!.id),
+      "panel",
+    ]);
     // Every evaluated Build-tab choice is reachable through a presented unit
     // on the tab the issue list routes it to.
     const sections = groupChoicesByLegacyWorkflow(

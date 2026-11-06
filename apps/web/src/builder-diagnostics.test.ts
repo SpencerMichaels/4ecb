@@ -222,6 +222,65 @@ describe("builder issue groups", () => {
           "Choose an option for Armor of Resistance +2: right-click the item on the Equipment tab.",
       }),
     ]);
+    // Every other issue about the item's pick (house-ruled, ineligible)
+    // reviews to the same holding, never to a Build tab it isn't on.
+    const ruled = builderIssueGroups({
+      ...common,
+      byId: new Map([[armor.id.toLocaleLowerCase(), armor]]),
+      build: {
+        formatVersion: 3,
+        known: [],
+        effectiveLevel: 1,
+        levels: [],
+        grabbag: [],
+        inventory: [entry],
+        alternates: [],
+        baseAbilities: {},
+        textStrings: {},
+      },
+      evaluation: evaluation({
+        occurrences: [
+          {
+            id: "legacy:loot:11:definition:0",
+            definitionId: armor.id,
+            acquiredLevel: 1,
+            kind: "inventory",
+          },
+          {
+            id: "armor-pick",
+            definitionId: "ID_FIRE",
+            acquiredLevel: 1,
+            parentId: "legacy:loot:11:definition:0",
+            kind: "choice",
+            legality: "houserule",
+          },
+          {
+            id: "legacy:loot:11:definition:1",
+            definitionId: "ID_HOMEBREW",
+            acquiredLevel: 1,
+            kind: "inventory",
+            legality: "houserule",
+          },
+        ],
+        choices: [
+          {
+            id: "armor-choice",
+            level: 1,
+            providerOccurrenceId: "legacy:loot:11:definition:0",
+            ruleOrdinal: 0,
+            index: 0,
+            type: "Class Feature",
+            optional: false,
+            selectedOccurrenceId: "armor-pick",
+            candidates: [],
+          },
+        ],
+      }),
+    });
+    expect(ruled.houseRules.map(({ target }) => target)).toEqual([
+      { kind: "inventory", entryId: "legacy:loot:11" },
+      { kind: "inventory", entryId: "legacy:loot:11" },
+    ]);
   });
 
   it("names a nested open choice after the feature that offers it", () => {

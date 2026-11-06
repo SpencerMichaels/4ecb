@@ -477,6 +477,21 @@ live site.
     for Hybrid Talent.") wrap cleanly.
   - **Wrong if:** the card clips or overflows, or a heading or issue detail
     is clipped or overflows its row.
+- [ ] **Sylestine: Review lands on Hybrid Talent's choice.**
+  - **Where:** `edit?tab=build&level=4&section=feats`, leave Hybrid
+    Talent's option open, then open the unresolved badge (the "?" in the
+    tab bar) and click Review on "Level 4 Hybrid Talent". Try it at 140%
+    zoom, and once with the keyboard (Tab to Review, Enter).
+  - **Expect:** the Build tab opens on Level 4, Feats, with Hybrid Talent
+    expanded and scrolled so step 2's "Hybrid Talent" heading and its class
+    feature table are in view (the feat table's pager may show above it).
+    The page moves once, after the tables fill, with no visible bounce.
+    With the keyboard, focus is on step 2 (a focus ring around it), so Tab
+    goes into its table. Clicking a level tab or the level picker
+    afterwards never scrolls on its own.
+  - **Wrong if:** the page stays at the top of the feat table, scrolls and
+    then jumps back, step 2's heading is hidden under anything, or focus
+    stays on the badge list or the page.
 
 ## Pass 21: Character library
 

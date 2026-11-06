@@ -31,11 +31,17 @@ import { evaluate, occurrenceFor } from "../../../scripts/native-character";
 import { builderIssueGroups } from "../src/builder-diagnostics";
 import {
   candidateReason,
+  choiceSectionId,
   choicesAtLevel,
   contextualChoiceTitle,
   isOptionalRetrainingChoice,
+  isPrimaryBuildChoice,
   powerSwapPresentation,
+  presentedChoiceSection,
+  presentLevelChoices,
+  reviewLandingElementIds,
 } from "../src/builder-ui";
+import { ChoiceFlowSection } from "../src/ChoiceEditors";
 import {
   acquisitionCommands,
   compatibleBaseItems,
@@ -55,10 +61,12 @@ import { itemChoiceHeading, itemChoicePages } from "../src/item-choice-pages";
 
 import {
   contains,
+  createElement,
   elementsWithClass,
   equal,
   inOrder,
   lacks,
+  markup,
   textOf,
   truthy,
   type Check,
@@ -998,6 +1006,91 @@ rule(
         "The issue says what to choose",
         open?.detail,
         "Choose an option for Hybrid Talent.",
+      ),
+    ];
+  },
+);
+rule(
+  "sylestine",
+  "Build, level 4: Feats",
+  "Hybrid Talent's Review lands on its choice",
+  (c) => {
+    // Left open, as the owner leaves it: the issue's Review must land on
+    // step 2 of the feat's flow, not on the Feats tab or the feat table.
+    const evaluation = c.atLevels([4]);
+    const step = evaluation.choices.find((candidate) => {
+      const provider = evaluation.occurrences.find(
+        ({ id }) => id === candidate.providerOccurrenceId,
+      );
+      return (
+        provider !== undefined &&
+        c.context.byId.get(provider.definitionId.toLocaleLowerCase())?.name ===
+          "Hybrid Talent"
+      );
+    });
+    if (step === undefined)
+      return [truthy("Hybrid Talent's step exists at level 4", false)];
+    const open = {
+      ...evaluation,
+      choices: evaluation.choices.map((choice) =>
+        choice === step
+          ? { ...choice, selectedOccurrenceId: undefined, optional: false }
+          : choice,
+      ),
+    };
+    const openStep = open.choices.find(({ id }) => id === step.id)!;
+    const issue = builderIssueGroups({
+      evaluation: open,
+      byId: c.context.byId,
+      effectiveLevel: c.build.effectiveLevel,
+      planningHorizon: c.build.effectiveLevel,
+      abilityScoresIncomplete: false,
+      abilityScoresHouseRuled: false,
+      build: c.build,
+    }).unresolved.find(({ key }) => key === `choice:${step.id}`);
+    const presentation = presentLevelChoices(
+      choicesAtLevel(4, open).filter(isPrimaryBuildChoice),
+    );
+    const flow = presentation.dependentFlowByChoiceId.get(step.id);
+    const landing = reviewLandingElementIds(openStep, presentation, "panel");
+    const html =
+      flow === undefined
+        ? ""
+        : markup(
+            createElement(ChoiceFlowSection, {
+              choices: flow,
+              evaluation: open,
+              build: c.build,
+              entities: c.context.entities,
+              byId: c.context.byId,
+              rollbackRevision: 0,
+              onDispatch: () => undefined,
+            }),
+          );
+    const stepElement = new RegExp(
+      `<section[^>]*id="${choiceSectionId(step.id)}"[^>]*>`,
+    ).exec(html)?.[0];
+    return [
+      equal("The issue's target", issue?.target, {
+        kind: "choice",
+        choiceId: step.id,
+      }),
+      equal(
+        "… on the Feats tab",
+        presentedChoiceSection(openStep, presentation),
+        "Feats",
+      ),
+      equal(
+        "Review lands first on step 2's own section",
+        landing[0],
+        choiceSectionId(step.id),
+      ),
+      truthy(
+        "… which the feat's flow renders, focusable, as step 2",
+        stepElement !== undefined &&
+          /tabindex="-1"/.test(stepElement) &&
+          flow?.indexOf(openStep) === 1,
+        stepElement ?? "no element",
       ),
     ];
   },

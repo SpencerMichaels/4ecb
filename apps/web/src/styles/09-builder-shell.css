@@ -911,6 +911,12 @@
   min-width: 0;
 }
 
+/* A Review with no single choice to show lands on the tab's panel. */
+.level-choice-tab-panel:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
 .level-choice-tab-panel > .retraining-section {
   border: 0;
 }

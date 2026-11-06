@@ -480,6 +480,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "sylestine|1|hybrid talent's open choice wording": auto(
     "The Build tab heads the feat's feature choice “Hybrid Talent”; opened, its issue is “Level 4 Hybrid Talent” — “Choose an option for Hybrid Talent.”",
   ),
+  "sylestine|1|hybrid talent's review lands on its choice": auto(
+    "Left open, the “Level 4 Hybrid Talent” issue targets step 2 of the feat's flow (its choice ID) on the Feats tab; Review's first landing id is that step's section, which the flow renders with tabindex -1.",
+  ),
   "zilvra|0|armor of resistance's damage type from the equipment tab": auto(
     'The "Leather Armor of Resistance +2: Resistance Type" issue reviews to the Equipment tab.',
   ),

@@ -240,17 +240,17 @@ describe("one table or none at a time", () => {
     // Feats tab, not on the Class tab its own type suggests.
     expect(handler).toContain("presentedChoiceSection(");
     expect(handler).not.toContain("legacyChoiceSection(choice)");
-    expect(handler).toContain("setScrollToChoiceId(choice.id)");
-    expect(source).toContain(
-      "document.getElementById(choiceSectionId(scrollToChoiceId))",
-    );
-    // A pick that opens a new flow step scrolls to it the same way.
+    // Review lands on the exact step (review-landing.ts), and only once the
+    // Build tab's evaluation lists full candidates: a Review from another
+    // tab first renders tables holding only their picks.
+    expect(handler).toContain("reviewLandingElementIds(");
+    expect(source).toContain('planningDetailFor?.workspace === "build"');
+    // A pick that opens a new flow step scrolls to it the same way, without
+    // taking focus from the table.
     expect(source).toContain(
       "openedFlowStepId(seenFlowSteps.stepIds, levelChoicePresentation)",
     );
-    expect(source).toContain(
-      "if (opened !== undefined) setScrollToChoiceId(opened);",
-    );
+    expect(source).toContain("landOnBuild([choiceSectionId(opened)], false);");
     // Instant scrolling only, so reduced-motion users never get animation.
     expect(source).not.toContain('behavior: "smooth"');
   });

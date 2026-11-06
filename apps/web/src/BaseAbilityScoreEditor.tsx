@@ -11,6 +11,7 @@ import {
 
 import {
   abilityScoreDisplay,
+  BASE_ABILITIES_SECTION_ID,
   pointBuyStepControl,
   raceAbilityScoreCells,
 } from "./builder-ui";
@@ -116,6 +117,8 @@ export function BaseAbilityScoreEditor({
     <section
       className={`level-choice-section base-ability-choice${assessment.complete ? "" : " choice-section-incomplete"}`}
       aria-labelledby="base-abilities"
+      id={BASE_ABILITIES_SECTION_ID}
+      tabIndex={-1}
     >
       <header>
         <div>

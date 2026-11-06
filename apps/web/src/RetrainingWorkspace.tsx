@@ -96,6 +96,7 @@ export function RetrainingWorkspace({
   selectedLevel,
   onSelectLevel,
   onRequestDetails,
+  review,
   onDispatch,
 }: {
   readonly evaluation: EvaluatedCharacter | undefined;
@@ -106,9 +107,19 @@ export function RetrainingWorkspace({
   readonly selectedLevel: number;
   readonly onSelectLevel: (level: number) => void;
   readonly onRequestDetails: (choiceId: string | undefined) => void;
+  /** An issue's Review opens that level's retraining; `request` changes
+   *  per ask. */
+  readonly review?: { readonly level: number; readonly request: number };
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [editingLevel, setEditingLevel] = useState<number>();
+  const handledReview = useRef<number>(undefined);
+  useEffect(() => {
+    if (review === undefined || handledReview.current === review.request)
+      return;
+    handledReview.current = review.request;
+    setEditingLevel(review.level);
+  }, [review]);
   if (evaluation === undefined)
     return (
       <section aria-label="Retraining" className="choice-pane">

@@ -1137,6 +1137,7 @@ export function ChoiceFlowSection({
             className="choice-flow-step"
             id={index === 0 ? undefined : choiceSectionId(choice.id)}
             key={choice.id}
+            tabIndex={index === 0 ? undefined : -1}
           >
             <div className="choice-flow-step-heading">
               <span aria-hidden="true">{index + 1}</span>
@@ -1495,6 +1496,7 @@ export function RepeatedChoiceGroup({
               className="grouped-choice-item"
               id={index === 0 ? undefined : choiceSectionId(choice.id)}
               key={choice.id}
+              tabIndex={index === 0 ? undefined : -1}
             >
               <ChoiceEditor
                 choice={choice}

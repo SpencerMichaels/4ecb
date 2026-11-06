@@ -87,6 +87,19 @@
   position: relative;
 }
 
+/* An issue's Review lands on the choice: scrolled clear of the pane's top
+   and focused. */
+.character-detail-choice,
+.character-detail-group {
+  scroll-margin-top: 1rem;
+}
+
+.character-detail-choice:focus-visible,
+.character-detail-group:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .character-detail-choice.is-unresolved {
   background: var(--warning-soft);
   box-shadow: inset 3px 0 var(--warning);

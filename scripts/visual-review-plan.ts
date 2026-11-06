@@ -1685,6 +1685,14 @@ const reviews: ReviewCharacter[] = [
                 "Hybrid Talent's open choice wording",
                 'Headed "Hybrid Talent", never "Class Feature"; left open, its issue says what to choose.',
               ],
+              [
+                "Hybrid Talent's Review lands on its choice",
+                "Left open, its issue's Review targets step 2 of the feat's flow on the Feats tab, whose section is rendered and focusable.",
+              ],
+              [
+                "Sylestine: Review lands on Hybrid Talent's choice",
+                "Leave Hybrid Talent's option open; from the status badge's list, Review scrolls to step 2 and focuses it.",
+              ],
             ],
           },
         ],

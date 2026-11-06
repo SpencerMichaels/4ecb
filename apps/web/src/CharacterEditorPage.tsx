@@ -97,6 +97,8 @@ import {
   presentLevelChoices,
   presentedChoiceSection,
   presentationUnitRoot,
+  reviewLandingElementIds,
+  BASE_ABILITIES_SECTION_ID,
   accordionPicksSummary,
   dependentFlowStepIds,
   openedFlowStepId,
@@ -125,6 +127,7 @@ import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
 import { LoadingPane, LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { useFittedTableHeight } from "./use-fitted-table-height";
+import { useReviewLanding, type ReviewLanding } from "./review-landing";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
@@ -217,6 +220,11 @@ function saveStateIconName(phase: SaveState["phase"]): IconName {
   if (phase === "saved") return "save-check";
   if (phase === "failed") return "save-off";
   return "save-pen";
+}
+
+/** A level tab's panel, where a Review without a more exact target lands. */
+function levelTabPanelId(level: number, section: LevelChoiceTab): string {
+  return `level-${level}-${levelChoiceTabSlug(section)}-panel`;
 }
 
 function levelChoiceTabSlug(section: LevelChoiceTab): BuilderSectionSlug {
@@ -334,12 +342,32 @@ export function CharacterEditorPage({
     navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
   );
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
-  // The choice an issue led to, scrolled into view once its tab renders it
-  // (it can sit below a window-height table, as step 2 of a feat's flow).
-  const [scrollToChoiceId, setScrollToChoiceId] = useState<string>();
+  // Where an issue's Review (or a pick that opens a later step) lands on
+  // the Build tab, once its level is evaluated: the choice can sit below a
+  // window-height table, as step 2 of a feat's flow (review-landing.ts).
+  const [buildLanding, setBuildLanding] = useState<ReviewLanding>();
+  const landingRequest = useRef(0);
+  const landOnBuild = (elementIds: readonly string[], focus: boolean): void => {
+    landingRequest.current += 1;
+    setBuildLanding({
+      elementIds,
+      block: "start",
+      focus,
+      request: landingRequest.current,
+    });
+  };
   // The holding an issue's Review link selects on the Equipment tab.
   const [inventoryFocus, setInventoryFocus] = useState<{
     readonly entryId: string;
+    readonly request: number;
+  }>();
+  // The Details choice and Retraining level an issue's Review opens.
+  const [detailsReview, setDetailsReview] = useState<{
+    readonly choiceId: string;
+    readonly request: number;
+  }>();
+  const [retrainingReview, setRetrainingReview] = useState<{
+    readonly level: number;
     readonly request: number;
   }>();
   // The accordion item the user opened (or null: all folded) on one level
@@ -403,6 +431,19 @@ export function CharacterEditorPage({
   // so the library summary is written only for the build that was saved.
   const evaluatedBuilds = useRef(
     new WeakMap<EvaluatedCharacter, CharacterBuild>(),
+  );
+  // The workspace and levels each published planning evaluation lists full
+  // candidates for (only the visible workspace's): until they arrive, its
+  // tables and option buttons hold just their picks, and a Review must not
+  // land yet.
+  const planningDetail = useRef(
+    new WeakMap<
+      EvaluatedCharacter,
+      {
+        readonly workspace: BuilderWorkspaceTab;
+        readonly levels: readonly number[];
+      }
+    >(),
   );
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
@@ -725,14 +766,15 @@ export function CharacterEditorPage({
       { ...evaluationBuild, effectiveLevel: planningHorizon },
       "planning",
     );
+    const planningLevels = planningCandidateDetailLevels(
+      workspaceTab,
+      selectedLevel,
+      characterDetailLevelKey.split(",").filter(Boolean).map(Number),
+    );
     const planningRequest = client.evaluate(
       {
         ...planningInput,
-        candidateDetailLevels: planningCandidateDetailLevels(
-          workspaceTab,
-          selectedLevel,
-          characterDetailLevelKey.split(",").filter(Boolean).map(Number),
-        ),
+        candidateDetailLevels: planningLevels,
         candidateDetailReplacementChoiceIds:
           expandedReplacementChoiceId === undefined
             ? []
@@ -777,7 +819,13 @@ export function CharacterEditorPage({
       evaluatedBuilds.current.set(evaluation, evaluationBuild);
       setCurrentEvaluation(evaluation);
     });
-    const planningPublished = publish(planningRequest, setPlanningEvaluation);
+    const planningPublished = publish(planningRequest, (evaluation) => {
+      planningDetail.current.set(evaluation, {
+        workspace: workspaceTab,
+        levels: planningLevels,
+      });
+      setPlanningEvaluation(evaluation);
+    });
     const selectedPublished = publish(
       selectedLevelRequest,
       setSelectedLevelEvaluation,
@@ -1092,15 +1140,23 @@ export function CharacterEditorPage({
       accordionOverrideForTab(current, arrivedTabKey),
     );
   }, [arrivedTabKey]);
-  // Runs after each render until the issue's choice is on the page (its
-  // level may still be evaluating, its accordion item still opening).
-  useEffect(() => {
-    if (scrollToChoiceId === undefined) return;
-    const element = document.getElementById(choiceSectionId(scrollToChoiceId));
-    if (element === null) return;
-    element.scrollIntoView?.({ block: "start" });
-    setScrollToChoiceId(undefined);
-  });
+  // Lands once the Build tab shows the evaluated level with its full
+  // candidate lists. A Review from another tab arrives with an evaluation
+  // that lists only each table's picks; when the full lists come in, the
+  // tables grow to the window's height and push a later step (Hybrid
+  // Talent's choice under the feat table) out of view.
+  const planningDetailFor =
+    planningEvaluation === undefined
+      ? undefined
+      : planningDetail.current.get(planningEvaluation);
+  useReviewLanding(
+    buildLanding,
+    workspaceTab === "build" &&
+      planningDetailFor?.workspace === "build" &&
+      planningDetailFor.levels.includes(selectedLevel) &&
+      selectedLevelEvaluation !== undefined,
+    () => setBuildLanding(undefined),
+  );
 
   useEffect(() => {
     if (
@@ -1176,7 +1232,7 @@ export function CharacterEditorPage({
         seenFlowSteps?.level === selectedLevel
           ? openedFlowStepId(seenFlowSteps.stepIds, levelChoicePresentation)
           : undefined;
-      if (opened !== undefined) setScrollToChoiceId(opened);
+      if (opened !== undefined) landOnBuild([choiceSectionId(opened)], false);
     }
   }
 
@@ -1433,6 +1489,7 @@ export function CharacterEditorPage({
       setReviewingContentUpdate(true);
       return;
     }
+    setBuildLanding(undefined);
     if (issue.target?.kind === "inventory") {
       const { entryId } = issue.target;
       setInventoryFocus((current) => ({
@@ -1448,6 +1505,10 @@ export function CharacterEditorPage({
         ...current,
         1: "Ability Scores",
       }));
+      landOnBuild(
+        [BASE_ABILITIES_SECTION_ID, levelTabPanelId(1, "Ability Scores")],
+        true,
+      );
       onNavigate(characterId, {
         workspace: "build",
         level: 1,
@@ -1462,6 +1523,7 @@ export function CharacterEditorPage({
         ...current,
         [level]: section,
       }));
+      landOnBuild([levelTabPanelId(level, section)], true);
       onNavigate(characterId, {
         workspace: "build",
         level,
@@ -1477,27 +1539,40 @@ export function CharacterEditorPage({
     if (choice === undefined) return;
     if (isCharacterDetailChoice(choice)) {
       setSelectedChoiceId(choice.id);
+      setDetailsReview((current) => ({
+        choiceId: choice.id,
+        request: (current?.request ?? 0) + 1,
+      }));
       onNavigate(characterId, { workspace: "details" });
       return;
     }
     if (isOptionalRetrainingChoice(choice)) {
       setSelectedLevel(choice.level);
+      setRetrainingReview((current) => ({
+        level: choice.level,
+        request: (current?.request ?? 0) + 1,
+      }));
       onNavigate(characterId, { workspace: "retraining", level: choice.level });
       return;
     }
     // The tab that presents the choice, which for a choice granted by
     // another pick (a feat's class feature) is the granting pick's tab.
-    const section = presentedChoiceSection(
-      choice,
-      presentLevelChoices(
-        choicesAtLevel(choice.level, planningEvaluation).filter(
-          isPrimaryBuildChoice,
-        ),
+    const presentation = presentLevelChoices(
+      choicesAtLevel(choice.level, planningEvaluation).filter(
+        isPrimaryBuildChoice,
       ),
     );
+    const section = presentedChoiceSection(choice, presentation);
     setSelectedLevel(choice.level);
     setSelectedChoiceId(choice.id);
-    setScrollToChoiceId(choice.id);
+    landOnBuild(
+      reviewLandingElementIds(
+        choice,
+        presentation,
+        levelTabPanelId(choice.level, section),
+      ),
+      true,
+    );
     setSelectedSectionByLevel((current) => ({
       ...current,
       [choice.level]: section,
@@ -1510,7 +1585,7 @@ export function CharacterEditorPage({
   };
   const activateLevelSection = (section: LevelChoiceTab): void => {
     setAccordionOverride(undefined);
-    setScrollToChoiceId(undefined);
+    setBuildLanding(undefined);
     setSelectedSectionByLevel((current) => ({
       ...current,
       [selectedLevel]: section,
@@ -1532,7 +1607,7 @@ export function CharacterEditorPage({
     requestedSection?: LevelChoiceTab,
   ): void => {
     setAccordionOverride(undefined);
-    setScrollToChoiceId(undefined);
+    setBuildLanding(undefined);
     try {
       const command = planningHorizonCommand(
         build,
@@ -2549,7 +2624,10 @@ export function CharacterEditorPage({
                               abilityScoresIncomplete) ||
                               sectionChoices.some(isUnresolvedChoice));
                           const tabId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-tab`;
-                          const panelId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-panel`;
+                          const panelId = levelTabPanelId(
+                            selectedLevel,
+                            section,
+                          );
                           return (
                             <button
                               aria-controls={panelId}
@@ -2631,7 +2709,11 @@ export function CharacterEditorPage({
                             <section
                               aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
                               className="level-choice-tab-panel"
-                              id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
+                              id={levelTabPanelId(
+                                selectedLevel,
+                                activeChoiceSection.section,
+                              )}
+                              tabIndex={-1}
                               role="tabpanel"
                             >
                               <div className="legacy-choice-list">
@@ -2774,6 +2856,9 @@ export function CharacterEditorPage({
                     onNavigate(characterId, { workspace: "retraining", level });
                   }}
                   onRequestDetails={setExpandedReplacementChoiceId}
+                  {...(retrainingReview === undefined
+                    ? {}
+                    : { review: retrainingReview })}
                   onDispatch={dispatch}
                 />
               ) : null}
@@ -2785,6 +2870,7 @@ export function CharacterEditorPage({
             >
               <CharacterDetailsEditor
                 active={workspaceTab === "details"}
+                candidatesListed={planningDetailFor?.workspace === "details"}
                 choices={characterDetailChoices}
                 evaluation={planningEvaluation}
                 build={build}
@@ -2795,6 +2881,9 @@ export function CharacterEditorPage({
                 effectiveLevel={build.effectiveLevel}
                 deityAlignment={deityAlignment}
                 alignmentHouseRuled={alignmentIssue !== undefined}
+                {...(detailsReview === undefined
+                  ? {}
+                  : { review: detailsReview })}
                 onDispatch={dispatch}
               />
             </div>

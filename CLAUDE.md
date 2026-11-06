@@ -377,6 +377,13 @@ separate header or level rail.
   backed by `previewProfileMigration`) to move a character onto the active
   content.
   Raise new character issues the same way, never as one-off banners.
+  An issue's `target` names the exact choice (choice ID, or the holding
+  for an item's choice); its Review lands there through `review-landing.ts`
+  (`reviewLandingElementIds` in `builder-ui.ts`: the step's own section,
+  else its group, else the tab panel), expanding its accordion item, and
+  only once the Build tab's planning evaluation lists full candidates for
+  the level (off the Build tab it lists only picks, so the tables grow
+  after arrival). Ordinary navigation never scrolls.
   Settings' content table logic lives in `content-profile-ui.ts`.
 - **Legacy viewer source.** When available locally,
   `reverse-engineering/generated/decompiled/CharacterSheetViewer/CharTracker/`

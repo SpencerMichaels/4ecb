@@ -169,6 +169,36 @@ function choiceLabel(
 }
 
 /**
+ * The holding an occurrence belongs to: the inventory element itself or
+ * anything granted under it (an item's power, its choice's pick).
+ */
+function inventoryEntryOf(
+  occurrenceId: string | undefined,
+  evaluation: EvaluatedCharacter,
+  build: CharacterBuild | undefined,
+): CharacterBuild["inventory"][number] | undefined {
+  if (build === undefined || occurrenceId === undefined) return undefined;
+  const byOccurrenceId = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  let provider = byOccurrenceId.get(occurrenceId);
+  for (
+    let depth = 0;
+    provider !== undefined && provider.kind !== "inventory" && depth < 16;
+    depth += 1
+  )
+    provider =
+      provider.parentId === undefined
+        ? undefined
+        : byOccurrenceId.get(provider.parentId);
+  if (provider === undefined) return undefined;
+  const providerId = provider.id;
+  return build.inventory.find((candidate) =>
+    providerId.startsWith(`${candidate.id}:definition:`),
+  );
+}
+
+/**
  * The holding whose own rules make `choice` (directly, or through a chosen
  * candidate's further choice): its entry, display name, and the choice's
  * name and heading as the Shop's item-choice pages and the Equipment tab's
@@ -187,26 +217,15 @@ function inventoryChoiceHolding(
       readonly heading: string;
     }
   | undefined {
-  if (build === undefined) return undefined;
+  const entry = inventoryEntryOf(
+    choice.providerOccurrenceId,
+    evaluation,
+    build,
+  );
+  if (entry === undefined) return undefined;
   const byOccurrenceId = new Map(
     evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
   );
-  let provider = byOccurrenceId.get(choice.providerOccurrenceId);
-  for (
-    let depth = 0;
-    provider !== undefined && provider.kind !== "inventory" && depth < 16;
-    depth += 1
-  )
-    provider =
-      provider.parentId === undefined
-        ? undefined
-        : byOccurrenceId.get(provider.parentId);
-  if (provider === undefined) return undefined;
-  const providerId = provider.id;
-  const entry = build.inventory.find((candidate) =>
-    providerId.startsWith(`${candidate.id}:definition:`),
-  );
-  if (entry === undefined) return undefined;
   const slotOwner = byId.get(
     (
       byOccurrenceId.get(choice.providerOccurrenceId)?.definitionId ?? ""
@@ -496,6 +515,28 @@ export function builderIssueGroups({
           savedNames.get(occurrence.id),
         );
 
+  // Where Review leads: the choice's own slot, or for an item's choice (and
+  // anything an item grants) the holding on the Equipment tab, since items
+  // are current state (D097) and their choices are made from its menu.
+  const choiceTarget = (choice: EvaluatedChoice): BuilderIssueTarget => {
+    const entry = inventoryEntryOf(
+      choice.providerOccurrenceId,
+      evaluation,
+      build,
+    );
+    return entry === undefined
+      ? { kind: "choice", choiceId: choice.id }
+      : { kind: "inventory", entryId: entry.id };
+  };
+  const occurrenceTarget = (
+    occurrenceId: string | undefined,
+  ): { readonly target?: BuilderIssueTarget } => {
+    const entry = inventoryEntryOf(occurrenceId, evaluation, build);
+    return entry === undefined
+      ? {}
+      : { target: { kind: "inventory", entryId: entry.id } };
+  };
+
   const unresolved: BuilderIssue[] = evaluation.choices.flatMap(
     (choice): BuilderIssue[] => {
       if (
@@ -564,13 +605,8 @@ export function builderIssueGroups({
           effect:
             "It remains active and is preserved on export, but the character is marked as using house rules.",
           ...(choice === undefined
-            ? {}
-            : {
-                target: {
-                  kind: "choice" as const,
-                  choiceId: choice.id,
-                },
-              }),
+            ? occurrenceTarget(occurrence.id)
+            : { target: choiceTarget(choice) }),
         },
       ];
     },
@@ -607,13 +643,8 @@ export function builderIssueGroups({
       effect:
         "It remains active and is preserved on export, but the character is marked as using house rules.",
       ...(choice === undefined
-        ? {}
-        : {
-            target: {
-              kind: "choice" as const,
-              choiceId: choice.id,
-            },
-          }),
+        ? occurrenceTarget(diagnostic.occurrenceId)
+        : { target: choiceTarget(choice) }),
     });
   }
   // Legacy lists an equipped item whose Requirement is unmet as "custom
@@ -704,12 +735,7 @@ export function builderIssueGroups({
             : diagnosticEffect(diagnostic),
         ...(removable ? { removal: { occurrenceId: occurrence.id } } : {}),
         ...(choice !== undefined
-          ? {
-              target: {
-                kind: "choice" as const,
-                choiceId: choice.id,
-              },
-            }
+          ? { target: choiceTarget(choice) }
           : unslotted && occurrence !== undefined
             ? {
                 target: {
@@ -722,7 +748,7 @@ export function builderIssueGroups({
                   }),
                 },
               }
-            : {}),
+            : occurrenceTarget(occurrence?.id)),
       },
     ];
   });
@@ -783,7 +809,7 @@ export function builderIssueGroups({
               "This skill is already a class skill, so this selection has no effect.",
             effect:
               "It remains active and is preserved on export, but the character is marked as using house rules.",
-            target: { kind: "choice" as const, choiceId: choice.id },
+            target: choiceTarget(choice),
           },
         ];
       return [
@@ -795,7 +821,7 @@ export function builderIssueGroups({
           effect: unverified
             ? "The selection remains active, but its rules legality cannot be confirmed automatically."
             : "The selection remains present, but the character is not rules-legal until its eligibility is resolved or the selection is changed.",
-          target: { kind: "choice" as const, choiceId: choice.id },
+          target: choiceTarget(choice),
         },
       ];
     },
