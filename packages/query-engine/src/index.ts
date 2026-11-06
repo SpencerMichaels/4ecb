@@ -1,4 +1,9 @@
-import type { ContentEntity, ContentNode } from "@4ecb/content-domain";
+import {
+  type ContentEntity,
+  type ContentNode,
+  contentEntitiesById,
+  countsAsSearchNames,
+} from "@4ecb/content-domain";
 
 export const COMPENDIUM_QUERY_VERSION = 1;
 
@@ -273,11 +278,17 @@ function numericFieldsForEntity(entity: ContentEntity): Map<string, number> {
   return fields;
 }
 
-function searchableText(entity: ContentEntity): string {
+/** What full-text search matches: the record's own text, plus the names of
+ *  the CountsAs* records it grants (Torag is found by "Moradin"). */
+function searchableText(
+  entity: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
   return [
     entity.id,
     entity.name,
     ...(entity.aliases ?? []),
+    ...countsAsSearchNames(entity, byId),
     entity.type,
     entity.source,
     ...entity.sources,
@@ -544,13 +555,14 @@ export class CompendiumIndex {
     const knownIds = new Set(
       entities.map((entity) => entity.id.toLocaleLowerCase()),
     );
+    const entitiesById = contentEntitiesById(entities);
     const idNames = new Map(
       entities.map((entity) => [entity.id.toLocaleLowerCase(), entity.name]),
     );
     const mutableInverted = new Map<string, number[]>();
     const byId = new Map<string, number>();
     this.#documents = entities.map((entity, index) => {
-      const fullText = searchableText(entity);
+      const fullText = searchableText(entity, entitiesById);
       const tokens = new Set(tokenize(fullText));
       const facets = facetsForEntity(entity, idNames);
       for (const token of tokens) {

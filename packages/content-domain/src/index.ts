@@ -249,4 +249,5 @@ export * from "./power-text";
 export * from "./power-field-bonuses";
 export * from "./prerequisite-ir";
 export * from "./content-cache";
+export * from "./counts-as";
 export * from "./note-values";

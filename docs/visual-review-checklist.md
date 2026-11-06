@@ -859,6 +859,29 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** a restricted option is selectable or worded as an
     "allowed sources" problem, an issue is reported twice, or greyed rows
     are illegible at 140% or in dark theme.
+- [ ] **Deity table Domains column and counts-as search (D042 amendment).**
+  - **Where:** at 140% zoom, light and dark theme: a stock character's
+    Build → level 1 → Deity, then Details → Deity; widen and narrow the
+    window, and open/close the sidebar drawer below 63rem. Type "Moradin"
+    in the filter; then a Pathfinder campaign character's Deity table with
+    "Moradin" (and "Pharasma" or another stock name its deities count as),
+    its Race table with a stock race name its renamed or counts-as races
+    stand in for, and a language choice filtered the same way. Also
+    "Protection" in a deity filter.
+  - **Expect:** with room (table at least 40rem wide), columns read Deity,
+    Alignment, Domains, Description; Domains lists the domain names
+    ("Creation, Earth") or "—", wraps within about 10rem and sorts. Narrower,
+    Domains disappears with no gap or empty column, and Description takes
+    the space; each pantheon band and the "No matching deities" row still
+    span the full table width at both widths, with their counts at the
+    right edge. "Moradin" lists Moradin and the deities that count as him
+    (Torag in the campaign); a race or language is found by what it counts
+    as; "Protection" finds deities of that domain.
+  - **Wrong if:** a blank or sliver column stays when Domains is hidden,
+    a band stops short of the right edge or overhangs it, the switch
+    follows the window instead of the table (e.g. Domains squeezed beside
+    the detail pane), or a Torag worshipper's "must worship Moradin" feat
+    loses its "met through Torag" note.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

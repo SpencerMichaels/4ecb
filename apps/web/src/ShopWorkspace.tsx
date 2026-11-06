@@ -4,7 +4,7 @@ import type {
   BuildInventoryEntry,
   BuildOccurrence,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { type ContentEntity, countsAsSearchNames } from "@4ecb/content-domain";
 import { EXCEPTION_IDS, itemChoiceSlots } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
@@ -259,16 +259,29 @@ function legacyCategory(entity: ContentEntity): string {
   return magicType || entity.type;
 }
 
-const searchTexts = new WeakMap<ContentEntity, string>();
+const searchTexts = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  WeakMap<ContentEntity, string>
+>();
 
 /** What the Shop's search matches in a record, lower-cased: once per
- * (immutable) record, not on every keystroke. */
-function shopSearchText(entity: ContentEntity): string {
-  let text = searchTexts.get(entity);
+ * (immutable) record and content, not on every keystroke. Its names, its
+ * aliases and the names of the CountsAs* records it grants. */
+function shopSearchText(
+  entity: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  let texts = searchTexts.get(byId);
+  if (texts === undefined) {
+    texts = new WeakMap();
+    searchTexts.set(byId, texts);
+  }
+  let text = texts.get(entity);
   if (text === undefined) {
     text = [
       entity.name,
       ...(entity.aliases ?? []),
+      ...countsAsSearchNames(entity, byId),
       shopDisplayName(entity),
       entity.type,
       shopSubtype(entity) ?? "",
@@ -277,7 +290,7 @@ function shopSearchText(entity: ContentEntity): string {
     ]
       .join(" ")
       .toLocaleLowerCase();
-    searchTexts.set(entity, text);
+    texts.set(entity, text);
   }
   return text;
 }
@@ -507,7 +520,7 @@ export function ShopWorkspace({
   const searchRecords = useMemo(() => {
     const needle = normalized(search);
     return advancedRecords.filter((entity) => {
-      if (needle !== "" && !shopSearchText(entity).includes(needle))
+      if (needle !== "" && !shopSearchText(entity, byId).includes(needle))
         return false;
       const price = priceOf(entity);
       if (
@@ -527,6 +540,7 @@ export function ShopWorkspace({
   }, [
     advancedRecords,
     affordable,
+    byId,
     ownedDefinitions,
     ritualCostPercent,
     search,

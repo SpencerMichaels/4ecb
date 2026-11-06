@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
+import {
+  type ContentEntity,
+  countsAsSearchNames,
+  entityNames,
+  type RuleStatement,
+} from "@4ecb/content-domain";
 
 import {
   evaluateCharacter,
@@ -191,5 +196,22 @@ describe("prerequisite met through a counts-as alternate", () => {
     const unmet = feat([], "ID_MORADIN_FEAT");
     expect(unmet?.eligible).toBe(false);
     expect(unmet).not.toHaveProperty("prerequisiteMetThrough");
+  });
+});
+
+describe("counts-as search names stay out of rules", () => {
+  it("still meets Moradin only through Torag once search has read Torag's counts-as", () => {
+    const byId = new Map(
+      definitions.map((record) => [record.id.toLocaleLowerCase(), record]),
+    );
+    const torag = definitions.find(({ id }) => id === "ID_TORAG")!;
+    // The builder tables and Shop search find Torag by "Moradin"...
+    expect(countsAsSearchNames(torag, byId)).toEqual(["Moradin"]);
+    expect(entityNames(torag)).toEqual(["Torag"]);
+    // ...but a requirement naming Moradin is still met through Torag's
+    // counts-as alternate, never by Torag as a Moradin record.
+    expect(
+      feat([pick("deity", "ID_TORAG", 0)], "ID_MORADIN_FEAT"),
+    ).toMatchObject({ eligible: true, prerequisiteMetThrough: ["ID_TORAG"] });
   });
 });

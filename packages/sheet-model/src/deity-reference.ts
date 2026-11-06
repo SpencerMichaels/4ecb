@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { type ContentEntity, countsAsRecords } from "@4ecb/content-domain";
 
 const key = (value: string) => value.trim().toLocaleLowerCase();
 
@@ -57,28 +57,7 @@ export function deityCountsAs(
   deity: ContentEntity,
   lookup: (id: string) => ContentEntity | undefined,
 ): readonly ContentEntity[] {
-  const seen = new Set<string>();
-  return deity.rules.flatMap((rule) => {
-    if (key(rule.name) !== "grant") return [];
-    const attribute = (name: string) =>
-      rule.attributes.find((candidate) => key(candidate.name) === name)?.value;
-    const granted = attribute("name");
-    if (
-      granted === undefined ||
-      key(attribute("type") ?? "") !== "countsasdeity"
-    )
-      return [];
-    const record = lookup(granted.trim());
-    if (
-      record === undefined ||
-      key(record.type) !== "countsasdeity" ||
-      key(record.name) === key(deity.name) ||
-      seen.has(key(record.id))
-    )
-      return [];
-    seen.add(key(record.id));
-    return [record];
-  });
+  return countsAsRecords(deity, lookup, "CountsAsDeity");
 }
 
 /** "The Raven Queen, Kelemvor", or undefined for a deity counting as none. */

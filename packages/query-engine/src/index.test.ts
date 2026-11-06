@@ -116,6 +116,38 @@ describe("CompendiumIndex", () => {
     ]);
   });
 
+  it("finds a record by the names of the CountsAs* records it grants", () => {
+    const grant = (name: string, type: string) => ({
+      name: "grant",
+      attributes: [
+        { name: "name", value: name },
+        { name: "type", value: type },
+      ],
+      text: "",
+      children: [],
+      ordinal: 0,
+    });
+    const counting = new CompendiumIndex([
+      ...entities,
+      {
+        ...entity("ID_TORAG", "Torag", "Deity"),
+        rules: [grant("ID_COUNTSASDEITY_MORADIN", "CountsAsDeity")],
+      },
+      entity("ID_COUNTSASDEITY_MORADIN", "Moradin", "CountsAsDeity"),
+      {
+        ...entity("ID_HALF_DRAGON", "Halfdrake", "Race"),
+        rules: [grant("ID_COUNTSASRACE_DRAGONBORN", "CountsAsRace")],
+      },
+      entity("ID_COUNTSASRACE_DRAGONBORN", "Dragonborn", "CountsAsRace"),
+    ]);
+    const ids = (text: string) =>
+      counting.query({ text }).items.map(({ id }) => id);
+    expect(ids("moradin")).toEqual(
+      expect.arrayContaining(["ID_TORAG", "ID_COUNTSASDEITY_MORADIN"]),
+    );
+    expect(ids("dragonborn")).toContain("ID_HALF_DRAGON");
+  });
+
   it("matches phrases and reports facet counts", () => {
     const result = index.query({ text: '"immediate interrupt"' });
     expect(result.items.map((item) => item.id)).toEqual(["ID_POWER_2"]);

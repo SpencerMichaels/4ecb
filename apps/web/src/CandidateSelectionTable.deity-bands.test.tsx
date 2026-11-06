@@ -178,15 +178,15 @@ describe("Deity table bands", () => {
   it("groups rows into open bands in content order, the fallback last", () => {
     render(entities.map((entity) => candidate(entity)));
     expect(bands()).toEqual([
-      { label: "Core", count: "2", expanded: "true", colSpan: 3 },
-      { label: "Eberron", count: "1", expanded: "true", colSpan: 3 },
+      { label: "Core", count: "2", expanded: "true", colSpan: 4 },
+      { label: "Eberron", count: "1", expanded: "true", colSpan: 4 },
       {
         label: "Inner Sea major deities",
         count: "2",
         expanded: "true",
-        colSpan: 3,
+        colSpan: 4,
       },
-      { label: "Other", count: "1", expanded: "true", colSpan: 3 },
+      { label: "Other", count: "1", expanded: "true", colSpan: 4 },
     ]);
     expect(rowNames()).toEqual([
       "Avandra",

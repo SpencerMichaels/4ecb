@@ -849,6 +849,26 @@ The deity card shows the Pantheon as an ordinary authored field beside
 Alignment. Only the Deity table is grouped this way; grouping another
 choice table needs the owner's OK.
 
+Amendment (2026-11-06, owner: "it should list the domains for each deity,
+if there is space"; "searching deities by name should also search their
+'counts as' entries … The same should be true for races and languages"):
+the Deity table's columns are Name, Alignment, Domains, Description.
+Domains lists the deity's domain names (sheet-model `deityDomainsText`,
+by ID, cached per entity map and record as `deityTableDomains`). It is an
+optional column: a container query on the table itself
+(`candidate-table`, 11-selection-tables.css, never a media query) collapses
+it to no width, contents hidden, when the table is under 40rem; the cells
+stay in the table, so the bands' and empty row's colspan (four) always
+matches the columns. Every choice table's filter, the Shop's search and
+the compendium full text also match the names (aliases included) of the
+CountsAs* records an option's rules grant, of any CountsAs* type
+(content-domain `countsAsSearchNames`, by ID, cached per entity map):
+"Moradin" finds Torag. That is search only: a counts-as name is never
+one of the record's own names (`entityNames`), so rule name matching keeps
+the counts-as semantics of D116 (alternates, stand-ins, "met through").
+Since the table filter matches its visible columns' text, the Domains
+text is searchable too.
+
 ### D043 — Inactive provider rules preserve but suppress their saved children
 
 Statement-level `requires` controls whether a `select`, `grant`, or other rule

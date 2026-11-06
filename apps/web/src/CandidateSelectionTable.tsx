@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-import type { ContentEntity } from "@4ecb/content-domain";
+import { type ContentEntity, countsAsSearchNames } from "@4ecb/content-domain";
 import {
   powerAttackProfile,
   type CandidateDecision,
@@ -25,6 +25,7 @@ import {
   classTableMetadata,
   contentSpecificValue,
   deityTableDescription,
+  deityTableDomains,
   deityTableGroup,
   type groupParameterizedCandidates,
   isCandidateSelectable,
@@ -34,8 +35,8 @@ import {
   powerTableLevel,
   type CandidateTableTypeGroup,
   type ChoiceSelectionTableKind,
-} from "./builder-ui";
   unavailablePresentation,
+} from "./builder-ui";
 import {
   firstSelectedCandidateId,
   initialCandidateScrollStep,
@@ -204,10 +205,19 @@ function candidateTableHasSections(kind: ChoiceSelectionTableKind): boolean {
   return kind === "feat" || kind === "power" || kind === "deity";
 }
 
-function candidateTableColumnCount(kind: ChoiceSelectionTableKind): number {
+/**
+ * How many columns the kind's table has: every row, the header, and the
+ * pantheon/type bands and empty row that span them. Optional columns (the
+ * Deity table's Domains) stay in the table when it is narrow and collapse
+ * to no width instead (`selection-col-optional`, 11-selection-tables.css),
+ * so this count holds at every width.
+ */
+export function candidateTableColumnCount(
+  kind: ChoiceSelectionTableKind,
+): number {
   if (kind === "power") return 6;
-  if (kind === "class") return 4;
-  if (kind === "background" || kind === "deity") return 3;
+  if (kind === "class" || kind === "deity") return 4;
+  if (kind === "background") return 3;
   return 2;
 }
 
@@ -240,6 +250,7 @@ type CandidateSortColumn =
   | "role"
   | "power-source"
   | "associated-skills"
+  | "deity-domains"
   | "deity-description";
 type CandidateSortDirection = "ascending" | "descending";
 
@@ -498,11 +509,17 @@ export function CandidateSelectionTable({
       label,
       entity?.name,
       ...(entity?.aliases ?? []),
+      // Torag is found by "Moradin": the names of the CountsAs* records the
+      // option grants (search only; rules keep their own counts-as).
+      ...(entity === undefined ? [] : countsAsSearchNames(entity, byId)),
       entity?.printPrerequisites,
       entity === undefined ? undefined : choiceTableSummary(entity, kind),
       entity === undefined || kind !== "deity"
         ? undefined
         : deityTableDescription(entity),
+      entity === undefined || kind !== "deity"
+        ? undefined
+        : deityTableDomains(entity, byId),
       entity === undefined
         ? undefined
         : contentSpecificValue(entity, "Action Type"),
@@ -566,6 +583,7 @@ export function CandidateSelectionTable({
       return classTableMetadata(entity).powerSource.label;
     if (column === "associated-skills")
       return backgroundAssociatedSkills(entity);
+    if (column === "deity-domains") return deityTableDomains(entity, byId);
     return choiceTableSummary(entity, kind);
   };
   const compareCandidates = (
@@ -592,16 +610,22 @@ export function CandidateSelectionTable({
     column: CandidateSortColumn,
     label: string,
     contents: ReactNode = label,
+    className?: string,
   ) => {
     if (!candidateHeaderIsSortable(label))
       return (
-        <th key={column} scope="col">
+        <th className={className} key={column} scope="col">
           {contents}
         </th>
       );
     const active = sort.column === column;
     return (
-      <th aria-sort={active ? sort.direction : "none"} key={column} scope="col">
+      <th
+        aria-sort={active ? sort.direction : "none"}
+        className={className}
+        key={column}
+        scope="col"
+      >
         <button
           aria-label={`Sort by ${label}`}
           className="selection-sort-button"
@@ -685,6 +709,10 @@ export function CandidateSelectionTable({
       entity === undefined || kind !== "deity"
         ? undefined
         : deityTableDescription(entity);
+    const deityDomains =
+      entity === undefined || kind !== "deity"
+        ? undefined
+        : deityTableDomains(entity, byId);
     const classMetadata =
       entity === undefined || kind !== "class"
         ? undefined
@@ -832,6 +860,11 @@ export function CandidateSelectionTable({
           <>
             <td>
               <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+            <td className="selection-col-optional selection-col-domains">
+              <span className="selection-table-summary">
+                {deityDomains || "—"}
+              </span>
             </td>
             <td>
               <span className="selection-table-summary">
@@ -1310,6 +1343,12 @@ export function CandidateSelectionTable({
               ) : kind === "deity" ? (
                 <>
                   {sortableHeader("summary", "Alignment")}
+                  {sortableHeader(
+                    "deity-domains",
+                    "Domains",
+                    "Domains",
+                    "selection-col-optional selection-col-domains",
+                  )}
                   {sortableHeader("deity-description", "Description")}
                 </>
               ) : (

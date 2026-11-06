@@ -6,7 +6,11 @@ import {
   type BuildOccurrence,
 } from "@4ecb/character-domain";
 import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
-import { classifyPowerEntity, powerActionLabel } from "@4ecb/sheet-model";
+import {
+  classifyPowerEntity,
+  deityDomainsText,
+  powerActionLabel,
+} from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
   choiceHeading,
@@ -764,6 +768,36 @@ export function deityTableDescription(
   entity: ContentEntity,
 ): string | undefined {
   return firstSentence(entity.description);
+}
+
+const deityDomainTexts = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  WeakMap<ContentEntity, string | null>
+>();
+
+/**
+ * The Deity table's Domains column: the deity's domain names
+ * (`deityDomainsText`), resolved by ID in the content's entity map and
+ * cached per map and record, so sorting and filtering re-read nothing.
+ */
+export function deityTableDomains(
+  entity: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string | undefined {
+  let texts = deityDomainTexts.get(byId);
+  if (texts === undefined) {
+    texts = new WeakMap();
+    deityDomainTexts.set(byId, texts);
+  }
+  let text = texts.get(entity);
+  if (text === undefined) {
+    text =
+      deityDomainsText(entity, (id) =>
+        byId.get(id.trim().toLocaleLowerCase()),
+      ) ?? null;
+    texts.set(entity, text);
+  }
+  return text ?? undefined;
 }
 
 /** Skills listed by the authored background metadata, without prose inference. */
@@ -1566,6 +1600,10 @@ const permissionReasonLabels: Readonly<Record<string, string>> = {
   "source-unentitled": "Unavailable: not in your allowed sources",
 };
 
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLocaleLowerCase() + text.slice(1);
+}
+
 /**
  * How an option that can't be chosen says why, on every surface (one
  * `UnavailableLabel`, one label per status). A permission reason makes it
@@ -1601,10 +1639,6 @@ export function unavailablePresentation(reasons: readonly string[]): {
 
 export function isCandidateSelectable(candidate: CandidateDecision): boolean {
   return candidate.sourceEntitled !== false;
-function lowerFirst(text: string): string {
-  return text.charAt(0).toLocaleLowerCase() + text.slice(1);
-}
-
 }
 
 export function isCandidateVisible(

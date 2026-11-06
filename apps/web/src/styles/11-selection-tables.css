@@ -47,6 +47,36 @@
   width: 1%;
 }
 
+/* Optional columns (the Deity table's Domains) show only where the table
+   itself has room: a container query on the table, so it follows the
+   detail pane and the sidebar drawer as well as the window and zoom. Below
+   40rem (the nowrap Name and Alignment, about 10rem of domains and a
+   readable Description) the column collapses to no width with its
+   contents hidden. It is never display: none: the column stays in the
+   table, so the pantheon bands' and empty row's colspan
+   (candidateTableColumnCount) always matches the table's columns. */
+.candidate-selection-deity {
+  container: candidate-table / inline-size;
+}
+
+.candidate-selection-deity .selection-table-scroll .selection-col-domains {
+  width: 10rem;
+}
+
+@container candidate-table (max-width: 40rem) {
+  .candidate-selection-table .selection-table-scroll .selection-col-optional {
+    padding-inline: 0;
+    width: 0;
+  }
+
+  .candidate-selection-table
+    .selection-table-scroll
+    .selection-col-optional
+    > * {
+    display: none;
+  }
+}
+
 .candidate-selection-class .selection-table-scroll th:nth-child(2),
 .candidate-selection-class .selection-table-scroll td:nth-child(2),
 .candidate-selection-class .selection-table-scroll th:nth-child(3),

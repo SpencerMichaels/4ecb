@@ -408,6 +408,37 @@ renders its own card and keeps two columns. Verification:
 (table scroll width 418 px of a 1136 px section before, the 58rem
 `.choice-editor-fields` cap after, as on the Build tab).
 
+## Deity table Domains column; search by counts-as names (2026-11-06)
+
+The Deity table gains a Domains column between Alignment and Description
+(D042 amendment): the deity's domain names from sheet-model
+`deityDomainsText`, cached per entity map and record (`deityTableDomains`,
+`builder-ui.ts`), sortable. It is optional (`selection-col-optional`): a
+container query on the Deity table (`candidate-table`,
+`11-selection-tables.css`) collapses it to no width with its contents
+hidden below 40rem of table width, so it follows the detail pane and
+sidebar drawer at any zoom; its cells stay in the table, so the pantheon
+bands and empty row span four columns at every width
+(`candidateTableColumnCount`). Search: content-domain `countsAsRecords` /
+`countsAsSearchNames` read the CountsAs* records an option's grant rules
+name (any CountsAs* type, by ID, cached per entity map); every choice
+table's filter, the Shop's search and query-engine full text match those
+names, so "Moradin" finds Torag and a race or language is found by what it
+counts as. Search only: `entityNames` is unchanged, so rules keep D116's
+counts-as semantics (sheet-model `deityCountsAs` now reads the same
+helper). The table filter already matched visible column text, so domain
+names are searchable with the column. Verification: synthetic
+`CandidateSelectionTable.deity-domains.test.tsx` (columns, colspan at every
+width, Moradin → Torag, counts-as race and language, domain search),
+`CandidateSelectionTable.deity-domains.style.test.ts` (container query,
+collapse not removal, no media query), `counts-as.test.ts`, a query-engine
+counts-as case and a rules-engine check that "must worship Moradin" is still
+met through Torag; focused tests, touched-package typechecks, lint and
+format pass; `parity:baseline` on two samples unchanged. The full test run
+and `pnpm typecheck` currently fail only in content-pack/content-tool from
+another change's uncommitted campaign work. Owner visual check pending
+(visual-review checklist pass 24).
+
 ## Deity table bands by pantheon (2026-11-06)
 
 The builder's Deity table bands its rows by an authored `Pantheon`
