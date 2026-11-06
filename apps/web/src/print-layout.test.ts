@@ -359,6 +359,22 @@ describe("print layout contract", () => {
       /\.print-variant-bonus\s*\{[^}]*font-weight:\s*700;/,
     );
   });
+  it("keeps weapon-table headings and numbers on one line so weapon names take the squeeze", () => {
+    // Every layout: a "Dmg 2" heading sets its column's minimum width.
+    expect(styles).toMatch(
+      /\n\.print-card-variant-table thead th\s*\{[^}]*white-space:\s*nowrap;/,
+    );
+    expect(styles).toMatch(
+      /\.print-variant-bonus,\s*\.print-variant-expression\s*\{[^}]*white-space:\s*nowrap;/,
+    );
+    // Weapon names stay wrappable.
+    expect(styles).not.toMatch(
+      /\.print-card-variant-table tbody th\s*\{[^}]*white-space:\s*nowrap/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-variant-table tbody th\s*\{[^}]*overflow-wrap:\s*break-word;/,
+    );
+  });
   it("defines Letter and A4 pages with a fixed three-by-three card grid", () => {
     expect(styles).toMatch(/@page\s*\{[\s\S]*?size:\s*letter/);
     expect(styles).toMatch(/@page\s+a4sheet\s*\{[\s\S]*?size:\s*A4/);

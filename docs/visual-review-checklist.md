@@ -468,6 +468,18 @@ live site.
     appears, the menu is clipped, a toolbar
     control moves or disappears between categories, "Level" breaks onto
     two lines, or grey text is unreadable in dark theme.
+- [ ] **Drow invoker: Angelic Harrier weapon table.**
+  - **Where:** `?preview=1`, the Angelic Harrier power card; then
+    `edit?tab=build` at level 1, select Angelic Harrier and look at its
+    card. At 140% zoom and in both themes.
+  - **Expect:** the weapon table's "Dmg 1"/"Dmg 2" headings and every
+    to-hit and damage value sit on one line; a long implement name wraps
+    instead (its continuation hanging under its first word). The printed
+    card still fits at a readable size.
+  - **Wrong if:** "Dmg 2" (or any heading or number) breaks over two lines,
+    the weapon column stays wide while a number column wraps, the table
+    overflows the card, or the printed card's text shrinks noticeably
+    compared with its neighbours.
 
 ## Pass 8: Arena fighter 11 (`fighter-arena`)
 

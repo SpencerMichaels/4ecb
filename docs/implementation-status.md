@@ -3562,6 +3562,9 @@ D079 implemented on branch `unified-cards`:
   weapon tables keep attack cells on one line, giving spare width to names.
   Every weapon table hangs wrapped weapon names under their first word, divides
   every column and bolds each to-hit bonus so adjacent expressions stay apart.
+  Column headings ("Dmg 2", "Attack 1") never wrap on any layout, so each
+  number column is at least its heading wide and weapon names take the
+  squeeze (owner, 2026-11-06).
 - Panel cards lay out their bands like printed cards, so a wrapped secondary
   attack line starts with its target icon rather than a "·" separator.
 - Builder and on-screen panel cards have dark-theme paper, ink and card

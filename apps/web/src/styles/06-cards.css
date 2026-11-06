@@ -331,6 +331,13 @@
 .print-card-variant-table thead th {
   background: color-mix(in srgb, var(--card-color) 10%, var(--card-paper));
 }
+/* Column headings ("Dmg 2", "Attack 1") never wrap: each number column is
+   at least its heading wide and the weapon names wrap to make room. The
+   cells keep their numbers on one line too (.print-variant-bonus,
+   .print-variant-expression). */
+.print-card-variant-table thead th {
+  white-space: nowrap;
+}
 .print-card-variant-table tbody tr:nth-child(odd) {
   background: var(--card-paper);
 }
@@ -579,6 +586,8 @@
 .print-reference-card.is-panel .print-card-variant-table td,
 .print-reference-card.is-panel .print-card-variant-table thead th {
   padding-inline: 0.4em;
+}
+.print-reference-card.is-panel .print-card-variant-table td {
   white-space: nowrap;
 }
 .print-reference-card.is-panel .print-card-variant-table tbody th {
