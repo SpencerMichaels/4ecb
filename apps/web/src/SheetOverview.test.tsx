@@ -27,6 +27,7 @@ import {
   paginateReminderColumns,
   type ReferenceEntry,
 } from "./SheetOverview";
+import { dotted } from "./test-dot-list";
 
 const model = buildSheetModel({
   details: { name: "Overview fixture", Level: "8" },
@@ -1798,7 +1799,9 @@ describe("real-data sheet overview", () => {
         paper="letter"
       />,
     );
-    expect(html).toContain('<p class="ov-player-company">Test player</p>');
+    expect(dotted(html)).toContain(
+      '<p class="ov-player-company">Test player</span></span></p>',
+    );
   });
   it.each([
     { identity: [] },
@@ -2193,8 +2196,8 @@ describe("real-data sheet overview", () => {
     expect(header).not.toContain("Initiative");
     expect(header).toContain('class="ov-identity-details"');
     expect(header).toContain("<dt>Theme</dt><dd>Synthetic theme</dd>");
-    expect(header).toContain(
-      '<p class="ov-player-company">Synthetic player · Synthetic company</p>',
+    expect(dotted(header)).toContain(
+      '<p class="ov-player-company">Synthetic player · Synthetic company</span></span></p>',
     );
     const band = summary
       .split('class="ov-numeric-band"')[1]!

@@ -180,9 +180,7 @@ export function printItemPresentation(card: SheetCard) {
             : `${tier.toLowerCase()} tier`,
         )
       : undefined,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter((entry): entry is string => Boolean(entry));
   const excluded = new Set([
     "level",
     "tier",
@@ -259,22 +257,16 @@ export function printItemPresentation(card: SheetCard) {
       ]
     : [...enhancementRule, ...bodyFields];
   const weight = field("Weight");
-  const price =
-    [
-      [lastField("Gold"), "gp"],
-      [lastField("Silver"), "sp"],
-      [lastField("Copper"), "cp"],
-    ]
-      .flatMap(([value, unit]) =>
-        value
-          ? [
-              /^[\d.,]+$/.test(value)
-                ? `${groupedNumber(value)} ${unit}`
-                : value,
-            ]
-          : [],
-      )
-      .join(" · ") || lastField("Market Price");
+  const coins = [
+    [lastField("Gold"), "gp"],
+    [lastField("Silver"), "sp"],
+    [lastField("Copper"), "cp"],
+  ].flatMap(([value, unit]) =>
+    value
+      ? [/^[\d.,]+$/.test(value) ? `${groupedNumber(value)} ${unit}` : value]
+      : [],
+  );
+  const price = coins.length > 0 ? coins : [lastField("Market Price")];
   const rawSlot = field("Item Slot");
   const slot =
     !isWeapon &&
@@ -295,7 +287,10 @@ export function printItemPresentation(card: SheetCard) {
     stats,
     statRows,
     metadata,
-    footerDetails: [slot, displayWeight, price].filter(Boolean).join(" · "),
+    // "·" lists for the footer's two sides (DotList).
+    footerDetails: [slot, displayWeight, ...price].filter(
+      (entry): entry is string => Boolean(entry),
+    ),
     weaponProperties,
     rules,
     // Keep unstructured/custom mechanical prose when it has no structured
@@ -313,7 +308,7 @@ export function printItemPresentation(card: SheetCard) {
     level: lastField("Level"),
     slot,
     weight: displayWeight,
-    price,
+    price: price.filter(Boolean).join(" · ") || undefined,
     icon: itemCategoryIcon({
       type: card.itemType,
       identityType: card.baseItemType,

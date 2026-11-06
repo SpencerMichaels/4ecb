@@ -151,8 +151,16 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-attack-target\.starts-wrapped-row\s*\{[^}]*flex-basis:\s*100%;/,
     );
-    expect(sheetSource).toContain(
-      'cell.classList.remove("starts-wrapped-row")',
+    // One line-start mechanism for every "·" list on a card, re-run at each
+    // fitted text size (line-starts.ts).
+    expect(sheetSource).toMatch(
+      /markLineStarts\(\s*element\.querySelectorAll\(\s*"\.print-card-combat-band\.is-secondary, \.print-item-stat-row, \.dot-list",/,
+    );
+    expect(styles).toMatch(
+      /\.dot-list-item \+ \.dot-list-item::before\s*\{[^}]*content:\s*"\\b7\\a0"/,
+    );
+    expect(styles).toMatch(
+      /\.dot-list-item\.starts-wrapped-row::before\s*\{[^}]*display:\s*none;/,
     );
     expect(sheetSource).toMatch(/withAuthoredPrintTargets\(\s*card,/);
   });

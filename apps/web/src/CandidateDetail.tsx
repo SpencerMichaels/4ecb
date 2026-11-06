@@ -23,6 +23,7 @@ import {
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
 import { DeityDomains } from "./DeityDomains";
+import { DotList } from "./DotList";
 import {
   detailStackEntries,
   detailStackSectionHeading,
@@ -209,11 +210,14 @@ function DetailLevelSection({
         >
           <Icon name="chevron" />
           <span className="detail-level-summary" id={titleId}>
-            <span className="detail-level-title">{heading.label}</span>{" "}
-            <span className="detail-level-count">
-              <span aria-hidden="true">·</span>
-              <span className="visually-hidden">:</span> {heading.count}
-            </span>
+            <DotList
+              items={[
+                <span className="detail-level-title">{heading.label}</span>,
+                <span className="detail-level-count">
+                  <span className="visually-hidden">:</span> {heading.count}
+                </span>,
+              ]}
+            />
           </span>
           {open ? null : (
             <span className="detail-level-benefits" id={namesId}>

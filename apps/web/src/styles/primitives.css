@@ -244,3 +244,15 @@ button.dialog-close {
   position: relative;
   z-index: 1;
 }
+
+/* "·"-separated lists (DotList.tsx): every item but the first leads with a
+   separator (silent to screen readers, joined to the item by a no-break
+   space); an item that starts a line drops it, the line break being the
+   separator (line-starts.ts, owner 2026-11-05). */
+.dot-list-item + .dot-list-item::before {
+  content: "\b7\a0";
+  content: "\b7\a0" / "";
+}
+.dot-list-item.starts-wrapped-row::before {
+  display: none;
+}

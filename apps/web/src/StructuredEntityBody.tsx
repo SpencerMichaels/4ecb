@@ -8,6 +8,7 @@ import {
   contentSpecificValue,
 } from "./builder-ui";
 import { namedClassFeatures } from "./detail-stack";
+import { DotList } from "./DotList";
 import { EntityPrerequisites } from "./EntityCard";
 import { Prose } from "./Prose";
 
@@ -379,16 +380,18 @@ export function StructuredEntityBody({
       ? [
           contentSpecificValue(entity, "Campaign"),
           contentSpecificValue(entity, "type"),
-        ]
-          .filter(Boolean)
-          .join(" · ")
-      : "";
+        ].filter(Boolean)
+      : [];
   return (
     <div className="structured-entity-body">
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
-      {context === "" ? null : <p className="entity-card-context">{context}</p>}
+      {context.length === 0 ? null : (
+        <p className="entity-card-context">
+          <DotList items={context} />
+        </p>
+      )}
       {classHeading === "" ? (
         description === "" ? null : (
           <p className="entity-card-lede">{description}</p>

@@ -7,6 +7,7 @@ import {
   characterIdentity,
   trashOrder,
 } from "./character-library-ui";
+import { DotList } from "./DotList";
 import { EmptyTrashDialog } from "./EmptyTrashDialog";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
@@ -94,15 +95,18 @@ export function TrashDialog({
                 <div className="trash-identity">
                   <strong>{character.title}</strong>
                   <span>
-                    {characterIdentity(character)}
-                    {trashed === undefined ? null : (
-                      <>
-                        {" · "}
-                        <span title={exactDateTime(character.deletedAt ?? "")}>
-                          Trashed {trashed}
-                        </span>
-                      </>
-                    )}
+                    <DotList
+                      items={[
+                        characterIdentity(character),
+                        trashed === undefined ? undefined : (
+                          <span
+                            title={exactDateTime(character.deletedAt ?? "")}
+                          >
+                            Trashed {trashed}
+                          </span>
+                        ),
+                      ]}
+                    />
                   </span>
                 </div>
                 <div className="character-card-actions">

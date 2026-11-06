@@ -15,6 +15,7 @@ import {
   BuilderCardContext,
 } from "./BuilderCards";
 import { CandidateDetail } from "./CandidateDetail";
+import { dotted } from "./test-dot-list";
 
 const alignment: ContentEntity = {
   id: "ID_ALIGNMENT_GOOD",
@@ -238,7 +239,9 @@ describe("beast companion detail", () => {
     // 16 + 1 × 10 hit points; AC 12 + level.
     expect(markup).toContain("<dt>HP</dt><dd>26</dd>");
     expect(markup).toContain("<dt>AC</dt><dd>13</dd>");
-    expect(markup).toContain("<strong>Claw</strong> +3 vs AC · 1d12+3 damage");
+    expect(dotted(markup)).toContain(
+      "<strong>Claw</strong> +3 vs AC · 1d12+3 damage",
+    );
   });
 });
 
@@ -357,7 +360,7 @@ describe("option detail benefits by level", () => {
       described: button.includes("aria-describedby"),
       hidden: hidden !== undefined,
       heading: (
-        /class="detail-level-summary"[^>]*>(.*?)<\/span><\/span>/.exec(
+        /class="detail-level-summary"[^>]*>(.*?)<\/span>(?=<span class="detail-level-benefits"|$)/.exec(
           content,
         )?.[1] ?? ""
       )
@@ -377,7 +380,7 @@ describe("option detail benefits by level", () => {
         expanded: true,
         described: false,
         hidden: false,
-        heading: "Level 1 ·: 1 feature",
+        heading: "Level 1 : 1 feature",
         names: [],
       },
       {
@@ -385,7 +388,7 @@ describe("option detail benefits by level", () => {
         expanded: true,
         described: false,
         hidden: false,
-        heading: "Level 9 ·: 1 feature, 2 powers",
+        heading: "Level 9 : 1 feature, 2 powers",
         names: [],
       },
       {
@@ -393,7 +396,7 @@ describe("option detail benefits by level", () => {
         expanded: false,
         described: true,
         hidden: true,
-        heading: "Level 11 ·: 1 feature",
+        heading: "Level 11 : 1 feature",
         names: ["Pact Curse"],
       },
     ]);
@@ -446,8 +449,8 @@ describe("option detail benefits by level", () => {
       }),
     );
     expect(sections(markup).map(({ heading }) => heading)).toEqual([
-      "Level 2 ·: 1 power",
-      "Level 5 ·: 1 feature",
+      "Level 2 : 1 power",
+      "Level 5 : 1 feature",
     ]);
     expect(markup).not.toContain("theme-power-cards");
 
@@ -513,8 +516,8 @@ describe("option detail benefits by level", () => {
     expect(
       sections(markup).map(({ heading, open }) => [heading, open]),
     ).toEqual([
-      ["Level 1 ·: 1 feature", true],
-      ["Test Path (Levels 11–12) ·: 2 features", true],
+      ["Level 1 : 1 feature", true],
+      ["Test Path (Levels 11–12) : 2 features", true],
     ]);
     const pathCards = markup.slice(markup.indexOf("Test Path (Levels"));
     expect(pathCards).toContain(

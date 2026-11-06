@@ -7,6 +7,7 @@ import {
 } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
+import { DotList } from "./DotList";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -37,17 +38,17 @@ const ATTACK_KIND_LABELS: Readonly<
 };
 
 /** "Blinking Bite (teleportation)", "Dust and Smoke · Aura 1". */
-function entryHeading(entry: CreatureBlockEntry): string {
+function entryHeading(entry: CreatureBlockEntry): readonly string[] {
   const name =
     entry.keywords === undefined
       ? entry.name
       : `${entry.name} (${entry.keywords})`;
-  return entry.aura === undefined ? name : `${name} · Aura ${entry.aura}`;
+  return [name, entry.aura === undefined ? "" : `Aura ${entry.aura}`];
 }
 
 /** The entry's attack icon, action and usage, leaving out an action its name
  *  states ("Standard Action"). */
-function entryMeta(entry: CreatureBlockEntry): string {
+function entryMeta(entry: CreatureBlockEntry): readonly string[] {
   const action =
     entry.action === undefined ||
     entry.name.toLocaleLowerCase().includes(entry.action.toLocaleLowerCase())
@@ -59,9 +60,7 @@ function entryMeta(entry: CreatureBlockEntry): string {
       : ATTACK_KIND_LABELS[entry.attackKind],
     action,
     entry.usage,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter((value): value is string => Boolean(value));
 }
 
 /** One trait or power of a stat block, as a section of its card. */
@@ -74,20 +73,28 @@ export function CreatureEntrySection({
   return (
     <section className="print-familiar-section print-associate-entry">
       <h4>
-        {entryHeading(entry)}
-        {meta === "" ? null : (
-          <span className="print-associate-usage"> {meta}</span>
+        <DotList items={entryHeading(entry)} />
+        {meta.length === 0 ? null : (
+          <span className="print-associate-usage">
+            {" "}
+            <DotList items={meta} />
+          </span>
         )}
       </h4>
       {entry.roll === undefined ? null : (
         <p className="print-creature-roll">
-          <strong>Attack</strong> {entry.roll.attack}
-          {entry.roll.damage === undefined ? null : (
-            <>
-              {" · "}
-              <strong>Damage</strong> {entry.roll.damage}
-            </>
-          )}
+          <DotList
+            items={[
+              <>
+                <strong>Attack</strong> {entry.roll.attack}
+              </>,
+              entry.roll.damage === undefined ? undefined : (
+                <>
+                  <strong>Damage</strong> {entry.roll.damage}
+                </>
+              ),
+            ]}
+          />
         </p>
       )}
       {entry.lines.map((line, index) => (
@@ -210,9 +217,7 @@ export function CreatureCard({
       ? undefined
       : [`Level ${card.level}`, card.role].filter(Boolean).join(" "),
     card.identity,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter(Boolean);
   const movement = [
     card.initiative === undefined
       ? undefined
@@ -222,16 +227,12 @@ export function CreatureCard({
       : ["Perception", signedNumber(card.perception)],
     ["Speed", card.speed || "—"],
   ].filter((entry): entry is string[] => entry !== undefined);
-  const notes = [
-    ...creatureNotes(card),
-    [
-      card.skills === undefined ? undefined : `Skills ${card.skills}`,
-      card.languages === undefined ? undefined : `Languages ${card.languages}`,
-    ]
-      .filter(Boolean)
-      .join(" · "),
-    ...(card.other ?? []),
-  ].filter((note) => note !== "");
+  const skillsAndLanguages = [
+    card.skills === undefined ? undefined : `Skills ${card.skills}`,
+    card.languages === undefined ? undefined : `Languages ${card.languages}`,
+  ].filter(Boolean);
+  const notes = creatureNotes(card).filter((note) => note !== "");
+  const otherNotes = (card.other ?? []).filter((note) => note !== "");
   // Split by block structure: paragraphs are the description's flavor,
   // shown only in the builder pane and with the flavor text preference;
   // tables stay in the body on both surfaces, and any other structure in
@@ -275,8 +276,10 @@ export function CreatureCard({
               {creatureCardTitle(card)}
             </span>
           </h3>
-          {identity === "" || !showStats ? null : (
-            <p className="print-play-identity">{identity}</p>
+          {identity.length === 0 || !showStats ? null : (
+            <p className="print-play-identity">
+              <DotList items={identity} />
+            </p>
           )}
         </div>
         {panel.headerAction}
@@ -311,15 +314,28 @@ export function CreatureCard({
               <CreatureAbilityTiles abilities={card.abilities} />
             )}
             <p className="print-creature-note">
-              {movement.map(([label, value], index) => (
-                <span key={label}>
-                  {index === 0 ? null : " · "}
-                  <strong>{label}</strong> {value}
-                </span>
-              ))}
-              {card.senses === undefined ? null : ` · ${card.senses}`}
+              <DotList
+                items={[
+                  ...movement.map(([label, value]) => (
+                    <>
+                      <strong>{label}</strong> {value}
+                    </>
+                  )),
+                  card.senses,
+                ]}
+              />
             </p>
             {notes.map((note) => (
+              <p className="print-creature-note" key={note}>
+                {note}
+              </p>
+            ))}
+            {skillsAndLanguages.length === 0 ? null : (
+              <p className="print-creature-note">
+                <DotList items={skillsAndLanguages} />
+              </p>
+            )}
+            {otherNotes.map((note) => (
               <p className="print-creature-note" key={note}>
                 {note}
               </p>

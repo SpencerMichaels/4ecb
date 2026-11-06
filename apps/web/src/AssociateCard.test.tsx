@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SheetAssociateCard } from "@4ecb/sheet-model";
 
 import { AssociateCard } from "./AssociateCard";
+import { dotted } from "./test-dot-list";
 
 const card: SheetAssociateCard = {
   kind: "associate",
@@ -77,16 +78,18 @@ describe("associate card", () => {
     expect(html).toMatch(/Init<\/.*?\+6/);
     expect(html).toMatch(/Perc<\/.*?\+15/);
     expect(html).toContain("Low-light vision");
-    expect(html).toContain("Mossy Pack (teleportation) · Aura 1");
+    expect(dotted(html)).toContain("Mossy Pack (teleportation) · Aura 1");
     expect(html).toContain("Mossy Bite");
-    expect(html).toContain("Standard · At-Will");
+    expect(dotted(html)).toContain("Standard · At-Will");
     expect(html).toContain(
       "<strong>Attack: </strong>Melee 1 (one creature); +17 vs. AC",
     );
     expect(html).toContain("1d8 + 6 damage, and it teleports up to 2 squares.");
     // A power named for its action does not repeat it.
-    expect(html).toContain("Minor Action<span");
-    expect(html).not.toContain("Minor · At-Will (1/round)");
+    expect(dotted(html)).toContain(
+      'Minor Action</span></span><span class="print-associate-usage">',
+    );
+    expect(dotted(html)).not.toContain("Minor · At-Will (1/round)");
     expect(html).toContain("Fey Beast Companion</span>");
   });
 

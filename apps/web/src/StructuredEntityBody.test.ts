@@ -8,6 +8,7 @@ import {
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
+import { dotted } from "./test-dot-list";
 
 function entity(
   id: string,
@@ -144,7 +145,7 @@ describe("structured race, class and background cards", () => {
       }),
     );
 
-    expect(markup).toContain("Test Realms · Campaign");
+    expect(dotted(markup)).toContain("Test Realms · Campaign");
     expect(markup).toContain('class="entity-benefit"');
     expect(markup.indexOf("+2 bonus to Diplomacy")).toBeLessThan(
       markup.indexOf("A busy port."),

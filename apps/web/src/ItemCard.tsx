@@ -1,6 +1,7 @@
 import type { SheetCard } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import { Prose } from "./Prose";
 import {
@@ -177,8 +178,12 @@ export function ItemCard({
         })}
       </div>
       <footer className="print-item-footer">
-        <span>{item.metadata}</span>
-        <span className="print-item-footer-details">{item.footerDetails}</span>
+        <span>
+          <DotList items={item.metadata} />
+        </span>
+        <span className="print-item-footer-details">
+          <DotList items={item.footerDetails} />
+        </span>
         {panel.source === undefined ? null : (
           <span className="print-card-source">{panel.source}</span>
         )}

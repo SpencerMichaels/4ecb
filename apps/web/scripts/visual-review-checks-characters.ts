@@ -395,7 +395,7 @@ function levelSections(
         ),
         count: textOf(
           elementsWithClass(section, "detail-level-count")[0] ?? "",
-        ).replace(/^·\s*:?\s*/, ""),
+        ).replace(/^·?\s*:?\s*/, ""),
         open: /^<div class="detail-level-section is-open"/.test(section),
         bullets: elementsWithClass(section, "detail-level-benefit").map(textOf),
         subheadings: elementsWithClass(section, "detail-level-subheading").map(

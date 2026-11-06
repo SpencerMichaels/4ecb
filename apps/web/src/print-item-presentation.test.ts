@@ -45,7 +45,7 @@ describe("printed item presentation", () => {
       };
       const view = printItemPresentation(item);
       expect(view.name).toBe("Fixture armbands");
-      expect(view.metadata).toContain(`${tier} tier`);
+      expect(view.metadata.join(" · ")).toContain(`${tier} tier`);
       expect(item.name).toContain("tier)");
       expect(
         printItemPresentation({ ...item, name: "Fixture potion (Lvl 5)" }).name,
@@ -140,7 +140,7 @@ describe("printed item presentation", () => {
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
       ["Range", "Proficiency", "Damage"],
     ]);
-    expect(view.metadata).toBe("Heavy blade, axe");
+    expect(view.metadata.join(" · ")).toBe("Heavy blade, axe");
     expect(view).toMatchObject({
       weight: "6 lb",
       price: "17,000 gp",
@@ -292,7 +292,7 @@ describe("printed item presentation", () => {
       }),
     );
     expect(view.stats).toEqual([]);
-    expect(view.metadata).toBe(
+    expect(view.metadata.join(" · ")).toBe(
       "Rare one-handed heavy plate armor · Key ability Wisdom",
     );
     expect(view.rules.map(({ label }) => label)).toEqual([
@@ -325,9 +325,11 @@ describe("printed item presentation", () => {
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
       ["Proficiency", "Damage", "Critical"],
     ]);
-    expect(view.metadata).toBe("Uncommon one-handed hammer · Military melee");
+    expect(view.metadata.join(" · ")).toBe(
+      "Uncommon one-handed hammer · Military melee",
+    );
     expect(view.slot).toBeUndefined();
-    expect(view.footerDetails).toBe("6 lb · 1,000 gp");
+    expect(view.footerDetails.join(" · ")).toBe("6 lb · 1,000 gp");
   });
   it("groups armor bonuses and penalties, omits zero penalties, and preserves worn slots", () => {
     const view = printItemPresentation(
@@ -353,8 +355,8 @@ describe("printed item presentation", () => {
       ["Check penalty", "Speed penalty"],
     ]);
     expect(view.rules).toEqual([{ label: "Enhancement", value: "+2 AC" }]);
-    expect(view.metadata).toBe("Rare heavy plate armor");
-    expect(view.footerDetails).toBe("Body · 50 lb · 5,000 gp");
+    expect(view.metadata.join(" · ")).toBe("Rare heavy plate armor");
+    expect(view.footerDetails.join(" · ")).toBe("Body · 50 lb · 5,000 gp");
     const shield = printItemPresentation(
       card("Armor", {
         "Armor Type": "Heavy Shield",
@@ -368,7 +370,7 @@ describe("printed item presentation", () => {
       "AC bonus",
       "Check penalty",
     ]);
-    expect(shield.metadata).toBe("Heavy shield");
+    expect(shield.metadata.join(" · ")).toBe("Heavy shield");
     expect(shield.slot).toBeUndefined();
   });
   it("puts implement enhancement and critical on one row and hides held slots", () => {
@@ -386,7 +388,7 @@ describe("printed item presentation", () => {
     ]);
     expect(view.rules).toEqual([]);
     expect(view.slot).toBeUndefined();
-    expect(view.metadata).toBe("Uncommon holy symbol");
+    expect(view.metadata.join(" · ")).toBe("Uncommon holy symbol");
   });
   it.each([
     ["Gear", undefined, "item", "Gear"],

@@ -3,6 +3,7 @@ import { useContext } from "react";
 import type { SheetBeastCompanionCard } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
+import { DotList } from "./DotList";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -73,9 +74,7 @@ export function BeastCompanionCard({
       : `Resist ${card.resistances
           .map((resistance) => `${resistance.value} ${resistance.type}`)
           .join(", ")}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter(Boolean);
   return (
     <article
       ref={cardRef}
@@ -158,15 +157,30 @@ export function BeastCompanionCard({
               }))}
             />
             <p className="print-play-note">
-              <strong>Speed</strong> {card.speed ?? "—"} · {card.vision} vision
+              <DotList
+                items={[
+                  <>
+                    <strong>Speed</strong> {card.speed ?? "—"}
+                  </>,
+                  `${card.vision} vision`,
+                ]}
+              />
             </p>
             <p className="print-play-note print-beast-attack">
-              <strong>{card.attack.name}</strong>{" "}
-              {signed(card.attack.attackBonus)} vs {card.attack.defense} ·{" "}
-              {damageText(card.attack.damage)} damage
+              <DotList
+                items={[
+                  <>
+                    <strong>{card.attack.name}</strong>{" "}
+                    {signed(card.attack.attackBonus)} vs {card.attack.defense}
+                  </>,
+                  `${damageText(card.attack.damage)} damage`,
+                ]}
+              />
             </p>
-            {defensesLine === "" ? null : (
-              <p className="print-play-note">{defensesLine}</p>
+            {defensesLine.length === 0 ? null : (
+              <p className="print-play-note">
+                <DotList items={defensesLine} />
+              </p>
             )}
             {trained.length === 0 ? null : (
               <p className="print-play-note">

@@ -74,7 +74,8 @@ describe("legacy power card parts", () => {
       fields: [...card.fields, { label: "Level", value: "1" }],
     });
     expect(markup).toContain(
-      '<div class="print-card-type"><span>At-Will power</span><span>Synthetic Monk · Level 1</span></div>',
+      // One "·" list, whose separator drops when "Level 1" wraps (DotList).
+      '<div class="print-card-type"><span>At-Will power</span><span><span class="dot-list"><span class="dot-list-item">Synthetic Monk</span> <span class="dot-list-item">Level 1</span></span></span></div>',
     );
     // Neither part on the card: the bar holds only the type.
     expect(render(card)).toContain(

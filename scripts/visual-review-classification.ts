@@ -441,6 +441,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "raidon|0|class block in the card type bar": auto(
     'Destined for Greatness ends "Adroit Explorer · Level 12" (a paragon utility); no class ID in any type bar.',
   ),
+  "raidon|0|separators drop at a wrapped line's start": auto(
+    'Destined for Greatness\'s "Adroit Explorer · Level 12" is one DotList (its "·" is CSS, dropped where "Level 12" wraps to a line start), and no printed type bar or item footer carries a literal "·".',
+  ),
   "raidon|0|monk movement technique on the discipline card": auto(
     "Five Storms and Dragon's Tail carry the Movement Technique section after the attack; no separate technique card.",
   ),

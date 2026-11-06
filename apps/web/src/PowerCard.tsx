@@ -11,6 +11,7 @@ import {
 } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import { printAdditionalEffect } from "./print-additional-effects";
@@ -247,9 +248,7 @@ export function PowerCard({
   const classAndLevel = [
     card.classBlock,
     level === undefined ? undefined : `Level ${level}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter(Boolean);
   return (
     <article
       ref={cardRef}
@@ -434,7 +433,11 @@ export function PowerCard({
       )}
       <div className="print-card-type">
         <span>{typeLabel}</span>
-        {classAndLevel ? <span>{classAndLevel}</span> : null}
+        {classAndLevel.length > 0 ? (
+          <span>
+            <DotList items={classAndLevel} />
+          </span>
+        ) : null}
       </div>
     </article>
   );

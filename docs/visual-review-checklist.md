@@ -43,9 +43,12 @@ Every automated check passes (2026-11-04).
 **Check every entry in light and dark theme, at 100% and 140% zoom.** For
 an entry on a print preview, also open the browser's print preview
 (Ctrl+P) once: printed cards and pages are light, with no focus rings and
-no red "Text exceeds card" outline. Only layout, legibility, colour, fit
-and "does this look right" are left here; labels, text, order, numbers,
-routes and issue titles are checked by `pnpm review:verify`, whose results
+no red "Text exceeds card" outline. Wherever a "·"-separated list wraps
+(type bars, item footers, companion and creature stat lines, entry
+headings, the page-1 player line, builder level summaries), the item that
+starts the new line has no "·" in front of it; mid-line "·"s stay. Only
+layout, legibility, colour, fit and "does this look right" are left here;
+labels, text, order, numbers, routes and issue titles are checked by `pnpm review:verify`, whose results
 are in `tmp/visual-review/index.html`. A failed check there is a bug, not
 something to eyeball.
 
@@ -414,12 +417,14 @@ live site.
 - [ ] **Raidon: type bar and movement technique.**
   - **Where:** `?preview=1`: Destined for Greatness, Five Storms and Dragon's
     Tail; then the Build tab with Five Storms selected.
-  - **Expect:** Destined for Greatness's class block clear of its type label.
-    On the discipline cards, after the attack and Hit lines, a thin rule,
-    "MOVEMENT TECHNIQUE" and a band ("Move" + "Personal"), all inside the
-    card.
-  - **Wrong if:** text collides or clips, or the technique's band runs past
-    the card edge.
+  - **Expect:** Destined for Greatness's class block clear of its type label;
+    where "ADROIT EXPLORER · LEVEL 12" wraps, "LEVEL 12" starts the second
+    line with no "·" (narrow the window or print to see it; the same holds
+    at 140% zoom and in Ctrl+P). On the discipline cards, after the attack
+    and Hit lines, a thin rule, "MOVEMENT TECHNIQUE" and a band ("Move" +
+    "Personal"), all inside the card.
+  - **Wrong if:** text collides or clips, a "·" begins or ends a line of
+    the type bar, or the technique's band runs past the card edge.
 
 ## Pass 19: Jim Darkmagic (`jim`)
 

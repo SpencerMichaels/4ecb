@@ -5,6 +5,7 @@ import {
   type SheetFamiliarCard,
 } from "@4ecb/sheet-model";
 
+import { DotList } from "./DotList";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -50,9 +51,7 @@ export function FamiliarCard({
   const isPanel = layout === "panel";
   const showStats = card.part !== "notes";
   const showNotes = card.part !== "stats";
-  const identity = [`${card.size} familiar`, card.tier]
-    .filter(Boolean)
-    .join(" · ");
+  const identity = [`${card.size} familiar`, card.tier];
   const sections = [
     ["Constant benefits", card.constantBenefits],
     ["Active benefits", card.activeBenefits],
@@ -84,7 +83,9 @@ export function FamiliarCard({
               {familiarCardTitle(card)}
             </span>
           </h3>
-          <p className="print-play-identity">{identity}</p>
+          <p className="print-play-identity">
+            <DotList items={identity} />
+          </p>
         </div>
         {panel.headerAction}
       </header>

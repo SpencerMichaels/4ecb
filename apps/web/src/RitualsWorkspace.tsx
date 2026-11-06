@@ -16,6 +16,7 @@ import {
 } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
+import { DotList } from "./DotList";
 import { ItemDetail, type InspectedItemDetail } from "./EquipmentWorkspace";
 import { practiceKind, type ShopBrowseId } from "./equipment-ui";
 import { Icon } from "./Icon";
@@ -170,13 +171,16 @@ function AllowanceChoiceDialog({
               checked={chosen === allowance.key}
               onChange={() => setChosen(allowance.key)}
             />{" "}
-            {allowance.provider}
-            {describe(allowance) === undefined ? null : (
-              <span className="ritual-allowance-option-detail">
-                {" "}
-                · {describe(allowance)}
-              </span>
-            )}
+            <DotList
+              items={[
+                allowance.provider,
+                describe(allowance) === undefined ? undefined : (
+                  <span className="ritual-allowance-option-detail">
+                    {describe(allowance)}
+                  </span>
+                ),
+              ]}
+            />
           </label>
         ))}
         <label>

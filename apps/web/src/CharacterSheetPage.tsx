@@ -46,6 +46,7 @@ import {
 
 import { contentProfileMatchesRevision } from "./profile-migration";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
+import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
@@ -624,8 +625,7 @@ export function CharacterSheetPage({
   const characterName = characterDisplayName(character) || "Unnamed character";
   const identitySummary = model.identity
     .filter((entry) => ["Level", "Race", "Class"].includes(entry.label))
-    .map((entry) => entry.value)
-    .join(" · ");
+    .map((entry) => entry.value);
   const recoveryHref =
     character.profileBinding === undefined ? "#/settings" : "#/characters";
   const recoveryLabel =
@@ -813,7 +813,9 @@ export function CharacterSheetPage({
             <div>
               <p className="eyebrow">Character view</p>
               <h1>{characterName}</h1>
-              <p>{identitySummary}</p>
+              <p>
+                <DotList items={identitySummary} />
+              </p>
             </div>
           </div>
           <div className="view-sheet-actions">

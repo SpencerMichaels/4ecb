@@ -4,6 +4,7 @@ import type { SheetFamiliarCard } from "@4ecb/sheet-model";
 
 import { FamiliarCard, familiarCardTitle } from "./FamiliarCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { dotted } from "./test-dot-list";
 
 const card: SheetFamiliarCard = {
   kind: "familiar",
@@ -25,7 +26,7 @@ describe("familiar card", () => {
   it("prints the familiar's statistics in the play-data frame", () => {
     const html = renderToStaticMarkup(<FamiliarCard card={card} />);
     expect(html).toContain("print-play-card print-familiar-card");
-    expect(html).toContain("Tiny familiar · Heroic Tier");
+    expect(dotted(html)).toContain("Tiny familiar · Heroic Tier");
     expect(html).toContain("<dt>AC</dt><dd>19</dd>");
     expect(html).toContain("<dt>HP</dt><dd>1</dd>");
     expect(html).toContain("<dt>Speed</dt><dd>6, fly 6</dd>");

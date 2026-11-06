@@ -1561,6 +1561,10 @@ const reviews: ReviewCharacter[] = [
                 'Destined for Greatness: "Adroit Explorer · Level 11" at the right of the type bar.',
               ],
               [
+                "Separators drop at a wrapped line's start",
+                'Destined for Greatness: "Adroit Explorer · Level 12" is one "·" list; where it wraps, "Level 12" starts its line without a "·".',
+              ],
+              [
                 "Monk movement technique on the discipline card",
                 "Five Storms and Dragon's Tail: the Movement Technique section inside the card.",
               ],

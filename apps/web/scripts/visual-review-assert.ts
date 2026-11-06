@@ -106,11 +106,14 @@ export function markup(element: ReactElement): string {
 
 export { createElement };
 
-/** Visible text of static markup, entities decoded, whitespace squashed. */
+/** Visible text of static markup, entities decoded, whitespace squashed.
+ * A DotList's CSS separators ("·" before each item but the first, dropped
+ * only where an item wraps to a line start) read as " · ". */
 export function textOf(html: string): string {
   return squash(
     html
       .replace(/<(script|style)[\s\S]*?<\/\1>/g, " ")
+      .replace(/<\/span>\s*<span class="dot-list-item">/g, "</span> · ")
       .replace(/<br\s*\/?>/g, " ")
       .replace(/<\/(p|div|li|tr|h\d|dt|dd|section|header|footer)>/g, " ")
       .replace(/<[^>]+>/g, "")

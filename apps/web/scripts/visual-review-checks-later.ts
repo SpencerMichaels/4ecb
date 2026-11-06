@@ -363,6 +363,37 @@ rule("raidon", "Print preview", "Class block in the card type bar", (c) => [
 rule(
   "raidon",
   "Print preview",
+  "Separators drop at a wrapped line's start",
+  (c) => {
+    const bar = elementsWithClass(
+      card(c, "Destined for Greatness")?.html ?? "",
+      "print-card-type",
+    ).at(-1);
+    const lists = (html: string) =>
+      ["print-card-type", "print-item-footer"].flatMap((name) =>
+        elementsWithClass(html, name),
+      );
+    return [
+      equal(
+        "Destined for Greatness: the class block and level are one DotList",
+        elementsWithClass(bar ?? "", "dot-list-item").map(textOf),
+        ["Adroit Explorer", "Level 12"],
+      ),
+      lacks(
+        'No type bar or item footer prints a literal "·" (all are DotLists)',
+        printedDeck(c)
+          .flatMap(({ html }) => lists(html))
+          .map((html) => html.replace(/<[^>]+>/g, ""))
+          .join(" "),
+        "·",
+      ),
+    ];
+  },
+);
+
+rule(
+  "raidon",
+  "Print preview",
   "Monk movement technique on the discipline card",
   (c) => {
     const five = card(c, "Five Storms")?.text ?? "";

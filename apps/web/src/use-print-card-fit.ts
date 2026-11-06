@@ -1,15 +1,16 @@
 import { useLayoutEffect, useRef } from "react";
 
+import { markLineStarts } from "./line-starts";
 import {
   preferredPrintCardTextSize,
   printCardFontSizes,
-  wrappedRowStarts,
 } from "./print-card-fit";
 
 /**
  * Aligns the action/range and primary attack/target bands on one shared first
- * column, and marks cells that begin a wrapped line of a secondary attack or
- * item stat row so they drop their leading "·" separator.
+ * column, and marks the items that begin a wrapped line of every "·" list on
+ * the card (secondary attack bands, item stat rows, DotLists) so they drop
+ * their leading separator — at each fitted text size, before measuring.
  */
 function layoutCardBands(element: HTMLElement) {
   // Restore intrinsic sizing before sharing the widest first cell. Never
@@ -28,19 +29,11 @@ function layoutCardBands(element: HTMLElement) {
       "--print-card-header-first-column",
       `${Math.max(...firstHeaderCells.map((cell) => cell.getBoundingClientRect().width))}px`,
     );
-  for (const row of element.querySelectorAll<HTMLElement>(
-    ".print-card-combat-band.is-secondary, .print-item-stat-row",
-  )) {
-    const cells = [...row.children];
-    // Measure the natural layout with separators restored each time.
-    cells.forEach((cell) => cell.classList.remove("starts-wrapped-row"));
-    const starts = wrappedRowStarts(
-      cells.map((cell) => cell.getBoundingClientRect().top),
-    );
-    cells.forEach((cell, index) =>
-      cell.classList.toggle("starts-wrapped-row", starts[index] === true),
-    );
-  }
+  markLineStarts(
+    element.querySelectorAll(
+      ".print-card-combat-band.is-secondary, .print-item-stat-row, .dot-list",
+    ),
+  );
 }
 
 /** Shrinks a fixed-size printed card's text until it fits. Fluid panel cards

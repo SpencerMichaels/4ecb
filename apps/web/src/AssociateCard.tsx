@@ -8,6 +8,7 @@ import {
   creatureNotes,
   signedNumber,
 } from "./CreatureCard";
+import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import {
   CardPanelSubheading,
@@ -95,8 +96,14 @@ export function AssociateCard({
           <CreatureAbilityTiles abilities={card.abilities} />
         )}
         <p className="print-play-note">
-          <strong>Speed</strong> {card.speed || "—"}
-          {card.senses === undefined ? null : ` · ${card.senses}`}
+          <DotList
+            items={[
+              <>
+                <strong>Speed</strong> {card.speed || "—"}
+              </>,
+              card.senses,
+            ]}
+          />
         </p>
         {notes.map((note) => (
           <p className="print-play-note" key={note}>

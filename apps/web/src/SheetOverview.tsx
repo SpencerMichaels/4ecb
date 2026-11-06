@@ -32,6 +32,7 @@ import {
 } from "@4ecb/sheet-model";
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import { DotList } from "./DotList";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
@@ -981,14 +982,13 @@ function Summary({
               .join(" ")}
           </p>
           <p className="ov-player-company">
-            {["Player", "Company"]
-              .map((label) =>
+            <DotList
+              items={["Player", "Company"].map((label) =>
                 model.identity
                   .find((entry) => entry.label === label)
                   ?.value.trim(),
-              )
-              .filter(Boolean)
-              .join(" · ")}
+              )}
+            />
           </p>
         </div>
         <div className="ov-identity-details">

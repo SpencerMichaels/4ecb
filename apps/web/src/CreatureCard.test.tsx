@@ -10,6 +10,7 @@ import {
   BuilderItemCard,
 } from "./BuilderCards";
 import { CreatureCard } from "./CreatureCard";
+import { dotted } from "./test-dot-list";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ItemCard } from "./ItemCard";
 
@@ -65,7 +66,9 @@ describe("CreatureCard", () => {
     const html = renderToStaticMarkup(<CreatureCard card={card} />);
     expect(html).toContain('data-creature-part="whole"');
     expect(html).toContain("Test Pony");
-    expect(html).toContain("Level 2 Brute · Medium natural beast (mount)");
+    expect(dotted(html)).toContain(
+      "Level 2 Brute · Medium natural beast (mount)",
+    );
     for (const text of [
       "<dt>AC</dt><dd>14</dd>",
       "<dt>HP</dt><dd>40</dd>",
@@ -81,7 +84,7 @@ describe("CreatureCard", () => {
       "Max.Drag",
       "1,000 lb.",
     ])
-      expect(html).toContain(text);
+      expect(dotted(html)).toContain(text);
     // Flavor prose stays off the printed card.
     expect(html).not.toContain("Ponies are small horses.");
     expect(html).toContain(">Mount<");
@@ -182,10 +185,10 @@ describe("CreatureCard", () => {
         }}
       />,
     );
-    expect(html).toContain(
-      '<p class="print-creature-roll"><strong>Attack</strong> +12 vs. Reflex · <strong>Damage</strong> 1d8+7</p>',
+    expect(dotted(html)).toContain(
+      '<p class="print-creature-roll"><strong>Attack</strong> +12 vs. Reflex · <strong>Damage</strong> 1d8+7</span></span></p>',
     );
-    expect(html).toContain(">Summoned creature · Daily<");
+    expect(dotted(html)).toContain(">Summoned creature · Daily<");
   });
 
   it("lists a command's numbers per implement as the power card's weapon rows (D111)", () => {
@@ -282,7 +285,7 @@ describe("CreatureCard", () => {
     expect(html.split('class="print-card-variant-table"').length - 1).toBe(1);
     // No caption names the commands (owner, 2026-11-05).
     expect(html).not.toContain("<caption");
-    expect(html).not.toContain("Standard Action · Opportunity Attack");
+    expect(dotted(html)).not.toContain("Standard Action · Opportunity Attack");
     // The command text is unchanged and the table follows the last command.
     expect(html.indexOf("print-card-variant-table")).toBeGreaterThan(
       html.lastIndexOf("Melee 1; Wisdom vs. Reflex."),
