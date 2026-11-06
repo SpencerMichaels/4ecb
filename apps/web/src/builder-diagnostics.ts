@@ -550,7 +550,8 @@ export function builderIssueGroups({
       )
         return [];
       // An item's own choice (inventory is current state, D097) is made from
-      // the holding's right-click menu on the Equipment tab.
+      // the holding's buttons in the Inventory tab's detail pane (or its
+      // right-click menu).
       const holding = inventoryChoiceHolding(choice, evaluation, build, byId);
       return [
         {
@@ -563,7 +564,7 @@ export function builderIssueGroups({
           detail:
             holding === undefined
               ? openChoiceDetail(choice)
-              : `${holding.heading} for ${holding.name}: right-click the item on the Equipment tab.`,
+              : `${holding.heading} for ${holding.name} from its detail pane on the Inventory tab.`,
           effect:
             "The character is incomplete, and no benefits from this selection apply until it is resolved.",
           target:

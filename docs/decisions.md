@@ -4949,3 +4949,35 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   Pathfinder revision 7 removes the five alternate-name patches; languages
   are unchanged (36 field and 101 rule patches, all applying, 159 records
   restricted over the full pack).
+
+### D117 — Right-click is a shortcut, never the only way to an action
+
+Status: accepted (2026-11-06, owner).
+
+Owner rule: "we should avoid hiding features like this behind right click
+unless there is no main-UI alternative." Right-click menus stay (the legacy
+builder's habit, and a fast path for desktop players), but every action they
+offer also has a visible control. Owner decision for the Inventory: the
+selected holding's actions are buttons in its detail pane.
+
+- **One list.** `EquipmentWorkspace`'s `itemActions(entry)` (label, key,
+  `checked`, `disabledReason`, `onSelect`) builds both the holding's
+  right-click menu (`ItemContextMenu`) and the pane's button row
+  (`ItemActionButtons`, `.item-detail-actions`, above the item card), so
+  they cannot drift. A checkable menu item is a toggle button
+  (`aria-pressed`, a check while on); an inert one keeps its reason as the
+  tooltip, present but inert in both places.
+- **The actions** (the whole menu, surveyed): "Wield two-handed" on a
+  versatile weapon the player chooses how to wield (absent when size
+  forces both hands, D102); on a dragonshard augment one "Attach to
+  <item>" toggle per eligible host (or an inert "Attach to…" when there is
+  none) and "Detach" (inert while loose); "<Choose …>…" per item-owned
+  choice, opening `ItemChoiceDialog` (inert when the content offers
+  nothing). The Loadout's slot right-click is the same menu; focusing a
+  slot selects its holding, so the same buttons show in the pane there.
+  The known-record menu's only action, Remove, already has the row's
+  trash button.
+- **Wording.** An item-choice issue now says to make the choice "from its
+  detail pane on the Inventory tab", not to right-click.
+- **Later surfaces.** Sheet Edit mode's right-click hide/show is being
+  given visible eye toggles separately (same rule).

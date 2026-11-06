@@ -169,7 +169,7 @@ describe("builder issue groups", () => {
       expect.objectContaining({
         title: "Armor of Resistance +2: Resistance Type",
         detail:
-          "Choose Resistance Type for Armor of Resistance +2: right-click the item on the Equipment tab.",
+          "Choose Resistance Type for Armor of Resistance +2 from its detail pane on the Inventory tab.",
         target: { kind: "inventory", entryId: "legacy:loot:11" },
       }),
     ]);
@@ -219,7 +219,7 @@ describe("builder issue groups", () => {
       expect.objectContaining({
         title: "Armor of Resistance +2: Option",
         detail:
-          "Choose an option for Armor of Resistance +2: right-click the item on the Equipment tab.",
+          "Choose an option for Armor of Resistance +2 from its detail pane on the Inventory tab.",
       }),
     ]);
     // Every other issue about the item's pick (house-ruled, ineligible)

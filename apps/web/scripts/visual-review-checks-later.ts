@@ -728,7 +728,8 @@ rule(
         "A Longsword is versatile",
         inventoryIsVersatile(longsword, c.context.byId),
       ),
-      // The right-click menu offers Wield two-handed only when this is false.
+      // The detail pane and right-click menu offer Wield two-handed only
+      // when this is false.
       truthy(
         "Small: size forces both hands (no Wield two-handed)",
         forced(true),
@@ -922,7 +923,7 @@ rule("zilvra", "Equipment", "Armor of Resistance's damage type", (c) => {
     equal(
       "The issue says what to choose and where",
       issue?.detail,
-      "Choose Resistance Type for Leather Armor of Resistance +2: right-click the item on the Equipment tab.",
+      "Choose Resistance Type for Leather Armor of Resistance +2 from its detail pane on the Inventory tab.",
     ),
     lacks(
       "No internal Class Feature type",

@@ -71,6 +71,7 @@ import {
 } from "./equipment-ui";
 import { Icon } from "./Icon";
 import {
+  ItemActionButtons,
   ItemContextMenu,
   itemContextMenuAt,
   type ItemContextMenuItem,
@@ -281,6 +282,8 @@ export interface InspectedItemDetail {
    * chosen for a Genasi Soul Armor), when the chosen candidate's definition
    * ID resolves to a known entity — shown as a secondary detail card. */
   readonly resolvedChoiceEntities?: readonly ContentEntity[];
+  /** The inventory holding inspected, whose actions the pane offers. */
+  readonly holdingId?: string;
 }
 
 export function inventoryItemDetail(
@@ -298,6 +301,7 @@ export function inventoryItemDetail(
   return {
     entities,
     displayName: inventoryDisplayName(entry, byId),
+    holdingId: entry.id,
     ...(resolvedChoiceEntities.length === 0 ? {} : { resolvedChoiceEntities }),
   };
 }
@@ -346,11 +350,15 @@ export function ItemDetail({
   item,
   byId,
   empty,
+  actions,
   onSetItemSetPartyPieces,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly empty?: { readonly heading: string; readonly hint: string };
+  /** The inspected holding's actions (the list its right-click menu
+   * shows), as buttons above its card. */
+  readonly actions?: readonly ItemContextMenuItem[];
   /** Sets or clears a group item set's party count (Equipment and Shop). */
   readonly onSetItemSetPartyPieces?: (
     setId: string,
@@ -392,44 +400,51 @@ export function ItemDetail({
       )
       .at(-1) ?? formulaItems[0];
   return (
-    <div className="candidate-detail-stack">
-      <div className="candidate-card-panel">
-        <BuilderItemCard
-          name={item.displayName}
-          entities={item.entities}
-          withCreatureCard
-        />
-      </div>
-      <BuilderCreatureCard name={item.displayName} entities={item.entities} />
-      {powers.map((power) => (
-        <Fragment key={power.id}>
-          <BuilderPowerCard entity={power} headingSuffix="-granted" />
-          {/* A summon power's creature (D111). */}
-          <BuilderCreatureCard
-            name={power.name}
-            entities={[power]}
-            origin={{ kind: "summon", powerId: power.id }}
-            headingSuffix="-granted-creature"
-          />
-        </Fragment>
-      ))}
-      <BuilderItemSetCard
-        pieces={item.entities}
-        byId={byId}
-        {...(onSetItemSetPartyPieces === undefined
-          ? {}
-          : { onSetPartyPieces: onSetItemSetPartyPieces })}
+    <>
+      {/* Outside the stack, so a lone card keeps its proportions. */}
+      <ItemActionButtons
+        label={`${item.displayName} actions`}
+        items={actions ?? []}
       />
-      {formulaItem === undefined ? null : (
+      <div className="candidate-detail-stack">
         <div className="candidate-card-panel">
           <BuilderItemCard
-            name={formulaItem.name}
-            entities={[formulaItem]}
-            headingSuffix="-formula"
+            name={item.displayName}
+            entities={item.entities}
+            withCreatureCard
           />
         </div>
-      )}
-    </div>
+        <BuilderCreatureCard name={item.displayName} entities={item.entities} />
+        {powers.map((power) => (
+          <Fragment key={power.id}>
+            <BuilderPowerCard entity={power} headingSuffix="-granted" />
+            {/* A summon power's creature (D111). */}
+            <BuilderCreatureCard
+              name={power.name}
+              entities={[power]}
+              origin={{ kind: "summon", powerId: power.id }}
+              headingSuffix="-granted-creature"
+            />
+          </Fragment>
+        ))}
+        <BuilderItemSetCard
+          pieces={item.entities}
+          byId={byId}
+          {...(onSetItemSetPartyPieces === undefined
+            ? {}
+            : { onSetPartyPieces: onSetItemSetPartyPieces })}
+        />
+        {formulaItem === undefined ? null : (
+          <div className="candidate-card-panel">
+            <BuilderItemCard
+              name={formulaItem.name}
+              entities={[formulaItem]}
+              headingSuffix="-formula"
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1209,7 +1224,9 @@ export function EquipmentWorkspace({
       request: focusRequest.request,
     });
   }, [focusRequest, build.inventory, byId, packageGroups]);
-  // Per-item right-click actions, as in the legacy builder (no menu button).
+  // Per-item actions: buttons in the selected holding's detail pane, with
+  // its right-click menu as a shortcut (as in the legacy builder), both
+  // built from this one list.
   const augmentActions = (
     augment: BuildInventoryEntry,
   ): readonly ItemContextMenuItem[] => {
@@ -1565,6 +1582,11 @@ export function EquipmentWorkspace({
     };
   }, [openSaleId]);
 
+  // The inspected holding, live from the build, so its actions follow edits.
+  const inspectedHolding =
+    workspace === "equipment" && inspected?.holdingId !== undefined
+      ? build.inventory.find(({ id }) => id === inspected.holdingId)
+      : undefined;
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
   };
@@ -2102,6 +2124,9 @@ export function EquipmentWorkspace({
           <ItemDetail
             byId={byId}
             item={inspected}
+            {...(inspectedHolding === undefined
+              ? {}
+              : { actions: itemActions(inspectedHolding) })}
             onSetItemSetPartyPieces={(setId, pieces) =>
               onSetText(
                 itemSetPartyCountName(setId, build.textStrings),

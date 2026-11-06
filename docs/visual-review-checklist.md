@@ -363,22 +363,30 @@ live site.
 
 ## Pass 7: Drow invoker 11 (`invoker-drow`)
 
-- [x] **Drow invoker: Equipment and Shop.**
+- [ ] **Drow invoker: Equipment and Shop.**
   - **Where:** `edit?tab=inventory`, select the Scarf of Reconciliation +2
     and look at its Caelynnvala's Boons card. Then in the Shop buy a
     Siberys Shard of Merciless Cold (heroic tier), a Longsword, Armor of
     Adaptable Resistance +1 and a Harper Pin (heroic tier), looking at the
-    Shop's choice pages for the last two. Back in Inventory right-click the
-    shard → Attach to → Rose Scythe of Chauntea, then right-click the
-    Longsword, the armor and the pin.
+    Shop's choice pages for the last two. Back in Inventory select the
+    shard and press "Attach to Rose Scythe of Chauntea" above its card,
+    then select the Longsword, the armor and the pin; right-click each of
+    them too. Also in the Loadout, focus the Longsword's slot. At 140%
+    zoom and in both themes.
   - **Expect:** "Party pieces" beside a small number box, the grey hint
     below; the scythe's "Augment: …" note muted with the row's columns
-    aligned; the shard's menu with the scythe ticked, then Detach; the
-    checkable "Wield two-handed" item; "Choose a damage type…" and "Choose
-    a power…" menu items; every menu readable and unclipped.
+    aligned; above each selected item's card a row of plain buttons: the
+    shard's "Attach to …" toggles (the scythe's with a check and the accent
+    fill once on) and Detach (greyed until attached, tooltip saying why);
+    the Longsword's "Wield two-handed" toggle; "Choose a damage type…" and
+    "Choose a power…" buttons opening the choice dialog; each right-click
+    menu lists the same actions in the same order and state; every row and
+    menu readable and unclipped.
   - **Wrong if:** the Party pieces label and box wrap apart or overflow the
     card, the hint is unreadable on the dark card, the augment note is
-    warning-coloured, the columns shift, or a menu is clipped.
+    warning-coloured, the columns shift, a menu is clipped, the button row
+    overflows the pane or squeezes the card, a toggle's on state shows only
+    by colour, or the pane and the menu disagree.
 - [x] **Drow invoker: Rose Scythe properties.**
   - **Where:** `edit?tab=inventory`, select the Rose Scythe of Chauntea;
     then `?preview=1`, its item card.
@@ -946,8 +954,8 @@ Moradin, or an item a character holds), build and import or advertise it.
     on: a stock deity's row, then click it for its card. A feat table with
     Show all on: a row whose prerequisites are unmet, and its card; hover
     each badge. Build → skill training: a skill that can't be chosen.
-    Inventory → right-click a held item whose saved choice is restricted →
-    Choose… dialog.
+    Inventory → select a held item whose saved choice is restricted → its
+    Choose… button and its dialog.
   - **Expect:** the same badge with a left bar everywhere (tone per
     status, next item), and no
     other reason text or box anywhere. The stock deity's row and card read

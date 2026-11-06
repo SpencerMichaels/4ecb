@@ -736,7 +736,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Gnome wizard: Wield when Small",
-            "Buy a Longsword, right-click it: no Wield two-handed item; wielded, it fills both hands.",
+            "Buy a Longsword and select it: no Wield two-handed button above its card (nor in its right-click menu); wielded, it fills both hands.",
           ],
           [
             "A free item appears",
@@ -1203,7 +1203,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Drow invoker: Equipment and Shop",
-            "Party pieces field; buy a shard, a Longsword, Armor of Adaptable Resistance +1 and a Harper Pin; the right-click menus.",
+            "Party pieces field; buy a shard, a Longsword, Armor of Adaptable Resistance +1 and a Harper Pin; the action buttons above each selected item's card and the same actions in its right-click menu.",
           ],
           [
             "Equipment and Shop item detail",
@@ -1211,7 +1211,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Augments attach/detach",
-            "Buy a Siberys Shard of Merciless Cold (heroic tier) in the Shop, then right-click it → Attach to → Rose Scythe of Chauntea: the scythe's muted Augment note and the shard's Attached to note.",
+            "Buy a Siberys Shard of Merciless Cold (heroic tier) in the Shop, then select it and press \"Attach to Rose Scythe of Chauntea\" above its card: the scythe's muted Augment note and the shard's Attached to note.",
           ],
           [
             "Party pieces field",

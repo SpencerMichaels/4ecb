@@ -1,6 +1,10 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 
-/** One action in an item's right-click menu. */
+/**
+ * One item action. The same list builds the item's right-click menu and the
+ * buttons in its detail pane (`ItemActionButtons`), so the two can't drift:
+ * right-click is a shortcut, never the only way in.
+ */
 export interface ItemContextMenuItem {
   readonly label: string;
   /** Unique within the menu; defaults to the label. */
@@ -9,7 +13,7 @@ export interface ItemContextMenuItem {
   readonly checked?: boolean;
   /**
    * Why the action can't be taken (the content offers nothing to choose):
-   * the item stays in the menu, shown but inert.
+   * the action stays in the menu and the pane, shown but inert.
    */
   readonly disabledReason?: string;
   readonly onSelect: () => void;
@@ -48,8 +52,8 @@ export function itemContextMenuAt(
 }
 
 /**
- * A per-item right-click menu, as the legacy builder offered item actions
- * (no visible menu button). Choosing an item, Escape, or a press outside
+ * A per-item right-click menu, as the legacy builder offered item actions:
+ * a shortcut for the buttons in the item's detail pane. Choosing an item, Escape, or a press outside
  * closes it; focus starts on the first item and returns to the opener.
  */
 export function ItemContextMenu({
@@ -103,6 +107,40 @@ export function ItemContextMenu({
             if (item.disabledReason !== undefined) return;
             item.onSelect();
             onClose();
+          }}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The selected item's actions as buttons in its detail pane, from the same
+ * list as its right-click menu: a checkable action is a toggle button
+ * (`aria-pressed`); an inert one stays present, its reason as the title.
+ */
+export function ItemActionButtons({
+  label,
+  items,
+}: {
+  readonly label: string;
+  readonly items: readonly ItemContextMenuItem[];
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div aria-label={label} className="item-detail-actions" role="group">
+      {items.map((item) => (
+        <button
+          aria-disabled={item.disabledReason === undefined ? undefined : true}
+          aria-pressed={item.checked}
+          key={item.key ?? item.label}
+          title={item.disabledReason}
+          type="button"
+          onClick={() => {
+            if (item.disabledReason !== undefined) return;
+            item.onSelect();
           }}
         >
           {item.label}

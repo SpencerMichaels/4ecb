@@ -1,5 +1,31 @@
 # Implementation status
 
+## Item actions are visible in the detail pane (2026-11-06)
+
+D117 (owner rule: right-click is a shortcut, never the only way to an
+action). The selected Inventory or Loadout holding's actions are a row of
+buttons above its card in the detail pane (`ItemActionButtons` in
+`ItemContextMenu.tsx`, `.item-detail-actions` in `13-equipment.css`), built
+from the same `itemActions(entry)` list as its right-click menu
+(`EquipmentWorkspace.tsx`; the inspected detail carries its `holdingId` and
+the pane reads the live holding). Surveyed menu actions, all now visible:
+"Wield two-handed" (toggle, `aria-pressed`; absent when size forces both
+hands), a dragonshard's "Attach to <item>" toggles, or an inert "Attach
+to…" with nothing eligible, and "Detach" (inert while loose), and each
+item-owned choice's "<heading>…" (e.g. "Choose Resistance Type…") opening
+`ItemChoiceDialog` (inert when the content offers nothing). The
+known-record menu's Remove already had the
+row's trash button. The Shop's catalog detail has no holding, so no row.
+An item-choice issue's detail now reads "… from its detail pane on the
+Inventory tab." (was "right-click the item on the Equipment tab").
+
+Verification: `EquipmentWorkspace.itemactions.test.tsx` (pane buttons per
+state: versatile toggle off/on and its calls, none for a plain or a
+size-forced weapon, augment attach/attached/detach/none-eligible, the
+choice button opening the dialog; pane and menu list the same labels,
+states and reasons), `EquipmentWorkspace.itemactions.style.test.ts`,
+`builder-diagnostics.test.ts`, `review:verify`.
+
 ## Known records have a visible Remove again (2026-11-06)
 
 D114 amendment (owner: "it looks like we lost the 'Remove' button for
@@ -1671,7 +1697,8 @@ unchanged. Covered by three `evaluator.test.ts` cases. Cache v85.
 - New characters start with 100 gp (`fbbd68a`); power cards show
   "Encounter (2×)" (`f60c1b1`); locked augmentable powers list version 0 and
   the Shifter prerequisite is native code (`7209676`); dragonshard augments
-  attach/detach by right-click in Equipment (`81e22d7`, `ac4e11f`); the
+  attach/detach by right-click in Equipment (`81e22d7`, `ac4e11f`; detail-pane
+  buttons too since D117); the
   theme-power reason quotes the Dark Sun rule (`f900e82`); `.dndcamp` support
   is out of scope.
 

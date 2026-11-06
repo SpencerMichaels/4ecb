@@ -986,8 +986,31 @@ button.inventory-icon-action[aria-disabled="true"] {
   font-size: 0.85em;
 }
 
-/* A per-item right-click menu (ItemContextMenu): legacy-style item actions
- * without a visible menu button. */
+/* The selected holding's actions above its detail card (ItemActionButtons),
+ * from the same list as its right-click menu. A toggle (Wield two-handed,
+ * Attach to <item>) shows a check and the accent fill while on. */
+.item-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.item-detail-actions button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-raised));
+  border-color: var(--accent);
+}
+
+.item-detail-actions button[aria-pressed="true"]::before {
+  content: "\2713\00a0";
+}
+
+.item-detail-actions button[aria-disabled="true"] {
+  color: var(--muted);
+}
+
+/* A per-item right-click menu (ItemContextMenu): a shortcut for the
+ * actions the selected item's detail pane shows as buttons. */
 .item-context-menu {
   background: var(--surface-raised);
   border: 1px solid var(--border);

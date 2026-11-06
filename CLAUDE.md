@@ -362,13 +362,17 @@ separate header or level rail.
   house-rule character issue (`unwieldableWeaponIssues`). The slot context
   also carries the "Ring Slots" stat (`ring-1`…`ring-4`), and the holy
   symbol slot is native `_INTERNAL_EquippedSymbol`, outside the equip count
-  (`legacyEquipCount`, `wornSymbol`). Equipment-tab
-  per-item actions are right-click menus (`ItemContextMenu.tsx`), e.g. "Wield
-  two-handed" (only where the player chooses: absent when size forces both
-  hands) and, on a dragonshard
-  augment, "Attach to <item>"/"Detach" (`set-inventory-augment`; the host's
+  (`legacyEquipCount`, `wornSymbol`). Inventory/Loadout
+  per-item actions are buttons above the selected holding's card in the
+  detail pane (`ItemActionButtons`), with a right-click menu
+  (`ItemContextMenu.tsx`) as a shortcut, both built from one
+  `itemActions(entry)` list (D117: right-click is never the only way in),
+  e.g. "Wield two-handed" (a toggle, only where the player chooses: absent
+  when size forces both hands), on a dragonshard
+  augment "Attach to <item>"/"Detach" (`set-inventory-augment`; the host's
   `augmentEntryId`, resolved by `boundAugmentHolding`, else the imported loot
-  `augment` CharLootID).
+  `augment` CharLootID), and an item-owned choice's "Choose …" opening
+  `ItemChoiceDialog`.
 - **Stylesheets.** `apps/web/src/styles/index.css` imports every app
   stylesheet in cascade order: `primitives.css`, then `01-base.css` …
   `16-actions-notices.css`, split by surface without reordering rules. Put a
