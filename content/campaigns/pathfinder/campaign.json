@@ -1,7 +1,7 @@
 {
   "campaignId": "pathfinder",
   "name": "Pathfinder (Inner Sea)",
-  "revision": 4,
+  "revision": 5,
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": [
@@ -160,6 +160,2239 @@
       "field": "name",
       "expect": "Learn Deep Speech",
       "value": "Learn Undercommon"
+    },
+    {
+      "id": "ID_FMP_RACE_33",
+      "field": "Languages",
+      "expect": "Common, Primordial",
+      "value": "Common, choice of Aquan, Auran, Ignan, or Terran"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_PRIMORDIAL",
+      "field": "name",
+      "expect": "Primordial (default Moteborn language)",
+      "value": "Elemental tongue (default Moteborn language)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_PRIMORDIAL",
+      "field": "prerequisites",
+      "expect": "!ID_FMP_LANGUAGE_6",
+      "value": "!ID_4ECB_PF_LANGUAGE_TERRAN or !ID_4ECB_PF_LANGUAGE_IGNAN or !ID_4ECB_PF_LANGUAGE_AURAN or !ID_4ECB_PF_LANGUAGE_AQUAN"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_ABYSSAL",
+      "field": "prerequisites",
+      "expect": "!ID_FMP_LANGUAGE_7, ID_FMP_LANGUAGE_6",
+      "value": "!ID_FMP_LANGUAGE_7, ID_4ECB_PF_LANGUAGE_TERRAN or ID_4ECB_PF_LANGUAGE_IGNAN or ID_4ECB_PF_LANGUAGE_AURAN or ID_4ECB_PF_LANGUAGE_AQUAN"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_DWARVEN",
+      "field": "prerequisites",
+      "expect": "!ID_FMP_LANGUAGE_3, ID_FMP_LANGUAGE_6",
+      "value": "!ID_FMP_LANGUAGE_3, ID_4ECB_PF_LANGUAGE_TERRAN or ID_4ECB_PF_LANGUAGE_IGNAN or ID_4ECB_PF_LANGUAGE_AURAN or ID_4ECB_PF_LANGUAGE_AQUAN"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_GIANT",
+      "field": "name",
+      "expect": "Giant (alternate Moteborn language)",
+      "value": "Jotun (alternate Moteborn language)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_GIANT",
+      "field": "prerequisites",
+      "expect": "!ID_FMP_LANGUAGE_19, ID_FMP_LANGUAGE_6",
+      "value": "!ID_FMP_LANGUAGE_19, ID_4ECB_PF_LANGUAGE_TERRAN or ID_4ECB_PF_LANGUAGE_IGNAN or ID_4ECB_PF_LANGUAGE_AURAN or ID_4ECB_PF_LANGUAGE_AQUAN"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_NONE",
+      "field": "prerequisites",
+      "expect": "ID_FMP_LANGUAGE_6, ID_FMP_LANGUAGE_7, ID_FMP_LANGUAGE_3, ID_FMP_LANGUAGE_19",
+      "value": "ID_4ECB_PF_LANGUAGE_TERRAN, ID_4ECB_PF_LANGUAGE_IGNAN, ID_4ECB_PF_LANGUAGE_AURAN, ID_4ECB_PF_LANGUAGE_AQUAN, ID_FMP_LANGUAGE_7, ID_FMP_LANGUAGE_3, ID_FMP_LANGUAGE_19"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_PRIMORDIAL",
+      "field": "name",
+      "expect": "Learn Primordial",
+      "value": "Learn an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_RACE_33",
+      "field": "name",
+      "expect": "Genasi",
+      "value": "Geniekin"
+    },
+    {
+      "id": "ID_FMP_RACE_26",
+      "field": "name",
+      "expect": "Shadar-kai",
+      "value": "Fetchling"
+    },
+    {
+      "id": "ID_FMP_RACE_43",
+      "field": "name",
+      "expect": "Kenku",
+      "value": "Tengu"
+    },
+    {
+      "id": "ID_FMP_RACE_53",
+      "field": "name",
+      "expect": "Vryloka",
+      "value": "Dhampir"
+    },
+    {
+      "id": "ID_FMP_RACE_28",
+      "field": "name",
+      "expect": "Warforged",
+      "value": "Automaton"
+    },
+    {
+      "id": "ID_FMP_FEAT_1240",
+      "field": "name",
+      "expect": "Shadar-Kai Beast",
+      "value": "Fetchling Beast"
+    },
+    {
+      "id": "ID_FMP_FEAT_1668",
+      "field": "name",
+      "expect": "Shadar-Kai Soul",
+      "value": "Fetchling Soul"
+    },
+    {
+      "id": "ID_INTERNAL_RACIAL_TRAIT_PAST_SPIRIT_(SHADAR-KAI)",
+      "field": "name",
+      "expect": "Past Spirit (Shadar-kai)",
+      "value": "Past Spirit (Fetchling)"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_AMONG_ANOTHER_RACE_(SHADAR-KAI)",
+      "field": "name",
+      "expect": "Among Another Race (Shadar-kai)",
+      "value": "Among Another Race (Fetchling)"
+    },
+    {
+      "id": "ID_MMA_FEAT_35680031",
+      "field": "name",
+      "expect": "Past Soul (shadar-kai)",
+      "value": "Past Soul (fetchling)"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_131",
+      "field": "name",
+      "expect": "Warforged Juggernaut",
+      "value": "Automaton Juggernaut"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_132",
+      "field": "name",
+      "expect": "Warforged Lifeseeker",
+      "value": "Automaton Lifeseeker"
+    },
+    {
+      "id": "ID_FMP_FEAT_445",
+      "field": "name",
+      "expect": "Improved Warforged Resolve",
+      "value": "Improved Automaton Resolve"
+    },
+    {
+      "id": "ID_FMP_FEAT_446",
+      "field": "name",
+      "expect": "Warforged Tactics",
+      "value": "Automaton Tactics"
+    },
+    {
+      "id": "ID_FMP_FEAT_448",
+      "field": "name",
+      "expect": "Warforged Fortification",
+      "value": "Automaton Fortification"
+    },
+    {
+      "id": "ID_FMP_FEAT_1560",
+      "field": "name",
+      "expect": "Warforged Example",
+      "value": "Automaton Example"
+    },
+    {
+      "id": "ID_FMP_FEAT_1561",
+      "field": "name",
+      "expect": "Warforged Faith",
+      "value": "Automaton Faith"
+    },
+    {
+      "id": "ID_FMP_FEAT_1672",
+      "field": "name",
+      "expect": "Warforged Soul",
+      "value": "Automaton Soul"
+    },
+    {
+      "id": "ID_FMP_FEAT_2476",
+      "field": "name",
+      "expect": "Warforged Superiority",
+      "value": "Automaton Superiority"
+    },
+    {
+      "id": "ID_FMP_RACIAL_TRAIT_721",
+      "field": "name",
+      "expect": "Warforged Resolve",
+      "value": "Automaton Resolve"
+    },
+    {
+      "id": "ID_FMP_RACIAL_TRAIT_800",
+      "field": "name",
+      "expect": "Warforged Mind",
+      "value": "Automaton Mind"
+    },
+    {
+      "id": "ID_FMP_RACIAL_TRAIT_1815",
+      "field": "name",
+      "expect": "Warforged Resilience",
+      "value": "Automaton Resilience"
+    },
+    {
+      "id": "ID_INTERNAL_RACIAL_TRAIT_PAST_SPIRIT_(WARFORGED)",
+      "field": "name",
+      "expect": "Past Spirit (Warforged)",
+      "value": "Past Spirit (Automaton)"
+    },
+    {
+      "id": "ID_FMP_POWER_2485",
+      "field": "name",
+      "expect": "Warforged Resolve",
+      "value": "Automaton Resolve"
+    },
+    {
+      "id": "ID_FMP_POWER_3150",
+      "field": "name",
+      "expect": "Warforged Fortification",
+      "value": "Automaton Fortification"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8191",
+      "field": "name",
+      "expect": "Ring of the Warforged (paragon tier)",
+      "value": "Ring of the Automaton (paragon tier)"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_AMONG_ANOTHER_RACE_(WARFORGED)",
+      "field": "name",
+      "expect": "Among Another Race (Warforged)",
+      "value": "Among Another Race (Automaton)"
+    },
+    {
+      "id": "ID_MMA_FEAT_35680037",
+      "field": "name",
+      "expect": "Past Soul (warforged)",
+      "value": "Past Soul (automaton)"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_AMONG_ANOTHER_RACE_(VRYLOKA)",
+      "field": "name",
+      "expect": "Among Another Race (Vryloka)",
+      "value": "Among Another Race (Dhampir)"
+    },
+    {
+      "id": "ID_FMP_POWER_14024",
+      "field": "name",
+      "expect": "Vryloka Bloodbond",
+      "value": "Dhampir Bloodbond"
+    },
+    {
+      "id": "ID_MMA_FEAT_35680036",
+      "field": "name",
+      "expect": "Past Soul (vryloka)",
+      "value": "Past Soul (dhampir)"
+    },
+    {
+      "id": "ID_INTERNAL_RACIAL_TRAIT_PAST_SPIRIT_(VRYLOKA)",
+      "field": "name",
+      "expect": "Past Spirit (Vryloka)",
+      "value": "Past Spirit (Dhampir)"
+    },
+    {
+      "id": "ID_INTERNAL_RACIAL_TRAIT_PAST_SPIRIT_(KENKU)",
+      "field": "name",
+      "expect": "Past Spirit (Kenku)",
+      "value": "Past Spirit (Tengu)"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_AMONG_ANOTHER_RACE_(KENKU)",
+      "field": "name",
+      "expect": "Among Another Race (Kenku)",
+      "value": "Among Another Race (Tengu)"
+    },
+    {
+      "id": "ID_FMP_FEAT_3762",
+      "field": "name",
+      "expect": "Kenku Ventriloquist",
+      "value": "Tengu Ventriloquist"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_68",
+      "field": "name",
+      "expect": "Wildfire Genasi",
+      "value": "Wildfire Geniekin"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_69",
+      "field": "name",
+      "expect": "Whirlwind Genasi",
+      "value": "Whirlwind Geniekin"
+    },
+    {
+      "id": "ID_FMP_FEAT_920",
+      "field": "name",
+      "expect": "Genasi Fire Affinity",
+      "value": "Geniekin Fire Affinity"
+    },
+    {
+      "id": "ID_FMP_FEAT_924",
+      "field": "name",
+      "expect": "Genasi Frost Affinity",
+      "value": "Geniekin Frost Affinity"
+    },
+    {
+      "id": "ID_FMP_FEAT_1653",
+      "field": "name",
+      "expect": "Genasi Soul",
+      "value": "Geniekin Soul"
+    },
+    {
+      "id": "ID_INTERNAL_RACIAL_TRAIT_PAST_SPIRIT_(GENASI)",
+      "field": "name",
+      "expect": "Past Spirit (Genasi)",
+      "value": "Past Spirit (Geniekin)"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7741",
+      "field": "name",
+      "expect": "Genasi Soul Armor +1",
+      "value": "Geniekin Soul Armor +1"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7742",
+      "field": "name",
+      "expect": "Genasi Soul Armor +2",
+      "value": "Geniekin Soul Armor +2"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7743",
+      "field": "name",
+      "expect": "Genasi Soul Armor +3",
+      "value": "Geniekin Soul Armor +3"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7744",
+      "field": "name",
+      "expect": "Genasi Soul Armor +4",
+      "value": "Geniekin Soul Armor +4"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7745",
+      "field": "name",
+      "expect": "Genasi Soul Armor +5",
+      "value": "Geniekin Soul Armor +5"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7746",
+      "field": "name",
+      "expect": "Genasi Soul Armor +6",
+      "value": "Geniekin Soul Armor +6"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_118",
+      "field": "name",
+      "expect": "Genasi - Chaos Burn",
+      "value": "Geniekin - Chaos Burn"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_119",
+      "field": "name",
+      "expect": "Genasi - Academic Exhibit",
+      "value": "Geniekin - Academic Exhibit"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_AMONG_ANOTHER_RACE_(GENASI)",
+      "field": "name",
+      "expect": "Among Another Race (Genasi)",
+      "value": "Among Another Race (Geniekin)"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_769",
+      "field": "name",
+      "expect": "Genasi - Balanceseeker",
+      "value": "Geniekin - Balanceseeker"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_770",
+      "field": "name",
+      "expect": "Genasi - Half-Elemental Refugee",
+      "value": "Geniekin - Half-Elemental Refugee"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_771",
+      "field": "name",
+      "expect": "Genasi - Reclaimed Birthright",
+      "value": "Geniekin - Reclaimed Birthright"
+    },
+    {
+      "id": "ID_MMA_FEAT_35680012",
+      "field": "name",
+      "expect": "Past Soul (genasi)",
+      "value": "Past Soul (geniekin)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_1632",
+      "field": "name",
+      "expect": "Supernal Linguist",
+      "value": "Celestial Linguist"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_SUPERNAL",
+      "field": "name",
+      "expect": "Supernal",
+      "value": "Celestial"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_GIANT",
+      "field": "name",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_DEEP_SPEECH",
+      "field": "name",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GENASI",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_BULLYWUG",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AQUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GITHYANKI",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GITHZERAI",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_SHARDMIND",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_ORC",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_19",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_ORCISH"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_HALF-ORC",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_19",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_ORCISH"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GNOLL",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_7",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOLL"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GNOME",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOMISH"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_GNOME",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SYLVAN",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_INTERNAL_RACIAL_TRAIT_STEALTH_BONUS",
+            "type": "Racial Trait"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_PIXIE",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_SATYR",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_HAMADRYAD",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_WILDEN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_HALFLING",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALFLING",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_INTERNAL_RACIAL_TRAIT_THIEVERY_BONUS",
+            "type": "Racial Trait"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_TINKER_GNOME",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_GNOMISH",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_INTERNAL_RACIAL_TRAIT_THIEVERY_BONUS",
+            "type": "Racial Trait"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_DROW",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_18",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_INTERNAL_RACIAL_TRAIT_STEALTH_BONUS",
+            "type": "Racial Trait"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_SVIRFNEBLIN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOMISH"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_MINOTAUR",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_19",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_INTERNAL_RACIAL_TRAIT_PERCEPTION_BONUS",
+            "type": "Racial Trait"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_GRANTS_THRI_KREEN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_43",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_33",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Language",
+              "number": "1",
+              "Category": "ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_TERRAN"
+            }
+          }
+        ],
+        "after": {
+          "name": "select",
+          "attributes": {
+            "type": "Race Ability Bonus",
+            "number": "1",
+            "Category": "Strength|Constitution"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_8",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_35",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "2",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_8"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_26",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_52",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_47",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_NECRIL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_RACE_53",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_NECRIL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_10",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_8",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_INFERNAL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_36",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AURAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_41",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TERRAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_42",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_IGNAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_45",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AQUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_72",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_38",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_1071",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AQUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_1828",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_3716",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_3652",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_2973",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_4",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_FEAT_2728",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_FMP_LANGUAGE_4|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20",
+            "default": "ID_FMP_LANGUAGE_4"
+          }
+        },
+        "set": {
+          "Category": "ID_4ECB_PF_LANGUAGE_SYLVAN|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20",
+          "default": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4286",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TERRAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4292",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_IGNAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4320",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AURAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4317",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AQUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4295",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TALICAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4298",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4304",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4440",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3814",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4386",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4390",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_PRIMORDIAL",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOLL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_19",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_NECRIL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_20",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TERRAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_GNOMISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_20",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALFLING",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_19",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ORCISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_18",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AKLO",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_SYLVAN",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_INFERNAL",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_7",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IGNAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AURAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AQUAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHADOWTONGUE",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MUAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TALICAN",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_TERRAN",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3883",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_6|ID_FMP_LANGUAGE_7|ID_FMP_LANGUAGE_8|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20",
+            "requires": "ID_FMP_LANGUAGE_2&ID_FMP_LANGUAGE_3&ID_FMP_LANGUAGE_4&!ID_FMP_CLASS_FEATURE_3884"
+          }
+        },
+        "set": {
+          "Category": "ID_FMP_LANGUAGE_1|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_FMP_LANGUAGE_7|ID_FMP_LANGUAGE_8|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3877",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_FMP_LANGUAGE_6|ID_FMP_LANGUAGE_7|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20"
+          }
+        },
+        "set": {
+          "category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_FMP_LANGUAGE_7|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4476",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4207",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_TIV_LANGUAGE_HEROES_FEYWILD_1",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOLL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_19",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_NECRIL"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_20",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TERRAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_28",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_IGNAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_29",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AURAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_30",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AQUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_31",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_32",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_MUAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_33",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TALICAN"
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_34",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_37",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_38",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_40",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_GNOMISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_20",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALFLING",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_19",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ORCISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_FMP_LANGUAGE_18",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AKLO",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_SYLVAN",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_INFERNAL",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_7",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOMISH"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_19",
+            "type": "Language"
+          }
+        },
+        "remove": true
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_28",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_HALFLING"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_29",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_FMP_LANGUAGE_19"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_30",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_ORCISH"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_31",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_FMP_LANGUAGE_18"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_32",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_33",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_FMP_LANGUAGE_7"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_34",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_INFERNAL"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_37",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_FMP_LANGUAGE_8"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_38",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_GNOLL"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_40",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_NECRIL"
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TERRAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IGNAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AURAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AQUAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHADOWTONGUE",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MUAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TALICAN",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_NECRIL",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_CER_MAGIC_ITEM_7060",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_18",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_PRIMORDIAL",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_6",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_755",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_28",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_756",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_29",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_753",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_30",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_752",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_34",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_754",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_34",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "Starting"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_757",
+      "rule": {
+        "match": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_34"
+          }
+        },
+        "set": {
+          "Category": "Starting"
+        }
+      }
     }
   ]
 }

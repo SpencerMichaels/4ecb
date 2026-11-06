@@ -1,5 +1,82 @@
 # Implementation status
 
+## Pathfinder campaign revision 5 (2026-11-06)
+
+Campaign content (D116 rule-patch, alias and prerequisite-line amendments;
+owner decisions of 2026-11-06, languages item 16 and the race renames).
+`content/campaigns/pathfinder/` revision 5:
+
+- **Copies → patches.** The 70 non-language full copies of stock records
+  (19 race Grants, 7 races, 7 familiars, 6 feats, 21 class features, 3
+  items, Learn Primordial, 6 Shifter backgrounds) are gone from
+  `house-rules.xml`, replaced in `campaign.json` by 9 field patches (the
+  Genasi Languages line, the Moteborn and Learn Primordial names, four
+  Moteborn prerequisites) and 101 rule patches (67 `set`, 16
+  `replaceWith`, 6 `remove`, 12 `add`, chained anchored adds grouped),
+  so those records follow later server fixes. Composed over the full
+  pack, every affected record equals the revision-4 copy exactly (fields,
+  rules and rule ordinals), except that the three renamed records gain
+  their stock name as an alias, as every name patch does. The 12 Language
+  copies stay full records.
+- **Language aliases.** The two CountsAsLanguage records and their seven
+  grants are removed; Celestial is "Also Known As" Supernal, Jotun Giant,
+  Undercommon Deep Speech, and Terran, Ignan, Auran, Aquan, Muan and
+  Talican Primordial. Name patches: Supernal Linguist → Celestial
+  Linguist, the Background Associations Supernal, Giant and Deep Speech →
+  Celestial, Jotun and Undercommon (the Learn records' "<name> background
+  association" prerequisites still resolve through the aliases).
+- **Race renames** by name patch: Genasi → Geniekin, Shadar-kai →
+  Fetchling, Kenku → Tengu, Vryloka → Dhampir, Warforged → Automaton, and
+  49 records embedding those names (paragon paths, feats, racial traits,
+  powers, items, backgrounds, Past Spirit/Past Soul/Among Another Race),
+  keeping each row's capitalization style. Deva is not renamed; Cannith
+  Warforged, Warforged Faceplate and Familiar: Warforged Faceplate keep
+  their Eberron names; Primordial-named records with no single Pathfinder
+  name are left. Patches: 90 field (58 name) and 101 rule; 140 house-rule
+  records (62 deities, 51 CountsAsDeity, 27 languages).
+- **Race power Display labels are not patched.** `Display` ("Genasi
+  Racial Power", "Warforged Juggernaut Attack 11"; 39 records for the five
+  renamed races) is never shown to a player: it is an internal specific
+  (`internalSpecificNames`, excluded from card bodies), read only to class
+  a classless power as "Racial" (`powerClassBlock`) and to group powers in
+  the builder table (`builder-ui.ts`). The legacy power card printed it;
+  ours does not.
+- **`campaign build --against` reports prerequisite renames.** The report
+  gains `prerequisiteRenames` (`renamedLines` and `unchanged`: each
+  displayed line that keeps an old name because swapping it is not safe,
+  from rules-engine `prerequisiteDisplayLines(...).diagnostics` over the
+  patched records) and warns on each unchanged line
+  (`apps/content-tool/src/campaign-command.ts`).
+
+"Primordial language" (Rimetongue Caller, Summon Rimefire Brute) still
+reads "Primordial language": the stock Primordial record keeps the name
+itself (restricted, not offered), and a record's own name wins over
+another's alias, so the clause names it and no alias is swapped; the
+requirement is still met by any of the six elemental tongues.
+
+Verification: `campaign build --against tmp/content/full-local.4ecp`:
+valid, all 90 field and 101 rule patches apply, 159 records restricted
+(unchanged), the only warnings the 12 Language "replaces" notices; 221
+prerequisite lines show current names, 0 unchanged. Private probes over
+the full pack (ignored): the language probe (62 checks: the 61 language
+checks plus no rule-patch diagnostics) passes, with "fluent in Supernal"
+met by Celestial (Holy Speech, Sivis Truenamer) and "Primordial language"
+by Ignan, Muan, Talican and Aquan; `tmp/probe/pf/rev5.ts` (45 checks):
+the five race cards carry the new names with "Also known as" the old one,
+Deva and the Eberron names are unchanged, the table filter's "warforged"
+finds Automaton, a Fetchling meets the shadar-kai clauses of feats and the
+Abiding Reaper and Doomspeaker paragon paths (Abiding Reaper eligible at
+11), lines read "11th level, fetchling", "Revenant, fetchling", "fluent in
+Celestial", "Celestial background association", "Geniekin, firesoul
+elemental manifestation"; Learn Celestial, Jotun and Undercommon stay
+eligible; a Firesoul Geniekin meets Extra Manifestation and Wildfire
+Geniekin; an Automaton meets Automaton Juggernaut; Valria (Vryloka, now
+Dhampir) and the 8 Deva saves load with the same issues as on revision 4;
+the deity probe (28 checks) passes. A composed revision 4 vs 5 diff
+changes only the intended names, aliases and CountsAsLanguage grants.
+`campaign-command.test.ts`; `pnpm test`, `pnpm typecheck`, lint, prettier
+and `scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`.
+
 ## Campaign rule patches (2026-11-06)
 
 Campaign follow-up (D116 amendment, owner-approved). A campaign's `patches`
@@ -38,7 +115,7 @@ The synthetic fixture campaign has one rule patch (the Cliffkin's Speed
 statadd +6 → +5), and `scripts/check.sh` asserts its `--against` entry and
 the inspect counts.
 
-Pathfinder coverage (not yet converted): 82 house-rule records replace a
+Pathfinder coverage (converted in revision 5, above): 82 house-rule records replace a
 stock ID. 70 (19 race Grants, 7 races, 7 familiars, 6 feats, 21 class
 features including the Moteborn options and Scholar, 3 items, 6 Shifter
 backgrounds, Learn Primordial) change only rules, names, Languages and
@@ -87,7 +164,7 @@ full-text index match aliases; profile-migration fingerprints compare
 them. The synthetic campaign renames the Cliffkin "Crag Folk" and gives
 the Tide Mother an "Also Known As" (Sea Mother), and `scripts/check.sh`
 asserts both patches apply and the alias is in the built campaign. The
-Pathfinder content does not use aliases yet. Verification: synthetic
+Pathfinder campaign uses them from revision 5 (above). Verification: synthetic
 `aliases` tests in `prerequisites.test.ts` (Deva race untyped, typed and
 "Race Deva" for feat and paragon-path owners; "fluent in Supernal" through
 an aliased Celestial without CountsAsLanguage; "Primordial language" with
@@ -115,7 +192,7 @@ v123); `displayPrerequisites(entity, lines)` reads it for the builder
 reference cards (`EntityPrerequisites`, met-through filter on the
 substituted line) and the sheet's feature prerequisites and cards. The
 diagnostics are available from `prerequisiteDisplayLines(...).diagnostics`;
-the `campaign build --against` report does not list them yet. Content
+`campaign build --against` lists them from revision 5 (above). Content
 correction (`93-prerequisites.part`): the Flailing Gauntlet's
 Traveler's Unpredictable Power gets Self-Forged's rule form "!Warforged,
 artificer" (was unverified) and keeps its wording as its print line.
@@ -172,7 +249,9 @@ choice of one common language instead; only the 11 "Learn <restricted
 language>" background choices are restricted by ID. 23 field patches change
 the Languages line of 20 races and the names Learn Celestial, Learn Jotun
 and Learn Undercommon. A save with a Primordial free pick shows it as "not
-used in this campaign" (accepted, decision 15).
+used in this campaign" (accepted, decision 15). Revision 5 (above)
+replaced the 70 copies with patches and the CountsAsLanguage records with
+aliases.
 
 Verification: `content-tool campaign build --against
 tmp/content/full-local.4ecp`: valid, 0 errors, all 23 patches apply, 159

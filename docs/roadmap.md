@@ -953,15 +953,18 @@ Follow-ups (not done):
 - Done (2026-11-06): record aliases ("Also known as"): a renamed record
   keeps its stock name for name lookups, the card and search; a `name`
   patch adds it, or a record authors "Also Known As"
-  (`docs/implementation-status.md`, Record aliases). The Pathfinder
-  content has not adopted them yet (e.g. renaming Deva or Genasi).
+  (`docs/implementation-status.md`, Record aliases).
 - Done (2026-11-06): rule patches (`set`, `replaceId`, `replaceWith`,
   `remove`, `add` on a stock record's rule elements, each with a match as
   its drift guard) and the `prerequisites` field patch; format version 3
   (`docs/implementation-status.md`, Campaign rule patches).
-- Next: convert the Pathfinder campaign's 70 non-language full copies to
-  field and rule patches (a prototype conversion reproduced all 70; the 12
-  Language copies stay, kept by the `Language` type rule).
+- Done (2026-11-06): Pathfinder revision 5: the 70 non-language copies
+  are field and rule patches (composed records identical), the
+  CountsAsLanguage records are aliases, five races are renamed (Geniekin,
+  Fetchling, Tengu, Dhampir, Automaton; Deva kept) with their embedded
+  names, and `campaign build --against` lists prerequisite lines that
+  keep an old name (`docs/implementation-status.md`, Pathfinder campaign
+  revision 5).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

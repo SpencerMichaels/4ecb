@@ -908,7 +908,9 @@ Moradin, or an item a character holds), build and import or advertise it.
     Backgrounds list "Learn Celestial", "Learn Jotun", "Learn Undercommon"
     and "Learn an elemental tongue" (which opens a choice of four), and no
     Damaran, Netherese or other restricted Learn row unless Show all is
-    on. A Deva cleric's Holy Speech reads "met through Celestial". The
+    on. A Deva cleric's Holy Speech reads "fluent in Celestial" (from
+    revision 5, with no "met through" note: Celestial is the language
+    Supernal under its own name). The
     saved Primordial pick has one "Primordial is not used in this
     campaign." issue whose Review opens its choice.
   - **Wrong if:** a stock name (Giant, Deep Speech, Supernal, Primordial)
@@ -929,6 +931,35 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** the line sits below the fields, uses a different label
     style from "Prerequisite:", or a record without aliases shows an empty
     "Also known as" line.
+- [ ] **Pathfinder renames (campaign revision 5).** Added 2026-11-06; the
+      names, matching and prerequisite lines are checked by private
+      probes, these are the surfaces.
+  - **Where:** a new character in the Pathfinder campaign: the Race table
+    filtered by "warforged", "shadar", "genasi", "kenku" and "vryloka";
+    the Geniekin, Fetchling and Automaton race cards; a Fetchling at 11th
+    level: a feat such as Ghostly Rejuvenation and the paragon path
+    Abiding Reaper (cards and table rows); an Automaton's Automaton
+    Juggernaut card; a Geniekin's manifestation choice and a Firesoul
+    Geniekin's Wildfire Geniekin; the Celestial, Jotun and an elemental
+    tongue's language cards; a background benefit list with Learn
+    Celestial; Valria (Vryloka) moved into the campaign, Build and sheet.
+  - **Expect:** each filter keeps the renamed race (Automaton, Fetchling,
+    Geniekin, Tengu, Dhampir); its card reads "Also known as: Warforged"
+    (etc.) first while its description prose keeps the old name.
+    Prerequisite lines read the new name in the book's case ("11th
+    level, fetchling", "Fetchling", "Automaton", "Geniekin, firesoul
+    elemental manifestation", "Celestial background association"), with
+    no "met through" note. Deva, Cannith Warforged and Warforged
+    Faceplate are unchanged. Language cards read "Also known as:
+    Supernal" (Giant, Deep Speech, Primordial). Rimetongue Caller still
+    reads "Wizard, Primordial language" (the stock Primordial keeps its
+    name; any elemental tongue meets it). Valria's race shows Dhampir on
+    the Build tab and the sheet. Power cards of the renamed races show no
+    old name in their header (their "Racial" class block is unchanged).
+  - **Wrong if:** an old race name shows in a name, prerequisite line or
+    sheet field outside prose and "Also known as", a renamed paragon path
+    or feat is greyed out for its race, or the filter loses a row by its
+    old name.
 
 ## Decisions
 

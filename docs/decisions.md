@@ -4778,7 +4778,13 @@ expect, value}`: `field` is "name" or a specific's name; other top-level
   travel with the evaluation (`EvaluatedCharacter.prerequisiteLines`), so
   composed campaign profiles need no stored field and stock packs, which
   have no aliases, are unchanged (`docs/rules-engine.md`, prerequisite
-  display).
+  display). `campaign build --against` lists the lines left unchanged
+  (`prerequisiteRenames`), the drift guard for renames. Pathfinder
+  revision 5 (2026-11-06) is the first campaign to use aliases, rule
+  patches and renames: its 70 non-language copies became patches, its
+  CountsAsLanguage records aliases, and five races are renamed (Deva is
+  not); race power `Display` labels stay unpatched because no surface
+  shows them.
 - **Amendment (2026-11-06): rule patches** (owner-approved: the Pathfinder
   campaign carried about 70 full copies of stock records — race Grants,
   races, familiars, feats, items, Shifter backgrounds, class features —
