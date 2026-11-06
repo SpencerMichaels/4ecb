@@ -3042,14 +3042,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "PowerCard.MonkMovementTechnique": code(
       "Power cards append the _ChildPower movement technique (its Action Type, Attack Type and specifics).",
-      "SheetCard.movementTechnique, printed after the attack by PowerCard.tsx. Deliberate difference (owner decision 2026-10-28, D099, a layout choice): legacy also prints the technique's own card; card-deck.ts deckPowerCards drops it from the deck (print and screen sheet) when the discipline's card carries it, and a technique owned without its discipline keeps its card",
+      "SheetCard.movementTechnique, printed by PowerCard.tsx in its own band at the card's foot (owner decision 2026-11-05, D079 note). Deliberate difference (owner decision 2026-10-28, D099, a layout choice): legacy also prints the technique's own card; card-deck.ts deckPowerCards drops it from the deck (print and screen sheet) when the discipline's card carries it, and a technique owned without its discipline keeps its card",
       test(
         CARD_PARTS,
         "gives power cards their class block, technique and spellbook mark",
       ),
       test(
         POWER_CARD,
-        "appends a full discipline's movement technique after its attack",
+        "puts a full discipline's movement technique in a band at the card's foot",
       ),
       test(
         CARD_DECK,
