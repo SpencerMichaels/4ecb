@@ -442,19 +442,19 @@ const reviews: ReviewCharacter[] = [
       required: [],
     },
     purpose:
-      "Imported druid with Ritual Caster, a Ritual Book and a druid-granted ritual: the Rituals tab.",
+      "Imported druid with Ritual Caster, a Ritual Book and a druid-granted ritual: the Inventory's known rituals.",
     links: [
       {
-        label: "Rituals tab",
-        path: "tab=rituals",
+        label: "Inventory",
+        path: "tab=inventory",
         items: [
           [
             "Rows",
-            'The druid-granted ritual\'s source line reads "Granted by Druid".',
+            'Under "Rituals known", the druid-granted ritual\'s detail line ends "Granted by Druid".',
           ],
           [
             "Free-ritual counter",
-            'The druid\'s free-ritual block: "Free rituals (Druid)" and a line per allowance left, or no block once used; no rule sentence.',
+            'The druid\'s free-ritual block before the known groups: "Free rituals (Druid)" and a line per allowance left, or no block once used; no rule sentence.',
           ],
         ],
       },
@@ -705,8 +705,8 @@ const reviews: ReviewCharacter[] = [
         ],
       },
       {
-        label: "Rituals tab",
-        path: "tab=rituals",
+        label: "Inventory",
+        path: "tab=inventory",
         items: [
           [
             "Free-ritual counter",
@@ -714,11 +714,11 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Known-list source line",
-            'Comprehend Language reads "Learned free at level 1 (Spellbook)".',
+            'Comprehend Language\'s row under "Rituals known" ends "Learned free (Spellbook)" (no level).',
           ],
           [
             '"Learn X free" dialog',
-            'Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion (the Psion 15 review character\'s Rituals tab). Each option reads "Psion · …" with what that allowance still covers.',
+            'In the Shop\'s Rituals category, Learn free on a 1st-level ritual learns it straight away (one allowance, no dialog). The dialog itself needs a psion (the Psion 15 review character). Each option reads "Psion · …" with what that allowance still covers.',
           ],
         ],
       },
@@ -1088,42 +1088,43 @@ const reviews: ReviewCharacter[] = [
       "Female drow invoker of Avandra, Widow of Arach-Tinilith theme (Spiderling of Lolth), Awaken God Fragment, the Rose Scythe of Chauntea, two of Caelynnvala's Boons (a group set) and Summon Blade Angel.",
     links: [
       {
-        label: "Rituals tab",
-        path: "tab=rituals",
+        label: "Inventory",
+        path: "tab=inventory",
         items: [
           [
-            "The Rituals tab",
-            "Tab after Shop with a book-marked icon; no Free rituals rule sentence, then Known (N) and Learn rituals.",
+            "Drow invoker: rituals in the Inventory and Shop",
+            "The Inventory's Rituals known group and its right-click menu, then the Shop's Rituals category, at 140% zoom and in both themes.",
+          ],
+          [
+            "No Rituals tab",
+            'No Rituals tab; no Free rituals rule sentence; "Rituals known (N)" after the item groups.',
           ],
           [
             "Free-ritual counter",
-            "Its one free ritual is used (Make Whole), so the tab has no free-ritual block.",
+            "Its one free ritual is used (Make Whole), so the Inventory has no free-ritual block.",
           ],
           [
             "Groups",
-            "Rituals / Alchemical formulas / Martial practices always shown; italic empty states.",
+            "Only the kinds the invoker knows have a group, after the items, each count in the title's label.",
           ],
           [
             "Rows",
-            'Book icon, name, muted source line ("Granted by Invoker"), Level, Category, Key skill.',
+            'Book icon, name, then a muted line: Level, Category, Key skill, "Granted by Invoker".',
           ],
           [
             "Remove",
-            "Trash icon with an armed red state on learned entries only; granted ones have none.",
+            "No per-row buttons: Remove is the right-click menu, inert with the reason on a granted ritual.",
           ],
-          [
-            "Detail card",
-            "Select a row: the source as the card's subheading; with nothing selected, the empty-state text.",
-          ],
+          ["Detail card", "Select a row: the source as the card's subheading."],
         ],
       },
       {
-        label: "Rituals tab: learn",
-        path: "tab=rituals&category=rituals",
+        label: "Shop: Rituals",
+        path: "tab=shop&category=rituals",
         items: [
           [
-            "Learning view",
-            '"← Known rituals" back button, Type select with only the three catalogs, "Search rituals…", a Known chip and column, Buy / Learn free buttons.',
+            "Rituals category",
+            'Type select with the three learning categories after the items, "Search rituals…", the item categories\' chips (no Known chip), Buy / Learn free, known rituals marked Known and disabled.',
           ],
         ],
       },
@@ -1133,19 +1134,19 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Shop",
-            "The Type list has no Rituals, Alchemical formulas or Martial practices; Ritual Scrolls are still under Consumables.",
+            "The Type list has Rituals, Alchemical formulas and Martial practices; All items has none of them; Ritual Scrolls are still under Consumables.",
           ],
         ],
       },
       {
-        label: "Old link: Shop rituals",
-        path: "tab=shop&category=rituals",
-        items: [["Old links", "Lands on the Rituals tab (learning view)."]],
+        label: "Old link: Rituals tab",
+        path: "tab=rituals",
+        items: [["Old links", "Lands on the Shop's Rituals category."]],
       },
       {
         label: "Old link: section=practices",
         path: "tab=equipment&section=practices",
-        items: [["Old links", "Lands on the Rituals tab."]],
+        items: [["Old links", "Lands on the Shop's Rituals category."]],
       },
       {
         label: "Print preview",
@@ -1442,24 +1443,24 @@ const reviews: ReviewCharacter[] = [
         ],
       },
       {
-        label: "Rituals tab",
-        path: "tab=rituals",
+        label: "Inventory",
+        path: "tab=inventory",
         items: [
           [
             "Free rituals block",
             '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
           ],
           [
-            "Known table",
-            "Name, Level, Category, Key skill and Remove columns; three padded group rows with their empty states.",
+            "Known groups",
+            "The Inventory's three columns; a known group only for a kind the psion knows.",
           ],
           [
             "Learn free dialog",
-            "Learn rituals → Tenser's Floating Disk → Learn free: two Psion options and None (a gift).",
+            "Shop → Rituals → Tenser's Floating Disk → Learn free: two Psion options and None (a gift).",
           ],
           [
-            "Psion: Rituals tab",
-            "The free-rituals block, the Known table's columns and group rows, and the Learn free dialog for Tenser's Floating Disk, at 140% zoom and in both themes.",
+            "Psion: free rituals in the Inventory and Shop",
+            "The free-rituals block in the Inventory, and the Learn free dialog for Tenser's Floating Disk from the Shop's Rituals category, at 140% zoom and in both themes.",
           ],
         ],
       },

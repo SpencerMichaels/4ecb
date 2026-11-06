@@ -111,10 +111,10 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   // Piri
   "piri|0|rows": auto(
-    'The druid-granted ritual\'s source line reads "Granted by Druid".',
+    'The druid-granted ritual\'s Inventory row reads "Granted by Druid".',
   ),
   "piri|0|free-ritual counter": auto(
-    'The druid\'s free-ritual block: no rule sentence, and a "Free rituals (Druid)" heading with a line per allowance left (none once used).',
+    'The druid\'s free-ritual block in the Inventory, before the known groups: no rule sentence, and a "Free rituals (Druid)" heading with a line per allowance left (none once used).',
   ),
   "piri|1|printed reference pages": auto(
     'Granted ritual entries show "Granted by: Druid".',
@@ -177,7 +177,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'The "Free rituals (Spellbook)" block\'s line ("… free 1st-level rituals and … free rituals of level 5 or lower"), with no rule sentence.',
   ),
   "wizard-gnome|6|known-list source line": auto(
-    'Comprehend Language reads "Learned free at level 1 (Spellbook)".',
+    'Comprehend Language\'s Inventory row reads "Learned free (Spellbook)", no level.',
   ),
   "wizard-gnome|6|learn x free dialog": auto(
     "The wizard's Spellbook is one allowance (no dialog); with a psion's allowance beside it, Tenser's Floating Disk fits both, so Learn free asks.",
@@ -266,35 +266,35 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     'Sprite with Vigorous Familiar: AC +1, speed "6, fly 6"; no "Familiar: Sprite" power card.',
   ),
   // Drow invoker
-  "invoker-drow|0|the rituals tab": auto(
-    "Rituals tab after Shop with the book-marked icon; no Free rituals rule sentence (its one free ritual is used, so no free-ritual block), then Known (N) and Learn rituals.",
+  "invoker-drow|0|no rituals tab": auto(
+    'No Rituals tab or workspace; no Free rituals rule sentence (its one free ritual is used, so no free-ritual block); "Rituals known (N)" in the Inventory, no source naming a level.',
   ),
   "invoker-drow|0|free-ritual counter": auto(
-    "The invoker's one free ritual is used, so there is no free-ritual block.",
+    "The invoker's one free ritual is used, so the Inventory has no free-ritual block.",
   ),
   "invoker-drow|0|groups": auto(
-    "The three groups are always shown, empty ones with their empty-state text.",
+    "Only the kinds known have a group, in order after the item categories, each count inside the item categories' label.",
   ),
   "invoker-drow|0|rows": auto(
-    'Each row has the book icon, name, the "Granted by Invoker" source line, Level, Category and Key skill.',
+    'Each row has the book icon, the name, then Level, Category, Key skill and "Granted by Invoker" on the muted detail line.',
   ),
   "invoker-drow|0|remove": auto(
-    "Remove (trash icon) on learned entries only; granted entries have none.",
+    "Known rows have no buttons besides the name; their right-click menu's Remove is inert, with the reason, for a granted ritual.",
   ),
   "invoker-drow|0|detail card": auto(
-    "A selected row's card has its source as the subheading; with nothing selected, the empty-state text.",
+    "A selected row's card has its source as the subheading.",
   ),
-  "invoker-drow|1|learning view": auto(
-    '"← Known rituals" back button, Type select with only the three catalogs, "Search rituals…", Known chip and column, Buy / Learn free buttons.',
+  "invoker-drow|1|rituals category": auto(
+    'Shop → Rituals: the three learning categories after the items in the Type select, "Search rituals…", Affordable / Proficient / Filters (no Known chip), Buy / Learn free, a learned ritual Known and disabled.',
   ),
   "invoker-drow|2|shop": auto(
-    "The Shop's Type list has no Rituals, Alchemical formulas or Martial practices; Ritual Scrolls are under Consumables.",
+    "The Shop's Type list has Rituals, Alchemical formulas and Martial practices; All items lists no ritual; Ritual Scrolls are under Consumables.",
   ),
   "invoker-drow|3|old links": auto(
-    "tab=shop&category=rituals canonicalizes to the Rituals tab's learning view.",
+    "tab=rituals (with or without a category) canonicalizes to the Shop's learning category.",
   ),
   "invoker-drow|4|old links": auto(
-    "tab=equipment&section=practices canonicalizes to the Rituals tab.",
+    "tab=equipment&section=practices canonicalizes to the Shop's Rituals category.",
   ),
   "invoker-drow|5|printed reference pages": auto(
     'Granted ritual entries show "Granted by: Invoker".',
@@ -542,11 +542,11 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "psion-thought-warrior|1|free rituals block": auto(
     '"Free rituals (Psion)", then "1 free 1st-level ritual" and "1 free ritual: Sending or Tenser\'s Floating Disk"; no rule sentence.',
   ),
-  "psion-thought-warrior|1|known table": auto(
-    "The Known table's Name, Level, Category, Key skill and Remove columns, and three group rows on the padded section label with their empty states.",
+  "psion-thought-warrior|1|known groups": auto(
+    "The Inventory keeps its Item, Quantity and actions columns; a known group only for a kind the psion knows.",
   ),
   "psion-thought-warrior|1|learn free dialog": auto(
-    'Learn Tenser\'s Floating Disk free: "Psion · 1 free 1st-level ritual", "Psion · 1 free ritual: Sending or Tenser\'s Floating Disk", "None (a gift)", each a radio with its text beside it; Cancel, then Learn free.',
+    'Learn Tenser\'s Floating Disk free (offered in the Shop\'s Rituals category): "Psion · 1 free 1st-level ritual", "Psion · 1 free ritual: Sending or Tenser\'s Floating Disk", "None (a gift)", each a radio with its text beside it; Cancel, then Learn free.',
   ),
   "psion-thought-warrior|0|shared implement table (d111)": auto(
     "Thought Warrior: the commands, then one uncaptioned table (no line naming the commands) with one row per implement (orb +1, staff +3, Unarmed), each printed once.",

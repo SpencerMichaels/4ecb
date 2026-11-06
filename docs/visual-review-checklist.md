@@ -75,8 +75,9 @@ A path such as `beatrix` → `edit?tab=build&level=1&section=class` means
 `#/characters/visual-review-beatrix/edit?tab=build&level=1&section=class`;
 `beatrix` → `?preview=1` is its print preview, and `beatrix` → `sheet` is
 `#/characters/visual-review-beatrix`. Builder tabs, left to right: Build,
-Details, Loadout, Inventory, Shop, Rituals, Retraining (each `tab=` slug is
-the tab name in lower case). The theme is Settings → Display → Color theme.
+Details, Loadout, Inventory, Shop, Retraining (each `tab=` slug is the tab
+name in lower case; rituals are learned in the Shop and listed in the
+Inventory, D114). The theme is Settings → Display → Color theme.
 
 The passes run the native review characters first, then the imported player
 saves (one print preview each), then the library, new characters, and the
@@ -115,8 +116,8 @@ live site.
     strip at the window's left edge, click it again, reopen it and press
     Esc, reopen it and click the level page. Also try a tall window and a
     short one (at 140% zoom), and with the drawer closed narrow the window
-    step by step on Build (Class and Feats), Details, Inventory, Shop,
-    Rituals and Retraining.
+    step by step on Build (Class and Feats), Details, Inventory, Shop and
+    Retraining.
   - **Expect:** closed, only a slim strip with a ">" shows at the window's
     left edge, as tall as the sidebar's content, and the tab bar starts
     just right of it; no space opens above or below. Clicking it slides the
@@ -342,6 +343,30 @@ live site.
     missing, an implement power prints an "Unarmed" row, or the creature
     card's text is unreadable at its size.
 
+- [ ] **Drow invoker: rituals in the Inventory and Shop.**
+  - **Where:** `edit?tab=inventory` at 140% zoom, in light and dark theme:
+    scroll to "Rituals known" below the items, click a ritual, right-click
+    it, then right-click a granted one (its line ends "Granted by
+    Invoker"). Then the Shop: open the Type list, choose Rituals, then
+    Alchemical formulas and back to All items.
+  - **Expect:** "Rituals known" reads like the item groups above it, its
+    count the same size and weight as the word; each row is the book icon,
+    the name, and one muted line "Level N · Category · Key skill" (plus
+    the source for a granted or free ritual), with no quantity buttons or
+    trash icon. The detail pane shows the ritual's card. The right-click
+    menu has Remove; on the granted ritual it is greyed, its tooltip saying
+    why. In the Type list the three learning categories sit under a
+    "Rituals and practices" heading after the items. In every category the
+    toolbar (Type, Slot, Subtype, search, Affordable, Proficient, Filters)
+    and the table's columns stay in the same places; the Level header is
+    on one line; a learned ritual's row reads Known with its buttons
+    disabled.
+  - **Wrong if:** the count is smaller than the title, a detail line
+    overlaps the next row or a long one isn't wrapped under the name, a
+    row has a visible Remove/⋮ button, the menu is clipped, a toolbar
+    control moves or disappears between categories, "Level" breaks onto
+    two lines, or grey text is unreadable in dark theme.
+
 ## Pass 8: Arena fighter 11 (`fighter-arena`)
 
 - [x] **Arena fighter: opening a filled choice.**
@@ -407,24 +432,21 @@ live site.
     Attack" line appears, the rows read as belonging to the next command, or
     a card overflows.
 
-- [x] **Psion: Rituals tab.**
-  - **Where:** `edit?tab=rituals` at 140% zoom, in light and dark theme.
-    Then Learn rituals, search "Tenser", and click Tenser's Floating Disk's
-    gift (Learn free) button.
-  - **Expect:** at the top, a compact block: a bold "Free rituals" with a
-    grey "(Psion)", then two lines indented under it, "1 free 1st-level
-    ritual" and "1 free ritual: Sending or Tenser's Floating Disk". The
-    Known table's header row (Name, Level, Category, Key skill) has the same
-    padding as its cells, its navy group rows (Rituals, Alchemical
-    formulas, Martial practices) have their label and count inset from the
-    row's left edge, and each column's text stays in its own column. The
+- [ ] **Psion: free rituals in the Inventory and Shop.**
+  - **Where:** `edit?tab=inventory` at 140% zoom, in light and dark theme,
+    below the items. Then the Shop: Type → Rituals, search "Tenser", and
+    click Tenser's Floating Disk's gift (Learn free) button.
+  - **Expect:** after the item groups, a full-width row holding a compact
+    block: a bold "Free rituals" with a grey "(Psion)", then two lines
+    indented under it, "1 free 1st-level ritual" and "1 free ritual:
+    Sending or Tenser's Floating Disk", inset like the cells above. The
     dialog is wide enough that each "Psion · …" option sits on one line
-    beside its radio; the part after "·" grey.
+    beside its radio; the part after "·" grey; Cancel, then Learn free.
   - **Wrong if:** the block reads like a paragraph or its lines don't sit
-    under the heading, a group label touches the row's edge, Category or
-    Key skill text runs into the next column or under the Remove button, a
-    dialog option's wrapped line starts under the radio (looking like a new
-    option or a heading), or grey text is unreadable in dark theme.
+    under the heading, it touches the table's edge or squeezes into the
+    Item column, a dialog option's wrapped line starts under the radio
+    (looking like a new option or a heading), or grey text is unreadable
+    in dark theme.
 
 ## Pass 10: Hu's sheet editing (`hu`)
 

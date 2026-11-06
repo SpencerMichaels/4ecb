@@ -68,6 +68,7 @@ import {
 } from "../src/detail-stack";
 import {
   catalogItemDetail,
+  EquipmentWorkspace,
   inventoryItemDetail,
 } from "../src/EquipmentWorkspace";
 import {
@@ -93,8 +94,7 @@ import {
   knownRecordSourceLabel,
   ritualAllowanceGroups,
   ritualAllowanceLabel,
-  RitualsWorkspace,
-} from "../src/RitualsWorkspace";
+} from "../src/known-records-ui";
 import { canonicalHashRedirect } from "../src/routes";
 
 import { swapPresentationChecks } from "./visual-review-checks-later";
@@ -1311,29 +1311,46 @@ rule("runepriest-scholar", "Print preview", "Serene Blade runepriest", (c) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* Rituals tab                                                         */
+/* Known rituals: the Inventory's groups and the Shop's learning       */
+/* categories (D114)                                                   */
 /* ------------------------------------------------------------------ */
 
-function ritualsHtml(
+/** The Equipment workspace as Inventory (or as the Shop on a learning
+ *  category), with the character's evaluation for its known records. */
+function knownWorkspaceHtml(
   c: ReviewCharacter,
-  category?: "rituals",
-  build: CharacterBuild = c.build,
-  evaluation: EvaluatedCharacter = c.evaluation,
+  workspace: "equipment" | "shop" = "equipment",
+  shopCategory: "rituals" | "items" = "rituals",
 ): string {
+  const coins = { copper: 0, silver: 0, gold: 0, platinum: 0, astral: 0 };
   return markup(
-    createElement(RitualsWorkspace, {
-      build,
+    createElement(EquipmentWorkspace, {
+      build: c.build,
       entities: c.context.entities,
       byId: c.context.byId,
-      evaluation,
-      walletCopper: 1_000_000,
-      category,
-      onCategoryChange: () => undefined,
-      onLearn: () => undefined,
-      onRemove: () => undefined,
+      wallet: { carried: { ...coins, astral: 1 }, stored: coins },
+      activeDefinitionIds: c.evaluation.activeDefinitionIds,
+      loadoutSlotContext: c.evaluation.loadoutSlotContext,
+      workspace,
+      loadoutView: false,
+      shopCategory,
+      onShopCategoryChange: () => undefined,
+      onPutInventory: () => undefined,
+      onInventoryCommands: () => undefined,
+      onPurchase: () => undefined,
+      onSell: () => undefined,
+      onEquipSlot: () => undefined,
+      onSetWielding: () => undefined,
+      onSetAugment: () => undefined,
+      onSetText: () => undefined,
+      evaluation: c.evaluation,
+      onLearnKnown: () => undefined,
+      onRemoveKnown: () => undefined,
     }),
   );
 }
+
+const inventoryHtml = (c: ReviewCharacter) => knownWorkspaceHtml(c);
 
 function ritualStatuses(c: ReviewCharacter) {
   return ritualAllowanceStatuses(
@@ -1362,11 +1379,19 @@ function knownRows(c: ReviewCharacter) {
   }));
 }
 
-/** The provider's compact free-ritual block: a "Free rituals (Provider)"
- *  heading and one line per allowance with some left, or no block for it
- *  once nothing is left; never the class's rule sentence. */
+/** The Inventory's known-record rows (by name), each a table row. */
+function knownRowHtml(html: string, name: string): string | undefined {
+  return [...html.matchAll(/<tr[^>]*data-known-entry[\s\S]*?<\/tr>/gu)]
+    .map((match) => match[0])
+    .find((row) => textOf(row).startsWith(name));
+}
+
+/** The provider's compact free-ritual block in the Inventory: a "Free
+ *  rituals (Provider)" heading and one line per allowance with some left,
+ *  or no block for it once nothing is left; never the class's rule
+ *  sentence. */
 function ritualCounter(c: ReviewCharacter, provider: string): Check[] {
-  const html = ritualsHtml(c);
+  const html = inventoryHtml(c);
   const statuses = ritualStatuses(c).filter(
     ({ allowance }) => key(allowance.provider) === key(provider),
   );
@@ -1397,8 +1422,12 @@ function ritualCounter(c: ReviewCharacter, provider: string): Check[] {
           headings.join(" | ") || "none",
         )
       : truthy(
-          `The block's heading reads "${heading}"`,
-          headings.includes(heading),
+          `The block's heading reads "${heading}", in the Inventory table before the known groups`,
+          headings.includes(heading) &&
+            html.indexOf("inventory-allowance-row") <
+              (html.indexOf("data-known-entry") === -1
+                ? Number.POSITIVE_INFINITY
+                : html.indexOf("data-known-entry")),
           headings.join(" | ") || "none",
         ),
     ...(group?.lines ?? []).map(({ label }) =>
@@ -1411,24 +1440,25 @@ function ritualCounter(c: ReviewCharacter, provider: string): Check[] {
   ];
 }
 
-rule("piri", "Rituals tab", "Rows", (c) => {
+rule("piri", "Inventory", "Rows", (c) => {
   const rows = knownRows(c).filter(
     ({ record }) => record.source.kind === "granted",
   );
+  const granted = rows.find(({ source }) => source === "Granted by Druid");
   return [
     truthy(
       'A granted ritual reads "Granted by Druid"',
-      rows.some(({ source }) => source === "Granted by Druid"),
+      granted !== undefined,
       rows.map(({ name, source }) => `${name}: ${source}`).join("; "),
     ),
     contains(
-      "The Rituals tab shows it",
-      textOf(ritualsHtml(c)),
+      "The Inventory row shows it under the name",
+      textOf(knownRowHtml(inventoryHtml(c), granted?.name ?? "?") ?? ""),
       "Granted by Druid",
     ),
   ];
 });
-rule("piri", "Rituals tab", "Free-ritual counter", (c) =>
+rule("piri", "Inventory", "Free-ritual counter", (c) =>
   ritualCounter(c, "Druid"),
 );
 
@@ -1485,32 +1515,32 @@ rule("wizard-gnome", "Print preview", "Tome of Binding reminder", (c) => {
   ];
 });
 
-rule("wizard-gnome", "Rituals tab", "Free-ritual counter", (c) => [
+rule("wizard-gnome", "Inventory", "Free-ritual counter", (c) => [
   ...ritualCounter(c, "Spellbook"),
   contains(
     "The Spellbook line reads as the checklist says",
-    textOf(ritualsHtml(c)),
+    textOf(inventoryHtml(c)),
     "free 1st-level rituals and 2 free rituals of level 5 or lower",
   ),
 ]);
 
-rule("wizard-gnome", "Rituals tab", "Known-list source line", (c) => {
+rule("wizard-gnome", "Inventory", "Known-list source line", (c) => {
   const row = knownRows(c).find(({ name }) => name === "Comprehend Language");
   return [
     equal(
-      "Comprehend Language's source line",
+      "Comprehend Language's source line (no level: current state)",
       row?.source,
-      "Learned free at level 1 (Spellbook)",
+      "Learned free (Spellbook)",
     ),
-    inOrder(
-      "The Rituals tab row shows it under the name",
-      textOf(ritualsHtml(c)),
-      ["Comprehend Language", "Learned free at level 1 (Spellbook)"],
+    contains(
+      "The Inventory row shows it under the name",
+      textOf(knownRowHtml(inventoryHtml(c), "Comprehend Language") ?? ""),
+      "Learned free (Spellbook)",
     ),
   ];
 });
 
-rule("wizard-gnome", "Rituals tab", '"Learn X free" dialog', (c) => {
+rule("wizard-gnome", "Inventory", '"Learn X free" dialog', (c) => {
   // The wizard's Spellbook is one allowance (two level pools), so Learn free
   // needs no choice; the dialog is for several allowances, as a psion's
   // own allowance beside the Spellbook (the checklist's example).
@@ -1571,10 +1601,10 @@ rule("wizard-gnome", "Rituals tab", '"Learn X free" dialog', (c) => {
   ];
 });
 
-rule("psion-thought-warrior", "Rituals tab", "Free rituals block", (c) => {
+rule("psion-thought-warrior", "Inventory", "Free rituals block", (c) => {
   // No rituals learned yet, so both of the psion's allowances are left.
   const lines = elementsWithClass(
-    ritualsHtml(c),
+    inventoryHtml(c),
     "rituals-allowance-count",
   ).map(textOf);
   return [
@@ -1586,35 +1616,34 @@ rule("psion-thought-warrior", "Rituals tab", "Free rituals block", (c) => {
   ];
 });
 
-rule("psion-thought-warrior", "Rituals tab", "Known table", (c) => {
-  const html = ritualsHtml(c);
-  const table =
-    /<table class="inventory-table rituals-known-table">[\s\S]*?<\/table>/u.exec(
-      html,
-    )?.[0] ?? "";
-  const headers = /<thead>[\s\S]*?<\/thead>/u.exec(table)?.[0] ?? "";
+rule("psion-thought-warrior", "Inventory", "Known groups", (c) => {
+  const html = inventoryHtml(c);
+  const labels = elementsWithClass(html, "inventory-category-label").map(
+    textOf,
+  );
+  const shown = KNOWN_RECORD_GROUPS.filter(({ kind }) =>
+    knownRows(c).some(({ record }) => knownRecordKindOf(record) === kind),
+  );
   return [
     contains(
-      "Five columns: Name, Level, Category, Key skill, then the Remove column",
-      headers,
-      '<th>Name</th><th>Level</th><th>Category</th><th>Key skill</th><th><span class="visually-hidden">Actions</span></th>',
-    ),
-    ...KNOWN_RECORD_GROUPS.map(({ label, empty }) =>
-      contains(
-        `The "${label}" group row uses the padded section label, with its empty state`,
-        textOf(table),
-        `${label}0 ${empty}`,
-      ),
+      "The Inventory keeps its three columns (Item, Quantity, actions)",
+      html,
+      '<thead><tr><th>Item</th><th>Quantity</th><th><span class="visually-hidden">Actions</span></th></tr></thead>',
     ),
     equal(
-      "Every group row's label is a .table-section-label",
-      elementsWithClass(table, "table-section-label").length,
-      KNOWN_RECORD_GROUPS.length,
+      "Only the kinds the psion knows have a group, like item categories",
+      labels.filter((label) =>
+        KNOWN_RECORD_GROUPS.some(({ label: group }) => label.startsWith(group)),
+      ),
+      shown.map(
+        ({ kind, label }) =>
+          `${label}${knownRows(c).filter(({ record }) => knownRecordKindOf(record) === kind).length}`,
+      ),
     ),
   ];
 });
 
-rule("psion-thought-warrior", "Rituals tab", "Learn free dialog", (c) => {
+rule("psion-thought-warrior", "Inventory", "Learn free dialog", (c) => {
   const disk = c.context.named("Tenser's Floating Disk", "Ritual");
   const statuses = ritualStatuses(c);
   const eligible = eligibleRitualAllowances(
@@ -1652,33 +1681,41 @@ rule("psion-thought-warrior", "Rituals tab", "Learn free dialog", (c) => {
       "None (a gift)",
     ]),
     inOrder("Cancel, then Learn free", textOf(html), ["Cancel", "Learn free"]),
+    equal(
+      "Tenser's Floating Disk is in the Shop's Rituals category",
+      shopBrowseCategory(disk),
+      "rituals",
+    ),
+    contains(
+      "… whose rows have the Learn free (gift) button",
+      knownWorkspaceHtml(c, "shop"),
+      'title="Learn free"',
+    ),
   ];
 });
 
-rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
+rule("invoker-drow", "Inventory", "No Rituals tab", (c) => {
   const source = readFileSync(
     resolve("apps/web/src/CharacterEditorPage.tsx"),
     "utf8",
   );
-  const shop = source.indexOf(
-    '<span className="builder-tab-label">Shop</span>',
-  );
-  const rituals = source.search(
-    /<Icon name="book-marked" \/>\s*<span className="builder-tab-label">Rituals<\/span>/,
-  );
-  const html = ritualsHtml(c);
+  const html = inventoryHtml(c);
   const text = textOf(html);
   const allowances = freeRitualAllowanceTexts(c.evaluation);
   const records = knownRows(c);
+  const rituals = records.filter(
+    ({ record }) => knownRecordKindOf(record) === "ritual",
+  );
   const headings = elementsWithClass(html, "rituals-allowance-heading").map(
     textOf,
   );
   return [
-    truthy(
-      "The Rituals tab button (book-marked icon) follows Shop",
-      shop >= 0 && rituals > shop,
-      `Shop at ${shop}, Rituals at ${rituals} in CharacterEditorPage.tsx`,
+    lacks(
+      "The tab bar has no Rituals tab",
+      source,
+      '<span className="builder-tab-label">Rituals</span>',
     ),
+    lacks("… nor a Rituals workspace", source, "RitualsWorkspace"),
     truthy("The invoker has Free rituals text", allowances.length > 0),
     // The block shows only what is left, never the rule sentence; the
     // invoker's one free ritual is used, so there is no block.
@@ -1686,116 +1723,141 @@ rule("invoker-drow", "Rituals tab", "The Rituals tab", (c) => {
       lacks("The Free rituals text is not shown", text, allowance),
     ),
     equal("No free-ritual block (nothing left)", headings, []),
-    inOrder("Known (N), then Learn rituals", text, [
-      `Known ${records.length}`,
-      "Learn rituals",
-    ]),
+    contains(
+      `The Inventory lists "Rituals known" with its count ${rituals.length}`,
+      text,
+      `Rituals known${rituals.length}`,
+    ),
+    lacks("No source names a level (current state)", text, "at level"),
   ];
 });
 
-rule("invoker-drow", "Rituals tab", "Free-ritual counter", (c) => [
+rule("invoker-drow", "Inventory", "Free-ritual counter", (c) => [
   ...ritualCounter(c, "Invoker"),
   lacks(
-    "Its one free ritual is used, so the tab has no free-ritual block",
-    ritualsHtml(c),
+    "Its one free ritual is used, so the Inventory has no free-ritual block",
+    inventoryHtml(c),
     'class="rituals-allowance"',
   ),
 ]);
 
-rule("invoker-drow", "Rituals tab", "Groups", (c) => {
-  const text = textOf(ritualsHtml(c));
-  const empty = KNOWN_RECORD_GROUPS.filter(({ kind }) =>
-    knownRows(c).every(({ record }) => knownRecordKindOf(record) !== kind),
+rule("invoker-drow", "Inventory", "Groups", (c) => {
+  const html = inventoryHtml(c);
+  const labels = elementsWithClass(html, "inventory-category-label").map(
+    textOf,
   );
+  const shown = KNOWN_RECORD_GROUPS.filter(({ kind }) =>
+    knownRows(c).some(({ record }) => knownRecordKindOf(record) === kind),
+  );
+  const empty = KNOWN_RECORD_GROUPS.filter((group) => !shown.includes(group));
+  const lastItemGroup = html.lastIndexOf("inventory-category-");
   return [
     inOrder(
-      "The three groups, in order",
-      text,
-      KNOWN_RECORD_GROUPS.map(({ label }) => label),
+      "The known groups, in order, after the item categories",
+      textOf(html),
+      shown.map(({ label }) => label),
     ),
-    ...empty.map(({ label, empty: emptyText }) =>
-      contains(`${label} shows its empty state`, text, emptyText),
+    ...empty.map(({ label }) =>
+      truthy(
+        `No "${label}" group (none known)`,
+        !labels.some((value) => value.startsWith(label)),
+        labels.join(" | "),
+      ),
     ),
-    contains(
-      "Empty states use the empty-row style",
-      ritualsHtml(c),
-      'class="rituals-empty-row"',
+    truthy(
+      "Each known group's count is in the item categories' label (the title's size)",
+      shown.every(({ label }) =>
+        labels.some((value) => /^\d+$/u.test(value.slice(label.length))),
+      ),
+      labels.join(" | "),
     ),
+    truthy("The page has item groups too", lastItemGroup >= 0),
   ];
 });
 
-rule("invoker-drow", "Rituals tab", "Rows", (c) => {
-  const html = ritualsHtml(c);
-  const rows = elementsWithClass(html, "table-clickable-row");
+rule("invoker-drow", "Inventory", "Rows", (c) => {
+  const html = inventoryHtml(c);
   const granted = knownRows(c).find(
     ({ source }) => source === "Granted by Invoker",
   );
-  const row = rows.find(
-    (value) => granted !== undefined && value.includes(granted.name),
-  );
-  const level =
+  const row =
+    granted === undefined ? undefined : knownRowHtml(html, granted.name);
+  const value = (field: string) =>
     granted?.record.entity === undefined
-      ? "—"
-      : (contentSpecificValue(granted.record.entity, "Level") ?? "—");
-  const category =
-    granted?.record.entity === undefined
-      ? "—"
-      : (contentSpecificValue(granted.record.entity, "Category") ?? "—");
-  const skill =
-    granted?.record.entity === undefined
-      ? "—"
-      : (contentSpecificValue(granted.record.entity, "Key Skill") ?? "—");
+      ? undefined
+      : contentSpecificValue(granted.record.entity, field)?.trim();
+  const level = value("Level");
   return [
     truthy(
       "A ritual granted by Invoker",
       granted !== undefined,
       granted?.name ?? "none",
     ),
-    contains("Its row has the book icon", row ?? "", "lucide-book "),
-    inOrder(
-      "Name, source line, Level, Category, Key skill",
+    contains("Its row has the book icon", row ?? "", "lucide-book"),
+    equal(
+      "Name, then Level, Category, Key skill and source on the detail line",
       textOf(row ?? ""),
-      [granted?.name ?? "?", "Granted by Invoker", level, category, skill],
+      [
+        granted?.name ?? "?",
+        [
+          level === undefined ? undefined : `Level ${level}`,
+          value("Category"),
+          value("Key Skill"),
+          "Granted by Invoker",
+        ]
+          .filter((part) => part !== undefined && part !== "")
+          .join(" · "),
+      ].join(""),
     ),
     contains(
-      "The source line uses the muted source style",
+      "The detail line uses the muted known-detail style",
       row ?? "",
-      'class="rituals-known-source"',
+      "inventory-known-detail",
     ),
   ];
 });
 
-rule("invoker-drow", "Rituals tab", "Remove", (c) => {
-  const html = ritualsHtml(c);
+rule("invoker-drow", "Inventory", "Remove", (c) => {
+  const html = inventoryHtml(c);
   const rows = knownRows(c);
-  return rows
-    .map(({ record, name }) =>
-      record.source.kind === "learned"
-        ? contains(
-            `Learned ${name} has Remove (trash icon)`,
-            html,
-            `aria-label="Remove ${name}"`,
-          )
-        : lacks(
-            `Granted ${name} has no Remove`,
-            html,
-            `aria-label="Remove ${name}"`,
-          ),
-    )
-    .concat([
-      truthy(
-        "There are both learned and granted entries",
-        rows.some(({ record }) => record.source.kind === "learned") &&
-          rows.some(({ record }) => record.source.kind === "granted"),
-        rows
-          .map(({ name, record }) => `${name} (${record.source.kind})`)
-          .join("; "),
-      ),
-    ]);
+  const source = readFileSync(
+    resolve("apps/web/src/EquipmentWorkspace.tsx"),
+    "utf8",
+  );
+  return [
+    ...rows.map(({ name }) => {
+      const row = knownRowHtml(html, name) ?? "";
+      return equal(
+        `${name}'s row has no buttons besides its name (Remove is the right-click menu)`,
+        row.match(/<button/gu)?.length ?? 0,
+        1,
+      );
+    }),
+    contains(
+      "Known rows open the right-click menu",
+      source,
+      "openKnownContextMenu(event, record, name)",
+    ),
+    contains(
+      "… whose Remove is inert for a granted record, saying why",
+      source,
+      "it can't be removed.",
+    ),
+    truthy(
+      "There are both learned and granted entries",
+      rows.some(({ record }) => record.source.kind === "learned") &&
+        rows.some(({ record }) => record.source.kind === "granted"),
+      rows
+        .map(({ name, record }) => `${name} (${record.source.kind})`)
+        .join("; "),
+    ),
+  ];
 });
 
-rule("invoker-drow", "Rituals tab", "Detail card", (c) => {
-  const row = knownRows(c).find(({ record }) => record.entity !== undefined);
+rule("invoker-drow", "Inventory", "Detail card", (c) => {
+  const row = knownRows(c).find(
+    ({ record, source }) => record.entity !== undefined && source !== undefined,
+  );
   const detail =
     row?.record.entity === undefined
       ? ""
@@ -1806,7 +1868,7 @@ rule("invoker-drow", "Rituals tab", "Detail card", (c) => {
             displayName: row.record.entity.name,
             effectiveLevel: c.build.effectiveLevel,
           },
-          { note: row.source },
+          row.source === undefined ? {} : { note: row.source },
         );
   return [
     contains(
@@ -1814,56 +1876,69 @@ rule("invoker-drow", "Rituals tab", "Detail card", (c) => {
       detail,
       `<p class="candidate-relationship">${row?.source ?? ""}</p>`,
     ),
-    contains(
-      "With nothing selected, the empty state",
-      textOf(ritualsHtml(c)),
-      "Choose a ritual to inspect it",
-    ),
   ];
 });
 
-rule("invoker-drow", "Rituals tab: learn", "Learning view", (c) => {
-  const html = ritualsHtml(c, "rituals");
+rule("invoker-drow", "Shop: Rituals", "Rituals category", (c) => {
+  const html = knownWorkspaceHtml(c, "shop");
   const text = textOf(html);
-  const select = elementsWithClass(html, "shop-type-select")[0] ?? "";
-  const options = [
-    ...html.matchAll(/<option value="([^"]*)"[^>]*>([^<]*)<\/option>/g),
-  ].map((match) => match[2]!);
+  const learned = knownRows(c).find(
+    ({ record }) =>
+      record.source.kind === "learned" &&
+      record.entity !== undefined &&
+      knownRecordKindOf(record) === "ritual",
+  );
   return [
-    contains('A "← Known rituals" back button', html, "lucide-arrow-left"),
-    contains("… labelled Known rituals", text, "Known rituals"),
-    truthy(
-      "The Type select lists only the three catalogs",
-      ["Rituals", "Alchemical formulas", "Martial practices"].every((label) =>
-        options.includes(label),
-      ) &&
-        !options.includes("All items") &&
-        !options.includes("Consumables"),
-      `options: ${options.slice(0, 20).join(", ")}${select === "" ? "" : ""}`,
+    contains(
+      "The Type select lists the three learning categories after the items",
+      html,
+      '<optgroup label="Rituals and practices"><option value="rituals" selected="">Rituals</option><option value="alchemical-formulas">Alchemical formulas</option><option value="martial-practices">Martial practices</option></optgroup>',
     ),
     contains(
       'A "Search rituals…" placeholder',
       html,
       'placeholder="Search rituals…"',
     ),
-    contains("A Known chip", text, "Known"),
+    inOrder("The item categories' chips, unchanged", text, [
+      "Affordable",
+      "Proficient",
+      "Filters",
+    ]),
+    lacks("No Known chip", html, "lucide-book-check"),
     contains("Buy buttons", html, 'aria-label="Buy '),
     contains("Learn free buttons (title)", html, 'title="Learn free"'),
+    truthy(
+      `A learned ritual (${learned?.name ?? "none"}) is marked Known, its buttons disabled`,
+      learned !== undefined &&
+        new RegExp(
+          `aria-label="Buy ${learned.name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}"[^>]*disabled`,
+          "u",
+        ).test(html),
+      learned?.name ?? "none",
+    ),
+    contains("… with Known in the Owned column", html, ">Known</td>"),
   ];
 });
 
 rule("invoker-drow", "Shop", "Shop", (c) => {
+  const html = knownWorkspaceHtml(c, "shop", "items");
   const labels = SHOP_BROWSE_CATEGORIES.map(({ label }) => label);
   const scroll = c.context.entities.find(
     (entity) => practiceKind(entity) === "scroll",
   );
+  const ritual = knownRows(c)[0]?.name;
   return [
     truthy(
-      "The Shop's Type list has no Rituals, Alchemical formulas or Martial practices",
-      !labels.some((label) =>
-        ["Rituals", "Alchemical formulas", "Martial practices"].includes(label),
+      "The Shop's Type list has Rituals, Alchemical formulas and Martial practices",
+      ["Rituals", "Alchemical formulas", "Martial practices"].every((label) =>
+        labels.includes(label),
       ),
       labels.join(", "),
+    ),
+    lacks(
+      `All items lists no ritual (${ritual ?? "none"})`,
+      html,
+      `aria-label="Buy ${ritual ?? "?"}"`,
     ),
     equal(
       `A Ritual Scroll (${scroll?.name ?? "none"}) is under Consumables`,
@@ -1873,13 +1948,20 @@ rule("invoker-drow", "Shop", "Shop", (c) => {
   ];
 });
 
-rule("invoker-drow", "Old link: Shop rituals", "Old links", (c) => {
-  const hash = `#/characters/${c.record.id}/edit?tab=shop&category=rituals`;
+rule("invoker-drow", "Old link: Rituals tab", "Old links", (c) => {
+  const id = c.record.id;
   return [
     equal(
-      "tab=shop&category=rituals canonicalizes to the Rituals tab's learning view",
-      canonicalHashRedirect(hash),
-      `#/characters/${c.record.id}/edit?tab=rituals&category=rituals`,
+      "tab=rituals canonicalizes to the Shop's Rituals category",
+      canonicalHashRedirect(`#/characters/${id}/edit?tab=rituals`),
+      `#/characters/${id}/edit?tab=shop&category=rituals`,
+    ),
+    equal(
+      "tab=rituals&category=martial-practices keeps its category",
+      canonicalHashRedirect(
+        `#/characters/${id}/edit?tab=rituals&category=martial-practices`,
+      ),
+      `#/characters/${id}/edit?tab=shop&category=martial-practices`,
     ),
   ];
 });
@@ -1887,9 +1969,9 @@ rule("invoker-drow", "Old link: section=practices", "Old links", (c) => {
   const hash = `#/characters/${c.record.id}/edit?tab=equipment&section=practices`;
   return [
     equal(
-      "tab=equipment&section=practices canonicalizes to the Rituals tab",
+      "tab=equipment&section=practices canonicalizes to the Shop's Rituals category",
       canonicalHashRedirect(hash),
-      `#/characters/${c.record.id}/edit?tab=rituals`,
+      `#/characters/${c.record.id}/edit?tab=shop&category=rituals`,
     ),
   ];
 });
