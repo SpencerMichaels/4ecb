@@ -72,6 +72,13 @@ Print/PDF check:
 pnpm check:print                  # scripts/check-print.mjs (Chromium+Firefox+Poppler)
 ```
 
+It prints a synthetic fixture in Letter and A4 (the paper is the app-wide
+`4ecb.paperSize.v1` setting; monochrome is left to the print dialog, D083).
+Inside the Nix shell (`IN_NIX_SHELL` set) it launches the browsers without an
+inherited `LD_LIBRARY_PATH`: a host value pointing at newer-glibc libraries
+(alsa-lib needing GLIBC_2.43) stops the flake's Chromium from starting. CI is
+not a Nix shell and keeps its environment.
+
 Full public verification gate (run before declaring a milestone/checkpoint
 done — mirrors CI, uses only synthetic content):
 

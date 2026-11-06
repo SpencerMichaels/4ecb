@@ -67,12 +67,35 @@ const { stdout: variantTableMarkup } = await execute("pnpm", [
   "apps/web/tsconfig.app.json",
   "apps/web/scripts/print-power-variant-fixture.tsx",
 ]);
+// The printed card, not the screen sheet's panel copy of it (D079).
 const installVariantTable = `
-  const card = [...document.querySelectorAll(".print-power-card")]
+  const card = [...document.querySelectorAll(".print-only .print-power-card")]
     .find((element) => element.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 03");
   card.querySelector(".print-card-weapon-variants").outerHTML = ${JSON.stringify(variantTableMarkup)};
   window.dispatchEvent(new Event("beforeprint"));
 `;
+// Paper sizes printed by each browser. Monochrome and blank hit points are no
+// longer sheet options: monochrome is left to the print dialog and the
+// scratchpad tracks hit points (D083), so neither varies the matrix.
+const printVariants = [
+  { name: "letter", paper: "letter" },
+  { name: "a4", paper: "a4" },
+];
+// apps/web/src/paper-size.ts
+const PAPER_SIZE_STORAGE_KEY = "4ecb.paperSize.v1";
+// The fixture's deck: the Play data and Skills cards (add03b2) lead, then 18
+// power cards and 6 item cards. The fixture prints from its cached snapshot,
+// not an evaluation, so the evaluated Action Point/Second Wind cards are absent.
+const expectedCardCount = 26;
+// Play scratchpad and Session notes pages print no page number and take
+// none, so numbered pages run on as if they were absent (ab10cf1).
+const unnumberedPage = `(page=>['Play scratchpad','Session notes'].includes(page.getAttribute('aria-label')))`;
+// What a reference-card wait saw when it timed out: whether the sheet loaded
+// and each card's title, so a changed deck reads as a diff, not a bare timeout.
+const referenceCardState = `({
+  hero: document.body.textContent.includes("Synthetic print fixture hero"),
+  cards: [...document.querySelectorAll(".print-only .print-reference-card")].map(card => card.querySelector("h3")?.textContent ?? card.className),
+})`;
 const scratch = await mkdtemp(join(tmpdir(), "4ecb-print-check-"));
 const scratchpadPreview = process.argv.includes("--scratchpad-preview")
   ? join(
@@ -99,6 +122,18 @@ const preview = spawn(
   ],
   { cwd: projectRoot, stdio: ["ignore", "pipe", "pipe"] },
 );
+// In the Nix shell the browsers are the flake's own builds with their own
+// library paths; an LD_LIBRARY_PATH inherited from the host can point them at
+// libraries built against a newer glibc (e.g. alsa-lib needing GLIBC_2.43),
+// and Chromium then fails to start. CI is not a Nix shell and keeps its env.
+const browserEnv =
+  process.env.IN_NIX_SHELL === undefined
+    ? process.env
+    : Object.fromEntries(
+        Object.entries(process.env).filter(
+          ([name]) => name !== "LD_LIBRARY_PATH",
+        ),
+      );
 const chromium = spawn(
   "chromium",
   [
@@ -112,7 +147,7 @@ const chromium = spawn(
     "--remote-allow-origins=*",
     "about:blank",
   ],
-  { stdio: ["ignore", "pipe", "pipe"] },
+  { env: browserEnv, stdio: ["ignore", "pipe", "pipe"] },
 );
 
 let client;
@@ -253,9 +288,12 @@ try {
     `detail-card header rhythm changed: ${JSON.stringify(styleContract)}`,
   );
   assert(
-    styleContract["power-flavor"].paddingBottom === "10.4px" &&
-      styleContract["item-flavor"].paddingTop === "11.2px" &&
-      styleContract["item-flavor"].paddingBottom === "10.32px",
+    // One flavor rhythm for every detail card (--entity-card-flavor-padding,
+    // 0.8rem); the per-type power/item paddings went with their renderers.
+    styleContract["power-flavor"].paddingTop === "12.8px" &&
+      styleContract["power-flavor"].paddingBottom === "12.8px" &&
+      styleContract["item-flavor"].paddingTop === "12.8px" &&
+      styleContract["item-flavor"].paddingBottom === "12.8px",
     `detail-card flavor rhythm changed: ${JSON.stringify(styleContract)}`,
   );
   const character = printCharacter();
@@ -286,20 +324,16 @@ try {
   );
 
   const chromiumResults = [];
-  for (const variant of [
-    { name: "letter-color", paper: "letter", monochrome: false },
-    { name: "letter-monochrome", paper: "letter", monochrome: true },
-    { name: "a4-color", paper: "a4", monochrome: false },
-    { name: "a4-monochrome", paper: "a4", monochrome: true },
-  ]) {
-    await updateSheetSettings(client, character.id, variant);
+  for (const variant of printVariants) {
+    await setPaperSize(client, variant.paper);
     await navigate(
       client,
       `${origin}/?print=${encodeURIComponent(variant.name)}#/characters/${character.id}`,
     );
     await waitForExpression(
       client,
-      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .print-reference-card").length === 24`,
+      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .print-reference-card").length === ${expectedCardCount}`,
+      referenceCardState,
     );
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
     await evaluate(client, `(() => { ${installVariantTable} return true; })()`);
@@ -314,14 +348,15 @@ try {
     );
     await waitForExpression(
       client,
-      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].filter(page=>page.getAttribute('aria-label')!=='Session notes').every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1)`,
+      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].every((page,_,all)=>${unnumberedPage}(page) ? !page.querySelector('.ov-page-number') : Number(page.querySelector('.ov-page-number')?.textContent)===all.filter(p=>!${unnumberedPage}(p)).indexOf(page)+1)`,
+      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].map(page=>(page.getAttribute('aria-label') ?? page.className) + ': ' + (page.querySelector('.ov-page-number')?.textContent ?? '-'))`,
     );
     await checkSummaryPaneFlow(client);
-    await checkSummaryPresentation(client, variant.monochrome);
+    await checkSummaryPresentation(client);
     await checkSummaryContinuation(client);
-    await checkScratchpad(client, variant.monochrome);
+    await checkScratchpad(client);
     await checkReferences(client);
-    if (referencePreview && variant.name === "letter-color") {
+    if (referencePreview && variant.name === "letter") {
       for (const [name, selector] of [
         [
           "summary",
@@ -368,7 +403,7 @@ try {
         );
       }
     }
-    if (scratchpadPreview && variant.name === "letter-color") {
+    if (scratchpadPreview && variant.name === "letter") {
       const clip = await evaluate(
         client,
         `(() => {
@@ -389,8 +424,10 @@ try {
     const overview = await evaluate(
       client,
       `(() => {
+      // The Session notes template has no footer (6b87da5): its content must
+      // clear the paper's bottom edge instead.
       const pages=[...document.querySelectorAll('.sheet-overview .ov-paper')].filter(p=>!p.closest('.ov-measure'));
-      return {pageCount:pages.length,cardPages:document.querySelectorAll('.print-card-page').length,overflow:pages.filter(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom > p.querySelector('.sp-page-footer').getBoundingClientRect().top-7 || p.scrollWidth > p.clientWidth+1).map(p=>p.getAttribute('aria-label'))};
+      return {pageCount:pages.length,cardPages:document.querySelectorAll('.print-card-page').length,overflow:pages.filter(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom > (p.querySelector('.sp-page-footer') ?? p).getBoundingClientRect()[p.querySelector('.sp-page-footer') ? 'top' : 'bottom']-7 || p.scrollWidth > p.clientWidth+1).map(p=>p.getAttribute('aria-label'))};
     })()`,
     );
     assert(
@@ -435,12 +472,13 @@ try {
         ).map((card) => (card.querySelector("h3")?.textContent ?? "unnamed") +
           " (" + card.className + "; body " + card.querySelector(".print-card-body")?.scrollHeight +
           "/" + card.querySelector(".print-card-body")?.clientHeight + "px)");
-        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant-table")]
+        const weaponFontMismatch = [...document.querySelectorAll(".print-only .print-card-variant-table")]
           .some((line) => getComputedStyle(line).fontSize !==
             getComputedStyle(line.closest(".print-card-body")).fontSize);
-        const tables = [...document.querySelectorAll(".print-card-variant-table")];
+        const tables = [...document.querySelectorAll(".print-only .print-card-variant-table")];
         const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
           cell.scrollWidth <= cell.clientWidth + 1));
+        const tableCells = tables.flatMap((table) => [...table.querySelectorAll("th, td")].filter((cell) => cell.scrollWidth > cell.clientWidth + 1).map((cell) => cell.textContent.trim() + " " + cell.scrollWidth + "/" + cell.clientWidth + "px")).concat(tables.length === 0 ? ["no table"] : []);
         const shortCard = cards.find((card) => card.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 02");
         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
           .flatMap((band) => [...band.children])
@@ -471,9 +509,11 @@ try {
           overflowing,
           weaponFontMismatch,
           tableFits,
+          tableCells,
           shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
           shortItemFont: getComputedStyle(cards.find((card) => card.querySelector("h3 > span")?.textContent === "Synthetic item 02").querySelector(".print-card-body")).fontSize,
-          minimumBodyFont: Math.min(...cards.map((card) => parseFloat(getComputedStyle(card.querySelector(".print-card-body")).fontSize))),
+          // Play data/Skills cards (add03b2) have stat tiles, not a fitted body.
+          minimumBodyFont: Math.min(...cards.flatMap((card) => card.querySelector(".print-card-body") ?? []).map((body) => parseFloat(getComputedStyle(body).fontSize))),
           bandOverflow,
           targetOverflow,
           applicationChromeHidden: hidden,
@@ -490,7 +530,7 @@ try {
       `${variant.name} omits additional effects`,
     );
     assert(
-      layout.cardCount === 24,
+      layout.cardCount === expectedCardCount,
       `${variant.name} did not render every card`,
     );
     assert(
@@ -501,7 +541,10 @@ try {
       !layout.weaponFontMismatch,
       `${variant.name} uses smaller weapon text`,
     );
-    assert(layout.tableFits, `${variant.name} overflows the multiattack table`);
+    assert(
+      layout.tableFits,
+      `${variant.name} overflows the multiattack table: ${JSON.stringify(layout.tableCells)}`,
+    );
     assert(
       layout.minimumBodyFont >= (6 * 96) / 72 - 0.01,
       `${variant.name} shrinks card bodies below 6 pt`,
@@ -518,13 +561,6 @@ try {
       layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
       `${variant.name} clips card bands: ${[...layout.bandOverflow, ...layout.targetOverflow].join(", ")}`,
     );
-    if (variant.monochrome) {
-      assert(
-        layout.itemHeaderBackground === "rgb(255, 255, 255)" &&
-          layout.itemHeaderColor === "rgb(17, 17, 17)",
-        `${variant.name} did not apply monochrome card colors: ${layout.itemHeaderBackground} / ${layout.itemHeaderColor}`,
-      );
-    }
 
     const pdf = await client.send("Page.printToPDF", {
       printBackground: true,
@@ -555,7 +591,6 @@ try {
           character: character.title,
           powers: character.snapshot.powers.length,
           itemCards: character.snapshot.loot.length,
-          blankHitPoints: character.sheetSettings.blankHitPoints,
         },
         chromiumResults,
         ...(scratchpadPreview ? { scratchpadPreview } : {}),
@@ -583,6 +618,7 @@ try {
 async function firefoxPrintMatrix(character, origin, outputDirectory) {
   const port = await availablePort();
   const driver = spawn("geckodriver", ["--port", String(port)], {
+    env: browserEnv,
     stdio: "ignore",
   });
   let sessionId;
@@ -628,40 +664,12 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
     );
 
     const results = [];
-    for (const variant of [
-      { name: "letter-color", paper: "letter", monochrome: false },
-      { name: "letter-monochrome", paper: "letter", monochrome: true },
-      { name: "a4-color", paper: "a4", monochrome: false },
-      { name: "a4-monochrome", paper: "a4", monochrome: true },
-    ]) {
+    for (const variant of printVariants) {
       await webdriverExecuteAsync(
         port,
         sessionId,
-        `const [id, paper, monochrome] = arguments;
-         const done = arguments[arguments.length - 1];
-         (async () => {
-           const database = await new Promise((resolve, reject) => {
-             const request = indexedDB.open("4ecb");
-             request.onsuccess = () => resolve(request.result);
-             request.onerror = () => reject(request.error);
-           });
-           const character = await new Promise((resolve, reject) => {
-             const request = database.transaction("characters").objectStore("characters").get(id);
-             request.onsuccess = () => resolve(request.result);
-             request.onerror = () => reject(request.error);
-           });
-           character.sheetSettings = { ...character.sheetSettings, paper, monochrome };
-           await new Promise((resolve, reject) => {
-             const transaction = database.transaction("characters", "readwrite");
-             transaction.objectStore("characters").put(character);
-             transaction.oncomplete = () => resolve();
-             transaction.onerror = () => reject(transaction.error);
-             transaction.onabort = () => reject(transaction.error);
-           });
-           database.close();
-           done(true);
-         })().catch((error) => done({ error: String(error) }));`,
-        [character.id, variant.paper, variant.monochrome],
+        `localStorage.setItem(${JSON.stringify(PAPER_SIZE_STORAGE_KEY)}, arguments[0]); arguments[arguments.length - 1](true);`,
+        [variant.paper],
       );
       await webdriverNavigate(
         port,
@@ -673,9 +681,8 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         sessionId,
         `const sheet = document.querySelector(".sheet-page");
          return document.body.textContent.includes("${character.title}") &&
-           document.querySelectorAll(".print-only .print-reference-card").length === 24 &&
+           document.querySelectorAll(".print-only .print-reference-card").length === ${expectedCardCount} &&
            sheet?.classList.contains("paper-${variant.paper}") === true &&
-           sheet?.classList.contains("sheet-monochrome") === ${variant.monochrome} &&
            document.querySelector('link[data-print-paper="${variant.paper}"]') !== null;`,
       );
       await webdriverExecute(
@@ -686,7 +693,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       await webdriverWait(
         port,
         sessionId,
-        `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-card-body")?.clientHeight > 0 && document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0;`,
+        `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-only .print-card-body")?.clientHeight > 0 && document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0;`,
       );
       if (overviewOnly) {
         // Focused overview diagnostics do not weaken the default physical-card gate.
@@ -705,7 +712,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
             return { result: { value } };
           },
         };
-        await checkScratchpad(adapter, variant.monochrome);
+        await checkScratchpad(adapter);
         await checkReferences(adapter);
         let evidence = {};
         if (includeCardPages) {
@@ -757,12 +764,13 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
              body.getBoundingClientRect().right > card.getBoundingClientRect().right + 1
            )
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
-         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant-table")]
+         const weaponFontMismatch = [...document.querySelectorAll(".print-only .print-card-variant-table")]
            .some((line) => getComputedStyle(line).fontSize !==
              getComputedStyle(line.closest(".print-card-body")).fontSize);
-         const tables = [...document.querySelectorAll(".print-card-variant-table")];
+         const tables = [...document.querySelectorAll(".print-only .print-card-variant-table")];
          const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
            cell.scrollWidth <= cell.clientWidth + 1));
+         const tableCells = tables.flatMap((table) => [...table.querySelectorAll("th, td")].filter((cell) => cell.scrollWidth > cell.clientWidth + 1).map((cell) => cell.textContent.trim() + " " + cell.scrollWidth + "/" + cell.clientWidth + "px")).concat(tables.length === 0 ? ["no table"] : []);
          const shortCard = cards.find((card) => card.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 02");
          const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
            .flatMap((band) => [...band.children])
@@ -783,9 +791,11 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            overflowing,
            weaponFontMismatch,
            tableFits,
+           tableCells,
            shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
            shortItemFont: getComputedStyle(cards.find((card) => card.querySelector("h3 > span")?.textContent === "Synthetic item 02").querySelector(".print-card-body")).fontSize,
-           minimumBodyFont: Math.min(...cards.map((card) => parseFloat(getComputedStyle(card.querySelector(".print-card-body")).fontSize))),
+           // Play data/Skills cards (add03b2) have stat tiles, not a fitted body.
+          minimumBodyFont: Math.min(...cards.flatMap((card) => card.querySelector(".print-card-body") ?? []).map((body) => parseFloat(getComputedStyle(body).fontSize))),
            bandOverflow,
            targetOverflow,
            itemHeaderBackground: style?.backgroundColor,
@@ -793,7 +803,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
          };`,
       );
       assert(
-        layout.cardCount === 24,
+        layout.cardCount === expectedCardCount,
         `Firefox ${variant.name} did not render every card`,
       );
       assert(
@@ -806,7 +816,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       );
       assert(
         layout.tableFits,
-        `Firefox ${variant.name} overflows the multiattack table`,
+        `Firefox ${variant.name} overflows the multiattack table: ${JSON.stringify(layout.tableCells)}`,
       );
       assert(
         layout.minimumBodyFont >= (6 * 96) / 72 - 0.01,
@@ -824,12 +834,6 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
         `Firefox ${variant.name} clips card bands: ${[...layout.bandOverflow, ...layout.targetOverflow].join(", ")}`,
       );
-      if (variant.monochrome)
-        assert(
-          layout.itemHeaderBackground === "rgb(255, 255, 255)" &&
-            layout.itemHeaderColor === "rgb(17, 17, 17)",
-          `Firefox ${variant.name} did not apply monochrome colors`,
-        );
       const printed = await webdriverRequest(
         port,
         `/session/${sessionId}/print`,
@@ -988,7 +992,10 @@ function printCharacter() {
           id: "FEAT_PRINT_1",
           name: "Synthetic focus",
           type: "Feat",
-          description: "A public fixture feat with readable rules text.",
+          // An in-play condition, so page 1 has a reminder to continue: plain
+          // passive text stopped being one (c16ae09, D112).
+          description:
+            "When you spend an action point, you can shift 1 square.",
         },
         ...Array.from({ length: 3 }, (_, index) => ({
           id: `FEATURE_PRINT_EXTRA_${index}`,
@@ -1032,7 +1039,7 @@ function printCharacter() {
   };
 }
 
-async function checkSummaryPresentation(client, monochrome) {
+async function checkSummaryPresentation(client) {
   const presentation = await evaluate(
     client,
     `(() => {
@@ -1101,38 +1108,24 @@ async function checkSummaryPresentation(client, monochrome) {
       paragraphs.nestedInset === 0,
     "Distinct benefits must have bullets without double-indenting their paragraphs",
   );
-  if (monochrome) {
-    assert(
-      Object.values(accents).every((color) => {
-        const channels = color.match(/\d+/g)?.map(Number);
-        return (
-          channels?.length === 3 &&
-          channels[0] === channels[1] &&
-          channels[1] === channels[2]
-        );
-      }),
-      `Monochrome summary accents must be grayscale: ${JSON.stringify(accents)}`,
-    );
-  } else {
-    assert(
-      [
-        accents.attack,
-        accents.defense,
-        accents.info,
-        accents.abilities,
-        accents.senses,
-        ...(accents.reminders ? [accents.reminders] : []),
-      ].every((color) => color === "rgb(234, 240, 246)"),
-      `All summary panes must share the slate-blue tint: ${JSON.stringify(accents)}`,
-    );
-    assert(
-      accents.defenseStats === "rgb(238, 243, 233)" &&
-        accents.health === "rgb(240, 236, 245)" &&
-        accents.initiative === "rgb(234, 242, 240)" &&
-        accents.speed === accents.initiative,
-      `Numeric groups must use green defenses, violet health and teal initiative/speed: ${JSON.stringify(accents)}`,
-    );
-  }
+  assert(
+    [
+      accents.attack,
+      accents.defense,
+      accents.info,
+      accents.abilities,
+      accents.senses,
+      ...(accents.reminders ? [accents.reminders] : []),
+    ].every((color) => color === "rgb(234, 240, 246)"),
+    `All summary panes must share the slate-blue tint: ${JSON.stringify(accents)}`,
+  );
+  assert(
+    accents.defenseStats === "rgb(238, 243, 233)" &&
+      accents.health === "rgb(240, 236, 245)" &&
+      accents.initiative === "rgb(234, 242, 240)" &&
+      accents.speed === accents.initiative,
+    `Numeric groups must use green defenses, violet health and teal initiative/speed: ${JSON.stringify(accents)}`,
+  );
   assert(
     presentation.identityPairs,
     "Summary identity must retain two three-row tables within the header",
@@ -1202,7 +1195,7 @@ async function checkReferences(client) {
     const ids=pages.flatMap(p=>[...p.querySelectorAll('[data-reference-id]')].map(e=>e.dataset.referenceId.replace(/:(?:part\\d+|last)$/,'')));
     const expected=[...document.querySelectorAll('.ov-measure .ov-reference-card')].map(e=>e.dataset.referenceId).filter(id=>!id.startsWith('summary-reminder:'));
     return {beforeCards:!firstCard || Boolean(pages.at(-1).compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING),
-      continuousNumbers:physicalPages.filter(page=>page.getAttribute('aria-label')!=='Session notes').every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1),
+      continuousNumbers:physicalPages.every((page,_,all)=>${unnumberedPage}(page) ? !page.querySelector('.ov-page-number') : Number(page.querySelector('.ov-page-number')?.textContent)===all.filter(p=>!${unnumberedPage}(p)).indexOf(page)+1),
       notesTemplateLast:physicalPages.at(-1)?.getAttribute('aria-label')==='Session notes' && !physicalPages.at(-1).querySelector('.ov-page-number'),
       cardFooterBounds:[...document.querySelectorAll('.print-card-page')].every(page=>{
         const p=page.getBoundingClientRect(), f=page.querySelector('.print-card-page-footer').getBoundingClientRect(), g=page.querySelector('.print-card-grid').getBoundingClientRect();
@@ -1258,7 +1251,8 @@ async function checkReferences(client) {
       pageNumbersOnly:pages.every(p=>!p.querySelector('.sp-running-header') &&
         /^\\d+$/.test(p.querySelector('.ov-page-number').textContent.trim()) &&
         p.querySelector('.ov-reference-footer-identity').textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') &&
-        p.querySelector('.ov-reference-footer > span:nth-child(2)').textContent==='Character Reference'),
+        // Section title left, identity centered, number right (2d7905f).
+        p.querySelector('.ov-reference-footer > span:first-child').textContent==='Character Reference'),
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
       inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
         body.querySelector('td:first-child .action-type-icon')),
@@ -1271,7 +1265,6 @@ async function checkReferences(client) {
         return !cells.some(cell=>cell.textContent.startsWith('Synthetic item 01')) && cells.some(cell=>
           cell.textContent.startsWith('Synthetic item 02') && cell.previousElementSibling?.getAttribute('aria-label')==='Quantity 1');})(),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
-      monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
       tablesInBounds:pages.every(p=>[...p.querySelectorAll('.ov-reference-table')].every(t=>t.scrollWidth<=t.clientWidth+1)),
       groupHeaders:pages.reduce((sum,p)=>sum+p.querySelectorAll('.ov-reference-group-heading').length,0)};
@@ -1311,7 +1304,7 @@ async function checkReferences(client) {
       state.weaponIndependentIndexAttacks &&
       state.equippedIcons &&
       state.carriedExcludesEquipped &&
-      state.usageColors.length === (state.monochrome ? 1 : 3) &&
+      state.usageColors.length === 3 &&
       state.tablesInBounds &&
       state.groupHeaders > 0,
     `Reference pages must precede cards, preserve entries, number character pages continuously, finish with an unnumbered notes template, and use in-bounds sections: ${JSON.stringify(state)}`,
@@ -1334,7 +1327,7 @@ async function checkReferences(client) {
   );
 }
 
-async function checkScratchpad(client, monochrome) {
+async function checkScratchpad(client) {
   const state = await evaluate(
     client,
     `(() => {
@@ -1523,21 +1516,15 @@ async function checkScratchpad(client, monochrome) {
     "Scratchpad must use the projected surge total, not the raw additive stat",
   );
   assert(
-    state.header ===
-      (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)") &&
-      state.defenseBackground ===
-        (monochrome ? "rgb(238, 238, 238)" : "rgb(240, 241, 242)") &&
+    state.header === "rgb(234, 240, 246)" &&
+      state.defenseBackground === "rgb(240, 241, 242)" &&
       JSON.stringify(state.healthColors) ===
-        JSON.stringify(
-          monochrome
-            ? Array(4).fill("rgb(238, 238, 238)")
-            : [
-                "rgb(232, 241, 232)",
-                "rgb(245, 231, 233)",
-                "rgb(245, 237, 218)",
-                "rgb(231, 237, 247)",
-              ],
-        ),
+        JSON.stringify([
+          "rgb(232, 241, 232)",
+          "rgb(245, 231, 233)",
+          "rgb(245, 237, 218)",
+          "rgb(231, 237, 247)",
+        ]),
     `Scratchpad must match the approved health tints: ${JSON.stringify(state)}`,
   );
   assert(
@@ -1557,8 +1544,7 @@ async function checkScratchpad(client, monochrome) {
       state.consumableBorder &&
       state.consumableIcons === 3 &&
       state.consumableCount === 1 &&
-      state.consumableColor ===
-        (monochrome ? "rgb(238, 238, 238)" : "rgb(255, 232, 204)"),
+      state.consumableColor === "rgb(255, 232, 204)",
     `Consumables must use the item-card gold accent, track every owned stack once and sit below Daily powers: ${JSON.stringify(state)}`,
   );
   const baseline = await evaluate(
@@ -1647,7 +1633,15 @@ async function checkSummaryContinuation(client) {
     client,
     `document.querySelectorAll('.ov-reminder-probe [data-reminder-index]').length`,
   );
-  assert(reminderCount > 0, "Continuation fixture needs summary reminders");
+  if (reminderCount === 0)
+    throw new Error(
+      `Continuation fixture needs summary reminders: ${JSON.stringify(
+        await evaluate(
+          client,
+          `({region:document.querySelector('.ov-reminder-region')?.textContent.slice(0,600) ?? null, summary:document.querySelector('.ov-paper[aria-label="Character summary"]')?.textContent.slice(0,1500)})`,
+        ),
+      )}`,
+    );
   const ruleIndex = await evaluate(
     client,
     `(() => {
@@ -1666,7 +1660,7 @@ async function checkSummaryContinuation(client) {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')];
       const summary=pages[0], next=pages[1], scratch=pages.find(p=>p.getAttribute('aria-label')==='Play scratchpad');
       const labels=[...summary.querySelectorAll('.ov-reminder-probe [data-reminder-index] > strong')].map(e=>e.textContent.trim());
-      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.ov-page-number').textContent,overflow:next?.dataset.overviewOverflow,
+      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchAfterContinuation:pages.indexOf(scratch)===2,scratchNumber:scratch?.querySelector('.ov-page-number')?.textContent ?? null,overflow:next?.dataset.overviewOverflow,
         compact:!!next?.querySelector('.ov-reminder-panels .sp-reminders') && !next?.querySelector('.ov-reference-card, .sp-page-heading'),
         matchingHeaders:getComputedStyle(next.querySelector('.sp-panel > h3')).backgroundColor===getComputedStyle(summary.querySelector('.sp-panel > h3')).backgroundColor};
     })()`,
@@ -1699,8 +1693,10 @@ async function checkSummaryContinuation(client) {
       );
     }
     assert(
-      continuation.scratchPage.trim() === "3",
-      "Scratchpad must follow the summary continuation",
+      // The scratchpad prints unnumbered since ab10cf1.
+      continuation.scratchAfterContinuation &&
+        continuation.scratchNumber === null,
+      `Scratchpad must follow the summary continuation, unnumbered: ${JSON.stringify(continuation)}`,
     );
   } catch (error) {
     const state = await evaluate(
@@ -1713,7 +1709,7 @@ async function checkSummaryContinuation(client) {
   }
   await waitForExpression(
     client,
-    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-page-number').textContent.trim()==='2'`,
+    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelectorAll('.sheet-overview > .ov-paper')[1]?.getAttribute('aria-label')==='Play scratchpad' && !document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-page-number')`,
   );
 }
 
@@ -1823,36 +1819,11 @@ async function checkSummaryPaneFlow(client) {
   );
 }
 
-async function updateSheetSettings(cdp, id, variant) {
+// The printed paper is an app-wide preference, not character data (D083).
+async function setPaperSize(cdp, paper) {
   await evaluate(
     cdp,
-    `(async () => {
-      const database = await new Promise((resolve, reject) => {
-        const request = indexedDB.open("4ecb");
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      const character = await new Promise((resolve, reject) => {
-        const request = database.transaction("characters").objectStore("characters").get(${JSON.stringify(id)});
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      character.sheetSettings = {
-        ...character.sheetSettings,
-        paper: ${JSON.stringify(variant.paper)},
-        monochrome: ${JSON.stringify(variant.monochrome)},
-      };
-      await new Promise((resolve, reject) => {
-        const transaction = database.transaction("characters", "readwrite");
-        transaction.objectStore("characters").put(character);
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-        transaction.onabort = () => reject(transaction.error);
-      });
-      database.close();
-      return true;
-    })()`,
-    true,
+    `localStorage.setItem(${JSON.stringify(PAPER_SIZE_STORAGE_KEY)}, ${JSON.stringify(paper)})`,
   );
 }
 
@@ -1883,7 +1854,10 @@ async function inspectPdf(
     pages === expectedPages,
     `${path} should contain ${expectedPages} measured overview/card pages, got ${pages}: ${text
       .split("\f")
-      .map((page, index) => `${index + 1}: ${page.trim().slice(0, 100)}`)
+      .map(
+        (page, index) =>
+          `${index + 1}: ${page.trim().slice(0, 60).replace(/\s+/g, " ")} … ${page.trim().slice(-90).replace(/\s+/g, " ")}`,
+      )
       .join(" | ")}`,
   );
   const tagged = /^Tagged:\s+yes$/m.test(info);
@@ -1916,7 +1890,6 @@ async function inspectPdf(
       normalizedText.includes("end of preserved overview notes."),
       `${path} loses continued overview notes`,
     );
-  const compactText = text.replace(/\s+/g, " ");
   if (continuousNumbers) {
     const printedPages = text.split("\f").filter((page) => page.trim());
     assert(
@@ -1930,14 +1903,23 @@ async function inspectPdf(
         !/(?:^|\s)\d+$/.test(template.trim()),
       `${path} must end with an unnumbered Session Notes template`,
     );
-    printedPages
-      .slice(0, -1)
-      .forEach((page, index) =>
+    // Scratchpad pages print no number and take none (ab10cf1); their footer
+    // line leads with the "Scratchpad" section title.
+    let number = 0;
+    printedPages.slice(0, -1).forEach((page, index) => {
+      const footer = page.trim().split("\n").at(-1).trim();
+      const printed = footer.match(/(?:^|\s)(\d+)$/)?.[1];
+      if (footer.startsWith("Scratchpad"))
         assert(
-          page.trim().match(/(?:^|\s)(\d+)$/)?.[1] === String(index + 1),
+          printed === undefined,
+          `${path} printed page ${index + 1} numbers the scratchpad`,
+        );
+      else
+        assert(
+          printed === String((number += 1)),
           `${path} printed page ${index + 1} lacks its continuous footer number`,
-        ),
-      );
+        );
+    });
   }
   for (const required of [
     "Synthetic print fixture hero",
@@ -1970,20 +1952,20 @@ async function inspectPdf(
       !normalizedText.includes(hidden.toLocaleLowerCase()),
       `${path} includes application chrome: ${hidden}`,
     );
-  assert(
-    !/(?:Hit Points|Maximum HP)\s+72/i.test(compactText),
-    `${path} did not blank the mutable hit-point value`,
-  );
   return { pages, widthPoints: width, heightPoints: height, tagged };
 }
 
 async function chromiumVersion() {
-  const { stdout } = await execute("chromium", ["--version"]);
+  const { stdout } = await execute("chromium", ["--version"], {
+    env: browserEnv,
+  });
   return stdout.trim();
 }
 
 async function firefoxVersion() {
-  const { stdout } = await execute("firefox", ["--version"]);
+  const { stdout } = await execute("firefox", ["--version"], {
+    env: browserEnv,
+  });
   return stdout.trim();
 }
 
@@ -2083,12 +2065,18 @@ async function navigate(cdp, url) {
   await waitForExpression(cdp, `document.readyState === "complete"`);
 }
 
-async function waitForExpression(cdp, expression) {
+async function waitForExpression(cdp, expression, describe) {
   for (let attempt = 0; attempt < 150; attempt += 1) {
     if (await evaluate(cdp, expression)) return;
     await delay(100);
   }
-  throw new Error(`Timed out waiting for browser expression: ${expression}`);
+  const state =
+    describe === undefined
+      ? ""
+      : ` (state: ${JSON.stringify(await evaluate(cdp, describe))})`;
+  throw new Error(
+    `Timed out waiting for browser expression: ${expression}${state}`,
+  );
 }
 
 async function evaluate(cdp, expression, awaitPromise = false) {
