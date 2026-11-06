@@ -279,7 +279,13 @@ at least two layers, and `composeContentPacks` drops stored prerequisite IR
 from every record of a multi-layer pack, so the engine parses a patched
 `prerequisites` line, and any prerequisite that names a patched rule's IDs,
 against the composed records. Rule patches touch no specific, so the other
-stored IR (`_Power Text IR`, `_Note Values IR`) is unaffected. It then
+stored IR (`_Power Text IR`, `_Note Values IR`) is unaffected. Stored
+`_Formula Items IR` (an alchemical formula's created item versions, linked
+by name to the records "<formula> (level N)" and "<formula> (heroic|paragon|epic
+tier)") also depends on other records, so `composeContentPacks` links it
+again over the composed (and patched) records of every multi-layer pack: a
+later layer may add, replace or rename a version, and the sheet reads the
+field without a fallback. It then
 resolves
 the restrictions against the patched records: an ID rule matches ignoring
 case (in the composed record's spelling; an ID with no record is kept as

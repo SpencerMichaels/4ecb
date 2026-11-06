@@ -2,6 +2,7 @@ import type { CharacterBuild, CharacterCommand } from "@4ecb/character-domain";
 import {
   ASSOCIATE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_FIELD,
+  FORMULA_ITEMS_FIELD,
   NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,
@@ -194,13 +195,15 @@ function removedSelections(
 /**
  * Fields `content-tool build` derives from a record's own text. The source
  * fields they parse are already compared, and they also change when a parser
- * version is bumped or (prerequisites) when any record joins the pack, so
+ * version is bumped or (prerequisites, formula items) when any record joins
+ * the pack, so
  * comparing them would report unchanged wording as changed. A re-parse that
  * changes a number still shows in the evaluated stat and power differences.
  */
 const DERIVED_SPECIFICS: ReadonlySet<string> = new Set([
   ASSOCIATE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_FIELD,
+  FORMULA_ITEMS_FIELD,
   NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,

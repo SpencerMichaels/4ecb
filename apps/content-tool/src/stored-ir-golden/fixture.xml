@@ -341,4 +341,57 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
     <specific name="Short Description">You gain temporary hit points.</specific>
     <specific name="_CS_ShortDescription">Temporary hp equal to Con mod (+5 at 11th, +10 at 21st) when you drop enemy to 0 hp; +1 damage per tier with weapon attacks@</specific>
   </RulesElement>
+
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_ACIDIC" name="Golden Acidic Fire" type="Ritual" source="Synthetic">
+    A volatile mixture that bursts into acidic flame.
+    <specific name="Category">Volatile</specific>
+    <specific name="Key Skill">Arcana or Thievery (no check)</specific>
+    <specific name="Component Cost">See below</specific>
+    <specific name="Level">5</specific>
+    <specific name="Time">30 minutes</specific>
+    <specific name="Market Price">200 gp</specific>
+    <specific name="type">Alchemical Formula</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_ACIDIC_10" name="Golden Acidic Fire (level 10)" type="Magic Item" source="Synthetic">
+    <specific name="Level">10</specific>
+    <specific name="Gold">200</specific>
+    <specific name="Magic Item Type">Alchemical</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_ACIDIC_5" name="Golden Acidic Fire (level 5)" type="Magic Item" source="Synthetic">
+    <specific name="Level">5</specific>
+    <specific name="Gold">50</specific>
+    <specific name="Magic Item Type">Alchemical</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_ACIDIC_AMMO" name="Golden Acidic Fire Ammunition (level 6)" type="Magic Item" source="Synthetic">
+    <specific name="Level">6</specific>
+    <specific name="Gold">75</specific>
+    <specific name="Magic Item Type">Ammunition</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_PATCH" name="Golden Woundpatch" type="Ritual" source="Synthetic">
+    <specific name="Component Cost">See Alchemical Item</specific>
+    <specific name="Level">3</specific>
+    <specific name="type">Alchemical Formula</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_PATCH_EPIC" name="Golden Woundpatch (epic tier)" type="Magic Item" source="Synthetic">
+    <specific name="Level">23</specific>
+    <specific name="Gold">17,000</specific>
+    <specific name="Magic Item Type">Alchemical</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_PATCH_HEROIC" name="Golden Woundpatch (Heroic Tier)" type="Magic Item" source="Synthetic">
+    <specific name="Level">3</specific>
+    <specific name="Gold">30</specific>
+    <specific name="Magic Item Type">Alchemical</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_PRICED" name="Golden Keen Oil" type="Ritual" source="Synthetic">
+    <specific name="Component Cost">200 gp</specific>
+    <specific name="type">Alchemical Formula</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_PRICED_ITEM" name="Golden Keen Oil (heroic tier)" type="Magic Item" source="Synthetic">
+    <specific name="Level">5</specific>
+    <specific name="Gold">50</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FORMULA_ORPHAN" name="Golden Lost Tincture" type="Ritual" source="Synthetic">
+    <specific name="Component Cost">See below</specific>
+    <specific name="type">Alchemical Formula</specific>
+  </RulesElement>
 </D20Rules>

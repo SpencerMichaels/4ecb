@@ -373,6 +373,9 @@ export function printItemPresentation(card: SheetCard) {
       magicItemType: magicType,
       itemSlot: field("Item Slot"),
       gearCategory: field("Gear Category", "Category"),
+      // A ritual record's subtype: a formula's or practice's card shows its
+      // Inventory row's icon.
+      ritualType: field("Type"),
     }),
   };
 }

@@ -80,7 +80,7 @@ import {
   itemChoiceHeading,
   itemChoiceSelectionsFrom,
 } from "./item-choice-pages";
-import { canonicalItemIcon } from "./item-icons";
+import { canonicalItemIcon, KNOWN_RECORD_ICONS } from "./item-icons";
 import { ItemChoiceDialog } from "./ItemChoicePicker";
 import {
   AllowanceChoiceDialog,
@@ -1413,7 +1413,7 @@ export function EquipmentWorkspace({
                               <Icon
                                 name={
                                   record.entity === undefined
-                                    ? "book"
+                                    ? KNOWN_RECORD_ICONS[kind]
                                     : canonicalItemIcon(record.entity)
                                 }
                               />

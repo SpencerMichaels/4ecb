@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "fixture": "baf947da09adf460a9f44138746682e2e1a364a02184cb9507ee05a00c722608",
+  "output": {
+    "ID_GOLDEN_FORMULA_ACIDIC": {
+      "version": 1,
+      "name": "Golden Acidic Fire",
+      "items": [
+        {
+          "id": "ID_GOLDEN_FORMULA_ACIDIC_5",
+          "level": 5,
+          "gold": 50
+        },
+        {
+          "id": "ID_GOLDEN_FORMULA_ACIDIC_10",
+          "level": 10,
+          "gold": 200
+        }
+      ]
+    },
+    "ID_GOLDEN_FORMULA_PATCH": {
+      "version": 1,
+      "name": "Golden Woundpatch",
+      "items": [
+        {
+          "id": "ID_GOLDEN_FORMULA_PATCH_HEROIC",
+          "level": 3,
+          "gold": 30
+        },
+        {
+          "id": "ID_GOLDEN_FORMULA_PATCH_EPIC",
+          "level": 23,
+          "gold": 17000
+        }
+      ]
+    }
+  }
+}

@@ -253,10 +253,15 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   looked up by text in `rules-engine/src/power-text-index.ts`),
   `_Note Values IR` (a feature note's tier, level-step and ability values,
   content-domain `note-values.ts`, printed in page-1 reminders by
-  `featureReminderText` via derived-values `noteValueText`, D112) and
+  `featureReminderText` via derived-values `noteValueText`, D112),
   `_Prerequisite IR` (prerequisite trees, content-domain
   `prerequisite-ir.ts`, stored by `content-tool build` against the whole
-  pack and used only for that same record set); bump the field's version
+  pack and used only for that same record set) and `_Formula Items IR`
+  (the item versions, level and gold, an alchemical formula whose cost is
+  "See below"/"See Alchemical Item" creates, content-domain
+  `formula-items.ts`: linked by `content-tool build` and again by
+  `composeContentPacks` over a multi-layer pack; sheet-model `entityFields`
+  turns it into the card's "Item's price" cost and "Creates" line); bump the field's version
   when its parse changes. `apps/content-tool/src/stored-ir-golden.test.ts`
   enforces it: it snapshots each kind's output for a synthetic fixture with
   its version, fails when output changes under an unchanged version, and

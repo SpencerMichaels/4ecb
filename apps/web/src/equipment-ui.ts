@@ -33,6 +33,7 @@ import {
   inventoryUnwieldableReason,
   inventoryWieldsTwoHanded,
   isAuthoredShield,
+  learnedReferenceKindOf,
   legacyLoadoutHints,
   loadoutContext,
   loadoutRingSlotCount,
@@ -542,10 +543,7 @@ export function practiceKind(entity: ContentEntity): PracticeKind | undefined {
   if (entity.type.trim().toLocaleLowerCase() === "ritual scroll")
     return "scroll";
   if (entity.type.trim().toLocaleLowerCase() !== "ritual") return undefined;
-  const subtype = contentSpecificValue(entity, "type")?.toLocaleLowerCase();
-  if (subtype === "alchemical formula") return "alchemical-formula";
-  if (subtype === "martial practice") return "martial-practice";
-  return "ritual";
+  return learnedReferenceKindOf(contentSpecificValue(entity, "type"));
 }
 
 export function entityCurrencyCopper(

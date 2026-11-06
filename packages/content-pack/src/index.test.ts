@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   PREREQUISITE_IR_FIELD,
+  readFormulaItems,
+  withStoredFormulaItems,
   type ParsedContentSource,
 } from "@4ecb/content-domain";
 
@@ -198,6 +200,68 @@ describe("content pack", () => {
       ["ID_TEST_HORSE-6", "Fixed"],
     ]);
     expect((await validateContentPack(composed.pack)).valid).toBe(true);
+  });
+
+  it("links formulas to item versions from every composed layer", async () => {
+    const entity = (
+      id: string,
+      name: string,
+      type: string,
+      fields: Readonly<Record<string, string>>,
+    ) => ({
+      ...source.entities[0]!,
+      id,
+      name,
+      type,
+      specifics: Object.entries(fields).map(([fieldName, value], ordinal) => ({
+        name: fieldName,
+        value,
+        extraAttributes: [],
+        ordinal,
+      })),
+    });
+    const formula = entity("ID_FORMULA", "Acidic Fire", "Ritual", {
+      "Component Cost": "See below",
+      type: "Alchemical Formula",
+    });
+    const level5 = entity("ID_V5", "Acidic Fire (level 5)", "Magic Item", {
+      Level: "5",
+      Gold: "50",
+    });
+    const baseline = await buildContentPack(
+      {
+        ...source,
+        entities: withStoredFormulaItems([formula, level5]),
+      },
+      { packId: "baseline", name: "Baseline" },
+    );
+    const personal = await buildContentPack(
+      {
+        ...source,
+        sourceKey: "personal.xml",
+        entities: [
+          entity("ID_V10", "Acidic Fire (level 10)", "Magic Item", {
+            Level: "10",
+            Gold: "200",
+          }),
+        ],
+      },
+      { packId: "personal", name: "Personal" },
+    );
+    const single = await composeContentPacks([baseline], {
+      packId: "single",
+      name: "Single",
+    });
+    const composed = await composeContentPacks([baseline, personal], {
+      packId: "profile",
+      name: "Layered profile",
+    });
+    const items = (pack: typeof composed.pack) =>
+      readFormulaItems(
+        pack.entities.find(({ id }) => id === "ID_FORMULA")?.specifics,
+      )?.items.map(({ id }) => id);
+    expect(items(single.pack)).toEqual(["ID_V5"]);
+    expect(items(composed.pack)).toEqual(["ID_V5", "ID_V10"]);
   });
 
   it("rejects unsafe or oversized profile identity fields", async () => {

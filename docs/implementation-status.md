@@ -1,5 +1,48 @@
 # Implementation status
 
+## Alchemical formulas name the created item's price (2026-11-06)
+
+Owner-approved. Adventurer's Vault prints a formula above the item it
+creates, so its Component Cost "See below" (AV1: "See Alchemical Item")
+meant the market price of the version made, from the item's level table;
+our card has no table, so the cost dangled. The pack build now links each
+alchemical formula whose cost is a "See …" reference to its item versions,
+the records named "<formula> (level N)" or "<formula> (heroic|paragon|epic
+tier)" (any case; level and Gold from the record; one entry per distinct
+level and price), and stores them as `_Formula Items IR` version 1
+(content-domain `formula-items.ts`, `withStoredFormulaItems`, run by
+`content-tool build` after the prerequisite IR). The link depends on other
+records, so `composeContentPacks` links again over a multi-layer or
+campaign-patched pack (a single-layer composition keeps the stored field).
+sheet-model `entityFields` reads it: the Cost reads "Item's price" and a
+"Creates" field follows the description ("Creates: Acidic Fire — level 5
+(50 gp), 10 (200 gp), 15 (1,000 gp), 20 (5,000 gp), 25 (25,000 gp), 30
+(125,000 gp)"), on every card surface and the printed reference entry,
+which is built from the same fields. A formula with a real cost or without
+versions is unchanged.
+
+Private pack: all 17 "See below" formulas resolve (Acidic Fire, Alchemist's
+Spark, Clear-Path Mist, Clockwork Bomb, Heartflow, Inferno Oil, Lodret
+Leaf, Noxious Grenade, Resonance Crystal, Spotted Toadstool Venom,
+Suppression Crystal, Tension Wheel, Tethercord, Woundpatch, Rust Bomb,
+Corrosive Oil, Bravery Powder), as do the 35 formulas whose cost is "See
+Alchemical Item", "See Alchemical", "see alchemical item <name>" or "See the
+item's price" (52 in all). Lodret Leaf, Suppression Crystal, Tension Wheel
+and Woundpatch name their versions by tier. "Alchemist's Spark Ammunition
+(level N)" records are a separate item, not listed.
+
+The known-record icon is one mapping (`KNOWN_RECORD_ICONS`, item-icons.ts;
+kind from sheet-model `learnedReferenceKindOf`): a formula's or practice's
+card showed the ritual book because the card passed no subtype; it now
+shows its Inventory row's flask or dumbbell.
+
+Verification: `content-domain/src/formula-items.test.ts`,
+`content-pack/src/index.test.ts` (linked across layers),
+`stored-ir-golden.test.ts` (new `formula-items.golden.json`; the fixture's
+new records changed only the prerequisite stamps), `ritual-card.test.tsx`
+(cost, Creates line, unlinked formula, card/row icons for all three kinds);
+private pack rebuilt; `pnpm parity:baseline` unchanged.
+
 ## No ritual provenance on the sheet (2026-11-06)
 
 D114 amendment (owner: same rule as the Inventory). The on-screen sheet's

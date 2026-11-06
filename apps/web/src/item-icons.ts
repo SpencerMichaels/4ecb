@@ -1,5 +1,9 @@
 import type { EquipmentSlotId } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  learnedReferenceKindOf,
+  type SheetLearnedReferenceKind,
+} from "@4ecb/sheet-model";
 
 import { contentSpecificValue } from "./builder-ui";
 import type { IconName } from "./Icon";
@@ -24,6 +28,19 @@ export const LOADOUT_SLOT_ICONS: Readonly<Record<EquipmentSlotId, IconName>> = {
   companion: "paw-print",
   familiar: "paw-print",
   mount: "paw-print",
+};
+
+/**
+ * One icon per known-record kind (D114), wherever a ritual, alchemical
+ * formula or martial practice shows one: Inventory and Shop rows, choice
+ * tables and every card. A formula shares its alchemical item's flask.
+ */
+export const KNOWN_RECORD_ICONS: Readonly<
+  Record<SheetLearnedReferenceKind, IconName>
+> = {
+  ritual: "book",
+  "alchemical-formula": "flask-conical",
+  "martial-practice": "dumbbell",
 };
 
 function normalized(value: string | undefined): string {
@@ -73,12 +90,12 @@ export function itemCategoryIcon(metadata: {
   if (identityType === "armor") return LOADOUT_SLOT_ICONS.body;
 
   const type = normalized(metadata.type);
+  if (type === "ritual")
+    return KNOWN_RECORD_ICONS[learnedReferenceKindOf(metadata.ritualType)];
   const kind =
     type === "magic item"
       ? normalized(metadata.magicItemType) || "magic item"
-      : type === "ritual"
-        ? normalized(metadata.ritualType) || "ritual"
-        : type;
+      : type;
   const slot = normalized(metadata.itemSlot);
   const value = `${kind} ${slot}`;
 
@@ -93,10 +110,10 @@ export function itemCategoryIcon(metadata: {
   if (type === "gear") return "item";
   if (type === "item set") return "layers";
   if (type === "ritual scroll") return "details";
-  if (kind.includes("martial practice")) return "dumbbell";
+  if (kind.includes("martial practice"))
+    return KNOWN_RECORD_ICONS["martial-practice"];
   if (kind.includes("alchemical") || kind.includes("formula"))
-    return "flask-conical";
-  if (type === "ritual") return "book";
+    return KNOWN_RECORD_ICONS["alchemical-formula"];
   if (kind.includes("alternative reward")) return "award";
   if (/boon|gift|blessing/u.test(kind)) return "gift";
   if (kind.includes("echo of power")) return "waves";

@@ -252,6 +252,7 @@ export function isUserFacingSpecific(field: SpecificField): boolean {
 export * from "./aliases";
 export * from "./associate-stat-block";
 export * from "./creature-stat-block";
+export * from "./formula-items";
 export * from "./power-text";
 export * from "./power-field-bonuses";
 export * from "./prerequisite-ir";

@@ -15,8 +15,10 @@ import {
   isUserFacingSpecific,
   powerAttackSlots,
   readCreatureStatBlock,
+  readFormulaItems,
   weaponPropertyText,
   type ContentEntity,
+  type FormulaItems,
   type SpecificField,
 } from "@4ecb/content-domain";
 import {
@@ -638,21 +640,41 @@ function entityMap(
 }
 
 function entityFields(entity: ContentEntity | undefined): SheetValue[] {
-  return (
-    entity?.specifics.flatMap((field) =>
-      field.value.length === 0 || !isUserFacingSpecific(field)
-        ? []
-        : [
-            {
-              label: field.name,
-              value:
-                field.name.trim().toLocaleLowerCase() === "properties"
-                  ? weaponPropertyText(entity, field.value)
-                  : field.value,
-            },
-          ],
-    ) ?? []
+  if (entity === undefined) return [];
+  // An alchemical formula whose cost is "See below" (the created version's
+  // market price, from the item's level table under it in the book) names
+  // that price and lists the versions it creates, linked at pack build.
+  const created = readFormulaItems(entity.specifics);
+  const fields: SheetValue[] = entity.specifics.flatMap((field) => {
+    if (field.value.length === 0 || !isUserFacingSpecific(field)) return [];
+    const name = field.name.trim().toLocaleLowerCase();
+    return [
+      {
+        label: field.name,
+        value:
+          name === "properties"
+            ? weaponPropertyText(entity, field.value)
+            : created !== undefined && name === "component cost"
+              ? FORMULA_ITEM_PRICE
+              : field.value,
+      },
+    ];
+  });
+  return created === undefined
+    ? fields
+    : [...fields, { label: "Creates", value: formulaCreatesText(created) }];
+}
+
+/** A formula's Component Cost when it is the created version's price. */
+export const FORMULA_ITEM_PRICE = "Item's price";
+
+/** "Acidic Fire — level 5 (50 gp), 10 (200 gp), 15 (1,000 gp)". */
+export function formulaCreatesText(created: FormulaItems): string {
+  const versions = created.items.map(
+    ({ level, gold }) =>
+      `${level} (${gold.toLocaleString("en-US", { maximumFractionDigits: 2 })} gp)`,
   );
+  return `${created.name} — level ${versions.join(", ")}`;
 }
 
 function fieldFromOverlay(
@@ -832,9 +854,17 @@ function learnedReferenceKind(
     )
   )
     return undefined;
-  const subtype = field(entity, "Type").trim().toLocaleLowerCase();
-  if (subtype === "alchemical formula") return "alchemical-formula";
-  if (subtype === "martial practice") return "martial-practice";
+  return learnedReferenceKindOf(field(entity, "Type"));
+}
+
+/** A Ritual record's kind from its subtype field (a lowercase "type":
+ *  "Alchemical Formula", "Martial Practice"; anything else is a ritual). */
+export function learnedReferenceKindOf(
+  subtype: string | undefined,
+): SheetLearnedReferenceKind {
+  const value = subtype?.trim().toLocaleLowerCase();
+  if (value === "alchemical formula") return "alchemical-formula";
+  if (value === "martial practice") return "martial-practice";
   return "ritual";
 }
 

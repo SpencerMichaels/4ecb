@@ -428,7 +428,13 @@ live site.
     description as the body, the market price in the footer and "Ritual …
     Level N" in the type bar. Choose a martial practice (Alter Ego, on a
     character that knows one, or in the Shop's Martial practices): its
-    description shows too and the type bar reads "Martial Practice". The
+    description shows too and the type bar reads "Martial Practice". In
+    the Shop's Alchemical formulas choose Acidic Fire, then Woundpatch: the
+    card's icon is the flask its row shows (a practice's the dumbbell, a
+    ritual's the book), COST reads "Item's price", and after the
+    description a "Creates:" line lists the versions ("Acidic Fire — level
+    5 (50 gp), 10 (200 gp), …, 30 (125,000 gp)"; Woundpatch's three
+    levels) in the body's rule style, wrapping within the card. The
     right-click menu has Remove; on the granted ritual it is greyed, its
     tooltip saying why. In the Type list the three learning categories
     follow the items as ordinary entries, with no group heading. In every
@@ -439,6 +445,8 @@ live site.
   - **Wrong if:** the count is smaller than the title, a ritual name sits
     at the right or in a different column/indent than item names, the
     card has no description or repeats the subheader fields in its body,
+    a formula's card shows a book or "See below", the Creates line is
+    clipped, cramped or styled unlike the body text,
     a row has a visible Remove/⋮ button, the menu is clipped, a toolbar
     control moves or disappears between categories, "Level" breaks onto
     two lines, or grey text is unreadable in dark theme.

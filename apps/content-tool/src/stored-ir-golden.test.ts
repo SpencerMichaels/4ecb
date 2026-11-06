@@ -2,7 +2,7 @@
  * Guard against stale stored parses. The pack build parses content text once
  * and stores the result with a version (`_Power Text IR`, `_Prerequisite
  * IR`, `_Associate Stat Block`, `_Creature Stat Block`,
- * `_Note Values IR`); the engine trusts a stored field whose
+ * `_Note Values IR`, `_Formula Items IR`); the engine trusts a stored field whose
  * version matches. A parser change without a version bump would leave every
  * older pack with stale IR that synthetic tests never see.
  *
@@ -28,12 +28,15 @@ import {
   ASSOCIATE_STAT_BLOCK_VERSION,
   CREATURE_STAT_BLOCK_FIELD,
   CREATURE_STAT_BLOCK_VERSION,
+  FORMULA_ITEMS_FIELD,
+  FORMULA_ITEMS_VERSION,
   NOTE_VALUES_FIELD,
   NOTE_VALUES_VERSION,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
   PREREQUISITE_IR_FIELD,
   PREREQUISITE_IR_VERSION,
+  withStoredFormulaItems,
 } from "@4ecb/content-domain";
 import { parseD20Rules } from "@4ecb/legacy-wotc";
 import { withStoredPrerequisiteIr } from "@4ecb/rules-engine";
@@ -46,7 +49,9 @@ const UPDATE_COMMAND =
   "UPDATE_STORED_IR_GOLDEN=1 pnpm vitest run apps/content-tool/src/stored-ir-golden.test.ts";
 
 const parsed = parseD20Rules(fixture, "stored-ir-golden/fixture.xml");
-const entities = withStoredPrerequisiteIr(parsed.entities);
+const entities = withStoredFormulaItems(
+  withStoredPrerequisiteIr(parsed.entities),
+);
 
 interface Golden {
   readonly version: number;
@@ -98,6 +103,13 @@ const kinds = [
     constant:
       "NOTE_VALUES_VERSION (packages/content-domain/src/note-values.ts)",
     file: "note-values.golden.json",
+  },
+  {
+    field: FORMULA_ITEMS_FIELD,
+    version: FORMULA_ITEMS_VERSION,
+    constant:
+      "FORMULA_ITEMS_VERSION (packages/content-domain/src/formula-items.ts)",
+    file: "formula-items.golden.json",
   },
 ] as const;
 

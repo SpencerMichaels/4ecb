@@ -1,10 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  withStoredFormulaItems,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 import { sheetItemCard } from "@4ecb/sheet-model";
 
 import { ItemCard } from "./ItemCard";
+import { canonicalItemIcon, KNOWN_RECORD_ICONS } from "./item-icons";
 import { printItemPresentation } from "./print-item-presentation";
 import { appStyles } from "./test-styles";
 
@@ -150,6 +154,94 @@ describe("ritual, formula and practice cards", () => {
       expect(markup).not.toContain("Component Cost");
     },
   );
+});
+
+/** A created item version, spelled as Adventurer's Vault records are. */
+function version(name: string, level: string, gold: string): ContentEntity {
+  return {
+    ...record(name, { Level: level, Gold: gold }, ""),
+    type: "Magic Item",
+  };
+}
+
+describe("a formula whose cost is the created item's price", () => {
+  // "See below" in the book: the created version's market price, from the
+  // item's level table under the formula. The pack build links the
+  // versions (`_Formula Items IR`); the card names the price and lists them.
+  const [acidic] = withStoredFormulaItems([
+    record(
+      "Synthetic Acidic Fire",
+      {
+        Category: "Volatile",
+        "Key Skill": "Arcana or Thievery (no check)",
+        "Component Cost": "See below",
+        Duration: "",
+        Level: "5",
+        Time: "30 minutes",
+        "Market Price": "200 gp",
+        Prerequisite: "",
+        type: "Alchemical Formula",
+      },
+      "You combine reagents into a volatile flask.",
+    ),
+    version("Synthetic Acidic Fire (level 10)", "10", "200"),
+    version("Synthetic Acidic Fire (level 5)", "5", "50"),
+    version("Synthetic Acidic Fire (level 15)", "15", "1000"),
+  ]);
+  const creates =
+    "Synthetic Acidic Fire — level 5 (50 gp), 10 (200 gp), 15 (1,000 gp)";
+
+  it("reads Item's price and lists the versions after the description", () => {
+    const item = printItemPresentation(cardOf(acidic!));
+    expect(item.statRows).toContainEqual([
+      { label: "Cost", value: "Item's price" },
+    ]);
+    expect(item.description).toBe(acidic!.description);
+    expect(item.rules).toEqual([{ label: "Creates", value: creates }]);
+    // The formula's own price stays the footer's.
+    expect(item.footerDetails).toEqual(["200 gp"]);
+    const markup = renderToStaticMarkup(
+      <ItemCard card={cardOf(acidic!)} layout="print" />,
+    );
+    expect(markup).not.toContain("See below");
+    expect(markup.indexOf(acidic!.description)).toBeLessThan(
+      markup.indexOf("Creates: "),
+    );
+    expect(markup).toContain(creates);
+  });
+
+  it("gives the printed reference entry the same fields", () => {
+    // Printed rituals are reference-page entries built from these fields.
+    const fields = cardOf(acidic!).fields;
+    expect(fields).toContainEqual({
+      label: "Component Cost",
+      value: "Item's price",
+    });
+    expect(fields.at(-1)).toEqual({ label: "Creates", value: creates });
+  });
+
+  it("leaves a formula without linked versions as authored", () => {
+    // `formula` names no versions in its set: no Creates line.
+    const [unlinked] = withStoredFormulaItems([formula]);
+    const item = printItemPresentation(cardOf(unlinked!));
+    expect(item.statRows).toContainEqual([
+      { label: "Cost", value: "See Alchemical Item" },
+    ]);
+    expect(item.rules).toEqual([]);
+  });
+});
+
+describe("known-record icons", () => {
+  it.each([
+    [ritual, "book"],
+    [practice, "dumbbell"],
+    [formula, "flask-conical"],
+  ] as const)("show the same icon on %s's card and row", (entity, icon) => {
+    // The Inventory, Shop and choice rows use canonicalItemIcon.
+    expect(canonicalItemIcon(entity)).toBe(icon);
+    expect(printItemPresentation(cardOf(entity)).icon).toBe(icon);
+    expect(Object.values(KNOWN_RECORD_ICONS)).toContain(icon);
+  });
 });
 
 describe("Inventory known-record rows (D114)", () => {

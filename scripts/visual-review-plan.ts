@@ -1101,7 +1101,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Drow invoker: rituals in the Inventory and Shop",
-            "The Inventory's Rituals group, a ritual's card and the right-click menu, then the Shop's Rituals category, at 140% zoom and in both themes.",
+            "The Inventory's Rituals group, a ritual's card and the right-click menu, then the Shop's Rituals and Alchemical formulas categories (Acidic Fire's flask icon, Item's price and Creates line), at 140% zoom and in both themes.",
           ],
           [
             "No Rituals tab",
