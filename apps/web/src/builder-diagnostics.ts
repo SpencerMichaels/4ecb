@@ -191,8 +191,10 @@ function inventoryEntryOf(
       provider.parentId === undefined
         ? undefined
         : byOccurrenceId.get(provider.parentId);
-  if (provider === undefined) return undefined;
-  const providerId = provider.id;
+  // A holding definition that is also a saved occurrence executes as that
+  // occurrence, so its own `<holding>:definition:<n>` ID (which the
+  // evaluator's item diagnostics still name) has no occurrence row.
+  const providerId = provider?.id ?? occurrenceId;
   return build.inventory.find((candidate) =>
     providerId.startsWith(`${candidate.id}:definition:`),
   );
@@ -658,6 +660,7 @@ export function builderIssueGroups({
         detail: diagnostic.message,
         effect:
           "The item stays equipped and its properties apply, but the character is marked as using house rules.",
+        ...occurrenceTarget(diagnostic.occurrenceId),
       });
   if (abilityScoresHouseRuled)
     houseRules.push({

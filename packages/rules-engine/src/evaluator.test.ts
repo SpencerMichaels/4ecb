@@ -5420,6 +5420,11 @@ describe("legacy item requirements", () => {
   it("marks an equipped item whose Requirement is unmet as a house rule", () => {
     const evaluated = evaluate(false, 1);
     expect(unmet(evaluated)).toHaveLength(1);
+    // It names the holding's occurrence, so Review can land on the item.
+    expect(unmet(evaluated)[0]?.occurrenceId).toBe("focus:definition:0");
+    expect(
+      evaluated.occurrences.some(({ id }) => id === "focus:definition:0"),
+    ).toBe(true);
     expect(evaluated.legal).toBe(false);
   });
 

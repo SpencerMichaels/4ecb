@@ -3090,10 +3090,14 @@ rule("executioner-rogue", "House rules", '"Equipped item requirement"', (c) => {
     planningHorizon: c.build.effectiveLevel,
     abilityScoresIncomplete: false,
     abilityScoresHouseRuled: false,
+    build: c.build,
   });
   const all = [...groups.houseRules, ...groups.warnings, ...groups.errors];
   const issue = all.find(({ title, detail }) =>
     /equipped item requirement/i.test(`${title} ${detail}`),
+  );
+  const warsoul = c.build.inventory.find(({ elements }) =>
+    elements.some(({ name }) => /Warsoul/.test(name ?? "")),
   );
   return [
     truthy(
@@ -3109,6 +3113,15 @@ rule("executioner-rogue", "House rules", '"Equipped item requirement"', (c) => {
       "Warsoul",
     ),
     equal("… under House rules", issue?.kind, "house-rule"),
+    truthy(
+      "The Warsoul Weapon holding",
+      warsoul !== undefined,
+      warsoul?.id ?? "none",
+    ),
+    equal("… Review lands on its Inventory row", issue?.target, {
+      kind: "inventory",
+      entryId: warsoul?.id,
+    }),
   ];
 });
 

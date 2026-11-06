@@ -957,7 +957,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             '"Equipped item requirement"',
-            "An Equipped item requirement issue for the Warsoul Weapon.",
+            "An Equipped item requirement issue for the Warsoul Weapon; its Review opens the Warsoul Weapon's Inventory row.",
           ],
         ],
       },

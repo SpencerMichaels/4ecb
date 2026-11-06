@@ -93,7 +93,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v112-2026-11-05-note-values";
+  "evaluated-character-v113-2026-11-05-item-requirement-holding";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -4422,17 +4422,20 @@ function evaluateCharacterInternal(
   let itemRequirementUnmet = false;
   for (const entry of inventory) {
     if (entry.equippedQuantity <= 0 || entry.quantity <= 0) continue;
-    for (const definitionId of entry.definitionIds) {
+    entry.definitionIds.forEach((definitionId, definitionIndex) => {
       const entity = index.get(definitionId);
       if (entity === undefined || meetsItemRequirement(entity, activeIds))
-        continue;
+        return;
       itemRequirementUnmet = true;
       diagnostics.push({
         severity: "warning",
         code: "item.requirement-unmet",
         message: `${entry.name ?? entity.name}: ${field(entity, "Requirement") ?? ""}`,
+        // The holding's own occurrence ID (as inventoryOccurrences names
+        // it), so the issue can land on its Inventory row.
+        occurrenceId: `${entry.id}:definition:${definitionIndex}`,
       });
-    }
+    });
   }
   const complete =
     converged &&

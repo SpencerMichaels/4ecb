@@ -386,18 +386,53 @@ describe("builder issue groups", () => {
     ]);
   });
 
-  it("lists an equipped item's unmet requirement as a house rule", () => {
+  it("lists an equipped item's unmet requirement as a house rule on its holding", () => {
+    const focus: BuildInventoryEntry = {
+      id: "legacy:loot:4",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 1,
+      elements: [
+        {
+          definitionId: "KI_FOCUS",
+          name: "Synthetic Ki Focus +1",
+          type: "Magic Item",
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    const diagnostic = {
+      severity: "warning" as const,
+      code: "item.requirement-unmet",
+      message: "Synthetic Ki Focus +1: Must be able to use Ki Focuses.",
+      occurrenceId: "legacy:loot:4:definition:0",
+    };
+    const build = {
+      formatVersion: 3 as const,
+      known: [],
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [focus],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
     const result = builderIssueGroups({
       ...common,
+      build,
       evaluation: evaluation({
         legal: false,
-        diagnostics: [
+        occurrences: [
           {
-            severity: "warning",
-            code: "item.requirement-unmet",
-            message: "Synthetic Ki Focus +1: Must be able to use Ki Focuses.",
+            id: "legacy:loot:4:definition:0",
+            definitionId: "KI_FOCUS",
+            acquiredLevel: 1,
+            kind: "inventory",
           },
         ],
+        diagnostics: [diagnostic],
       }),
     });
 
@@ -406,6 +441,21 @@ describe("builder issue groups", () => {
     expect(result.houseRules[0]?.detail).toBe(
       "Synthetic Ki Focus +1: Must be able to use Ki Focuses.",
     );
+    expect(result.houseRules[0]?.target).toEqual({
+      kind: "inventory",
+      entryId: "legacy:loot:4",
+    });
+    // A definition saved as its own occurrence has no holding occurrence
+    // row; the diagnostic's holding ID still finds the Inventory row.
+    const saved = builderIssueGroups({
+      ...common,
+      build,
+      evaluation: evaluation({ legal: false, diagnostics: [diagnostic] }),
+    });
+    expect(saved.houseRules[0]?.target).toEqual({
+      kind: "inventory",
+      entryId: "legacy:loot:4",
+    });
   });
 
   it("separates house rules from evaluation warnings and errors", () => {

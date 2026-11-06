@@ -247,7 +247,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "executioner-rogue|0|hybrid executioner without assassin's strike (hybrid)":
     auto("No Assassin's Strike upgrade choice at level 7."),
   "executioner-rogue|1|equipped item requirement": auto(
-    "An Equipped item requirement issue names the Warsoul Weapon.",
+    "An Equipped item requirement issue names the Warsoul Weapon; its Review targets the Warsoul Weapon's Inventory row.",
   ),
   "executioner-rogue|2|power weapon rows": auto(
     "Throw Grapple has a no-weapon row; rogue weapon powers list only the allowed weapons.",
