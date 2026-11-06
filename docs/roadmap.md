@@ -926,7 +926,8 @@ Make supported customization convenient rather than file-format-only.
 
 ### Campaign slice (D116)
 
-**Status (2026-11-06): designed, not built; placement pending owner.** A
+**Status (2026-11-06): in progress, ahead of M9 (owner: "not strict on
+ordering").** A
 narrowed, pulled-forward part of M8: campaign documents (overlay content plus
 ID and type restrictions), per-character campaign membership with the
 profile recomposed over server revisions, file import/export and a

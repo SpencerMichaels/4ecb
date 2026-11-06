@@ -4560,8 +4560,9 @@ in a later pass): without the guard that build held Ritual Caster twice.
 
 ### D116 — Campaigns layer a DM's content and restrictions over the server's
 
-Status: accepted design (2026-11-06, owner); not built. Placement in the
-milestone order is pending (roadmap M8, "Campaign slice").
+Status: accepted (2026-11-06, owner); in progress, built ahead of M9
+(owner: "You can build it now. I'm not strict on ordering."); roadmap M8,
+"Campaign slice".
 
 Owner's user story: "as the DM, I want to use the Pathfinder setting for my
 4e game. For players, the biggest change is that the list of deities
@@ -4600,15 +4601,22 @@ and it stops the browser following server revisions (D004 amendment).
   Evil, so `deityAlignmentIssue` works unchanged. Each deity's Pathfinder
   domains map to the 34 4e Domain records as closely as possible (not 1:1),
   so domain feats and Channel Divinity keep working.
-- **Deity equivalents.** Deity-specific content stays available through
+- **Deity equivalents: `CountsAsDeity`** (owner, 2026-11-06: "add
+  CountsAsDeity"). Deity-specific content stays available through
   equivalents (owner: "Moradin in D&D is roughly the same as Torag in
   Pathfinder"). About 220 stock records require a named deity (128 feats,
   25 paragon paths, 31 class features, 30 backgrounds, 5 epic destinies, 1
   power), so the equivalence lives on the campaign's deity, not on those
-  records: a Torag record "counts as" Moradin, and a `worship` prerequisite
-  is met by the owned deity's name or a name it counts as (the
-  `CountsAsClass` precedent for hybrids). One deity may count as several.
-  The requirement still reads "Moradin"; the builder explains it is met
-  through Torag. Legacy export can't express counts-as, so an exported
-  character fails those prerequisites in the old builder (a lossy-export
-  note).
+  records. The legacy rule language's alternates (`ConnectAlternate`,
+  `RULE.cs`: CountsAsClass, CountsAsRace, CountsAsPact, CountsAsFeature;
+  modern `COUNTS_AS_ALTERNATES` in `prerequisites.ts`) gain one entry,
+  `deity: "CountsAsDeity"`: a `worship` requirement is also met by an owned
+  same-named CountsAsDeity record, which content grants (Torag grants a
+  "Moradin" CountsAsDeity). The engine knows nothing of any setting. One
+  deity may count as several, and a deity with no equivalent counts as none
+  but still carries mapped domains. The requirement still reads "Moradin";
+  the builder explains it is met through Torag. The type is a modern
+  extension: the old builder ignores it, so an exported character fails
+  those prerequisites there (a lossy-export note). Stock content uses it
+  too: the seven "<Deity> (Forgotten Realms)" duplicates count as their
+  base deity, whose name-matched requirements they otherwise fail.
