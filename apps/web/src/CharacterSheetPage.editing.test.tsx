@@ -602,7 +602,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   it("lists every section in print order, each an ordinary checkbox", async () => {
     runtime.record = {
       ...record(),
-      sheetLayout: { version: 1, hiddenSections: ["reference:rituals"] },
+      sheetLayout: { version: 1, shownSections: ["reference:rituals"] },
     };
     await renderSheet(true);
     await openSections();
@@ -628,7 +628,16 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     // character (no rituals).
     for (const row of rows) {
       expect(row.disabled, row.name).toBe(false);
-      expect(row.checked, row.name).toBe(row.name !== "Rituals & practices");
+      // The overview, scratchpad and cards by default, plus the
+      // section this layout turned on.
+      expect(row.checked, row.name).toBe(
+        [
+          "Overview",
+          "Play scratchpad",
+          "Rituals & practices",
+          "Power & item cards",
+        ].includes(row.name ?? ""),
+      );
     }
     expect(sectionsMenu()!.querySelector(".sheet-pages-hint")).toBeNull();
     await tick("Rituals & practices");
@@ -652,16 +661,8 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
 
     // A cards-only sheet starts its card pages at page 1; with the cards
     // hidden too the preview is simply empty, with no notice.
-    for (const label of [
-      "Play scratchpad",
-      "Feature reference",
-      "Item reference",
-      "Power index",
-      "Rituals & practices",
-      "Character profile",
-      "Session notes",
-    ])
-      await tick(label);
+    // (The reference pages and Session notes are hidden by default.)
+    await tick("Play scratchpad");
     expect(
       container.querySelectorAll(".sheet-overview .ov-page-number"),
     ).toHaveLength(0);
@@ -688,8 +689,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   it("hides and shows sections from the Sections menu without re-evaluating, saving silently", async () => {
     await renderSheet(true);
     expect(pageText("Play scratchpad")).toContain("Arc Strike");
-    expect(pageText("Session notes")).not.toBe("");
+    // Session notes print only when turned on.
+    expect(pageText("Session notes")).toBe("");
     await openSections();
+    expect(sectionCheckbox("Session notes")?.checked).toBe(false);
     await tick("Play scratchpad");
     // The menu stays open for the next pick; the section's pages are gone,
     // with no placeholder left behind.
@@ -700,17 +703,18 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       sheetLayout: { version: 1, hiddenSections: ["scratchpad"] },
     });
     await tick("Session notes");
-    expect(pageText("Session notes")).toBe("");
+    expect(pageText("Session notes")).not.toBe("");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: {
         version: 1,
-        hiddenSections: ["scratchpad", "session-notes"],
+        hiddenSections: ["scratchpad"],
+        shownSections: ["session-notes"],
       },
     });
     await tick("Play scratchpad");
     await tick("Session notes");
     expect(pageText("Play scratchpad")).toContain("Arc Strike");
-    expect(pageText("Session notes")).not.toBe("");
+    expect(pageText("Session notes")).toBe("");
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: null,
     });
@@ -722,10 +726,16 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   it("arms, then confirms, a reset to the default sheet", async () => {
     runtime.record = {
       ...record(),
-      sheetLayout: { version: 1, hiddenSections: ["session-notes"] },
+      sheetLayout: {
+        version: 1,
+        hiddenSections: ["scratchpad"],
+        shownSections: ["session-notes", "reference:features"],
+      },
     };
     await renderSheet(true);
-    expect(pageText("Session notes")).toBe("");
+    expect(pageText("Session notes")).not.toBe("");
+    expect(pageText("Play scratchpad")).toBe("");
+    expect(pageText("Character reference")).not.toBe("");
     const reset = () =>
       container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
     expect(reset().disabled).toBe(false);
@@ -737,7 +747,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(runtime.updateMetadata).not.toHaveBeenCalled();
     await act(async () => reset().click());
     await settle();
-    expect(pageText("Session notes")).not.toBe("");
+    // Back to the defaults: both delta lists cleared.
+    expect(pageText("Session notes")).toBe("");
+    expect(pageText("Character reference")).toBe("");
+    expect(pageText("Play scratchpad")).toContain("Arc Strike");
     expect(runtime.updateMetadata).toHaveBeenCalledWith("ada", {
       sheetLayout: null,
       itemCardsShown: { "holding-cloak": true },
@@ -805,6 +818,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   });
 
   it("reorders by dragging a row onto another, marking where it will drop", async () => {
+    runtime.record = {
+      ...record(),
+      sheetLayout: { version: 1, shownSections: ["session-notes"] },
+    };
     await renderSheet(true);
     await openSections();
     const row = (label: string) =>
@@ -845,6 +862,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: {
         version: 1,
+        shownSections: ["session-notes"],
         sectionOrder: [
           "summary",
           "session-notes",
@@ -1019,6 +1037,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
   });
 
   it("sets scratchpad and session notes copies with − / + or a typed number", async () => {
+    runtime.record = {
+      ...record(),
+      sheetLayout: { version: 1, shownSections: ["session-notes"] },
+    };
     await renderSheet(true);
     await openSections();
     const control = (name: string) =>
@@ -1046,7 +1068,11 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(fewer.disabled).toBe(false);
     expect(papers("Play scratchpad")).toBe(single * 2);
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
-      sheetLayout: { version: 1, sectionCopies: { scratchpad: 2 } },
+      sheetLayout: {
+        version: 1,
+        shownSections: ["session-notes"],
+        sectionCopies: { scratchpad: 2 },
+      },
     });
 
     // Typing saves a valid count at once; anything else reverts on blur.
@@ -1064,7 +1090,11 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await type("4");
     expect(papers("Play scratchpad")).toBe(single * 4);
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
-      sheetLayout: { version: 1, sectionCopies: { scratchpad: 4 } },
+      sheetLayout: {
+        version: 1,
+        shownSections: ["session-notes"],
+        sectionCopies: { scratchpad: 4 },
+      },
     });
     const saves = runtime.updateMetadata.mock.calls.length;
     for (const bad of ["", "0", "2.5"]) {
@@ -1096,19 +1126,22 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     expect(runtime.updateMetadata).toHaveBeenLastCalledWith("ada", {
       sheetLayout: {
         version: 1,
+        shownSections: ["session-notes"],
         sectionCopies: { scratchpad: 3, "session-notes": 3 },
       },
     });
     expect(runtime.evaluate).toHaveBeenCalledTimes(1);
     expect(document.body.textContent).not.toMatch(/\bSaved\b/);
 
-    // Reset restores one copy of each.
+    // Reset restores one copy of each, and Session notes' default (hidden).
     const reset = () =>
       container.querySelector<HTMLButtonElement>("[data-sheet-reset-trigger]")!;
     await act(async () => reset().click());
     await act(async () => reset().click());
     await settle();
     expect(papers("Play scratchpad")).toBe(single);
+    expect(papers("Session notes")).toBe(0);
+    await tick("Session notes");
     expect(papers("Session notes")).toBe(1);
     expect(field().value).toBe("1");
   });
@@ -1118,6 +1151,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       ...record(),
       sheetLayout: {
         version: 1,
+        shownSections: ["session-notes"],
         sectionOrder: ["summary", "scratchpad", "cards", "session-notes"],
         sectionCopies: { scratchpad: 2, "session-notes": 2 },
       },

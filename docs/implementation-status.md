@@ -1,5 +1,35 @@
 # Implementation status
 
+## Only the overview, scratchpad and cards print by default (2026-11-06)
+
+D099 amendment (owner: "Enabled by default: overview, scratchpad, power and
+item cards. Everything else disabled by default."). One default-visibility
+table, `SHEET_SECTION_DEFAULT_SHOWN` beside `SHEET_SECTION_IDS`
+(`packages/character-domain/src/sheet-layout.ts`), marks `summary`,
+`scratchpad` and `cards` shown and the five `reference:*` groups and
+`session-notes` hidden. `SheetLayout` gains an optional `shownSections`
+(default-hidden sections the player turned on), mirroring `shownCards`;
+`hiddenSections` keeps meaning default-shown sections turned off, and an id
+in the other default's list is inert. `withSheetSectionShown` stores only
+the delta, `sheetSectionShown` reads it, and sheet-model's
+`sheetHiddenSections` gives `applySheetLayout` and `SheetOverview`'s
+no-layout default the hidden set, so the Sections menu, Reset (back to the
+defaults), preview, print and on-screen sheet all follow it. No layout
+version bump and no migration: characters without explicit choices switch
+to the new defaults. Copies steppers are unchanged; `.dnd4e` export never
+sees the layout. `check:print`'s synthetic fixture turns the reference
+pages and Session notes on through `shownSections` so their print checks
+still run; `review:verify` renders its printed-pages surface with every
+section on.
+
+Verification: `sheet-layout.test.ts` (character-domain: defaults table,
+`shownSections` normalize/round-trip, stale-list ids inert; sheet-model:
+default hidden set, both lists applied), `SheetOverview.test.tsx` (no-layout
+print omits reference pages and Session notes), `CharacterSheetPage.editing.test.tsx`
+(menu checkboxes from defaults plus `shownSections`, hide/show saves the
+right list, Reset clears both), `pnpm vitest run packages apps`, typecheck,
+lint, format:check, `review:verify` (176 passed), `check:print`.
+
 ## Sheet Edit mode explains hide/show in its toolbar (2026-11-06)
 
 D099 amendment (owner, replacing the same day's eye toggles, which covered

@@ -2,6 +2,7 @@ import {
   SHEET_COPYABLE_SECTION_IDS,
   SHEET_SECTION_IDS,
   sheetSectionCopies,
+  sheetSectionShown,
   sheetSectionOrder,
   type SheetCopyableSectionId,
   type SheetLayout,
@@ -62,6 +63,16 @@ export interface ResolvedSheetLayout {
   /** Every page-1 reminder candidate in page order, shown or not; page 1
    *  prints the shown ones. */
   readonly reminders: readonly SheetLayoutReminder[];
+}
+
+/** Sections that do not print under a layout: those hidden by default
+ *  (`SHEET_SECTION_DEFAULT_SHOWN`) unless shown, and those the player hid. */
+export function sheetHiddenSections(
+  layout: SheetLayout | undefined,
+): ReadonlySet<SheetSectionId> {
+  return new Set(
+    SHEET_SECTION_IDS.filter((section) => !sheetSectionShown(layout, section)),
+  );
 }
 
 /**
@@ -143,11 +154,7 @@ export function applySheetLayout(
       return [card];
     },
   );
-  const hiddenSections = new Set(
-    (layout?.hiddenSections ?? []).filter((id) =>
-      SHEET_SECTION_IDS.includes(id),
-    ),
-  );
+  const hiddenSections = sheetHiddenSections(layout);
   return {
     deck: cards
       .filter((card) => card.shown)

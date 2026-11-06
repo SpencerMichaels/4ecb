@@ -4,6 +4,13 @@
 them; M5.7 and M5.75 are closed. Keep the entries for future regression
 walks.
 
+**Reference pages and Session notes are off by default (2026-11-06, D099
+amendment).** A sheet without layout choices prints only the overview, the
+play scratchpad and the cards. For an entry on the Character Reference
+pages or Session notes, first turn them on: `?preview=1` → Edit →
+**Sections**, tick the reference groups (or Session notes), then back to
+View. Reset turns them off again.
+
 **Summary (2026-11-04 compression).** Since the 2026-10-29 pare-down (121
 items to 45 over 13 passes) the list had grown back to 55 items over 18
 passes, 60 owner rows on the review page. Now it is 38 walk-through entries
@@ -109,8 +116,8 @@ live site.
     the text above it, space around a divider or table is uneven, or a
     folded summary wraps or pushes its status icon off the row.
 - [x] **Beatrix: reference feature rows.**
-  - **Where:** `?preview=1`, the Character Reference pages: Past life and the
-    two Guardian Feature rows.
+  - **Where:** `?preview=1` with Feature reference ticked in Sections, the
+    Character Reference pages: Past life and the two Guardian Feature rows.
   - **Expect:** a long heading wraps onto a second line, clear of the
     "Level N" tag at the right.
   - **Wrong if:** the tag overlaps or pushes the text, or a heading is cut
@@ -575,7 +582,7 @@ live site.
 
 - [x] **Hu: sheet Edit mode.**
   - **Where:** `?preview=1`. Toggle View | Edit a few times. In Edit,
-    open **Sections**: untick Play scratchpad and Session notes, drag Power
+    open **Sections**: untick Play scratchpad, tick Session notes, drag Power
     & item cards to the top by its grip, click + on Play scratchpad twice
     and type 3 into Session notes' field. Right-click a power card and an
     item card. Then the browser's print preview.
@@ -649,8 +656,8 @@ live site.
 
 - [ ] **Piri: rituals on the sheet.** Added 2026-11-06; that no source
       line remains is verified automatically, this is the look.
-  - **Where:** `?preview=1`, the reference pages' "Rituals & practices"
-    entries (Animal Messenger is druid-granted); then the on-screen sheet's
+  - **Where:** `?preview=1` with Rituals & practices ticked in Sections,
+    the reference pages' "Rituals & practices" entries (Animal Messenger is druid-granted); then the on-screen sheet's
     Rituals & practices cards, light and dark theme.
   - **Expect:** each entry starts with the ritual's description, then its
     fields under the card's one-word labels (Skill, Cost, Price; the label
@@ -709,7 +716,8 @@ live site.
   - **Where:** `?preview=1`: Expeditious Retreat and Freezing Cloud; then
     their panel cards on the Build tab.
   - **Expect:** a small uppercase "SPELLBOOK" at the right of the title band.
-    On the Character Reference pages the Spellbook heading reads just
+    On the Character Reference pages (Feature reference ticked in
+    Sections) the Spellbook heading reads just
     "Spellbook", with no spell names after it (they are power cards).
   - **Wrong if:** it wraps under the name or pushes the name off, or the
     reference heading still reads "Spellbook: Expeditious Retreat, …".

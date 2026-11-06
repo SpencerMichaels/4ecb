@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeSheetLayout,
+  SHEET_SECTION_DEFAULT_SHOWN,
   SHEET_SECTION_IDS,
+  sheetSectionShown,
   sheetSectionCopies,
   sheetSectionOrder,
   withHoldingCardsShown,
@@ -24,6 +26,7 @@ describe("sheet layout", () => {
       normalizeSheetLayout({
         version: 9,
         hiddenSections: ["scratchpad", "reference:items", "page-1", 4],
+        shownSections: ["session-notes", "pages", "session-notes", ""],
         hiddenCards: ["power:a", "power:a", "", null, "x".repeat(600)],
         shownCards: "item:a",
         future: true,
@@ -31,7 +34,54 @@ describe("sheet layout", () => {
     ).toEqual({
       version: 1,
       hiddenSections: ["scratchpad", "reference:items"],
+      shownSections: ["session-notes"],
       hiddenCards: ["power:a"],
+    });
+    expect(normalizeSheetLayout({ version: 1, shownSections: [] })).toBe(
+      undefined,
+    );
+  });
+
+  it("prints the overview, scratchpad and cards by default, nothing else", () => {
+    expect(
+      SHEET_SECTION_IDS.filter((id) => SHEET_SECTION_DEFAULT_SHOWN[id]),
+    ).toEqual(["summary", "scratchpad", "cards"]);
+    expect(
+      SHEET_SECTION_IDS.filter((id) => sheetSectionShown(undefined, id)),
+    ).toEqual(["summary", "scratchpad", "cards"]);
+  });
+
+  it("turns default-hidden sections on through shownSections", () => {
+    const shown = withSheetSectionShown(undefined, "reference:items", true);
+    expect(shown).toEqual({ version: 1, shownSections: ["reference:items"] });
+    expect(sheetSectionShown(shown, "reference:items")).toBe(true);
+    expect(normalizeSheetLayout(JSON.parse(JSON.stringify(shown)))).toEqual(
+      shown,
+    );
+    // Hiding it again is the default: nothing is stored.
+    expect(withSheetSectionShown(shown, "reference:items", false)).toBe(
+      undefined,
+    );
+    // Hiding an already hidden section stores nothing either.
+    expect(withSheetSectionShown(undefined, "session-notes", false)).toBe(
+      undefined,
+    );
+  });
+
+  it("ignores a section stored in the list for the other default", () => {
+    // An older save hid a section that is now hidden by default, and a
+    // shown list may name a section shown by default: both are inert.
+    const layout = normalizeSheetLayout({
+      version: 1,
+      hiddenSections: ["reference:features"],
+      shownSections: ["cards"],
+    });
+    expect(sheetSectionShown(layout, "reference:features")).toBe(false);
+    expect(sheetSectionShown(layout, "cards")).toBe(true);
+    // Showing the section clears the stale entry and stores the delta.
+    expect(withSheetSectionShown(layout, "reference:features", true)).toEqual({
+      version: 1,
+      shownSections: ["cards", "reference:features"],
     });
   });
 

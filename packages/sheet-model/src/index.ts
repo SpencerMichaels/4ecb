@@ -199,6 +199,7 @@ export {
 } from "./card-deck";
 export {
   applySheetLayout,
+  sheetHiddenSections,
   sheetLayoutCardKey,
   type ResolvedSheetLayout,
   type SheetLayoutCard,

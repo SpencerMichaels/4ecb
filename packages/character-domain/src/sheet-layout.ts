@@ -40,10 +40,33 @@ export const SHEET_SECTION_IDS: readonly SheetSectionId[] = [
   "session-notes",
 ];
 
+/**
+ * Whether each section prints by default (D099 amendment, 2026-11-06): the
+ * overview, scratchpad and card pages; the reference pages and Session
+ * notes only when the player turns them on.
+ */
+export const SHEET_SECTION_DEFAULT_SHOWN: Readonly<
+  Record<SheetSectionId, boolean>
+> = {
+  summary: true,
+  scratchpad: true,
+  "reference:features": false,
+  "reference:items": false,
+  "reference:power-index": false,
+  "reference:rituals": false,
+  "reference:profile": false,
+  cards: true,
+  "session-notes": false,
+};
+
 export interface SheetLayout {
   readonly version: 1;
-  /** Sections left out of the printed sheet. */
+  /** Default-shown sections the player left out (an id of a section
+   *  hidden by default is ignored). */
   readonly hiddenSections?: readonly SheetSectionId[];
+  /** Default-hidden sections the player turned on (an id of a section
+   *  shown by default is ignored). */
+  readonly shownSections?: readonly SheetSectionId[];
   /** Deck card keys (sheet-model `sheetCardDeck`) left out of the deck. */
   readonly hiddenCards?: readonly string[];
   /** Keys of cards hidden by default that print anyway. */
@@ -141,6 +164,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
     return undefined;
   const record = value as Record<string, unknown>;
   const hiddenSections = strings(record.hiddenSections).filter(isSectionId);
+  const shownSections = strings(record.shownSections).filter(isSectionId);
   const hiddenCards = strings(record.hiddenCards);
   const shownCards = strings(record.shownCards);
   const order = sheetSectionOrder(record.sectionOrder);
@@ -154,6 +178,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
   const reminders = reminderChoices(record.reminders);
   if (
     hiddenSections.length === 0 &&
+    shownSections.length === 0 &&
     hiddenCards.length === 0 &&
     shownCards.length === 0 &&
     sectionOrder === undefined &&
@@ -165,6 +190,7 @@ export function normalizeSheetLayout(value: unknown): SheetLayout | undefined {
   return {
     version: 1,
     ...(hiddenSections.length === 0 ? {} : { hiddenSections }),
+    ...(shownSections.length === 0 ? {} : { shownSections }),
     ...(hiddenCards.length === 0 ? {} : { hiddenCards }),
     ...(shownCards.length === 0 ? {} : { shownCards }),
     ...(sectionOrder === undefined ? {} : { sectionOrder }),
@@ -265,16 +291,36 @@ export function withSheetReminderShown(
   });
 }
 
-/** Shows or hides one sheet section. */
+/** Whether a section prints under a layout: its default, unless the
+ *  layout's delta list for that default names it. */
+export function sheetSectionShown(
+  layout: SheetLayout | undefined,
+  section: SheetSectionId,
+): boolean {
+  return SHEET_SECTION_DEFAULT_SHOWN[section]
+    ? !(layout?.hiddenSections ?? []).includes(section)
+    : (layout?.shownSections ?? []).includes(section);
+}
+
+/**
+ * Shows or hides one sheet section, storing only the delta from its
+ * default: a default-shown section the player hides goes in
+ * `hiddenSections`, a default-hidden one they show in `shownSections`.
+ */
 export function withSheetSectionShown(
   layout: SheetLayout | undefined,
   section: SheetSectionId,
   shown: boolean,
 ): SheetLayout | undefined {
-  const others = (layout?.hiddenSections ?? []).filter((id) => id !== section);
+  const hidden = (layout?.hiddenSections ?? []).filter((id) => id !== section);
+  const shownList = (layout?.shownSections ?? []).filter(
+    (id) => id !== section,
+  );
+  const byDefault = SHEET_SECTION_DEFAULT_SHOWN[section];
   return normalizeSheetLayout({
     ...layout,
-    hiddenSections: shown ? others : [...others, section],
+    hiddenSections: byDefault && !shown ? [...hidden, section] : hidden,
+    shownSections: !byDefault && shown ? [...shownList, section] : shownList,
   });
 }
 

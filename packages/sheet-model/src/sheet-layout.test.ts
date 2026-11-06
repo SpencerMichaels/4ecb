@@ -65,7 +65,15 @@ describe("applySheetLayout", () => {
       ["item:b", false],
       ["item:def:cached", false],
     ]);
-    expect(resolved.hiddenSections.size).toBe(0);
+    // Only the overview, scratchpad and cards print by default.
+    expect([...resolved.hiddenSections]).toEqual([
+      "reference:features",
+      "reference:items",
+      "reference:power-index",
+      "reference:rituals",
+      "reference:profile",
+      "session-notes",
+    ]);
     expect(resolved.sectionOrder).toEqual(SHEET_SECTION_IDS);
     expect(resolved.sectionCopies).toEqual({
       scratchpad: 1,
@@ -80,7 +88,14 @@ describe("applySheetLayout", () => {
         version: 1,
         hiddenCards: ["power:arc", "play:skills", "item:a", "power:gone"],
         shownCards: ["item:def:cached"],
-        hiddenSections: ["summary", "scratchpad"],
+        hiddenSections: ["summary", "scratchpad", "session-notes"],
+        shownSections: [
+          "reference:features",
+          "reference:items",
+          "reference:power-index",
+          "reference:rituals",
+          "summary",
+        ],
         sectionOrder: ["cards"],
         sectionCopies: { "session-notes": 2 },
       },
@@ -98,7 +113,14 @@ describe("applySheetLayout", () => {
     expect(resolved.cards.find(({ key }) => key === "item:b")?.holdingId).toBe(
       "b",
     );
-    expect([...resolved.hiddenSections]).toEqual(["summary", "scratchpad"]);
+    // A default-hidden section in hiddenSections (session-notes) or a
+    // default-shown one in shownSections (summary) changes nothing.
+    expect([...resolved.hiddenSections]).toEqual([
+      "summary",
+      "scratchpad",
+      "reference:profile",
+      "session-notes",
+    ]);
     expect(resolved.sectionOrder[0]).toBe("cards");
     expect(resolved.sectionCopies).toEqual({
       scratchpad: 1,

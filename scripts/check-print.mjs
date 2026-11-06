@@ -957,6 +957,20 @@ function printCharacter() {
     id: "synthetic-print-character",
     title: "Synthetic print fixture hero",
     notes: "Public synthetic print fixture",
+    // Only the overview, scratchpad and cards print by default (D099
+    // amendment, 2026-11-06): the fixture turns the reference pages and
+    // Session notes on so their print layout is checked too.
+    sheetLayout: {
+      version: 1,
+      shownSections: [
+        "reference:features",
+        "reference:items",
+        "reference:power-index",
+        "reference:rituals",
+        "reference:profile",
+        "session-notes",
+      ],
+    },
     createdAt: "2026-08-31T00:00:00.000Z",
     updatedAt: "2026-08-31T00:00:00.000Z",
     legacy: { format: "dnd4e", sourceXml: "<D20Character/>" },

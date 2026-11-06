@@ -383,7 +383,10 @@ separate header or level rail.
   through `test-styles.ts` (`appStyles`).
 - **Print layout.** `SheetOverview.tsx` renders page 1, continuations,
   scratchpad, reference pages, the card pages (its children) and Session
-  Notes in the layout's section order (D099), fitting content by measuring
+  Notes in the layout's section order (D099); by default only the overview,
+  scratchpad and cards print (`SHEET_SECTION_DEFAULT_SHOWN` in
+  character-domain `sheet-layout.ts`; the layout stores `hiddenSections`
+  and `shownSections` deltas from it), fitting content by measuring
   hidden "probe" copies (`ov-pane-probe`, `ov-reminder-probe`). Power and
   item cards are `PowerCard.tsx`/`ItemCard.tsx` (fit hook in
   `use-print-card-fit.ts`) plus `PrintPlayCards.tsx`. The deck and its

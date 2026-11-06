@@ -364,17 +364,19 @@ To choose what prints and in what order, open **Sections** in the Edit
 toolbar. Each row is a section with a checkbox: Overview (page 1, with any
 continuation pages), the play scratchpad, each full-reference group
 (features, item reference, power index, rituals & practices, character
-profile), Power & item cards and session notes. Untick a row to leave that
-section out of the preview and the printout; untick Overview and the rest
-to reprint only some cards. Drag a row by its grip (or focus it and press
+profile), Power & item cards and session notes. By default only Overview,
+the play scratchpad and Power & item cards are ticked: tick a reference
+group or session notes to print it too. Untick a row to leave that
+section out of the preview and the printout; untick Overview and the
+scratchpad to reprint only some cards. Drag a row by its grip (or focus it and press
 Alt+Up or Alt+Down) to move it; the sheet prints in the new order and page
 numbers follow it. The play scratchpad and session notes print without page
 numbers, so you can print extra copies: use the − and + buttons on their
 rows, or type a number. Escape or a click elsewhere closes the menu. An item's card
 choice is saved on the item itself, so it carries over when the character is
 exported to the original Character Builder. **Reset** (click again to
-confirm) prints everything again, in the default order, with the default
-reminders. Changes save automatically, are
+confirm) goes back to the default sections (Overview, play scratchpad and
+cards), in the default order, with the default reminders. Changes save automatically, are
 kept per character in backups and copies, and don't change the character's
 "last modified" time; printing (**Print or save PDF**, or **PDF** from the
 library) always uses the saved choices.

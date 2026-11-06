@@ -20,7 +20,10 @@ import {
   type CharacterSheetModel,
   type SheetDeckCard,
 } from "@4ecb/sheet-model";
-import { characterDisplayName } from "@4ecb/character-domain";
+import {
+  characterDisplayName,
+  type SheetSectionId,
+} from "@4ecb/character-domain";
 
 import { AssociateCard } from "../src/AssociateCard";
 import { BeastCompanionCard } from "../src/BeastCompanionCard";
@@ -73,7 +76,13 @@ export interface PrintedPages {
 
 const printedPages = new WeakMap<CharacterSheetModel, PrintedPages>();
 
-/** Page 1, continuations, reference pages (SheetOverview, as printed). */
+/** Every section turned on, so the reference pages and Session notes print
+ *  (by default only the overview, scratchpad and cards do, D099 amendment
+ *  2026-11-06; the unit tests cover the defaults). */
+const EVERY_SECTION: ReadonlySet<SheetSectionId> = new Set();
+
+/** Page 1, continuations, reference pages (SheetOverview, as printed with
+ *  every section turned on). */
 export function printedPagesFor(
   c: ReviewCharacter,
   model: CharacterSheetModel = c.sheet,
@@ -86,6 +95,7 @@ export function printedPagesFor(
         name: characterName(c),
         portrait: undefined,
         paper: "letter",
+        hiddenSections: EVERY_SECTION,
       }),
     );
     result = { html, text: textOf(html), references: references(model) };

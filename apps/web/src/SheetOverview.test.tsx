@@ -28,6 +28,9 @@ import {
   type ReferenceEntry,
 } from "./SheetOverview";
 import { dotted } from "./test-dot-list";
+// Most tests read the reference and Session notes pages, which print only
+// when turned on (D099 amendment, 2026-11-06): render every section.
+const EVERY_SECTION: ReadonlySet<SheetSectionId> = new Set();
 
 const model = buildSheetModel({
   details: { name: "Overview fixture", Level: "8" },
@@ -92,6 +95,7 @@ describe("real-data sheet overview", () => {
     ]);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -234,6 +238,7 @@ describe("real-data sheet overview", () => {
     ).toBe(false);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -363,6 +368,7 @@ describe("real-data sheet overview", () => {
     ]);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -455,6 +461,7 @@ describe("real-data sheet overview", () => {
     expect(entry?.parts[0]?.inventoryWeight).toBe(8);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -469,6 +476,7 @@ describe("real-data sheet overview", () => {
   it("keeps Date and XP off the scratchpad and appends an unnumbered ruled template", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Fixture"
         portrait={undefined}
@@ -548,6 +556,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -582,6 +591,7 @@ describe("real-data sheet overview", () => {
       ).toBe(false);
       const html = renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={fixture}
           name="Fixture"
           portrait={undefined}
@@ -610,6 +620,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Ingi fixture"
         portrait={undefined}
@@ -822,6 +833,7 @@ describe("real-data sheet overview", () => {
     ).toEqual([undefined, undefined, "Universal actions"]);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{ ...model, powers }}
         name="Fixture"
         portrait={undefined}
@@ -1216,6 +1228,7 @@ describe("real-data sheet overview", () => {
   it("places card pages after the scratchpad and full references", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Fixture"
         portrait={undefined}
@@ -1233,6 +1246,7 @@ describe("real-data sheet overview", () => {
   it("supplies a continuous starting page to card rendering", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Fixture"
         portrait={undefined}
@@ -1246,6 +1260,23 @@ describe("real-data sheet overview", () => {
     expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
       html.indexOf('data-card-start="2"'),
     );
+  });
+  it("prints only the overview, scratchpad and cards without a layout", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+      >
+        <section data-card-position="here" />
+      </SheetOverview>,
+    );
+    expect(html).toContain('aria-label="Character summary"');
+    expect(html).toContain('aria-label="Play scratchpad"');
+    expect(html).toContain('data-card-position="here"');
+    expect(html).not.toMatch(/<article[^>]*aria-label="Character reference"/);
+    expect(html).not.toContain('aria-label="Session notes"');
   });
   it("leaves hidden sections out and numbers later pages without them", () => {
     const render = (hidden: readonly SheetSectionId[]) =>
@@ -1273,6 +1304,7 @@ describe("real-data sheet overview", () => {
     }) =>
       renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={model}
           name="Fixture"
           portrait={undefined}
@@ -1322,6 +1354,7 @@ describe("real-data sheet overview", () => {
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           powers: ["Alpha", "Beta"].map((name) => ({
@@ -1363,6 +1396,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -1387,6 +1421,7 @@ describe("real-data sheet overview", () => {
   it("puts date in the compact session row and identity in the scratchpad footer", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           identity: [
@@ -1424,6 +1459,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -1451,6 +1487,7 @@ describe("real-data sheet overview", () => {
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Fixture"
         portrait={undefined}
@@ -1625,6 +1662,7 @@ describe("real-data sheet overview", () => {
     const second = "Whenever you shift, gain another benefit.";
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           overview: {
@@ -1667,6 +1705,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           overview: {
@@ -1725,6 +1764,7 @@ describe("real-data sheet overview", () => {
     ).toEqual(["Melee Basic Attack", "Ranged Basic Attack"]);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           powers: [
@@ -1757,6 +1797,7 @@ describe("real-data sheet overview", () => {
     const name = "A very long synthetic character name that needs truncation";
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name={name}
         portrait={undefined}
@@ -1770,6 +1811,7 @@ describe("real-data sheet overview", () => {
   it("puts senses before skills and keeps defensive traits above reminders on the right", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           overview: {
@@ -1806,6 +1848,7 @@ describe("real-data sheet overview", () => {
   it("omits a blank company and its separator from the player subtitle", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           identity: [
@@ -1830,6 +1873,7 @@ describe("real-data sheet overview", () => {
     ({ identity }) => {
       const html = renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={{ ...model, identity }}
           name="Fixture"
           portrait={undefined}
@@ -1865,6 +1909,7 @@ describe("real-data sheet overview", () => {
     ]) {
       const html = renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={{ ...model, overview: { ...model.overview!, saves: saves! } }}
           name="Fixture"
           portrait={undefined}
@@ -1895,6 +1940,7 @@ describe("real-data sheet overview", () => {
       };
       const html = renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={m}
           name="Fixture"
           portrait={undefined}
@@ -1962,6 +2008,7 @@ describe("real-data sheet overview", () => {
     expect(rows[0]).toMatchObject({ attack: "+10", damage: "1d8+5" });
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={m}
         name="Fixture"
         portrait={undefined}
@@ -1982,6 +2029,7 @@ describe("real-data sheet overview", () => {
     expect(
       renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={{
             ...m,
             powers: [{ ...m.powers[0]!, variants: [variants[1]!] }],
@@ -2061,6 +2109,7 @@ describe("real-data sheet overview", () => {
     expect(overviewBasicAttackRows(fixture, 1)).toHaveLength(2);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -2194,6 +2243,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={m}
         name="Fixture"
         portrait={undefined}
@@ -2260,6 +2310,7 @@ describe("real-data sheet overview", () => {
   it("groups defensive traits in the summary body and preserves full references", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           overview: {
@@ -2326,6 +2377,7 @@ describe("real-data sheet overview", () => {
     ).not.toContain("Resist 5 fire");
     const empty = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Fixture"
         portrait={undefined}
@@ -2355,6 +2407,7 @@ describe("real-data sheet overview", () => {
     ) =>
       renderToStaticMarkup(
         <SheetOverview
+          hiddenSections={EVERY_SECTION}
           model={{ ...model, overview: { ...model.overview!, ...overview } }}
           name="Fixture"
           portrait={undefined}
@@ -2425,6 +2478,7 @@ describe("real-data sheet overview", () => {
   ])("signs initiative %s as %s", (value, expected) => {
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{ ...model, resources: [{ label: "Initiative", value }] }}
         name="Fixture"
         portrait={undefined}
@@ -2459,6 +2513,7 @@ describe("real-data sheet overview", () => {
     }));
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           overview: {
@@ -2682,6 +2737,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={m}
         name="Fixture"
         portrait={undefined}
@@ -2858,6 +2914,7 @@ describe("real-data sheet overview", () => {
     expect(wornItems).toContain("Daggers");
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -2900,6 +2957,7 @@ describe("real-data sheet overview", () => {
     expect(entries.some((entry) => entry.id.startsWith("note:"))).toBe(false);
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -2961,6 +3019,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -2981,6 +3040,7 @@ describe("real-data sheet overview", () => {
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={model}
         name="Overview fixture"
         portrait={undefined}
@@ -3096,6 +3156,7 @@ describe("real-data sheet overview", () => {
     };
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={fixture}
         name="Fixture"
         portrait={undefined}
@@ -3138,6 +3199,7 @@ describe("real-data sheet overview", () => {
     });
     const html = renderToStaticMarkup(
       <SheetOverview
+        hiddenSections={EVERY_SECTION}
         model={{
           ...model,
           powers: [

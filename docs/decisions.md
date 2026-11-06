@@ -2995,7 +2995,7 @@ Decision:
   and `portrait`. No schema bump; backups, export, duplicate and trash carry
   it unchanged; the rules engine and `.dnd4e` import/export never see it.
   It stores only deltas from the default sheet (`hiddenSections`,
-  `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`, `cardOrder`,
+  `shownSections` (2026-11-06 amendment below), `hiddenCards`, `shownCards`, `sectionOrder`, `sectionCopies`, `cardOrder`,
   `reminders`), so new cards and reminders get default behavior; vanished
   keys are ignored, not pruned. `normalizeSheetLayout` reads stored values
   leniently (malformed entries are dropped; an empty layout is the default).
@@ -3210,6 +3210,26 @@ Decision:
   the sheet). Reminder rows are right-click only again, as before the eye
   toggles. This is D117's main-UI alternative for sheet Edit mode: the
   action is still right-click, but the visible UI says so.
+- Amendment (owner, 2026-11-06): "Enabled by default: overview,
+  scratchpad, power and item cards. Everything else disabled by default."
+  Sections now have a default visibility, one table beside
+  `SHEET_SECTION_IDS`: `SHEET_SECTION_DEFAULT_SHOWN` in
+  `character-domain/src/sheet-layout.ts` (`summary`, `scratchpad`,
+  `cards` shown; the five `reference:*` groups and `session-notes`
+  hidden). The layout stores deltas from it the way cards do:
+  `hiddenSections` keeps meaning default-shown sections the player turned
+  off, and a new optional `shownSections` lists default-hidden sections
+  they turned on (`withSheetSectionShown` writes the right list,
+  `sheetSectionShown` reads one section, sheet-model
+  `sheetHiddenSections` the whole set `applySheetLayout` and
+  `SheetOverview`'s no-layout default use). An id in the other default's
+  list (an older save's `hiddenSections: ["reference:features"]`) is inert.
+  No layout version bump: the field is optional and an older reader's
+  `normalizeSheetLayout` drops it (it would just print its own defaults).
+  Existing characters are not migrated (owner): one without explicit
+  choices switches to the new defaults, and Reset returns to them. Copies
+  steppers are unchanged; the layout stays native-only, so `.dnd4e`
+  export is unaffected.
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

@@ -24,6 +24,7 @@ import {
   CONDITIONAL_MODIFIERS_HEADING,
   featureChoiceText,
   powerActionRank,
+  sheetHiddenSections,
   withoutDanglingChoiceLeadIn,
   type CharacterSheetModel,
   type OverviewReminder,
@@ -3545,7 +3546,8 @@ function ReferencePages({
     </>
   );
 }
-const NO_HIDDEN_SECTIONS: ReadonlySet<SheetSectionId> = new Set();
+// No layout: the default sections print (`SHEET_SECTION_DEFAULT_SHOWN`).
+const DEFAULT_HIDDEN_SECTIONS = sheetHiddenSections(undefined);
 const NO_SECTION_COPIES: Readonly<
   Partial<Record<SheetCopyableSectionId, number>>
 > = {};
@@ -3561,7 +3563,7 @@ export function SheetOverview({
   name,
   portrait,
   paper,
-  hiddenSections = NO_HIDDEN_SECTIONS,
+  hiddenSections = DEFAULT_HIDDEN_SECTIONS,
   sectionOrder = SHEET_SECTION_IDS,
   sectionCopies = NO_SECTION_COPIES,
   cardPageCount = 0,
