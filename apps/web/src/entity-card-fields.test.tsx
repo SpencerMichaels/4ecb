@@ -467,3 +467,66 @@ describe("background card", () => {
     expect(plain).not.toContain("General");
   });
 });
+
+describe("race card", () => {
+  const trait = record(
+    "ID_SYNTH_TRAIT",
+    "Synthetic Breath",
+    "Racial Trait",
+    { Level: "1" },
+    { description: "You can breathe fire." },
+  );
+  const race = record(
+    "ID_SYNTH_RACE",
+    "Synthetic Dragonborn",
+    "Race",
+    {
+      Size: "Medium",
+      Speed: "6 squares",
+      Vision: "Normal",
+      "Average Height": `6'2"-6'8"`,
+      "Average Weight": "220-320 lb.",
+      "Ability Scores": "+2 Strength; +2 Constitution or +2 Charisma",
+      Languages: "Common, choice of two others",
+      "Skill Bonuses": "+2 History, +2 Intimidate",
+      "Racial Traits": "ID_SYNTH_TRAIT",
+      "Short Description": "Proud warriors.",
+    },
+    { description: "Born to fight." },
+  );
+
+  it("shows Size · Speed · Vision, then Height · Weight", () => {
+    expect(subheaderLines(render(race, [trait]))).toEqual([
+      ["Size: Medium", "Speed: 6 squares", "Vision: Normal"],
+      ["Height: 6&#x27;2&quot;-6&#x27;8&quot;", "Weight: 220-320 lb."],
+    ]);
+  });
+
+  it("lists Abilities, Languages and Skills as body lines, before the traits", () => {
+    const markup = render(race, [trait]);
+    expect(bodyLines(markup)).toEqual([
+      "Abilities: +2 Strength; +2 Constitution or +2 Charisma",
+      "Languages: Common, choice of two others",
+      "Skills: +2 History, +2 Intimidate",
+    ]);
+    expect(body(markup).indexOf("<dt>Skills</dt>")).toBeLessThan(
+      body(markup).indexOf("Racial traits"),
+    );
+    expect(body(markup)).toContain("You can breathe fire.");
+  });
+
+  it("shows each field once and leaves empty fields out", () => {
+    const markup = render(race, [trait]);
+    expectNoDuplicateLabels(markup);
+    expect(body(markup)).not.toContain("6 squares");
+    expect(body(markup)).not.toContain("220-320 lb.");
+    const sparse = record("ID_SYNTH_RACE_2", "Sparse Race", "Race", {
+      Size: "Small",
+      Vision: "Low-light",
+    });
+    expect(subheaderLines(render(sparse))).toEqual([
+      ["Size: Small", "Vision: Low-light"],
+    ]);
+    expect(bodyLines(render(sparse))).toEqual([]);
+  });
+});

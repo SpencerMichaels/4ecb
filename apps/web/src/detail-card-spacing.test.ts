@@ -361,7 +361,6 @@ const HEADING_ROLES = {
   "prose heading": ".reference-card-body .prose-blocks > h6",
   "lore field heading": ".reference-card-body .entity-lore-field > h6",
   "field label": ".reference-card-body .candidate-fields dt",
-  "stat label": ".reference-card-body .entity-stat-grid dt",
   "trait name": ".reference-card-body .entity-trait-list strong",
 };
 

@@ -195,6 +195,20 @@ const PLACEMENTS: Readonly<
       fields.at("Languages", "body", "Associated Languages"),
     ];
   },
+  // A race's traits box: size, speed and vision (fixed size first), then
+  // height and weight up top; its ability, language and skill lists
+  // ("+2 Wisdom; +2 Intelligence or +2 Charisma", "Common, choice of two
+  // others") vary, so they are body lines.
+  race: (fields) => [
+    fields.at("Size", 1, "Size"),
+    fields.at("Speed", 1, "Speed"),
+    fields.at("Vision", 1, "Vision"),
+    fields.at("Height", 2, "Average Height"),
+    fields.at("Weight", 2, "Average Weight"),
+    fields.at("Abilities", "body", "Ability Scores"),
+    fields.at("Languages", "body", "Languages"),
+    fields.at("Skills", "body", "Skill Bonuses"),
+  ],
   class: classPlacements,
   "hybrid class": classPlacements,
   "class feature": featurePlacements,

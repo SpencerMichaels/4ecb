@@ -48,29 +48,6 @@ function CardSection({
   );
 }
 
-interface StatRow {
-  readonly label: string;
-  readonly value: string | undefined;
-}
-
-function StatGrid({ rows }: { readonly rows: readonly StatRow[] }) {
-  const shown = rows.filter(
-    (row): row is { label: string; value: string } =>
-      row.value !== undefined && row.value.trim() !== "",
-  );
-  if (shown.length === 0) return null;
-  return (
-    <dl className="entity-stat-grid">
-      {shown.map((row) => (
-        <div key={row.label}>
-          <dt>{row.label}</dt>
-          <dd>{row.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 interface Trait {
   readonly id: string;
   readonly name: string;
@@ -172,16 +149,6 @@ function MoreFields({
   );
 }
 
-const RACE_STATS = [
-  ["Ability Scores", "Ability scores"],
-  ["Size", "Size"],
-  ["Speed", "Speed"],
-  ["Vision", "Vision"],
-  ["Languages", "Languages"],
-  ["Skill Bonuses", "Skill bonuses"],
-  ["Average Height", "Height"],
-  ["Average Weight", "Weight"],
-] as const;
 const RACE_LORE = [
   ["Characteristics", "Characteristics"],
   ["Physical Qualities", "Physical qualities"],
@@ -203,14 +170,12 @@ function RaceBody({
       const trait = references.get(normalized(id));
       return trait === undefined ? [] : [traitOf(trait)];
     });
+  // Size, speed, vision, height and weight are the card's subheader
+  // (`EntitySubheader`); its body lines lead the body.
+  const placement = entityCardFields(entity);
   return (
     <>
-      <StatGrid
-        rows={RACE_STATS.map(([field, label]) => ({
-          label,
-          value: contentSpecificValue(entity, field),
-        }))}
-      />
+      <CardFieldLines fields={placement?.body ?? []} />
       <TraitList heading="Racial traits" traits={traits} />
       <CardSection title={`About ${entity.name}`}>
         <LoreFields entity={entity} names={RACE_LORE} />
@@ -218,7 +183,7 @@ function RaceBody({
       <MoreFields
         entity={entity}
         placed={[
-          ...RACE_STATS.map(([field]) => field),
+          ...(placement?.placed ?? []),
           ...RACE_LORE.map(([field]) => field),
           "Racial Traits",
         ]}

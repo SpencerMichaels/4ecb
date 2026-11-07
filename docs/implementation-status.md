@@ -1680,6 +1680,21 @@ leaving out what was placed or dropped.
   them "Skills:" and "Languages:" too, before the Benefit. Tests:
   `entity-card-fields.test.tsx`, `StructuredEntityBody.test.ts`,
   `overview.test.ts`, `SheetOverview.test.tsx`.
+- **Race:** subheader "Size · Speed · Vision", then "Height · Weight".
+  Body lines before the racial traits: Abilities (Ability Scores),
+  Languages, Skills (Skill Bonuses). The stat grid (`entity-stat-grid`,
+  its CSS and `StatGrid`) is gone with the last race, class and
+  background use. Content: `content/corrections/9J-race-speeds.part`
+  gives the Pixie the Speed "4 squares, fly 6 (altitude limit 1)" (it was a
+  119-character rule sentence, every other race's is "6 squares" or
+  similar) and moves "You cannot use your fly speed if you are carrying
+  more than a normal load." to the end of its description (the card's
+  About text); the Speed specific is display text only (the evaluated
+  speed comes from the race's statadd). The pack was rebuilt
+  (`build-private-content.sh`, valid); `pnpm parity:baseline` shows no
+  new mismatch (the baseline names the previous pack until it is
+  re-accepted). Tests: `entity-card-fields.test.tsx`,
+  `StructuredEntityBody.test.ts`.
 
 ## Known-record rows and ritual cards (2026-11-06)
 

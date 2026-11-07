@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Race card speeds (D079 amendment, card subheaders, 2026-11-06). A race
+  card's subheader reads "Size · Speed · Vision", which holds only short
+  fields of steady size; every race's Speed is "6 squares" or similar
+  except the Pixie's, whose authored Speed carried a rule sentence (119
+  characters). Its speed keeps the squares; the sentence moves to the end
+  of the race's description (the card's About text). The Speed specific is
+  display text only: the evaluated Speed comes from the race's statadd.
+  Merged after the CBLoader parts by scripts/build-private-content.sh.
+-->
+<D20Rules game-system="D&amp;D4E">
+
+  <!-- Pixie (Heroes of the Feywild, CBLoader 06-races.part). -->
+  <RemoveNodes internal-id="ID_FMP_RACE_61"><specific name="Speed" /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_RACE_61">
+    <specific name="Speed">4 squares, fly 6 (altitude limit 1)</specific>
+You cannot use your fly speed if you are carrying more than a normal load.</AppendNodes>
+</D20Rules>

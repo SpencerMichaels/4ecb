@@ -1156,6 +1156,20 @@ Moradin, or an item a character holds), build and import or advertise it.
     "Benefit: …".
   - **Wrong if:** "Scales of War Adventure Path" overflows the card, or
     the campaign shows twice.
+- [ ] **Race card subheader.** Added 2026-11-06; lines and body lines are
+      unit-tested, this is the look.
+  - **Where:** at 140% zoom, light and dark theme: Build → level 1 →
+    Race; click Dragonborn, Halfling, Bullywug ("6 squares (swamp
+    walk)") and Pixie (Heroes of the Feywild; needs the rebuilt pack).
+  - **Expect:** "SIZE Medium · SPEED 6 squares · VISION Normal", then
+    "HEIGHT 6' 2"-6' 8" · WEIGHT 220-320 lb."; the body opens with the
+    short description, then "Abilities: …", "Languages: …", "Skills: …"
+    lines, then Racial traits and About. The Pixie reads "SPEED 4
+    squares, fly 6 (altitude limit 1)" on the first line, and its About
+    text ends "You cannot use your fly speed if you are carrying more than
+    a normal load."
+  - **Wrong if:** the first line wraps between a label and its value,
+    the old two-column stat grid remains, or a field shows twice.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

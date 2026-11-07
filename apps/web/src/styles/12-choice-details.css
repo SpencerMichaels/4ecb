@@ -660,31 +660,6 @@
   padding-top: var(--card-block-gap, 0.6rem);
 }
 
-.entity-stat-grid {
-  align-items: baseline;
-  display: grid;
-  gap: 0.3rem 0.75rem;
-  grid-template-columns: max-content minmax(0, 1fr);
-  margin: 0;
-}
-
-.entity-stat-grid > div {
-  display: contents;
-}
-
-.entity-stat-grid dt {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.entity-stat-grid dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
 .entity-trait-list {
   display: grid;
   gap: var(--card-block-gap, 0.55rem);

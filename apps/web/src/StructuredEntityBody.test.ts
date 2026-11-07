@@ -57,7 +57,7 @@ function render(subject: ContentEntity, others: readonly ContentEntity[] = []) {
 }
 
 describe("structured race, class and background cards", () => {
-  it("leads a race with its stat grid and traits, then its lore", () => {
+  it("leads a race with its body lines and traits, then its lore", () => {
     const trait = entity(
       "TRAIT_STOMACH",
       "Iron Stomach",
@@ -85,7 +85,11 @@ describe("structured race, class and background cards", () => {
     );
 
     expect(markup).toContain("Tough mountain folk.");
-    expect(markup).toContain("<dt>Speed</dt><dd>5 squares</dd>");
+    // Size and Speed are the card's subheader (entity-card-fields.test.tsx).
+    expect(markup).not.toContain("5 squares");
+    expect(markup).toContain(
+      '<dt>Abilities</dt><dd class="preserve-lines">+2 Constitution, +2 Strength or +2 Wisdom</dd>',
+    );
     expect(markup).toContain("Iron Stomach");
     expect(markup).toContain("+5 to saving throws against poison.");
     expect(markup).not.toContain("TRAIT_STOMACH");
