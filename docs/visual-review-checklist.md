@@ -1508,6 +1508,49 @@ Moradin, or an item a character holds), build and import or advertise it.
     potion flask, the globe as the orb's orbit), or any of these still
     shows the generic grid or the Feat sparkles.
 
+## Pass 25: Prose-only bonuses and background benefits (D120)
+
+Rebuild the private pack first (`scripts/build-private-content.sh`), then
+`pnpm review:build` and re-import the review content: older packs have no
+`_Prose Bonuses IR`, so the new pane rows don't appear (the background
+reminders do). The texts and which rows appear are unit-tested and were
+diffed on every sample save; this pass is how the rows sit on page 1.
+
+- [ ] **Flint: a prose-only check penalty in the pane.** Added 2026-11-07.
+  - **Where:** `flint` → `?preview=1`, page 1's Conditional modifiers pane,
+    at 100% and 140% zoom, light and dark theme.
+  - **Expect:** under "Skills & checks" a row "-5 penalty to Strength
+    checks to break or force open objects" with source "Wee Warrior",
+    striped like its neighbours; the pane still fits as before, and
+    "Remember in play" has no Wee Warrior row repeating it.
+  - **Wrong if:** the row sits under another group, its text is cut off or
+    runs into the Source column, the pane overflows page 1 where it did
+    not before, or the same bonus shows twice on the page.
+- [ ] **copy of character: a background benefit in Remember in play.**
+      Added 2026-11-07.
+  - **Where:** `copy-of-character` → `?preview=1`, page 1's "Remember in
+    play"; then Edit mode (`?preview=1&edit=1`), right-click the new row.
+  - **Expect:** an Other reminders row headed "Background benefit: Sarifal
+    Benefit" with "You gain Terrain Walk …", hidden and shown by
+    right-click like the other reminders.
+  - **Wrong if:** the row is missing, appears twice, can't be hidden, or
+    pushes other reminders off page 1 without a continuation note.
+- [ ] **Imported saves with the new rows.** Added 2026-11-07.
+  - **Where:** import with your own content and open each print preview,
+    page 1: `sample-chars/Erdan 11.dnd4e` (Skills & checks: Ranger
+    Wilderness Knacks "+2 bonus to Bluff, Diplomacy, and Intimidate checks
+    against beasts"); `sample-chars/Raleigh.dnd4e` (Saving throws: "+2
+    bonus to saving throws against ongoing lightning damage" from
+    Elemental Specialty, and a "Background benefit: High Imaskar Benefit"
+    reroll reminder); `sample-chars/KrizDevvon15.dnd4e` (Speed: Greaves of
+    Maldeen's long "+2 item bonus to speed as long as you move toward an
+    enemy …" row); `sample-chars/Hystan_8.dnd4e` (Defenses: Point Blank
+    Greatbow's AC row, and no Point Blank Greatbow reminder).
+  - **Expect:** each row in its group; the long Greaves row wraps inside
+    the Effect column; no reminder repeats a row.
+  - **Wrong if:** a row is in the wrong group, a long row breaks the table,
+    or a reminder repeats what a row says.
+
 ## Decisions
 
 Open judgement calls, not pass/fail checks. Look while you are on the

@@ -364,7 +364,12 @@ at least two layers, and `composeContentPacks` drops stored prerequisite IR
 from every record of a multi-layer pack, so the engine parses a patched
 `prerequisites` line, and any prerequisite that names a patched rule's IDs,
 against the composed records. Rule patches touch no specific, so the other
-stored IR (`_Power Text IR`, `_Note Values IR`) is unaffected. Stored
+stored IR (`_Power Text IR`, `_Note Values IR`) is unaffected.
+`_Prose Bonuses IR` (D120: the standing situational bonuses a record's
+prose states and its own statadds do not carry) is left as stored too; a
+rule patch that adds a statadd carrying one of them is caught at the
+sheet, which drops a stored bonus the evaluation already carries from the
+same source (same stat and amount). Stored
 `_Formula Items IR` (an alchemical formula's created item versions, linked
 by name to the records "<formula> (level N)" and "<formula> (heroic|paragon|epic
 tier)") also depends on other records, so `composeContentPacks` links it

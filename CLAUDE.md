@@ -265,6 +265,11 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   `_Note Values IR` (a feature note's tier, level-step and ability values,
   content-domain `note-values.ts`, printed in page-1 reminders by
   `featureReminderText` via derived-values `noteValueText`, D112),
+  `_Prose Bonuses IR` (the standing situational bonuses a feature's,
+  chosen benefit's or item property's prose states and its own statadds
+  don't carry, content-domain `prose-bonuses.ts`, parsed by legacy-wotc
+  `prose-bonuses.ts`; sheet-model `proseBonusRows` lists them in page 1's
+  Conditional modifiers pane or defensive traits, D120),
   `_Prerequisite IR` (prerequisite trees, content-domain
   `prerequisite-ir.ts`, stored by `content-tool build` against the whole
   pack and used only for that same record set) and `_Formula Items IR`

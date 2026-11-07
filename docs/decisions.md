@@ -5412,3 +5412,69 @@ over legacy behavior here.
   pack's stored trees: the only untyped clauses naming a Race and a
   Language are "thri-kreen" (5) and "goblin" (5); `pnpm parity:baseline`
   is unchanged.
+
+### D120 — Prose-only situational bonuses join the conditional panes; background benefits are reminders
+
+Status: accepted (2026-11-07, owner).
+
+Page 1 showed a situational bonus only when a statadd with a `condition`
+carried it (the Conditional modifiers pane, `conditionalModifiers` and
+`defensiveStatTraits`) or when the record's text passed the reminder test
+(when/if/trigger…). A record whose bonus exists only in its prose fell
+through both: Foreign Memories has no rules at all ("+5 feat bonus to
+Arcana, Insight, History, and Dungeoneering checks as they relate to
+aberrant creatures"); Stone Cunning's statadd carries only its flat
+Dungeoneering half; Enemy of the Darkness carries initiative and
+Perception but not "saving throws against poison".
+
+- **Detection at pack build.** The legacy-wotc import
+  (`legacy-wotc/src/prose-bonuses.ts`) parses each feature's full text
+  (else its benefit, else its note), each item's Property text (never its
+  powers) and a Background Choice's or self-implementing background's
+  benefit, and stores `_Prose Bonuses IR` (content-domain
+  `prose-bonuses.ts`, `PROSE_BONUSES_VERSION` 1, golden-tested). It keeps
+  only **standing** bonuses: a signed amount to a skill, kind of check,
+  defense, save, initiative, speed or resistance, granted to the character
+  ("you gain", "Gain a…", "grants you", "you and allies…"), with a
+  condition before or after it, and no duration, action trigger, action
+  point, choice or modification of another bonus. Clauses the record's
+  own statadds carry (same stat, amount and type; a statadd routed
+  through the record's own stat; legacy `resist:<condition>` stats; a
+  statadd condition that swallowed the clause) are left out. A flat prose
+  bonus without a statadd is missing content, not a situation, and is
+  skipped, except checks no stat holds ("Strength ability checks").
+- **Coverage (full pack, hand-labelled).** The owner's raw rule ("text
+  mentions a bonus, no statadd of that stat") matches 2,030 records,
+  mostly triggered or temporary effects and other creatures' bonuses
+  (already reminders or power text). The standing parse keeps 235 records
+  (252 bonuses: 150 magic items, 42 class features, 37 feats, 16 gear,
+  the rest racial traits, a theme, item-set benefits and two
+  backgrounds); the last precision sample was 48/50 before its two
+  patterns were fixed. Known misses: a bonus whose clause follows a
+  non-target ("+2 to Intelligence attacks, and a +4 to Intelligence
+  checks"), "the owner/master gains", choice-dependent bonuses.
+- **Where it shows.** sheet-model `proseBonusRows`
+  (`prose-bonus-modifiers.ts`) reads the field for page 1's features, the
+  picks made under them and equipped holdings (`OverviewInventory`
+  `definitionIds`), and adds each bonus where a conditional statadd of the
+  stat would go: skills, checks, defenses, initiative and speed as
+  conditional modifiers; saves and resistances as defensive traits
+  (`conditional`, `authored`). The text is the record's own clause. A
+  bonus the evaluation already carries from the same source (same stat and
+  amount) is dropped. The rows carry the record's source keys, so the
+  reminder dedup (reminder-coverage.ts) drops a reminder the row covers.
+  Content corrections were not needed; they stay the tool for a wrong or
+  missing statadd.
+- **Background benefits** (`background-benefits.ts`). A chosen benefit
+  (the "Background benefit" row's Background Choice) and the benefit of a
+  background that implements it itself ("Shifter - The Dalelands") are
+  "Remember in play" Other reminders when they hold a mechanical benefit
+  the build does not apply: a reroll, Terrain Walk, a skill substitution,
+  four failed death saves. Class skills, languages, proficiencies,
+  starting hit points and flat bonuses and resistances are left out;
+  conditional bonuses stay deduped against the panes. Theme, paragon and
+  epic features are Class Feature records and already reached reminders;
+  Background was the only feature group that never did.
+- Limitation: a campaign `description` patch does not re-run pack-build
+  parses, so a patched record keeps the stock text's prose bonuses (as
+  with `_Note Values IR`).

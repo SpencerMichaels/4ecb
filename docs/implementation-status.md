@@ -1,5 +1,49 @@
 # Implementation status
 
+## Prose-only situational bonuses on page 1; background benefit reminders (2026-11-07)
+
+D120. A situational bonus a record states only in its prose (no
+conditional statadd) now reaches page 1's Conditional modifiers pane,
+grouped like a conditional statadd of the same stat (Skills & checks,
+Defenses, Initiative, Speed; Saving throws and Resistances as defensive
+traits):
+
+- Pack build: legacy-wotc `prose-bonuses.ts` stores `_Prose Bonuses IR`
+  (content-domain `prose-bonuses.ts`, version 1; golden
+  `apps/content-tool/src/stored-ir-golden/prose-bonuses.golden.json`) for
+  feats, class features, racial traits, themes, paragon/epic records,
+  Background Choices, self-implementing backgrounds, item-set benefits and
+  item Property text. On the full private pack: 235 records, 252 bonuses.
+  The pack must be rebuilt (`scripts/build-private-content.sh`, then
+  `scripts/publish-content.sh`) for the rows to appear; older packs simply
+  have no field.
+- Sheet: sheet-model `prose-bonus-modifiers.ts` (`proseBonusRows`), called
+  by `withSheetOverview` for page-1 features, their picks and equipped
+  holdings (new `OverviewInventory.definitionIds`); rows carry the record's
+  source keys, so reminders they cover are dropped; a bonus the evaluation
+  already carries from the same source is dropped.
+- Background benefits (`background-benefits.ts`): a chosen benefit, or a
+  self-implementing background's, is an Other reminder when it holds a
+  mechanical benefit the build does not apply (rerolls, Terrain Walk,
+  substitutions, death-save count). 49 of the pack's 100 benefits qualify.
+- No `RULES_EVALUATION_CACHE_VERSION` change (EvaluatedCharacter
+  unchanged); `profile-migration.ts` treats the new field as derived.
+
+Verification: `prose-bonuses.test.ts` (legacy-wotc, 11 cases),
+`prose-bonus-modifiers.test.ts` and `background-benefits.test.ts`
+(sheet-model), stored-IR golden regenerated for the extended fixture.
+Detection precision/recall hand-labelled on the full pack (D120).
+Page-1 before/after (main vs branch, rebuilt pack) on the 68 sample-char
+and SampleHeroes saves: 20 change, every change reviewed as correct —
+new rows such as Ranger Wilderness Knacks (Erdan 11, Max Unger 12), Mark
+of Storm (Fei Zhu, Hunzu 10), Wee Warrior (Flint, oleander_8/9,
+test_test), Greaves of Maldeen (KrizDevvon ×4), Gauntlets of Ogre Power
+(Mellivora-L7, kai at 5th), Elemental Specialty saves (Raleigh), Disciple
+of Darkness (Wren); Point Blank Greatbow (HystanStart, Hystan_8) and Hat of
+Disguise (Edward Kenway) reminders dropped as covered; new background
+reminders for Raleigh (High Imaskar reroll) and "copy of character"
+(Sarifal Terrain Walk). No false positives found.
+
 ## Pathfinder revision 13: bonus utility and flavor feat slots; leading `$$LEVEL` (2026-11-07)
 
 Owner house rules (D116 amendment of 2026-11-07, below in
