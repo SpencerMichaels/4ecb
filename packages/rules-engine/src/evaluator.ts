@@ -99,7 +99,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v123-2026-11-06-prerequisite-lines";
+  "evaluated-character-v124-2026-11-06-replacement-category-gains";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2493,6 +2493,27 @@ function evaluateCharacterInternal(
         }
       : candidate;
   };
+  /**
+   * A retraining or swap target's offered gains: never the lost element
+   * itself (retraining X into X changes nothing) and, in a
+   * presentation-scoped evaluation, only what the gain select's category
+   * admits, as for an ordinary choice (the editor never shows another,
+   * `isCandidateVisible`). Listing every record of the type for each target,
+   * each with its own prerequisite checks, made a level-30 sorcerer's
+   * retraining list 34 targets x 10,668 powers (43 MB). The slot's saved
+   * gain stays listed whatever its category, so its diagnostics and the
+   * editor's selected row still find it.
+   */
+  const offeredReplacementGain = (
+    decision: CandidateDecision,
+    lostDefinitionId: string,
+    savedGain: ContentEntity | undefined,
+  ): boolean =>
+    key(decision.definitionId) !== key(lostDefinitionId) &&
+    (candidateDetailLevels === undefined ||
+      !decision.reasons.includes("category") ||
+      (savedGain !== undefined &&
+        key(decision.definitionId) === key(savedGain.id)));
   // The legacy engine treats the selected theme as a class category for
   // power choices only. This is what permits a theme attack such as Sly
   // Gambit to occupy the ordinary level-7 class encounter-power slot.
@@ -3103,9 +3124,12 @@ function evaluateCharacterInternal(
           replacesOccurrenceId: candidate.id,
           definitionId: candidate.definitionId,
           candidates: gains
-            .filter(
-              (decision) =>
-                key(decision.definitionId) !== key(candidate.definitionId),
+            .filter((decision) =>
+              offeredReplacementGain(
+                decision,
+                candidate.definitionId,
+                selectedGain,
+              ),
             )
             .map((decision) =>
               markOwned(
@@ -3444,9 +3468,16 @@ function evaluateCharacterInternal(
             occurrence.acquiredLevel,
             rule.source.level.minimum,
           );
+          // An ordinary retraining (rule +1704) at every level lists its
+          // gains only while its editor is open; a swap the level itself
+          // offers (a powerswap, a multiclass or power-replace swap: the
+          // Build tab's own rows) lists them with its level's choices, so
+          // its "New power" step is never empty.
           const detailedReplacement =
             candidateDetailLevels === undefined ||
-            candidateDetailReplacementChoiceIds.has(replacementChoiceId);
+            candidateDetailReplacementChoiceIds.has(replacementChoiceId) ||
+            (rule.retrain === undefined &&
+              candidateDetailLevels.has(replacementLevel));
           const slot = replacementSlot(
             occurrence,
             rule.source.ordinal,
@@ -3655,17 +3686,18 @@ function evaluateCharacterInternal(
                         ...(targetReasons.length === 0
                           ? {}
                           : { targetReasons }),
-                        // Retraining X into X changes nothing, so it isn't offered.
                         candidates: detailedReplacement
                           ? candidatesFor(
                               gainSelect,
                               gainProvider,
                               replacementLevel,
                             )
-                              .filter(
-                                (decision) =>
-                                  key(decision.definitionId) !==
-                                  key(candidate.definitionId),
+                              .filter((decision) =>
+                                offeredReplacementGain(
+                                  decision,
+                                  candidate.definitionId,
+                                  selectedReplacement,
+                                ),
                               )
                               .map((decision) =>
                                 markOwned(

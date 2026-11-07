@@ -5393,6 +5393,126 @@ describe("character evaluator", () => {
     );
   });
 
+  it("lists a level's power swap gains with its choices and a retrain's only on request", () => {
+    // A level-30 sorcerer's Build tab showed the level-13 swap's "New
+    // power" step empty: only the Retraining editor requested replacement
+    // gains. Scoped lists also leave out what the gain's category rejects.
+    const daily = (id: string, name: string, className: string) =>
+      entity(id, name, "Power", {
+        categories: [className, "daily"],
+        specifics: { Level: "9" },
+      });
+    const occurrences: CharacterOccurrence[] = [
+      {
+        id: "level-9",
+        definitionId: "LEVEL_9",
+        acquiredLevel: 9,
+        kind: "root",
+      },
+      {
+        id: "press",
+        definitionId: "PRESS",
+        acquiredLevel: 9,
+        parentId: "level-9",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+        kind: "choice",
+      },
+      {
+        id: "level-15",
+        definitionId: "LEVEL_15",
+        acquiredLevel: 15,
+        kind: "root",
+      },
+    ];
+    const definitions = [
+      entity("LEVEL_9", "9", "Level", {
+        rules: [
+          rule(
+            "select",
+            { type: "Power", number: "1", Category: "Fighter" },
+            0,
+          ),
+        ],
+      }),
+      entity("LEVEL_15", "15", "Level", {
+        rules: [
+          rule("replace", { powerswap: "Fighter,daily,15" }, 0),
+          rule("replace", { retrain: "true", optional: "true" }, 1),
+        ],
+      }),
+      daily("PRESS", "Press of Steel", "Fighter"),
+      daily("TOPPLING", "Toppling Finish", "Fighter"),
+      daily("FIREBALL", "Fireball", "Wizard"),
+    ];
+    const gains = (
+      result: ReturnType<typeof evaluateCharacter>,
+      ordinal: number,
+    ) =>
+      result.choices
+        .find((choice) => choice.id === `level-15:replacement:${ordinal}`)
+        ?.replacementOptions?.find(
+          ({ replacesOccurrenceId }) => replacesOccurrenceId === "press",
+        )
+        ?.candidates.map(({ definitionId }) => definitionId);
+    const input = { level: 15, baseAbilities: {}, occurrences, inventory: [] };
+
+    const scoped = evaluateCharacter(
+      { ...input, candidateDetailLevels: [15] },
+      definitions,
+    );
+    expect(gains(scoped, 0)).toEqual(["TOPPLING"]);
+    expect(gains(scoped, 1)).toEqual([]);
+    expect(
+      gains(
+        evaluateCharacter(
+          {
+            ...input,
+            candidateDetailLevels: [15],
+            candidateDetailReplacementChoiceIds: ["level-15:replacement:1"],
+          },
+          definitions,
+        ),
+        1,
+      ),
+    ).toEqual(["TOPPLING"]);
+    // Another level's Build tab lists neither.
+    expect(
+      gains(
+        evaluateCharacter(
+          { ...input, candidateDetailLevels: [9] },
+          definitions,
+        ),
+        0,
+      ),
+    ).toEqual([]);
+    // The exhaustive result keeps category mismatches, flagged.
+    const exhaustive = evaluateCharacter(input, definitions);
+    expect(gains(exhaustive, 1)).toEqual(["TOPPLING", "FIREBALL"]);
+    // A saved off-category gain stays listed for its diagnostics.
+    const savedFireball = evaluateCharacter(
+      {
+        ...input,
+        occurrences: [
+          ...occurrences,
+          {
+            id: "fireball",
+            definitionId: "FIREBALL",
+            acquiredLevel: 15,
+            parentId: "level-15",
+            ruleOrdinal: 1,
+            replacesId: "press",
+            kind: "choice",
+          },
+        ],
+        candidateDetailLevels: [15],
+        candidateDetailReplacementChoiceIds: ["level-15:replacement:1"],
+      },
+      definitions,
+    );
+    expect(gains(savedFireball, 1)).toEqual(["TOPPLING", "FIREBALL"]);
+  });
+
   it("applies list, replacement, and die-step overlays without mutating content", () => {
     const power = entity("POWER", "Power", "Power", {
       specifics: { Keywords: "Arcane", Damage: "1d8" },

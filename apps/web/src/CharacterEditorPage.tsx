@@ -461,6 +461,8 @@ export function CharacterEditorPage({
       {
         readonly workspace: BuilderWorkspaceTab;
         readonly levels: readonly number[];
+        /** Retraining choices whose gains it lists (an open editor's). */
+        readonly replacementChoiceIds: readonly string[];
       }
     >(),
   );
@@ -854,14 +856,15 @@ export function CharacterEditorPage({
       selectedLevel,
       characterDetailLevelKey.split(",").filter(Boolean).map(Number),
     );
+    const planningReplacementChoiceIds =
+      expandedReplacementChoiceId === undefined
+        ? []
+        : [expandedReplacementChoiceId];
     const planningRequest = client.evaluate(
       {
         ...planningInput,
         candidateDetailLevels: planningLevels,
-        candidateDetailReplacementChoiceIds:
-          expandedReplacementChoiceId === undefined
-            ? []
-            : [expandedReplacementChoiceId],
+        candidateDetailReplacementChoiceIds: planningReplacementChoiceIds,
         includePowers: false,
       },
       signal,
@@ -906,6 +909,7 @@ export function CharacterEditorPage({
       planningDetail.current.set(evaluation, {
         workspace: workspaceTab,
         levels: planningLevels,
+        replacementChoiceIds: planningReplacementChoiceIds,
       });
       setPlanningEvaluation(evaluation);
     });
@@ -2958,6 +2962,9 @@ export function CharacterEditorPage({
                     onNavigate(characterId, { workspace: "retraining", level });
                   }}
                   onRequestDetails={setExpandedReplacementChoiceId}
+                  listedReplacementChoiceIds={
+                    planningDetailFor?.replacementChoiceIds ?? []
+                  }
                   {...(retrainingReview === undefined
                     ? {}
                     : { review: retrainingReview })}

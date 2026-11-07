@@ -271,7 +271,7 @@ describe("the swap editor", () => {
     );
     expect(html).toContain("Power to replace");
     expect(html).toContain("New power");
-    expect(html).toContain("Choose the power to replace first.");
+    expect(html).toContain("Double-click a power in step 1 to choose it.");
     expect(html).not.toContain(">Replace<");
   });
 
@@ -340,8 +340,25 @@ describe("the swap editor", () => {
         onDispatch: () => undefined,
       }),
     );
-    expect(html).not.toContain("Choose the power to replace first.");
+    expect(html).not.toContain("Double-click a power in step 1 to choose it.");
     expect(html).toContain("Toppling Finish");
+    // A retraining editor whose gains are still being listed says so,
+    // instead of an empty "No matching powers." table.
+    const listing = renderToStaticMarkup(
+      createElement(ChoiceEditor, {
+        choice: swap,
+        evaluation: traded,
+        build,
+        entities: [...byId.values()],
+        byId,
+        disabled: false,
+        replacementGainsListed: false,
+        rollbackRevision: 0,
+        onDispatch: () => undefined,
+      }),
+    );
+    expect(listing).toContain("Listing the replacements…");
+    expect(listing).not.toContain("Toppling Finish");
     expect(replacementPickSummary(swap, traded, byId)).toBe(
       "Press of Steel → Hurricane Strike",
     );

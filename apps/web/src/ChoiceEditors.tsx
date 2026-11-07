@@ -372,6 +372,7 @@ function ReplacementEditor({
   byId,
   disabled,
   targetType,
+  gainsListed = true,
   rollbackRevision,
   onDispatch,
 }: {
@@ -382,6 +383,9 @@ function ReplacementEditor({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
   readonly targetType?: string;
+  /** False while the evaluation lists only the saved gain (a retraining's
+   *  gains are listed once its editor's request comes back). */
+  readonly gainsListed?: boolean;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -654,7 +658,12 @@ function ReplacementEditor({
           {stepHeading(1)}
           {target === undefined ? (
             <p className="field-help">
-              Choose the {noun ?? "option"} to replace first.
+              Double-click {noun === undefined ? "an option" : `a ${noun}`} in
+              step 1 to choose it.
+            </p>
+          ) : !gainsListed ? (
+            <p className="field-help" role="status">
+              Listing the replacements…
             </p>
           ) : (
             <CandidateSelectionTable
@@ -738,6 +747,7 @@ export function ChoiceEditor({
   selectionLabel = "Selection",
   keyAbilities = [],
   replacementTargetType,
+  replacementGainsListed,
   rollbackRevision,
   onOptimisticSelectionChange,
   onDispatch,
@@ -753,6 +763,8 @@ export function ChoiceEditor({
   readonly selectionLabel?: string;
   readonly keyAbilities?: readonly string[];
   readonly replacementTargetType?: string;
+  /** See ReplacementEditor's `gainsListed`. */
+  readonly replacementGainsListed?: boolean;
   readonly rollbackRevision: number;
   readonly onOptimisticSelectionChange?: (
     definitionId: string | undefined,
@@ -863,6 +875,9 @@ export function ChoiceEditor({
         {...(replacementTargetType === undefined
           ? {}
           : { targetType: replacementTargetType })}
+        {...(replacementGainsListed === undefined
+          ? {}
+          : { gainsListed: replacementGainsListed })}
         rollbackRevision={rollbackRevision}
         onDispatch={onDispatch}
       />

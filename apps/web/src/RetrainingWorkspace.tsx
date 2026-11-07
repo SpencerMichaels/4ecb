@@ -96,6 +96,7 @@ export function RetrainingWorkspace({
   selectedLevel,
   onSelectLevel,
   onRequestDetails,
+  listedReplacementChoiceIds,
   review,
   onDispatch,
 }: {
@@ -107,6 +108,9 @@ export function RetrainingWorkspace({
   readonly selectedLevel: number;
   readonly onSelectLevel: (level: number) => void;
   readonly onRequestDetails: (choiceId: string | undefined) => void;
+  /** The retraining choices `evaluation` lists gains for (the ones last
+   *  requested through `onRequestDetails` once their evaluation arrives). */
+  readonly listedReplacementChoiceIds: readonly string[];
   /** An issue's Review opens that level's retraining; `request` changes
    *  per ask. */
   readonly review?: { readonly level: number; readonly request: number };
@@ -269,6 +273,7 @@ export function RetrainingWorkspace({
           byId={byId}
           rollbackRevision={rollbackRevision}
           onRequestDetails={onRequestDetails}
+          listedReplacementChoiceIds={listedReplacementChoiceIds}
           onDispatch={onDispatch}
           onClose={() => setEditingLevel(undefined)}
         />
@@ -355,6 +360,7 @@ function LevelRetraining({
   byId,
   rollbackRevision,
   onRequestDetails,
+  listedReplacementChoiceIds,
   onDispatch,
 }: {
   readonly level: number;
@@ -365,6 +371,7 @@ function LevelRetraining({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
   readonly onRequestDetails: (choiceId: string | undefined) => void;
+  readonly listedReplacementChoiceIds: readonly string[];
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const retrain = levelRetrain(choices, evaluation, byId);
@@ -426,6 +433,9 @@ function LevelRetraining({
                   byId={byId}
                   disabled={false}
                   replacementTargetType={category}
+                  replacementGainsListed={listedReplacementChoiceIds.includes(
+                    choice.id,
+                  )}
                   rollbackRevision={rollbackRevision}
                   onDispatch={(command) => {
                     // A retrain of another kind replaces this level's retrain.

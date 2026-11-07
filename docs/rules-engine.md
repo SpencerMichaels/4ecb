@@ -527,10 +527,16 @@ measurements, not final browser budgets.
 `EvaluationInput.candidateDetailLevels` provides a presentation-only projection
 for interactive builders. Choices outside those levels retain selected and
 active candidate decisions required for legality and completeness, while the
-requested levels expand their selectable-category candidates. Optional
-replacement lists are independently requested through
-`candidateDetailReplacementChoiceIds` when their editor opens. Omitting both
-fields preserves the exhaustive compatibility/reporting result. With
+requested levels expand their selectable-category candidates. A swap the
+level itself offers (a powerswap, multiclass or power-replace `replace`: the
+Build tab's own rows) lists its gains with its level; an ordinary retraining
+(`retrain`, at every level) lists them only when requested through
+`candidateDetailReplacementChoiceIds`, which the Retraining editor does when it
+opens (showing "Listing the replacements…" until that evaluation arrives).
+Scoped replacement gains, like scoped choice candidates, leave out what the
+gain's category rejects, except the slot's saved gain (a level-30 sorcerer's
+retraining list was 43 MB with them, 14 MB without). Omitting both fields
+preserves the exhaustive compatibility/reporting result. With
 acquisition-level prerequisite snapshots enabled, the development runner
 measures Silaqui at approximately 7.8 seconds cold and 1.6 seconds warm for the
 exhaustive diagnostic, and 4.8 seconds cold and 0.55 seconds warm for the
