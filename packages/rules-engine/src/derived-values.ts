@@ -853,6 +853,22 @@ export function levelTier(level: number): 0 | 1 | 2 {
   return level >= 21 ? 2 : level >= 11 ? 1 : 0;
 }
 
+/**
+ * Magic item daily powers a character can use per day at a level (PHB 226):
+ * one per tier, each from a different item; an extended rest resets them.
+ * The legacy sheet's Heroic/Paragon/Epic "Use Box" textstrings count the same.
+ */
+export function magicItemDailyUses(level: number): 1 | 2 | 3 {
+  return (levelTier(level) + 1) as 1 | 2 | 3;
+}
+
+/**
+ * Extra magic item daily uses a day's milestones can grant (one each; it may
+ * come from an item already used, never a power already used). The legacy
+ * sheet tracks four per tier (`USAGE_Magic Item <Tier> Milestone Box 1–4`).
+ */
+export const MAGIC_ITEM_MILESTONE_USES = 4;
+
 /** A note value's fixed sum and dice at the level and modifiers. */
 function resolvedNoteValue(
   value: NoteValue,

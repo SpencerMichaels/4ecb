@@ -1,5 +1,24 @@
 # Implementation status
 
+## Scratchpad magic item daily power tracker (2026-11-06)
+
+The play scratchpad's Health panel prints an "Item dailies" row on every
+character, under Death saves and Action points: the tier's magic item
+daily uses (PHB 226: one at heroic, two at paragon, three at epic, each
+from a different item, "one per item"), then "Milestone" and four dashed
+boxes for the extra use each milestone grants. Blank pencil boxes, no live
+state (play state is M6). Counts mirror the legacy CharTracker
+`PanelModelMagicItemList` textstrings (`USAGE_Magic Item <Tier> Use Box
+1–3`, `<Tier> Milestone Box 1–4`, reset by `ApplyExtendedRest`) and come
+from new derived values `magicItemDailyUses(level)` (over `levelTier`) and
+`MAGIC_ITEM_MILESTONE_USES` (`packages/rules-engine/src/derived-values.ts`).
+The row is fixed-size, so the tracking pagination below (measured from the
+region's top) absorbs it. Scratchpad rows are not individually hideable;
+the whole section still is. Verification: `derived-values.test.ts` (uses at
+levels 1, 10, 11, 20, 21, 30), `SheetOverview.test.tsx` (1/2/3 base boxes,
+four milestone boxes, labels). Owner visual check pending ("Hu: scratchpad
+magic item dailies" in `visual-review-checklist.md`).
+
 ## Content-type icons: owner mapping (2026-11-06)
 
 Owner-approved icon mapping after the content-type icon audit. One mapping

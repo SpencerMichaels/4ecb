@@ -668,6 +668,22 @@ live site.
     others, their text or icons sit off-centre, Print or Sections moves
     between View and Edit, or the hint's wrapping pushes a button onto a
     new line.
+- [ ] **Hu: scratchpad magic item dailies (2026-11-06).** Added 2026-11-06;
+      the box counts per tier are unit-tested (`derived-values.test.ts`,
+      `SheetOverview.test.tsx`), this is the row's look and fit.
+  - **Where:** `?preview=1`, the Play scratchpad's Health panel, at 140%
+    zoom and in both themes; then the browser's print preview in Letter
+    and in A4 (Settings → paper size). Repeat on a paragon character
+    (Beldin Hammertongue 11 or Max Unger 12).
+  - **Expect:** under Death saves and Action points, one line: "Item
+    dailies", one box at heroic (two at paragon, three at epic), a small
+    grey "one per item", then on the right "Milestone" and four dashed
+    boxes. Boxes match the daily power boxes below in size and stroke. The
+    tracking tables below still start on the first page where they did.
+  - **Wrong if:** the row wraps at either paper size, the dashed boxes are
+    hard to tell from the solid ones (or vanish in print), the note crowds
+    the boxes, or the Health panel's height pushes power tracking to an
+    extra page it did not need before.
 
 ## Pass 11: Natan (`natan`)
 

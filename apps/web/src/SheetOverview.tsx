@@ -20,6 +20,10 @@ import {
   type SheetSectionId,
 } from "@4ecb/character-domain";
 import {
+  MAGIC_ITEM_MILESTONE_USES,
+  magicItemDailyUses,
+} from "@4ecb/rules-engine";
+import {
   combinedConditionalModifiers,
   CONDITIONAL_MODIFIERS_HEADING,
   featureChoiceText,
@@ -1524,6 +1528,42 @@ function SessionNotes({
     </Paper>
   );
 }
+/**
+ * Magic item daily power uses (PHB 226), blank pencil boxes like the legacy
+ * sheet's: the tier's uses, then the four a day's milestones can add.
+ */
+function ItemDailies({ level }: { level: number }) {
+  const uses = magicItemDailyUses(level);
+  return (
+    <div
+      className="ov-item-dailies"
+      role="group"
+      aria-label="Magic item daily powers"
+    >
+      <span className="ov-item-dailies-label">Item dailies</span>
+      <span
+        className="ov-item-dailies-boxes"
+        aria-label={`${uses} ${uses === 1 ? "use" : "uses"} per day`}
+      >
+        {Array.from({ length: uses }, (_, index) => (
+          <i className="ov-daily-box" key={index} />
+        ))}
+      </span>
+      <span className="ov-item-dailies-note">one per item</span>
+      <span className="ov-item-dailies-milestone">
+        Milestone
+        <span
+          className="ov-item-dailies-boxes"
+          aria-label={`${MAGIC_ITEM_MILESTONE_USES} milestone uses`}
+        >
+          {Array.from({ length: MAGIC_ITEM_MILESTONE_USES }, (_, index) => (
+            <i className="ov-daily-box ov-milestone-box" key={index} />
+          ))}
+        </span>
+      </span>
+    </div>
+  );
+}
 function Scratchpad({
   model,
   name,
@@ -1739,6 +1779,7 @@ function Scratchpad({
                     ))}
                   </span>
                 </div>
+                <ItemDailies level={model.overview!.level} />
               </div>
             </Panel>
           </div>

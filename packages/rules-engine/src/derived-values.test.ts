@@ -9,6 +9,8 @@ import {
   halfLevel,
   healingSurgeValue,
   levelTier,
+  MAGIC_ITEM_MILESTONE_USES,
+  magicItemDailyUses,
   noteValueAmount,
   noteValueText,
   ritualCostPercent,
@@ -123,6 +125,12 @@ describe("feature note values (D112)", () => {
   const flat = (value: number) => ({ kind: "flat", value }) as const;
   const dex = { kind: "ability", abilities: ["Dexterity"] } as const;
 
+  it("allows one magic item daily use per tier plus four milestone uses", () => {
+    expect([1, 10, 11, 20, 21, 30].map(magicItemDailyUses)).toEqual([
+      1, 1, 2, 2, 3, 3,
+    ]);
+    expect(MAGIC_ITEM_MILESTONE_USES).toBe(4);
+  });
   it("picks the tier, multiplies per tier and adds the modifiers", () => {
     expect([levelTier(10), levelTier(11), levelTier(21)]).toEqual([0, 1, 2]);
     const tiered = {

@@ -1483,6 +1483,35 @@ describe("real-data sheet overview", () => {
     expect(strip).not.toContain("<svg");
     expect(strip).not.toContain("ov-health-icon-value");
   });
+  it("prints the tier's magic item daily boxes and four milestone boxes on every scratchpad", () => {
+    const dailies = (level: number) => {
+      const html = renderToStaticMarkup(
+        <SheetOverview
+          hiddenSections={EVERY_SECTION}
+          model={{ ...model, overview: { ...model.overview!, level } }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+        />,
+      );
+      const row = html
+        .split('aria-label="Magic item daily powers"')[1]!
+        .split("</div>")[0]!;
+      return {
+        row,
+        base: row.split("Milestone")[0]!.match(/class="ov-daily-box"/g)?.length,
+        milestone: row.match(/class="ov-daily-box ov-milestone-box"/g)?.length,
+      };
+    };
+    expect(model.overview!.level).toBe(8);
+    expect([5, 15, 25].map((level) => dailies(level).base)).toEqual([1, 2, 3]);
+    const heroic = dailies(model.overview!.level);
+    expect(heroic.milestone).toBe(4);
+    expect(heroic.row).toContain("Item dailies");
+    expect(heroic.row).toContain('aria-label="1 use per day"');
+    expect(heroic.row).toContain("one per item");
+    expect(dailies(25).row).toContain('aria-label="3 uses per day"');
+  });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

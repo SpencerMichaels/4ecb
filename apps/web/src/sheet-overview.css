@@ -1481,6 +1481,39 @@ body:has(.sp-prototype) {
   gap: 0.08in;
   font-size: 9pt;
 }
+/* Its own line under death saves and action points, on every character. */
+.ov-item-dailies {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.04in 0.08in;
+  font-size: 9pt;
+}
+.ov-item-dailies-boxes,
+.ov-item-dailies-milestone {
+  display: flex;
+  align-items: center;
+  gap: 0.04in;
+}
+.ov-item-dailies-milestone {
+  gap: 0.06in;
+  margin-left: auto;
+}
+.ov-item-dailies .ov-daily-box {
+  width: 0.2in;
+  height: 0.2in;
+  margin: 0;
+  flex-shrink: 0;
+}
+/* Milestone uses are extra: dashed so they read apart from the tier's. */
+.ov-item-dailies .ov-milestone-box {
+  border-style: dashed;
+}
+.ov-item-dailies-note {
+  font-size: 7.5pt;
+  color: var(--sp-muted);
+}
 .ov-effects-table {
   table-layout: fixed;
 }
