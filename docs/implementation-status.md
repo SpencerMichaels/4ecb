@@ -1,5 +1,64 @@
 # Implementation status
 
+## Pathfinder revision 13: bonus utility and flavor feat slots; leading `$$LEVEL` (2026-11-07)
+
+Owner house rules (D116 amendment of 2026-11-07, below in
+`docs/decisions.md`). `content/campaigns/pathfinder/` revision 13 adds 10
+rule patches, each one `add` of a select after a stock level record's last
+rule (stock selects keep their ordinals):
+
+- ID_INTERNAL_LEVEL_4, 8, 12, 16, 20, 24, 28: `<select type="Power"
+name="Bonus Skill, Racial or Theme Utility" number="1"
+Category="$$LEVEL,Skill Power|Any Class,Utility">`. The pool: the 145
+  skill powers (Skill Power category; 29 of them lack Any Class, so it
+  stays its own alternative), 116 racial and 357 theme utility powers
+  (ID_FMP_CLASS_0 "Any Class" + Utility, the stock `$$CLASS` utility
+  slots' extra pool, rules-engine `dynamicCategories`), limited to the
+  character's own race and theme and to trained skills by their authored
+  prerequisites, and 3 Harper Agent feature powers whose "Unselectable"
+  prerequisite never passes. Nothing else carries Any Class + Utility.
+- ID_INTERNAL_LEVEL_1, 11, 21: `<select type="Feat" name="Flavor Feat"
+number="1" requires="!Nonstandard Feats">`, the stock level feat
+  selector (level 1's own feat is rule 60 of ID_INTERNAL_LEVEL_1). The
+  flavor guideline is not enforced; it is in the campaign description
+  (Settings → Campaigns), the only campaign text players see.
+
+The select's `name` is the Build tab's and Overview's row title
+(`choiceTitle`); the heading reads "Choose a power" / "Choose a feat".
+`house-rules.xml`'s header comment documents both. Legacy export drops
+rule patches as before: the picks are written as ordinary rules-legal
+elements the old builder has no slot for (best-effort, not checked in the
+old builder).
+
+Engine fix found on the way (rules-engine `expressions.ts`
+`matchesCategory`): a leading `$$LEVEL` was parsed as a dynamic prefix
+and then ignored, so the stock Skill Power and Skill Swap feats, Tome of
+Readiness, Monastic Perfection, Martial Cross-Training, Scoundrel
+Training and Shadow Poisoner offered powers above the character's level.
+Native `CategoryMatch::FromString` reads it as the match level
+(`-Module-.cs` ~30866, read in `Matches` ~31266): a power of that level
+or lower, another record of exactly that level. `RULES_EVALUATION_CACHE_VERSION`
+v127.
+
+Verification: `expressions.test.ts` (new case). `content-tool campaign
+build --against tmp/content/full-local.4ecp`: valid, 0 errors, version 6,
+216 field and 114 rule patches all applying, 207 house-rule records, 159
+records restricted, only the 12 known language-replacement warnings.
+Private scratch evaluation (Half-Orc Warpriest, Noble theme, composed
+pack, the Build tab's scoped planning requests): the bonus utility choice
+at levels 4 through 28 offers only skill powers in trained skills,
+Half-Orc racial and Noble theme utilities, of the character's level or
+lower (level 4: 10 eligible, all level 2; level 8: 25, up to 6; level 16:
+36, up to 16); levels 1, 11 and 21 have two feat choices (the stock one
+and "Flavor Feat") with ordinary feat legality; complete and legal at
+level 28 with no diagnostics; the Overview lists each bonus row under
+Feats or Powers; 9 of the 10 bonus picks are offered to retraining (all
+but level 28's own); the edited .dnd4e export round-trips.
+`audit:native-workflow` on the composed pack to level 30: complete,
+legal, export round trip passed. `pnpm parity:baseline`: no new
+mismatches (stats 4905/4944, powers 3328/3459).
+`pnpm audit:saved-selections`: 0 silent drops, 0 unexplained extras.
+
 ## Campaign text patches (document version 6); Pathfinder revision 12 (2026-11-07)
 
 D116 amendment of 2026-11-07 (owner-approved format extension).

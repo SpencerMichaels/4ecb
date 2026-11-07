@@ -24,6 +24,30 @@
   (alignments, domains, equivalents) is owner-approved, 2026-11-06;
   descriptions are original. CountsAsDeity is a modern type the old
   builder ignores.
+
+  Bonus slots (owner's house rules, revision 13): campaign.json's rule
+  patches add one select to stock level records, after each record's last
+  rule so the stock selects keep their ordinals (saved choices key by them).
+  - Levels 4, 8, 12, 16, 20, 24, 28 (ID_INTERNAL_LEVEL_N): select
+    name="Bonus Skill, Racial or Theme Utility", type="Power",
+    Category="$$LEVEL,Skill Power|Any Class,Utility": a skill power, or a
+    racial or theme utility power, of the character's level or lower. The
+    Skill Power feat's selector ("$$LEVEL,Skill Power") plus the stock
+    "Any Class" utility pool (ID_FMP_CLASS_0, which $$CLASS utility slots
+    also offer): racial and theme utilities carry it and are limited to the
+    character's own race or theme by their authored prerequisites, as skill
+    powers are to trained skills. Skill Power stays its own alternative
+    because 29 of the 145 skill powers lack "Any Class".
+  - Levels 1, 11, 21: select name="Flavor Feat", type="Feat",
+    requires="!Nonstandard Feats", the stock level feat selector. Any
+    legal feat is offered: the flavor guideline is honor-system, not
+    enforced, and players read it in the campaign description ("A flavor
+    feat's benefits must apply only against a particular kind of creature,
+    effect, or circumstance, never always-on bonuses to attack, damage,
+    defenses, hit points, or skills.").
+  The select's name attribute is the Build tab's choice title. Legacy
+  export drops rule patches (D116): the picks are written as ordinary
+  rules-legal elements, but the old builder has no slot for them.
 -->
 <D20Rules game-system="D&amp;D4E">
 

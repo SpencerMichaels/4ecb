@@ -5276,6 +5276,26 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
     "primordial ice", Use Cinderspeech's "adapted from the Primordial
     language", the power name Supernal Radiance).
 
+- **Amendment (2026-11-07, owner house rules): bonus slots; Pathfinder
+  revision 13.** A campaign adds a slot by a rule patch that `add`s a
+  select after a stock level record's last rule, so the stock selects'
+  ordinals (which key saved choices) never move; the select's `name`
+  attribute is what the builder titles the choice. Pathfinder: every 4th
+  level one "Bonus Skill, Racial or Theme Utility" (Category
+  `$$LEVEL,Skill Power|Any Class,Utility`: the Skill Power feat's
+  selector plus the stock "Any Class" utility pool, which the powers'
+  own race, theme and skill-training prerequisites limit to what the
+  character qualifies for), and a "Flavor Feat" at levels 1, 11 and 21
+  (the stock level feat selector). The flavor restriction ("benefits must
+  apply only against a particular kind of creature, effect, or
+  circumstance, never always-on bonuses to attack, damage, defenses, hit
+  points, or skills") is honor-system: the builder offers every legal
+  feat, and the guideline is in the campaign description, the only
+  campaign text players see (no new UI). With it, a leading `$$LEVEL`
+  in a category now limits candidates to the character's level, as
+  native `CategoryMatch::FromString` does (the stock Skill Power feat
+  offered above-level powers before).
+
 ### D117 — Right-click is a shortcut, never the only way to an action
 
 Status: accepted (2026-11-06, owner).

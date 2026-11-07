@@ -1003,6 +1003,12 @@ Follow-ups (not done):
   except lore about peoples and beings (`docs/implementation-status.md`,
   Campaign text patches). Release order: deploy the code before
   publishing revision 12 (a version-5 client skips it quietly).
+- Done (2026-11-07): Pathfinder revision 13: owner house-rule bonus
+  slots, a skill, racial or theme utility every 4th level and a flavor
+  feat at levels 1, 11 and 21, as rule-patch selects on the level
+  records; a leading `$$LEVEL` category now limits candidates to the
+  character's level (`docs/implementation-status.md`, Pathfinder
+  revision 13).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

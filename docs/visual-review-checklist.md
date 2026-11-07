@@ -1419,6 +1419,24 @@ Moradin, or an item a character holds), build and import or advertise it.
     Giant or Primordial as a language, a property or paragraph is missing,
     duplicated or reordered, or the Settings → Campaigns row shows an
     error for the revision-12 campaign.
+- [ ] **Pathfinder bonus slots (revision 13).** Added 2026-11-07;
+      candidates and legality are checked by a scratch evaluation, this is
+      how the rows read.
+  - **Where:** at 140% zoom: a Pathfinder character at revision 13 (a
+    new one, or one moved there by the content-update dialog), e.g. a
+    Half-Orc with a theme and a trained skill: Build → level 1 (Feats
+    section), level 4 and level 8 (Powers section), level 11; the
+    Overview tab; Settings → Campaigns' Description column.
+  - **Expect:** level 1 and 11 show two feat choices, the stock "Feat" and
+    "Flavor Feat"; level 4 shows "Bonus Skill, Racial or Theme Utility"
+    listing skill powers for trained skills, the character's racial
+    utilities and its theme's utilities, none above the viewed level; the
+    Overview lists both rows by those titles; the campaign description
+    names the bonus slots and the flavor-feat guideline.
+  - **Wrong if:** a bonus row is untitled or titled "Power"/"Feat" only,
+    another race's or theme's utility is offered as eligible, a level-6
+    power is offered at level 4, an existing character's stock feat or
+    power picks move into the new slots, or the description is cut off.
 - [ ] **Language table bands and the language card's Group (D042
       amendment, 2026-11-07).** Added 2026-11-07; band contents and order
       are unit-tested and probed, this is the look.

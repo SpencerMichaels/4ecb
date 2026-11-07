@@ -284,6 +284,15 @@ export function matchesCategory(
   const values = normalizedCategoryValues(entity, context);
   if (expression.dynamicPrefix !== undefined) {
     const prefix = expression.dynamicPrefix.toLocaleUpperCase();
+    // A leading $$LEVEL is native CategoryMatch::FromString's level flag
+    // (`-Module-.cs` ~30866: the match's level becomes -1, read in Matches
+    // ~31266 as the character's level): a power of that level or lower,
+    // another record of exactly that level ("$$LEVEL,Skill Power").
+    if (
+      prefix === "$$LEVEL" &&
+      numericMatch(entity, "$$LEVEL", context.level) === false
+    )
+      return false;
     const allowed = context.dynamicCategories?.[prefix];
     if (allowed !== undefined) {
       const belongs = [...values].some((value) => allowed.has(value));

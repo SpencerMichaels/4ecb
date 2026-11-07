@@ -1,8 +1,8 @@
 {
   "campaignId": "pathfinder",
   "name": "Pathfinder",
-  "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting.",
-  "revision": 12,
+  "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting. House rules: a bonus skill, racial or theme utility power at levels 4, 8, 12, 16, 20, 24 and 28, and a bonus flavor feat at levels 1, 11 and 21. A flavor feat's benefits must apply only against a particular kind of creature, effect, or circumstance, never always-on bonuses to attack, damage, defenses, hit points, or skills.",
+  "revision": 13,
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": [
@@ -4079,6 +4079,166 @@
       "field": "flavor",
       "expect": "words of Supernal",
       "value": "words of Celestial"
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_4",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_8",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_12",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_16",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_20",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_24",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_28",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Power",
+              "name": "Bonus Skill, Racial or Theme Utility",
+              "number": "1",
+              "Category": "$$LEVEL,Skill Power|Any Class,Utility"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_1",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Feat",
+              "name": "Flavor Feat",
+              "number": "1",
+              "requires": "!Nonstandard Feats"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_11",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Feat",
+              "name": "Flavor Feat",
+              "number": "1",
+              "requires": "!Nonstandard Feats"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ID_INTERNAL_LEVEL_21",
+      "rule": {
+        "add": [
+          {
+            "name": "select",
+            "attributes": {
+              "type": "Feat",
+              "name": "Flavor Feat",
+              "number": "1",
+              "requires": "!Nonstandard Feats"
+            }
+          }
+        ]
+      }
     }
   ]
 }

@@ -141,6 +141,34 @@ describe("compatibility expressions", () => {
     expect(matches(classPower, "7")).toBe(true);
   });
 
+  it("limits a leading $$LEVEL to powers of the character's level or lower", () => {
+    // Native CategoryMatch::FromString reads a leading $$LEVEL as the match
+    // level (the Skill Power feat's "$$LEVEL,Skill Power").
+    const skillPower = (level: number) =>
+      entity(
+        `S${level}`,
+        "Skill power",
+        "Power",
+        ["Skill Power", "Utility"],
+        level,
+      );
+    const matches = (candidate: ContentEntity, category: string) =>
+      matchesCategory(candidate, parseCategoryExpression(category), {
+        owned,
+        level: 6,
+      });
+    expect(matches(skillPower(2), "$$LEVEL,Skill Power")).toBe(true);
+    expect(matches(skillPower(6), "$$LEVEL,Skill Power")).toBe(true);
+    expect(matches(skillPower(10), "$$LEVEL,Skill Power")).toBe(false);
+    expect(
+      matches(skillPower(10), "$$LEVEL,Skill Power|Any Class,Utility"),
+    ).toBe(false);
+    expect(
+      matches(skillPower(6), "$$LEVEL,Skill Power|Any Class,Utility"),
+    ).toBe(true);
+    expect(matches(skillPower(10), "Skill Power")).toBe(true);
+  });
+
   it("resolves category IDs and display names through the content index", () => {
     const power = entity("POWER", "Power", "Power", ["CATEGORY_ENCOUNTER"]);
     const aliases = new Set(["category_encounter", "encounter"]);
