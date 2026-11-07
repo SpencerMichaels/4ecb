@@ -668,6 +668,11 @@ equipped phases; inventory alternatives remain hypothetical loadouts. Missing
 legacy phase data and unsupported companion calculations remain visible as
 dashes and authored rules rather than acquiring inferred totals.
 
+Legacy sheet field survey (2026-11-06): the magic item daily tracker is
+done, Power Points are in progress, and every other legacy sheet field the
+modern sheet lacks is listed with the owner's decision in
+[`legacy-sheet-gaps.md`](legacy-sheet-gaps.md).
+
 ## M5.7 — Invited-beta UI and hostability preparation
 
 **Status (2026-11-05): complete.** The product owner approved the final
