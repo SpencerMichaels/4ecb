@@ -51,6 +51,36 @@ describe("panel power card", () => {
     }
   });
 
+  it("badges Channel Divinity before a utility's usage badge", () => {
+    const utility = {
+      ...card,
+      usage: "Encounter",
+      fields: [...card.fields, { label: "Power Type", value: "Utility" }],
+    };
+    const both = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: { ...utility, sharedUsage: "Channel Divinity" },
+        characterLevel: 1,
+      }),
+    );
+    const cd = both.indexOf(">CD</span>");
+    expect(cd).toBeGreaterThan(0);
+    expect(cd).toBeLessThan(both.indexOf(">E</span>"));
+    expect(both.indexOf(">E</span>")).toBeLessThan(both.indexOf("</header>"));
+    const attack = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: { ...card, sharedUsage: "Channel Divinity" },
+        characterLevel: 1,
+      }),
+    );
+    expect(attack).toContain(">CD</span>");
+    expect(attack).not.toContain(">W</span>");
+    const plain = renderToStaticMarkup(
+      createElement(PowerCard, { card: utility, characterLevel: 1 }),
+    );
+    expect(plain).not.toContain("print-channel-divinity-badge");
+  });
+
   it("never shows flavor on printed cards", () => {
     const markup = renderToStaticMarkup(
       createElement(PowerCard, {

@@ -75,6 +75,14 @@
 .print-utility-usage-badge.usage-daily {
   background: #777;
 }
+/* Channel Divinity: the builder reference cards' (deity, class…) slate teal,
+   and wide enough for its two letters. */
+.print-channel-divinity-badge {
+  background: var(--tone-neutral);
+  min-width: 0.18in;
+  padding: 0 0.02in;
+  width: auto;
+}
 .print-power-card > header h3 > span:last-child {
   min-width: 0;
   white-space: normal;

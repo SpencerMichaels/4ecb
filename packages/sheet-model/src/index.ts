@@ -550,43 +550,51 @@ function inventoryCategoryFields(
   return category === undefined ? {} : { category };
 }
 
+/** Marks a Channel Divinity power, by its keyword or its authored "Channel
+ * Divinity" usage line (most deity feats carry only the line). */
+function withChannelDivinityUsage(
+  card: SheetCard,
+  definition: ContentEntity | undefined,
+): SheetCard {
+  if (card.sharedUsage !== undefined) return card;
+  const fields = [
+    ...card.fields,
+    ...(definition?.specifics.map((field) => ({
+      label: field.name,
+      value: field.value,
+    })) ?? []),
+  ];
+  return /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(card.keywords ?? "") ||
+    fields.some(
+      (field) =>
+        field.label.trim().toLowerCase() === "channel divinity" &&
+        field.value.trim().length > 0,
+    )
+    ? { ...card, sharedUsage: "Channel Divinity" }
+    : card;
+}
+
 function withPowerReferenceMetadata(
   model: CharacterSheetModel,
   content: readonly ContentEntity[],
 ): CharacterSheetModel {
   const universal = universalPowerDefinitionIds(content);
   const definitions = entityMap(content);
-  const isChannelDivinity = (card: SheetCard) => {
-    const definition = card.id
-      ? definitions.get(card.id.trim().toLowerCase())
-      : undefined;
-    const fields = [
-      ...card.fields,
-      ...(definition?.specifics.map((field) => ({
-        label: field.name,
-        value: field.value,
-      })) ?? []),
-    ];
-    return (
-      /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(card.keywords ?? "") ||
-      fields.some(
-        (field) =>
-          field.label.trim().toLowerCase() === "channel divinity" &&
-          field.value.trim().length > 0,
-      )
-    );
-  };
   return {
     ...model,
-    powers: model.powers.map((card) => ({
-      ...card,
-      ...(card.id && universal.has(card.id.trim().toLowerCase())
-        ? { universal: true }
-        : {}),
-      ...(isChannelDivinity(card)
-        ? { sharedUsage: "Channel Divinity" as const }
-        : {}),
-    })),
+    powers: model.powers
+      .map((card) => ({
+        ...card,
+        ...(card.id && universal.has(card.id.trim().toLowerCase())
+          ? { universal: true }
+          : {}),
+      }))
+      .map((card) =>
+        withChannelDivinityUsage(
+          card,
+          card.id ? definitions.get(card.id.trim().toLowerCase()) : undefined,
+        ),
+      ),
   };
 }
 
@@ -1524,7 +1532,7 @@ export function createSheetPowerCardFinder(
     const key = `${entity.id}\u0000${power?.definitionId ?? ""}`;
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
-    const card =
+    const card = withChannelDivinityUsage(
       power === undefined
         ? withoutSummonCreatureFields(
             authoredSheetPowerCard(
@@ -1544,7 +1552,9 @@ export function createSheetPowerCardFinder(
             new Map(),
             options.proficientEquipmentOnly !== false,
             records,
-          )[0]!;
+          )[0]!,
+      entity,
+    );
     cache.set(key, card);
     return card;
   };

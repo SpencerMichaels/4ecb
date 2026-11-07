@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { buildSheetModel } from "./index";
+import type { EvaluatedCharacter } from "@4ecb/rules-engine";
+import { buildSheetModel, createSheetPowerCardFinder } from "./index";
 import { universalPowerDefinitionIds } from "./power-reference";
 
 const entity = (id: string, type: string): ContentEntity => ({
@@ -87,6 +88,42 @@ describe("universal power reference provenance", () => {
     expect(card.sharedUsage).toBe("Channel Divinity");
     expect(card.keywords).toBe("Divine");
     expect(buildSheetModel(snapshot).powers[0]?.sharedUsage).toBeUndefined();
+  });
+  it("marks builder cards from the same Channel Divinity field", () => {
+    const power = {
+      ...entity("shared", "Power"),
+      specifics: [
+        {
+          name: "Power Usage",
+          value: "Encounter",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "Channel Divinity",
+          value: "Choose one shared power per encounter.",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const plain = { ...entity("plain", "Power"), specifics: [] };
+    const evaluation = {
+      level: 1,
+      occurrences: [],
+      activeDefinitionIds: [],
+      activeDefinitions: [],
+      choices: [],
+      stats: {},
+      overlays: [],
+      textStrings: {},
+      textContributions: [],
+      diagnostics: [],
+      powers: [],
+    } as unknown as EvaluatedCharacter;
+    const finder = createSheetPowerCardFinder(evaluation, [power, plain]);
+    expect(finder(power, undefined).sharedUsage).toBe("Channel Divinity");
+    expect(finder(plain, undefined).sharedUsage).toBeUndefined();
   });
   it("follows unconditional generic starting grants, not publication or power names", () => {
     const common = entity("common", "Power");

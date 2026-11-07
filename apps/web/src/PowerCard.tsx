@@ -283,6 +283,16 @@ export function PowerCard({
         {card.spellbook === true ? (
           <span className="print-card-name-subtext">Spellbook</span>
         ) : null}
+        {/* Channel Divinity's shared use, before a utility's usage badge. */}
+        {card.sharedUsage === "Channel Divinity" ? (
+          <span
+            className="print-utility-usage-badge print-channel-divinity-badge"
+            aria-label="Channel Divinity power"
+            title="Channel Divinity"
+          >
+            CD
+          </span>
+        ) : null}
         {isUtility ? (
           <span
             className={`print-utility-usage-badge usage-${usageTone}`}
