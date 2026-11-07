@@ -24,6 +24,7 @@ import {
   classifyPowerCard,
   classifyPowerEntity,
   deityDomainsText,
+  deitySubheaderRows,
   hybridClassName,
   FAMILIAR_RULES_REMINDER,
   powerActionLabel,
@@ -892,13 +893,17 @@ function proficiencies(c: ReviewCharacter): Check[] {
 
 rule("beatrix", "Print preview", "Proficiencies pane", (c) => proficiencies(c));
 
-/** The deity entry right after the backgrounds, church icon, Domains line
- *  first. */
+/** The deity entry right after the backgrounds, church icon, its card's
+ *  subheader fields (Alignment, Pantheon, Domains, any Counts as) first. */
 function printedDeity(c: ReviewCharacter, deity: string): Check[] {
   const pages = printedPagesFor(c);
   const groups = [...new Set(pages.references.map((entry) => entry.group))];
   const entry = pages.references.find((value) => value.group === "Deity");
-  const first = entry?.parts[0];
+  const fields = deitySubheaderRows(c.context.named(deity, "Deity"), (id) =>
+    c.context.byId.get(key(id)),
+  )
+    .flat()
+    .map(({ label }) => label);
   const at = pages.html.indexOf(`<h3>${deity}</h3>`);
   const before = at < 0 ? "" : pages.html.slice(Math.max(0, at - 600), at);
   return [
@@ -914,15 +919,24 @@ function printedDeity(c: ReviewCharacter, deity: string): Check[] {
             )
             .at(-1),
     ),
-    equal("Its first line is Domains", first?.label, "Domains"),
+    truthy(
+      "The deity has an Alignment and Domains",
+      fields[0] === "Alignment" && fields.includes("Domains"),
+      fields.join(", "),
+    ),
+    equal(
+      "Its first lines are the card's subheader fields, in order",
+      entry?.parts.slice(0, fields.length).map(({ label }) => label),
+      fields,
+    ),
     truthy(
       "Its heading has the church icon",
       /lucide-church/.test(before),
       at < 0 ? `${deity} heading not found` : "church icon before the name",
     ),
     truthy(
-      "The description follows the Domains line",
-      (entry?.parts.length ?? 0) > 1,
+      "The description follows the fields",
+      (entry?.parts.length ?? 0) > fields.length,
       `${entry?.parts.length ?? 0} parts`,
     ),
   ];
@@ -2603,25 +2617,47 @@ rule("invoker-drow", "Details", "Builder deity card", (c) => {
   const avandra = c.context.entity("ID_FMP_DEITY_1");
   const html = candidateDetailHtml(c, avandra);
   const text = textOf(html);
-  const domains = deityDomainsText(avandra, (id) =>
-    c.context.byId.get(key(id)),
-  );
+  const lookup = (id: string) => c.context.byId.get(key(id));
+  const domains = deityDomainsText(avandra, lookup);
+  const rows = deitySubheaderRows(avandra, lookup);
   const firstDomain = detailStackEntries(
     avandra,
     candidateReferenceIndex(c.context.byId),
   ).find(({ entity }) => key(entity.type) === "domain");
   const description = avandra.description.trim().split("\n")[0]!.slice(0, 40);
+  const bodyStart = html.indexOf('class="reference-card-body"');
+  const body = textOf(
+    html.slice(bodyStart, html.indexOf("</aside>", bodyStart)),
+  );
   return [
     truthy(
       "Avandra has domains",
       domains !== undefined && domains !== "",
       domains ?? "none",
     ),
-    inOrder('"Domains: …" above the description, domain cards below', text, [
-      `Domains: ${domains ?? ""}`,
+    equal(
+      'Subheader lines: "Alignment · Pantheon" (Pantheon when the content has one), then "Domains"',
+      rows.map((row) => row.map(({ label }) => label)),
+      [
+        contentSpecificValue(avandra, "Pantheon")?.trim()
+          ? ["Alignment", "Pantheon"]
+          : ["Alignment"],
+        ["Domains"],
+      ],
+    ),
+    contains(
+      "The card has the ritual cards' undivided subheader",
+      html,
+      'class="print-item-stats is-undivided"',
+    ),
+    inOrder("Subheader above the description, domain cards below", text, [
+      ...rows.flat().map(({ label, value }) => `${label} ${value}`),
       description,
       firstDomain?.entity.name ?? "(a domain card)",
     ]),
+    ...["Alignment", "Pantheon", "Domains"].map((label) =>
+      lacks(`The body doesn't repeat ${label}`, body, label),
+    ),
   ];
 });
 

@@ -45,7 +45,11 @@ const content = [
     "DEITY",
     "Synthetic Moon",
     "Deity",
-    { Alignment: "Unaligned", Domains: "DOMAIN_B, DOMAIN_A, MISSING" },
+    {
+      Alignment: "Unaligned",
+      Domains: "DOMAIN_B, DOMAIN_A, MISSING",
+      Pantheon: "Core",
+    },
     "God of synthetic tides.",
   ),
   entity("DOMAIN_A", "Tides", "Domain", {}, "Tidal lore."),
@@ -202,6 +206,11 @@ describe("deity domains", () => {
         { id: "DOMAIN_B", name: "Dusk" },
         { id: "DOMAIN_A", name: "Tides" },
       ],
+      fields: [
+        { label: "Alignment", value: "Unaligned" },
+        { label: "Pantheon", value: "Core" },
+        { label: "Domains", value: "Dusk, Tides" },
+      ],
       description: "God of synthetic tides.",
       source: "Synthetic Book",
     });
@@ -209,7 +218,12 @@ describe("deity domains", () => {
       sheet.overview?.features.find(({ group }) => group === "Deity"),
     ).toMatchObject({
       name: "Synthetic Moon",
-      fields: [{ label: "Domains", value: "Dusk, Tides" }],
+      // The card's subheader fields, in its order.
+      fields: [
+        { label: "Alignment", value: "Unaligned" },
+        { label: "Pantheon", value: "Core" },
+        { label: "Domains", value: "Dusk, Tides" },
+      ],
       description: "God of synthetic tides.",
       fieldsFirst: true,
       playReminder: false,

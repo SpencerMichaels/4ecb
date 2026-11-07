@@ -175,6 +175,11 @@ export {
   deityCountsAs,
   deityCountsAsText,
   deityDomainsText,
+  deityCardFields,
+  deitySubheaderRows,
+  DEITY_SUBHEADER_SPECIFICS,
+  type DeityCardFields,
+  type DeityField,
   type SheetDeityReference,
 } from "./deity-reference";
 export {

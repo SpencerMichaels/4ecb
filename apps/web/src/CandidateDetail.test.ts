@@ -619,8 +619,9 @@ describe("counts-as on option details (D116)", () => {
   });
 
   it("lists the deities a deity counts as, and none for one without", () => {
+    // Its own subheader line (deity-card.test.tsx).
     expect(detail(torag, {})).toContain(
-      '<p class="deity-counts-as"><strong>Counts as:</strong> Moradin</p>',
+      '<div class="print-item-stat-row"><div><dt>Counts as</dt><dd>Moradin</dd></div></div>',
     );
     expect(detail(plainDeity, {})).not.toContain("Counts as");
     expect(detail(campaignMoradin, {})).not.toContain("Counts as");

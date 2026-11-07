@@ -6,7 +6,10 @@ import {
   type ContentEntity,
   type SpecificField,
 } from "@4ecb/content-domain";
-import { classifyPowerEntity } from "@4ecb/sheet-model";
+import {
+  classifyPowerEntity,
+  DEITY_SUBHEADER_SPECIFICS,
+} from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon, type IconName } from "./Icon";
@@ -23,13 +26,16 @@ import { entityTypeIcon } from "./visual-language";
 export function entityCardSpecifics(
   entity: ContentEntity,
 ): readonly SpecificField[] {
-  return entity.specifics.filter(
-    (field) =>
+  // A deity's common fields are its card's subheader (DeitySubheader).
+  const isDeity = entity.type.trim().toLocaleLowerCase() === "deity";
+  return entity.specifics.filter((field) => {
+    const name = field.name.trim().toLocaleLowerCase();
+    return (
       isUserFacingSpecific(field) &&
-      !["short description", "source"].includes(
-        field.name.trim().toLocaleLowerCase(),
-      ),
-  );
+      !["short description", "source"].includes(name) &&
+      !(isDeity && DEITY_SUBHEADER_SPECIFICS.has(name))
+    );
+  });
 }
 
 export function entityCardSource(entity: ContentEntity): string {

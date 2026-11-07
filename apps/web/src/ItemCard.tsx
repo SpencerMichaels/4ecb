@@ -1,6 +1,7 @@
 import type { SheetCard } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import { CardSubheader } from "./CardSubheader";
 import { DotList } from "./DotList";
 import { Icon } from "./Icon";
 import { Prose } from "./Prose";
@@ -68,28 +69,19 @@ export function ItemCard({
       )}
       <CardPanelSubheading subheading={panel.subheading} />
       {!hasSubheader ? null : (
-        <div className="print-item-subheader">
-          <dl
-            className={`print-item-stats${item.isRitual ? " is-ritual" : ""}`}
-          >
-            {item.statRows.map((row, rowIndex) => (
-              <div className="print-item-stat-row" key={rowIndex}>
-                {row.map(({ label, value }) => (
-                  <div key={label}>
-                    <dt>
-                      {label === "Proficiency" &&
-                      row.some((stat) => stat.label === "Range")
-                        ? "Prof"
-                        : label === "Critical"
-                          ? "Crit"
-                          : label}
-                    </dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </div>
-            ))}
-            {item.weaponProperties.length > 0 ? (
+        <CardSubheader
+          rows={item.statRows}
+          undivided={item.isRitual}
+          labelFor={({ label }, row) =>
+            label === "Proficiency" &&
+            row.some((stat) => stat.label === "Range")
+              ? "Prof"
+              : label === "Critical"
+                ? "Crit"
+                : label
+          }
+          extra={
+            item.weaponProperties.length > 0 ? (
               <div className="print-item-stat-row print-item-properties">
                 <div>
                   <dt>Properties</dt>
@@ -102,11 +94,22 @@ export function ItemCard({
                   </dd>
                 </div>
               </div>
-            ) : null}
-          </dl>
-        </div>
+            ) : null
+          }
+        />
       )}
       <div className="print-card-body print-item-body">
+        {item.leadFields.map((field) => (
+          <section className="print-item-rule" key={field.label}>
+            <div className="print-item-rule-text">
+              <strong>{`${field.label}: `}</strong>
+              <CardText
+                value={field.value}
+                textPresentation={textPresentation}
+              />
+            </div>
+          </section>
+        ))}
         {description ? (
           <CardText value={description} textPresentation={textPresentation} />
         ) : null}

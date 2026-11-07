@@ -442,6 +442,7 @@ describe("deity, god fragment and item set surfaces", () => {
         id: "ID_DEITY",
         name: "Synthetic Moon",
         domains: [{ id: "ID_DOMAIN", name: "Tides" }],
+        fields: [{ label: "Domains", value: "Tides" }],
         description: "",
         source: "",
       },

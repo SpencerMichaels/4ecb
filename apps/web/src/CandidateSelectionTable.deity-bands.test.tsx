@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { CandidateDecision } from "@4ecb/rules-engine";
+import { deitySubheaderRows } from "@4ecb/sheet-model";
 
 import {
   DEITY_PANTHEON_FALLBACK,
@@ -197,13 +198,17 @@ describe("deityTableGroup", () => {
     expect(scans).toBe(first);
   });
 
-  it("shows the Pantheon on the deity card as an authored field", () => {
+  it("shows the Pantheon in the deity card's subheader, not its body", () => {
+    // Alignment, then Pantheon (deity-card.test.tsx renders the card).
     expect(
-      entityCardSpecifics(entities[0]!).map(({ name, value }) => [name, value]),
+      deitySubheaderRows(entities[0]!, () => undefined)[0]?.map(
+        ({ label, value }) => [label, value],
+      ),
     ).toEqual([
       ["Alignment", "Good"],
       ["Pantheon", "Core"],
     ]);
+    expect(entityCardSpecifics(entities[0]!)).toEqual([]);
   });
 });
 

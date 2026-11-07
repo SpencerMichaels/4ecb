@@ -705,6 +705,16 @@
 .reference-card-subheading p {
   margin: 0;
 }
+/* A deity card's subheader is the item cards' (CardSubheader) over this
+   card's own paper, at the panel cards' body size. */
+.reference-entity-card > .print-item-subheader {
+  --card-paper: var(--parchment);
+  --print-card-body-size: var(--panel-card-body-size);
+}
+/* … with the panel item cards' stat-row inset. */
+.reference-entity-card > .print-item-subheader .print-item-stat-row {
+  padding: 0.25rem 0.55rem;
+}
 /* Blocks in a card body (flavor, prerequisite line, paragraphs, fields,
    sections) are spaced by one gap; the body's own rules are in
    12-choice-details.css. */
@@ -1215,9 +1225,9 @@
 .print-item-stat-row:last-child {
   border-bottom: 0;
 }
-/* A ritual's subheader lines (fields, duration, cost, prerequisite) read
+/* Ritual and deity subheader lines (CardSubheader's undivided rows) read
    as one block; only the stats' own border divides it from the body. */
-.print-item-stats.is-ritual .print-item-stat-row {
+.print-item-stats.is-undivided .print-item-stat-row {
   border-bottom: 0;
 }
 .print-item-stat-row > div {

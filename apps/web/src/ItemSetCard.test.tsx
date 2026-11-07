@@ -9,7 +9,6 @@ import {
   type BuilderCardSettings,
 } from "./BuilderCards";
 import { BuilderItemSetCard, parsePartyPieces } from "./BuilderItemSetCard";
-import { DeityDomains } from "./DeityDomains";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ItemSetCard } from "./ItemSetCard";
 
@@ -163,38 +162,4 @@ const entity = (
   description: "",
   extensions: [],
   provenance: { sourceKey: "item-set-card-test", sourceOrdinal: 0 },
-});
-
-describe("deity domains line", () => {
-  const deity = entity("DEITY", "Synthetic Moon", "Deity", {
-    Domains: "DOMAIN_B, DOMAIN_A",
-  });
-  const references = new Map(
-    [
-      deity,
-      entity("DOMAIN_A", "Tides", "Domain"),
-      entity("DOMAIN_B", "Dusk", "Domain"),
-    ].map((value) => [value.id.toLowerCase(), value]),
-  );
-
-  it("opens a deity card with its domains", () => {
-    expect(
-      renderToStaticMarkup(
-        <DeityDomains entity={deity} references={references} />,
-      ),
-    ).toBe(
-      '<p class="deity-domains"><strong>Domains:</strong> Dusk, Tides</p>',
-    );
-  });
-
-  it("is absent for other cards", () => {
-    expect(
-      renderToStaticMarkup(
-        <DeityDomains
-          entity={references.get("domain_a")!}
-          references={references}
-        />,
-      ),
-    ).toBe("");
-  });
 });

@@ -124,40 +124,59 @@ export function printItemPresentation(card: SheetCard) {
   const remainingStats = combatStats.filter(
     (stat) => !groupedRows.some((values) => values.includes(stat)),
   );
-  // A ritual reads like its published block: its short, evenly sized
-  // fields are the subheader (owner, 2026-11-06): category, time and
-  // skill on one line; the variable-length duration, cost and any
-  // prerequisite each on their own, so none pushes a short field aside. Its level is the type bar's, its
-  // market price the footer's, and its description the body.
+  // A ritual reads like its published block (owner, 2026-11-06): the
+  // subheader holds the fields whose size does not vary widely, category,
+  // time and skill on line 1; the duration, cost and any prerequisite can
+  // be phrases or sentences, so they lead the body as labelled lines,
+  // above the description. Moving a field is a change to its placement
+  // below. Its level is the type bar's, its market price the footer's.
   const ritualKind = isRitual
     ? field("Type")?.trim() || card.itemType || "Ritual"
     : undefined;
   const ritualCategory = field("Category")?.trim();
-  // Each row names the fields it shows; their one-word labels are
-  // sheet-model's, shared with the printed reference entry.
-  const ritualRows = [
+  // [field, value, subheader line (1-based) or "body"]; the one-word
+  // labels are sheet-model's, shared with the printed reference entry.
+  const ritualFields = (
     [
       [
         "Category",
         ritualCategory?.toLowerCase() === ritualKind?.toLowerCase()
           ? undefined
           : ritualCategory,
+        1,
       ],
-      ["Time", field("Time")],
-      ["Key Skill", field("Key Skill")],
-    ],
-    [["Duration", field("Duration")]],
-    [["Component Cost", field("Component Cost")]],
-    [["Prerequisite", field("Prerequisite", "Prerequisites")]],
-  ]
-    .map((row) =>
-      row.flatMap(([name, value]) =>
-        name && value?.trim()
-          ? [{ label: learnedRecordFieldLabel(name), value: value.trim() }]
-          : [],
-      ),
-    )
-    .filter((values) => values.length > 0);
+      ["Time", field("Time"), 1],
+      ["Key Skill", field("Key Skill"), 1],
+      ["Duration", field("Duration"), "body"],
+      ["Component Cost", field("Component Cost"), "body"],
+      ["Prerequisite", field("Prerequisite", "Prerequisites"), "body"],
+    ] as const
+  ).flatMap(([name, value, place]) =>
+    isRitual && value?.trim()
+      ? [
+          {
+            place,
+            field: {
+              label: learnedRecordFieldLabel(name),
+              value: value.trim(),
+            },
+          },
+        ]
+      : [],
+  );
+  const ritualLines = [
+    ...new Set(
+      ritualFields.flatMap(({ place }) => (place === "body" ? [] : [place])),
+    ),
+  ].sort((left, right) => left - right);
+  const ritualRows = ritualLines.map((line) =>
+    ritualFields.flatMap(({ place, field: value }) =>
+      place === line ? [value] : [],
+    ),
+  );
+  const ritualBodyFields: readonly SheetValue[] = ritualFields.flatMap(
+    ({ place, field: value }) => (place === "body" ? [value] : []),
+  );
   const statRows = isRitual
     ? ritualRows
     : remainingStats.length > 0
@@ -353,6 +372,9 @@ export function printItemPresentation(card: SheetCard) {
       (entry): entry is string => Boolean(entry),
     ),
     weaponProperties,
+    /** Labelled lines above the description (a ritual's duration, cost
+     *  and prerequisite); `rules` follow it. */
+    leadFields: ritualBodyFields,
     rules,
     // Keep unstructured/custom mechanical prose when it has no structured
     // replacement, but never repeat an explicitly identified flavor passage.

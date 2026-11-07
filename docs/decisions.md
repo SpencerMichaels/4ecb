@@ -885,6 +885,15 @@ the counts-as semantics of D116 (alternates, stand-ins, "met through").
 Since the table filter matches its visible columns' text, the Domains
 text is searchable too.
 
+Amendment (2026-11-06, owner: "Deity detail cards ought to have subheaders
+containing their common fields - pantheon, alignment, domains"): the deity
+card's Alignment and Pantheon are no longer body fields, nor its Domains
+and Counts as opening lines. They are its subheader, the ritual cards'
+(`CardSubheader.tsx`, undivided lines, one-word labels): "Alignment ·
+Pantheon", then Domains and any Counts as on their own lines, each only
+when it has a value (sheet-model `deitySubheaderRows`). The body is the
+description. The printed Deity reference entry lists the same fields.
+
 ### D043 — Inactive provider rules preserve but suppress their saved children
 
 Statement-level `requires` controls whether a `select`, `grant`, or other rule
@@ -4674,6 +4683,18 @@ click-to-arm, click-again confirm. On a granted or chosen record it stays
 in place, aria-disabled, its tooltip the right-click menu's reason
 (`knownRecordRemoveBlockedReason`: "Granted by Druid; it can't be
 removed."). The right-click Remove stays.
+
+Amendment (2026-11-06, owner: "we should not put fields whose size can
+_vary widely_ in the subheader"; fields whose values can be phrases or
+sentences go in the body, bounded lists of names or words stay): a
+ritual's subheader is Category · Time · Skill alone (a formula's skill
+list, up to "Arcana, Dungeoneering, or Thievery (no check)", wraps inside
+that line). Duration, Cost and any Prerequisite ("Until you take an
+extended rest", "50 gp plus 1 healing surge") are labelled lines at the
+top of the body, above the description (`leadFields` in
+`print-item-presentation.ts`, one placement per field). Deity cards follow
+the same rule (D042 amendment): their Alignment, Pantheon, Domains and
+Counts as are all bounded.
 
 ### D115 — A choice among named rituals is a Build-tab choice
 

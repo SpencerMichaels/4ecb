@@ -91,7 +91,8 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Background Choice": presented("choices"),
   // Character Reference pages, grouped by kind after the inventory.
   Proficiency: presented("proficiencies"),
-  // The Deity entry starts "Domains: Love, Moon, Trickery".
+  // The Deity entry lists "Domains: Love, Moon, Trickery" (after
+  // Alignment and Pantheon).
   Domain: presented("references"),
   // Chosen under its feat's row; its ability is a power card of its own.
   "God Fragment": presented("powers"),

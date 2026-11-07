@@ -991,8 +991,8 @@ order; it now reads Inner Sea major deities 19, Other deities 28, Elven 3,
 Dwarven 10, Eldest 9, Archdevils 8, then under Show all the restricted
 Core 20, Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (r9 composed
 over the full pack; the full pack alone: Core, Forgotten Realms, Eberron,
-Dragon Magazine). The deity card shows "Pantheon" as an ordinary authored
-field, after Alignment. Stock content: `content/corrections/9I-deity-pantheons.part`
+Dragon Magazine). The deity card shows "Pantheon" after Alignment (since
+2026-11-06 in its subheader, "Alignment · Pantheon"). Stock content: `content/corrections/9I-deity-pantheons.part`
 (generated from the pack) gives all 135 stock deities a Pantheon: Core 20,
 Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (none missing on the
 rebuilt full pack). Pathfinder campaign revision 3: Inner Sea major deities
@@ -1086,7 +1086,8 @@ candidate's status. `CandidateDetail.tsx` resolves the names through the
 cached reference index and `EntityPrerequisites` (`EntityCard.tsx`,
 also under `StructuredEntityBody`) appends "— met through <names>". The
 other direction: a deity's card lists what it counts as after its domains
-("Counts as: The Raven Queen, Kelemvor", `DeityDomains.tsx` over sheet-model
+("Counts as: The Raven Queen, Kelemvor", now a subheader line,
+`DeitySubheader.tsx` over sheet-model
 `deityCountsAs`, the CountsAsDeity records its rules grant, resolved by ID),
 only when it has any. Same-name equivalents are left out on both sides
 (owner, 2026-11-06): a deity counting as one of its own name (the campaign's
@@ -1528,6 +1529,38 @@ mismatches; Azreille's informational full-pack run is now incomplete (the
 required Ritual choice, she knows no ritual). Owner visual checks pending:
 checklist "Psion: the ritual choice in the Class flow" and the updated
 "Psion: free rituals in the Inventory and Shop".
+
+## Deity card subheader; ritual body fields (2026-11-06)
+
+Owner: deity detail cards get a subheader with their common fields. The
+builder's deity card (`CandidateDetail.tsx`'s reference-entity card, Build
+and Details tabs) shows, under the title, the ritual cards' undivided
+subheader, now the shared `CardSubheader.tsx` (ItemCard uses it too; the
+modifier class is `is-undivided`): "Alignment · Pantheon" (fixed-size
+first), then "Domains" and any "Counts as" (D116, same-name equivalents
+left out) each on their own line; empty fields and lines are left out.
+Rows come from sheet-model `deityCardFields` (`deity-reference.ts`), which
+places each field on a subheader line or in the body (labelled lines above
+the description, `DeityBodyFields`; none today), so moving one is a
+one-line change; `DeitySubheader.tsx` replaces `DeityDomains.tsx`, and the body drops
+Alignment and Pantheon (`DEITY_SUBHEADER_SPECIFICS`, `entityCardSpecifics`),
+keeping the description. The printed Character Reference Deity entry lists
+the same fields (`SheetDeityReference.fields`) before its description,
+where it had Domains only. "Counts as" stays two words: no one-word label
+says it. Owner rule (D114 amendment): the subheader holds no field whose
+size varies widely. Measured on the full pack and the Pathfinder
+campaign: Domains 10 to 33 characters (two or three names); Counts as 3
+to 46 (one to four names; seven deities in the full pack, 44 under
+Pathfinder, its longest "Sehanine, Mielikki, Selûne, Solonor
+Thelandira"). Ritual, formula and practice cards therefore keep only
+Category · Time · Skill in the subheader (Skill 4 to 29 characters on
+rituals, 17 to 45 on formulas); Duration, Cost and Prerequisite are
+labelled lines at the top of the body, above the description
+(`leadFields`, one placement per field in `print-item-presentation.ts`).
+Tests: `deity-card.test.tsx`, `deity-reference.test.ts`,
+`ritual-card.test.tsx`, `sheet-gaps.test.ts`, `CandidateDetail.test.ts`.
+Owner checks: the checklist's "Deity card subheader" and "Drow invoker:
+rituals in the Inventory and Shop".
 
 ## Known-record rows and ritual cards (2026-11-06)
 

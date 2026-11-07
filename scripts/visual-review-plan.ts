@@ -221,7 +221,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Printed Deity entry",
-            "Sehanine after Background (church icon): Domains line, then the description.",
+            "Sehanine after Background (church icon): Alignment, any Pantheon and Domains lines, then the description.",
           ],
           [
             "Concrete reminders",
@@ -1179,7 +1179,7 @@ const reviews: ReviewCharacter[] = [
         items: [
           [
             "Builder deity card",
-            `Avandra's card: "Domains: …" above the description, domain cards below.`,
+            `Avandra's card: the subheader (Alignment · any Pantheon, then Domains) above the description, domain cards below.`,
           ],
           [
             "Other detail stacks",
@@ -1251,7 +1251,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Printed Deity entry",
-            "Avandra after Background (church icon): Domains line, then the description with its bullets.",
+            "Avandra after Background (church icon): Alignment, any Pantheon and Domains lines, then the description with its bullets.",
           ],
           [
             "Awaken God Fragment",

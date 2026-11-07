@@ -454,17 +454,16 @@ live site.
     same trash Remove as the item rows, in the same place; the first click
     arms it (red, warning icon) and a second removes a learned ritual. The detail pane
     shows the ritual's card: under the name a shaded subheader, one line
-    "CATEGORY Exploration · TIME 10 minutes · SKILL Nature", then
-    "DURATION …" and "COST …" each on its own line (and a "PREREQUISITE …"
-    line when there is one), with no divider between those lines
-    (one-word labels; a long value wraps inside its line), then the
-    description as the body, the market price in the footer and "Ritual …
+    "CATEGORY Exploration · TIME 10 minutes · SKILL Nature" (one-word
+    labels; a long skill list wraps inside it); the body opens with
+    "Duration: …" and "Cost: …" lines (and "Prerequisite: …" when there is
+    one) in the body's rule style, then the description, the market price in the footer and "Ritual …
     Level N" in the type bar. Choose a martial practice (Alter Ego, on a
     character that knows one, or in the Shop's Martial practices): its
     description shows too and the type bar reads "Martial Practice". In
     the Shop's Alchemical formulas choose Acidic Fire, then Woundpatch: the
     card's icon is the flask its row shows (a practice's the dumbbell, a
-    ritual's the book), COST reads "Item's price", and after the
+    ritual's the book), "Cost:" reads "Item's price", and after the
     description a "Creates:" line lists the versions ("Acidic Fire — level
     5 (50 gp), 10 (200 gp), …, 30 (125,000 gp)"; Woundpatch's three
     levels) in the body's rule style, wrapping within the card. The
@@ -1014,9 +1013,9 @@ Moradin, or an item a character holds), build and import or advertise it.
     campaign?"; Cancel leaves the select unchanged. Show all off lists only
     the campaign's 77 deities (revision 9), in bands Inner Sea major
     deities 19, Other deities 28, Elven 3, Dwarven 10 (Torag among them),
-    Eldest 9 and Archdevils 8, in that order; Barbatos's card reads
-    "Counts as: Bel", Moloch's "Counts as: Bane, Glasya", Dispater's has no
-    "Counts as" line, and each card's source reads "Pathfinder". On, the
+    Eldest 9 and Archdevils 8, in that order; Barbatos's card subheader
+    has a "COUNTS AS Bel" line, Moloch's "COUNTS AS Bane, Glasya",
+    Dispater's no Counts as line, and each card's source reads "Pathfinder". On, the
     stock ones are greyed and
     unselectable, labelled "Unavailable in this campaign". The worshipper has one
     issue, "Moradin is not used in this campaign.", whose Review opens the
@@ -1050,6 +1049,28 @@ Moradin, or an item a character holds), build and import or advertise it.
     follows the window instead of the table (e.g. Domains squeezed beside
     the detail pane), or a Torag worshipper's "must worship Moradin" feat
     loses its "met through Torag" note.
+- [ ] **Deity card subheader.** Added 2026-11-06; lines, order, omissions
+      and the body are unit-tested (`deity-card.test.tsx`), this is the look.
+  - **Where:** at 140% zoom, light and dark theme: a stock character's
+    Build → level 1 → Deity, click Avandra (all three fields), then a deity
+    without domains if the list has one (else any); Details → Deity, the
+    same cards; a Pathfinder campaign character's Deity, click Barbatos
+    (Counts as) and Dispater (none). Then print preview's Character
+    Reference page, the Deity entry.
+  - **Expect:** under the title band a shaded subheader in the ritual
+    cards' style, small uppercase one-word labels, no rules between its
+    lines: "ALIGNMENT Good · PANTHEON Core" on the first line, "DOMAINS
+    Change, Luck, Trickery" on the next, and on a counts-as deity "COUNTS
+    AS Bel" on a third; an empty field or line is simply absent. The body
+    starts with the description; no "Alignment", "Pantheon", "Domains:"
+    or "Counts as:" line repeats below it; domain cards follow the card
+    as before. The printed Deity entry lists Alignment, Pantheon, Domains
+    (and any Counts as) before its description.
+  - **Wrong if:** the subheader looks different from a ritual card's
+    (other tint, divider lines between its rows, mixed-case labels), its
+    padding doesn't line up with the title band's text, Pantheon wraps
+    under Alignment while there is room, the subheader is unreadable in
+    dark theme, or a field shows twice.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with
@@ -1154,7 +1175,8 @@ Moradin, or an item a character holds), build and import or advertise it.
     step's card, and each table's filter box typed with the old name.
   - **Expect:** the card's first body line reads "**Also known as:**
     Cliffkin" (or "Sea Mother") in the same label style as the
-    Prerequisite line, above the flavor and stat grid / domains; the
+    Prerequisite line, above the flavor and stat grid (a deity's domains
+    are its subheader, above the body); the
     "Also Known As" field does not appear again in the field list; typing
     the old name in the table filter keeps the renamed row.
   - **Wrong if:** the line sits below the fields, uses a different label

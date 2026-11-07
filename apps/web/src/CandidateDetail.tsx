@@ -18,7 +18,7 @@ import {
   useCandidateFavorites,
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
-import { DeityDomains } from "./DeityDomains";
+import { DeityBodyFields, DeitySubheader } from "./DeitySubheader";
 import { DotList } from "./DotList";
 import {
   detailStackEntries,
@@ -424,6 +424,7 @@ export function CandidateDetailCard({
         {subheading === undefined ? null : (
           <div className="reference-card-subheading">{subheading}</div>
         )}
+        <DeitySubheader entity={entity} references={references} />
         <div className="reference-card-body">
           {structuredKind !== undefined && references !== undefined ? (
             <StructuredEntityBody
@@ -436,7 +437,7 @@ export function CandidateDetailCard({
           ) : (
             <EntityCardBody
               beforeNarrative={
-                <DeityDomains entity={entity} references={references} />
+                <DeityBodyFields entity={entity} references={references} />
               }
               entity={entity}
               hideFlavortext={hideFlavortext}

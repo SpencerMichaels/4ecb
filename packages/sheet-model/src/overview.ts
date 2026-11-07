@@ -67,17 +67,17 @@ export interface OverviewFeature {
   readonly fieldsFirst?: boolean;
 }
 
-/** The deity's reference entry: "Domains: Love, Moon, Trickery", then its
+/** The deity's reference entry: its card's subheader fields (Alignment,
+ *  Pantheon, Domains, any Counts as; `deityCardFields`), then its
  *  description. Page 1's identity table keeps just the name. */
 function deityFeature(deity: SheetDeityReference): OverviewFeature {
-  const domains = deity.domains.map(({ name }) => name.trim()).join(", ");
   return {
     id: deity.id,
     name: deity.name,
     group: "Deity",
     summary: deity.description,
     description: deity.description,
-    fields: domains ? [{ label: "Domains", value: domains }] : [],
+    fields: deity.fields,
     source: deity.source,
     fullTextAvailable: true,
     playReminder: false,

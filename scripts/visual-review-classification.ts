@@ -62,7 +62,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "Proficiencies follows Worn/Held Items and Carried Items with Armor / Shields / Weapons / Implements lines in lower case.",
   ),
   "beatrix|4|printed deity entry": auto(
-    "Sehanine's entry follows Background, with the church icon, a Domains line, then the description.",
+    "Sehanine's entry follows Background, with the church icon, her card's subheader fields (Alignment, any Pantheon, Domains) as its first lines, then the description.",
   ),
   "beatrix|4|concrete reminders": auto(
     "Superior Will's reminder leaves out its +2 Will (in Will); no White Well Reward reminder (its Pact Reward is on Eldritch Bolt's damage) and no Rod Expertise reminder (D112).",
@@ -303,7 +303,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     '"Rituals & practices" renders the learned references as panel item cards, with no "Granted by"/"Chosen for" heading.',
   ),
   "invoker-drow|7|builder deity card": auto(
-    'Avandra\'s card: "Domains: …" above the description, domain cards below.',
+    "Avandra's card: the subheader (Alignment · any Pantheon, then Domains) above the description, domain cards below.",
   ),
   "invoker-drow|7|other detail stacks": auto(
     "Lolth's stack lists her domain cards.",
@@ -327,7 +327,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "A Caelynnvala's Boons piece in the Shop has the Item Set panel card and the Party pieces field.",
   ),
   "invoker-drow|11|printed deity entry": auto(
-    "Avandra's entry follows Background, with the church icon, a Domains line, then the description with its bullets.",
+    "Avandra's entry follows Background, with the church icon, her card's subheader fields (Alignment, any Pantheon, Domains) as its first lines, then the description with its bullets.",
   ),
   "invoker-drow|11|awaken god fragment": auto(
     'Reference entry with a "Constant Benefits:" line; the fragment\'s Encounter power card among the encounter powers.',

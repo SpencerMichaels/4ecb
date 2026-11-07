@@ -96,31 +96,44 @@ const cardOf = (entity: ContentEntity) =>
   sheetItemCard({ name: entity.name, entities: [entity] });
 
 describe("ritual, formula and practice cards", () => {
-  it("puts the short fields in the subheader with one-word labels", () => {
-    expect(printItemPresentation(cardOf(ritual)).statRows).toEqual([
+  it("puts the bounded fields in the subheader with one-word labels", () => {
+    const messenger = printItemPresentation(cardOf(ritual));
+    expect(messenger.statRows).toEqual([
       [
         { label: "Category", value: "Exploration" },
         { label: "Time", value: "10 minutes" },
         { label: "Skill", value: "Nature" },
       ],
-      // Variable-length values have their own lines.
-      [{ label: "Duration", value: "Special" }],
-      [{ label: "Cost", value: "10 gp" }],
     ]);
-    // A practice's category repeats its kind; an empty field has no cell;
-    // a prerequisite is a subheader row of its own.
-    expect(printItemPresentation(cardOf(practice)).statRows[0]).toEqual([
-      { label: "Time", value: "1 hour" },
-      { label: "Skill", value: "Bluff" },
+    // Fields that can be phrases or sentences lead the body instead
+    // (owner, 2026-11-06), above the description.
+    expect(messenger.leadFields).toEqual([
+      { label: "Duration", value: "Special" },
+      { label: "Cost", value: "10 gp" },
     ]);
-    expect(printItemPresentation(cardOf(formula)).statRows).toEqual([
+    // A practice's category repeats its kind; an empty field has no cell.
+    const disguise = printItemPresentation(cardOf(practice));
+    expect(disguise.statRows).toEqual([
+      [
+        { label: "Time", value: "1 hour" },
+        { label: "Skill", value: "Bluff" },
+      ],
+    ]);
+    expect(disguise.leadFields).toEqual([
+      { label: "Duration", value: "24 hours" },
+      { label: "Cost", value: "50 gp plus 1 healing surge" },
+    ]);
+    const silver = printItemPresentation(cardOf(formula));
+    expect(silver.statRows).toEqual([
       [
         { label: "Category", value: "Oil" },
         { label: "Time", value: "15 minutes" },
         { label: "Skill", value: "Nature or Religion or Thievery (no check)" },
       ],
-      [{ label: "Cost", value: "See Alchemical Item" }],
-      [{ label: "Prerequisite", value: "Alchemist" }],
+    ]);
+    expect(silver.leadFields).toEqual([
+      { label: "Cost", value: "See Alchemical Item" },
+      { label: "Prerequisite", value: "Alchemist" },
     ]);
   });
 
@@ -133,7 +146,7 @@ describe("ritual, formula and practice cards", () => {
     (entity, kind) => {
       const item = printItemPresentation(cardOf(entity));
       expect(item.description).toBe(entity.description);
-      // The subheader fields are not repeated as body rules.
+      // No field is repeated as a later body rule.
       expect(item.rules).toEqual([]);
       expect(item.kind).toBe(kind);
       expect(item.level).toBe(
@@ -148,10 +161,19 @@ describe("ritual, formula and practice cards", () => {
       );
       expect(markup).toContain('class="print-item-subheader"');
       // Its lines read as one block: no dividers between them.
-      expect(markup).toContain('class="print-item-stats is-ritual"');
+      expect(markup).toContain('class="print-item-stats is-undivided"');
       expect(markup).toContain(entity.description);
       expect(markup).not.toContain("Key Skill");
       expect(markup).not.toContain("Component Cost");
+      // The labelled lines come before the description, each once.
+      const body = markup.slice(markup.indexOf("print-item-body"));
+      for (const { label } of item.leadFields) {
+        expect(body.indexOf(`<strong>${label}: </strong>`)).toBeGreaterThan(0);
+        expect(body.indexOf(`<strong>${label}: </strong>`)).toBeLessThan(
+          body.indexOf(entity.description),
+        );
+        expect(markup.split(`<dt>${label}</dt>`)).toHaveLength(1);
+      }
     },
   );
 });
@@ -193,9 +215,10 @@ describe("a formula whose cost is the created item's price", () => {
 
   it("reads Item's price and lists the versions after the description", () => {
     const item = printItemPresentation(cardOf(acidic!));
-    expect(item.statRows).toContainEqual([
-      { label: "Cost", value: "Item's price" },
-    ]);
+    expect(item.leadFields).toContainEqual({
+      label: "Cost",
+      value: "Item's price",
+    });
     expect(item.description).toBe(acidic!.description);
     expect(item.rules).toEqual([{ label: "Creates", value: creates }]);
     // The formula's own price stays the footer's.
@@ -239,7 +262,8 @@ describe("a formula whose cost is the created item's price", () => {
         label: learnedRecordFieldLabel(label),
         value: value.trim(),
       }));
-      for (const stat of printItemPresentation(card).statRows.flat())
+      const item = printItemPresentation(card);
+      for (const stat of [...item.statRows.flat(), ...item.leadFields])
         expect(printed).toContainEqual(stat);
     },
   );
@@ -248,9 +272,10 @@ describe("a formula whose cost is the created item's price", () => {
     // `formula` names no versions in its set: no Creates line.
     const [unlinked] = withStoredFormulaItems([formula]);
     const item = printItemPresentation(cardOf(unlinked!));
-    expect(item.statRows).toContainEqual([
-      { label: "Cost", value: "See Alchemical Item" },
-    ]);
+    expect(item.leadFields).toContainEqual({
+      label: "Cost",
+      value: "See Alchemical Item",
+    });
     expect(item.rules).toEqual([]);
   });
 });
@@ -282,7 +307,7 @@ describe("Inventory known-record rows (D114)", () => {
     );
     // A ritual card's subheader lines have no dividers between them.
     expect(appStyles).toMatch(
-      /\.print-item-stats\.is-ritual \.print-item-stat-row \{\s*border-bottom: 0;/u,
+      /\.print-item-stats\.is-undivided \.print-item-stat-row \{\s*border-bottom: 0;/u,
     );
     // No muted detail line under a known record's name.
     expect(appStyles).not.toContain("inventory-known-detail");
