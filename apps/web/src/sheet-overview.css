@@ -1214,11 +1214,6 @@ body:has(.sp-prototype) {
   width: 0.2in;
   height: 0.2in;
 }
-.sp-death-saves > span,
-.ov-action-point-count > span {
-  display: flex;
-  gap: 0.04in;
-}
 .sp-death-saves .icon,
 .ov-action-point-count .icon {
   width: 0.2in;
@@ -1466,8 +1461,9 @@ body:has(.sp-prototype) {
   line-height: 1;
   color: var(--sp-muted);
 }
-/* One row of pencil trackers, marks over labels: death saves, item dailies,
-   a psionic's power points, action points. */
+/* One row of pencil trackers, each label above its marks like the panel's
+   other fields: death saves, item dailies, a psionic's power points, action
+   points. */
 .ov-health-trackers {
   display: flex;
   align-items: flex-start;
@@ -1476,6 +1472,7 @@ body:has(.sp-prototype) {
   margin-top: auto;
   padding-top: 0.04in;
 }
+/* Every tracker centres its label and its marks on one axis. */
 .ov-scratch-health .ov-tracker {
   display: flex;
   flex-direction: column;
@@ -1484,6 +1481,13 @@ body:has(.sp-prototype) {
   margin: 0;
   font-size: 9pt;
 }
+/* The HP write-ins' label look. */
+.ov-tracker-label {
+  color: var(--sp-muted);
+  white-space: nowrap;
+}
+/* Item dailies' two box groups sit in one marks row with the boxes' own gap
+   between them, so all its boxes are evenly spaced. */
 .ov-tracker-marks,
 .ov-item-dailies-boxes {
   display: flex;
@@ -1491,33 +1495,20 @@ body:has(.sp-prototype) {
   gap: 0.04in;
   min-height: 0.2in;
 }
-.ov-item-dailies .ov-tracker-marks,
-.ov-tracker-labels {
-  gap: 0.12in;
-}
-/* Each label sits under its own group of boxes. */
-.ov-tracker-labels {
-  display: flex;
-  justify-content: space-between;
-  align-self: stretch;
-}
-.ov-item-dailies .ov-daily-box {
+.ov-scratch-health .ov-tracker .ov-daily-box {
   width: 0.2in;
   height: 0.2in;
   margin: 0;
   flex-shrink: 0;
 }
-/* Milestone uses are extra: dashed so they read apart from the tier's. */
+/* Milestone uses are optional extras: dashed, otherwise the same box. */
 .ov-item-dailies .ov-milestone-box {
   border-style: dashed;
 }
-.ov-power-points .ov-tracker-marks {
-  align-items: flex-end;
-}
-.ov-power-points-blank {
-  width: 0.5in;
-  align-self: stretch;
-  border-bottom: 1px solid var(--sp-border);
+/* A pool too large for boxes: the consumables' count blank, at the row's
+   mark height. */
+.ov-power-points .ov-consumable-count > i {
+  height: 0.2in;
 }
 .ov-effects-table {
   table-layout: fixed;

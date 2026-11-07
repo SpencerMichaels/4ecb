@@ -1,5 +1,34 @@
 # Implementation status
 
+## Scratchpad Resources trackers redone (2026-11-06)
+
+Owner feedback on the play scratchpad's tracker row. The panel holding it is
+renamed "Resources" (it was "Health"; it now also tracks item dailies,
+power points and action points; its class and page 1's Health stat group
+are unchanged). Every tracker is one `Tracker` (`SheetOverview.tsx`): its
+label above its marks, in the muted 9 pt of the "Current HP"/"Temporary
+HP" write-in labels. Item dailies has one centred label, "Item dailies +Milestones" (owner: all
+four trackers share one centre line), over one marks row: the tier's
+solid boxes, then four dashed milestone boxes, the groups 0.04in apart like
+the boxes, so all boxes read as one evenly spaced row
+(screen readers still hear "N uses per day" and "4 milestone uses" groups).
+Power points replace the "___ / N" blank: one pencil box per point up to
+`POWER_POINT_BOX_LIMIT` (3), else the Consumables pane's bordered count
+blank followed by "/ N", at the row's 0.2in mark height. The limit is
+measured: with epic dailies the A4 row (4.23in) leaves 0.88in for this
+tracker, a box plus gap is 0.24in, so three fit and a fourth overflows
+(real pools: 2 at levels 1–2, 4 at 3–6, then 6–15+, e.g. Azreille 4,
+Beldin Hammertongue 9, so most psionics get the write-in). Verification:
+`SheetOverview.test.tsx` (markup order, one marks row, dashed class,
+"+Milestones", boxes for 1 and 3 points, write-in for 4 and 9, CSS rules,
+"Resources" heading); `check:print` now gives its fixture a 3-point pool
+and asserts, in Chromium and Firefox at Letter and A4, that the four
+trackers fit one line inside the row at least 0.1in apart, labels above
+marks and centred on them, the six item-daily boxes evenly spaced and the same size as the
+power point boxes, milestones dashed. Owner visual checks pending ("Hu:
+scratchpad magic item dailies" and "Beldin: printed Power Points" in
+`visual-review-checklist.md`).
+
 ## Printed psionic Power Points pool (2026-11-06)
 
 A character whose evaluated "Power Points" stat is above 0 (psionic
@@ -11,8 +40,9 @@ it in `resources` as "Power Points" only when above 0
 UI only reads it. Page 1's Health stat group carries a fifth tile, "Pwr
 Pts" (the longer "Power pts" was cut off), after Surge HP (the numeric band's columns become 5/5/1/1 for these
 characters only, `.ov-numeric-band.has-power-points`); the play
-scratchpad's Health panel adds a "___ / N" pencil blank labelled "Power
-points" in its tracker row, between Item dailies and Action points. Others print exactly as before. The engine's value matches
+scratchpad's Resources panel (then "Health") adds a "Power points" tracker
+in its tracker row, between Item dailies and Action points (boxes or a
+count write-in since the redo above). Others print exactly as before. The engine's value matches
 the legacy cache on the psionic samples (Beldin Hammertongue 11: 9,
 Azreille: 4; `parity:baseline` unchanged). Verification:
 `overview.test.ts` and `sheet-gaps.test.ts` (listed only above 0, both
@@ -22,12 +52,13 @@ others). Owner visual check pending ("Beldin: printed Power Points" in
 
 ## Scratchpad magic item daily power tracker (2026-11-06)
 
-The play scratchpad's Health panel prints an "Item dailies" row on every
-character, in one tracker row of marks over labels (owner layout,
+The play scratchpad's Resources panel (then "Health") prints an "Item
+dailies" row on every character, in one tracker row (labels above marks
+since the redo above; first built marks over labels) (owner layout,
 2026-11-06: Death saves, Item dailies, a psionic's Power points, Action
 points; two lines tall): the tier's magic item daily uses (PHB 226: one at
 heroic, two at paragon, three at epic, each from a different item) over
-"Item dailies", then four dashed boxes over "Milestones" for the extra use
+"Item dailies", then four dashed boxes ("+Milestones" since the redo) for the extra use
 each milestone grants. Blank pencil boxes, no live
 state (play state is M6). Counts mirror the legacy CharTracker
 `PanelModelMagicItemList` textstrings (`USAGE_Magic Item <Tier> Use Box

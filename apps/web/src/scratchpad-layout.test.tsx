@@ -42,8 +42,9 @@ describe("scratchpad measured tracking layout", () => {
       new URL("./sheet-overview.css", import.meta.url),
       "utf8",
     );
+    // The shared tracker marks rule spaces skulls and circles.
     const rule = styles.match(
-      /\.sp-death-saves > span,\s*\.ov-action-point-count > span\s*\{([^}]+)\}/,
+      /\n\.ov-tracker-marks,\s*\.ov-item-dailies-boxes\s*\{([^}]+)\}/,
     )?.[1];
     expect(rule).toContain("gap: 0.04in");
   });

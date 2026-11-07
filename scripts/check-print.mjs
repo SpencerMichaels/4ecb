@@ -1011,6 +1011,9 @@ function printCharacter() {
     Insight: "+8",
     Perception: "+10",
     Stealth: "+12",
+    // The largest pool the scratchpad prints as boxes (POWER_POINT_BOX_LIMIT),
+    // the tracker row's widest case short of epic dailies.
+    "Power Points": "3",
   };
   return {
     schemaVersion: 2,
@@ -1439,9 +1442,10 @@ async function checkScratchpad(client) {
       consumableBoxesRightAligned:[...page.querySelectorAll('.ov-consumable-boxes')].every(e=>Math.abs(e.lastElementChild.getBoundingClientRect().right-e.getBoundingClientRect().right)<0.1),
       consumableBorder:getComputedStyle(page.querySelector('.ov-consumables')).borderColor===getComputedStyle(page.querySelector('.sp-daily')).borderColor,
       consumableIcons:page.querySelectorAll('.ov-consumable-name .lucide-flask-round').length,
-      consumableCount:page.querySelectorAll('.ov-consumable-count').length,
+      consumableCount:page.querySelectorAll('.ov-consumables .ov-consumable-count').length,
       footerDate:page.querySelector('.sp-page-footer').textContent.includes('Date'),
       runningHeader:page.querySelector('.sp-running-header') !== null,
+      trackerRow:(()=>{const row=page.querySelector('.ov-health-trackers');const r=row.getBoundingClientRect();const kids=[...row.children].map(k=>k.getBoundingClientRect());const boxes=[...page.querySelectorAll('.ov-item-dailies .ov-daily-box')].map(e=>e.getBoundingClientRect());const steps=boxes.slice(1).map((b,i)=>b.left-boxes[i].right);const labels=[...row.querySelectorAll('.ov-tracker-label')].map(e=>e.getBoundingClientRect());const marks=[...row.querySelectorAll('.ov-tracker-marks, .ov-item-dailies-boxes')].map(e=>e.getBoundingClientRect());const centre=r=>(r.left+r.right)/2;const offCentre=[...row.children].map(k=>Math.abs(centre(k.querySelector(':scope > .ov-tracker-label').getBoundingClientRect())-centre(k.querySelector(':scope > .ov-tracker-marks').getBoundingClientRect())));return {trackers:kids.length,offCentre,inside:kids.every(k=>k.left>=r.left-0.5&&k.right<=r.right+0.5),oneLine:kids.every(k=>Math.abs(k.top-kids[0].top)<0.5),gaps:kids.slice(1).map((k,i)=>k.left-kids[i].right),boxSteps:steps,labelsAbove:Math.max(...labels.map(l=>l.bottom))<=Math.min(...marks.map(m=>m.top))+0.5,milestoneDashed:[...page.querySelectorAll('.ov-milestone-box')].map(e=>getComputedStyle(e).borderTopStyle),powerBoxes:page.querySelectorAll('.ov-power-points .ov-daily-box').length,sizes:[...page.querySelectorAll('.ov-health-trackers .ov-daily-box')].every(e=>{const b=e.getBoundingClientRect();return Math.abs(b.width-boxes[0].width)<0.1&&Math.abs(b.height-boxes[0].height)<0.1;})};})(),
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
       milestone:[...page.querySelectorAll('*')].some(e=>e.children.length===0&&e.textContent.includes('Milestone')&&!e.closest('.ov-item-dailies')),
       itemDailies:page.querySelector('.ov-item-dailies') !== null,
@@ -1556,6 +1560,24 @@ async function checkScratchpad(client) {
       state.upperBottoms.length === 2 &&
       Math.abs(state.upperBottoms[0] - state.upperBottoms[1]) < 1,
     `Upper panes must align with three hollow AP marks, and milestones only in Item dailies: ${JSON.stringify(state)}`,
+  );
+  const trackers = state.trackerRow;
+  assert(
+    trackers.trackers === 4 &&
+      trackers.inside &&
+      trackers.oneLine &&
+      trackers.gaps.every((gap) => gap >= 9.5) &&
+      trackers.boxSteps.length === 5 &&
+      trackers.boxSteps.every(
+        (step) => Math.abs(step - trackers.boxSteps[0]) < 0.5,
+      ) &&
+      trackers.labelsAbove &&
+      trackers.offCentre.every((offset) => offset < 0.5) &&
+      trackers.milestoneDashed.length === 4 &&
+      trackers.milestoneDashed.every((style) => style === "dashed") &&
+      trackers.powerBoxes === 3 &&
+      trackers.sizes,
+    `Resources trackers (death saves, item dailies, 3 power point boxes, action points) must fit one row, labels above and centred on their marks, item daily and milestone boxes evenly spaced, milestones dashed: ${JSON.stringify(trackers)}`,
   );
   assert(
     state.encounterColumns === 10 &&

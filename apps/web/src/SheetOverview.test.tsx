@@ -1508,10 +1508,45 @@ describe("real-data sheet overview", () => {
     expect([5, 15, 25].map((level) => dailies(level).base)).toEqual([1, 2, 3]);
     const heroic = dailies(model.overview!.level);
     expect(heroic.milestone).toBe(4);
-    expect(heroic.row).toContain("Item dailies");
-    expect(heroic.row).toContain('aria-label="1 use per day"');
-    expect(heroic.row).toContain("Milestones");
-    // One row: death saves, item dailies, then action points.
+    // One centred label over one marks row holding both box groups, which
+    // share the boxes' own gap, so all boxes run on evenly spaced.
+    expect(heroic.row).toBe(
+      '><span class="ov-tracker-label">Item dailies +Milestones</span>' +
+        '<span class="ov-tracker-marks">' +
+        '<span class="ov-item-dailies-boxes" role="group" aria-label="1 use per day"><i class="ov-daily-box"></i></span>' +
+        '<span class="ov-item-dailies-boxes" role="group" aria-label="4 milestone uses">' +
+        '<i class="ov-daily-box ov-milestone-box"></i>'.repeat(4) +
+        "</span></span>",
+    );
+    expect(dailies(25).row).toContain('aria-label="3 uses per day"');
+    const css = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    const rule = (selector: string) =>
+      css.match(
+        new RegExp(
+          `(?:^|\\n)${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\{([^}]*)\\}`,
+        ),
+      )?.[1] ?? "";
+    // Every tracker, item dailies included, centres label and marks on one
+    // axis: no tracker-specific layout overrides the shared rule.
+    expect(rule(".ov-scratch-health .ov-tracker")).toMatch(
+      /flex-direction: column;\s*align-items: center;/,
+    );
+    expect(css).not.toMatch(
+      /\.ov-item-dailies(?![-\w])[^{]*\{[^}]*(?:display|justify|align|grid)/,
+    );
+    expect(rule(".ov-tracker-marks,\n.ov-item-dailies-boxes")).toContain(
+      "gap: 0.04in;",
+    );
+    expect(rule(".ov-item-dailies .ov-milestone-box")).toContain(
+      "border-style: dashed;",
+    );
+    // No wider gap between the two groups anywhere else.
+    expect(css).not.toMatch(/\.ov-item-dailies[^{]*\{[^}]*gap: 0\.(?!04in)/);
+    // One row: death saves, item dailies, then action points, each label
+    // above its marks.
     const trackers = renderToStaticMarkup(
       <SheetOverview
         hiddenSections={EVERY_SECTION}
@@ -1521,20 +1556,18 @@ describe("real-data sheet overview", () => {
         paper="letter"
       />,
     ).split('class="ov-health-trackers"')[1]!;
-    expect(
-      ["Death saves", "Item dailies", "Action points"].map((label) =>
-        trackers.indexOf(label),
-      ),
-    ).toEqual(
-      [
-        ...["Death saves", "Item dailies", "Action points"].map((label) =>
-          trackers.indexOf(label),
-        ),
-      ].sort((a, b) => a - b),
+    const labels = ["Death saves", "Item dailies", "Action points"];
+    const at = labels.map((label) => trackers.indexOf(label));
+    expect(at).toEqual([...at].sort((a, b) => a - b));
+    expect(trackers).toContain(
+      '<div class="ov-tracker sp-death-saves"><span class="ov-tracker-label">Death saves</span><span class="ov-tracker-marks">',
     );
-    expect(dailies(25).row).toContain('aria-label="3 uses per day"');
+    expect(trackers).toContain(
+      '<div class="ov-tracker ov-action-point-count"><span class="ov-tracker-label">Action points</span><span class="ov-tracker-marks" aria-label="Three action point marks">',
+    );
+    expect(rule(".ov-tracker-label")).toContain("color: var(--sp-muted);");
   });
-  it("prints a psionic's Power Points pool on page 1 and as a scratchpad write-in", () => {
+  it("prints a psionic's Power Points pool on page 1 and as scratchpad boxes or a count write-in", () => {
     const render = (resources: typeof model.resources) =>
       renderToStaticMarkup(
         <SheetOverview
@@ -1548,27 +1581,44 @@ describe("real-data sheet overview", () => {
     const plain = render(model.resources);
     expect(plain).toContain('class="ov-numeric-band"');
     expect(plain).not.toContain("Pwr Pts");
-    expect(plain).not.toContain('aria-label="Power points"');
-    const psionic = render([
-      ...model.resources,
-      { label: "Power Points", value: "9" },
-    ]);
+    expect(plain).not.toContain("ov-power-points");
+    const pool = (value: string) =>
+      render([...model.resources, { label: "Power Points", value }]);
+    const psionic = pool("9");
     const band = psionic
       .split('class="ov-numeric-band has-power-points"')[1]!
       .split('aria-label="Initiative"')[0]!;
     expect(band).toContain("<dt>Surge HP</dt>");
     expect(band).toContain("<dt>Pwr Pts</dt><dd>9</dd>");
-    const writeIn = psionic
-      .split('class="ov-health-trackers"')[1]!
-      .split('aria-label="Power points"')[1]!
-      .split("</div>")[0]!;
-    expect(writeIn).toContain(
-      '<span class="ov-tracker-marks"><span class="ov-power-points-blank"></span>/ 9</span><span>Power points</span>',
+    const tracker = (html: string) =>
+      html
+        .split('class="ov-health-trackers"')[1]!
+        .split('<div class="ov-tracker ov-power-points">')[1]!
+        .split("</div>")[0]!;
+    // Above the box limit: the consumables' bordered count blank, "/ 9".
+    expect(tracker(psionic)).toBe(
+      '<span class="ov-tracker-label">Power points</span><span class="ov-tracker-marks"><span class="ov-consumable-count"><i aria-label="Write remaining power points"></i><span>/ 9</span></span></span>',
     );
-    expect(
-      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
-    ).toMatch(
+    expect(tracker(pool("4"))).toContain("<span>/ 4</span>");
+    // Small pools: one pencil box per point.
+    expect(tracker(pool("3"))).toBe(
+      '<span class="ov-tracker-label">Power points</span><span class="ov-tracker-marks" aria-label="3 power points">' +
+        '<i class="ov-daily-box"></i>'.repeat(3) +
+        "</span>",
+    );
+    expect(tracker(pool("1"))).toContain('aria-label="1 power point"');
+    const css = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    expect(css).toMatch(
       /\.ov-numeric-band\.has-power-points \{\s*grid-template-columns: minmax\(0, 5fr\) minmax\(0, 5fr\)/,
+    );
+    expect(css).toMatch(
+      /\.ov-power-points \.ov-consumable-count > i \{\s*height: 0\.2in;/,
+    );
+    expect(css).toMatch(
+      /\.ov-scratch-health \.ov-tracker \.ov-daily-box \{\s*width: 0\.2in;\s*height: 0\.2in;/,
     );
   });
   it("matches scratchpad health reference values to the four summary cells", () => {
@@ -1596,10 +1646,18 @@ describe("real-data sheet overview", () => {
       .split("</div>")[0]!;
     expect(ap.match(/lucide-circle/g)).toHaveLength(3);
     expect(ap).not.toContain("<i");
-    const death = html.split('class="ov-tracker sp-death-saves"')[1]!.split("</div>")[0]!;
-    expect(death.indexOf("lucide-skull")).toBeLessThan(
+    const death = html
+      .split('class="ov-tracker sp-death-saves"')[1]!
+      .split("</div>")[0]!;
+    expect(death.indexOf("lucide-skull")).toBeGreaterThan(
       death.indexOf("Death saves"),
     );
+    // The panel holds more than health now (death saves, item dailies,
+    // power points, action points): its heading is Resources.
+    const panel = html.split(
+      '<section class="sp-panel ov-scratch-health">',
+    )[1]!;
+    expect(panel).toMatch(/^<h3><svg[^]*?<\/svg>Resources<\/h3>/);
   });
   it("sorts tracking powers by action, explicit utility type, then name without mutating input", () => {
     const rows = [

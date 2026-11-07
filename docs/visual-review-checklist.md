@@ -668,40 +668,55 @@ live site.
     others, their text or icons sit off-centre, Print or Sections moves
     between View and Edit, or the hint's wrapping pushes a button onto a
     new line.
-- [ ] **Hu: scratchpad magic item dailies (2026-11-06).** Added 2026-11-06;
-      the box counts per tier are unit-tested (`derived-values.test.ts`,
-      `SheetOverview.test.tsx`), this is the row's look and fit.
-  - **Where:** `?preview=1`, the Play scratchpad's Health panel, at 140%
-    zoom and in both themes; then the browser's print preview in Letter
-    and in A4 (Settings → paper size). Repeat on a paragon character
-    (Beldin Hammertongue 11 or Max Unger 12).
-  - **Expect:** one tracker row, two lines tall, marks over labels: three
-    skulls over "Death saves", then one box at heroic (two at paragon,
-    three at epic) over "Item dailies" beside four dashed boxes over
-    "Milestones", then three circles over "Action points" on the right. Boxes match the daily power boxes below in size and stroke. The
-    tracking tables below still start on the first page where they did.
-  - **Wrong if:** the row wraps at either paper size, the dashed boxes are
-    hard to tell from the solid ones (or vanish in print), a label doesn't
-    sit under its marks, or the Health panel's height pushes power tracking to an
-    extra page it did not need before.
-- [ ] **Beldin: printed Power Points (2026-11-06).** Added 2026-11-06; the
-      value and its absence below 1 are unit-tested (`overview.test.ts`,
-      `sheet-gaps.test.ts`, `SheetOverview.test.tsx`), this is the tile's
-      and the write-in's look and fit.
-  - **Where:** Beldin Hammertongue 11, `?preview=1`: page 1's numeric band,
-    then the Play scratchpad's Health panel; at 140% zoom and in both
-    themes, then the browser's print preview in Letter and in A4. Compare
-    with a non-psionic (Hu Sheng-Ming Level 8).
+- [ ] **Hu: scratchpad magic item dailies (2026-11-06).** Added 2026-11-06,
+      redone the same day (one row, labels above, panel renamed); the box
+      counts per tier, the markup and the even spacing are tested
+      (`derived-values.test.ts`, `SheetOverview.test.tsx`, `check:print`
+      measures the row), this is the row's look.
+  - **Where:** Hu Sheng-Ming Level 8, `?preview=1`, the Play scratchpad's
+    Resources panel (it was "Health"), at 140% zoom and in both themes;
+    then the browser's print preview in Letter and in A4 (Settings → paper
+    size). Repeat on a paragon character (Beldin Hammertongue 11 or Max
+    Unger 12).
+  - **Expect:** the panel heading reads "Resources" (heart icon). One
+    tracker row, two lines tall, every label above its marks in the grey
+    of the "Current HP"/"Temporary HP" labels: "Death saves" over three
+    skulls; "Item dailies +Milestones" over one unbroken row of boxes, one
+    solid box at heroic (two at paragon, three at epic) then four dashed
+    ones, every box the same distance apart, label and boxes on one centre
+    line like the other three trackers;
+    "Action points" over three circles on the right. Boxes match the daily
+    power boxes below in size and stroke. The tracking tables below still
+    start on the first page where they did.
+  - **Wrong if:** the row wraps at either paper size, there is a wider gap
+    between the solid and dashed boxes, the dashed boxes are hard to tell
+    from the solid ones (or vanish in print), a label sits below its
+    marks or off its marks' centre, or the panel's height pushes power
+    tracking to an extra page.
+- [ ] **Beldin: printed Power Points (2026-11-06).** Added 2026-11-06,
+      tracker redone the same day; the value, its absence below 1 and the
+      boxes/write-in choice are unit-tested (`overview.test.ts`,
+      `sheet-gaps.test.ts`, `SheetOverview.test.tsx`), and `check:print`
+      measures three boxes in the row; this is the tile's and the tracker's
+      look.
+  - **Where:** Beldin Hammertongue 11 (pool 9) and Azreille (pool 4),
+    `?preview=1`: page 1's numeric band, then the Play scratchpad's
+    Resources panel; at 140% zoom and in both themes, then the browser's
+    print preview in Letter and in A4. For the boxes, a new level-1 Psion
+    (pool 2). Compare with a non-psionic (Hu Sheng-Ming Level 8).
   - **Expect:** page 1's Health group shows Max HP, Bloodied, Surges, Surge
     HP, then "Pwr Pts" 9, its tiles the same size as the Defenses tiles;
-    Initiative and Speed keep their single tiles. On the scratchpad's tracker
-    row, "____ / 9" over "Power points" between Item dailies and Action
-    points, the row still two lines tall. Hu's page 1 and
-    scratchpad are unchanged (no tile, no line).
+    Initiative and Speed keep their single tiles. On the scratchpad's
+    tracker row, between Item dailies and Action points, "Power points"
+    above a small bordered write-in box followed by "/ 9" (Azreille "/ 4"),
+    the same box as the Consumables pane's counts but row height; the
+    level-1 Psion shows two solid pencil boxes instead. The row stays two
+    lines tall. Hu's page 1 and scratchpad have no tile and no tracker.
   - **Wrong if:** "Pwr Pts" or any Health/Defenses label is cut off with
-    an ellipsis, the band overflows the page width, the write-in line wraps
-    or its blank is invisible in print, or the Health panel's growth pushes
-    power tracking to an extra page.
+    an ellipsis, the band overflows the page width, the tracker wraps or
+    crowds its neighbours, the write-in box is invisible in print or taller
+    than the other marks, or the panel's growth pushes power tracking to
+    an extra page.
 
 ## Pass 11: Natan (`natan`)
 

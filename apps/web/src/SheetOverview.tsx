@@ -1543,56 +1543,110 @@ function SessionNotes({
   );
 }
 /**
- * Magic item daily power uses (PHB 226), blank pencil boxes like the legacy
- * sheet's: the tier's uses, then the four a day's milestones can add.
+ * One pencil tracker of the Resources panel's tracker row: its label above
+ * its marks, like the panel's other fields.
  */
-function ItemDailies({ level }: { level: number }) {
-  const uses = magicItemDailyUses(level);
+function Tracker({
+  label,
+  className,
+  groupLabel,
+  marksLabel,
+  children,
+}: {
+  label: string;
+  className: string;
+  /** Makes the tracker a named group, for marks in several groups. */
+  groupLabel?: string;
+  /** Names the marks for screen readers when they carry no text. */
+  marksLabel?: string;
+  children: ReactNode;
+}) {
   return (
     <div
-      className="ov-tracker ov-item-dailies"
-      role="group"
-      aria-label="Magic item daily powers"
+      className={`ov-tracker ${className}`}
+      {...(groupLabel === undefined
+        ? {}
+        : { role: "group", "aria-label": groupLabel })}
     >
-      <span className="ov-tracker-marks">
-        <span
-          className="ov-item-dailies-boxes"
-          aria-label={`${uses} ${uses === 1 ? "use" : "uses"} per day`}
-        >
-          {Array.from({ length: uses }, (_, index) => (
-            <i className="ov-daily-box" key={index} />
-          ))}
-        </span>
-        <span
-          className="ov-item-dailies-boxes"
-          aria-label={`${MAGIC_ITEM_MILESTONE_USES} milestone uses`}
-        >
-          {Array.from({ length: MAGIC_ITEM_MILESTONE_USES }, (_, index) => (
-            <i className="ov-daily-box ov-milestone-box" key={index} />
-          ))}
-        </span>
-      </span>
-      <span className="ov-tracker-labels">
-        <span>Item dailies</span>
-        <span>Milestones</span>
+      <span className="ov-tracker-label">{label}</span>
+      <span
+        className="ov-tracker-marks"
+        {...(marksLabel === undefined ? {} : { "aria-label": marksLabel })}
+      >
+        {children}
       </span>
     </div>
   );
 }
-/** A pencil blank for the psionic pool's remaining points, out of the total. */
-function PowerPointsWriteIn({ total }: { total: string | undefined }) {
-  if (total === undefined) return null;
+/**
+ * Magic item daily power uses (PHB 226), blank pencil boxes like the legacy
+ * sheet's: the tier's uses, then the four a day's milestones can add, drawn
+ * dashed, in one evenly spaced row under one centred label like the other
+ * trackers'.
+ */
+function ItemDailies({ level }: { level: number }) {
+  const uses = magicItemDailyUses(level);
   return (
-    <div
-      className="ov-tracker ov-power-points"
-      role="group"
-      aria-label="Power points"
+    <Tracker
+      label="Item dailies +Milestones"
+      className="ov-item-dailies"
+      groupLabel="Magic item daily powers"
     >
-      <span className="ov-tracker-marks">
-        <span className="ov-power-points-blank" />/ {total}
+      <span
+        className="ov-item-dailies-boxes"
+        role="group"
+        aria-label={`${uses} ${uses === 1 ? "use" : "uses"} per day`}
+      >
+        {Array.from({ length: uses }, (_, index) => (
+          <i className="ov-daily-box" key={index} />
+        ))}
       </span>
-      <span>Power points</span>
-    </div>
+      <span
+        className="ov-item-dailies-boxes"
+        role="group"
+        aria-label={`${MAGIC_ITEM_MILESTONE_USES} milestone uses`}
+      >
+        {Array.from({ length: MAGIC_ITEM_MILESTONE_USES }, (_, index) => (
+          <i className="ov-daily-box ov-milestone-box" key={index} />
+        ))}
+      </span>
+    </Tracker>
+  );
+}
+/**
+ * The most power points printed as one pencil box each. Measured in print
+ * (check:print): with the row's other trackers at their widest (epic
+ * dailies), A4's tracker row leaves 0.88in for this one, and a box and its
+ * gap take 0.24in, so three boxes fit under the 0.72in "Power points" label
+ * while a fourth would overflow (Letter is 0.14in wider). Larger pools get a
+ * write-in.
+ */
+const POWER_POINT_BOX_LIMIT = 3;
+/**
+ * A psionic's daily pool: a box per point when it fits the row, else the
+ * scratchpad's styled count write-in (the consumables' blank) out of the
+ * total.
+ */
+function PowerPointsTracker({ total }: { total: string | undefined }) {
+  if (total === undefined) return null;
+  const count = /^\d+$/.test(total) ? Number(total) : undefined;
+  return count !== undefined && count <= POWER_POINT_BOX_LIMIT ? (
+    <Tracker
+      label="Power points"
+      className="ov-power-points"
+      marksLabel={`${count} power ${count === 1 ? "point" : "points"}`}
+    >
+      {Array.from({ length: count }, (_, index) => (
+        <i className="ov-daily-box" key={index} />
+      ))}
+    </Tracker>
+  ) : (
+    <Tracker label="Power points" className="ov-power-points">
+      <span className="ov-consumable-count">
+        <i aria-label="Write remaining power points" />
+        <span>/ {total}</span>
+      </span>
+    </Tracker>
   );
 }
 function Scratchpad({
@@ -1757,7 +1811,7 @@ function Scratchpad({
       >
         <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
-            <Panel title="Health" icon="heart" className="ov-scratch-health">
+            <Panel title="Resources" icon="heart" className="ov-scratch-health">
               <div
                 className="ov-scratch-defenses"
                 role="group"
@@ -1794,27 +1848,22 @@ function Scratchpad({
                 <div>Temporary HP</div>
               </div>
               <div className="ov-health-trackers">
-                <div className="ov-tracker sp-death-saves">
-                  <span className="ov-tracker-marks">
-                    {[0, 1, 2].map((n) => (
-                      <Icon key={n} name="skull" />
-                    ))}
-                  </span>
-                  Death saves
-                </div>
+                <Tracker label="Death saves" className="sp-death-saves">
+                  {[0, 1, 2].map((n) => (
+                    <Icon key={n} name="skull" />
+                  ))}
+                </Tracker>
                 <ItemDailies level={model.overview!.level} />
-                <PowerPointsWriteIn total={powerPoints(model)} />
-                <div className="ov-tracker ov-action-point-count">
-                  <span
-                    className="ov-tracker-marks"
-                    aria-label="Three action point marks"
-                  >
-                    {[0, 1, 2].map((n) => (
-                      <Icon key={n} name="circle" />
-                    ))}
-                  </span>
-                  Action points
-                </div>
+                <PowerPointsTracker total={powerPoints(model)} />
+                <Tracker
+                  label="Action points"
+                  className="ov-action-point-count"
+                  marksLabel="Three action point marks"
+                >
+                  {[0, 1, 2].map((n) => (
+                    <Icon key={n} name="circle" />
+                  ))}
+                </Tracker>
               </div>
             </Panel>
           </div>
