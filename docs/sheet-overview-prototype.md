@@ -255,7 +255,7 @@ three hollow action-point circles. Health's four reference cells use muted
 green (Max HP), rose (Bloodied), gold (Surges) and blue (Surge HP) backgrounds,
 with dark text and centered label/number stacks. Icons are omitted. The defenses
 strip uses neutral gray so its grouping is not associated with blue Surge HP.
-There is no milestone tracker or running
+Milestones appear only in the Item dailies row (2026-11-06); there is no running
 header; a consistent identity/section/page footer matches the other pages.
 Date is omitted; XP and ruled session/treasure notes have their own following
 page. The former Session

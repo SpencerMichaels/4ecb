@@ -1443,7 +1443,8 @@ async function checkScratchpad(client) {
       footerDate:page.querySelector('.sp-page-footer').textContent.includes('Date'),
       runningHeader:page.querySelector('.sp-running-header') !== null,
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
-      milestone:page.textContent.includes('Milestone'),
+      milestone:[...page.querySelectorAll('*')].some(e=>e.children.length===0&&e.textContent.includes('Milestone')&&!e.closest('.ov-item-dailies')),
+      itemDailies:page.querySelector('.ov-item-dailies') !== null,
       actionPointMarks:page.querySelectorAll('.ov-action-point-count .icon').length,
       actionPointHollow:[...page.querySelectorAll('.ov-action-point-count .icon')].every(e=>getComputedStyle(e).fill==='none'),
       encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
@@ -1549,11 +1550,12 @@ async function checkScratchpad(client) {
       state.trackerBottomGap > 0 &&
       state.trackerBottomGap < 12 &&
       !state.milestone &&
+      state.itemDailies &&
       state.actionPointMarks === 3 &&
       state.actionPointHollow &&
       state.upperBottoms.length === 2 &&
       Math.abs(state.upperBottoms[0] - state.upperBottoms[1]) < 1,
-    `Upper panes must align with three hollow AP marks and no milestone tracker: ${JSON.stringify(state)}`,
+    `Upper panes must align with three hollow AP marks, and milestones only in Item dailies: ${JSON.stringify(state)}`,
   );
   assert(
     state.encounterColumns === 10 &&
