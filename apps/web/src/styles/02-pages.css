@@ -78,6 +78,16 @@
   line-height: 1;
 }
 
+/* Flex centering centres line boxes, and a line box carries descender
+   space below the letters, so the name and the version sat low beside the
+   icon. Trimmed to cap height and baseline, their letters centre on the
+   icon and on each other. */
+@supports (text-box: trim-both cap alphabetic) {
+  .library-brand :is(.app-brand-name, .build-version) {
+    text-box: trim-both cap alphabetic;
+  }
+}
+
 .settings-subheading {
   align-items: end;
   border-bottom: 1px solid var(--border);

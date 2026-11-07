@@ -30,3 +30,11 @@ describe("library brand mark", () => {
     expect(appStyles).toMatch(/\.app-brand-mark \{[^}]*inline-size: 2\.25rem;/);
   });
 });
+
+describe("library brand alignment", () => {
+  it("trims the name and version to cap height so they centre on the icon", () => {
+    expect(appStyles).toMatch(
+      /@supports \(text-box: trim-both cap alphabetic\) \{\s*\.library-brand :is\(\.app-brand-name, \.build-version\) \{\s*text-box: trim-both cap alphabetic;/,
+    );
+  });
+});
