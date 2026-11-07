@@ -1,5 +1,39 @@
 # Implementation status
 
+## Scoped builder requests guarded (2026-11-06)
+
+The empty Build-tab swap step (e0633d5d) slipped past every audit because
+they all evaluate unscoped, while the builder asks for full option lists
+only for what the open tab shows. The editor's requests now come from one
+pure plan, `builderEvaluationPlan` (`builder-evaluation-plan.ts`, used by
+`CharacterEditorPage`), and `builder-scoped-requests.ts` names what each
+tab shows (Build-tab rows and level 1's racial ability bonus, Details,
+Retraining targets and the open retrain's gains) and compares the plan's
+scoped evaluations with unscoped ones of the same horizons: shown choices'
+candidates, replacement targets and gains, Overview rows, issue pages and
+non-presentation facts. A public test runs it on a synthetic level-4
+fighter with every kind of choice (picks, companion, details, powerswap,
+multiclass, power-replace, retrains, an item-owned power choice) on every
+tab and level; it fails with e0633d5d's engine condition reverted. The
+private `pnpm audit:scoped-requests` sweeps every sample-chars save, tab
+and level (`--shard K/N`), and `audit:native-workflow` now evaluates each
+level as the Build tab requests it. Fixes it found: the Overview headed a
+filled power group by its picks while the Build tab used its candidates
+(Akagi: "At-Will Powers" vs "Powers"), so a filled group is now headed by
+its picks everywhere; a feature choice named from the feature its options
+share took the lone pick's own category in the Overview (Sylestine's
+Twofold Pact pick read "Eldritch Pact: Dark Pact", the Build tab "Twofold
+Pact: Dark Pact"), so a lone listed option now names nothing; and an
+unlabelled optional feat swap (stock Novice,
+Acolyte and Adept Power, Paragon Multiclassing: no rule text) was taken for
+the optional retrain and moved to the Retraining tab, so replacement
+choices now carry the engine's `retraining` flag and only those go there.
+Evaluation cache v125. Known residual: an unresolved choice at a level the
+open tab doesn't detail (only Overview or the issue pages see it) has no
+candidates there, so an internal-type choice's issue wording ("Choose an
+option" vs "Choose a damage type") and the Overview's power-slot order fall
+back; no sample save has one.
+
 ## An augmentable power is one card (2026-11-06)
 
 D118 (owner decision, a deliberate difference from the legacy sheet): an

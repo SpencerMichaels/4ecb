@@ -58,6 +58,7 @@ describe("Build tab empty state", () => {
       index: 0,
       type: "Replacement",
       optional: true,
+      retraining: true,
       candidates: [],
     } as unknown as EvaluatedChoice;
     const primary = primaryLevelBuildChoices([retrain]);

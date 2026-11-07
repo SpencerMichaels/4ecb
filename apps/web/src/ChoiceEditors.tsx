@@ -1525,7 +1525,7 @@ export function RepeatedChoiceGroup({
           >
             {candidateKind === "feature"
               ? contextualChoiceTitle(root, evaluation, byId)
-              : repeatedChoiceGroupTitle(choices, byId)}
+              : repeatedChoiceGroupTitle(choices, evaluation, byId)}
           </h4>
         </div>
         {houseRule ? (

@@ -12,11 +12,11 @@ import { CandidateDetail } from "./CandidateDetail";
 import type { InspectedOption } from "./CandidateSelectionTable";
 import { CandidateInspectionScope } from "./builder-choice-context";
 import {
-  isOptionalRetrainingChoice,
-  replacedDefinitionId,
   retrainingCategory,
-  selectedOccurrence,
+  levelRetrain,
+  retrainingChoicesByLevel,
   unresolveEvaluatedChoiceCommand,
+  type LevelRetrain,
   type RetrainingCategory,
 } from "./builder-ui";
 import { ChoiceAccordionItem } from "./ChoiceAccordionItem";
@@ -38,47 +38,6 @@ export function retrainingCategories(
   )
     ? [...CATEGORIES, "companion"]
     : CATEGORIES;
-}
-
-export interface LevelRetrain {
-  readonly choice: EvaluatedChoice;
-  readonly category: RetrainingCategory | undefined;
-  readonly from: string;
-  readonly to: string;
-  readonly toId: string | undefined;
-}
-
-function entityName(
-  definitionId: string | undefined,
-  byId: ReadonlyMap<string, ContentEntity>,
-): string {
-  if (definitionId === undefined) return "";
-  return byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId;
-}
-
-/** The retrain made at a level (one per level), if any. */
-export function levelRetrain(
-  choices: readonly EvaluatedChoice[],
-  evaluation: EvaluatedCharacter,
-  byId: ReadonlyMap<string, ContentEntity>,
-): LevelRetrain | undefined {
-  for (const choice of choices) {
-    const selected = selectedOccurrence(choice, evaluation);
-    if (selected === undefined) continue;
-    const replacedId = replacedDefinitionId(choice, evaluation);
-    return {
-      choice,
-      category: retrainingCategory(
-        replacedId === undefined
-          ? undefined
-          : byId.get(replacedId.toLocaleLowerCase())?.type,
-      ),
-      from: entityName(replacedId, byId),
-      to: entityName(selected.definitionId, byId),
-      toId: selected.definitionId,
-    };
-  }
-  return undefined;
 }
 
 /**
@@ -130,15 +89,10 @@ export function RetrainingWorkspace({
         <p className="choice-empty-state">Evaluating retraining options…</p>
       </section>
     );
-  const choicesByLevel = new Map<number, EvaluatedChoice[]>();
-  for (const choice of evaluation.choices) {
-    if (!isOptionalRetrainingChoice(choice)) continue;
-    if (choice.level > build.effectiveLevel) continue;
-    choicesByLevel.set(choice.level, [
-      ...(choicesByLevel.get(choice.level) ?? []),
-      choice,
-    ]);
-  }
+  const choicesByLevel = retrainingChoicesByLevel(
+    evaluation,
+    build.effectiveLevel,
+  );
   const levels = [...choicesByLevel.keys()].sort((a, b) => a - b);
   const selected = choicesByLevel.has(selectedLevel)
     ? selectedLevel

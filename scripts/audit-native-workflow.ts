@@ -26,6 +26,32 @@ import {
   replacementCommand,
   replacementIntegrity,
 } from "./native-character";
+import {
+  builderEvaluationPlan,
+  builderRequestBuild,
+} from "../apps/web/src/builder-evaluation-plan";
+import { planningEvaluationHorizon } from "../apps/web/src/builder-ui";
+
+/** The evaluation the Build tab's choices read at `level`. */
+function buildTabEvaluation(
+  build: Parameters<typeof evaluate>[0],
+  level: number,
+  entities: Parameters<typeof evaluate>[1],
+): ReturnType<typeof evaluate> {
+  const planning = builderEvaluationPlan({
+    workspace: "build",
+    currentLevel: build.effectiveLevel,
+    selectedLevel: level,
+    planningHorizon: planningEvaluationHorizon(build, level),
+    characterDetailLevels: [],
+  }).requests.find(({ role }) => role === "planning")!;
+  return evaluate(builderRequestBuild(build, planning), entities, {
+    candidateDetailLevels: planning.candidateDetailLevels,
+    candidateDetailReplacementChoiceIds:
+      planning.candidateDetailReplacementChoiceIds ?? [],
+    includePowers: false,
+  });
+}
 
 async function main(): Promise<void> {
   const packArgument = process.argv[2];
@@ -97,7 +123,14 @@ async function main(): Promise<void> {
       });
     }
     for (let attempt = 0; attempt < 512; attempt += 1) {
-      const current = evaluate(transaction.current, pack.entities);
+      // As the Build tab at this level asks for it (builderEvaluationPlan's
+      // planning request), so a scoped request that omits a choice's options
+      // fails here; the final evaluation below is exhaustive.
+      const current = buildTabEvaluation(
+        transaction.current,
+        level,
+        pack.entities,
+      );
       const unresolvedChoices = current.choices.filter(
         (candidate) =>
           !candidate.optional && candidate.selectedOccurrenceId === undefined,

@@ -764,8 +764,10 @@ describe("release accessibility contract", () => {
 
   it("threads the selected-level rules evaluation into ability score editors", () => {
     expect(characterEditor).toContain("const selectedLevelRequest =");
+    // The selected horizon evaluates the build at the selected level
+    // (builderRequestBuild, covered in builder-evaluation-plan.test.ts).
     expect(characterEditor).toContain(
-      "{ ...evaluationBuild, effectiveLevel: selectedLevel }",
+      "builderRequestBuild(evaluationBuild, request)",
     );
     expect(
       characterEditor.match(/evaluation=\{selectedLevelEvaluation\}/g),

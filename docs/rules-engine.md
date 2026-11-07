@@ -536,7 +536,25 @@ opens (showing "Listing the replacements…" until that evaluation arrives).
 Scoped replacement gains, like scoped choice candidates, leave out what the
 gain's category rejects, except the slot's saved gain (a level-30 sorcerer's
 retraining list was 43 MB with them, 14 MB without). Omitting both fields
-preserves the exhaustive compatibility/reporting result. With
+preserves the exhaustive compatibility/reporting result. An ordinary
+retraining's choice carries `retraining: true`; the builder puts only those
+on the Retraining tab (`isOptionalRetrainingChoice`), so an unlabelled
+optional feat swap (Novice Power's and Paragon Multiclassing's multiclass
+swaps have no rule text) stays a Build-tab row.
+
+The web builder's requests come from one pure plan,
+`builderEvaluationPlan` (`apps/web/src/builder-evaluation-plan.ts`: the
+current, selected-level and planning requests per tab, and which evaluation
+each consumer reads). Every other audit evaluates unscoped, so a scoped
+request that omits what a visible editor needs (the empty Build-tab swap
+step above) passes them; `builder-scoped-requests.ts` names what each tab
+shows and compares the plan's scoped evaluations against unscoped ones of
+the same horizons: every shown choice's candidates, replacement targets and
+gains (the open retrain's), the Overview rows, the issue pages and the
+non-presentation facts. `builder-scoped-requests.test.ts` runs it over a
+synthetic character with every kind of choice, and `pnpm
+audit:scoped-requests` over every `sample-chars` save, tab and level
+(`--shard K/N` for parallel runs; JSON in `tmp/audit/`). With
 acquisition-level prerequisite snapshots enabled, the development runner
 measures Silaqui at approximately 7.8 seconds cold and 1.6 seconds warm for the
 exhaustive diagnostic, and 4.8 seconds cold and 0.55 seconds warm for the

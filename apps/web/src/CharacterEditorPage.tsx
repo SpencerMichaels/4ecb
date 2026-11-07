@@ -20,12 +20,13 @@ import {
   type BoundProfileResolution,
 } from "./bound-profile-resolution";
 import {
-  currentCandidateDetailLevels,
-  evaluationDispatchOrder,
-  planningCandidateDetailLevels,
+  builderEvaluationPlan,
+  builderRequestBuild,
+  characterDetailLevels,
   publishEvaluationResult,
   sameRulesInputs,
-  selectedCandidateDetailLevels,
+  type BuilderEvaluationRequest,
+  type EvaluationHorizonRole,
 } from "./builder-evaluation-plan";
 import {
   builderIssueGroups,
@@ -55,7 +56,6 @@ import {
   type CharacterRecord,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import { characterClassName } from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
@@ -770,15 +770,8 @@ export function CharacterEditorPage({
     build === undefined
       ? undefined
       : resolveCharacterWallet(build, "stored").amount;
-  const characterDetailLevelKey = [
-    ...new Set(
-      (planningEvaluation?.choices ?? [])
-        .filter(isCharacterDetailChoice)
-        .map((choice) => choice.level),
-    ),
-  ]
-    .sort((left, right) => left - right)
-    .join(",");
+  const characterDetailLevelKey =
+    characterDetailLevels(planningEvaluation).join(",");
 
   useEffect(() => {
     const client = rulesClient.current;
@@ -810,79 +803,66 @@ export function CharacterEditorPage({
       return input;
     };
     // Dispatch order determines which evaluation the single rules worker
-    // finishes first; see evaluationDispatchOrder. Reuse (which result a tied
-    // consumer receives) is unchanged from before this reordering.
-    const dispatchOrder = evaluationDispatchOrder(
-      evaluationBuild.effectiveLevel,
+    // finishes first; see evaluationDispatchOrder. A horizon without its own
+    // request reads the one it coincides with (builderEvaluationPlan).
+    const plan = builderEvaluationPlan({
+      workspace: workspaceTab,
+      currentLevel: evaluationBuild.effectiveLevel,
       selectedLevel,
       planningHorizon,
-    );
-    const distinctCurrentRequest = dispatchOrder.includes("current")
-      ? client.evaluate(
+      characterDetailLevels: characterDetailLevelKey
+        .split(",")
+        .filter(Boolean)
+        .map(Number),
+      expandedReplacementChoiceId,
+    });
+    const requests = new Map<
+      EvaluationHorizonRole,
+      Promise<EvaluatedCharacter>
+    >();
+    let planningInput: EvaluationInput | undefined;
+    let planningRequest: BuilderEvaluationRequest | undefined;
+    for (const request of plan.requests) {
+      const input = project(
+        builderRequestBuild(evaluationBuild, request),
+        request.role,
+      );
+      if (request.role === "planning") {
+        planningInput = input;
+        planningRequest = request;
+      }
+      requests.set(
+        request.role,
+        client.evaluate(
           {
-            ...project(projectBuildForLegacyExport(evaluationBuild), "current"),
-            candidateDetailLevels: currentCandidateDetailLevels(
-              workspaceTab,
-              evaluationBuild.effectiveLevel,
-              selectedLevel,
-            ),
+            ...input,
+            candidateDetailLevels: request.candidateDetailLevels,
+            ...(request.candidateDetailReplacementChoiceIds === undefined
+              ? {}
+              : {
+                  candidateDetailReplacementChoiceIds:
+                    request.candidateDetailReplacementChoiceIds,
+                }),
             includePowers: false,
           },
           signal,
-        )
-      : undefined;
-    const distinctSelectedRequest = dispatchOrder.includes("selected")
-      ? client.evaluate(
-          {
-            ...project(
-              { ...evaluationBuild, effectiveLevel: selectedLevel },
-              "selected",
-            ),
-            candidateDetailLevels: selectedCandidateDetailLevels(
-              workspaceTab,
-              selectedLevel,
-            ),
-            includePowers: false,
-          },
-          signal,
-        )
-      : undefined;
-    const planningInput = project(
-      { ...evaluationBuild, effectiveLevel: planningHorizon },
-      "planning",
-    );
-    const planningLevels = planningCandidateDetailLevels(
-      workspaceTab,
-      selectedLevel,
-      characterDetailLevelKey.split(",").filter(Boolean).map(Number),
-    );
-    const planningReplacementChoiceIds =
-      expandedReplacementChoiceId === undefined
-        ? []
-        : [expandedReplacementChoiceId];
-    const planningRequest = client.evaluate(
-      {
-        ...planningInput,
-        candidateDetailLevels: planningLevels,
-        candidateDetailReplacementChoiceIds: planningReplacementChoiceIds,
-        includePowers: false,
-      },
-      signal,
-    );
+        ),
+      );
+    }
     // Results may come from the persistent cache without the worker building
     // its level snapshots; build them now, queued behind the visible
     // evaluations, so the first edit doesn't pay a cold evaluation. The
     // planning horizon's snapshots cover every lower level.
-    if (!rulesCachesWarmed.current) {
+    if (!rulesCachesWarmed.current && planningInput !== undefined) {
       rulesCachesWarmed.current = true;
       client.warm?.(planningInput);
     }
-    const currentRequest = distinctCurrentRequest ?? planningRequest;
-    const selectedLevelRequest =
-      distinctSelectedRequest ??
-      (selectedLevel === evaluationBuild.effectiveLevel
-        ? currentRequest
-        : planningRequest);
+    const planningLevels = planningRequest?.candidateDetailLevels ?? [];
+    const planningReplacementChoiceIds =
+      planningRequest?.candidateDetailReplacementChoiceIds ?? [];
+    const planningPromise = requests.get("planning")!;
+    const currentRequest = requests.get(plan.current) ?? planningPromise;
+    const selectedLevelRequest = requests.get(plan.selected) ?? planningPromise;
     const publish = (
       request: Promise<EvaluatedCharacter>,
       setter: (evaluation: EvaluatedCharacter) => void,
@@ -905,7 +885,7 @@ export function CharacterEditorPage({
       evaluatedBuilds.current.set(evaluation, evaluationBuild);
       setCurrentEvaluation(evaluation);
     });
-    const planningPublished = publish(planningRequest, (evaluation) => {
+    const planningPublished = publish(planningPromise, (evaluation) => {
       planningDetail.current.set(evaluation, {
         workspace: workspaceTab,
         levels: planningLevels,

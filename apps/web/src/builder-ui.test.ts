@@ -1021,13 +1021,32 @@ describe("builder planning UI", () => {
     expect(choiceTableSummary(option, "feature")).toBe(
       "Fight more effectively beside your allies.",
     );
+    // Without a feature provider, the feature its options share names it.
+    const pursuit = {
+      ...option,
+      id: "FEATURE_PURSUIT",
+      name: "Censure of Pursuit",
+    };
+    byId.set(pursuit.id, pursuit);
+    expect(
+      contextualChoiceName(
+        {
+          ...choice,
+          candidates: [candidate(option.id), candidate(pursuit.id)],
+        },
+        { occurrences: [] } as unknown as EvaluatedCharacter,
+        (id) => byId.get(id),
+      ),
+    ).toBe("Avenger's Censure");
+    // A lone listed option (an evaluation listing only the slot's pick)
+    // shares nothing: its own category doesn't name the choice.
     expect(
       contextualChoiceName(
         choice,
         { occurrences: [] } as unknown as EvaluatedCharacter,
         (id) => byId.get(id),
       ),
-    ).toBe("Avenger's Censure");
+    ).toBeUndefined();
 
     const anonymousOption = {
       ...option,
@@ -2023,6 +2042,7 @@ describe("builder planning UI", () => {
       id: "replacement",
       type: "Replacement",
       optional: true,
+      retraining: true,
       selectedOccurrenceId: "fading",
       replacementOptions: [
         {
@@ -2055,9 +2075,16 @@ describe("builder planning UI", () => {
     } as unknown as EvaluatedCharacter;
     expect(selectedCandidateDecision(choice, evaluation)?.eligible).toBe(true);
     expect(isOptionalRetrainingChoice(choice)).toBe(true);
+    // A labelled feat swap and an unlabelled one (Novice Power's
+    // multiclass swap) are Build-tab rows: only the retrain flag decides.
+    const unflagged = {
+      ...choice,
+      retraining: undefined,
+    } as unknown as typeof choice;
     expect(
-      isOptionalRetrainingChoice({ ...choice, name: "Mastery replacement" }),
+      isOptionalRetrainingChoice({ ...unflagged, name: "Mastery replacement" }),
     ).toBe(false);
+    expect(isOptionalRetrainingChoice(unflagged)).toBe(false);
   });
 
   it("keeps inventory-owned configuration out of the level-up timeline", () => {

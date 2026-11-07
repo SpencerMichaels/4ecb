@@ -488,12 +488,11 @@ export function levelRailChoiceStatus(
       : "future";
 }
 
+/** A level's ordinary retrain (the Retraining tab's). An unlabelled
+ *  optional swap a feat offers (Novice Power's multiclass swap) is a
+ *  Build-tab row, so the engine's flag decides, not the missing label. */
 export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
-  return (
-    choice.type === "Replacement" &&
-    choice.optional &&
-    (choice.name === undefined || choice.name.trim() === "")
-  );
+  return choice.type === "Replacement" && choice.retraining === true;
 }
 
 /** Which kind of thing a retrain replaces: a skill, a feat, a power or (Martial
@@ -907,13 +906,20 @@ export function contextualChoiceName(
     provider === undefined ? undefined : resolveEntity(provider.definitionId);
   if (isFeature(providerEntity)) return providerEntity.name;
 
+  // The feature the offered options share, as the Build tab lists them (no
+  // category mismatches). A lone option shares nothing with anything: it
+  // is all an evaluation that lists only each slot's pick (the Overview's,
+  // `candidateDetailLevels`) has, and its own categories would name a
+  // feature the Build tab doesn't (Sylestine's Twofold Pact pick read
+  // "Eldritch Pact").
   const candidateEntities = choice.candidates.flatMap((candidate) => {
+    if (candidate.reasons.includes("category")) return [];
     const entity = resolveEntity(candidate.definitionId);
     return entity === undefined ? [] : [entity];
   });
   const first = candidateEntities[0];
   const sharedCategories =
-    first === undefined
+    first === undefined || candidateEntities.length < 2
       ? []
       : first.categories.filter((category) =>
           candidateEntities.every((entity) =>
@@ -2328,7 +2334,7 @@ export function presentationUnitTitle(
   const root = unit[0]!;
   if (unit === presentation.grouped.backgrounds) return "Background";
   if (presentation.repeatedGroupByChoiceId.has(root.id))
-    return repeatedChoiceGroupTitle(unit, byId);
+    return repeatedChoiceGroupTitle(unit, evaluation, byId);
   return contextualChoiceTitle(root, evaluation, byId);
 }
 
@@ -2831,20 +2837,34 @@ const powerGroupLabels: Readonly<Record<LegacyVisualTone, string>> = {
   neutral: "Powers",
 };
 
+/**
+ * A group of repeated power slots is headed by the usage its powers share:
+ * its picks' once every slot has one, else its offered candidates'. Picks
+ * first, so the Overview (whose evaluation lists only each slot's pick,
+ * `candidateDetailLevels`) heads a filled group as the Build tab does.
+ */
 export function repeatedChoiceGroupTitle(
   choices: readonly EvaluatedChoice[],
+  evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
 ): string {
   if (!choices.every((choice) => choice.type.trim().toLowerCase() === "power"))
     return choiceTitle(choices[0]!);
+  const picks = choices.map((choice) =>
+    selectedDefinitionId(choice, evaluation),
+  );
+  const ids = picks.every((pick) => pick !== undefined)
+    ? (picks as readonly string[])
+    : choices.flatMap((choice) =>
+        choice.candidates
+          .filter(({ reasons }) => !reasons.includes("category"))
+          .map(({ definitionId }) => definitionId),
+      );
   const tones = new Set(
-    choices.flatMap((choice) =>
-      choice.candidates.flatMap((candidate) => {
-        if (candidate.reasons.includes("category")) return [];
-        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
-        return entity === undefined ? [] : [entityVisualTone(entity)];
-      }),
-    ),
+    ids.flatMap((id) => {
+      const entity = byId.get(id.toLocaleLowerCase());
+      return entity === undefined ? [] : [entityVisualTone(entity)];
+    }),
   );
   tones.delete("neutral");
   return tones.size === 1 ? powerGroupLabels[[...tones][0]!] : "Powers";
@@ -2924,4 +2944,71 @@ export function findOccurrence(
   return [...build.levels.map((frame) => frame.root), ...build.grabbag]
     .map(visit)
     .find((value) => value !== undefined);
+}
+/** The Build tab's rows for a level: everything but the Details tab's
+ *  choices (a class's required deity stays, in Class) and the optional
+ *  retrain (Retraining tab). */
+export function buildTabChoices(
+  choices: readonly EvaluatedChoice[],
+): readonly EvaluatedChoice[] {
+  return choices.filter(
+    (choice) =>
+      !isOptionalRetrainingChoice(choice) &&
+      (!isCharacterDetailChoice(choice) || isRequiredClassDeityChoice(choice)),
+  );
+}
+
+/** The Retraining tab's levels: each reached level's optional retrains. */
+export function retrainingChoicesByLevel(
+  evaluation: EvaluatedCharacter,
+  effectiveLevel: number,
+): ReadonlyMap<number, readonly EvaluatedChoice[]> {
+  const byLevel = new Map<number, EvaluatedChoice[]>();
+  for (const choice of evaluation.choices) {
+    if (!isOptionalRetrainingChoice(choice)) continue;
+    if (choice.level > effectiveLevel) continue;
+    byLevel.set(choice.level, [...(byLevel.get(choice.level) ?? []), choice]);
+  }
+  return byLevel;
+}
+
+export interface LevelRetrain {
+  readonly choice: EvaluatedChoice;
+  readonly category: RetrainingCategory | undefined;
+  readonly from: string;
+  readonly to: string;
+  readonly toId: string | undefined;
+}
+
+function retrainedEntityName(
+  definitionId: string | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  if (definitionId === undefined) return "";
+  return byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId;
+}
+
+/** The retrain made at a level (one per level), if any. */
+export function levelRetrain(
+  choices: readonly EvaluatedChoice[],
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): LevelRetrain | undefined {
+  for (const choice of choices) {
+    const selected = selectedOccurrence(choice, evaluation);
+    if (selected === undefined) continue;
+    const replacedId = replacedDefinitionId(choice, evaluation);
+    return {
+      choice,
+      category: retrainingCategory(
+        replacedId === undefined
+          ? undefined
+          : byId.get(replacedId.toLocaleLowerCase())?.type,
+      ),
+      from: retrainedEntityName(replacedId, byId),
+      to: retrainedEntityName(selected.definitionId, byId),
+      toId: selected.definitionId,
+    };
+  }
+  return undefined;
 }

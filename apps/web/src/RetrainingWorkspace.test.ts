@@ -2,7 +2,8 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
 import { describe, expect, it } from "vitest";
 
-import { levelRetrain, retrainingCategories } from "./RetrainingWorkspace";
+import { levelRetrain } from "./builder-ui";
+import { retrainingCategories } from "./RetrainingWorkspace";
 
 describe("level retrain summary", () => {
   const byId = new Map<string, ContentEntity>([

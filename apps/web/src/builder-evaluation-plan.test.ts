@@ -7,6 +7,8 @@ import {
 } from "@4ecb/character-domain";
 
 import {
+  builderEvaluationPlan,
+  builderRequestBuild,
   currentCandidateDetailLevels,
   evaluationDispatchOrder,
   planningCandidateDetailLevels,
@@ -140,5 +142,75 @@ describe("builder evaluation planning", () => {
 
   it("does not duplicate the selected horizon when it matches current", () => {
     expect(evaluationDispatchOrder(4, 4, 10)).toEqual(["current", "planning"]);
+  });
+});
+
+describe("the editor's evaluation plan", () => {
+  it("names each horizon's request and the one each evaluation reads", () => {
+    // Build tab at level 4 of a level-8 character planning nothing further:
+    // the selected level has its own request; current and planning share one.
+    expect(
+      builderEvaluationPlan({
+        workspace: "build",
+        currentLevel: 8,
+        selectedLevel: 4,
+        planningHorizon: 8,
+        characterDetailLevels: [1],
+        expandedReplacementChoiceId: undefined,
+      }),
+    ).toEqual({
+      requests: [
+        { role: "selected", level: 4, candidateDetailLevels: [4] },
+        {
+          role: "planning",
+          level: 8,
+          candidateDetailLevels: [4],
+          candidateDetailReplacementChoiceIds: [],
+        },
+      ],
+      current: "planning",
+      selected: "selected",
+    });
+    // A retraining editor open on a planned level: its gains are asked of
+    // the planning request; the current level reads its own.
+    expect(
+      builderEvaluationPlan({
+        workspace: "retraining",
+        currentLevel: 4,
+        selectedLevel: 4,
+        planningHorizon: 10,
+        characterDetailLevels: [],
+        expandedReplacementChoiceId: "level-4:replacement:2",
+      }),
+    ).toMatchObject({
+      requests: [
+        { role: "current", level: 4, candidateDetailLevels: [] },
+        {
+          role: "planning",
+          candidateDetailLevels: [4],
+          candidateDetailReplacementChoiceIds: ["level-4:replacement:2"],
+        },
+      ],
+      current: "current",
+      selected: "current",
+    });
+  });
+
+  it("evaluates the selected and planning horizons at their level", () => {
+    const planned = { ...build, effectiveLevel: 4 };
+    expect(
+      builderRequestBuild(planned, {
+        role: "selected",
+        level: 2,
+        candidateDetailLevels: [],
+      }).effectiveLevel,
+    ).toBe(2);
+    expect(
+      builderRequestBuild(planned, {
+        role: "current",
+        level: 4,
+        candidateDetailLevels: [],
+      }).effectiveLevel,
+    ).toBe(4);
   });
 });

@@ -99,7 +99,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v124-2026-11-06-replacement-category-gains";
+  "evaluated-character-v125-2026-11-06-retraining-choice-flag";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -215,6 +215,14 @@ export interface EvaluatedChoice {
   /** Legacy alternate-slot name for spellbook/prepared-power choices. */
   readonly spellbook?: string;
   readonly optional: boolean;
+  /**
+   * An ordinary retraining (a `replace` with `retrain`, every level's
+   * rule +1704): the Retraining tab's, never a swap the level or a feat
+   * offers (powerswap, multiclass, power-replace), which are Build-tab rows
+   * whether or not their rule has a label (Novice Power's and Paragon
+   * Multiclassing's have none).
+   */
+  readonly retraining?: true;
   /**
    * The slot's selection. A replacement's is its own saved pick, which a
    * later replacement may have traded away: then it is in
@@ -3755,6 +3763,7 @@ function evaluateCharacterInternal(
             type: "Replacement",
             ...(rule.label === undefined ? {} : { name: rule.label }),
             optional: rule.optional,
+            ...(rule.retrain === undefined ? {} : { retraining: true }),
             ...(selected === undefined
               ? {}
               : { selectedOccurrenceId: selected.id }),

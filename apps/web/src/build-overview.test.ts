@@ -139,6 +139,7 @@ const choices: EvaluatedChoice[] = [
   }),
   choice(2, "Replacement", "o-retrain", {
     optional: true,
+    retraining: true,
     replacementOptions: [
       {
         replacesOccurrenceId: "o-toughness",
@@ -148,7 +149,7 @@ const choices: EvaluatedChoice[] = [
     ],
   }),
   // Level 3: an unused retrain only.
-  choice(3, "Replacement", undefined, { optional: true }),
+  choice(3, "Replacement", undefined, { optional: true, retraining: true }),
 ];
 // Level 4: the two increases of one select rule.
 const increases = [0, 1].map((index) => ({
