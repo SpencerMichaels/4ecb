@@ -67,7 +67,7 @@ renamed "Resources" (it was "Health"; it now also tracks item dailies,
 power points and action points; its class and page 1's Health stat group
 are unchanged). Every tracker is one `Tracker` (`SheetOverview.tsx`): its
 label above its marks, in the muted 9 pt of the "Current HP"/"Temporary
-HP" write-in labels. Item dailies has one centred label, "Item dailies +Milestones" (owner: all
+HP" write-in labels. Item dailies has one centred label, "Item dailies + Milestones" (owner: all
 four trackers share one centre line), over one marks row: the tier's
 solid boxes, then four dashed milestone boxes, the groups 0.04in apart like
 the boxes, so all boxes read as one evenly spaced row
@@ -80,7 +80,7 @@ tracker, a box plus gap is 0.24in, so three fit and a fourth overflows
 (real pools: 2 at levels 1–2, 4 at 3–6, then 6–15+, e.g. Azreille 4,
 Beldin Hammertongue 9, so most psionics get the write-in). Verification:
 `SheetOverview.test.tsx` (markup order, one marks row, dashed class,
-"+Milestones", boxes for 1 and 3 points, write-in for 4 and 9, CSS rules,
+"+ Milestones", boxes for 1 and 3 points, write-in for 4 and 9, CSS rules,
 "Resources" heading); `check:print` now gives its fixture a 3-point pool
 and asserts, in Chromium and Firefox at Letter and A4, that the four
 trackers fit one line inside the row at least 0.1in apart, labels above
@@ -118,7 +118,7 @@ since the redo above; first built marks over labels) (owner layout,
 2026-11-06: Death saves, Item dailies, a psionic's Power points, Action
 points; two lines tall): the tier's magic item daily uses (PHB 226: one at
 heroic, two at paragon, three at epic, each from a different item) over
-"Item dailies", then four dashed boxes ("+Milestones" since the redo) for the extra use
+"Item dailies", then four dashed boxes ("+ Milestones" since the redo) for the extra use
 each milestone grants. Blank pencil boxes, no live
 state (play state is M6). Counts mirror the legacy CharTracker
 `PanelModelMagicItemList` textstrings (`USAGE_Magic Item <Tier> Use Box

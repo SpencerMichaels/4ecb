@@ -1588,7 +1588,7 @@ function ItemDailies({ level }: { level: number }) {
   const uses = magicItemDailyUses(level);
   return (
     <Tracker
-      label="Item dailies +Milestones"
+      label="Item dailies + Milestones"
       className="ov-item-dailies"
       groupLabel="Magic item daily powers"
     >

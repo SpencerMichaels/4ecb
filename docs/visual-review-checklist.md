@@ -681,7 +681,7 @@ live site.
   - **Expect:** the panel heading reads "Resources" (heart icon). One
     tracker row, two lines tall, every label above its marks in the grey
     of the "Current HP"/"Temporary HP" labels: "Death saves" over three
-    skulls; "Item dailies +Milestones" over one unbroken row of boxes, one
+    skulls; "Item dailies + Milestones" over one unbroken row of boxes, one
     solid box at heroic (two at paragon, three at epic) then four dashed
     ones, every box the same distance apart, label and boxes on one centre
     line like the other three trackers;

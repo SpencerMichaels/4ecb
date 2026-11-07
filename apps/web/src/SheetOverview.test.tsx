@@ -1511,7 +1511,7 @@ describe("real-data sheet overview", () => {
     // One centred label over one marks row holding both box groups, which
     // share the boxes' own gap, so all boxes run on evenly spaced.
     expect(heroic.row).toBe(
-      '><span class="ov-tracker-label">Item dailies +Milestones</span>' +
+      '><span class="ov-tracker-label">Item dailies + Milestones</span>' +
         '<span class="ov-tracker-marks">' +
         '<span class="ov-item-dailies-boxes" role="group" aria-label="1 use per day"><i class="ov-daily-box"></i></span>' +
         '<span class="ov-item-dailies-boxes" role="group" aria-label="4 milestone uses">' +
