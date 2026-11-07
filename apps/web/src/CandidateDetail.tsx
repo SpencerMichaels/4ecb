@@ -18,7 +18,7 @@ import {
   useCandidateFavorites,
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
-import { DeityBodyFields, DeitySubheader } from "./DeitySubheader";
+import { DeityBodyFields, EntitySubheader } from "./EntitySubheader";
 import { DotList } from "./DotList";
 import {
   detailStackEntries,
@@ -424,7 +424,7 @@ export function CandidateDetailCard({
         {subheading === undefined ? null : (
           <div className="reference-card-subheading">{subheading}</div>
         )}
-        <DeitySubheader entity={entity} references={references} />
+        <EntitySubheader entity={entity} references={references} />
         <div className="reference-card-body">
           {structuredKind !== undefined && references !== undefined ? (
             <StructuredEntityBody

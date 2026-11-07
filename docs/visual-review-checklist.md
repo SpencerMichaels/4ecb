@@ -1071,6 +1071,22 @@ Moradin, or an item a character holds), build and import or advertise it.
     padding doesn't line up with the title band's text, Pantheon wraps
     under Alignment while there is room, the subheader is unreadable in
     dark theme, or a field shows twice.
+- [ ] **Feat card subheader.** Added 2026-11-06; lines, order, omissions
+      and body lines are unit-tested (`entity-card-fields.test.tsx`), this
+      is the look.
+  - **Where:** at 140% zoom, light and dark theme: any character's Build →
+    a feat choice; click Weapon Focus (no Type), then Armor of Bahamut
+    (Type "Divinity"), Arcane Initiate (Type "Multiclass Wizard") and
+    Power of Creation (Powers and Associated Power Info; a divine
+    character sees it).
+  - **Expect:** under the title band the deity cards' shaded subheader:
+    "TIER Heroic · TYPE Divinity" (just "TIER Heroic" without a type).
+    The body reads "Prerequisite: …", the benefit text, then "Powers: …",
+    "Associated Power Info: …" and "Special: …" lines when the feat has
+    them; no "Tier:" line at the end any more.
+  - **Wrong if:** the subheader differs from a deity or ritual card's, a
+    long multiclass Type pushes Tier onto its own line, or Tier or Type
+    shows again in the body.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

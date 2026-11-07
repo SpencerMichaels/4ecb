@@ -1,5 +1,11 @@
 import { type ContentEntity, countsAsRecords } from "@4ecb/content-domain";
 
+import {
+  layoutCardFields,
+  type CardField,
+  type CardFieldLayout,
+} from "./entity-card-fields";
+
 const key = (value: string) => value.trim().toLocaleLowerCase();
 
 /** The deity's Character Reference entry: its domains, then its text. */
@@ -71,17 +77,11 @@ export function deityCountsAsText(
   return names.length === 0 ? undefined : names.join(", ");
 }
 
-export interface DeityField {
-  readonly label: string;
-  readonly value: string;
-}
+export type DeityField = CardField;
 
 /** A deity card's fields: its subheader lines, then labelled body lines
  *  above its description. */
-export interface DeityCardFields {
-  readonly subheader: readonly (readonly DeityField[])[];
-  readonly body: readonly DeityField[];
-}
+export type DeityCardFields = CardFieldLayout;
 
 /**
  * A deity card's common fields (owner, 2026-11-06), with one-word labels.
@@ -101,35 +101,12 @@ export function deityCardFields(
     deity.specifics
       .find((field) => key(field.name) === key(name))
       ?.value.trim();
-  // [label, value, subheader line (1-based) or "body"]
-  const fields: readonly (readonly [
-    string,
-    string | undefined,
-    number | "body",
-  ])[] = [
-    ["Alignment", specific("Alignment"), 1],
-    ["Pantheon", specific("Pantheon"), 1],
-    ["Domains", deityDomainsText(deity, lookup), 2],
-    ["Counts as", deityCountsAsText(deity, lookup), 3],
-  ];
-  const present = fields.flatMap(([label, value, place]) =>
-    value === undefined || value === "" ? [] : [{ label, value, place }],
-  );
-  const lines = [
-    ...new Set(
-      present.flatMap(({ place }) => (place === "body" ? [] : [place])),
-    ),
-  ].sort((left, right) => left - right);
-  return {
-    subheader: lines.map((line) =>
-      present
-        .filter(({ place }) => place === line)
-        .map(({ label, value }) => ({ label, value })),
-    ),
-    body: present
-      .filter(({ place }) => place === "body")
-      .map(({ label, value }) => ({ label, value })),
-  };
+  return layoutCardFields([
+    { label: "Alignment", value: specific("Alignment"), place: 1 },
+    { label: "Pantheon", value: specific("Pantheon"), place: 1 },
+    { label: "Domains", value: deityDomainsText(deity, lookup), place: 2 },
+    { label: "Counts as", value: deityCountsAsText(deity, lookup), place: 3 },
+  ]);
 }
 
 /** The card's subheader lines (`deityCardFields`). */

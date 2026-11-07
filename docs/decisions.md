@@ -2350,6 +2350,28 @@ a card or pane wraps, the item that starts the new line drops its separator
 stat rows (`starts-wrapped-row`), re-run by the card fit loop at each text
 size, by one shared ResizeObserver and before printing.
 
+**Card subheaders (owner, 2026-11-06).** Every card type places each of
+its fields once: on a subheader line under the title (the shared
+`CardSubheader.tsx`, undivided lines, "·" between a line's fields), as a
+labelled line in the body, or nowhere. Owner rules: "we should not put
+fields whose size can _vary widely_ in the subheader" — short fields of
+steady size, and bounded lists of names or words (a deity's Domains), go
+up; phrases and sentences are body lines; a short fixed-size field never
+follows a variable one on a line; labels are one word ("Cost", not
+"Component Cost"). Nothing is shown twice: a field the card already shows
+in its title, type bar, header bands, footer, fold heading or level tag is
+dropped. The placements are data in sheet-model, one entry per field
+(`entityCardFields` in `entity-card-fields.ts` for reference cards,
+`deityCardFields` for deities, `layoutCardFields` shared; items in
+`print-item-presentation.ts`), so moving a field is a one-line change.
+The per-type decisions (subheader `Tier · Type` on feats, `Size · Speed ·
+Vision` and `Height · Weight` on races, `Role · Source`, `HP · Level ·
+Surges` and `Defenses` on classes, `Campaign · Type` on backgrounds,
+`Ability` on skills, `Time · Cost · Skill` on alchemical items,
+`Minimum · Bonus` on mundane armor, `Quirks` on god fragments; the
+duplicates dropped) are recorded in `docs/implementation-status.md`,
+"Card subheaders". Powers and companions keep their header bands.
+
 ### D080 — Builder character sidebar and level picker
 
 Status: accepted (2026-10-18).

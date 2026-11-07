@@ -9,6 +9,7 @@ import {
 import {
   classifyPowerEntity,
   DEITY_SUBHEADER_SPECIFICS,
+  entityCardFields,
 } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
@@ -23,19 +24,38 @@ import {
 } from "./builder-ui";
 import { entityTypeIcon } from "./visual-language";
 
+/**
+ * The labelled lines of a card's body: the body fields sheet-model places
+ * for its type (`entityCardFields`: one-word labels, in placement order),
+ * then every other user-facing specific as authored. Fields placed in the
+ * subheader (`EntitySubheader`) or dropped as duplicates are left out.
+ */
 export function entityCardSpecifics(
   entity: ContentEntity,
 ): readonly SpecificField[] {
-  // A deity's common fields are its card's subheader (DeitySubheader).
+  // A deity's common fields are its card's subheader (EntitySubheader).
   const isDeity = entity.type.trim().toLocaleLowerCase() === "deity";
-  return entity.specifics.filter((field) => {
-    const name = field.name.trim().toLocaleLowerCase();
-    return (
-      isUserFacingSpecific(field) &&
-      !["short description", "source"].includes(name) &&
-      !(isDeity && DEITY_SUBHEADER_SPECIFICS.has(name))
-    );
-  });
+  const placement = entityCardFields(entity);
+  const placed: readonly SpecificField[] = (placement?.body ?? []).map(
+    ({ label, value }, index) => ({
+      name: label,
+      value,
+      extraAttributes: [],
+      ordinal: -1 - index,
+    }),
+  );
+  return [
+    ...placed,
+    ...entity.specifics.filter((field) => {
+      const name = field.name.trim().toLocaleLowerCase();
+      return (
+        isUserFacingSpecific(field) &&
+        !["short description", "source"].includes(name) &&
+        !(isDeity && DEITY_SUBHEADER_SPECIFICS.has(name)) &&
+        !(placement?.placed.has(name) ?? false)
+      );
+    }),
+  ];
 }
 
 export function entityCardSource(entity: ContentEntity): string {

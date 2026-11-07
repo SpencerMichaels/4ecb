@@ -171,6 +171,15 @@ export {
   type InventoryPackagePair,
 } from "./inventory-packages";
 export {
+  entityCardFields,
+  layoutCardFields,
+  type CardField,
+  type CardFieldLayout,
+  type CardFieldPlace,
+  type CardFieldPlacement,
+  type EntityCardFields,
+} from "./entity-card-fields";
+export {
   deityDomains,
   deityCountsAs,
   deityCountsAsText,

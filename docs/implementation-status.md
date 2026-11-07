@@ -1592,6 +1592,25 @@ Tests: `deity-card.test.tsx`, `deity-reference.test.ts`,
 Owner checks: the checklist's "Deity card subheader" and "Drow invoker:
 rituals in the Inventory and Shop".
 
+## Card subheaders (2026-11-06)
+
+D079 amendment (owner decisions over the subheader audit). Reference cards
+(`CandidateDetail.tsx`'s reference-entity card, Build and Details tabs and
+detail stacks) take their subheader and body lines from sheet-model
+`entityCardFields` (`entity-card-fields.ts`): one placement entry per
+field (a subheader line, `"body"`, or `"drop"` for a duplicate), laid
+out by `layoutCardFields`, which `deityCardFields` now shares.
+`EntitySubheader.tsx` (was `DeitySubheader.tsx`) renders the subheader
+for every type through `CardSubheader`; `entityCardSpecifics` lists the
+placed body fields first, one-word labels, then any other authored field,
+leaving out what was placed or dropped.
+
+- **Feat:** subheader "Tier · Type" (Type in either authored case; an
+  empty one is left out). Body: the Prerequisite line above the text, then
+  Powers (Associated Powers), Associated Power Info and Special after it.
+  Tier no longer ends the body. Tests: `entity-card-fields.test.tsx`,
+  `entity-card-fields.test.ts`.
+
 ## Known-record rows and ritual cards (2026-11-06)
 
 D114 amendment (owner feedback). The Inventory's known groups read
