@@ -5478,3 +5478,45 @@ Perception but not "saving throws against poison".
 - Limitation: a campaign `description` patch does not re-run pack-build
   parses, so a patched record keeps the stock text's prose bonuses (as
   with `_Note Values IR`).
+
+### D121 — A select's count can follow an ability; Pathfinder bonus languages
+
+Status: accepted (2026-11-07, owner).
+
+Owner house rule for the Pathfinder campaign (revision 14): a character
+learns bonus languages equal to their Intelligence modifier (minimum 1) at
+1st level, and one more, chosen at that level, each time a later increase
+raises the modifier. Any of the campaign's 66 languages may be chosen; the
+DM enforces any further restriction.
+
+- **Rule language extension.** The legacy rule language has no
+  stat-dependent choice count (`number` is an integer, `requires` tests
+  only ownership, `statmin` gates only statadds), and no stock content
+  needs one. A select's `number` may now be `ABILITYMOD(X)`,
+  `MINONEMOD(X)` or `HALFMOD(X)` (the statadd link forms, computed by the
+  same `linkedAbilityModifier`) of an ability at the choice's level,
+  optionally wrapped in `GAIN(…)`: how far it exceeds its highest value at
+  any earlier level (0 before level 1), never below 0 (rules-engine
+  `ir.ts` `SelectCountFormula`). Modern-only: legacy export writes the
+  picks as ordinary rules-legal languages the old builder has no slot for,
+  as with every rule patch (D116).
+- **Evaluation.** Abilities depend on choices (a racial +2), so the
+  count is resolved after the stats: the topology pass assumes the slots
+  the saved picks fill, the formula's slots are listed afterwards with the
+  resolved count (the current level from its stats, an earlier level from
+  its prerequisite scope, D106: no item adds an ability score), and
+  `evaluateCharacter` runs once more only when the resolved count keeps or
+  drops a different saved pick or fills a different default. What the
+  slots hold never changes the abilities they follow, so that pass
+  settles it (capped at three passes). A pick past the count (Intelligence
+  lowered after choosing) is kept, inactive, until the count returns; no
+  issue is raised (a legacy-format-style dormant pick, not a choice to
+  make).
+- **Pathfinder.** Thirty rule patches add `<select type="Language"
+name="Bonus Language" number="GAIN(MINONEMOD(Intelligence))"
+Category="…the 66 languages…">` after each level record's last rule
+  (after revision 13's bonus slots, so earlier ordinals keep their saved
+  choices). The explicit category offers exactly the 66, not the kept
+  All, Secret Language and The language of the mind records. Existing
+  characters see the new choice as an open choice once they move to
+  revision 14. The campaign description names the rule.

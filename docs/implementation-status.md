@@ -1,5 +1,47 @@
 # Implementation status
 
+## Pathfinder revision 14: bonus languages; select count formulas (2026-11-07)
+
+Owner house rule (D121): bonus languages equal to the 1st-level
+Intelligence modifier (minimum 1), and one more at each level where an
+increase raises the modifier, from any of the campaign's 66 languages.
+
+- Engine (rules-engine): a select `number` may be `ABILITYMOD`/
+  `MINONEMOD`/`HALFMOD(<ability>)`, optionally in `GAIN(…)` (`ir.ts`
+  `parseSelectCountFormula`; `stats.ts` `linkedAbilityModifier`, now
+  shared with statadd links). `evaluator.ts`: `selectSlotCount` replaces
+  `rule.number` in the topology pass (assumed count, else the saved
+  picks' slots) and in `activeProviderRule` (a pick past the count is
+  inactive, kept); the slot listing is `listSelectSlots`, run for a
+  formula select after the stats with the resolved count (earlier levels
+  from their prerequisite scopes); `evaluateCharacter` re-runs once with
+  the resolved counts only when a saved pick or default would differ.
+  `build-projection` gives formula selects 10 positional import slots.
+  `RULES_EVALUATION_CACHE_VERSION` v128.
+- Content: `content/campaigns/pathfinder/` revision 14, 30 rule patches,
+  one per level record, appended after revision 13's (`add` of `<select
+type="Language" name="Bonus Language"
+number="GAIN(MINONEMOD(Intelligence))" Category="…66 IDs…">`); the
+  campaign description names the rule (492 of 500 characters).
+- Release order: deploy the code before publishing revision 14; older
+  code reads the formula as 0 slots and shows no bonus language choice.
+
+Verification: `select-count-formula.test.ts` (parse forms, level-1 count
+with the minimum, a level-4 increase, an over-count pick inactive and
+restored); `pnpm test` 2498 passed. `content-tool campaign build --against
+tmp/content/full-local.4ecp`: all 360 patch outcomes `applies`. Private
+scratch evaluation on the composed pack (full candidates): Gizmo (Int 18
+at level 6) 3 bonus languages at level 1 and 1 at level 4; Beldin (Int 9),
+Hystan (Int 8) and Fei Zhu (Int 13) 1 at level 1 and none later; 63-64
+eligible candidates (known languages excluded). Timing matches the
+campaign-free evaluation (Beldin 10.7 s vs 9.9 s, Gizmo 2.7 s vs 2.6 s):
+no second pass when picks fit the count. `audit:native-workflow` on the
+composed pack to level 30: complete, legal, 0 diagnostics, export round
+trip passed; the export re-imports with its bonus language in its slot.
+`pnpm parity:baseline`: no new mismatches (stats 4905/4944, powers
+3328/3459). `pnpm audit:saved-selections`: 0 silent drops, 0 unexplained
+extras.
+
 ## Prose-only situational bonuses on page 1; background benefit reminders (2026-11-07)
 
 D120. A situational bonus a record states only in its prose (no

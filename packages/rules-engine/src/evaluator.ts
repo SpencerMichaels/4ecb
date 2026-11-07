@@ -40,9 +40,14 @@ import {
   type GrantRule,
   type ModifyRule,
   type ReplaceRule,
+  type SelectCountFormula,
   type SelectRule,
 } from "./ir";
-import { StatAccumulator, type EvaluatedStat } from "./stats";
+import {
+  StatAccumulator,
+  linkedAbilityModifier,
+  type EvaluatedStat,
+} from "./stats";
 import {
   choiceSelectionSetAside,
   evaluatePrerequisite,
@@ -99,7 +104,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v127-2026-11-07-level-flag";
+  "evaluated-character-v128-2026-11-07-select-count-formula";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1238,6 +1243,7 @@ function evaluateCharacterInternal(
     readonly index: RulesIndex;
   },
   options: EvaluationOptions = {},
+  assumedSelectCounts?: ReadonlyMap<string, number>,
 ): EvaluatedCharacter {
   // Progress counts work items, not time: one per earlier level's
   // prerequisite scope (each a nested evaluation, the bulk of a cold run)
@@ -1328,6 +1334,38 @@ function evaluateCharacterInternal(
     ...executed,
     ...itemSets.benefitOccurrences,
   ];
+  /**
+   * A select's slot count. A count formula's (D121) depends on abilities,
+   * which the stats phase computes after the choices; this pass assumes
+   * `assumedSelectCounts` (else as many slots as the saved picks fill),
+   * and `evaluateCharacter` runs again when the resolved count would keep
+   * or drop a different pick.
+   */
+  const selectSlotCount = (
+    rule: SelectRule,
+    provider: CharacterOccurrence,
+  ): number => {
+    if (rule.countFormula === undefined) return rule.number;
+    return (
+      assumedSelectCounts?.get(
+        selectCountKey(provider.id, rule.source.ordinal),
+      ) ?? savedSlotCount(rule, provider)
+    );
+  };
+  /** How many of a select's slots its saved picks reach. */
+  const savedSlotCount = (
+    rule: SelectRule,
+    provider: CharacterOccurrence,
+  ): number => {
+    let count = 0;
+    for (const candidate of saved)
+      if (
+        candidate.parentId === provider.id &&
+        candidate.ruleOrdinal === rule.source.ordinal
+      )
+        count = Math.max(count, (candidate.choiceIndex ?? 0) + 1);
+    return count;
+  };
   const replacedIds = new Set(
     saved.flatMap((occurrence) =>
       occurrence.replacesId === undefined ? [] : [occurrence.replacesId],
@@ -1534,6 +1572,13 @@ function evaluateCharacterInternal(
       (candidate) => candidate.source.ordinal === occurrence.ruleOrdinal,
     );
     if (rule === undefined) return true;
+    // A pick past a count formula's current count waits, kept (D121).
+    if (
+      rule.kind === "select" &&
+      rule.countFormula !== undefined &&
+      (occurrence.choiceIndex ?? 0) >= selectSlotCount(rule, parent)
+    )
+      return false;
     return (
       activeAt(rule, input.level) &&
       ruleRequiresMet(rule.requires, parent, activeOccurrences, context)
@@ -1926,7 +1971,7 @@ function evaluateCharacterInternal(
                   continue;
                 for (
                   let choiceIndex = 0;
-                  choiceIndex < selectRule.number;
+                  choiceIndex < selectSlotCount(selectRule, selectProvider);
                   choiceIndex += 1
                 ) {
                   droppedSlots.add(
@@ -1958,7 +2003,7 @@ function evaluateCharacterInternal(
           if (target === undefined || !isSourceEntitled(target)) continue;
           for (
             let choiceIndex = 0;
-            choiceIndex < rule.number;
+            choiceIndex < selectSlotCount(rule, occurrence);
             choiceIndex += 1
           ) {
             const direct = saved.find(
@@ -2013,7 +2058,7 @@ function evaluateCharacterInternal(
         if (rule.kind === "select" && !rule.existing) {
           for (
             let choiceIndex = 0;
-            choiceIndex < rule.number;
+            choiceIndex < selectSlotCount(rule, occurrence);
             choiceIndex += 1
           ) {
             const direct = saved.find(
@@ -3189,6 +3234,181 @@ function evaluateCharacterInternal(
         )
       : name;
 
+  /** The choice slots a select offers: the first `count`, less dropped ones. */
+  const listSelectSlots = (
+    occurrence: CharacterOccurrence,
+    rule: SelectRule,
+    count: number,
+  ): void => {
+    const choiceLevel = Math.max(
+      occurrence.acquiredLevel,
+      rule.source.level.minimum,
+    );
+    for (let choiceIndex = 0; choiceIndex < count; choiceIndex += 1) {
+      if (
+        droppedSelectSlots.has(
+          `${occurrence.id}:${rule.source.ordinal}:${choiceIndex}`,
+        )
+      )
+        continue;
+      const directSelection = saved.find(
+        (candidate) =>
+          candidate.parentId === occurrence.id &&
+          candidate.ruleOrdinal === rule.source.ordinal &&
+          (candidate.choiceIndex ?? 0) === choiceIndex,
+      );
+      const selected =
+        occurrences.find(
+          (candidate) =>
+            candidate.parentId === occurrence.id &&
+            candidate.ruleOrdinal === rule.source.ordinal &&
+            (candidate.choiceIndex ?? 0) === choiceIndex,
+        ) ??
+        (directSelection === undefined
+          ? undefined
+          : occurrences.find((candidate) =>
+              replacementIncludes(candidate, directSelection.id),
+            ));
+      const siblingDefinitionIds = new Set(
+        occurrences
+          .filter(
+            (candidate) =>
+              candidate.parentId === occurrence.id &&
+              candidate.ruleOrdinal === rule.source.ordinal &&
+              (candidate.choiceIndex ?? 0) !== choiceIndex,
+          )
+          .map((candidate) => key(candidate.definitionId)),
+      );
+      const detailed =
+        candidateDetailLevels === undefined ||
+        candidateDetailLevels.has(choiceLevel);
+      const selectedEntity =
+        selected === undefined ? undefined : index.get(selected.definitionId);
+      const baseCandidates = detailed
+        ? candidatesFor(rule, occurrence, choiceLevel)
+        : selectedEntity !== undefined
+          ? [candidateFor(rule, occurrence, selectedEntity, choiceLevel)]
+          : rule.existing
+            ? ownedDefinitions
+                .filter((candidate) => key(candidate.type) === key(rule.type))
+                .map((candidate) =>
+                  candidateFor(rule, occurrence, candidate, choiceLevel),
+                )
+            : [];
+      let themeRestricted: boolean | undefined;
+      const preparedReasons = preparedPickReasons(rule, choiceLevel, selected);
+      const choiceId = `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`;
+      if (hybrid !== undefined && hybridPowerSlot(rule.name) !== undefined)
+        hybridSlotRequests.set(choiceId, {
+          slotName: rule.name,
+          level: choiceLevel,
+          excludedIds: selected === undefined ? [] : [selected.id],
+          replacement: false,
+          rule,
+          provider: occurrence,
+        });
+      const candidates = baseCandidates
+        .map((candidate) => {
+          const definition = index.get(candidate.definitionId);
+          if (
+            definition !== undefined &&
+            field(definition, "_ThemePower") !== undefined &&
+            (themeRestricted ??= themePowerRestricted(
+              rule,
+              occurrence,
+              choiceLevel,
+              selected,
+            ))
+          )
+            candidate = {
+              ...candidate,
+              eligible: false,
+              rulesLegal: false,
+              reasons: [...candidate.reasons, "theme-power"],
+            };
+          const prepared = preparedReasons?.(candidate.definitionId);
+          if (prepared !== undefined && prepared.length > 0)
+            candidate = {
+              ...candidate,
+              eligible: false,
+              rulesLegal: false,
+              reasons: [...candidate.reasons, ...prepared],
+            };
+          if (
+            rule.existing ||
+            definition === undefined ||
+            key(definition.name) === key(defaultName(rule) ?? "")
+          )
+            return candidate;
+          const equivalent = passThroughDefinition(definition);
+          const duplicate =
+            siblingDefinitionIds.has(key(definition.id)) ||
+            (equivalent !== definition &&
+              siblingDefinitionIds.has(key(equivalent.id)));
+          if (duplicate)
+            return {
+              ...candidate,
+              eligible: false,
+              rulesLegal: false,
+              reasons: [...candidate.reasons, "duplicate"],
+            };
+          // The topology pass drops a selection whose definition is
+          // already owned by the choice's level (legacy marks such a
+          // candidate Selected), so offering it would let a pick vanish.
+          return !candidate.reasons.includes("self") &&
+            ownedElsewhere(
+              definition,
+              equivalent,
+              choiceLevel,
+              selected === undefined ? [] : [selected.id],
+            )
+            ? {
+                ...candidate,
+                eligible: false,
+                rulesLegal: false,
+                reasons: [...candidate.reasons, "owned"],
+              }
+            : candidate;
+        })
+        .filter(
+          (candidate) =>
+            candidateDetailLevels === undefined ||
+            candidate.definitionId === selected?.definitionId ||
+            !candidate.reasons.includes("category"),
+        )
+        // Native never lists what Prepare rules out; a saved pick
+        // stays, flagged.
+        .filter(
+          (candidate) =>
+            candidate.definitionId === selected?.definitionId ||
+            !candidate.reasons.some(
+              (reason) =>
+                reason === "prepare-source" || reason === "prepare-level",
+            ),
+        );
+      choices.push({
+        id: choiceId,
+        level: choiceLevel,
+        providerOccurrenceId: occurrence.id,
+        ruleOrdinal: rule.source.ordinal,
+        index: choiceIndex,
+        type: rule.type,
+        ...(rule.name === undefined ? {} : { name: rule.name }),
+        ...(rule.spellbook === undefined ? {} : { spellbook: rule.spellbook }),
+        optional:
+          rule.optional || ["build", "class build"].includes(key(rule.type)),
+        ...(selected === undefined
+          ? {}
+          : { selectedOccurrenceId: selected.id }),
+        candidates,
+      });
+    }
+  };
+  const deferredCountSelects: {
+    readonly occurrence: CharacterOccurrence;
+    readonly rule: SelectRule;
+    readonly formula: SelectCountFormula;
+  }[] = [];
   for (const occurrence of occurrences) {
     const entity = index.get(occurrence.definitionId);
     if (entity === undefined) continue;
@@ -3286,187 +3506,14 @@ function evaluateCharacterInternal(
           break;
         case "select": {
           if (prerequisiteContextOnly) break;
-          const choiceLevel = Math.max(
-            occurrence.acquiredLevel,
-            rule.source.level.minimum,
-          );
-          for (
-            let choiceIndex = 0;
-            choiceIndex < rule.number;
-            choiceIndex += 1
-          ) {
-            if (
-              droppedSelectSlots.has(
-                `${occurrence.id}:${rule.source.ordinal}:${choiceIndex}`,
-              )
-            )
-              continue;
-            const directSelection = saved.find(
-              (candidate) =>
-                candidate.parentId === occurrence.id &&
-                candidate.ruleOrdinal === rule.source.ordinal &&
-                (candidate.choiceIndex ?? 0) === choiceIndex,
-            );
-            const selected =
-              occurrences.find(
-                (candidate) =>
-                  candidate.parentId === occurrence.id &&
-                  candidate.ruleOrdinal === rule.source.ordinal &&
-                  (candidate.choiceIndex ?? 0) === choiceIndex,
-              ) ??
-              (directSelection === undefined
-                ? undefined
-                : occurrences.find((candidate) =>
-                    replacementIncludes(candidate, directSelection.id),
-                  ));
-            const siblingDefinitionIds = new Set(
-              occurrences
-                .filter(
-                  (candidate) =>
-                    candidate.parentId === occurrence.id &&
-                    candidate.ruleOrdinal === rule.source.ordinal &&
-                    (candidate.choiceIndex ?? 0) !== choiceIndex,
-                )
-                .map((candidate) => key(candidate.definitionId)),
-            );
-            const detailed =
-              candidateDetailLevels === undefined ||
-              candidateDetailLevels.has(choiceLevel);
-            const selectedEntity =
-              selected === undefined
-                ? undefined
-                : index.get(selected.definitionId);
-            const baseCandidates = detailed
-              ? candidatesFor(rule, occurrence, choiceLevel)
-              : selectedEntity !== undefined
-                ? [candidateFor(rule, occurrence, selectedEntity, choiceLevel)]
-                : rule.existing
-                  ? ownedDefinitions
-                      .filter(
-                        (candidate) => key(candidate.type) === key(rule.type),
-                      )
-                      .map((candidate) =>
-                        candidateFor(rule, occurrence, candidate, choiceLevel),
-                      )
-                  : [];
-            let themeRestricted: boolean | undefined;
-            const preparedReasons = preparedPickReasons(
+          // A count formula's slots wait for its resolved count (D121).
+          if (rule.countFormula !== undefined)
+            deferredCountSelects.push({
+              occurrence,
               rule,
-              choiceLevel,
-              selected,
-            );
-            const choiceId = `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`;
-            if (
-              hybrid !== undefined &&
-              hybridPowerSlot(rule.name) !== undefined
-            )
-              hybridSlotRequests.set(choiceId, {
-                slotName: rule.name,
-                level: choiceLevel,
-                excludedIds: selected === undefined ? [] : [selected.id],
-                replacement: false,
-                rule,
-                provider: occurrence,
-              });
-            const candidates = baseCandidates
-              .map((candidate) => {
-                const definition = index.get(candidate.definitionId);
-                if (
-                  definition !== undefined &&
-                  field(definition, "_ThemePower") !== undefined &&
-                  (themeRestricted ??= themePowerRestricted(
-                    rule,
-                    occurrence,
-                    choiceLevel,
-                    selected,
-                  ))
-                )
-                  candidate = {
-                    ...candidate,
-                    eligible: false,
-                    rulesLegal: false,
-                    reasons: [...candidate.reasons, "theme-power"],
-                  };
-                const prepared = preparedReasons?.(candidate.definitionId);
-                if (prepared !== undefined && prepared.length > 0)
-                  candidate = {
-                    ...candidate,
-                    eligible: false,
-                    rulesLegal: false,
-                    reasons: [...candidate.reasons, ...prepared],
-                  };
-                if (
-                  rule.existing ||
-                  definition === undefined ||
-                  key(definition.name) === key(defaultName(rule) ?? "")
-                )
-                  return candidate;
-                const equivalent = passThroughDefinition(definition);
-                const duplicate =
-                  siblingDefinitionIds.has(key(definition.id)) ||
-                  (equivalent !== definition &&
-                    siblingDefinitionIds.has(key(equivalent.id)));
-                if (duplicate)
-                  return {
-                    ...candidate,
-                    eligible: false,
-                    rulesLegal: false,
-                    reasons: [...candidate.reasons, "duplicate"],
-                  };
-                // The topology pass drops a selection whose definition is
-                // already owned by the choice's level (legacy marks such a
-                // candidate Selected), so offering it would let a pick vanish.
-                return !candidate.reasons.includes("self") &&
-                  ownedElsewhere(
-                    definition,
-                    equivalent,
-                    choiceLevel,
-                    selected === undefined ? [] : [selected.id],
-                  )
-                  ? {
-                      ...candidate,
-                      eligible: false,
-                      rulesLegal: false,
-                      reasons: [...candidate.reasons, "owned"],
-                    }
-                  : candidate;
-              })
-              .filter(
-                (candidate) =>
-                  candidateDetailLevels === undefined ||
-                  candidate.definitionId === selected?.definitionId ||
-                  !candidate.reasons.includes("category"),
-              )
-              // Native never lists what Prepare rules out; a saved pick
-              // stays, flagged.
-              .filter(
-                (candidate) =>
-                  candidate.definitionId === selected?.definitionId ||
-                  !candidate.reasons.some(
-                    (reason) =>
-                      reason === "prepare-source" || reason === "prepare-level",
-                  ),
-              );
-            choices.push({
-              id: choiceId,
-              level: choiceLevel,
-              providerOccurrenceId: occurrence.id,
-              ruleOrdinal: rule.source.ordinal,
-              index: choiceIndex,
-              type: rule.type,
-              ...(rule.name === undefined ? {} : { name: rule.name }),
-              ...(rule.spellbook === undefined
-                ? {}
-                : { spellbook: rule.spellbook }),
-              optional:
-                rule.optional ||
-                ["build", "class build"].includes(key(rule.type)),
-              ...(selected === undefined
-                ? {}
-                : { selectedOccurrenceId: selected.id }),
-              candidates,
+              formula: rule.countFormula,
             });
-          }
+          else listSelectSlots(occurrence, rule, rule.number);
           break;
         }
         case "replace": {
@@ -4246,6 +4293,49 @@ function evaluateCharacterInternal(
       ],
     };
   };
+  // Count formulas (D121), resolved from each choice level's abilities (the
+  // current level's stats, an earlier level's prerequisite scope), list
+  // their slots now. The topology pass held saved picks to the assumed
+  // count; `evaluateCharacter` runs again only when the resolved count
+  // keeps or drops a different pick, or fills a different default.
+  const resolvedCounts = new Map<string, number>();
+  let countsAsAssumed = true;
+  for (const { occurrence, rule, formula } of deferredCountSelects) {
+    const valueAt = (level: number): number => {
+      const score =
+        level >= input.level
+          ? stats.evaluate(formula.ability).value
+          : prerequisiteScopeAt(level).context.abilities[formula.ability];
+      return linkedAbilityModifier(
+        typeof score === "number" ? score : 0,
+        formula,
+      );
+    };
+    const choiceLevel = Math.max(
+      occurrence.acquiredLevel,
+      rule.source.level.minimum,
+    );
+    let count = valueAt(choiceLevel);
+    if (formula.gain) {
+      let highest = 0;
+      for (let level = 1; level < choiceLevel; level += 1)
+        highest = Math.max(highest, valueAt(level));
+      count -= highest;
+    }
+    count = Math.max(0, count);
+    resolvedCounts.set(
+      selectCountKey(occurrence.id, rule.source.ordinal),
+      count,
+    );
+    listSelectSlots(occurrence, rule, count);
+    const assumed = selectSlotCount(rule, occurrence);
+    const filled = savedSlotCount(rule, occurrence);
+    if (
+      Math.min(assumed, filled) !== Math.min(count, filled) ||
+      (rule.defaultId !== undefined && assumed !== count)
+    )
+      countsAsAssumed = false;
+  }
   // Prerequisites hold for every offered candidate, including what a
   // replacement (retraining, power swap) may take, checked at its level
   // without what it gives up (nor the slot's current pick, being redone).
@@ -4783,7 +4873,7 @@ function evaluateCharacterInternal(
   });
   traceEvaluationState(equipment, expressionContext);
   const prerequisiteLines = prerequisiteDisplayLines(evaluationEntities).lines;
-  return {
+  const evaluated: EvaluatedCharacter = {
     level: input.level,
     converged,
     iterations,
@@ -4816,6 +4906,12 @@ function evaluateCharacterInternal(
     suggestions,
     diagnostics,
   };
+  if (resolvedCounts.size > 0)
+    selectCountResolutions.set(evaluated, {
+      resolved: resolvedCounts,
+      asAssumed: countsAsAssumed,
+    });
+  return evaluated;
 }
 
 export function evaluateCharacter(
@@ -4823,16 +4919,45 @@ export function evaluateCharacter(
   entities: readonly ContentEntity[],
   options: EvaluationOptions = {},
 ): EvaluatedCharacter {
-  const evaluated = evaluateCharacterInternal(
+  let evaluated = evaluateCharacterInternal(
     input,
     entities,
     false,
     undefined,
     options,
   );
+  // A count formula's slots (D121) follow abilities the first pass computed
+  // after its choices; a pass on the resolved counts settles them, since
+  // what those slots hold doesn't change the abilities they follow.
+  for (let pass = 1; pass < 3; pass += 1) {
+    const counts = selectCountResolutions.get(evaluated);
+    if (counts === undefined || counts.asAssumed) break;
+    evaluated = evaluateCharacterInternal(
+      input,
+      entities,
+      false,
+      undefined,
+      options,
+      counts.resolved,
+    );
+  }
   options.onProgress?.({ completed: 1, total: 1 });
   return evaluated;
 }
+
+function selectCountKey(providerId: string, ruleOrdinal: number): string {
+  return `${providerId}\0${ruleOrdinal}`;
+}
+
+/** Each top-level evaluation's resolved count formulas (D121), and whether
+ *  the pass assumed exactly those counts. */
+const selectCountResolutions = new WeakMap<
+  EvaluatedCharacter,
+  {
+    readonly resolved: ReadonlyMap<string, number>;
+    readonly asAssumed: boolean;
+  }
+>();
 
 /**
  * Native ProcessModify with neither `name` nor `select` walks the

@@ -489,10 +489,18 @@ function linkValue(
   linked: number,
 ): number {
   if (!parsed.abilityModifier) return parsed.sign * linked;
-  let result = abilityModifier(linked);
-  if (parsed.half === true) result = Math.trunc(result / 2);
-  if (parsed.minimumOne === true && result < 1) result = 1;
-  return parsed.sign * result;
+  return parsed.sign * linkedAbilityModifier(linked, parsed);
+}
+
+/** ABILITYMOD, HALFMOD (`half`) and MINONEMOD (`minimumOne`) of a score. */
+export function linkedAbilityModifier(
+  score: number,
+  options: { readonly half?: boolean; readonly minimumOne?: boolean },
+): number {
+  let result = abilityModifier(score);
+  if (options.half === true) result = Math.trunc(result / 2);
+  if (options.minimumOne === true && result < 1) result = 1;
+  return result;
 }
 
 /** What one top-level contribution has added to the stat. */

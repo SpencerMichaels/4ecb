@@ -69,7 +69,10 @@ export interface DropRule extends BaseRule {
 export interface SelectRule extends BaseRule {
   readonly kind: "select";
   readonly type: string;
+  /** The authored slot count; 0 when `countFormula` gives it instead. */
   readonly number: number;
+  /** A modern `number` formula (D121): the count depends on an ability. */
+  readonly countFormula?: SelectCountFormula;
   readonly category?: string;
   readonly name?: string;
   readonly spellbook?: string;
@@ -79,6 +82,55 @@ export interface SelectRule extends BaseRule {
   readonly defaultId?: string;
   readonly grant?: string;
   readonly label?: string;
+}
+
+/**
+ * A select `number` given by an ability modifier (D121, a modern extension
+ * the legacy builder lacks): `ABILITYMOD(X)`, `MINONEMOD(X)` (at least 1)
+ * or `HALFMOD(X)`, the statadd link forms, of the ability at the choice's
+ * level, optionally wrapped in `GAIN(…)`: how far that value exceeds its
+ * highest at any earlier level (0 before level 1). A count below 0 is 0.
+ */
+export interface SelectCountFormula {
+  /** The ability's full name ("Intelligence"). */
+  readonly ability: string;
+  readonly minimumOne: boolean;
+  readonly half: boolean;
+  readonly gain: boolean;
+}
+
+const COUNT_FORMULA_ABILITIES: Readonly<Record<string, string>> = {
+  str: "Strength",
+  strength: "Strength",
+  con: "Constitution",
+  constitution: "Constitution",
+  dex: "Dexterity",
+  dexterity: "Dexterity",
+  int: "Intelligence",
+  intelligence: "Intelligence",
+  wis: "Wisdom",
+  wisdom: "Wisdom",
+  cha: "Charisma",
+  charisma: "Charisma",
+};
+
+/** A select `number` formula, or undefined for a literal (or unknown). */
+export function parseSelectCountFormula(
+  value: string,
+): SelectCountFormula | undefined {
+  const gain = /^GAIN\((.+)\)$/i.exec(value.trim());
+  const inner = (gain?.[1] ?? value).trim();
+  const link = /^(ABILITYMOD|MINONEMOD|HALFMOD)\((.+)\)$/i.exec(inner);
+  if (link?.[1] === undefined || link[2] === undefined) return undefined;
+  const ability = COUNT_FORMULA_ABILITIES[link[2].trim().toLocaleLowerCase()];
+  if (ability === undefined) return undefined;
+  const modifier = link[1].toLocaleUpperCase();
+  return {
+    ability,
+    minimumOne: modifier === "MINONEMOD",
+    half: modifier === "HALFMOD",
+    gain: gain !== null,
+  };
 }
 
 export interface ReplaceRule extends BaseRule {
@@ -314,17 +366,20 @@ export function parseRule(
         grant: optional(statement, "grant"),
         label: statement.text.trim() || undefined,
       };
+      const number = optional(statement, "number");
+      const countFormula =
+        number === undefined ? undefined : parseSelectCountFormula(number);
       return {
         ...rule,
         kind,
         type: required(statement, "type"),
         number:
-          optional(statement, "number") === undefined
+          number === undefined
             ? 1
-            : Math.max(
-                0,
-                Number.parseInt(required(statement, "number"), 10) || 0,
-              ),
+            : countFormula !== undefined
+              ? 0
+              : Math.max(0, Number.parseInt(number, 10) || 0),
+        ...(countFormula === undefined ? {} : { countFormula }),
         optional: boolean(optional(statement, "optional")),
         existing: boolean(optional(statement, "existing")),
         ...Object.fromEntries(

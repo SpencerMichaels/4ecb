@@ -1437,6 +1437,27 @@ Moradin, or an item a character holds), build and import or advertise it.
     another race's or theme's utility is offered as eligible, a level-6
     power is offered at level 4, an existing character's stock feat or
     power picks move into the new slots, or the description is cut off.
+- [ ] **Pathfinder bonus languages (revision 14, D121).** Added
+      2026-11-07; slot counts per level, inactive extra picks and the
+      export round trip are unit-tested and probed, this is how the rows
+      read.
+  - **Where:** at 140% zoom: a Pathfinder character at revision 14 with
+    Intelligence 16 or more at 1st level (a new one, or one moved there by
+    the content-update dialog): Build → level 1 (Race section), then a
+    level whose ability increase raises the Intelligence modifier (e.g.
+    Int 17 → 18 at level 4); the Overview tab; lower Intelligence below
+    16 on the ability-score step and look at level 1 again.
+  - **Expect:** level 1 shows one "Bonus Language" choice per point of the
+    modifier (one at Intelligence 13 or lower), each listing the 66
+    languages in the banded table with the languages the character knows
+    unavailable; the raising level shows one more "Bonus Language" choice;
+    levels where the modifier doesn't rise show none; lowering
+    Intelligence removes the extra slot and its pick from the sheet's
+    languages, and raising it back restores the pick.
+  - **Wrong if:** a bonus language row is titled only "Language", an
+    empty Race section appears at a level with no bonus language, a known
+    language is offered as eligible, All or Secret Language is listed, or
+    the extra pick is lost (not restored) after Intelligence goes back up.
 - [ ] **Language table bands and the language card's Group (D042
       amendment, 2026-11-07).** Added 2026-11-07; band contents and order
       are unit-tested and probed, this is the look.

@@ -1009,6 +1009,12 @@ Follow-ups (not done):
   records; a leading `$$LEVEL` category now limits candidates to the
   character's level (`docs/implementation-status.md`, Pathfinder
   revision 13).
+- Done (2026-11-07): Pathfinder revision 14: bonus languages equal to the
+  1st-level Intelligence modifier (minimum 1), plus one at each level the
+  modifier rises, through a new select count formula
+  (`GAIN(MINONEMOD(Intelligence))`, D121; `docs/implementation-status.md`,
+  Pathfinder revision 14). Release order: deploy the code before
+  publishing revision 14 (older code reads the formula as 0 slots).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

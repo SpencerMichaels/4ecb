@@ -145,6 +145,21 @@ Trait also gets a `_SuppressAugments` overlay, and power rows list only
 version 0 of any locked augmentable power, as native `CharPowerAugmentCount`
 does for the sheet's cards.
 
+A select's `number` may also be a count formula (D121, a modern extension
+for campaign content; the legacy builder reads only an integer):
+`ABILITYMOD(X)`, `MINONEMOD(X)` or `HALFMOD(X)` of an ability (full name
+or `str`/`con`/`dex`/`int`/`wis`/`cha`) at the choice's level, optionally
+wrapped in `GAIN(…)`: how far that value exceeds its highest at any earlier
+level (0 before level 1), never below 0. Pathfinder's bonus languages are
+`GAIN(MINONEMOD(Intelligence))` on every level record. Abilities are known
+only after the choices, so the topology pass assumes as many slots as the
+saved picks fill, the formula's slots are listed once the stats (and earlier
+levels' prerequisite scopes) give the count, and `evaluateCharacter` runs
+once more only when the count keeps or drops a different saved pick (or a
+default); a pick past the count is kept but inactive until the count
+returns. `build-projection` gives such a select 10 positional slots for
+legacy import.
+
 `pnpm audit:selectors` (private corpus) records, through the opt-in
 condition trace (`condition-trace.ts`), whether every `wearing`/
 `not-wearing` operand, `requires` expression, zero/non-zero/`statmin`

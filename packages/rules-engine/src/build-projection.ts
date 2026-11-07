@@ -25,7 +25,7 @@ import {
   choiceName,
   type ChoiceWordingCandidate,
 } from "./choice-wording";
-import { parseRules } from "./ir";
+import { parseRules, type SelectRule } from "./ir";
 import {
   inventoryWornSymbolEntryId,
   legacyEquipCount,
@@ -41,6 +41,16 @@ interface ChildSlot {
   readonly grantTarget?: string;
   /** A select slot's element type: only a record of this type can fill it. */
   readonly type?: string;
+}
+
+/** A count formula's (D121) count depends on the character: room for any
+ *  ability modifier's, its unused slots left empty. */
+const COUNT_FORMULA_SLOT_CAPACITY = 10;
+
+function selectSlotCapacity(rule: SelectRule): number {
+  return rule.countFormula === undefined
+    ? Math.max(1, rule.number)
+    : COUNT_FORMULA_SLOT_CAPACITY;
 }
 
 function childSlots(
@@ -66,7 +76,7 @@ function childSlots(
         },
       ];
     if (rule.kind === "select")
-      return Array.from({ length: Math.max(1, rule.number) }, (_, index) => ({
+      return Array.from({ length: selectSlotCapacity(rule) }, (_, index) => ({
         ruleOrdinal: rule.source.ordinal,
         choiceIndex: index,
         kind: "choice" as const,
