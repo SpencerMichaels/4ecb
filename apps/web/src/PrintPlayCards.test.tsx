@@ -77,7 +77,7 @@ describe("printed play-data cards", () => {
     expect(html).toContain("<dt>Bloodied</dt><dd>35</dd>");
     expect(html).toContain("<dt>Surge HP</dt><dd>17</dd>");
     expect(html).toContain("<dt>Init</dt><dd>+2</dd>");
-    expect(html).toContain("<dt>Pass. Insight</dt><dd>18</dd>");
+    expect(html).toContain("<dt>Pass. Ins.</dt><dd>18</dd>");
     expect(html).toContain(
       '<dt><span class="stat-tile-lead">16</span><span class="stat-tile-label">STR</span></dt><dd>+3</dd>',
     );

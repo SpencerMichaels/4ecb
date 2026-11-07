@@ -86,7 +86,7 @@ export function playData(model: CharacterSheetModel): PlayData {
     speed: [{ label: "Speed", value: find(model.resources, "Speed") }],
     passives: [
       {
-        label: "Pass. Insight",
+        label: "Pass. Ins.",
         value: find(model.senses, "Passive Insight"),
       },
       {
