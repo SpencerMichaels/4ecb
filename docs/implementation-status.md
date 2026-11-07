@@ -1,5 +1,24 @@
 # Implementation status
 
+## Power swap replacements on the Build tab (2026-11-06)
+
+A player's level 30 sorcerer (Wren) could not complete a power swap: step 2
+listed nothing. The engine built a Replacement choice's gains only for
+choice IDs in `candidateDetailReplacementChoiceIds`, which only the
+Retraining editor sent, so every swap the Build tab shows (level
+powerswaps, multiclass swaps, power-replace swaps) had an empty step 2 for
+every class; Wren's eight unsaved paragon/epic powerswaps (levels 13–29)
+made it visible. A level's own swap (`replace` without `retrain`) now lists
+its gains with that level's candidates; an optional retrain still waits for
+its editor. Scoped (builder) evaluations drop off-category replacement gains
+except the saved pick (Wren level 30: 43 MB → 14 MB). The Retraining
+editor's step 2 reads "Listing the replacements…" until its evaluation
+arrives, and before a target is picked "Double-click a <kind> in step 1 to
+choose it." Evaluation cache v124 (e0633d5d). Wren's Build-tab level 13
+swap now lists 53 powers. Tests: 2,444 pass, public checks pass;
+`parity:baseline` unchanged for the other saves, Wren added (full pack;
+stats 76/76, powers 23/23, usage/action 21/21) and accepted.
+
 ## Exported RulesElementTally legality (2026-11-06)
 
 Edited `.dnd4e` export wrote `legality="houserule"` on every tally entry

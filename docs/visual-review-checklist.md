@@ -985,6 +985,17 @@ These need the deployed app, an installed PWA, or your own content.
     and "Level 7 Improved Disruptive Shot — Use three times per encounter".
   - **Wrong if:** "Disruptive Shot" or "Level 3 Improved Disruptive Shot"
     rows show, or a note ends in "@…".
+- [ ] **Wren: power swap and retraining replacements.**
+  - **Where:** import `sample-chars/Wren.dnd4e` with your own content.
+    Build tab, level 13: open the power swap and double-click a power in
+    step 1. Then Retraining, level 30: open "Retrain a power", look at step
+    2, double-click a step-1 power; repeat under "Retrain a feat".
+  - **Expect:** the Build-tab swap's step 2 lists about 53 powers. On
+    Retraining, before a pick step 2 reads "Double-click a power in step 1
+    to choose it." ("a feat" under feats); after the double-click it
+    briefly reads "Listing the replacements…", then lists them.
+  - **Wrong if:** either step 2 stays empty, says "No matching powers."
+    while loading, or the prompt names the wrong kind.
 
 ## Pass 24: Campaigns (D116)
 
