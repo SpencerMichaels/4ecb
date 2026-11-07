@@ -23,6 +23,7 @@ import {
   type ConditionalModifier,
 } from "./conditional-modifiers";
 import { equippedItemPropertyReminders } from "./item-reminders";
+import { proseBonusRows, type ProseBonusSource } from "./prose-bonus-modifiers";
 import {
   amountsShown,
   definitionSourceKey,
@@ -108,6 +109,9 @@ export interface OverviewInventory {
   readonly fields: readonly SheetValue[];
   /** Optional UI-provided classification, shared with the builder inventory. */
   readonly category?: string;
+  /** The holding's content records (base item, magic item, augment), for
+   *  the bonuses only their prose states (`proseBonusRows`). */
+  readonly definitionIds?: readonly string[];
 }
 export interface OverviewReminder extends SheetValue {
   /** What was chosen under the reminder's feature ("Eladrin"). */
@@ -428,6 +432,7 @@ export function withSheetOverview(
   );
   const referenceMetadata = featureReferenceMetadata(input);
   const seen = new Set<string>();
+  const proseSources: ProseBonusSource[] = [];
   for (const group of model.features)
     for (const entry of group.entries) {
       if (group.group === "Language") continue;
@@ -447,6 +452,29 @@ export function withSheetOverview(
       const id = entity?.id ?? `${group.group}:${entry.label}`;
       if (seen.has(id)) continue;
       seen.add(id);
+      // The feature's and its picks' records (a background's chosen
+      // benefit), for the bonuses only their prose states.
+      // A group's own choice row ("Background benefit") is named by its pick.
+      for (const [record, name] of [
+        [entity, entry.label] as const,
+        ...(entry.choices ?? []).map(
+          (choice) =>
+            [
+              definitions.get(key(choice.id)),
+              entity === undefined ? choice.name : entry.label,
+            ] as const,
+        ),
+      ])
+        if (record !== undefined)
+          proseSources.push({
+            entity: record,
+            name,
+            sourceKeys: [
+              definitionSourceKey(record.id),
+              definitionSourceKey(id),
+              nameSourceKey(entry.label),
+            ],
+          });
       const summary =
         (entity === undefined ? "" : featureNoteText(entity)) || entry.value;
       const description =
@@ -891,10 +919,38 @@ export function withSheetOverview(
       "notes" in card ? card.notes.map((note) => note.provenanceId) : [],
     ),
   );
-  const conditional = conditionalModifiers(
+  // The bonuses only a record's prose states (parsed at pack build) join
+  // the panes a conditional statadd of the same stat would.
+  for (const item of input.inventory)
+    if (item.equipped > 0 && item.quantity > 0)
+      for (const definitionId of item.definitionIds ?? []) {
+        const record = definitions.get(key(definitionId));
+        if (record !== undefined)
+          proseSources.push({
+            entity: record,
+            name: item.name,
+            sourceKeys: [
+              ...(item.id === undefined ? [] : [inventorySourceKey(item.id)]),
+              nameSourceKey(item.name),
+            ],
+          });
+      }
+  const prose = proseBonusRows(
+    proseSources,
     input.evaluatedStats ?? {},
-    model.skills.map(({ label }) => label),
-  ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId));
+    sourceOf,
+  );
+  for (const trait of prose.traits) {
+    defensiveTraits.push(trait);
+    textTraitSources.set(trait, prose.sources.get(trait) ?? []);
+  }
+  const conditional = [
+    ...conditionalModifiers(
+      input.evaluatedStats ?? {},
+      model.skills.map(({ label }) => label),
+    ).filter((modifier) => !companionNoteIds.has(modifier.provenanceId)),
+    ...prose.modifiers,
+  ];
   // What page 1's other panes and the companion card show: a reminder they
   // already cover is never offered (never twice on one page).
   // What gives a creature card: its mount holding, or its providers (a
@@ -907,7 +963,9 @@ export function withSheetOverview(
   ];
   const paneEntries: { sources: readonly string[]; text: string }[] = [
     ...conditional.map((modifier) => ({
-      sources: sourceKeys(modifier.provenanceId, modifier.source),
+      sources:
+        prose.sources.get(modifier) ??
+        sourceKeys(modifier.provenanceId, modifier.source),
       text: modifier.text,
     })),
     ...defensiveTraits.map((trait) => ({

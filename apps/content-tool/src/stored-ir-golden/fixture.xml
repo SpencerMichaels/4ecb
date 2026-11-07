@@ -2,7 +2,7 @@
 <!--
   Synthetic input for stored-ir-golden.test.ts: the text the pack build parses
   into _Power Text IR, _Associate Stat Block, _Creature Stat Block,
-  _Prerequisite IR and _Note Values IR, written in
+  _Prerequisite IR, _Note Values IR and _Prose Bonuses IR, written in
   the spellings real records use. Changing this file means regenerating the
   goldens (see the test); it never needs a version bump by itself.
 -->
@@ -393,5 +393,37 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
   <RulesElement internal-id="ID_GOLDEN_FORMULA_ORPHAN" name="Golden Lost Tincture" type="Ritual" source="Synthetic">
     <specific name="Component Cost">See below</specific>
     <specific name="type">Alchemical Formula</specific>
+  </RulesElement>
+
+  <!-- _Prose Bonuses IR: situational bonuses only the prose states. -->
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_SKILLS" name="Golden Memories" type="Feat" source="Synthetic">
+    You gain a +5 feat bonus to Arcana, Insight, History, and Dungeoneering checks as they relate to aberrant creatures or their works.
+    <specific name="Short Description">+5 to Arcana, Insight, History, and Dungeoneering related to aberrants and their works</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_PARTIAL" name="Golden Cunning" type="Feat" source="Synthetic">
+    You gain a +2 feat bonus to Dungeoneering checks and a +2 bonus to any skill check made to detect a trap, hazard, or secret door.
+    <rules>
+      <statadd name="Dungeoneering Misc" value="+2" type="Feat" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_CARRIED" name="Golden Senses" type="Feat" source="Synthetic">
+    You gain a +2 feat bonus to Perception and a +2 racial bonus to saving throws against charm effects.
+    <rules>
+      <statadd name="Perception Misc" value="+2" type="Feat" />
+      <statadd name="Saving Throws" value="+2" type="Racial" condition="against charm effects" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_LEADING" name="Golden Stone Footing" type="Magic Item" source="Synthetic">
+    <specific name="Property">When you are standing on a surface of stone or earth, you gain a +2 item bonus to Athletics checks and Strength ability checks (but not Strength-based attacks).</specific>
+    <specific name="Power">Daily (Minor Action): You gain a +2 bonus to all defenses until the end of your next turn.</specific>
+    <rules>
+      <statadd name="Athletics Misc" value="+2" type="item" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_TRIGGERED" name="Golden Second Wind" type="Feat" source="Synthetic">
+    When you use your second wind, you gain a +5 bonus to saving throws until the end of your next turn.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_RESIST" name="Golden Plating" type="Feat" source="Synthetic">
+    You gain resist 2 to all damage while you are bloodied.
   </RulesElement>
 </D20Rules>

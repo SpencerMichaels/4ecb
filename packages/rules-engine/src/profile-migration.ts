@@ -6,6 +6,7 @@ import {
   NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,
+  PROSE_BONUSES_FIELD,
   type ContentEntity,
 } from "@4ecb/content-domain";
 
@@ -207,6 +208,7 @@ const DERIVED_SPECIFICS: ReadonlySet<string> = new Set([
   NOTE_VALUES_FIELD,
   POWER_TEXT_FIELD,
   PREREQUISITE_IR_FIELD,
+  PROSE_BONUSES_FIELD,
 ]);
 
 function entityFingerprint(entity: ContentEntity): string {

@@ -2221,6 +2221,7 @@ export function buildSheetModel(
           })),
           options,
         ),
+        definitionIds: itemEntities.map((item) => item.id),
         fields: loot.elements.flatMap((element) =>
           element.id
             ? entityFields(entities.get(element.id.toLocaleLowerCase()))
@@ -2974,6 +2975,7 @@ export function buildEvaluatedSheetModel(
             loadout.assignmentsByEntry
               .get(entry.id)
               ?.map((assignment) => assignment.slot) ?? [],
+          definitionIds: itemEntities.map((item) => item.id),
           fields: itemEntities.flatMap(entityFields),
         };
       }),

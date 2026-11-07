@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "fixture": "33c108698621157cace35897775ac02edc85254383dd00146cd23932fd84c40f",
+  "output": {
+    "ID_GOLDEN_FEAT_PROSE_SKILLS": {
+      "version": 1,
+      "bonuses": [
+        {
+          "text": "+5 feat bonus to Arcana, Insight, History, and Dungeoneering checks as they relate to aberrant creatures or their works",
+          "amount": 5,
+          "bonusType": "feat",
+          "targets": [
+            {
+              "kind": "skill",
+              "name": "Arcana"
+            },
+            {
+              "kind": "skill",
+              "name": "Insight"
+            },
+            {
+              "kind": "skill",
+              "name": "History"
+            },
+            {
+              "kind": "skill",
+              "name": "Dungeoneering"
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_PROSE_PARTIAL": {
+      "version": 1,
+      "bonuses": [
+        {
+          "text": "+2 bonus to any skill check made to detect a trap, hazard, or secret door",
+          "amount": 2,
+          "targets": [
+            {
+              "kind": "checks",
+              "name": "Skill checks"
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_PROSE_LEADING": {
+      "version": 1,
+      "bonuses": [
+        {
+          "text": "+2 item bonus to Strength ability checks (but not Strength-based attacks) when you are standing on a surface of stone or earth",
+          "amount": 2,
+          "bonusType": "item",
+          "targets": [
+            {
+              "kind": "checks",
+              "name": "Strength checks"
+            }
+          ]
+        }
+      ]
+    },
+    "ID_GOLDEN_FEAT_PROSE_RESIST": {
+      "version": 1,
+      "bonuses": [
+        {
+          "text": "resist 2 to all damage while you are bloodied",
+          "amount": 2,
+          "targets": [
+            {
+              "kind": "resist",
+              "name": "all damage"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

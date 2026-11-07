@@ -22,6 +22,7 @@ import { associateStatBlockField } from "./associate-stat-block";
 import { creatureStatBlockField } from "./creature-stat-block";
 import { noteValuesField } from "./note-values";
 import { powerTextField } from "./power-text";
+import { proseBonusesField } from "./prose-bonuses";
 import { mergeSummonCommunityCards } from "./summon-community-cards";
 import { summonCreatureField } from "./summon-creature";
 import { applyLoadTimeSelfModifies } from "./self-modify";
@@ -448,6 +449,17 @@ export class D20RulesParser {
       specifics.length,
     );
     if (noteValues !== undefined) specifics.push(noteValues);
+
+    // Standing situational bonuses only the prose states, parsed once
+    // here for the sheet's Conditional modifiers pane.
+    const proseBonuses = proseBonusesField(
+      type,
+      specifics,
+      description,
+      rules,
+      specifics.length,
+    );
+    if (proseBonuses !== undefined) specifics.push(proseBonuses);
 
     const base = {
       id,
