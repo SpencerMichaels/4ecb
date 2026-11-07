@@ -367,6 +367,11 @@ export interface SheetCard {
   /** Authored shared encounter allowance; not inferred from the power name. */
   /** Powers that spend one shared use per encounter. */
   readonly sharedUsage?: "Channel Divinity" | "Second Wind";
+  /**
+   * An augment version's power (`_AugmentParent`): the versions are one
+   * power, used once whatever its augment, with a card per version.
+   */
+  readonly augmentParent?: { readonly id: string; readonly name: string };
   readonly basicAttackKind?: "melee" | "ranged";
   readonly flavor?: string;
   readonly prerequisites?: string;
@@ -586,6 +591,21 @@ function withChannelDivinityUsage(
     : card;
 }
 
+function augmentParentOf(
+  card: SheetCard,
+  definitions: ReadonlyMap<string, ContentEntity>,
+): Pick<SheetCard, "augmentParent"> {
+  const parentId = (
+    card.id ? definitions.get(card.id.trim().toLowerCase()) : undefined
+  )?.specifics
+    .find((field) => field.name === "_AugmentParent")
+    ?.value.trim();
+  const parent = parentId ? definitions.get(parentId.toLowerCase()) : undefined;
+  return parent === undefined
+    ? {}
+    : { augmentParent: { id: parent.id, name: parent.name } };
+}
+
 function withPowerReferenceMetadata(
   model: CharacterSheetModel,
   content: readonly ContentEntity[],
@@ -600,6 +620,7 @@ function withPowerReferenceMetadata(
         ...(card.id && universal.has(card.id.trim().toLowerCase())
           ? { universal: true }
           : {}),
+        ...augmentParentOf(card, definitions),
       }))
       .map((card) =>
         withChannelDivinityUsage(

@@ -793,6 +793,14 @@ live site.
   - **Expect:** "ENCOUNTER (2×) … POWER" on one line with the class block at
     the right; the card fits its print slot.
   - **Wrong if:** the bar wraps or the right-hand text is pushed off.
+- [ ] **Beldin: augmentable powers on the scratchpad.**
+  - **Where:** `?preview=1`, the scratchpad's Encounter powers table.
+  - **Expect:** Stygian Strike and Adept's Insight each have one row under
+    the plain power name (no "(Augment N)"); their power cards still print one
+    per augment version. Any other row ending in a parenthetical wraps before
+    the "(", never inside it.
+  - **Wrong if:** a version has its own row, or a name breaks as "… (Augment
+    / 2)".
 
 ## Pass 18: Raidon Kane (`raidon`)
 

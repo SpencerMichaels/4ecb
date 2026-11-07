@@ -1711,6 +1711,23 @@ describe("real-data sheet overview", () => {
     expect(rows).toEqual(original);
   });
 
+  it("tracks an augmentable power's versions as one power", () => {
+    const augmentParent = { id: "strike", name: "Stygian Strike" };
+    const rows = overviewTrackingRows({
+      ...model,
+      powers: [0, 2].map((augment) => ({
+        id: `strike-${augment}`,
+        name: `Stygian Strike (Augment ${augment})`,
+        kind: "power" as const,
+        usage: "Encounter",
+        fields: [],
+        augmentParent,
+      })),
+      overview: { ...model.overview!, inventory: [] },
+    });
+    expect(rows.map(({ id, name }) => ({ id, name }))).toEqual([augmentParent]);
+  });
+
   it("recognizes utility tracking powers only from explicit power and item metadata", () => {
     const rows = overviewTrackingRows({
       ...model,

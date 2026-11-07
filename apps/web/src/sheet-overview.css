@@ -1787,6 +1787,10 @@ body:has(.sp-prototype) {
 .sp-shared-power .action-type-icon {
   flex-shrink: 0;
 }
+/* "Adept's Insight / (Augment 1)", never "… (Augment / 1)". */
+.sp-shared-power .ov-tracking-paren {
+  white-space: nowrap;
+}
 .sp-daily-list > div {
   display: flex;
   align-items: start;
