@@ -5184,7 +5184,49 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   ones (Tiefling, Deva, Shadar-kai, Shade, Revenant, Vryloka) offer
   "Starting" plus their extras, so they include the regional languages.
   Scholar L10, the Ioun Stone of Perfect Language and the Helm of
-  Languages grant all 66 campaign languages.
+  Languages grant all 66 campaign languages. (Revision 11, below,
+  replaces the equivalents, aliases and Learn choices for setting
+  languages.)
+- **Amendment (2026-11-07, owner rule): direct equivalents vs
+  setting-specific languages; Pathfinder revision 11.** A stock language
+  has a Pathfinder equivalent only when it is a direct equivalent, a
+  language spoken by a kind of creature, usually one with a mechanical
+  creature type: Supernal → Celestial, Giant → Jotun, Deep Speech →
+  Undercommon, Primordial → the elemental tongues, Unseelie fey → Sylvan
+  (all fey speak Sylvan; Sylvan is "Also Known As" Unseelie fey and the
+  Unseelie Agent feature grants it), and a race's own language, as Orcish
+  for orcs or Sylvan for fey. These keep their aliases, grants and names. A setting-specific language, the language of
+  a culture or people of one setting (Damaran, Netherese, Shou, Thayan,
+  Tulgan, Untheric, Chondathan, Argon, Quori, Riedran, Thri-Kreen), gets
+  no guessed equivalent: wherever stock content grants, offers or names
+  one, the campaign offers an open choice of any language other than the
+  11 common ones (the 26 regional, 22 uncommon and 7 ancient, banded), and
+  the player or DM decides what fits. Setting-specific mechanical choices
+  that can be reflavored (Forgotten Realms, Eberron and Dark Sun
+  backgrounds and races) stay available; only their setting-tied
+  language part is generalized. Revision 11 therefore drops the six
+  setting aliases of revision 10; the Thri-Kreen race and the Shifter
+  backgrounds Luruar, Luskan, Moonshae Isles, Rashemen and Sembia offer
+  the open choice (Tethyr: Draconic or the open choice); the 11 setting
+  "Learn <language>" background choices are restricted again, replaced by
+  one house-rule "Learn another language" choice of the 55 for a
+  background associating any of them. Restricting them is not the
+  restrict-the-whole-record case ("swap, don't restrict"): each would be
+  an identical "Learn another language" row, so the duplicates go and one
+  record carries them all. The any-language backgrounds (Bounty Hunter,
+  Infiltrator, Lost Kin, Unhomed, Wandering Master: "Any one other than
+  Abyssal or Supernal") get a second record of the same name, never
+  eligible together with the first, without Abyssal and Celestial, as
+  stock content keeps Abyssal and Supernal from them. Card text follows
+  the rules: field patches rename creature-type languages in Associated
+  Languages, Benefit, Short Description, Constant Benefits, Property,
+  Power and Effect (to the tongue the rules grant where there is one, else
+  "an elemental tongue") and word the setting ones as the open choice
+  ("Any language other than the common ones"). Descriptions and fields
+  that occur several times on a record (Staff of Tongues' second
+  Property) cannot be field-patched and keep the stock wording for now.
+  The Helm of Languages grants the 64 campaign languages other than
+  Abyssal and Celestial, as its text says.
 
 ### D117 — Right-click is a shortcut, never the only way to an action
 
@@ -5268,3 +5310,37 @@ id>`). `applySheetLayout` reads a saved layout's former version keys as
   `sheetLayoutCardKeys`).
 - The scratchpad's tracking rows need no special case any more (one card,
   one row); the interim `SheetCard.augmentParent` is gone.
+
+### D119 — A bare race name in a prerequisite means the race
+
+Status: accepted (2026-11-07, owner). A deliberate difference from the
+legacy engine.
+
+Native InternalizeElement (`-Module-.cs` ~29875) meets an untyped name
+clause with any record of that name, skipping only Grants, CountsAsRace
+outside feats and the Assassin background (D089 port,
+`internalizedDefinitions`). So the stock "Thri-kreen" clause of Flailing
+Claws, Four-Armed Flurry, Hunting Thri-Kreen, Sturdy Plating and Past Soul
+(thri-kreen) resolves to the Thri-Kreen race, its CountsAsRace, the
+Thri-Kreen language and the Thri-Kreen background association; "Goblin"
+likewise to the Goblin race, language and association. A human who learned
+the language, or took a Tablelands background (which grants the
+association), met it; in the Pathfinder campaign the same held for the
+Halfling and Gnoll languages. The rules mean the race (owner: "a human who
+learns the language qualifies, which makes no sense"), so the rules win
+over legacy behavior here.
+
+- **The reading** (`bareNameReading` in rules-engine `prerequisites.ts`,
+  applied to the untyped name walk only): when the same-named records
+  include a Race or CountsAsRace, a same-named Language does not meet the
+  clause; and a Background Association, the internal link a background
+  grants for its benefit list, never meets a name another record answers.
+  A record named by its ID, typed references ("Thri-kreen language",
+  "fluent in Goblin", "Goblin background association") and a name only a
+  language carries ("Draconic") are unchanged.
+- `PREREQUISITE_IR_VERSION` is 2, so packs built earlier keep their stored
+  trees out of use until rebuilt (the engine internalizes the text
+  itself); `RULES_EVALUATION_CACHE_VERSION` is bumped. Survey of the full
+  pack's stored trees: the only untyped clauses naming a Race and a
+  Language are "thri-kreen" (5) and "goblin" (5); `pnpm parity:baseline`
+  is unchanged.

@@ -605,7 +605,7 @@ function internalizedDefinitions(
   const ownerIsFeat =
     context.subject !== undefined &&
     normalized(context.subject.type) === "feat";
-  return resolveDefinitions(token, context, requiredType).filter(
+  const walked = resolveDefinitions(token, context, requiredType).filter(
     (definition) => {
       if (normalized(definition.id) === wanted) return true;
       const type = normalized(definition.type);
@@ -616,6 +616,40 @@ function internalizedDefinitions(
         wanted === normalized(EXCEPTION_NAMES.assassinBackground)
       );
     },
+  );
+  return requiredType === undefined ? bareNameReading(walked, wanted) : walked;
+}
+
+/**
+ * A modern correction (D119) of the legacy walk, which accepts every
+ * same-named record: a bare name that also names a race means the race, so
+ * a same-named Language ("Thri-kreen", "Goblin"; a campaign's Halfling and
+ * Gnoll) never meets it, and a Background Association (the internal link a
+ * background grants for its benefit list) never meets a name another
+ * record answers. A record named by its ID always stays.
+ */
+function bareNameReading(
+  matches: readonly ContentEntity[],
+  wanted: string,
+): readonly ContentEntity[] {
+  const type = (definition: ContentEntity) => normalized(definition.type);
+  const naming = (definition: ContentEntity) =>
+    normalized(definition.id) === wanted;
+  const race = matches.some(
+    (definition) =>
+      type(definition) === "race" || type(definition) === "countsasrace",
+  );
+  const other = matches.some(
+    (definition) => type(definition) !== "background association",
+  );
+  if (!race && !other) return matches;
+  return matches.filter(
+    (definition) =>
+      naming(definition) ||
+      !(
+        (race && type(definition) === "language") ||
+        (other && type(definition) === "background association")
+      ),
   );
 }
 

@@ -1,5 +1,114 @@
 # Implementation status
 
+## A bare race name in a prerequisite means the race (2026-11-07)
+
+D119 (owner). The legacy name walk met "Thri-kreen" (Flailing Claws and
+four more feats) and "Goblin" with the same-named Language and Background
+Association too, so a human who learned Thri-Kreen, or took a Tablelands
+background, qualified; the Pathfinder campaign's Halfling and Gnoll
+languages did the same for "Halfling" and "Gnoll". rules-engine
+`prerequisites.ts` `bareNameReading`: in the untyped walk, a Race or
+CountsAsRace match drops same-named Languages, and a Background Association
+never meets a name another record answers; ID and typed references are
+unchanged. `PREREQUISITE_IR_VERSION` 2 (stored-IR golden regenerated),
+`RULES_EVALUATION_CACHE_VERSION` v126. The private full pack keeps its
+version-1 trees out of use until rebuilt (`build-private-content.sh`).
+Verification: `prerequisites.test.ts` (new case, fails without the fix),
+`stored-ir-golden.test.ts`; the Pathfinder probe (below); survey of the
+full pack's stored trees: "thri-kreen" ×5 and "goblin" ×5 are the only
+untyped Race + Language clauses; `pnpm parity:baseline` unchanged (stats
+4905/4944, powers 3328/3459).
+
+## Pathfinder revision 11: setting languages become an open choice (2026-11-07)
+
+D116 amendment of 2026-11-07 (owner rule: direct equivalents vs
+setting-specific languages). `content/campaigns/pathfinder/` revision 11,
+with an audit of every language decision since revision 4:
+
+- **Kept (direct equivalents and same-named languages).** Common,
+  Draconic, Dwarven, Elven, Goblin and Abyssal keep their stock records;
+  Celestial (Supernal), Jotun (Giant), Undercommon (Deep Speech) and the
+  six elemental tongues (Primordial) keep their aliases. Race and feature
+  swaps to a creature's own Pathfinder language stay: Orc and Half-Orc
+  Giant → Orcish, Gnoll Abyssal → Gnoll, Gnome Elven → Gnomish and
+  Sylvan, the fey races, Fey-Minded and two fey feats Elven → Sylvan,
+  Minotaur + Jotun, Halfling and Tinker Gnome + their language, Drow,
+  Duergar and Svirfneblin Undercommon, Bullywug, the mephits and the
+  elemental themes their element's tongue (Ironwrought Talican), Book Imp
+  Supernal → Infernal, and the aberrant Deep Speech grants → Aklo
+  (Githyanki, Githzerai, Shardmind, Beholderkin, Deep Sage,
+  Escaped Thrall, the Coat of Eyes). The race picks reading
+  `Starting|<extras>` (Tiefling, Deva, Shadar-kai, Shade, Revenant,
+  Vryloka) only add creature-type tongues. Unseelie Agent's "Unseelie
+  fey" (Aklo in revision 4) is now Sylvan, a direct equivalent (all fey
+  speak Sylvan; owner ruling), and Sylvan is "Also Known As" Unseelie fey.
+- **Changed (setting-specific).** The six setting aliases (Hallit
+  Damaran, Thassilonian Netherese, Tien Shou, Osiriani Thayan, Hongali
+  Tulgan, Ancient Osiriani Untheric) are gone. The open choice (one
+  `select` of the 26 regional, 22 uncommon and 7 ancient languages, 55,
+  banded) replaces the Thri-Kreen race's Thri-Kreen grant (revision 4: a
+  common choice) and the Shifter backgrounds' grants: Luruar and Moonshae
+  Isles (Chondathan; a common choice), Luskan (Shou; Tien), Rashemen
+  (Damaran; Hallit), Sembia (Netherese; Thassilonian); Tethyr offers
+  Draconic or the 55. The 11 setting "Learn <language>" choices are
+  restricted by ID again, with their stock names; two house-rule
+  Background Choice records named "Learn another language" replace
+  them: `ID_4ECB_PF_BACKGROUND_CHOICE_LEARN_ANOTHER_LANGUAGE` (the 55; a
+  background with any setting association and not the All association:
+  Quori, Thri-Kreen and Neverwinter backgrounds) and `…_ANY` (the 55
+  without Abyssal and Celestial, 53; the All association of the five
+  any-language backgrounds, whose text excludes Abyssal and Supernal).
+  The Helm of Languages no longer grants Abyssal and Celestial (64), as
+  its text says.
+- **Card text.** New field patches: 54 background Associated Languages,
+  8 background Benefits, 17 class-feature and 5 feat Short Descriptions,
+  8 familiar Constant Benefits (Book Imp, the four mephits, Beholderkin,
+  Gibbering Pet's table, Dimensional Pet), 5 item Properties (Dreamstone
+  Weapon +3 to +6, Helm of Languages), 4 Syllable Powers and Bahamut's
+  Voice's Effect; the Thri-Kreen Languages line reads "Common, choice of
+  one language other than the common ones". Each names the tongue the
+  rules grant, "an elemental tongue" for a choice of four, Celestial,
+  Jotun or Undercommon, and the setting ones "Any language other than the
+  common ones" / "a language of your choice other than the common ones".
+  The house-rule Common, Draconic, Dwarven, Elven and Goblin descriptions
+  ("a debased form of Supernal") are original. Left as they are: record
+  descriptions (about 45, e.g. Holy Tongue "fluent in Supernal", the
+  Learn Celestial card), fields a record has several of (Coat of Eyes,
+  Orb of Light, Staff of Tongues +1 to +6, Syllable of Grace), which
+  field patches cannot address; prerequisite lines, which already show
+  the Pathfinder names ("fluent in Celestial"; "Primordial language"
+  stays, revision 5); and lore naming peoples or beings (the quori,
+  thri-kreen, Shou pirates, primordials, Use Cinderspeech's "adapted from
+  the Primordial language").
+
+Verification: `content-tool campaign build --against
+tmp/content/full-local.4ecp`: valid, 0 errors, version 5, digest
+`75e031ce606067ec27caec890eb5eb3d872399ec3d51c75456c6474ff4f68be1`, 207
+house-rule records (77 Deity, 59 CountsAsDeity, 69 Language, 2
+Background Choice), 138 field and 104 rule patches all applying, 159
+records restricted (135 deities, 13 languages, 11 Learn choices), 6
+prerequisite lines renamed, 0 unchanged, only the 12 known
+language-replacement warnings. Private probe
+(`tmp/pf-languages/probe.rev11.ts`, ignored): 109 pass, 0 fail: Thri-Kreen
+and the five Shifter backgrounds offer exactly the 55 (banded Regional
+26, Uncommon 22, Ancient 7), Tethyr Draconic and the 55; every
+single-setting background shows one eligible "Learn another language"
+(the 55) and no setting Learn row; the five any-language backgrounds show
+the other one (53, Varisian among them) and reach every non-common
+language but Abyssal and Celestial; the six removed aliases no longer
+meet "Netherese" and the rest; the 12 thri-kreen feats' "Thri-kreen"
+clauses are met through the race, and (D119) a Human with Tablelands -
+Herder, or one speaking Halfling, Gnoll or Goblin, does not meet bare
+"Thri-kreen", "Halfling", "Gnoll" or "Goblin" (stock too: the Thri-Kreen
+language alone); Unseelie Agent grants Sylvan, which meets "Unseelie fey"; Human's pick is still the 11 common and
+26 regional; the Ioun Stone and Scholar L10 grant 66, the Helm 64; aliases
+only on the creature-type languages and Sylvan; the earlier race, Genasi, Moteborn,
+Holy Speech and Primordial checks pass. A survey of the composed campaign
+(`tmp/pf-languages/survey.ts`) finds no rule naming a restricted
+language and only the text exceptions above. `scripts/check.sh` with
+`FOURECB_SKIP_PRINT_CHECK=1`. Owner visual check pending (Pass 24,
+"Pathfinder languages").
+
 ## Pathfinder revision 10: 66 languages, banded language tables (2026-11-07)
 
 D116 and D042 amendments of 2026-11-07, owner decisions.

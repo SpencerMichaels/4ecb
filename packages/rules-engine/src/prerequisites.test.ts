@@ -702,6 +702,92 @@ describe("legacy prerequisites", () => {
     });
   });
 
+  it("reads a bare name that names a race as the race, not a same-named language or association (D119)", () => {
+    // Stock "Flailing Claws": "Thri-kreen, Thri-Kreen Claws power". The name
+    // also belongs to the Dark Sun language and the background association
+    // a Tablelands background grants; neither makes a human a thri-kreen.
+    const race = {
+      id: "ID_FMP_RACE_51",
+      name: "Thri-Kreen",
+      type: "Race",
+    } as ContentEntity;
+    const countsAs = {
+      id: "ID_INTERNAL_COUNTSASRACE_THRI-KREEN",
+      name: "Thri-Kreen",
+      type: "CountsAsRace",
+    } as ContentEntity;
+    const language = {
+      id: "ID_FMP_LANGUAGE_43",
+      name: "Thri-Kreen",
+      type: "Language",
+    } as ContentEntity;
+    const association = {
+      id: "ID_INTERNAL_BACKGROUND_ASSOCIATION_THRI_KREEN",
+      name: "Thri-Kreen",
+      type: "Background Association",
+    } as ContentEntity;
+    const human = { id: "HUMAN", name: "Human", type: "Race" } as ContentEntity;
+    const draconic = {
+      id: "ID_FMP_LANGUAGE_2",
+      name: "Draconic",
+      type: "Language",
+    } as ContentEntity;
+    const draconicAssociation = {
+      id: "ID_INTERNAL_BACKGROUND_ASSOCIATION_DRACONIC",
+      name: "Draconic",
+      type: "Background Association",
+    } as ContentEntity;
+    const feat = {
+      id: "FEAT",
+      name: "Flailing Claws",
+      type: "Feat",
+    } as ContentEntity;
+    const all = [
+      ...definitions,
+      race,
+      countsAs,
+      language,
+      association,
+      human,
+      draconic,
+      draconicAssociation,
+    ];
+    const base = { ...context, definitions: all, subject: feat };
+    const kreen = internalizePrerequisite("Thri-kreen", base);
+    expect(kreen).toMatchObject({ kind: "element", negated: false });
+    expect(
+      new Set(
+        kreen?.kind === "element"
+          ? [...(kreen as { definitionIds: readonly string[] }).definitionIds]
+          : [],
+      ),
+    ).toEqual(
+      new Set(["ID_FMP_RACE_51", "ID_INTERNAL_COUNTSASRACE_THRI-KREEN"]),
+    );
+    const speaker = { ...base, owned: [human, language, association] };
+    expect(evaluatePrerequisite("Thri-kreen", speaker).status).toBe("failed");
+    expect(
+      evaluatePrerequisite("Thri-kreen", { ...base, owned: [race] }).status,
+    ).toBe("satisfied");
+    // A language alone keeps its bare name; its association does not.
+    expect(internalizePrerequisite("Draconic", base)).toMatchObject({
+      definitionIds: ["ID_FMP_LANGUAGE_2"],
+    });
+    expect(
+      evaluatePrerequisite("Draconic", {
+        ...base,
+        owned: [human, draconicAssociation],
+      }).status,
+    ).toBe("failed");
+    // Typed and ID references are unchanged.
+    expect(internalizePrerequisite("Thri-kreen language", base)).toMatchObject({
+      definitionIds: ["ID_FMP_LANGUAGE_43"],
+    });
+    expect(internalizePrerequisite("ID_FMP_LANGUAGE_43", base)).toMatchObject({
+      definitionIds: ["ID_FMP_LANGUAGE_43"],
+    });
+  });
+
   it("meets a story membership by a representing option, else leaves it unverified", () => {
     // D090: corrections rewrite a membership clause as "<option> or <the
     // original wording>"; an OR is met by any met branch, otherwise it is

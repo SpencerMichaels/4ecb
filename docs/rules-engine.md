@@ -393,7 +393,10 @@ Prerequisite name lookup follows native InternalizeElement. Its walk of
 same-named records skips three kinds of record: `Grants` records,
 `CountsAsRace` records unless the prerequisite belongs to a Feat, and a
 `Background` named "assassin". So the Assassin background never meets a bare
-`Assassin` clause. Two lookups bypass that walk: a record named by its internal
+`Assassin` clause. One modern correction (D119): when the walk finds a Race
+or CountsAsRace, a same-named Language does not meet the clause (stock
+"Thri-kreen" and "Goblin" mean the race), and a Background Association
+never meets a name another record answers. Two lookups bypass that walk: a record named by its internal
 ID, and one named as `<name> <type>` (for example `!Dwarf CountsAsRace`).
 When the walk finds nothing, native SpecialCase follows: a bare `Shifter`
 clause (feats, paragon paths, backgrounds, themes) is Razorclaw Shifter or

@@ -1350,36 +1350,51 @@ Moradin, or an item a character holds), build and import or advertise it.
     hides the stock ones.
   - **Wrong if:** the dialogs differ in width or button order from the
     content-update dialog, or focus stays trapped after closing.
-- [ ] **Pathfinder languages (campaign revision 4; revision 10 lists).**
-      Added 2026-11-06; the choice contents are checked by a private
-      probe, these are the surfaces.
+- [ ] **Pathfinder languages (campaign revision 4; revision 10 lists;
+      revision 11 open choice).** Added 2026-11-06; the choice contents
+      are checked by a private probe, these are the surfaces.
   - **Where:** a new character in the Pathfinder campaign: Race step with
     a Gnome, Genasi, Tiefling and Thri-Kreen (race cards and their
-    language picks); the Human's "choice of one other"; a background with
-    language associations (benefit list); the sheet's Languages line; a
-    saved character with a Primordial pick (e.g. Azreille) moved into the
-    campaign.
+    language picks); the Human's "choice of one other"; backgrounds with
+    language associations (benefit list): Occupation - Bounty Hunter,
+    Tablelands - Herder and Blazestone; a Shifter's Shifter - Sembia
+    background; the sheet's Languages line; a saved character with a
+    Primordial pick (e.g. Azreille) moved into the campaign.
   - **Expect:** race cards read the Pathfinder lines ("Common, Gnomish,
     Sylvan"; Genasi "Common, choice of Aquan, Auran, Ignan, or Terran";
-    Thri-Kreen "Common, choice of one other"). Genasi shows one language
-    choice of the four tongues; Tiefling's pick lists the 11 common and
-    26 regional languages plus Abyssal and Infernal; the Human's lists the
-    37 only (revision 10). Backgrounds list "Learn Celestial", "Learn
-    Jotun", "Learn Undercommon" and "Learn an elemental tongue" (which
-    opens a choice of four); an any-language background (Occupation -
-    Bounty Hunter) also lists Learn Hallit, Thassilonian, Tien, Osiriani,
-    Hongali, Ancient Osiriani and Skald and "Learn a regional language",
-    "a Tian language", "a planar language", none greyed, and no Damaran,
-    Netherese or other stock-language Learn row anywhere. A Deva
-    cleric's Holy Speech reads "fluent in Celestial" (from revision 5,
-    with no "met through" note: Celestial is the language Supernal under
-    its own name). The
+    Thri-Kreen "Common, choice of one language other than the common
+    ones"). Genasi shows one language choice of the four tongues;
+    Tiefling's pick lists the 11 common and 26 regional languages plus
+    Abyssal and Infernal; the Human's lists the 37 only (revision 10); the
+    Thri-Kreen's lists the 55 others, banded Regional, Uncommon, Ancient,
+    no Common band (revision 11). Backgrounds list "Learn Celestial",
+    "Learn Jotun", "Learn Undercommon" and "Learn an elemental tongue"
+    (which opens a choice of four) where they associate those. Bounty
+    Hunter's benefit list has exactly one "Learn another language" row,
+    which opens a choice of 53 (the 55 without Abyssal and Celestial,
+    Varisian among them), and no Learn Hallit, Thassilonian, Tien,
+    regional, Tian or planar row (revision 11); Tablelands - Herder's has
+    one "Learn another language" opening all 55. With Show all on, the
+    stock Learn Damaran, Learn Netherese and the other setting rows appear
+    greyed "Unavailable in this campaign", and the other "Learn another
+    language" greyed for its prerequisite. Bounty Hunter's card reads
+    "Associated Languages: Any one other than Abyssal or Celestial.";
+    Blazestone's "Jotun, an elemental tongue"; Tablelands - Herder's "Any
+    language other than the common ones". Shifter - Sembia's card Benefit
+    reads "Add a language of your choice other than the common ones to
+    your list of known languages.", its Associated Languages "Any language
+    other than the common ones", and the background opens one language
+    choice of the 55 (no Thassilonian grant). A Deva cleric's Holy Speech
+    reads "fluent in Celestial" (from revision 5, with no "met through"
+    note: Celestial is the language Supernal under its own name). The
     saved Primordial pick has one "Primordial is not used in this
     campaign." issue whose Review opens its choice.
-  - **Wrong if:** a stock name (Giant, Deep Speech, Supernal, Primordial)
-    shows anywhere a player picks, a CountsAsLanguage ("Supernal",
-    "Primordial") appears in the Languages list, or a race or background is
-    greyed out over a language.
+  - **Wrong if:** a stock name (Giant, Deep Speech, Supernal, Primordial,
+    or a setting language such as Netherese or Chondathan) shows on a
+    background card's Associated Languages or Benefit line or anywhere a
+    player picks, a CountsAsLanguage ("Supernal", "Primordial") appears in
+    the Languages list, two eligible "Learn another language" rows show at
+    once, or a race or background is greyed out over a language.
 - [ ] **Language table bands and the language card's Group (D042
       amendment, 2026-11-07).** Added 2026-11-07; band contents and order
       are unit-tested and probed, this is the look.
@@ -1399,9 +1414,9 @@ Moradin, or an item a character holds), build and import or advertise it.
     Infernal); Linguist's picks show Common, Regional, Uncommon,
     Ancient, Other in that order. Collapsing Regional keeps its band row and count. Filtering
     "ti" shows Taltien and Tien (and any other match) under their bands
-    only. Tien's card subheader reads "GROUP Regional" and its body has an
-    "Also known as: Shou" line, no "Language Group" body line;
-    Thassilonian's reads "GROUP Ancient", "Also known as: Netherese". The
+    only. Tien's card subheader reads "GROUP Regional", with no "Also
+    known as" line (revision 11) and no "Language Group" body line;
+    Thassilonian's reads "GROUP Ancient", Jotun's "Also known as: Giant". The
     outside character's table has no bands at all, as before.
   - **Wrong if:** a stock (non-campaign) language table shows any band,
     the bands are out of order or start collapsed, a band row's width

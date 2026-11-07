@@ -99,7 +99,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v125-2026-11-06-retraining-choice-flag";
+  "evaluated-character-v126-2026-11-07-bare-name-race";
 
 export interface CharacterOccurrence {
   readonly id: string;

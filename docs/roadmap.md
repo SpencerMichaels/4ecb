@@ -988,6 +988,20 @@ Follow-ups (not done):
   (Netherese: Thassilonian and five more) and none of the 11 "Learn
   <language>" choices restricted (`docs/implementation-status.md`,
   Pathfinder revision 10).
+- Done (2026-11-07): Pathfinder revision 11: setting-specific stock
+  languages (Netherese, Chondathan, Quori, Thri-Kreen…) get no guessed
+  equivalent; their grants and Learn choices become an open choice of the
+  55 non-common languages, and background, feature, familiar and item
+  text names the campaign's languages (`docs/implementation-status.md`,
+  Pathfinder revision 11). With it, D119: a bare race name in a
+  prerequisite ("Thri-kreen", "Goblin") means the race, not a same-named
+  language or background association.
+- Not done: campaign field patches cannot change a record's description
+  or one of several same-named fields (e.g. Staff of Tongues' second
+  Property), so about 45 descriptions and 9 item fields still name
+  Supernal, Primordial or Deep Speech in the Pathfinder campaign (owner
+  decision: extend the patch format, which needs a campaign document
+  version).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

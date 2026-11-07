@@ -20,7 +20,7 @@ import type { ContentEntity, SpecificField } from "./index";
 export const PREREQUISITE_IR_FIELD = "_Prerequisite IR";
 /** Bump when the stored shape or internalizing changes; an older pack's
  *  field is then ignored and the engine internalizes the text itself. */
-export const PREREQUISITE_IR_VERSION = 1;
+export const PREREQUISITE_IR_VERSION = 2;
 
 export interface StoredPrerequisiteIr {
   readonly version: number;

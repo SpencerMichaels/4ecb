@@ -2,9 +2,22 @@
   "campaignId": "pathfinder",
   "name": "Pathfinder",
   "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting.",
-  "revision": 10,
+  "revision": 11,
   "houseRules": "house-rules.xml",
   "restrict": {
+    "ids": [
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
+      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN"
+    ],
     "types": {
       "Deity": "campaign-only",
       "Language": "campaign-only"
@@ -129,7 +142,7 @@
       "id": "ID_FMP_RACE_51",
       "field": "Languages",
       "expect": "Common, Thri-kreen",
-      "value": "Common, choice of one other"
+      "value": "Common, choice of one language other than the common ones"
     },
     {
       "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SUPERNAL",
@@ -555,7 +568,7 @@
           "attributes": {
             "type": "Language",
             "number": "1",
-            "Category": "Starting"
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
           }
         }
       }
@@ -1361,7 +1374,7 @@
           }
         },
         "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_AKLO"
+          "name": "ID_4ECB_PF_LANGUAGE_SYLVAN"
         }
       }
     },
@@ -1779,9 +1792,7 @@
             "type": "Language"
           }
         },
-        "set": {
-          "name": "ID_FMP_LANGUAGE_7"
-        }
+        "remove": true
       }
     },
     {
@@ -1809,9 +1820,7 @@
             "type": "Language"
           }
         },
-        "set": {
-          "name": "ID_FMP_LANGUAGE_8"
-        }
+        "remove": true
       }
     },
     {
@@ -1952,8 +1961,13 @@
             "type": "Language"
           }
         },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_HALLIT"
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
+          }
         }
       }
     },
@@ -1967,8 +1981,13 @@
             "type": "Language"
           }
         },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN"
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
+          }
         }
       }
     },
@@ -1982,8 +2001,13 @@
             "type": "Language"
           }
         },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_TIEN"
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
+          }
         }
       }
     },
@@ -2002,7 +2026,7 @@
           "attributes": {
             "type": "Language",
             "number": "1",
-            "Category": "Starting"
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
           }
         }
       }
@@ -2022,7 +2046,7 @@
           "attributes": {
             "type": "Language",
             "number": "1",
-            "Category": "Starting"
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
           }
         }
       }
@@ -2039,300 +2063,7 @@
           }
         },
         "set": {
-          "Category": "Starting"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
-      "field": "name",
-      "expect": "Learn Damaran",
-      "value": "Learn Hallit"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_DAMARAN",
-      "field": "name",
-      "expect": "Damaran",
-      "value": "Hallit"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_28",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_HALLIT"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
-      "field": "name",
-      "expect": "Learn Netherese",
-      "value": "Learn Thassilonian"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_NETHERESE",
-      "field": "name",
-      "expect": "Netherese",
-      "value": "Thassilonian"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_29",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
-      "field": "name",
-      "expect": "Learn Shou",
-      "value": "Learn Tien"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_SHOU",
-      "field": "name",
-      "expect": "Shou",
-      "value": "Tien"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_30",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_TIEN"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
-      "field": "name",
-      "expect": "Learn Thayan",
-      "value": "Learn Osiriani"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_THAYAN",
-      "field": "name",
-      "expect": "Thayan",
-      "value": "Osiriani"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_31",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_OSIRIANI"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
-      "field": "name",
-      "expect": "Learn Tulgan",
-      "value": "Learn Hongali"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_TULGAN",
-      "field": "name",
-      "expect": "Tulgan",
-      "value": "Hongali"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_32",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_HONGALI"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
-      "field": "name",
-      "expect": "Learn Untheric",
-      "value": "Learn Ancient Osiriani"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_UNTHERIC",
-      "field": "name",
-      "expect": "Untheric",
-      "value": "Ancient Osiriani"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_33",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
-      "field": "name",
-      "expect": "Learn Argon",
-      "value": "Learn Skald"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_ARGON",
-      "field": "name",
-      "expect": "Argon",
-      "value": "Skald"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_37",
-            "type": "Language"
-          }
-        },
-        "set": {
-          "name": "ID_4ECB_PF_LANGUAGE_SKALD"
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
-      "field": "name",
-      "expect": "Learn Chondathan",
-      "value": "Learn a regional language"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_34",
-            "type": "Language"
-          }
-        },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA"
-          }
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
-      "field": "name",
-      "expect": "Learn Riedran",
-      "value": "Learn a Tian language"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_40",
-            "type": "Language"
-          }
-        },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TALTIEN"
-          }
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
-      "field": "name",
-      "expect": "Learn Quori",
-      "value": "Learn a planar language"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_38",
-            "type": "Language"
-          }
-        },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "ID_FMP_LANGUAGE_8|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN"
-          }
-        }
-      }
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN",
-      "field": "name",
-      "expect": "Learn Thri-kreen",
-      "value": "Learn an uncommon language"
-    },
-    {
-      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN",
-      "rule": {
-        "match": {
-          "name": "grant",
-          "attributes": {
-            "name": "ID_FMP_LANGUAGE_43",
-            "type": "Language"
-          }
-        },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG"
-          }
+          "Category": "ID_FMP_LANGUAGE_2|ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR"
         }
       }
     },
@@ -3259,6 +2990,618 @@
           }
         }
       }
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_143",
+      "field": "Associated Languages",
+      "expect": "Any one other than Abyssal or Supernal.",
+      "value": "Any one other than Abyssal or Celestial."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_149",
+      "field": "Associated Languages",
+      "expect": "Any one other than Abyssal or Supernal.",
+      "value": "Any one other than Abyssal or Celestial."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_166",
+      "field": "Associated Languages",
+      "expect": "Any language other than Abyssal or Supernal",
+      "value": "Any language other than Abyssal or Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_299",
+      "field": "Associated Languages",
+      "expect": "Giant, Primordial",
+      "value": "Jotun, an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_302",
+      "field": "Associated Languages",
+      "expect": "Dwarven, Giant",
+      "value": "Dwarven, Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_306",
+      "field": "Associated Languages",
+      "expect": "Primordial",
+      "value": "An elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_307",
+      "field": "Associated Languages",
+      "expect": "Draconic, Primordial",
+      "value": "Draconic, an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_308",
+      "field": "Associated Languages",
+      "expect": "Dwarven, Giant",
+      "value": "Dwarven, Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_309",
+      "field": "Associated Languages",
+      "expect": "Deep Speech, Elven",
+      "value": "Undercommon, Elven"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_400",
+      "field": "Associated Languages",
+      "expect": "Supernal",
+      "value": "Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_403",
+      "field": "Associated Languages",
+      "expect": "Supernal",
+      "value": "Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_442",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_482",
+      "field": "Associated Languages",
+      "expect": "Primordial",
+      "value": "An elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_527",
+      "field": "Associated Languages",
+      "expect": "Quori",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_529",
+      "field": "Associated Languages",
+      "expect": "Quori",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_530",
+      "field": "Associated Languages",
+      "expect": "Quori",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_531",
+      "field": "Associated Languages",
+      "expect": "Supernal",
+      "value": "Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_555",
+      "field": "Associated Languages",
+      "expect": "Any one except Abyssal or Supernal",
+      "value": "Any one except Abyssal or Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_559",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_580",
+      "field": "Associated Languages",
+      "expect": "Giant, Goblin, Primordial",
+      "value": "Jotun, Goblin, an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_622",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_623",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_624",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_628",
+      "field": "Associated Languages",
+      "expect": "Dwarven or Giant",
+      "value": "Dwarven or Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_629",
+      "field": "Associated Languages",
+      "expect": "Dwarven or Giant",
+      "value": "Dwarven or Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_630",
+      "field": "Associated Languages",
+      "expect": "Dwarven or Giant",
+      "value": "Dwarven or Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_637",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_638",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_639",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_640",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_652",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_653",
+      "field": "Associated Languages",
+      "expect": "Giant",
+      "value": "Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_656",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_657",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_658",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_662",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_663",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_664",
+      "field": "Associated Languages",
+      "expect": "Thri-Kreen",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_665",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_666",
+      "field": "Associated Languages",
+      "expect": "Primordial",
+      "value": "An elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_707",
+      "field": "Associated Languages",
+      "expect": "Any one, except for Infernal and Supernal",
+      "value": "Any one, except for Infernal and Celestial"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_711",
+      "field": "Associated Languages",
+      "expect": "Primordial",
+      "value": "An elemental tongue"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_715",
+      "field": "Associated Languages",
+      "expect": "Deep Speech, Draconic, Elven, Giant",
+      "value": "Undercommon, Draconic, Elven, Jotun"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_752",
+      "field": "Associated Languages",
+      "expect": "Chondathan",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_753",
+      "field": "Associated Languages",
+      "expect": "Shou",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_754",
+      "field": "Associated Languages",
+      "expect": "Chondathan",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_755",
+      "field": "Associated Languages",
+      "expect": "Damaran",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_756",
+      "field": "Associated Languages",
+      "expect": "Netherese",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_757",
+      "field": "Associated Languages",
+      "expect": "Chondathan, Draconic",
+      "value": "Draconic, or any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_758",
+      "field": "Associated Languages",
+      "expect": "Deep Speech",
+      "value": "Undercommon"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_786",
+      "field": "Associated Languages",
+      "expect": "Deep Speech, Elven",
+      "value": "Undercommon, Elven"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_787",
+      "field": "Associated Languages",
+      "expect": "Chondathan, Giant",
+      "value": "Jotun, or any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_788",
+      "field": "Associated Languages",
+      "expect": "Chondathan, Damaran, Untheric",
+      "value": "Any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_791",
+      "field": "Associated Languages",
+      "expect": "Chondathan, Damaran, Dwarven, Giant, Goblin",
+      "value": "Dwarven, Jotun, Goblin, or any language other than the common ones"
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_12",
+      "field": "Benefit",
+      "expect": "You gain Deep Speech as an additional language, you add Dungeoneering to your class skill list, and you gain a +2 bonus to Dungeoneering checks.",
+      "value": "You gain Undercommon as an additional language, you add Dungeoneering to your class skill list, and you gain a +2 bonus to Dungeoneering checks."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_16",
+      "field": "Benefit",
+      "expect": "You can reroll any Arcana check, but you must keep the second result, even if it is worse.\n\tYou also know Deep Speech as an additional language.",
+      "value": "You can reroll any Arcana check, but you must keep the second result, even if it is worse.\n\tYou also know Undercommon as an additional language."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_752",
+      "field": "Benefit",
+      "expect": "You add Chondathan to your list of languages known, you add Intimidate to your class skills list, and you gain a +2 bonus to Perception while you are shifting.",
+      "value": "You add a language of your choice other than the common ones to your list of languages known, you add Intimidate to your class skills list, and you gain a +2 bonus to Perception while you are shifting."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_753",
+      "field": "Benefit",
+      "expect": "You can reroll any Stealth check, but you must keep the second result. Add Shou to your list of known languages.",
+      "value": "You can reroll any Stealth check, but you must keep the second result. Add a language of your choice other than the common ones to your list of known languages."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_754",
+      "field": "Benefit",
+      "expect": "Add Athletics to your class skill list. You gain a +3 bonus to Athletics checks made to swim, and to any skill or ability check related to piloting water vessels or to moving around on a boat. Add Chondathan to your list of known languages.",
+      "value": "Add Athletics to your class skill list. You gain a +3 bonus to Athletics checks made to swim, and to any skill or ability check related to piloting water vessels or to moving around on a boat. Add a language of your choice other than the common ones to your list of known languages."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_755",
+      "field": "Benefit",
+      "expect": "You add Damaran to your list of languages known, you add Nature to your class skills list, and you gain a +2 bonus to Bluff, Diplomacy, and Insight checks when dealing with fey.",
+      "value": "You add a language of your choice other than the common ones to your list of languages known, you add Nature to your class skills list, and you gain a +2 bonus to Bluff, Diplomacy, and Insight checks when dealing with fey."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_756",
+      "field": "Benefit",
+      "expect": "Add Bluff and Diplomacy to your class skill list. Add Netherese to your list of known languages.\n  When not shifting, you resemble a human more strongly than is normal for your race. This resemblance allows you to pass as human with a successful Bluff check against a creature's passive Insight, if you are not shifting. If someone makes an active Insight check against you, your Bluff check to disguise your shifter nature suffers a -5 penalty.",
+      "value": "Add Bluff and Diplomacy to your class skill list. Add a language of your choice other than the common ones to your list of known languages.\n  When not shifting, you resemble a human more strongly than is normal for your race. This resemblance allows you to pass as human with a successful Bluff check against a creature's passive Insight, if you are not shifting. If someone makes an active Insight check against you, your Bluff check to disguise your shifter nature suffers a -5 penalty."
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_757",
+      "field": "Benefit",
+      "expect": "Add Stealth to your class skill list. You gain a +2 bonus to Stealth checks. Add Chondathan or Draconic to your list of known languages",
+      "value": "Add Stealth to your class skill list. You gain a +2 bonus to Stealth checks. Add Draconic or a language of your choice other than the common ones to your list of known languages"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2548",
+      "field": "Short Description",
+      "expect": "Speak and read Giant and Goblin languages; add Int modifier to knowledge checks about giants and goblins",
+      "value": "Speak and read Jotun and Goblin languages; add Int modifier to knowledge checks about giants and goblins"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2828",
+      "field": "Short Description",
+      "expect": "You learn the Supernal language. You also gain a benefit associated with your domain.",
+      "value": "You learn the Celestial language. You also gain a benefit associated with your domain."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2898",
+      "field": "Short Description",
+      "expect": "+Low-light vision, fly speed, Supernal language (spoken), all languages (written), radiant damage type when illuminating nearby squares.",
+      "value": "+Low-light vision, fly speed, Celestial language (spoken), all languages (written), radiant damage type when illuminating nearby squares."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2912",
+      "field": "Short Description",
+      "expect": "Reroll Diplomacy and Insight checks, use either result. Cease aging, +Supernal (spoken), all languages (spoken, understood)",
+      "value": "Reroll Diplomacy and Insight checks, use either result. Cease aging, +Celestial (spoken), all languages (spoken, understood)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4207",
+      "field": "Short Description",
+      "expect": "You can speak, read, and write the secret language of the Unseelie fey",
+      "value": "You can speak, read, and write Sylvan"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4286",
+      "field": "Short Description",
+      "expect": "Your origin become elemental; gain the Primordial language, +1 power bonus to all defenses after using your second wind, and the stone panoply power",
+      "value": "Your origin become elemental; gain the Terran language, +1 power bonus to all defenses after using your second wind, and the stone panoply power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4292",
+      "field": "Short Description",
+      "expect": "Your origin becomes elemental; gain Primordial language; you can emit dim light up to 5 squares that can be suppressed or resumed as a minor action; gain the blazing corona power",
+      "value": "Your origin becomes elemental; gain Ignan language; you can emit dim light up to 5 squares that can be suppressed or resumed as a minor action; gain the blazing corona power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4295",
+      "field": "Short Description",
+      "expect": "Your origin becomes elemental; gain Primordial language, +1 bonus to Athletics and Endurance checks; power bonus from using your second wind increases to +4; gain the inevitable strike power",
+      "value": "Your origin becomes elemental; gain Talican language, +1 bonus to Athletics and Endurance checks; power bonus from using your second wind increases to +4; gain the inevitable strike power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4298",
+      "field": "Short Description",
+      "expect": "Gain +5 bonus to Endurance against environmental dangers, Primordial language, and the janissary charge power",
+      "value": "Gain +5 bonus to Endurance against environmental dangers, an elemental tongue, and the janissary charge power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301",
+      "field": "Short Description",
+      "expect": "Gain a +2 bonus to Arcane checks, Primordial language (if you already have this, choose Abyssal, Dwarven, or Giant instead), and the summon flame zephyr power",
+      "value": "Gain a +2 bonus to Arcane checks, an elemental tongue (if you already know one, you can choose Abyssal, Dwarven, or Jotun instead), and the summon flame zephyr power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4304",
+      "field": "Short Description",
+      "expect": "Gain proficiency with rods, Primordial language, and either the Solkara's wave or Vezzuvu's eruption power",
+      "value": "Gain proficiency with rods, an elemental tongue, and either the Solkara's wave or Vezzuvu's eruption power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4317",
+      "field": "Short Description",
+      "expect": "Your origin becomes elemental; gain Primordial language, aquatic trait, +2 attack in aquatic combat against nonaquatic creatures, swim speed equal to half your speed, buffeting wave power",
+      "value": "Your origin becomes elemental; gain Aquan language, aquatic trait, +2 attack in aquatic combat against nonaquatic creatures, swim speed equal to half your speed, buffeting wave power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4320",
+      "field": "Short Description",
+      "expect": "Your origin becomes elemental; gain Primordial language, +2 bonus to Athletics and Perception checks, and the wind fury assault power",
+      "value": "Your origin becomes elemental; gain Auran language, +2 bonus to Athletics and Perception checks, and the wind fury assault power"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4386",
+      "field": "Short Description",
+      "expect": "Roll twice with Chaos-Touched feature use both results (dupe result-choose any other damage type); gain Primordial language",
+      "value": "Roll twice with Chaos-Touched feature use both results (dupe result-choose any other damage type); gain an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4390",
+      "field": "Short Description",
+      "expect": "Increase an ability score by 2; origin changes to elemental; gain Primordial language; gain resist 15 and deal +3 damage with acid, cold, fire, lightning, or thunder",
+      "value": "Increase an ability score by 2; origin changes to elemental; gain an elemental tongue; gain resist 15 and deal +3 damage with acid, cold, fire, lightning, or thunder"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4476",
+      "field": "Short Description",
+      "expect": "Gain Deep Speech language and +2 Dungeoneering",
+      "value": "Gain Aklo language and +2 Dungeoneering"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4486",
+      "field": "Short Description",
+      "expect": "Gain Deep Speech language and +2 to Streetwise",
+      "value": "Gain Undercommon language and +2 to Streetwise"
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_10",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Arcana checks and History checks.\nYou can read and speak Supernal.\nYou gain resist fire 5. If you already have resist fire, increase your resistance by 2.",
+      "value": "You gain a +2 bonus to Arcana checks and History checks.\nYou can read and speak Infernal.\nYou gain resist fire 5. If you already have resist fire, increase your resistance by 2."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_36",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Primordial.\nYou gain resist 5 lightning and resist 5 thunder. If you already resist one of those damage types, increase it by 2.",
+      "value": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Auran.\nYou gain resist 5 lightning and resist 5 thunder. If you already resist one of those damage types, increase it by 2."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_38",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Perception checks.\nYou can read and speak Deep Speech.",
+      "value": "You gain a +2 bonus to Perception checks.\nYou can read and speak Aklo."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_41",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Bluff and Endurance checks.\nYou can read and speak Primordial.\nWhen you would be pushed, pulled, or slid, reduce the forced movement by 1 square.",
+      "value": "You gain a +2 bonus to Bluff and Endurance checks.\nYou can read and speak Terran.\nWhen you would be pushed, pulled, or slid, reduce the forced movement by 1 square."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_42",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Primordial.\nYou gain resist 5 fire. If you already have resist fire, increase it by 2.",
+      "value": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Ignan.\nYou gain resist 5 fire. If you already have resist fire, increase it by 2."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_45",
+      "field": "Constant Benefits",
+      "expect": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Primordial.\nYou gain resist 5 cold. If you already have resist cold, increase it by 2.",
+      "value": "You gain a +2 bonus to Bluff checks.\nYou can read and speak Aquan.\nYou gain resist 5 cold. If you already have resist cold, increase it by 2."
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_52",
+      "field": "Constant Benefits",
+      "expect": "At the end of each extended rest, roll 1d4 to determine a language you can read and speak. Then roll 1d4 two more times to determine two skills to which you gain a +2 bonus (reroll if the same skill shows up twice). All benefits last until your next extended rest.\n<table>1d4\tLanguage\tSkill\n1\tDeep Speech\tBluff\n2\tPrimordial\tDiplomacy\n3\tSupernal\tIntimidate\n4\tAbyssal\tStreetwise</table>",
+      "value": "At the end of each extended rest, roll 1d4 to determine a language you can read and speak. Then roll 1d4 two more times to determine two skills to which you gain a +2 bonus (reroll if the same skill shows up twice). All benefits last until your next extended rest.\n<table>1d4\tLanguage\tSkill\n1\tAklo\tBluff\n2\tAn elemental tongue\tDiplomacy\n3\tCelestial\tIntimidate\n4\tAbyssal\tStreetwise</table>"
+    },
+    {
+      "id": "ID_FMP_FAMILIAR_72",
+      "field": "Constant Benefits",
+      "expect": "You can read and speak Primordial.\nWhen you teleport, add 1 to the distance you teleport.",
+      "value": "You can read and speak an elemental tongue.\nWhen you teleport, add 1 to the distance you teleport."
+    },
+    {
+      "id": "ID_FMP_FEAT_1071",
+      "field": "Short Description",
+      "expect": "Gain Primordial language; on ships, climb at normal speed with Athletics check; +2 to Acrobatics and Athletics while on ship",
+      "value": "Gain Aquan language; on ships, climb at normal speed with Athletics check; +2 to Acrobatics and Athletics while on ship"
+    },
+    {
+      "id": "ID_FMP_FEAT_1354",
+      "field": "Short Description",
+      "expect": "Gain Supernal language; listeners understand your words if you wish",
+      "value": "Gain Celestial language; listeners understand your words if you wish"
+    },
+    {
+      "id": "ID_FMP_FEAT_2728",
+      "field": "Short Description",
+      "expect": "Use Nature instead of Arcana for fey monster knowledge; speak/write Elven (or Giant, or Goblin if already know Elven)",
+      "value": "Use Nature instead of Arcana for fey monster knowledge; speak/write Sylvan (or Jotun, or Goblin if already know Sylvan)"
+    },
+    {
+      "id": "ID_FMP_FEAT_3450",
+      "field": "Short Description",
+      "expect": "+2 to History and Religion; gain Supernal as language",
+      "value": "+2 to History and Religion; gain Celestial as language"
+    },
+    {
+      "id": "ID_FMP_FEAT_3716",
+      "field": "Short Description",
+      "expect": "+2 to Endurance and Intimidate; gain Primordial language",
+      "value": "+2 to Endurance and Intimidate; gain an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_1250",
+      "field": "Property",
+      "expect": "Anyone who touches a dreamstone weapon hears whispers in Deep Speech that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue.",
+      "value": "Anyone who touches a dreamstone weapon hears whispers in Aklo that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_1251",
+      "field": "Property",
+      "expect": "Anyone who touches a dreamstone weapon hears whispers in Deep Speech that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue.",
+      "value": "Anyone who touches a dreamstone weapon hears whispers in Aklo that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_1252",
+      "field": "Property",
+      "expect": "Anyone who touches a dreamstone weapon hears whispers in Deep Speech that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue.",
+      "value": "Anyone who touches a dreamstone weapon hears whispers in Aklo that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_1253",
+      "field": "Property",
+      "expect": "Anyone who touches a dreamstone weapon hears whispers in Deep Speech that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue.",
+      "value": "Anyone who touches a dreamstone weapon hears whispers in Aklo that portend the coming of great star entities and the end of the world. When a wielder swings a dreamstone weapon, the weapon audibly gives voice to the wielder's thoughts, which typically means murderous ideas when the wielder is engaged in battle, in the same susurrant voice but in the speaker's native tongue."
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "field": "Property",
+      "expect": "You can speak and understand any spoken language (the helm does not grant literacy or the ability to speak Abyssal or Supernal).",
+      "value": "You can speak and understand any spoken language (the helm does not grant literacy or the ability to speak Abyssal or Celestial)."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_9860",
+      "field": "Power",
+      "expect": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Supernal. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you gain regeneration 10 while your are bloodied.",
+      "value": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Celestial. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you gain regeneration 10 while your are bloodied."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_9862",
+      "field": "Power",
+      "expect": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Supernal. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you are phasing and gain insubstantial while bloodied.",
+      "value": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Celestial. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you are phasing and gain insubstantial while bloodied."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_9863",
+      "field": "Power",
+      "expect": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Supernal. Effect: You speak the syllable and it orbits your head. You gain a +6 power bonus to damage rolls until the end of the encounter.",
+      "value": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Celestial. Effect: You speak the syllable and it orbits your head. You gain a +6 power bonus to damage rolls until the end of the encounter."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_9864",
+      "field": "Power",
+      "expect": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Supernal. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you never grant combat advantage (unless you use a power or ability that causes you to do so) and you gain a +2 bonus to opportunity attacks.",
+      "value": "Power (Consumable): Standard Action. Requirement: You must be able to speak Abyssal or Celestial. Effect: You speak the syllable and it orbits your head. Until the end of the encounter, you never grant combat advantage (unless you use a power or ability that causes you to do so) and you gain a +2 bonus to opportunity attacks."
+    },
+    {
+      "id": "ID_FMP_POWER_10363",
+      "field": "Effect",
+      "expect": "Until the end of the encounter, you can speak Supernal as if you were a god or angel, such that any creature that has a language can understand your speech. In addition, you gain a +5 bonus to Diplomacy checks and Intimidate checks while speaking Supernal through this power.",
+      "value": "Until the end of the encounter, you can speak Celestial as if you were a god or angel, such that any creature that has a language can understand your speech. In addition, you gain a +5 bonus to Diplomacy checks and Intimidate checks while speaking Celestial through this power."
     }
   ]
 }

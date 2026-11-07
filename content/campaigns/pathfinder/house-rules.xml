@@ -1482,21 +1482,27 @@
     takes any language. A Pathfinder language with a stock equivalent keeps
     that stock record's ID, so existing grants, picks and prerequisites
     reach it (Celestial is the stock Supernal, Jotun the stock Giant,
-    Undercommon the stock Deep Speech); the rest are new records. Each
-    language with a stock equivalent is "Also Known As" its stock name
-    (Celestial: Supernal, Jotun: Giant, Undercommon: Deep Speech, each of
-    the six elemental tongues: Primordial; Hallit: Damaran, Thassilonian:
-    Netherese, Tien: Shou, Osiriani: Thayan, Hongali: Tulgan, Ancient
-    Osiriani: Untheric), so requirements naming the stock language ("fluent
-    in Supernal", "Primordial language") are met by it and prerequisite
-    lines show its Pathfinder name. All, Secret Language and The language
-    of the mind are unchanged copies the campaign keeps (a stock record
-    would be restricted by the type rule); having no group, they share the
-    tables' last "Other" band. Descriptions of new and renamed languages
-    are original. Primordial and the other Forgotten Realms, Eberron and
-    Dark Sun languages stay restricted stock records; their "Learn"
-    background choices are patched to a Pathfinder language or a choice of
-    one (campaign.json).
+    Undercommon the stock Deep Speech); the rest are new records. Only a
+    direct equivalent, a language spoken by a kind of creature, is "Also
+    Known As" its stock name (Celestial: Supernal, Jotun: Giant,
+    Undercommon: Deep Speech, each of the six elemental tongues:
+    Primordial, Sylvan: Unseelie fey, since all fey speak Sylvan), so
+    requirements naming the stock language ("fluent in
+    Supernal", "Primordial language") are met by it and prerequisite lines
+    show its Pathfinder name. A setting-specific stock language, of a
+    culture or people of the Forgotten Realms, Eberron or Dark Sun
+    (Damaran, Netherese, Shou, Thayan, Tulgan, Untheric, Chondathan, Argon,
+    Quori, Riedran, Thri-Kreen), has no equivalent here: wherever stock
+    content grants, offers or names one, the campaign offers a choice of
+    any language other than the 11 common ones (the 26 regional, 22
+    uncommon and 7 ancient), and the player or DM decides what fits
+    (owner rule of 2026-11-07, revision 11). All, Secret Language and The
+    language of the mind are unchanged copies the campaign keeps (a stock
+    record would be restricted by the type rule); having no group, they
+    share the tables' last "Other" band. Descriptions of new, renamed and
+    copied languages are original. Primordial and the setting languages
+    stay restricted stock records, and so do their "Learn" background
+    choices, replaced by "Learn another language" (below).
   -->
   <RulesElement name="Common" type="Language" internal-id="ID_FMP_LANGUAGE_1" source="Player's Handbook" revision-date="8/30/2010 3:41:50 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
@@ -1504,7 +1510,7 @@
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
-    Common is a debased form of Supernal, in the way that humans and halflings heard the first language.
+    Taldane, the trade tongue of the Inner Sea, spoken by humans and by most peoples who deal with them.
   </RulesElement>
 
   <RulesElement name="Draconic" type="Language" internal-id="ID_FMP_LANGUAGE_2" source="Player's Handbook" revision-date="8/30/2010 3:41:59 PM">
@@ -1513,7 +1519,7 @@
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
-    Draconic is a debased form of Supernal, in the way that dragons heard the first language.
+    The ancient language of dragons, also spoken by kobolds and used in many arcane texts.
   </RulesElement>
 
   <RulesElement name="Dwarven" type="Language" internal-id="ID_FMP_LANGUAGE_3" source="Player's Handbook" revision-date="8/30/2010 3:42:08 PM">
@@ -1522,7 +1528,7 @@
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
-    Dwarven is a debased form of Supernal, in the way that dwarves heard the first language.
+    The language of dwarves, written in angular runes made to be carved in stone.
   </RulesElement>
 
   <RulesElement name="Elven" type="Language" internal-id="ID_FMP_LANGUAGE_4" source="Player's Handbook" revision-date="8/30/2010 3:42:15 PM">
@@ -1531,12 +1537,13 @@
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
-    Elven is a debased form of Supernal, in the way that elves heard the first language.
+    The flowing language of elves, written in a graceful, curving script.
   </RulesElement>
 
   <RulesElement name="Sylvan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SYLVAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
     <specific name="Language Group"> Common </specific>
+    <specific name="Also Known As"> Unseelie fey </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1558,7 +1565,7 @@
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
-    Goblins is a debased form of Supernal, in the way that goblins heard the first language. Goblin is the only foundational language of the world that lacks its own script, owing to the brutal and barbaric nature of the goblin race.
+    The crude language of goblins, hobgoblins and bugbears, with a blunt script borrowed from their neighbors.
   </RulesElement>
 
   <RulesElement name="Halfling" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HALFLING" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
@@ -1620,7 +1627,6 @@
   <RulesElement name="Hallit" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HALLIT" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
     <specific name="Language Group"> Regional </specific>
-    <specific name="Also Known As"> Damaran </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1630,7 +1636,6 @@
   <RulesElement name="Hongali" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HONGALI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
     <specific name="Language Group"> Regional </specific>
-    <specific name="Also Known As"> Tulgan </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1739,7 +1744,6 @@
   <RulesElement name="Osiriani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_OSIRIANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
     <specific name="Language Group"> Regional </specific>
-    <specific name="Also Known As"> Thayan </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1794,7 +1798,6 @@
   <RulesElement name="Tien" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TIEN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
     <specific name="Language Group"> Regional </specific>
-    <specific name="Also Known As"> Shou </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -2022,7 +2025,6 @@
 
   <RulesElement name="Thassilonian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_THASSILONIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <specific name="Language Group"> Ancient </specific>
-    <specific name="Also Known As"> Netherese </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -2039,7 +2041,6 @@
 
   <RulesElement name="Ancient Osiriani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
     <specific name="Language Group"> Ancient </specific>
-    <specific name="Also Known As"> Untheric </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -2093,5 +2094,36 @@
     </rules>
     Some psions believe that there exists a language of the mind—an array of thoughts, visualizations, and sensations that are common to all thinking creatures across the cosmos. Those who study it believe that this universal mental language is the foundation on which all forms of telepathy are built.
 	Optional Rule: With the Dungeon Master's permission, psionic characters can learn this language, which does not exist in spoken form, but only as a script. Players cannot choose the language of the mind as one of their characters' starting languages; leaning it requires the Linguist feat or the proper background. Only psionic characters and creatures who have innate telepathy can learn to read and write this language, since part of its meaning is conveyed directly into the observer's mind. It can be translated with magic (such as the Comprehend Languages ritual), but is otherwise a form of communication that only telepathic creatures can share.
+  </RulesElement>
+  <!--
+    "Learn another language" (D116 amendment, revision 11). Stock
+    backgrounds associate the setting languages of the Forgotten Realms,
+    Eberron and Dark Sun (Damaran, Netherese, Shou, Thayan, Tulgan,
+    Untheric, Chondathan, Argon, Quori, Riedran, Thri-kreen), each with its
+    own "Learn <language>" choice. The campaign restricts those 11 choices
+    (campaign.json restrict.ids) and offers one of these two instead, named
+    alike and never both eligible: the first for a background with any of
+    those associations, a choice of the 55 languages other than the 11
+    common ones; the second for the any-language backgrounds (Bounty
+    Hunter, Infiltrator, Lost Kin, Unhomed, Wandering Master: the All
+    association), the same choice without Abyssal and Celestial, as stock
+    content keeps Abyssal and Supernal from them.
+  -->
+  <RulesElement name="Learn another language" type="Background Choice" internal-id="ID_4ECB_PF_BACKGROUND_CHOICE_LEARN_ANOTHER_LANGUAGE" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_INTERNAL_BACKGROUND_BENEFIT </Category>
+    <Prereqs> ID_INTERNAL_BACKGROUND_ASSOCIATION_DAMARAN or ID_INTERNAL_BACKGROUND_ASSOCIATION_NETHERESE or ID_INTERNAL_BACKGROUND_ASSOCIATION_SHOU or ID_INTERNAL_BACKGROUND_ASSOCIATION_THAYAN or ID_INTERNAL_BACKGROUND_ASSOCIATION_TULGAN or ID_INTERNAL_BACKGROUND_ASSOCIATION_UNTHERIC or ID_INTERNAL_BACKGROUND_ASSOCIATION_CHONDATHAN or ID_INTERNAL_BACKGROUND_ASSOCIATION_ARGON or ID_INTERNAL_BACKGROUND_ASSOCIATION_QUORI or ID_INTERNAL_BACKGROUND_ASSOCIATION_RIEDRAN or ID_INTERNAL_BACKGROUND_ASSOCIATION_THRI_KREEN, !ID_INTERNAL_BACKGROUND_ASSOCIATION_ALL </Prereqs>
+    <rules>
+      <select type="Language" number="1" Category="ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR" />
+    </rules>
+    You can speak, read, and write one language of your choice other than the common ones fluently.
+  </RulesElement>
+
+  <RulesElement name="Learn another language" type="Background Choice" internal-id="ID_4ECB_PF_BACKGROUND_CHOICE_LEARN_ANOTHER_LANGUAGE_ANY" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_INTERNAL_BACKGROUND_BENEFIT </Category>
+    <Prereqs> ID_INTERNAL_BACKGROUND_ASSOCIATION_ALL </Prereqs>
+    <rules>
+      <select type="Language" number="1" Category="ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA|ID_4ECB_PF_LANGUAGE_AKLO|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG|ID_4ECB_PF_LANGUAGE_THASSILONIAN|ID_4ECB_PF_LANGUAGE_AZLANTI|ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI|ID_4ECB_PF_LANGUAGE_JISTKA|ID_4ECB_PF_LANGUAGE_SHORY|ID_4ECB_PF_LANGUAGE_TEKRITANIN|ID_4ECB_PF_LANGUAGE_SENZAR" />
+    </rules>
+    You can speak, read, and write one language of your choice other than the common ones, Abyssal and Celestial fluently.
   </RulesElement>
 </D20Rules>
