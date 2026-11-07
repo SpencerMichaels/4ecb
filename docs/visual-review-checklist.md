@@ -1188,6 +1188,14 @@ Moradin, or an item a character holds), build and import or advertise it.
     above its text.
   - **Wrong if:** the alchemical line wraps a label away from its value,
     or a field also shows in the body.
+- [ ] **Theme section icon.** Added 2026-11-06; the icon name is
+      unit-tested, this is the look.
+  - **Where:** any character's Build → level 1, the Theme section heading,
+    then click a theme in its table.
+  - **Expect:** the heading's icon is the same glyph as the Background
+    section's and the theme card's title icon.
+  - **Wrong if:** the heading still shows the generic content icon, or
+    the heading and the card disagree.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

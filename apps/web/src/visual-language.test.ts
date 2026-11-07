@@ -140,6 +140,11 @@ describe("legacy-derived visual language", () => {
     expect(sheetReferenceIcon("Rituals & practices")).toBe("book");
   });
 
+  it("heads the Theme section with its cards' icon", () => {
+    expect(choiceSectionIcon("Theme")).toBe(entityTypeIcon("Theme"));
+    expect(choiceSectionIcon("Theme")).toBe("background");
+  });
+
   it("never uses the Shield for anything class-related", () => {
     expect(choiceSectionIcon("Class")).toBe("character");
     expect(sheetReferenceIcon("Class features")).not.toBe("class");

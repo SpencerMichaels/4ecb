@@ -1708,6 +1708,16 @@ leaving out what was placed or dropped.
   epic destiny's or theme's prerequisite is its "Prerequisite:" body line
   above the text (unchanged; now tested), no subheader. Tests:
   `entity-card-fields.test.tsx`, `print-item-presentation.test.ts`.
+- **Theme section icon:** the Build tab's Theme section heading
+  (`choiceSectionIcon("Theme")`, was the generic `content`) uses
+  `background`, the icon its Theme cards and rows already use
+  (`entityTypeIcon`, the owner's content-type mapping). Test:
+  `visual-language.test.ts`.
+
+Owner checks: the checklist's "Feat card subheader", "Duplicate card
+fields dropped", "Class card subheader", "Background card subheader",
+"Race card subheader", "Skill, god fragment, alchemical item and special
+armor subheaders" and "Theme section icon".
 
 ## Known-record rows and ritual cards (2026-11-06)
 

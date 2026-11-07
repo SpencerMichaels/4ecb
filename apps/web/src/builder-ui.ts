@@ -2856,10 +2856,11 @@ export function choiceSectionIcon(section: string): IconName {
       return "character";
     case "Race":
       return "race";
+    // A theme's cards share the background's icon (entityTypeIcon), and
+    // so does its section heading.
     case "Background":
-      return "background";
     case "Theme":
-      return "content";
+      return "background";
     case "Ability Scores":
       return "ability";
     case "Companion":
