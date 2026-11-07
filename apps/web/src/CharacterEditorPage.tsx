@@ -468,6 +468,21 @@ export function CharacterEditorPage({
   const firstEvaluationRecorded = useRef(false);
   const rulesCachesWarmed = useRef(false);
 
+  // The window title names the open character, following renames; leaving
+  // the builder restores the app's title.
+  const windowTitle =
+    character === undefined
+      ? undefined
+      : characterDisplayName(character) || "Unnamed character";
+  useEffect(() => {
+    if (windowTitle === undefined) return;
+    const previous = document.title;
+    document.title = windowTitle;
+    return () => {
+      document.title = previous;
+    };
+  }, [windowTitle]);
+
   useEffect(() => {
     let cancelled = false;
     const startedAt = performance.now();
