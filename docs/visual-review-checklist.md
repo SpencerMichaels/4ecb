@@ -1182,6 +1182,34 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** the line sits below the fields, uses a different label
     style from "Prerequisite:", or a record without aliases shows an empty
     "Also known as" line.
+- [ ] **Content-type icons (owner mapping, 2026-11-06).** Added
+      2026-11-06; each type's icon is unit-tested (`item-icons.test.ts`,
+      `visual-language.test.ts`), this is the look of the four new glyphs
+      beside the old ones.
+  - **Where:** at 140% zoom, light and dark theme: a new character's Build
+    → level 1 (the Class step's section icon, the class table, Starting
+    presets, Languages, a cleric's Deity card with its Domain cards); a
+    ranger with Beast Mastery or a wizard with Arcane Familiar (the
+    companion/familiar table rows); a cleric's Battle Cleric Armaments or
+    Weapon Training (Proficiency rows). Shop: search "Bag of Holding"
+    (Wondrous Item), "Riding Horse" (Mount), "Superior Implement" rows
+    (e.g. an Accurate Staff, a Ki Focus). Print preview: page 1's
+    Languages and Class features panels; with Sections → reference groups
+    on, the Class features, Paragon paths, Epic destinies, Theme, Power
+    index and Item power index headings.
+  - **Expect:** Class, its section, class features and trait packages
+    show the person (the class table's glyph), never the Shield; racial
+    traits the race pair; companion and familiar rows and a mount the paw
+    print; proficiencies the badge check; Domain cards a globe; Language
+    rows and the page-1 Languages panel the Languages glyph; Starting
+    presets a signpost; Bag of Holding an amphora; a superior staff the
+    wand, a superior ki focus the focus; the reference headings crown,
+    sun, scroll, bolt and backpack. Each new glyph sits on the same
+    baseline, size and stroke as its neighbours.
+  - **Wrong if:** a new glyph is larger, heavier, filled or off-centre
+    next to the others, reads as an existing glyph (the amphora as a
+    potion flask, the globe as the orb's orbit), or any of these still
+    shows the generic grid or the Feat sparkles.
 
 ## Decisions
 

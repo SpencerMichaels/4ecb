@@ -1,5 +1,35 @@
 # Implementation status
 
+## Content-type icons: owner mapping (2026-11-06)
+
+Owner-approved icon mapping after the content-type icon audit. One mapping
+per surface: `entityTypeIcon` (`visual-language.ts`, builder rows and
+cards), `canonicalItemIcon`/`itemCategoryIcon` (`item-icons.ts`, Shop,
+Inventory, item cards, scratchpad) and the new `sheetReferenceIcon`
+(`visual-language.ts`), which replaces `SheetOverview.tsx`'s
+`referenceIcon` and its page-1 reminder-panel `categoryIcons`. Class,
+Hybrid Class, Class Feature and Trait Package use the person
+(`character`); nothing class-related uses the Shield any more (the sheet's
+"Class features" reference group and reminder panel and the Build tab's
+Class section icon, `choiceSectionIcon`, switched too); the `class` icon
+name is now used only by the unshipped `prototypes/SheetPrototype.tsx`.
+Racial Trait and CountsAsRace use `race`; Companion, Familiar and Associate
+rows `companion` (paw print), like their cards, and a Gear Mount the mount
+slot's paw print; Proficiency `proficient`; God Fragment `church`; a
+Superior Implement its `Group`'s implement icon (church, orbit,
+wand-sparkles, book-marked, focus; a Light Blade the sword). New Lucide
+glyphs: `languages` (Language rows and page-1 Languages panel, was
+`race`), `globe` (Domain), `signpost` (Build, the Starting presets) and
+`amphora` (Wondrous Item and other uncategorized magic items, was the Feat
+sparkles). Reference groups: Paragon paths crown, Epic destinies sun,
+Theme background, Power index power, Item power index item. Internal
+types keep `content`. Verification: `item-icons.test.ts` (new: superior
+implements, mount, amphora, and a sweep that no player-visible type in a
+synthetic set falls to `content`, the Feat sparkles or the Shield) and
+`visual-language.test.ts`; `pnpm test`, typecheck, lint, format:check,
+`review:verify`. Owner visual check pending ("Content-type icons" in the
+visual-review checklist).
+
 ## Hosted campaigns install by themselves; invite page removed (2026-11-06)
 
 D116 amendment (owner: "there's no need for a shortcut - all the hosted

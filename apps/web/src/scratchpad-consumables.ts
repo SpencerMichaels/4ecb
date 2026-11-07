@@ -67,6 +67,7 @@ export function scratchpadConsumables(
               magicItemType: field("Magic Item Type"),
               itemSlot: field("Item Slot"),
               gearCategory: field("Gear Category", "Category"),
+              implementGroup: field("Group"),
             }),
           },
         ]

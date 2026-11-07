@@ -32,14 +32,21 @@ export function entityVisualTone(entity: ContentEntity): LegacyVisualTone {
 
 export function entityTypeIcon(type: string): IconName {
   switch (type.trim().toLocaleLowerCase()) {
+    // Class and everything chosen under a class reads as the character
+    // (the person), never the Shield (owner, 2026-11-06).
     case "class":
     case "hybrid class":
+    case "class feature":
+    case "trait package":
       return "character";
     case "paragon path":
       return "crown";
     case "epic destiny":
       return "sun";
     case "race":
+    case "racial trait":
+    // "Past life" options are race aliases.
+    case "countsasrace":
       return "race";
     case "background":
     case "theme":
@@ -59,9 +66,26 @@ export function entityTypeIcon(type: string): IconName {
       return "item";
     case "ritual":
       return "book";
-    // The sheet's Deity reference group uses the same church.
+    // The sheet's Deity reference group uses the same church; a god
+    // fragment is a shard of a deity.
     case "deity":
+    case "god fragment":
       return "church";
+    case "domain":
+      return "globe";
+    // Rows match their sheet cards and the companion loadout slot.
+    case "companion":
+    case "familiar":
+    case "associate":
+      return "companion";
+    // The Shop's "Proficient" filter glyph.
+    case "proficiency":
+      return "proficient";
+    case "language":
+      return "languages";
+    // Starting presets: a suggested direction.
+    case "build":
+      return "signpost";
     default:
       return "content";
   }
@@ -98,4 +122,36 @@ export function powerAttackIcon(value: string | undefined): IconName {
 
 export function visualToneClass(tone: LegacyVisualTone): string {
   return `tone-${tone}`;
+}
+
+/**
+ * The one icon map for the sheet's reference groups and page-1 reminder
+ * panels, matching each group's builder card (`entityTypeIcon`).
+ */
+export function sheetReferenceIcon(group: string): IconName {
+  if (group.startsWith("Racial")) return "race";
+  switch (group) {
+    case "Feats":
+    case "Other reminders":
+      return "feat";
+    case "Class features":
+      return "character";
+    case "Paragon paths":
+      return "crown";
+    case "Epic destinies":
+      return "sun";
+    case "Theme":
+    case "Background":
+      return "background";
+    case "Deity":
+      return "church";
+    case "Items":
+    case "Item properties":
+    case "Item power index":
+      return "item";
+    case "Power index":
+      return "power";
+    default:
+      return "book";
+  }
 }

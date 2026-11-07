@@ -406,6 +406,7 @@ export function printItemPresentation(card: SheetCard) {
       // A ritual record's subtype: a formula's or practice's card shows its
       // Inventory row's icon.
       ritualType: field("Type"),
+      implementGroup: field("Group"),
     }),
   };
 }

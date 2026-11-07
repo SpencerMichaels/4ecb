@@ -33,6 +33,7 @@ import {
   type SheetValue,
 } from "@4ecb/sheet-model";
 import { Icon, type IconName } from "./Icon";
+import { sheetReferenceIcon } from "./visual-language";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { DotList } from "./DotList";
 import { fittingOneLineSize } from "./one-line-fit";
@@ -474,12 +475,6 @@ function ReminderPanels({
     "Item properties",
     "Other reminders",
   ];
-  const categoryIcons: Readonly<Record<string, IconName>> = {
-    "Class features": "class",
-    "Racial features": "race",
-    Feats: "feat",
-    "Item properties": "item",
-  };
   return (
     <div className="sp-column ov-reminder-panels">
       {categories.map((category) => {
@@ -493,7 +488,7 @@ function ReminderPanels({
           <Panel
             key={category}
             title={category}
-            icon={categoryIcons[category] ?? "feat"}
+            icon={sheetReferenceIcon(category)}
           >
             <Reminders
               values={entries.map(({ entry }) => entry)}
@@ -1124,7 +1119,11 @@ function Summary({
                 </tbody>
               </table>
             </Panel>
-            <Panel title="Languages" icon="race" className="ov-languages-panel">
+            <Panel
+              title="Languages"
+              icon="languages"
+              className="ov-languages-panel"
+            >
               <table className="ov-language-table" aria-label="Languages">
                 <tbody>
                   {(
@@ -2393,20 +2392,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
 }
 const referenceCategory = (group: string) =>
   group.toLowerCase().replace(/[^a-z]+/g, "-");
-const referenceIcon = (group: string): IconName =>
-  group === "Feats"
-    ? "feat"
-    : group.startsWith("Racial")
-      ? "race"
-      : group === "Class features"
-        ? "class"
-        : group === "Items"
-          ? "item"
-          : group === "Background"
-            ? "background"
-            : group === "Deity"
-              ? "church"
-              : "book";
 function EquippedTables({ parts }: { parts: readonly ReferencePart[] }) {
   return (
     <div className="ov-equipped-columns">
@@ -2625,7 +2610,7 @@ function ReferenceCard({
     >
       {!inventoryColumn ? (
         <header>
-          <Icon name={referenceIcon(entry.group)} />
+          <Icon name={sheetReferenceIcon(entry.group)} />
           <h3>
             {entry.name}
             {entry.choice ? (
@@ -3474,7 +3459,7 @@ function ReferencePages({
                         className="ov-reference-group-heading"
                         data-reference-category={referenceCategory(block.group)}
                       >
-                        <Icon name={referenceIcon(block.group)} />
+                        <Icon name={sheetReferenceIcon(block.group)} />
                         {block.group}
                       </h3>
                     ) : null}
@@ -3520,7 +3505,7 @@ function ReferencePages({
                               entry.group,
                             )}
                           >
-                            <Icon name={referenceIcon(entry.group)} />
+                            <Icon name={sheetReferenceIcon(entry.group)} />
                             {entry.group}
                           </h3>
                         ) : null}

@@ -1,4 +1,5 @@
 import {
+  Amphora,
   Anvil,
   ArchiveRestore,
   ArrowDownUp,
@@ -51,6 +52,7 @@ import {
   Funnel,
   Gem,
   Gift,
+  Globe,
   GraduationCap,
   GripVertical,
   Hand,
@@ -59,6 +61,7 @@ import {
   House,
   Key,
   KeyRound,
+  Languages,
   Layers3,
   ListChecks,
   LayoutGrid,
@@ -84,6 +87,7 @@ import {
   ShoppingCart,
   Shirt,
   Shuffle,
+  Signpost,
   Sparkles,
   SquareStar,
   Stamp,
@@ -156,6 +160,7 @@ export type IconName =
   | "crown"
   | "details"
   | "affordable"
+  | "amphora"
   | "download"
   | "export"
   | "proficient"
@@ -172,6 +177,7 @@ export type IconName =
   | "filter"
   | "gem"
   | "gift"
+  | "globe"
   | "grip"
   | "hand"
   | "heart"
@@ -185,6 +191,7 @@ export type IconName =
   | "item"
   | "key"
   | "key-round"
+  | "languages"
   | "layers"
   | "list-checks"
   | "level"
@@ -212,6 +219,7 @@ export type IconName =
   | "shop"
   | "shopping-cart"
   | "shirt"
+  | "signpost"
   | "skill"
   | "skull"
   | "square-star"
@@ -286,6 +294,7 @@ const icons: Record<IconName, LucideIcon> = {
   filter: Funnel,
   gem: Gem,
   gift: Gift,
+  globe: Globe,
   grip: GripVertical,
   hand: Hand,
   heart: Heart,
@@ -298,11 +307,13 @@ const icons: Record<IconName, LucideIcon> = {
   import: FolderInput,
   export: SquareArrowRightExit,
   affordable: Coins,
+  amphora: Amphora,
   consolidate: Coins,
   proficient: BadgeCheck,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,
+  languages: Languages,
   layers: Layers3,
   "list-checks": ListChecks,
   level: ChevronsUp,
@@ -330,6 +341,7 @@ const icons: Record<IconName, LucideIcon> = {
   shop: ShoppingCart,
   "shopping-cart": ShoppingCart,
   shirt: Shirt,
+  signpost: Signpost,
   skill: GraduationCap,
   skull: Skull,
   "square-star": SquareStar,

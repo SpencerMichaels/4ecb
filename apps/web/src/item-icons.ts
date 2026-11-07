@@ -67,6 +67,7 @@ export function canonicalItemIcon(
       contentSpecificValue(entity, "Gear Category") ??
       contentSpecificValue(entity, "Category"),
     ritualType: contentSpecificValue(entity, "type"),
+    implementGroup: contentSpecificValue(entity, "Group"),
   });
 }
 
@@ -79,6 +80,8 @@ export function itemCategoryIcon(metadata: {
   readonly itemSlot?: string | undefined;
   readonly gearCategory?: string | undefined;
   readonly ritualType?: string | undefined;
+  /** A superior implement's `Group`: its implement (or weapon) kind. */
+  readonly implementGroup?: string | undefined;
 }): IconName {
   const identityType = normalized(metadata.identityType ?? metadata.type);
   if (
@@ -92,10 +95,15 @@ export function itemCategoryIcon(metadata: {
   const type = normalized(metadata.type);
   if (type === "ritual")
     return KNOWN_RECORD_ICONS[learnedReferenceKindOf(metadata.ritualType)];
+  // A superior implement takes its implement group's icon (Holy Symbol,
+  // Orb, Staff, Tome, Ki Focus…), as the same implement as a magic item.
+  const superiorImplement = type === "superior implement";
   const kind =
     type === "magic item"
       ? normalized(metadata.magicItemType) || "magic item"
-      : type;
+      : superiorImplement
+        ? normalized(metadata.implementGroup)
+        : type;
   const slot = normalized(metadata.itemSlot);
   const value = `${kind} ${slot}`;
 
@@ -107,7 +115,10 @@ export function itemCategoryIcon(metadata: {
     normalized(metadata.gearCategory) === "ammunition"
   )
     return "bow-arrow";
-  if (type === "gear") return "item";
+  if (type === "gear")
+    return normalized(metadata.gearCategory) === "mount"
+      ? LOADOUT_SLOT_ICONS.mount
+      : "item";
   if (type === "item set") return "layers";
   if (type === "ritual scroll") return "details";
   if (kind.includes("martial practice"))
@@ -142,5 +153,9 @@ export function itemCategoryIcon(metadata: {
   if (kind.includes("reagent")) return "test-tube";
   if (kind.includes("whetstone")) return "anvil";
   if (/intelligent item|psionic talent/u.test(kind)) return "brain";
-  return "feat";
+  // A weapon-group implement (a Light Blade: a dagger).
+  if (superiorImplement) return LOADOUT_SLOT_ICONS["main-hand"];
+  // Wondrous items and other uncategorized magic items: a curio, never the
+  // Feat sparkles.
+  return "amphora";
 }

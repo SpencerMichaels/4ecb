@@ -2853,7 +2853,7 @@ export function repeatedChoiceGroupTitle(
 export function choiceSectionIcon(section: string): IconName {
   switch (section) {
     case "Class":
-      return "class";
+      return "character";
     case "Race":
       return "race";
     case "Background":

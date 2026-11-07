@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
+import { choiceSectionIcon } from "./builder-ui";
 import {
   entityTypeIcon,
   entityVisualTone,
   powerActionSymbol,
   powerAttackIcon,
+  sheetReferenceIcon,
 } from "./visual-language";
 
 function entity(
@@ -94,6 +96,53 @@ describe("legacy-derived visual language", () => {
     expect(entityTypeIcon("Power")).toBe("power");
     expect(entityTypeIcon("Armor")).toBe("item");
     expect(entityTypeIcon("Deity")).toBe("church");
+  });
+
+  it("maps every class- and race-related type to its family icon", () => {
+    for (const type of [
+      "Class",
+      "Hybrid Class",
+      "Class Feature",
+      "Trait Package",
+    ])
+      expect(entityTypeIcon(type), type).toBe("character");
+    for (const type of ["Race", "Racial Trait", "CountsAsRace"])
+      expect(entityTypeIcon(type), type).toBe("race");
+  });
+
+  it("maps companion, proficiency, deity and language rows", () => {
+    for (const type of ["Companion", "Familiar", "Associate"])
+      expect(entityTypeIcon(type), type).toBe("companion");
+    expect(entityTypeIcon("Proficiency")).toBe("proficient");
+    expect(entityTypeIcon("God Fragment")).toBe("church");
+    expect(entityTypeIcon("Domain")).toBe("globe");
+    expect(entityTypeIcon("Language")).toBe("languages");
+    expect(entityTypeIcon("Build")).toBe("signpost");
+    // Internal plumbing stays generic.
+    expect(entityTypeIcon("Internal")).toBe("content");
+  });
+
+  it("gives each sheet reference group its builder card's icon", () => {
+    expect(sheetReferenceIcon("Class features")).toBe("character");
+    expect(sheetReferenceIcon("Racial traits")).toBe("race");
+    expect(sheetReferenceIcon("Racial features")).toBe("race");
+    expect(sheetReferenceIcon("Feats")).toBe("feat");
+    expect(sheetReferenceIcon("Other reminders")).toBe("feat");
+    expect(sheetReferenceIcon("Paragon paths")).toBe("crown");
+    expect(sheetReferenceIcon("Epic destinies")).toBe("sun");
+    expect(sheetReferenceIcon("Theme")).toBe("background");
+    expect(sheetReferenceIcon("Background")).toBe("background");
+    expect(sheetReferenceIcon("Deity")).toBe("church");
+    expect(sheetReferenceIcon("Items")).toBe("item");
+    expect(sheetReferenceIcon("Item properties")).toBe("item");
+    expect(sheetReferenceIcon("Item power index")).toBe("item");
+    expect(sheetReferenceIcon("Power index")).toBe("power");
+    expect(sheetReferenceIcon("Rituals & practices")).toBe("book");
+  });
+
+  it("never uses the Shield for anything class-related", () => {
+    expect(choiceSectionIcon("Class")).toBe("character");
+    expect(sheetReferenceIcon("Class features")).not.toBe("class");
   });
 
   it("maps every power action type to the tabletop-dashboard symbol", () => {
