@@ -424,7 +424,7 @@ describe("release accessibility contract", () => {
     expect(details).not.toContain("changeCurrentLevel");
     expect(details).not.toContain('name: "Name"');
     expect(styles).toMatch(
-      /\.builder-sidebar-identity \.portrait-trigger\s*\{[^}]*height: 9rem;[^}]*width: 9rem;/,
+      /\.builder-sidebar-identity \.portrait-trigger\s*\{[^}]*height: var\(--character-portrait-size\);[^}]*width: var\(--character-portrait-size\);/,
     );
     expect(styles).toMatch(/\.builder-character-facts\s*\{[^}]*margin: 0;/);
     expect(styles).toMatch(
