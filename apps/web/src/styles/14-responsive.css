@@ -338,9 +338,9 @@
 }
 
 @media (max-width: 60rem) {
+  /* The heading stays one row so its close control keeps to the right of
+     the title at any zoom (owner, 2026-11-06); the title wraps instead. */
   .page-heading {
-    align-items: start;
-    display: grid;
     gap: 0.75rem;
   }
   .unofficial {

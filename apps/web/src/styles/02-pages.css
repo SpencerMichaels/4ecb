@@ -24,6 +24,11 @@
   padding-bottom: 1rem;
 }
 
+.page-heading > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .page-heading p:last-child {
   margin-bottom: 0;
   max-width: 48rem;
