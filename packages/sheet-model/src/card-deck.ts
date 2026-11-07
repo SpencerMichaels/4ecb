@@ -230,7 +230,8 @@ export function sheetCardDeck(
 /**
  * The content records the default deck prints as cards of their own, as
  * lowercased IDs: each shown power, item, item set and companion or creature
- * card's record, and a movement technique its discipline's card prints. A
+ * card's record, a movement technique its discipline's card prints and an
+ * augmentable power's versions its one card shows (D118). A
  * feature's pick among them is shown elsewhere (`markChoicesShownElsewhere`).
  */
 export function sheetDeckRecordIds(
@@ -242,6 +243,8 @@ export function sheetDeckRecordIds(
     if (card.id !== undefined) ids.add(keyPart(card.id));
     if ("movementTechnique" in card && card.movementTechnique !== undefined)
       ids.add(keyPart(card.movementTechnique.id));
+    if ("augmentVersionIds" in card)
+      for (const id of card.augmentVersionIds ?? []) ids.add(keyPart(id));
   }
   return ids;
 }

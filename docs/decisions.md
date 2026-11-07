@@ -5164,3 +5164,51 @@ selected holding's actions are buttons in its detail pane.
   with a toolbar hint the same day, because a card's toggle covered the
   power card's usage icons (D099 amendments, 2026-11-06). The hint is the
   main-UI pointer to the right-click action there.
+
+### D118 — An augmentable power prints as one card, laid out like the book
+
+Status: accepted (2026-11-06, owner). A deliberate difference from the
+legacy sheet.
+
+An augmentable psionic power (a record with `_AugmentVersions`, whose
+version records carry `_AugmentParent`) is one power with one use. The
+rules engine still evaluates one power per version, as native
+`CharPowerAugmentCount` does (a locked power, `_SuppressAugments`, has only
+version 0), because each version has its own attack and damage. The legacy
+sheet prints a card per version ("Stygian Strike (Augment 0)", "Stygian
+Strike (Augment 2)", CharTracker `CharacterSheetDisplay.cs` ~1078). Owner
+decision: one card per power, as the rulebook prints it.
+
+- **The card** (`sheet-model/src/augment-cards.ts`,
+  `withCombinedAugmentCards`/`combinedAugmentCard`): the lowest present
+  version's card (version 0, the unaugmented power, with its evaluated
+  numbers) under the parent's ID and name, and the parent's flavor,
+  prerequisites, description and source; then one `SheetPowerAugment` per
+  further version, in `_AugmentVersions` order (versions need not be
+  contiguous: 0, 2): "Augment N" from the parent's `Augment` marker, the
+  parent's authored fields under that marker (the indented " Hit" and
+  similar, labels trimmed, personalized like every card field: "Hit: As
+  above, and …"), and that version's evaluated attack and damage only where
+  they differ from the base's for the same weapon and attack (`numbers`,
+  copied from the version's evaluated card, never recomputed). A parent
+  without an authored block for a version shows that version's differing
+  fields. A locked power's card has no augment sections.
+  `SheetCard.augmentVersionIds` lists the versions shown.
+- **Every surface.** The evaluated sheet, the legacy-cache sheet (which
+  lists the parent itself: its own fields are split the same way, without
+  numbers) and `createSheetPowerCardFinder` all build it, so the print deck,
+  screen sheet, builder panes, power index, page-1 lists and scratchpad
+  show the same one card (D079). The finder answers a lookup by the parent
+  or any version's record: the owned versions, else hypothetical versions
+  the builder evaluates (`BuilderCards.tsx`), else every version's authored
+  card. `PowerCard.tsx` prints each augment as a section after the rules
+  (`print-card-augment`: a bold "Augment N" line, the numbers as rule lines,
+  then its rules); it goes through the normal print fit.
+- **Saved layouts.** The card's deck key is the parent's (`power:<parent
+id>`). `applySheetLayout` reads a saved layout's former version keys as
+  this card's: it is hidden when the card's key or every version's key is
+  hidden, and a stored order places it at its first version's place;
+  showing it clears the version keys too (`SheetLayoutCard.layoutAliases`,
+  `sheetLayoutCardKeys`).
+- The scratchpad's tracking rows need no special case any more (one card,
+  one row); the interim `SheetCard.augmentParent` is gone.

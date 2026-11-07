@@ -793,14 +793,28 @@ live site.
   - **Expect:** "ENCOUNTER (2×) … POWER" on one line with the class block at
     the right; the card fits its print slot.
   - **Wrong if:** the bar wraps or the right-hand text is pushed off.
-- [ ] **Beldin: augmentable powers on the scratchpad.**
-  - **Where:** `?preview=1`, the scratchpad's Encounter powers table.
-  - **Expect:** Stygian Strike and Adept's Insight each have one row under
-    the plain power name (no "(Augment N)"); their power cards still print one
-    per augment version. Any other row ending in a parenthetical wraps before
-    the "(", never inside it.
-  - **Wrong if:** a version has its own row, or a name breaks as "… (Augment
-    / 2)".
+- [ ] **Beldin: an augmentable power is one card (D118).**
+  - **Where:** `?preview=1`, the power cards: Stygian Strike, Energizing
+    Strike and Adept's Insight; then the Build tab at level 11, the paragon
+    path's power choice, Stygian Strike's detail pane (and Energizing Strike's
+    at level 1).
+  - **Expect:** one card per power, titled with the plain name (no "(Augment
+    N)"): the unaugmented attack band and rules (Stygian Strike +18 vs Will,
+    1d10+11), then an "Augment 2" heading and "Hit: As above, and you or one
+    ally can make a melee basic attack …". Energizing Strike has "Augment 1"
+    and "Augment 2" sections; Augment 2 starts with "Staggering Flail +3:
+    2d10+11 damage" and "Unarmed: 2d4+8 damage" lines before its Hit. Adept's
+    Insight (a feature card) shows "Augment 1 / Effect: You instead add
+    1d4+1 …". The builder pane shows the same card. The longer printed cards
+    still fit their slot (smaller text at worst) and look right in dark mode
+    in the builder and at 140% zoom.
+  - **Expect (scratchpad):** the Encounter powers table has one row each for
+    Stygian Strike and Adept's Insight; a row ending in a parenthetical wraps
+    before the "(", never inside it.
+  - **Wrong if:** a version still has its own card or row, an augment
+    section is missing or repeats the whole base Hit where the book says "As
+    above", the augment heading looks unlike the card's other labels, or a
+    card overflows its print slot.
 
 ## Pass 18: Raidon Kane (`raidon`)
 

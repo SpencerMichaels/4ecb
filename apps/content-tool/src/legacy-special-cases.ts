@@ -191,6 +191,7 @@ const ACTION_CARDS = "packages/sheet-model/src/universal-action-cards.test.ts";
 const CARD_PARTS = "packages/sheet-model/src/legacy-card-parts.test.ts";
 const POWER_CARD = "apps/web/src/PowerCard.test.tsx";
 const CARD_DECK = "packages/sheet-model/src/card-deck.test.ts";
+const AUGMENT_CARDS = "packages/sheet-model/src/augment-cards.test.ts";
 const INVENTORY_PACKAGES =
   "packages/sheet-model/src/inventory-packages.test.ts";
 const CONFORMANCE =
@@ -593,8 +594,16 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "D20Workspace.PowerAugmentCount": code(
       "Number of _AugmentVersions entries. CharPowerAugmentCount (D20Workspace.cs ~1691), which the sheet's power cards iterate, gives a locked augmentable power (not IsUnlockedAugmentablePower) only version 0.",
-      "powers.ts evaluatePowers; a locked power (_SuppressAugments, which psionics.ts nativePsionics also overlays on a Racial Trait's pick) lists only its first _AugmentVersions entry",
+      "powers.ts evaluatePowers; a locked power (_SuppressAugments, which psionics.ts nativePsionics also overlays on a Racial Trait's pick) lists only its first _AugmentVersions entry. Deliberate difference (owner decision 2026-11-06, D118): legacy prints a card per version; sheet-model augment-cards.ts folds the versions into one card under the parent (version 0's card, then an \"Augment N\" section per further version), on every surface",
       test(POWERS, "materializes and deduplicates psionic augment versions"),
+      test(
+        AUGMENT_CARDS,
+        "folds non-contiguous versions into one card under the parent",
+      ),
+      test(
+        AUGMENT_CARDS,
+        "prints a locked power's version 0 alone, without augments",
+      ),
       test(
         PSIONICS,
         "lists a locked (Dilettante) augmentable power's version 0 only",

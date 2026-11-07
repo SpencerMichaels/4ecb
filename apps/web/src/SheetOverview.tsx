@@ -1240,40 +1240,31 @@ export function overviewTrackingRows(
   model: CharacterSheetModel,
   compactItemNames = false,
 ): readonly TrackingRow[] {
-  // An augmentable power's versions are one power with one use: one row.
-  const seenAugmented = new Set<string>();
-  const powers = model.powers
-    .flatMap((power) => {
-      const parent = power.augmentParent;
-      if (parent === undefined) return [power];
-      if (seenAugmented.has(parent.id)) return [];
-      seenAugmented.add(parent.id);
-      return [{ ...power, id: parent.id, name: parent.name }];
-    })
-    .map((power) => ({
-      id: power.id ?? power.name,
-      name: power.name,
-      action: power.actionType ?? "",
-      usage: power.usage ?? "",
-      ...(power.fields.some(
-        (field) =>
-          field.label.trim().toLowerCase() === "power type" &&
-          field.value.trim().toLowerCase() === "utility",
-      )
-        ? { utility: true }
+  // An augmentable power is one card (D118), so one row.
+  const powers = model.powers.map((power) => ({
+    id: power.id ?? power.name,
+    name: power.name,
+    action: power.actionType ?? "",
+    usage: power.usage ?? "",
+    ...(power.fields.some(
+      (field) =>
+        field.label.trim().toLowerCase() === "power type" &&
+        field.value.trim().toLowerCase() === "utility",
+    )
+      ? { utility: true }
+      : {}),
+    ...(power.sharedUsage === "Second Wind"
+      ? { group: "Second Wind" }
+      : power.sharedUsage === "Channel Divinity" ||
+          power.fields.some(
+            (field) =>
+              field.label.trim().toLowerCase() === "channel divinity" &&
+              field.value.trim().length > 0,
+          ) ||
+          /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
+        ? { group: "Channel Divinity" }
         : {}),
-      ...(power.sharedUsage === "Second Wind"
-        ? { group: "Second Wind" }
-        : power.sharedUsage === "Channel Divinity" ||
-            power.fields.some(
-              (field) =>
-                field.label.trim().toLowerCase() === "channel divinity" &&
-                field.value.trim().length > 0,
-            ) ||
-            /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
-          ? { group: "Channel Divinity" }
-          : {}),
-    }));
+  }));
   const items = (model.overview?.inventory ?? []).flatMap((item, index) =>
     item.fields.flatMap((field, ordinal) => {
       const power = printItemPower(field);

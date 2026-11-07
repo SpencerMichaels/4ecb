@@ -5,8 +5,10 @@ import {
   classifyPowerCard,
   powerActionLabel,
   powerActionName,
+  type SheetAugmentNumbers,
   type SheetCard,
   type SheetMovementTechnique,
+  type SheetPowerAugment,
   type SheetPowerAttack,
   type SheetValue,
 } from "@4ecb/sheet-model";
@@ -123,6 +125,63 @@ function MovementTechnique({
           textPresentation={textPresentation}
         />
       </div>
+    </section>
+  );
+}
+
+/** An augment's evaluated numbers as rule lines: per weapon when the card
+ *  lists several ("Staggering Flail +3: 2d10+11 damage"), else "Attack:"
+ *  and "Damage:". */
+function augmentNumberLines(
+  numbers: readonly SheetAugmentNumbers[],
+): SheetValue[] {
+  return numbers.flatMap(({ equipmentName, ordinal, attack, damage }) => {
+    const attackLabel = ordinal === undefined ? "" : ` ${ordinal}`;
+    if (equipmentName !== undefined)
+      return [
+        {
+          label: `${equipmentName}${ordinal === undefined ? "" : ` (attack ${ordinal})`}`,
+          value: [attack, damage === undefined ? undefined : `${damage} damage`]
+            .filter(Boolean)
+            .join(", "),
+        },
+      ];
+    return [
+      ...(attack === undefined
+        ? []
+        : [{ label: `Attack${attackLabel}`, value: attack }]),
+      ...(damage === undefined
+        ? []
+        : [{ label: `Damage${attackLabel}`, value: damage }]),
+    ];
+  });
+}
+
+/** An augmentable power's "Augment N" section (D118), laid out as the book
+ *  prints it: the heading, the augment's numbers, then its rules. */
+function AugmentSection({
+  augment,
+  characterLevel,
+  textPresentation,
+}: {
+  readonly augment: SheetPowerAugment;
+  readonly characterLevel: number;
+  readonly textPresentation?: CardTextPresentation | undefined;
+}) {
+  const title = `Augment ${augment.augment}`;
+  return (
+    <section className="print-card-augment" aria-label={title}>
+      <p className="print-card-rule-line print-card-augment-title">
+        <strong>{title}</strong>
+      </p>
+      <PrintRuleLines
+        fields={[
+          ...augmentNumberLines(augment.numbers ?? []),
+          ...augment.fields,
+        ]}
+        characterLevel={characterLevel}
+        textPresentation={textPresentation}
+      />
     </section>
   );
 }
@@ -399,6 +458,14 @@ export function PowerCard({
               />
             </div>
           </section>
+        ))}
+        {(card.augments ?? []).map((augment) => (
+          <AugmentSection
+            key={augment.id}
+            augment={augment}
+            characterLevel={characterLevel}
+            textPresentation={textPresentation}
+          />
         ))}
         {rules.length === 0 && card.description !== undefined ? (
           <CardText

@@ -1711,21 +1711,25 @@ describe("real-data sheet overview", () => {
     expect(rows).toEqual(original);
   });
 
-  it("tracks an augmentable power's versions as one power", () => {
-    const augmentParent = { id: "strike", name: "Stygian Strike" };
+  it("tracks an augmentable power's one card as one power (D118)", () => {
     const rows = overviewTrackingRows({
       ...model,
-      powers: [0, 2].map((augment) => ({
-        id: `strike-${augment}`,
-        name: `Stygian Strike (Augment ${augment})`,
-        kind: "power" as const,
-        usage: "Encounter",
-        fields: [],
-        augmentParent,
-      })),
+      powers: [
+        {
+          id: "strike",
+          name: "Stygian Strike",
+          kind: "power" as const,
+          usage: "Encounter",
+          fields: [],
+          augmentVersionIds: ["strike-0", "strike-2"],
+          augments: [{ id: "strike-2", augment: "2", fields: [] }],
+        },
+      ],
       overview: { ...model.overview!, inventory: [] },
     });
-    expect(rows.map(({ id, name }) => ({ id, name }))).toEqual([augmentParent]);
+    expect(rows.map(({ id, name }) => ({ id, name }))).toEqual([
+      { id: "strike", name: "Stygian Strike" },
+    ]);
   });
 
   it("recognizes utility tracking powers only from explicit power and item metadata", () => {

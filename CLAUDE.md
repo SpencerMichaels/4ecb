@@ -439,6 +439,12 @@ separate header or level rail.
   A card's class block, Spellbook subtitle and monk movement technique come
   from `sheet-model/src/power-card-header.ts`; feature notes (legacy
   `_CS_ShortDescription`, "@" hiding) from `sheet-model/src/feature-notes.ts`.
+  An augmentable power's versions (`_AugmentVersions`/`_AugmentParent`) are
+  one card under the parent (D118, `sheet-model/src/augment-cards.ts`):
+  version 0's card, then an "Augment N" section per further version (the
+  parent's authored block, plus that version's evaluated numbers where they
+  differ); the finder finds it by the parent or any version, and saved
+  layouts' version keys map to it (`layoutAliases`).
   A feature heading or reminder row names its picks (`featureChoiceText`)
   except those the sheet prints on their own (a deck card or a listed
   feature's entry), flagged `shownElsewhere` by record ID (D078 note).

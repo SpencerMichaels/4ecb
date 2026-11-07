@@ -506,7 +506,12 @@ export function comparePowerTypes(
         ? undefined
         : cards.find(
             (candidate) =>
-              candidate.id !== undefined && key(candidate.id) === key(lookupId),
+              (candidate.id !== undefined &&
+                key(candidate.id) === key(lookupId)) ||
+              // An augmentable power's one card (D118) shows its versions.
+              (candidate.augmentVersionIds ?? []).some(
+                (version) => key(version) === key(lookupId),
+              ),
           )) ??
       cards.find((candidate) => key(candidate.name) === key(cachedPower.name));
     // Legacy caches write the bare category, never the "(2×)" use count.

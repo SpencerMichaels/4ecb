@@ -284,6 +284,10 @@
   display: block;
   margin: 0;
 }
+/* An augmentable power's "Augment N" sections follow its rules (D118). */
+.print-card-augment {
+  margin: var(--print-card-section-gap) 0 0;
+}
 .print-card-rule-line.starts-section {
   margin-top: var(--print-card-section-gap);
 }

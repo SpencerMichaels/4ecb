@@ -415,6 +415,9 @@ export function withSheetOverview(
                 text: [
                   power.name,
                   ...power.fields.map((field) => field.value),
+                  ...(power.augments ?? []).flatMap((augment) =>
+                    augment.fields.map((field) => field.value),
+                  ),
                   power.description ?? "",
                 ].join("\n"),
               },

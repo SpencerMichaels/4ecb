@@ -38,6 +38,7 @@ import {
   deckPowerCards,
   sheetCompanionCardKeyBase,
   sheetLayoutCardKey,
+  sheetLayoutCardKeys,
   type CharacterSheetModel,
   type SheetDeckCard,
   type SheetLayoutCard,
@@ -399,10 +400,14 @@ export function CharacterSheetPage({
       const holdingIds = cards.flatMap(({ holdingId }) =>
         holdingId === undefined ? [] : [holdingId],
       );
-      // A split creature's actions card stands for the creature (D110).
+      // A split creature's actions card stands for the creature (D110);
+      // an augmentable power's card also clears its versions' old keys
+      // (D118).
       const layoutCards = cards
         .filter(({ holdingId }) => holdingId === undefined)
-        .map((card) => ({ ...card, key: sheetLayoutCardKey(card) }));
+        .flatMap((card) =>
+          sheetLayoutCardKeys(card, shown).map((key) => ({ ...card, key })),
+        );
       const current = latestPresentation.current;
       const nextLayout =
         layoutCards.length === 0

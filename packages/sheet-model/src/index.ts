@@ -86,6 +86,20 @@ import {
 } from "./feature-choices";
 import { sheetDeckRecordIds } from "./card-deck";
 import {
+  augmentParentOf,
+  augmentVersionIdsOf,
+  combinedAugmentCard,
+  withCombinedAugmentCards,
+  type AugmentCardParts,
+  type SheetPowerAugment,
+} from "./augment-cards";
+export {
+  augmentParentOf,
+  augmentVersionIdsOf,
+  type SheetAugmentNumbers,
+  type SheetPowerAugment,
+} from "./augment-cards";
+import {
   sheetDeityReference,
   type SheetDeityReference,
 } from "./deity-reference";
@@ -218,6 +232,7 @@ export {
   applySheetLayout,
   sheetHiddenSections,
   sheetLayoutCardKey,
+  sheetLayoutCardKeys,
   type ResolvedSheetLayout,
   type SheetLayoutCard,
   type SheetLayoutReminder,
@@ -368,10 +383,13 @@ export interface SheetCard {
   /** Powers that spend one shared use per encounter. */
   readonly sharedUsage?: "Channel Divinity" | "Second Wind";
   /**
-   * An augment version's power (`_AugmentParent`): the versions are one
-   * power, used once whatever its augment, with a card per version.
+   * An augmentable power's card (D118): its augment versions' cards folded
+   * into one, under the parent power's ID and name. These are the version
+   * records it shows (version 0 first), for lookups and saved layout keys.
    */
-  readonly augmentParent?: { readonly id: string; readonly name: string };
+  readonly augmentVersionIds?: readonly string[];
+  /** Its "Augment N" sections after the unaugmented power (D118). */
+  readonly augments?: readonly SheetPowerAugment[];
   readonly basicAttackKind?: "melee" | "ranged";
   readonly flavor?: string;
   readonly prerequisites?: string;
@@ -591,19 +609,32 @@ function withChannelDivinityUsage(
     : card;
 }
 
-function augmentParentOf(
-  card: SheetCard,
-  definitions: ReadonlyMap<string, ContentEntity>,
-): Pick<SheetCard, "augmentParent"> {
-  const parentId = (
-    card.id ? definitions.get(card.id.trim().toLowerCase()) : undefined
-  )?.specifics
-    .find((field) => field.name === "_AugmentParent")
-    ?.value.trim();
-  const parent = parentId ? definitions.get(parentId.toLowerCase()) : undefined;
-  return parent === undefined
-    ? {}
-    : { augmentParent: { id: parent.id, name: parent.name } };
+/**
+ * How an augmentable power's version cards fold into one card (D118): the
+ * parent's authored fields, filtered and personalized as a power card's.
+ */
+function augmentCardParts(
+  lookup: (id: string) => ContentEntity | undefined,
+  personalize: (text: string) => string,
+  keep: (label: string) => boolean = () => true,
+  prerequisiteLines?: Readonly<Record<string, string>>,
+): AugmentCardParts {
+  return {
+    lookup,
+    parentFields: (parent) =>
+      [...parent.specifics]
+        .sort((left, right) => left.ordinal - right.ordinal)
+        .filter(
+          (specific) =>
+            isUserFacingPowerField(specific) &&
+            !CARD_HEADER_POWER_FIELDS.has(
+              specific.name.trim().toLocaleLowerCase(),
+            ) &&
+            keep(specific.name),
+        )
+        .map(({ name, value }) => ({ label: name, value: personalize(value) })),
+    presentation: (parent) => entityPresentation(parent, prerequisiteLines),
+  };
 }
 
 function withPowerReferenceMetadata(
@@ -620,7 +651,6 @@ function withPowerReferenceMetadata(
         ...(card.id && universal.has(card.id.trim().toLowerCase())
           ? { universal: true }
           : {}),
-        ...augmentParentOf(card, definitions),
       }))
       .map((card) =>
         withChannelDivinityUsage(
@@ -1552,6 +1582,11 @@ function withoutSummonCreatureFields(
  * Builds printed power cards from a builder evaluation, including powers the
  * character does not own yet when the caller supplies a hypothetical
  * evaluation of that power. Owned powers produce exactly the sheet's card.
+ *
+ * An augmentable power, asked for by its own record or any augment
+ * version's, is its one combined card (D118): from the evaluation's owned
+ * versions, else the hypothetical versions supplied, else every version's
+ * authored card.
  */
 export function createSheetPowerCardFinder(
   evaluation: EvaluatedCharacter,
@@ -1560,7 +1595,10 @@ export function createSheetPowerCardFinder(
     SheetModelOptions,
     "resolveAbilityChoices" | "proficientEquipmentOnly"
   > = {},
-): (entity: ContentEntity, power: EvaluatedPower | undefined) => SheetCard {
+): (
+  entity: ContentEntity,
+  power: EvaluatedPower | readonly EvaluatedPower[] | undefined,
+) => SheetCard {
   const personalize = createEvaluatedPowerTextPersonalizer(
     evaluation,
     content,
@@ -1575,34 +1613,92 @@ export function createSheetPowerCardFinder(
     lookup: (id: string) => contentById.get(id.trim().toLocaleLowerCase()),
     spellbookPowerIds: spellbookPowerIds(evaluation),
   };
+  const ownedById = new Map(
+    evaluation.powers.map((power) => [
+      power.definitionId.toLocaleLowerCase(),
+      power,
+    ]),
+  );
+  const augmentParts = augmentCardParts(
+    records.lookup,
+    personalize,
+    (label) => !irrelevantFeatureClauses.has(featureClauseKey(label)),
+    evaluation.prerequisiteLines,
+  );
+  const singleCard = (
+    entity: ContentEntity,
+    power: EvaluatedPower | undefined,
+  ): SheetCard =>
+    power === undefined
+      ? withoutSummonCreatureFields(
+          authoredSheetPowerCard(
+            entity,
+            personalize,
+            records.lookup,
+            evaluation.prerequisiteLines,
+          ),
+          entity,
+        )
+      : evaluatedPowerCards(
+          power,
+          entity,
+          evaluation,
+          personalize,
+          irrelevantFeatureClauses,
+          new Map(),
+          options.proficientEquipmentOnly !== false,
+          records,
+        )[0]!;
   const cache = new Map<string, SheetCard>();
-  return (entity, power) => {
-    const key = `${entity.id}\u0000${power?.definitionId ?? ""}`;
+  return (entity, given) => {
+    const powers: readonly EvaluatedPower[] =
+      given === undefined ? [] : "definitionId" in given ? [given] : given;
+    const parent = augmentParentOf(entity, records.lookup);
+    const versionIds = parent === undefined ? [] : augmentVersionIdsOf(parent);
+    const owned = versionIds.flatMap((id) => {
+      const power = ownedById.get(id.toLocaleLowerCase());
+      return power === undefined ? [] : [power];
+    });
+    const versions =
+      owned.length > 0
+        ? owned
+        : powers.filter((power) =>
+            versionIds.some(
+              (id) =>
+                id.toLocaleLowerCase() ===
+                power.definitionId.toLocaleLowerCase(),
+            ),
+          );
+    const key =
+      parent === undefined
+        ? `${entity.id}\u0000${powers[0]?.definitionId ?? ""}`
+        : `${parent.id}\u0000${versions.map((power) => power.definitionId).join(",")}`;
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
-    const card = withChannelDivinityUsage(
-      power === undefined
-        ? withoutSummonCreatureFields(
-            authoredSheetPowerCard(
-              entity,
-              personalize,
-              records.lookup,
-              evaluation.prerequisiteLines,
-            ),
-            entity,
-          )
-        : evaluatedPowerCards(
-            power,
-            entity,
-            evaluation,
-            personalize,
-            irrelevantFeatureClauses,
-            new Map(),
-            options.proficientEquipmentOnly !== false,
-            records,
-          )[0]!,
-      entity,
-    );
+    const combined =
+      parent === undefined
+        ? undefined
+        : combinedAugmentCard(
+            parent,
+            versions.length > 0
+              ? versions.flatMap((power) => {
+                  const version = records.lookup(power.definitionId);
+                  return version === undefined
+                    ? []
+                    : [singleCard(version, power)];
+                })
+              : versionIds.flatMap((id) => {
+                  const version = records.lookup(id);
+                  return version === undefined
+                    ? []
+                    : [singleCard(version, undefined)];
+                }),
+            augmentParts,
+          );
+    const card =
+      combined === undefined
+        ? withChannelDivinityUsage(singleCard(entity, powers[0]), entity)
+        : withChannelDivinityUsage(combined, parent);
     cache.set(key, card);
     return card;
   };
@@ -1655,6 +1751,59 @@ export function sheetItemCard(input: {
   };
 }
 
+/** A legacy cache sheet's power text personalizer, from its cached
+ *  stats and ability scores. */
+function legacyPowerTextPersonalizer(
+  snapshot: LegacyCharacterSnapshot,
+  keyAbilities: readonly string[],
+  options: SheetModelOptions,
+): (value: string) => string {
+  return (value) =>
+    personalizePowerText(
+      value,
+      snapshot.levelCount,
+      {
+        modifier: (name) => {
+          const found = Object.entries(snapshot.stats).find(
+            ([candidate]) =>
+              candidate.trim().toLocaleLowerCase() ===
+              name.trim().toLocaleLowerCase(),
+          )?.[1];
+          if (found !== undefined) {
+            const parsed = Number(found);
+            if (Number.isFinite(parsed)) return parsed;
+          }
+          const ability = ABILITIES.find(
+            (candidate) =>
+              `${candidate} modifier`.toLocaleLowerCase() ===
+              name.toLocaleLowerCase(),
+          );
+          const score =
+            ability === undefined ? undefined : snapshot.abilities[ability];
+          return score === undefined ? undefined : abilityModifier(score);
+        },
+        score: (name) => {
+          const found = Object.entries(snapshot.stats).find(
+            ([candidate]) =>
+              candidate.trim().toLocaleLowerCase() ===
+              name.trim().toLocaleLowerCase(),
+          )?.[1];
+          const ability = ABILITIES.find(
+            (candidate) =>
+              candidate.toLocaleLowerCase() === name.toLocaleLowerCase(),
+          );
+          const raw =
+            found ??
+            (ability === undefined ? undefined : snapshot.abilities[ability]);
+          const parsed = Number(raw);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        },
+        keyAbilities,
+      },
+      options.resolveAbilityChoices === true,
+    );
+}
+
 function powerCard(
   power: LegacyPowerSnapshot,
   entities: ReadonlyMap<string, ContentEntity>,
@@ -1666,6 +1815,11 @@ function powerCard(
     power.id === undefined
       ? undefined
       : entities.get(power.id.toLocaleLowerCase());
+  const personalize = legacyPowerTextPersonalizer(
+    snapshot,
+    keyAbilities,
+    options,
+  );
   const normalize = (value: string) => value.trim().toLocaleLowerCase();
   const mainHandName = Object.entries(snapshot.textStrings).find(
     ([name]) => normalize(name) === "_internal_mainhandweapon",
@@ -1789,51 +1943,7 @@ function powerCard(
       )
       .map(({ label, value }) => ({
         label,
-        value: personalizePowerText(
-          value,
-          snapshot.levelCount,
-          {
-            modifier: (name) => {
-              const found = Object.entries(snapshot.stats).find(
-                ([candidate]) =>
-                  candidate.trim().toLocaleLowerCase() ===
-                  name.trim().toLocaleLowerCase(),
-              )?.[1];
-              if (found !== undefined) {
-                const parsed = Number(found);
-                if (Number.isFinite(parsed)) return parsed;
-              }
-              const ability = ABILITIES.find(
-                (candidate) =>
-                  `${candidate} modifier`.toLocaleLowerCase() ===
-                  name.toLocaleLowerCase(),
-              );
-              const score =
-                ability === undefined ? undefined : snapshot.abilities[ability];
-              return score === undefined ? undefined : abilityModifier(score);
-            },
-            score: (name) => {
-              const found = Object.entries(snapshot.stats).find(
-                ([candidate]) =>
-                  candidate.trim().toLocaleLowerCase() ===
-                  name.trim().toLocaleLowerCase(),
-              )?.[1];
-              const ability = ABILITIES.find(
-                (candidate) =>
-                  candidate.toLocaleLowerCase() === name.toLocaleLowerCase(),
-              );
-              const raw =
-                found ??
-                (ability === undefined
-                  ? undefined
-                  : snapshot.abilities[ability]);
-              const parsed = Number(raw);
-              return Number.isFinite(parsed) ? parsed : undefined;
-            },
-            keyAbilities,
-          },
-          options.resolveAbilityChoices === true,
-        ),
+        value: personalize(value),
       })),
     ...entityPresentation(entity),
     ...(entity?.description === undefined || entity.description.length === 0
@@ -2029,8 +2139,15 @@ export function buildSheetModel(
         : [],
     ),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
-    powers: snapshot.powers.map((power) =>
-      powerCard(power, entities, snapshot, keyAbilities, options),
+    // An augmentable power's versions are one card (D118).
+    powers: withCombinedAugmentCards(
+      snapshot.powers.map((power) =>
+        powerCard(power, entities, snapshot, keyAbilities, options),
+      ),
+      augmentCardParts(
+        (id) => entities.get(id.trim().toLocaleLowerCase()),
+        legacyPowerTextPersonalizer(snapshot, keyAbilities, options),
+      ),
     ),
     items: itemCards,
     companions: [],
@@ -2570,16 +2687,25 @@ export function buildEvaluatedSheetModel(
   };
   const powerCards = withUniversalActionCards(
     [
-      ...evaluation.powers.flatMap((power) =>
-        evaluatedPowerCards(
-          power,
-          entities.get(power.definitionId.toLocaleLowerCase()),
-          evaluation,
+      // An augmentable power's versions are one card (D118).
+      ...withCombinedAugmentCards(
+        evaluation.powers.flatMap((power) =>
+          evaluatedPowerCards(
+            power,
+            entities.get(power.definitionId.toLocaleLowerCase()),
+            evaluation,
+            personalizePowerText,
+            irrelevantFeatureClauses,
+            inventoryNames,
+            options.proficientEquipmentOnly !== false,
+            powerRecords,
+          ),
+        ),
+        augmentCardParts(
+          powerRecords.lookup,
           personalizePowerText,
-          irrelevantFeatureClauses,
-          inventoryNames,
-          options.proficientEquipmentOnly !== false,
-          powerRecords,
+          (label) => !irrelevantFeatureClauses.has(featureClauseKey(label)),
+          evaluation.prerequisiteLines,
         ),
       ),
       // A god fragment's ability is in its own fields, not a Power record.

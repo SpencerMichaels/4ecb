@@ -17,6 +17,7 @@ import {
 import {
   authoredSheetPowerCard,
   createEvaluatedPowerTextPersonalizer,
+  augmentVersionIdsOf,
   createSheetPowerCardFinder,
   creatureRecord,
   itemCardBesideCreature,
@@ -201,6 +202,25 @@ export function evaluatedBuilderCardSettings(
     hypotheticalPowers.set(id, power);
     return power;
   };
+  // An augmentable power evaluates as its augment versions; the finder
+  // folds them into its one card (D118).
+  const hypotheticalAugments = new Map<string, readonly EvaluatedPower[]>();
+  const hypotheticalAugmentVersions = (parent: ContentEntity) => {
+    const id = parent.id.toLocaleLowerCase();
+    const cached = hypotheticalAugments.get(id);
+    if (cached !== undefined) return cached;
+    const versions = new Set(
+      augmentVersionIdsOf(parent).map((version) => version.toLocaleLowerCase()),
+    );
+    const powers = powersFor(
+      [...evaluation.activeDefinitionIds, parent.id],
+      [parent.id],
+    ).filter((candidate) =>
+      versions.has(candidate.definitionId.toLocaleLowerCase()),
+    );
+    hypotheticalAugments.set(id, powers);
+    return powers;
+  };
   const powerCards = new WeakMap<ContentEntity, SheetCard>();
   let contentById: Map<string, ContentEntity> | undefined;
   const paragonPathId = buildParagonPathId(build);
@@ -219,9 +239,15 @@ export function evaluatedBuilderCardSettings(
       let card = powerCards.get(entity);
       if (card === undefined) {
         const { cardFor, owned } = ownedState();
+        const versions = augmentVersionIdsOf(entity);
         card = cardFor(
           entity,
-          owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
+          versions.length > 0
+            ? versions.some((id) => owned.has(id.toLocaleLowerCase()))
+              ? undefined
+              : hypotheticalAugmentVersions(entity)
+            : (owned.get(entity.id.toLocaleLowerCase()) ??
+                hypotheticalPower(entity)),
         );
         powerCards.set(entity, card);
       }

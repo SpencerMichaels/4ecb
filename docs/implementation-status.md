@@ -1,5 +1,34 @@
 # Implementation status
 
+## An augmentable power is one card (2026-11-06)
+
+D118 (owner decision, a deliberate difference from the legacy sheet): an
+augmentable psionic power prints as one card under its own name, laid out
+like the book, instead of a card per augment version. `sheet-model`
+`augment-cards.ts` folds the evaluated version cards into version 0's card
+under the parent's ID, then an "Augment N" section per further version: the
+parent's authored block under its `Augment` marker ("Hit: As above, and …")
+and that version's evaluated attack/damage where they differ (per weapon).
+A locked power's card has no sections. The evaluated sheet, the legacy-cache
+sheet (its parent card is split the same way) and
+`createSheetPowerCardFinder` (looked up by the parent or any version;
+`BuilderCards.tsx` evaluates unowned versions) all build it, so print, the
+builder panes, the power index, page-1 lists and the scratchpad agree; the
+scratchpad's interim row collapsing (30e29b80) is gone. Saved layouts keyed
+by a version card still apply (`layoutAliases`). `PowerCard.tsx` prints the
+sections (`print-card-augment`) inside the fitted body. Beldin
+Hammertongue's Stygian Strike, Energizing Strike, Demoralizing Strike,
+Forward-Thinking Cut and Adept's Insight each print one card;
+`pnpm parity:baseline` is unchanged.
+
+Verification: `augment-cards.test.ts` (non-contiguous 0/2/4 versions,
+locked version 0, differing damage per weapon, fallback without an authored
+block, finder by parent or version id, unowned hypothetical and authored
+cards, saved version keys hidden/ordered/cleared, legacy-cache split),
+`PowerCard.test.tsx`, `BuilderCards.test.ts`, `SheetOverview.test.tsx`,
+`pnpm vitest run packages apps`, typecheck, lint, format:check,
+`scripts/check.sh`.
+
 ## Power swap replacements on the Build tab (2026-11-06)
 
 A player's level 30 sorcerer (Wren) could not complete a power swap: step 2

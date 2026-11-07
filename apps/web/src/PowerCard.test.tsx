@@ -197,3 +197,62 @@ describe("legacy power card parts", () => {
     );
   });
 });
+
+describe("augmentable power card (D118)", () => {
+  const augmentable: SheetCard = {
+    ...card,
+    usage: "Encounter",
+    augmentVersionIds: ["strike-0", "strike-2", "strike-4"],
+    augments: [
+      {
+        id: "strike-2",
+        augment: "2",
+        fields: [{ label: "Hit", value: "As above, and slide the target 1." }],
+        numbers: [
+          { equipmentName: "Flail", damage: "2d10+6" },
+          { equipmentName: "Unarmed", damage: "2d4+6" },
+        ],
+      },
+      {
+        id: "strike-4",
+        augment: "4",
+        fields: [{ label: "Effect", value: "The target is dazed." }],
+        numbers: [{ attack: "+20 vs Will", damage: "3d10+6" }],
+      },
+    ],
+  };
+
+  it("prints each augment as a section after the power's rules", () => {
+    for (const layout of ["print", "panel"] as const) {
+      const markup = renderToStaticMarkup(
+        createElement(PowerCard, {
+          card: augmentable,
+          characterLevel: 1,
+          layout,
+        }),
+      );
+      const base = markup.indexOf("1[W] + Strength");
+      const two = markup.indexOf('aria-label="Augment 2"');
+      const four = markup.indexOf('aria-label="Augment 4"');
+      expect(base).toBeGreaterThan(0);
+      expect(two).toBeGreaterThan(base);
+      expect(four).toBeGreaterThan(two);
+      const section = markup.slice(two, four);
+      expect(section).toContain(
+        '<p class="print-card-rule-line print-card-augment-title"><strong>Augment 2</strong></p>',
+      );
+      // The augment's own numbers, per weapon, then its rules.
+      expect(section.indexOf("<strong>Flail:</strong>")).toBeLessThan(
+        section.indexOf("<strong>Hit:</strong>"),
+      );
+      expect(section).toContain("2d10+6 damage");
+      expect(section).toContain("2d4+6 damage");
+      expect(section).toContain("As above, and slide the target 1.");
+      const last = markup.slice(four);
+      expect(last).toContain("<strong>Attack:</strong>");
+      expect(last).toContain("+20 vs Will");
+      expect(last).toContain("<strong>Damage:</strong>");
+      expect(last).toContain("The target is dazed.");
+    }
+  });
+});

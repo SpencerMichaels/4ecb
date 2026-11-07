@@ -194,39 +194,4 @@ describe("universal power reference provenance", () => {
       ),
     ).toBe(true);
   });
-  it("names an augment version's power from its _AugmentParent", () => {
-    const parent = { ...entity("strike", "Power"), name: "Strike" };
-    const version = {
-      ...entity("strike-2", "Power"),
-      name: "Strike (Augment 2)",
-      specifics: [
-        {
-          name: "_AugmentParent",
-          value: " strike ",
-          extraAttributes: [],
-          ordinal: 0,
-        },
-      ],
-    };
-    const snapshot = {
-      details: {},
-      abilities: {},
-      stats: {},
-      selectedRules: [],
-      textStrings: {},
-      loot: [],
-      levelCount: 1,
-      source: "legacy-cache" as const,
-      powers: [parent, version].map((power) => ({
-        id: power.id,
-        name: power.name,
-        weapons: [],
-      })),
-    };
-    expect(
-      buildSheetModel(snapshot, [parent, version]).powers.map(
-        (power) => power.augmentParent,
-      ),
-    ).toEqual([undefined, { id: "strike", name: "Strike" }]);
-  });
 });

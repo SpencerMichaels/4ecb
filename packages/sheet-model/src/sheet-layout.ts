@@ -9,7 +9,11 @@ import {
   type SheetSectionId,
 } from "@4ecb/character-domain";
 
-import { sheetCardDeck, type SheetDeckEntry } from "./card-deck";
+import {
+  sheetCardDeck,
+  sheetPowerCardKeyBase,
+  type SheetDeckEntry,
+} from "./card-deck";
 import {
   BEAST_NOTES_KEY_SUFFIX,
   type SheetBeastCompanionCard,
@@ -40,6 +44,12 @@ export interface SheetLayoutCard extends SheetDeckEntry {
    * its stats card, under the creature's one key.
    */
   readonly layoutKey?: string;
+  /**
+   * Older keys a saved layout may store for this card: an augmentable
+   * power's one card (D118) answers to its versions' former card keys.
+   * Showing the card clears them too.
+   */
+  readonly layoutAliases?: readonly string[];
 }
 
 export interface SheetLayoutReminder extends OverviewReminderCandidate {
@@ -105,6 +115,35 @@ export function applySheetLayout(
 ): ResolvedSheetLayout {
   const hiddenCards = new Set(layout?.hiddenCards ?? []);
   const shownCards = new Set(layout?.shownCards ?? []);
+  // An augmentable power's card (D118) under its versions' former keys:
+  // it is hidden when every version card was, and placed where the first
+  // of them was.
+  const aliases = new Map(
+    model.powers.flatMap((card) =>
+      (card.augmentVersionIds ?? []).length === 0
+        ? []
+        : [
+            [
+              sheetPowerCardKeyBase(card),
+              (card.augmentVersionIds ?? []).map((id) =>
+                sheetPowerCardKeyBase({ ...card, id }),
+              ),
+            ] as const,
+          ],
+    ),
+  );
+  const aliasedKey = new Map(
+    [...aliases].flatMap(([key, versions]) =>
+      versions.map((version) => [version, key] as const),
+    ),
+  );
+  const hiddenUnder = (entry: SheetDeckEntry) => {
+    const versions = aliases.get(entry.key) ?? [];
+    return (
+      hiddenCards.has(entry.key) ||
+      (versions.length > 0 && versions.every((key) => hiddenCards.has(key)))
+    );
+  };
   const holdingOf = (entry: SheetDeckEntry) =>
     entry.card.kind === "item"
       ? (entry.card as SheetCard).holdingId
@@ -113,9 +152,7 @@ export function applySheetLayout(
     const holdingId = holdingOf(entry);
     if (holdingId !== undefined)
       return options.itemCardsShown?.get(holdingId) ?? entry.defaultShown;
-    return entry.defaultShown
-      ? !hiddenCards.has(entry.key)
-      : shownCards.has(entry.key);
+    return entry.defaultShown ? !hiddenUnder(entry) : shownCards.has(entry.key);
   };
   const defaultCards = sheetCardDeck(model, shown);
   // A held mount's description is its creature's (D110): while the
@@ -130,7 +167,10 @@ export function applySheetLayout(
         : [],
     ),
   );
-  const cards = orderedCards(defaultCards, layout?.cardOrder ?? []).flatMap(
+  const cardOrder = (layout?.cardOrder ?? []).map(
+    (key) => aliasedKey.get(key) ?? key,
+  );
+  const cards = orderedCards(defaultCards, cardOrder).flatMap(
     (entry): SheetLayoutCard[] => {
       const holdingId = holdingOf(entry);
       const creature =
@@ -144,6 +184,9 @@ export function applySheetLayout(
             }),
         shown: shown(entry),
         ...(holdingId === undefined ? {} : { holdingId }),
+        ...(aliases.has(entry.key)
+          ? { layoutAliases: aliases.get(entry.key)! }
+          : {}),
       };
       if (options.splitCompanions?.has(entry.key) !== true) return [card];
       if (entry.card.kind === "creature")
@@ -284,3 +327,16 @@ function splitFamiliarCard(
 export const sheetLayoutCardKey = (
   card: Pick<SheetLayoutCard, "key" | "layoutKey">,
 ) => card.layoutKey ?? card.key;
+
+/**
+ * The keys showing or hiding a card writes or clears: its stored key and,
+ * when showing it, the older keys it answers to (`layoutAliases`), so a
+ * card a saved layout hid under them shows again.
+ */
+export const sheetLayoutCardKeys = (
+  card: Pick<SheetLayoutCard, "key" | "layoutKey" | "layoutAliases">,
+  shown: boolean,
+): string[] => [
+  sheetLayoutCardKey(card),
+  ...(shown ? (card.layoutAliases ?? []) : []),
+];

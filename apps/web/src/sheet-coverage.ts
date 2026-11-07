@@ -71,7 +71,13 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
   return {
     features,
     identity,
-    powerIds: ids(sheet.powers),
+    // An augmentable power's card shows its augment versions too (D118).
+    powerIds: new Set([
+      ...ids(sheet.powers),
+      ...sheet.powers.flatMap(({ augmentVersionIds }) =>
+        (augmentVersionIds ?? []).map(key),
+      ),
+    ]),
     powerNames: new Set(sheet.powers.map(({ name }) => key(name))),
     // An item set card lists its set's benefits.
     itemIds: new Set([

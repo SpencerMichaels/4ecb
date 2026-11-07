@@ -171,4 +171,55 @@ describe("builder card settings", () => {
     settingsFor();
     expect(scans()).toBe(warm);
   });
+
+  it("shows an augmentable power as its one combined card (D118)", () => {
+    // Spelled as the real content is: indented fields under "Augment".
+    const versionId = (augment: number) =>
+      `ID_INTERNAL_POWER_MIND_SURGE_(AUGMENT_${augment})`;
+    const parent = entity("MIND_SURGE", "Power", {
+      "Power Usage": "At-Will",
+      "Action Type": "Standard Action",
+      Effect: "You slide the target 1 square.",
+      Augment: "1",
+      " Effect": "You slide the target 3 squares.",
+      _AugmentVersions: [0, 1].map(versionId).join(","),
+    });
+    const version = (augment: number, effect: string) =>
+      entity(versionId(augment), "Power", {
+        "Power Usage": "At-Will",
+        "Action Type": "Standard Action",
+        Effect: effect,
+        _AugmentParent: "MIND_SURGE",
+      });
+    const augmentable = [
+      ...content,
+      parent,
+      version(0, "You slide the target 1 square."),
+      version(1, "You slide the target 3 squares."),
+    ];
+    const evaluation = rules.evaluateCharacter(
+      rules.projectBuildForEvaluation(build, augmentable),
+      augmentable,
+    );
+    const settings = evaluatedBuilderCardSettings(
+      build,
+      evaluation,
+      augmentable,
+      preferences,
+    );
+    const card = settings.powerCardFor(parent);
+    expect(card.name).toBe("MIND_SURGE");
+    expect(card.augmentVersionIds).toEqual([0, 1].map(versionId));
+    expect(card.fields).toContainEqual({
+      label: "Effect",
+      value: "You slide the target 1 square.",
+    });
+    expect(card.augments).toEqual([
+      {
+        id: versionId(1),
+        augment: "1",
+        fields: [{ label: "Effect", value: "You slide the target 3 squares." }],
+      },
+    ]);
+  });
 });
