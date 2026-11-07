@@ -996,12 +996,13 @@ Follow-ups (not done):
   Pathfinder revision 11). With it, D119: a bare race name in a
   prerequisite ("Thri-kreen", "Goblin") means the race, not a same-named
   language or background association.
-- Not done: campaign field patches cannot change a record's description
-  or one of several same-named fields (e.g. Staff of Tongues' second
-  Property), so about 45 descriptions and 9 item fields still name
-  Supernal, Primordial or Deep Speech in the Pathfinder campaign (owner
-  decision: extend the patch format, which needs a campaign document
-  version).
+- Done (2026-11-07): campaign text patches (document version 6): field
+  patches reach a record's description and flavor by passage and one
+  occurrence of a repeated field, and Pathfinder revision 12 uses them so
+  no card text names a stock language the campaign renames or lacks,
+  except lore about peoples and beings (`docs/implementation-status.md`,
+  Campaign text patches). Release order: deploy the code before
+  publishing revision 12 (a version-5 client skips it quietly).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

@@ -848,8 +848,8 @@ describe("campaign field patches", () => {
       decodeCampaign(jsonBuffer({ ...v1, patches })),
     ).rejects.toThrow("A version 1 campaign cannot carry patches");
     await expect(
-      decodeCampaign(jsonBuffer({ ...built, version: 6 })),
-    ).rejects.toThrow("Unsupported campaign version: 6");
+      decodeCampaign(jsonBuffer({ ...built, version: 7 })),
+    ).rejects.toThrow("Unsupported campaign version: 7");
   });
 
   it("still decodes version 2 documents with their digests", async () => {
@@ -906,6 +906,351 @@ const grantIgnan = {
   name: "grant",
   attributes: { name: "ID_SYN_LANGUAGE_IGNAN", type: "Language" },
 };
+
+describe("campaign text patches (version 6)", () => {
+  // Spelt as the real content spells them: the Staff of Tongues has four
+  // Property specifics, the second naming Supernal; Holy Tongue's text is
+  // its description.
+  const staff = {
+    ...entity("ID_SYN_STAFF_OF_TONGUES", "Magic Item", "Staff of Tongues +1"),
+    specifics: [
+      {
+        name: "Property",
+        value: "You can speak, read, and write Common.",
+        extraAttributes: [],
+        ordinal: 0,
+      },
+      {
+        name: "Property",
+        value: "You can speak, read, and write Supernal.",
+        extraAttributes: [],
+        ordinal: 1,
+      },
+      { name: "Rarity", value: "Uncommon", extraAttributes: [], ordinal: 2 },
+    ],
+  };
+  const tongue = {
+    ...entity("ID_SYN_HOLY_TONGUE", "Class Feature", "Holy Tongue"),
+    description:
+      "You are fluent in Supernal.\n\tSupernal is the language of the gods.",
+  };
+  const textStock = source([...stock.entities, staff, tongue]);
+  const patches: CampaignPatch[] = [
+    {
+      id: "ID_SYN_STAFF_OF_TONGUES",
+      field: "Property",
+      occurrence: 2,
+      expect: "You can speak, read, and write Supernal.",
+      value: "You can speak, read, and write Celestial.",
+    },
+    {
+      id: "ID_SYN_HOLY_TONGUE",
+      field: "description",
+      expect: "fluent in Supernal",
+      value: "fluent in Celestial",
+    },
+    {
+      id: "ID_SYN_HOLY_TONGUE",
+      field: "description",
+      expect: "Supernal is the language",
+      value: "Celestial is the language",
+    },
+  ];
+  const textManifest: CampaignManifest = { ...manifest, patches };
+  const unnumbered = ({ occurrence, ...patch }: CampaignPatch) => {
+    void occurrence;
+    return patch;
+  };
+
+  async function base(entities = textStock) {
+    return buildContentPack(entities, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+  }
+
+  async function compose(campaign: CampaignDocument, entities = textStock) {
+    return composeCampaignProfile([await base(entities)], campaign, {
+      packId: "campaign:synthetic-setting:t",
+      name: "Synthetic Setting",
+    });
+  }
+
+  it("writes version 6 only for a description or occurrence patch", async () => {
+    const campaign = await buildCampaign(textManifest, houseRuleSource, xml);
+    expect(campaign.version).toBe(6);
+    expect(campaign).not.toHaveProperty("description");
+    // Recorded, so the version-6 digest input never changes.
+    expect(campaign.contentDigest).toBe(
+      "d5ba9ae8922af644cea1163e0f9f928ec8899ea2419d72790c0af92aed3703be",
+    );
+    expect(await decodeCampaign(buffer(encodeCampaign(campaign)))).toEqual(
+      campaign,
+    );
+    // A campaign description is optional in version 6.
+    const described = await buildCampaign(
+      { ...textManifest, description: "Celestial for Supernal." },
+      houseRuleSource,
+      xml,
+    );
+    expect(described.version).toBe(6);
+    expect((await validateCampaign(described)).valid).toBe(true);
+    // Each new target alone needs version 6; a plain field patch does not.
+    for (const patch of patches)
+      expect(
+        (
+          await buildCampaign(
+            { ...manifest, patches: [patch] },
+            houseRuleSource,
+            xml,
+          )
+        ).version,
+      ).toBe(6);
+    expect(
+      (
+        await buildCampaign(
+          {
+            ...manifest,
+            patches: [unnumbered(patches[0]!)],
+          },
+          houseRuleSource,
+          xml,
+        )
+      ).version,
+    ).toBe(3);
+    // The occurrence is under the digest.
+    const [first, ...rest] = campaignPatches(campaign);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: [{ ...first!, occurrence: 1 }, ...rest],
+        }),
+      ),
+    ).rejects.toThrow(/Digest mismatch/);
+  });
+
+  it("keeps a version-5 document's digest and semantics", async () => {
+    // A version-5 document's "description" field names a specific, as it
+    // always did (no record has one): never the description.
+    const described = await buildCampaign(
+      {
+        ...manifest,
+        description: "Setting gods replace the stock ones.",
+      },
+      houseRuleSource,
+      xml,
+    );
+    expect(described.version).toBe(5);
+    expect(described.contentDigest).toBe(
+      "083c3d5326642ce25890b35ab567b73ad104596b80386e2fa3cb86849749bffd",
+    );
+    expect(
+      campaignPatchOutcomes((await base()).entities, [patches[1]!], 5).map(
+        ({ status }) => status,
+      ),
+    ).toEqual(["field-missing"]);
+    // An occurrence needs version 6.
+    const v6 = await buildCampaign(textManifest, houseRuleSource, xml);
+    expect(
+      (
+        await validateCampaign({
+          ...v6,
+          version: 5,
+          description: "Setting gods.",
+        })
+      ).errors,
+    ).toContain("A version 5 campaign cannot patch one field occurrence");
+    await expect(
+      decodeCampaign(jsonBuffer({ ...v6, version: 3 })),
+    ).rejects.toThrow("Campaign patches are invalid");
+  });
+
+  it("patches one occurrence and passages of the description", async () => {
+    const campaign = await buildCampaign(textManifest, houseRuleSource, xml);
+    const profile = await compose(campaign);
+    const byId = (id: string) =>
+      profile.pack.entities.find((record) => record.id === id);
+    expect(
+      byId("ID_SYN_STAFF_OF_TONGUES")?.specifics.map(({ value }) => value),
+    ).toEqual([
+      "You can speak, read, and write Common.",
+      "You can speak, read, and write Celestial.",
+      "Uncommon",
+    ]);
+    // Each passage applies in the order authored, to the text the earlier
+    // ones left.
+    expect(byId("ID_SYN_HOLY_TONGUE")?.description).toBe(
+      "You are fluent in Celestial.\n\tCelestial is the language of the gods.",
+    );
+    expect(
+      profile.pack.diagnostics.filter(({ code }) =>
+        code.startsWith("campaign."),
+      ),
+    ).toEqual([]);
+    expect((await validateContentPack(profile.pack)).valid).toBe(true);
+  });
+
+  it("patches flavor text by passage too", async () => {
+    const flavored = source([
+      ...textStock.entities.filter(({ id }) => id !== staff.id),
+      { ...staff, flavor: "Runes of Supernal wind along the staff." },
+    ]);
+    const flavor: CampaignPatch = {
+      id: "ID_SYN_STAFF_OF_TONGUES",
+      field: "flavor",
+      expect: "Runes of Supernal",
+      value: "Runes of Celestial",
+    };
+    const campaign = await buildCampaign(
+      { ...manifest, patches: [flavor] },
+      houseRuleSource,
+      xml,
+    );
+    expect(campaign.version).toBe(6);
+    const profile = await compose(campaign, flavored);
+    expect(
+      profile.pack.entities.find(({ id }) => id === staff.id)?.flavor,
+    ).toBe("Runes of Celestial wind along the staff.");
+    // A record without flavor text has no passage to replace.
+    expect(
+      campaignPatchOutcomes((await base()).entities, [flavor]).map(
+        ({ status }) => status,
+      ),
+    ).toEqual(["passage-missing"]);
+  });
+
+  it("keeps the content's text when the passage or occurrence drifts", async () => {
+    const campaign = await buildCampaign(
+      {
+        ...manifest,
+        patches: [
+          ...patches,
+          {
+            id: "ID_SYN_STAFF_OF_TONGUES",
+            field: "Property",
+            occurrence: 4,
+            expect: "x",
+            value: "y",
+          },
+          {
+            id: "ID_SYN_STAFF_OF_TONGUES",
+            field: "Property",
+            expect: "x",
+            value: "y",
+          },
+          {
+            id: "ID_SYN_DEITY_SUN",
+            field: "description",
+            expect: "text",
+            value: "lore",
+          },
+        ],
+      },
+      houseRuleSource,
+      xml,
+    );
+    // A later server revision reworded both records.
+    const drifted = source([
+      ...stock.entities.map((record) =>
+        record.id === "ID_SYN_DEITY_SUN"
+          ? { ...record, description: "text and more text" }
+          : record,
+      ),
+      {
+        ...staff,
+        specifics: staff.specifics.map((specific) =>
+          specific.ordinal === 1
+            ? { ...specific, value: "You can speak Supernal." }
+            : specific,
+        ),
+      },
+      { ...tongue, description: "You speak Supernal." },
+    ]);
+    const outcomes = campaignPatchOutcomes(
+      (await base(drifted)).entities,
+      campaignPatches(campaign),
+    );
+    expect(outcomes.map(({ patch, status }) => [patch.id, status])).toEqual([
+      ["ID_SYN_DEITY_SUN", "passage-ambiguous"],
+      ["ID_SYN_HOLY_TONGUE", "passage-missing"],
+      ["ID_SYN_HOLY_TONGUE", "passage-missing"],
+      ["ID_SYN_STAFF_OF_TONGUES", "field-ambiguous"],
+      ["ID_SYN_STAFF_OF_TONGUES", "stock-differs"],
+      ["ID_SYN_STAFF_OF_TONGUES", "occurrence-missing"],
+    ]);
+    const profile = await compose(campaign, drifted);
+    expect(
+      profile.pack.entities.find(({ id }) => id === "ID_SYN_HOLY_TONGUE")
+        ?.description,
+    ).toBe("You speak Supernal.");
+    expect(
+      profile.pack.diagnostics
+        .filter(({ code }) => code === "campaign.patch-not-applied")
+        .map(({ message }) => message),
+    ).toEqual([
+      'Patch ID_SYN_DEITY_SUN description not applied: the description of ID_SYN_DEITY_SUN contains "text" 2 times, the patch expects 1 (lengthen the passage)',
+      'Patch ID_SYN_HOLY_TONGUE description not applied: the description of ID_SYN_HOLY_TONGUE does not contain "fluent in Supernal"',
+      'Patch ID_SYN_HOLY_TONGUE description not applied: the description of ID_SYN_HOLY_TONGUE does not contain "Supernal is the language"',
+      "Patch ID_SYN_STAFF_OF_TONGUES Property not applied: ID_SYN_STAFF_OF_TONGUES has 2 Property fields (name one with occurrence)",
+      'Patch ID_SYN_STAFF_OF_TONGUES Property #2 not applied: the content has "You can speak Supernal.", the patch expects "You can speak, read, and write Supernal."',
+      "Patch ID_SYN_STAFF_OF_TONGUES Property #4 not applied: ID_SYN_STAFF_OF_TONGUES has 2 Property fields, not 4",
+    ]);
+  });
+
+  it("refuses invalid text patches", async () => {
+    const [occurrence, passage] = patches as [CampaignPatch, CampaignPatch];
+    const invalid: [CampaignPatch[], RegExp][] = [
+      [[{ ...passage, expect: "" }], /expect must be the passage/],
+      [[passage, { ...passage, value: "other" }], /listed twice/],
+      [[occurrence, { ...occurrence, value: "other" }], /listed twice/],
+      [
+        [{ ...occurrence, occurrence: 1 }, unnumbered(occurrence)],
+        /listed twice/,
+      ],
+      [
+        [{ ...occurrence, occurrence: 0 }],
+        /occurrence must be an integer from 1 to 1,000/,
+      ],
+      [[{ ...occurrence, occurrence: 1.5 }], /occurrence must be an integer/],
+      [[{ ...passage, occurrence: 1 }], /only a specific takes an occurrence/],
+      [
+        [
+          {
+            id: "ID_SYN_DEITY_SUN",
+            field: "name",
+            expect: "Sun God",
+            value: "Sol",
+            occurrence: 1,
+          },
+        ],
+        /only a specific takes an occurrence/,
+      ],
+      [
+        [
+          {
+            ...passage,
+            expect: "x".repeat(MAX_CAMPAIGN_PATCH_VALUE_LENGTH + 1),
+          },
+        ],
+        /expect must be at most 4,000 characters/,
+      ],
+    ];
+    for (const [list, message] of invalid)
+      await expect(
+        buildCampaign({ ...manifest, patches: list }, houseRuleSource, xml),
+      ).rejects.toThrow(message);
+    const campaign = await buildCampaign(textManifest, houseRuleSource, xml);
+    await expect(
+      decodeCampaign(
+        jsonBuffer({
+          ...campaign,
+          patches: [{ ...occurrence, occurrence: "2" }],
+        }),
+      ),
+    ).rejects.toThrow("Campaign patches are invalid");
+  });
+});
 
 describe("campaign rule patches", () => {
   function rule(

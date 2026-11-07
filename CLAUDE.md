@@ -71,21 +71,27 @@ pnpm content-tool advertise-campaign x.4ecc [--out-dir deploy]   # private-packs
 
 Campaigns (D116): `campaign.json` is `{campaignId, name, description?,
 revision, houseRules: "<xml path>", restrict: {ids, types: {"Deity":
-"campaign-only"}}, patches: [{id, field, expect, value} | {id, rule}]}`;
+"campaign-only"}}, patches: [{id, field, expect, value, occurrence?} | {id,
+rule}]}`;
 `description` is the DM's one-line plain-text summary (at most 500
 characters, in the digest; it makes the document version 5, shown in
 Settings → Campaigns' Description column and printed by `campaign inspect`,
 dropped by legacy export); a field patch changes
 one field ("name", "prerequisites" or a specific such as "Languages") of a
 server record without copying it, and applies only while the record still
-has `expect`; a rule patch is one operation on its rule elements (`set`,
+has `expect`; `occurrence` (1-based) picks one of a record's same-named
+specifics, and "description"/"flavor" patch that text by passage (`expect`
+must appear exactly once, `value` replaces it); either makes the document
+version 6 (written only when needed; a version-5 client skips it quietly,
+so deploy code before publishing one); a rule patch is one operation on its rule elements (`set`,
 `replaceId`, `replaceWith`, `remove` with a `match` and `count`, or `add`,
 optionally `before`/`after` an anchor: rule positions key saved occurrences),
 applied only while exactly `count` elements match (else, for either kind, a
 composed-pack diagnostic; format in `docs/content-pack-format.md`, Rule
 patches). The house-rule XML is parsed at build (same parser as `build`),
 and `--against` only warns, listing each patch's status (`applies`,
-`stock-differs` with the pack's value, `target-missing`, a rule patch's
+`stock-differs` with the pack's value, `target-missing`,
+`occurrence-missing`, `passage-missing`/`passage-ambiguous`, a rule patch's
 `no-match`/`ambiguous` with the matched elements…): rerun it on each new
 server pack. `advertise` and `advertise-campaign` read-modify-write
 `runtime-config.json`, each changing only its own key. Built `.4ecc` files are

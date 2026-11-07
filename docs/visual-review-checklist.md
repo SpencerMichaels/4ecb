@@ -1395,6 +1395,30 @@ Moradin, or an item a character holds), build and import or advertise it.
     player picks, a CountsAsLanguage ("Supernal", "Primordial") appears in
     the Languages list, two eligible "Learn another language" rows show at
     once, or a race or background is greyed out over a language.
+- [ ] **Pathfinder card text (revision 12, campaign text patches).** Added
+      2026-11-07; the patched text is probed, these are the cards.
+  - **Where:** a character in the Pathfinder campaign at revision 12 (after
+    the content-update dialog moves it there): the Shop's magic-item card
+    for Staff of Tongues +1 (and +4); a cleric with Holy Tongue (Build
+    tab's feature card and the printed sheet's feature entry); the feat
+    card for Remembered Mother Tongue; the Learn Celestial background
+    choice card; the Coat of Eyes; an Earthforger theme's starting
+    feature; the Adamantine Horse of Xarn's card.
+  - **Expect:** Staff of Tongues lists its four properties in the stock
+    order with only the second changed: "You can speak, read, and write
+    Celestial."; Holy Tongue reads "You are fluent in Celestial.";
+    Remembered Mother Tongue "You can speak, read, and write Celestial. If
+    you wish it, listeners who don't speak Celestial can understand…";
+    Learn Celestial "You can speak, read, and write Celestial fluently.";
+    the Coat of Eyes "…write Aklo fluently."; Earthforger "you add Terran
+    to the languages you can read, write, and speak"; the Adamantine Horse
+    "it understands Draconic, Common, and Celestial", with the rest of its
+    long description (concordance, tiers) unchanged. Card layout and
+    fitting are as before (same lengths, give or take a word).
+  - **Wrong if:** any of these cards still reads Supernal, Deep Speech,
+    Giant or Primordial as a language, a property or paragraph is missing,
+    duplicated or reordered, or the Settings → Campaigns row shows an
+    error for the revision-12 campaign.
 - [ ] **Language table bands and the language card's Group (D042
       amendment, 2026-11-07).** Added 2026-11-07; band contents and order
       are unit-tested and probed, this is the look.

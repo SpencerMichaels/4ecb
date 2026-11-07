@@ -5224,9 +5224,57 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   "an elemental tongue") and word the setting ones as the open choice
   ("Any language other than the common ones"). Descriptions and fields
   that occur several times on a record (Staff of Tongues' second
-  Property) cannot be field-patched and keep the stock wording for now.
+  Property) cannot be field-patched and keep the stock wording for now
+  (revision 12, below, patches them).
   The Helm of Languages grants the 64 campaign languages other than
   Abyssal and Celestial, as its text says.
+- **Amendment (2026-11-07, owner-approved): text patches, campaign
+  document version 6; Pathfinder revision 12.** Field patches reach two
+  more targets, so a campaign renames languages in every text a card
+  shows without copying the record:
+  - `field: "description"` / `"flavor"` patch the record's description or
+    flavor text by passage: `expect` is a passage that must appear in the
+    text exactly once, `value` replaces it, and a record's several passage
+    patches apply in the order authored. Chosen over a whole-text
+    `expect`: descriptions run to 14,000 characters (artifact concordance
+    tables), past the 4,000-character limit, a DM copying a whole
+    description with its tabs and newlines would get it wrong, and any
+    unrelated server correction anywhere in the text would stop the patch.
+    A passage is what the DM reads on the card and means to change, and
+    the exactly-once guard is a rule patch's match with its default
+    `count` of 1: a passage no longer there or now repeated does not apply
+    and `--against` says so (`passage-missing`, `passage-ambiguous` with
+    the count); no `count` option, since a longer passage is the safer
+    way to change two mentions. Flavor joined description because the
+    same survey found flavor text naming Supernal and Primordial (12
+    records), unreachable for the same reason.
+  - `occurrence` (1-based, specifics only) names one of several
+    same-named specifics, with `expect` still that occurrence's whole
+    value; without it a repeated field stays `field-ambiguous`.
+  - Version 6 (description optional) is written only when a patch needs
+    it; earlier documents keep their digests and meaning (there
+    "description" and "flavor" name specifics, and `occurrence` is
+    refused). A deployed version-5 client refuses a version-6 document
+    as "Unsupported campaign version: 6": the background install of a
+    hosted campaign swallows it and retries each load, so the player sees
+    nothing and keeps the installed revision until the app updates; it
+    never applies part of one. Release order: deploy the code before
+    publishing a version-6 campaign, or its players wait for the code.
+  - Pathfinder revision 12 applies the owner rule above to every text the
+    revision-11 survey (widened to flavor, and to mentions without
+    "language" beside them) found: creature-type equivalents take the
+    Pathfinder name (the tongue the rules grant, else "an elemental
+    tongue"), Book Imp-style fiend marks Infernal (Infernal Slave's "a
+    Supernal rune"). The aberrant Deep Speech mentions read Aklo:
+    owner-confirmed 2026-11-07 (Githyanki, Githzerai, Shardmind,
+    Beholderkin, Deep Sage, Escaped Thrall, the Coat of Eyes). The four
+    Moteborn language options' stock lore, which derives Dwarven from
+    Supernal and Jotun from Primordial, is replaced by what each option
+    teaches ("Jotun is the language of giants."). Lore about peoples and
+    beings stays (the Netherese of Umbriri, Netheril and Scion of Shadow,
+    thri-kreen, the quori, Unseelie fey creatures, primordials and
+    "primordial ice", Use Cinderspeech's "adapted from the Primordial
+    language", the power name Supernal Radiance).
 
 ### D117 — Right-click is a shortcut, never the only way to an action
 

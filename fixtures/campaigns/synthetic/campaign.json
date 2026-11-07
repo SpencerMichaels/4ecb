@@ -25,6 +25,12 @@
     },
     {
       "id": "ID_4ECB_SYNTHETIC_RACE_1",
+      "field": "description",
+      "expect": "Choose Cliffkin when",
+      "value": "Choose Crag Folk when"
+    },
+    {
+      "id": "ID_4ECB_SYNTHETIC_RACE_1",
       "rule": {
         "match": {
           "name": "statadd",

@@ -85,17 +85,20 @@ optional (identified by magic bytes, as for `.4ecp`):
 
 ```text
 CampaignDocument
-├── format: "4ecb-campaign", version: 3, or 5 with a description
-│                       (1, 2 and 4 still read)
+├── format: "4ecb-campaign", version: 3, 5 with a description, or 6
+│                       with a text patch (1, 2 and 4 still read)
 ├── campaignId          1-32 pack-ID characters
 ├── name                pack-name rules
-├── description         the DM's plain-text summary; version 5 only
+├── description         the DM's plain-text summary; version 5 (always)
+│                       or 6 (optional)
 ├── revision            integer 1..999,999; the DM bumps it on every change
 ├── restrictions
 │   ├── ids[]           record IDs not offered (legacy Restricted)
 │   └── types[]         { type, allow: "campaign-only" }
-├── patches[]           { id, field, expect, value } | { id, rule }; version 2+
-│                       (rule patches and "prerequisites" from version 3)
+├── patches[]           { id, field, expect, value, occurrence? } | { id, rule };
+│                       version 2+ (rule patches and "prerequisites" from
+│                       version 3; "description", "flavor" and `occurrence`
+│                       from version 6)
 ├── houseRules          an embedded ContentPack, packId campaign.<id>.r<revision>
 ├── legacyHouseRulesXml the DM's RulesElement XML verbatim, for legacy export
 └── contentDigest       SHA-256
@@ -107,13 +110,18 @@ identity is `(campaignId, contentDigest)`; `revision` orders its versions, and
 a store refuses the same ID and revision with a different digest.
 `buildCampaign` sorts restricted IDs, type rules and patches ignoring case,
 so the digest does not depend on how they were listed: patches by ID, a
-record's field patches (by field) before its rule patches, which keep the
-order authored because each sees the record the earlier ones left. IDs,
-types and field patch (ID, field) pairs must be unique ignoring case.
+record's field patches (by field, then occurrence) before its rule patches,
+which keep the order authored because each sees the record the earlier
+ones left; a record's description (or flavor) patches likewise keep the
+order authored. IDs, types and field patch targets must be unique ignoring
+case: a field patch's (ID, field, occurrence) (no `occurrence` counts as
+1), a description or flavor patch's (ID, field, `expect`).
 
-**Versions.** `buildCampaign` writes version 3, or version 5 for a campaign
-with a description (below), each always carrying `patches` (possibly
-empty). A version-1 document has no `patches` field and
+**Versions.** `buildCampaign` writes the lowest version its content needs:
+version 3, version 5 for a campaign with a description (below), or version
+6 for a campaign with a text patch (below, with or without a description),
+each always carrying `patches` (possibly empty). A version-1 document has
+no `patches` field and
 reads as having none; its digest input has no `patches` key, so version-1
 documents (installed, in backups, hosted) keep their digests and load
 unchanged. A version-2 document carries field patches only (no rule patches
@@ -147,6 +155,58 @@ loading with its digest. `decodeCampaign` refuses a non-string or over-long
 description before validating. Legacy export drops it silently (the old
 builder's campaign block has only a name), and a campaign created from a
 legacy save has none.
+
+**Text patches (version 6).** Two field-patch targets reach text a plain
+field patch cannot (D116 amendment, 2026-11-07):
+
+- **Description and flavor, by passage.** `field: "description"` names the
+  record's description (its body text) and `field: "flavor"` its flavor
+  text. `expect` is a passage of that text, not the whole text, and
+  `value` replaces it: the patch applies only while the passage appears in
+  the text exactly once (case and whitespace as stored, tabs and newlines
+  included). A record may have several such patches, applied in the order
+  authored, each to the text the earlier ones left. Descriptions run to
+  14,000 characters (artifacts with their concordance tables), past the
+  4,000-character `expect` limit, and most of a long description has
+  nothing to do with the change, so a whole-text `expect` would be both
+  impossible to author and broken by any unrelated server correction. A
+  passage is what the DM sees and means ("fluent in Supernal" →
+  "fluent in Celestial"); a passage that is no longer there, or appears
+  more than once, does not apply, with the same exactly-once guard as a
+  rule patch's match and `count` of 1 (lengthen the passage to make it
+  unique). `expect` cannot be empty; `value` may be (removing the
+  passage). These two names are reserved like `name` and `prerequisites`:
+  no record of the corpus has a specific named Description or Flavor.
+  Stored IR parsed from a description (an Associate's `_Associate Stat
+Block`, a mount's `_Creature Stat Block`) is not rebuilt, as for any
+  patch, so a passage patch on such a stat block changes the shown text
+  only.
+- **One occurrence of a repeated field.** A specific a record has several
+  of (the Staff of Tongues' four `Property` fields) is named by
+  `occurrence`, an integer from 1 to 1,000 counting that record's
+  specifics of that name from 1 in content order. The patch applies only
+  while that occurrence exists and has exactly `expect`, so `expect`
+  keeps its meaning. Without `occurrence` a field the record has more
+  than once is still `field-ambiguous`, never patched. `occurrence` is
+  for specifics only (`name`, `prerequisites`, `description` and `flavor`
+  are single).
+
+Version 6 is version 5's content plus these targets; its description is
+optional. It exists because an earlier reader would misread them under an
+earlier version number: a version-5 reader would treat "description" and
+"flavor" as specifics of that name, so those patches would silently not
+apply while the rest of the campaign did (a partial campaign), and it
+would leave `occurrence` out of the digest input and refuse the document
+as a digest mismatch, as if it were corrupt. In a version-2 to -5
+document "description" and "flavor" still name specifics, as they always
+did, and `occurrence` is refused ("A version 5 campaign cannot patch one
+field occurrence"), so earlier documents decode and apply unchanged with
+their digests. An already deployed (version-5) client refuses a version-6
+document with "Unsupported campaign version: 6": the background install of
+a hosted campaign catches the error and retries on the next load, the
+player sees nothing and keeps the revision they have, and Settings →
+Campaigns → Import shows the message. No client applies a version-6
+document in part. Legacy export drops patches as before.
 
 **Version 4 (read-only).** Version 4 added alternate-name patches
 `{id, alternateName}` (a setting's second name shown in a record's title,
@@ -199,9 +259,11 @@ whole-record override would freeze them). `field` is `"name"` (the record's
 name), `"prerequisites"` (the record's `<Prereqs>` line; version 3: an
 empty `expect` means it has none, an empty `value` removes it) or a
 specific's name (`Languages`, `Short Description`; matched ignoring case
-and surrounding space); other top-level fields (description, flavor,
-categories) are not patchable, and rules change through rule patches
-(below). `expect` is the value the DM saw and `value` the campaign's. Limits: at most 10,000 patches; a field name of 1-120
+and surrounding space), `"description"` or `"flavor"` (version 6, by
+passage, above); categories are not patchable, and rules change through
+rule patches (below). `expect` is the value the DM saw and `value` the
+campaign's, and `occurrence` (version 6) names one of several same-named
+specifics. Limits: at most 10,000 patches; a field name of 1-120
 trimmed characters that does not start with `_` (stored IR such as
 `_Power Text IR` is built from the content and never patched); `expect` and
 `value` at most 4,000 characters without control characters other than tab
@@ -280,13 +342,16 @@ throws on any error.
 
 `composeCampaignProfile(basePacks, campaign, options)` composes
 `[...basePacks, campaign.houseRules]` with `last-pack-wins-v1`, then applies
-the patches to the composed records (`applyCampaignPatches`): a patch applies
-only when its record exists (ID ignoring case), the field occurs on it exactly
-once, and its current value is exactly `expect`. Otherwise the record keeps
-the server's value and the composed pack gets a `warning` diagnostic with
-code `campaign.patch-not-applied` (target missing, field missing, field
-repeated, or "the content has X, the patch expects Y"); composition never
-fails over a patch. An applied `name` patch keeps the stock name as an
+the patches to the composed records (`applyCampaignPatches`, in order): a
+patch applies only when its record exists (ID ignoring case), the field
+occurs on it exactly once (or has the patch's `occurrence`), and its
+current value is exactly `expect`; a description or flavor patch, when its
+passage appears exactly once. Otherwise the record keeps the server's value
+and the composed pack gets a `warning` diagnostic with code
+`campaign.patch-not-applied` (target missing, field missing, field repeated
+"(name one with occurrence)", fewer occurrences than named, "the content has
+X, the patch expects Y", or the passage missing or repeated); composition
+never fails over a patch. An applied `name` patch keeps the stock name as an
 alias (`renamedEntity`, content-domain `aliases.ts`). It then applies the
 rule patches (`applyCampaignRulePatches`): one that does not apply (record
 missing, no element matches, a different number matches than `count`, or
@@ -329,12 +394,15 @@ manifest and house-rule XML, `campaign inspect` prints one, and
 `advertise-campaign` hosts it (`docs/public-deployment.md`); the browser stores
 installed documents as described in `docs/architecture.md` (Browser
 persistence). Patches are authored in `campaign.json` as
-`patches: [{id, field, expect, value} | {id, rule}]`, not in the house-rule
+`patches: [{id, field, expect, value, occurrence?} | {id, rule}]`, not in the house-rule
 XML, which is the legacy `Houserules` block (RulesElement records only,
 exported verbatim). `campaign build --against PACK.4ecp` lists every field
 patch with its status (`applies`, `target-missing`, `field-missing`,
-`field-ambiguous`, or `stock-differs` with the pack's `current` value beside
-`expect`) and, under `rulePatches`, every rule patch in order with its
+`field-ambiguous` or `occurrence-missing` with the record's field `count`,
+`stock-differs` with the pack's `current` value beside `expect`, and for a
+description or flavor patch `passage-missing` or `passage-ambiguous` with
+the passage's `count`; an occurrence patch's entry carries its
+`occurrence`) and, under `rulePatches`, every rule patch in order with its
 `operation`, status (`applies`, `target-missing`, `no-match`, `ambiguous`,
 `present`) and the `matched` elements as XML, for example:
 

@@ -69,8 +69,9 @@ const MANIFEST_KEYS = new Set([
 const PATCH_KEYS = ["id", "field", "expect", "value"] as const;
 
 /**
- * `patches: [{id, field, expect, value} | {id, rule: {...}}]`: a field
- * patch has string keys and no others; a rule patch is an ID and one rule
+ * `patches: [{id, field, expect, value, occurrence?} | {id, rule: {...}}]`:
+ * a field patch has string keys, an optional numeric `occurrence` and no
+ * others; a rule patch is an ID and one rule
  * operation (`campaignRuleOperationShapeErrors`). Patches live in
  * campaign.json, not the house-rule XML: that XML is the legacy
  * `Houserules` block, RulesElement records only, kept verbatim for export,
@@ -100,20 +101,31 @@ function parsePatches(value: unknown): CampaignPatchEntry[] {
       return { id: patch.id, rule: patch.rule as CampaignRuleOperation };
     }
     const unknown = Object.keys(patch).filter(
-      (key) => !(PATCH_KEYS as readonly string[]).includes(key),
+      (key) =>
+        key !== "occurrence" &&
+        !(PATCH_KEYS as readonly string[]).includes(key),
     );
     if (unknown.length > 0)
       throw new Error(`${label} has unknown keys: ${unknown.join(", ")}`);
     for (const key of PATCH_KEYS)
       if (typeof patch[key] !== "string")
         throw new Error(`${label}.${key} must be a string`);
+    const { occurrence } = patch;
+    if (occurrence !== undefined && typeof occurrence !== "number")
+      throw new Error(`${label}.occurrence must be a number`);
     const {
       id,
       field,
       expect,
       value: patched,
     } = patch as Record<(typeof PATCH_KEYS)[number], string>;
-    return { id, field, expect, value: patched };
+    return {
+      id,
+      field,
+      expect,
+      value: patched,
+      ...(occurrence === undefined ? {} : { occurrence }),
+    };
   });
 }
 
@@ -125,7 +137,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Reads a `campaign.json` value: `{campaignId, name, description?,
  * revision, houseRules?,
  * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}},
- * patches?: [{id, field, expect, value} | {id, rule}]}`. Unknown
+ * patches?: [{id, field, expect, value, occurrence?} | {id, rule}]}`. Unknown
  * keys are refused, so a misspelt restriction never silently restricts
  * nothing. Identity and limit rules are `buildCampaign`'s.
  */
@@ -288,22 +300,30 @@ function rulePatchReport(
 export interface CampaignPatchReport {
   readonly id: string;
   readonly field: string;
+  /** The patch's occurrence, when it names one. */
+  readonly occurrence?: number;
   readonly status: CampaignPatchOutcome["status"];
   readonly expect: string;
   readonly value: string;
   /** The pack's value, when it differs from `expect`. */
   readonly current?: string;
+  /** How many such fields the record has ("field-ambiguous",
+   *  "occurrence-missing") or how often a description has the passage
+   *  ("passage-ambiguous"). */
+  readonly count?: number;
 }
 
 function patchReport(outcome: CampaignPatchOutcome): CampaignPatchReport {
-  const { id, field, expect, value } = outcome.patch;
+  const { id, field, expect, value, occurrence } = outcome.patch;
   return {
     id,
     field,
+    ...(occurrence === undefined ? {} : { occurrence }),
     status: outcome.status,
     expect,
     value,
     ...(outcome.status === "stock-differs" ? { current: outcome.current } : {}),
+    ...("count" in outcome ? { count: outcome.count } : {}),
   };
 }
 
@@ -367,6 +387,7 @@ export function campaignAgainstPack(
   const patchOutcomes = campaignPatchOutcomes(
     composed,
     campaignPatches(campaign),
+    campaign.version,
   );
   for (const outcome of patchOutcomes)
     if (outcome.status !== "applies")
@@ -382,7 +403,11 @@ export function campaignAgainstPack(
       warnings.push(`${campaignRulePatchOutcomeMessage(outcome)} (${packId})`);
   const prerequisiteRenames = prerequisiteRenameReport(
     runCampaignRulePatches(
-      applyCampaignPatches(composed, campaignPatches(campaign)).entities,
+      applyCampaignPatches(
+        composed,
+        campaignPatches(campaign),
+        campaign.version,
+      ).entities,
       campaignRulePatches(campaign),
     ).entities,
   );

@@ -56,7 +56,7 @@ build_campaign() {
 build_campaign "$scratch_dir/first.4ecc"
 build_campaign "$scratch_dir/second.4ecc"
 cmp "$scratch_dir/first.4ecc" "$scratch_dir/second.4ecc"
-jq -e '.against.patches | length == 2 and all(.status == "applies")' \
+jq -e '.against.patches | length == 3 and all(.status == "applies")' \
   "$scratch_dir/first.4ecc.json" >/dev/null
 jq -e '.against.rulePatches == [{
     id: "ID_4ECB_SYNTHETIC_RACE_1",
@@ -66,10 +66,10 @@ jq -e '.against.rulePatches == [{
     rule: {match: {name: "statadd", attributes: {name: "Speed", value: "+6"}}, set: {value: "+5"}}
   }]' "$scratch_dir/first.4ecc.json" >/dev/null
 pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
-  jq -e '.validation.valid and .version == 5 and
+  jq -e '.validation.valid and .version == 6 and
     .description == "Setting gods replace the stock deities. Everything else is standard." and
     .houseRules.recordCount == 4 and
-    .patches == 2 and .rulePatches == 1' >/dev/null
+    .patches == 3 and .rulePatches == 1' >/dev/null
 # Record aliases (D116): the authored "Also Known As" is parsed at build.
 gzip -dc "$scratch_dir/first.4ecc" |
   jq -e '[.houseRules.entities[] | select(.aliases == ["Sea Mother"])] | length == 1' >/dev/null

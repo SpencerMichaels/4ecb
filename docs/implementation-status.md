@@ -1,5 +1,70 @@
 # Implementation status
 
+## Campaign text patches (document version 6); Pathfinder revision 12 (2026-11-07)
+
+D116 amendment of 2026-11-07 (owner-approved format extension).
+content-pack `campaign.ts`: a field patch's `field` may be
+`"description"` or `"flavor"`, patched by passage (`expect` must appear in
+the text exactly once; several per record apply in the order authored),
+and `occurrence` (1-based) names one of a record's same-named specifics;
+`runCampaignPatches` applies field patches in order with the new statuses
+`occurrence-missing`, `passage-missing` and `passage-ambiguous`.
+`CAMPAIGN_TEXT_PATCH_VERSION` 6 is written only when a patch needs it
+(description optional); versions 1-5 keep their digests and meaning
+("description"/"flavor" name specifics there, `occurrence` is refused).
+`content-tool campaign build` reads `occurrence` and reports it, with
+`count`, under `--against`. Old clients: a deployed version-5 app refuses
+a version-6 document as "Unsupported campaign version: 6"; the hosted
+background install (`refreshInstalledCampaigns`) swallows the error and
+retries on each load, so players see nothing and keep revision 11 until
+the app updates (Settings → Import shows the message); nothing is applied
+in part. Deploy the code before publishing revision 12. Legacy export
+drops patches as before; legacy import (a save's campaign block) builds a
+patch-free campaign, unchanged. The public fixture campaign gains a
+description patch (version 6), asserted by `scripts/check.sh`.
+
+`content/campaigns/pathfinder/` revision 12: 78 new field patches, so
+every card text naming a stock language the campaign renames or lacks
+now names the campaign's: 9 occurrence patches (the Coat of Eyes, Orb of
+Light and Staff of Tongues +1 to +6 Property, Syllable of Grace's Power),
+51 description passages (Holy Tongue, Remembered Mother Tongue, the
+elemental theme features, the Learn Celestial / Jotun / Undercommon /
+elemental tongue cards, Mrtok, Eremann, Emblem of Ossandrya, the
+Adamantine Horse of Xarn, Audaviator, Donning Trollflesh and 30 more), 12
+flavor passages (Earth-Splitter Weapon +1 to +6, Ring of Adaptation,
+Dauntless Champion's Ring, Infernal Slave, Wall of Winter, Utterance of
+Mockery, Sigil of Repulsion) and 6 single fields revision 11's survey
+missed (Epic Insight, Wizard's Apprentice L10, Chaosmade L10, Earthspur
+Deepminer and Deep Sage Short Descriptions; Prophetic Sanctification's
+Common Knowledge). The aberrant Deep Speech mentions read Aklo
+(owner-confirmed 2026-11-07); the Moteborn language options' stock
+language-origin lore is replaced by what each teaches. Lore about peoples
+and beings stays (the Netherese, thri-kreen, quori, Unseelie fey
+creatures, primordials, Use Cinderspeech's "adapted from the Primordial
+language", Supernal Radiance).
+
+Verification: `campaign.test.ts` (version 6 digest recorded, version-5
+digest and "description"-as-specific unchanged, occurrence and passage
+apply, drift statuses and messages, flavor, invalid patches) and
+`campaign-command.test.ts` (manifest `occurrence`, `--against` report).
+`content-tool campaign build --against tmp/content/full-local.4ecp`:
+valid, 0 errors, version 6, digest
+`e0210e559fbdf02ef4340e5208ee624bfe500dcdc5f6fd3d7f9eb830a64a51fd`, 207
+house-rule records, 216 field and 104 rule patches all applying, 159
+records restricted, 6 prerequisite lines renamed, 0 unchanged, only the
+12 known language-replacement warnings. Private probe
+(`tmp/pf-languages/probe.rev12.ts`, ignored): 138 pass, 0 fail (revision
+11's 109 checks, the generic field-patch check extended to passages and
+occurrences, plus each Staff of Tongues changing only its Supernal
+Property, 18 card texts, kept lore, and no unpatched record's description
+or flavor changed). Surveys (`survey.ts`, and `survey2.ts`, which also
+reads flavor and mentions without "language" beside them): only the lore
+above and the prerequisite lines (shown renamed, revision 5) remain.
+`scripts/check.sh` with `FOURECB_SKIP_PRINT_CHECK=1`: all public checks
+passed (253 test files, 2,474 tests).
+Owner visual check pending (Pass 24, "Pathfinder card text (revision
+12)").
+
 ## A bare race name in a prerequisite means the race (2026-11-07)
 
 D119 (owner). The legacy name walk met "Thri-kreen" (Flailing Claws and
@@ -37,7 +102,7 @@ with an audit of every language decision since revision 4:
   elemental themes their element's tongue (Ironwrought Talican), Book Imp
   Supernal → Infernal, and the aberrant Deep Speech grants → Aklo
   (Githyanki, Githzerai, Shardmind, Beholderkin, Deep Sage,
-  Escaped Thrall, the Coat of Eyes). The race picks reading
+  Escaped Thrall, the Coat of Eyes; owner-confirmed 2026-11-07). The race picks reading
   `Starting|<extras>` (Tiefling, Deva, Shadar-kai, Shade, Revenant,
   Vryloka) only add creature-type tongues. Unseelie Agent's "Unseelie
   fey" (Aklo in revision 4) is now Sylvan, a direct equivalent (all fey
@@ -75,7 +140,8 @@ with an audit of every language decision since revision 4:
   descriptions (about 45, e.g. Holy Tongue "fluent in Supernal", the
   Learn Celestial card), fields a record has several of (Coat of Eyes,
   Orb of Light, Staff of Tongues +1 to +6, Syllable of Grace), which
-  field patches cannot address; prerequisite lines, which already show
+  field patches cannot address (revision 12, above, patches them with
+  version-6 text patches); prerequisite lines, which already show
   the Pathfinder names ("fluent in Celestial"; "Primordial language"
   stays, revision 5); and lore naming peoples or beings (the quori,
   thri-kreen, Shou pirates, primordials, Use Cinderspeech's "adapted from

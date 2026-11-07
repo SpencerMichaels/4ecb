@@ -2,7 +2,7 @@
   "campaignId": "pathfinder",
   "name": "Pathfinder",
   "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting.",
-  "revision": 11,
+  "revision": 12,
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": [
@@ -3602,6 +3602,483 @@
       "field": "Effect",
       "expect": "Until the end of the encounter, you can speak Supernal as if you were a god or angel, such that any creature that has a language can understand your speech. In addition, you gain a +5 bonus to Diplomacy checks and Intimidate checks while speaking Supernal through this power.",
       "value": "Until the end of the encounter, you can speak Celestial as if you were a god or angel, such that any creature that has a language can understand your speech. In addition, you gain a +5 bonus to Diplomacy checks and Intimidate checks while speaking Celestial through this power."
+    },
+    {
+      "id": "ID_CER_MAGIC_ITEM_7060",
+      "field": "Property",
+      "expect": "You gain the ability to speak, read, and write Deep Speech fluently.",
+      "value": "You gain the ability to speak, read, and write Aklo fluently.",
+      "occurrence": 3
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_4552",
+      "field": "Property",
+      "expect": "You can speak and understand Supernal and read the Supernal script.",
+      "value": "You can speak and understand Celestial and read the Celestial script.",
+      "occurrence": 1
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8913",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8914",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8915",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8916",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8917",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_8918",
+      "field": "Property",
+      "expect": "You can speak, read, and write Supernal.",
+      "value": "You can speak, read, and write Celestial.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_9859",
+      "field": "Power",
+      "expect": "Power (Consumable): Minor Action. Requirement: You must be able to speak Abyssal or Supernal. Effect: You speak the syllable and it orbits your head. You gain a +3 bonus to AC against opportunity attacks and a +3 item bonus to speed until the end of the encounter.",
+      "value": "Power (Consumable): Minor Action. Requirement: You must be able to speak Abyssal or Celestial. Effect: You speak the syllable and it orbits your head. You gain a +3 bonus to AC against opportunity attacks and a +3 item bonus to speed until the end of the encounter.",
+      "occurrence": 2
+    },
+    {
+      "id": "ID_FMP_BACKGROUND_560",
+      "field": "Common Knowledge",
+      "expect": "You have preternatural insight that frequently leads you to find omens in events that seem mere happenstance to others. The event that revealed this ability to you forever changed the course of your life. Perhaps in the middle of debilitating illness you began babbling in Supernal before miraculously being healed. During your investiture you might have been struck by visions that appeared to last for days in which you spoke with an avatar of your deity. You might have witnessed portents during a short walk through the wilderness, only to return home and discover you had been gone for a week while the events that were foretold during your journey come to pass. Regardless of how you awakened to your gifts, you have now become an instrument of prophecy. Do you find it onerous to interpret the signs given to you by your god or is it obvious to you what events are truly prophetic and which are merely coincidence? Is this ability a boon or would you rather be rid of the capability?",
+      "value": "You have preternatural insight that frequently leads you to find omens in events that seem mere happenstance to others. The event that revealed this ability to you forever changed the course of your life. Perhaps in the middle of debilitating illness you began babbling in Celestial before miraculously being healed. During your investiture you might have been struck by visions that appeared to last for days in which you spoke with an avatar of your deity. You might have witnessed portents during a short walk through the wilderness, only to return home and discover you had been gone for a week while the events that were foretold during your journey come to pass. Regardless of how you awakened to your gifts, you have now become an instrument of prophecy. Do you find it onerous to interpret the signs given to you by your god or is it obvious to you what events are truly prophetic and which are merely coincidence? Is this ability a boon or would you rather be rid of the capability?"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3814",
+      "field": "Short Description",
+      "expect": "Increase Wisdom and any other score by 2, learn Primordial",
+      "value": "Increase Wisdom and any other score by 2, learn an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3877",
+      "field": "Short Description",
+      "expect": "Gain a +3 power bonus to Arcana checks and gain one new lanaguage (other than Supernal)",
+      "value": "Gain a +3 power bonus to Arcana checks and gain one new lanaguage (other than Celestial)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4440",
+      "field": "Short Description",
+      "expect": "You gain fluency in Primordial; use seed of chaos one additional time per encounter.",
+      "value": "You gain fluency in an elemental tongue; use seed of chaos one additional time per encounter."
+    },
+    {
+      "id": "ID_FMP_FEAT_1073",
+      "field": "Short Description",
+      "expect": "Gain Deep Speech; gain resist 2 necrotic (3 at paragon, 5 at epic)",
+      "value": "Gain Undercommon; gain resist 2 necrotic (3 at paragon, 5 at epic)"
+    },
+    {
+      "id": "ID_FMP_FEAT_1828",
+      "field": "Short Description",
+      "expect": "+5 to Dungeoneering knowledge and aberrant creature monster knowledge checks; learn Deep Speech",
+      "value": "+5 to Dungeoneering knowledge and aberrant creature monster knowledge checks; learn Aklo"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_1632",
+      "field": "description",
+      "expect": "Your study of Supernal",
+      "value": "Your study of Celestial"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_1696",
+      "field": "description",
+      "expect": "fluent in Supernal",
+      "value": "fluent in Celestial"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_1855",
+      "field": "description",
+      "expect": "speak Supernal",
+      "value": "speak Celestial"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2548",
+      "field": "description",
+      "expect": "the Giant and Goblin languages",
+      "value": "the Jotun and Goblin languages"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2828",
+      "field": "description",
+      "expect": "the Supernal language",
+      "value": "the Celestial language"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2898",
+      "field": "description",
+      "expect": "speak Supernal and",
+      "value": "speak Celestial and"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_2912",
+      "field": "description",
+      "expect": "You speak Supernal,",
+      "value": "You speak Celestial,"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3814",
+      "field": "description",
+      "expect": "write Primordial if",
+      "value": "write an elemental tongue if"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3877",
+      "field": "description",
+      "expect": "(other than Supernal)",
+      "value": "(other than Celestial)"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4207",
+      "field": "description",
+      "expect": "the secret language of the Unseelie fey",
+      "value": "Sylvan"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4286",
+      "field": "description",
+      "expect": "add Primordial to",
+      "value": "add Terran to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4292",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add Ignan to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4295",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add Talican to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4298",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add an elemental tongue to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add an elemental tongue to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301",
+      "field": "description",
+      "expect": "If you already know Primordial, you instead learn Abyssal, Dwarven, or Giant.",
+      "value": "If you already know one, you instead learn Abyssal, Dwarven, or Jotun."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_DWARVEN",
+      "field": "description",
+      "expect": "Dwarven is a debased form of Supernal, in the way that dwarves heard the first language.",
+      "value": "Dwarven is the language of the dwarves."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_GIANT",
+      "field": "description",
+      "expect": "The titans and giants adopted a debased version of Primordial for their own tongue.",
+      "value": "Jotun is the language of giants."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_PRIMORDIAL",
+      "field": "description",
+      "expect": "The primordials had their own language with none of the special qualities of Supernal.",
+      "value": "You learn one of the elemental tongues: Aquan, Auran, Ignan or Terran."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4301_NONE",
+      "field": "description",
+      "expect": "already know Primordial, Abyssal, Dwarven, and Giant.",
+      "value": "already know an elemental tongue, Abyssal, Dwarven, and Jotun."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4304",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add an elemental tongue to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4317",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add Aquan to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4320",
+      "field": "description",
+      "expect": "Add Primordial to",
+      "value": "Add Auran to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4386",
+      "field": "description",
+      "expect": "write Primordial fluently",
+      "value": "write an elemental tongue fluently"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4390",
+      "field": "description",
+      "expect": "write Primordial.",
+      "value": "write an elemental tongue."
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4440",
+      "field": "description",
+      "expect": "fluency in Primordial",
+      "value": "fluency in an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4476",
+      "field": "description",
+      "expect": "Add Deep Speech to",
+      "value": "Add Aklo to"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4486",
+      "field": "description",
+      "expect": "Add Deep Speech to",
+      "value": "Add Undercommon to"
+    },
+    {
+      "id": "ID_FMP_FEAT_1071",
+      "field": "description",
+      "expect": "You gain Primordial as",
+      "value": "You gain Aquan as"
+    },
+    {
+      "id": "ID_FMP_FEAT_1073",
+      "field": "description",
+      "expect": "You gain Deep Speech as",
+      "value": "You gain Undercommon as"
+    },
+    {
+      "id": "ID_FMP_FEAT_1354",
+      "field": "description",
+      "expect": "write Supernal. If you wish it, listeners who don't speak Supernal",
+      "value": "write Celestial. If you wish it, listeners who don't speak Celestial"
+    },
+    {
+      "id": "ID_FMP_FEAT_1828",
+      "field": "description",
+      "expect": "write Deep Speech fluently",
+      "value": "write Aklo fluently"
+    },
+    {
+      "id": "ID_FMP_FEAT_2728",
+      "field": "description",
+      "expect": "speak and write Elven. (If you already know Elven, you can choose Giant or Goblin instead.)",
+      "value": "speak and write Sylvan. (If you already know Sylvan, you can choose Jotun or Goblin instead.)"
+    },
+    {
+      "id": "ID_FMP_FEAT_3450",
+      "field": "description",
+      "expect": "gain Supernal as a language",
+      "value": "gain Celestial as a language"
+    },
+    {
+      "id": "ID_FMP_FEAT_3716",
+      "field": "description",
+      "expect": "write Primordial.",
+      "value": "write an elemental tongue."
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_4287",
+      "field": "description",
+      "expect": "Languages Common, Giant",
+      "value": "Languages Common, Jotun"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_4300",
+      "field": "description",
+      "expect": "Languages Common, Supernal",
+      "value": "Languages Common, Celestial"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_4301",
+      "field": "description",
+      "expect": "Languages Common, Supernal",
+      "value": "Languages Common, Celestial"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_5383",
+      "field": "description",
+      "expect": "exclamations in Supernal",
+      "value": "exclamations in Celestial"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7969",
+      "field": "description",
+      "expect": "Draconic, Common, and Supernal",
+      "value": "Draconic, Common, and Celestial"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7974",
+      "field": "description",
+      "expect": "Elven, Giant, Goblin, and Supernal",
+      "value": "Elven, Jotun, Goblin, and Celestial"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_332",
+      "field": "description",
+      "expect": "Using Primordial words of power",
+      "value": "Using words of power in an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_403",
+      "field": "description",
+      "expect": "speak in Supernal",
+      "value": "speak in Celestial"
+    },
+    {
+      "id": "ID_FMP_PARAGON_PATH_533",
+      "field": "description",
+      "expect": "speak Supernal with",
+      "value": "speak Celestial with"
+    },
+    {
+      "id": "ID_FMP_RITUAL_329",
+      "field": "description",
+      "expect": "unable to speak Giant",
+      "value": "unable to speak Jotun"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_EAST_RIFT_BENEFIT",
+      "field": "description",
+      "expect": "You gain Deep Speech as",
+      "value": "You gain Undercommon as"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_HIGH_IMASKAR_BENEFIT",
+      "field": "description",
+      "expect": "know Deep Speech as",
+      "value": "know Undercommon as"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DEEP_SPEECH",
+      "field": "description",
+      "expect": "write Deep Speech fluently",
+      "value": "write Undercommon fluently"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_GIANT",
+      "field": "description",
+      "expect": "write Giant fluently",
+      "value": "write Jotun fluently"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_PRIMORDIAL",
+      "field": "description",
+      "expect": "write Primordial fluently",
+      "value": "write an elemental tongue fluently"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SUPERNAL",
+      "field": "description",
+      "expect": "write Supernal fluently",
+      "value": "write Celestial fluently"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.4",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.9",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.14",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.19",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.24",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_149886.29",
+      "field": "flavor",
+      "expect": "bears Primordial runes",
+      "value": "bears Terran runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3737",
+      "field": "flavor",
+      "expect": "engraved with Primordial runes",
+      "value": "engraved with elemental runes"
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_7088",
+      "field": "flavor",
+      "expect": "Supernal, Iokharic, and Barazhad",
+      "value": "Celestial, Iokharic, and Barazhad"
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_4225",
+      "field": "flavor",
+      "expect": "a Supernal rune",
+      "value": "an Infernal rune"
+    },
+    {
+      "id": "ID_FMP_POWER_5833",
+      "field": "flavor",
+      "expect": "words of Primordial",
+      "value": "words of an elemental tongue"
+    },
+    {
+      "id": "ID_FMP_POWER_7603",
+      "field": "flavor",
+      "expect": "words of Supernal",
+      "value": "words of Celestial"
+    },
+    {
+      "id": "ID_FMP_POWER_7604",
+      "field": "flavor",
+      "expect": "words of Supernal",
+      "value": "words of Celestial"
     }
   ]
 }

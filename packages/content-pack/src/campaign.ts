@@ -47,12 +47,21 @@ export const CAMPAIGN_VERSION = 3;
  */
 export const CAMPAIGN_DESCRIPTION_VERSION = 5;
 /**
+ * The version `buildCampaign` writes for a campaign with a text patch: a
+ * field patch on a record's description, or on one `occurrence` of a field
+ * the record has several of (D116 amendment). It may carry a campaign
+ * description or not. An earlier reader refuses it as "unsupported
+ * version", so no client applies these patches in part.
+ */
+export const CAMPAIGN_TEXT_PATCH_VERSION = 6;
+/**
  * Versions `decodeCampaign` reads; a version-1 document has no patches, a
  * version-2 document only field patches, a version-4 document may carry
- * retired alternate-name patches, which load and are ignored, and only a
- * version-5 document carries a description.
+ * retired alternate-name patches, which load and are ignored, a version-5
+ * document carries a description, and only a version-6 document carries
+ * text patches (and may carry a description).
  */
-export const CAMPAIGN_VERSIONS = [1, 2, 3, 4, 5] as const;
+export const CAMPAIGN_VERSIONS = [1, 2, 3, 4, 5, 6] as const;
 export type CampaignVersion = (typeof CAMPAIGN_VERSIONS)[number];
 export const MAX_CAMPAIGN_ENCODED_BYTES = 16 * 1024 * 1024;
 export const MAX_CAMPAIGN_DECODED_BYTES = 16 * 1024 * 1024;
@@ -77,6 +86,20 @@ export const CAMPAIGN_PATCH_NAME_FIELD = "name";
  * any other field names a specific.
  */
 export const CAMPAIGN_PATCH_PREREQUISITES_FIELD = "prerequisites";
+/**
+ * The patch field naming the record's description, its body text (version
+ * 6; in an earlier document it names a specific, as any other field). Its
+ * `expect` is a passage of the text, which must appear in it exactly once,
+ * and `value` replaces that passage.
+ */
+export const CAMPAIGN_PATCH_DESCRIPTION_FIELD = "description";
+/**
+ * The patch field naming the record's flavor text (`<Flavor>`), patched by
+ * passage as the description is (version 6).
+ */
+export const CAMPAIGN_PATCH_FLAVOR_FIELD = "flavor";
+/** Highest `occurrence` a field patch can name. */
+export const MAX_CAMPAIGN_PATCH_OCCURRENCE = 1_000;
 /** Most rule elements one rule patch matches (`count`). */
 export const MAX_CAMPAIGN_RULE_MATCH_COUNT = 1_000;
 /** Most rule elements one `add` appends. */
@@ -94,12 +117,25 @@ export const MAX_CAMPAIGN_RULE_NAME_LENGTH = 120;
 export interface CampaignPatch {
   /** The target record's ID (matched ignoring case). */
   readonly id: string;
-  /** "name", or a specific's name (matched ignoring case), e.g. "Languages". */
+  /**
+   * "name", "prerequisites", "description" (version 6) or a specific's name
+   * (matched ignoring case), e.g. "Languages".
+   */
   readonly field: string;
-  /** The stock value the author saw. */
+  /**
+   * The stock value the author saw; for "description", the passage of the
+   * text the patch replaces, which must appear in it exactly once.
+   */
   readonly expect: string;
-  /** The campaign's value. */
+  /** The campaign's value (for "description", the passage's new text). */
   readonly value: string;
+  /**
+   * Version 6, a specific only: which of the record's specifics of that
+   * name, counted from 1 in content order, for a field a record has
+   * several of (Staff of Tongues' Property). Without it the record must
+   * have the field once.
+   */
+  readonly occurrence?: number;
 }
 
 /**
@@ -395,6 +431,36 @@ function isPrerequisitesField(field: string): boolean {
   );
 }
 
+/**
+ * The text a passage patch edits: "description" and "flavor" name the
+ * record's description and flavor text only from version 6 (before, a
+ * specific of that name, as any other field).
+ */
+function passageField(
+  field: string,
+  version: number,
+): "description" | "flavor" | undefined {
+  if (version < CAMPAIGN_TEXT_PATCH_VERSION) return undefined;
+  const folded = field.trim().toLocaleLowerCase();
+  return folded === CAMPAIGN_PATCH_DESCRIPTION_FIELD
+    ? "description"
+    : folded === CAMPAIGN_PATCH_FLAVOR_FIELD
+      ? "flavor"
+      : undefined;
+}
+
+function isPassageField(field: string, version: number): boolean {
+  return passageField(field, version) !== undefined;
+}
+
+/** A field patch only a version-6 document can carry. */
+function isTextPatch(patch: CampaignPatch): boolean {
+  return (
+    patch.occurrence !== undefined ||
+    isPassageField(patch.field, CAMPAIGN_TEXT_PATCH_VERSION)
+  );
+}
+
 function canonicalAttributes(
   attributes: Readonly<Record<string, string>>,
 ): Record<string, string> {
@@ -445,8 +511,14 @@ function canonicalRuleOperation(
 function canonicalPatch(patch: CampaignPatchEntry): CampaignPatchEntry {
   if (isCampaignRulePatch(patch))
     return { id: patch.id, rule: canonicalRuleOperation(patch.rule) };
-  const { id, field, expect, value } = patch;
-  return { id, field, expect, value };
+  const { id, field, expect, value, occurrence } = patch;
+  return {
+    id,
+    field,
+    expect,
+    value,
+    ...(occurrence === undefined ? {} : { occurrence }),
+  };
 }
 
 function canonicalDocumentPatch(
@@ -564,7 +636,10 @@ function isPatchEntryShape(value: unknown, version: number): boolean {
   return (
     typeof value.field === "string" &&
     typeof value.expect === "string" &&
-    typeof value.value === "string"
+    typeof value.value === "string" &&
+    (value.occurrence === undefined ||
+      (version >= CAMPAIGN_TEXT_PATCH_VERSION &&
+        typeof value.occurrence === "number"))
   );
 }
 
@@ -720,8 +795,22 @@ function getMapValue(
   )?.[1];
 }
 
-function patchKey(patch: Pick<CampaignPatch, "id" | "field">): string {
-  return `${patch.id.toLocaleLowerCase()}\u0000${patch.field.trim().toLocaleLowerCase()}`;
+/**
+ * What a field patch targets, for "listed twice": a record's field, one
+ * occurrence of it (an unnumbered patch targets the only one), or for a
+ * description one passage (a record may have several description patches).
+ */
+function patchKey(patch: CampaignPatch, version: number): string {
+  const target = isPassageField(patch.field, version)
+    ? patch.expect
+    : String(patch.occurrence ?? 1);
+  return `${patch.id.toLocaleLowerCase()}\u0000${patch.field.trim().toLocaleLowerCase()}\u0000${target}`;
+}
+
+/** The label a field patch's errors and outcomes start with. */
+function patchLabel(patch: CampaignPatch): string {
+  const { id, field, occurrence } = patch;
+  return `Patch ${id} ${field}${occurrence === undefined ? "" : ` #${occurrence}`}`;
 }
 
 function hasControlCharactersInText(value: string): boolean {
@@ -735,6 +824,7 @@ function hasControlCharactersInText(value: string): boolean {
 function patchErrors(
   patches: readonly CampaignDocumentPatch[],
   houseRules: readonly Pick<ContentEntity, "id">[],
+  version: number,
 ): string[] {
   if (patches.length > MAX_CAMPAIGN_PATCHES)
     return [
@@ -758,8 +848,8 @@ function patchErrors(
     }
     // A retired alternate name has no effect, so nothing to check.
     if (isRetiredAlternateNamePatch(patch)) continue;
-    const { field, expect, value } = patch;
-    const label = `Patch ${id} ${field}`;
+    const { field, expect, value, occurrence } = patch;
+    const label = patchLabel(patch);
     if (
       field.length === 0 ||
       field.length > MAX_CAMPAIGN_PATCH_FIELD_LENGTH ||
@@ -767,7 +857,7 @@ function patchErrors(
       hasControlCharacters(field)
     )
       errors.push(
-        `${label}: field must be "name", "prerequisites" or a specific's name of 1-${MAX_CAMPAIGN_PATCH_FIELD_LENGTH} trimmed characters`,
+        `${label}: field must be "name", "prerequisites", "description" or a specific's name of 1-${MAX_CAMPAIGN_PATCH_FIELD_LENGTH} trimmed characters`,
       );
     else if (field.startsWith("_"))
       errors.push(
@@ -787,11 +877,33 @@ function patchErrors(
     if (expect === value) errors.push(`${label} changes nothing`);
     if (isNameField(field) && value.trim() === "")
       errors.push(`${label}: a record name cannot be empty`);
+    if (isPassageField(field, version) && expect === "")
+      errors.push(
+        `${label}: expect must be the passage of the ${field} the patch replaces`,
+      );
+    if (occurrence !== undefined) {
+      if (
+        isNameField(field) ||
+        isPrerequisitesField(field) ||
+        isPassageField(field, version)
+      )
+        errors.push(
+          `${label}: only a specific takes an occurrence (a record has one ${field})`,
+        );
+      if (
+        !Number.isInteger(occurrence) ||
+        occurrence < 1 ||
+        occurrence > MAX_CAMPAIGN_PATCH_OCCURRENCE
+      )
+        errors.push(
+          `${label}: occurrence must be an integer from 1 to ${MAX_CAMPAIGN_PATCH_OCCURRENCE.toLocaleString()}`,
+        );
+    }
     if (overlay.has(id.toLocaleLowerCase()))
       errors.push(
         `${label}: ${id} is one of the campaign's house rules; edit the record instead`,
       );
-    const key = patchKey(patch);
+    const key = patchKey(patch, version);
     if (seen.has(key)) errors.push(`${label} is listed twice`);
     seen.add(key);
   }
@@ -817,11 +929,15 @@ function descriptionErrors(description: string | undefined): string[] {
   return errors;
 }
 
-/** Version 5 always carries a description, and no other version can. */
+/**
+ * Version 5 always carries a description, version 6 may, and no other
+ * version can.
+ */
 function descriptionVersionErrors(
   version: number,
   description: string | undefined,
 ): string[] {
+  if (version === CAMPAIGN_TEXT_PATCH_VERSION) return [];
   if (version === CAMPAIGN_DESCRIPTION_VERSION)
     return description === undefined
       ? [`A version ${version} campaign must have a description`]
@@ -841,6 +957,13 @@ function patchVersionErrors(
       ? []
       : ["A version 1 campaign cannot carry patches"];
   const entries = patches ?? [];
+  if (
+    version < CAMPAIGN_TEXT_PATCH_VERSION &&
+    campaignPatches({ patches: entries }).some(
+      ({ occurrence }) => occurrence !== undefined,
+    )
+  )
+    return [`A version ${version} campaign cannot patch one field occurrence`];
   if (version !== 4 && entries.some(isRetiredAlternateNamePatch))
     return [`A version ${version} campaign cannot carry alternate names`];
   if (version === 2) {
@@ -893,12 +1016,20 @@ export async function buildCampaign(
   };
   const patches = sortedPatches(manifest.patches ?? []);
   const description = manifest.description?.trim();
+  // The lowest version the content needs (D116 amendments).
+  const version: CampaignVersion = campaignPatches({ patches }).some(
+    isTextPatch,
+  )
+    ? CAMPAIGN_TEXT_PATCH_VERSION
+    : description === undefined
+      ? CAMPAIGN_VERSION
+      : CAMPAIGN_DESCRIPTION_VERSION;
   const errors = [
     ...campaignManifestErrors({ ...manifest, restrictions }),
     ...descriptionErrors(description),
     ...legacyXmlErrors(legacyHouseRulesXml),
     ...houseRuleCountErrors(houseRules.entities.length),
-    ...patchErrors(patches, houseRules.entities),
+    ...patchErrors(patches, houseRules.entities, version),
   ];
   if (errors.length > 0)
     throw new Error(`Invalid campaign: ${errors.join("; ")}`);
@@ -908,11 +1039,7 @@ export async function buildCampaign(
   });
   const document: Omit<CampaignDocument, "contentDigest"> = {
     format: CAMPAIGN_FORMAT,
-    // The lowest version the content needs (D116 amendments).
-    version:
-      description === undefined
-        ? CAMPAIGN_VERSION
-        : CAMPAIGN_DESCRIPTION_VERSION,
+    version,
     campaignId: manifest.campaignId,
     name: manifest.name,
     ...(description === undefined ? {} : { description }),
@@ -930,8 +1057,10 @@ export async function buildCampaign(
 
 /**
  * Patches in canonical order and form: by ID ignoring case; a record's
- * field patches by field, then its rule patches in the order authored (the
- * sort is stable), since each rule patch sees the ones before it.
+ * field patches by field and occurrence, then its rule patches in the order
+ * authored (the sort is stable), since each rule patch sees the ones before
+ * it. A record's description patches also keep the order authored, the
+ * order they apply in.
  */
 function sortedPatches(
   patches: readonly CampaignPatchEntry[],
@@ -942,7 +1071,10 @@ function sortedPatches(
     const leftRule = isCampaignRulePatch(left);
     const rightRule = isCampaignRulePatch(right);
     if (leftRule || rightRule) return Number(leftRule) - Number(rightRule);
-    return compareIgnoringCase(left.field, right.field);
+    return (
+      compareIgnoringCase(left.field, right.field) ||
+      (left.occurrence ?? 0) - (right.occurrence ?? 0)
+    );
   });
 }
 
@@ -1068,7 +1200,11 @@ export async function validateCampaign(
     ...descriptionVersionErrors(campaign.version, campaign.description),
     ...descriptionErrors(campaign.description),
     ...patchVersionErrors(campaign.version, campaign.patches),
-    ...patchErrors(campaign.patches ?? [], campaign.houseRules.entities),
+    ...patchErrors(
+      campaign.patches ?? [],
+      campaign.houseRules.entities,
+      campaign.version,
+    ),
   ];
   const expectedPackId = campaignHouseRulesPackId(
     campaign.campaignId,
@@ -1160,10 +1296,16 @@ export type CampaignPatchOutcome =
   | { readonly patch: CampaignPatch; readonly status: "target-missing" }
   /** The record has no specific of that name. */
   | { readonly patch: CampaignPatch; readonly status: "field-missing" }
-  /** The record has several specifics of that name. */
+  /** The record has several specifics of that name (and no occurrence). */
   | {
       readonly patch: CampaignPatch;
       readonly status: "field-ambiguous";
+      readonly count: number;
+    }
+  /** The record has fewer specifics of that name than `occurrence`. */
+  | {
+      readonly patch: CampaignPatch;
+      readonly status: "occurrence-missing";
       readonly count: number;
     }
   /** The field's current value is not the one the author saw. */
@@ -1171,57 +1313,171 @@ export type CampaignPatchOutcome =
       readonly patch: CampaignPatch;
       readonly status: "stock-differs";
       readonly current: string;
+    }
+  /** A description or flavor patch: the text lacks the passage. */
+  | { readonly patch: CampaignPatch; readonly status: "passage-missing" }
+  /** A description or flavor patch: the passage appears `count` times. */
+  | {
+      readonly patch: CampaignPatch;
+      readonly status: "passage-ambiguous";
+      readonly count: number;
     };
 
-function patchedFieldValue(
-  entity: ContentEntity,
-  field: string,
-): { readonly value: string } | { readonly count: number } {
-  if (isNameField(field)) return { value: entity.name };
-  if (isPrerequisitesField(field)) return { value: entity.prerequisites ?? "" };
+/** How many times `passage` appears in `text`, without overlaps. */
+function passageCount(text: string, passage: string): number {
+  let count = 0;
+  for (
+    let at = text.indexOf(passage);
+    at >= 0;
+    at = text.indexOf(passage, at + passage.length)
+  )
+    count += 1;
+  return count;
+}
+
+/** The specifics a field patch names, in content order. */
+function specificIndexes(entity: ContentEntity, field: string): number[] {
   const folded = field.trim().toLocaleLowerCase();
-  const matches = entity.specifics.filter(
-    (specific) => specific.name.trim().toLocaleLowerCase() === folded,
+  return entity.specifics.flatMap((specific, index) =>
+    specific.name.trim().toLocaleLowerCase() === folded ? [index] : [],
   );
-  const [only] = matches;
-  return matches.length === 1 && only !== undefined
-    ? { value: only.value }
-    : { count: matches.length };
+}
+
+/**
+ * One field patch on one record: its outcome, and the record after it when
+ * it applies.
+ */
+function runFieldPatch(
+  entity: ContentEntity,
+  patch: CampaignPatch,
+  version: number,
+): { readonly outcome: CampaignPatchOutcome; readonly entity?: ContentEntity } {
+  const { field, expect, value, occurrence } = patch;
+  const differs = (current: string) => ({
+    outcome: { patch, status: "stock-differs" as const, current },
+  });
+  if (isNameField(field)) {
+    if (entity.name !== expect) return differs(entity.name);
+    // The stock name stays an alias, so everything that names the record
+    // by its old name still finds it (Deva → Aasimar).
+    return {
+      outcome: { patch, status: "applies" },
+      entity: renamedEntity(entity, value),
+    };
+  }
+  if (isPrerequisitesField(field)) {
+    const current = entity.prerequisites ?? "";
+    if (current !== expect) return differs(current);
+    // The stored `_Prerequisite IR` was parsed from the old text; a
+    // composed campaign profile never keeps stored prerequisite IR
+    // (composeContentPacks), so the engine parses the new one.
+    const { prerequisites: _old, ...rest } = entity;
+    void _old;
+    return {
+      outcome: { patch, status: "applies" },
+      entity: value === "" ? rest : { ...rest, prerequisites: value },
+    };
+  }
+  const passage = passageField(field, version);
+  if (passage !== undefined) {
+    const text = entity[passage] ?? "";
+    const count = passageCount(text, expect);
+    if (count === 0) return { outcome: { patch, status: "passage-missing" } };
+    if (count > 1)
+      return { outcome: { patch, status: "passage-ambiguous", count } };
+    const at = text.indexOf(expect);
+    return {
+      outcome: { patch, status: "applies" },
+      entity: {
+        ...entity,
+        [passage]: `${text.slice(0, at)}${value}${text.slice(at + expect.length)}`,
+      },
+    };
+  }
+  const indexes = specificIndexes(entity, field);
+  if (indexes.length === 0)
+    return { outcome: { patch, status: "field-missing" } };
+  if (occurrence === undefined && indexes.length > 1)
+    return {
+      outcome: { patch, status: "field-ambiguous", count: indexes.length },
+    };
+  const index = indexes[(occurrence ?? 1) - 1];
+  if (index === undefined)
+    return {
+      outcome: { patch, status: "occurrence-missing", count: indexes.length },
+    };
+  const current = entity.specifics[index]?.value ?? "";
+  if (current !== expect) return differs(current);
+  return {
+    outcome: { patch, status: "applies" },
+    entity: {
+      ...entity,
+      specifics: entity.specifics.map((specific, position) =>
+        position === index ? { ...specific, value } : specific,
+      ),
+    },
+  };
+}
+
+/**
+ * Applies field patches to `entities` in order (IDs matched ignoring case;
+ * each patch sees the record as the patches before it left it, which only
+ * matters for a record's several description patches): every outcome, and
+ * the patched records. `version` is the document's: "description" names
+ * the description only from version 6.
+ */
+export function runCampaignPatches(
+  entities: readonly ContentEntity[],
+  patches: readonly CampaignPatch[],
+  version: number = CAMPAIGN_TEXT_PATCH_VERSION,
+): {
+  readonly entities: readonly ContentEntity[];
+  readonly outcomes: readonly CampaignPatchOutcome[];
+} {
+  if (patches.length === 0) return { entities, outcomes: [] };
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  const patched = new Map<string, ContentEntity>();
+  const outcomes = patches.map((patch): CampaignPatchOutcome => {
+    const key = patch.id.toLocaleLowerCase();
+    const entity = patched.get(key) ?? byId.get(key);
+    if (entity === undefined) return { patch, status: "target-missing" };
+    const result = runFieldPatch(entity, patch, version);
+    if (result.entity !== undefined) patched.set(key, result.entity);
+    return result.outcome;
+  });
+  return {
+    entities:
+      patched.size === 0
+        ? entities
+        : entities.map(
+            (entity) => patched.get(entity.id.toLocaleLowerCase()) ?? entity,
+          ),
+    outcomes,
+  };
 }
 
 /**
  * Each patch's outcome against `entities` (IDs matched ignoring case): it
- * applies only when the record exists, the field is there once, and its
- * value is exactly the patch's `expect`.
+ * applies only when the record exists, the field is there once (or has the
+ * patch's `occurrence`), and its value is exactly the patch's `expect`; a
+ * description patch, when the description has its passage exactly once.
  */
 export function campaignPatchOutcomes(
   entities: readonly ContentEntity[],
   patches: readonly CampaignPatch[],
-): CampaignPatchOutcome[] {
-  if (patches.length === 0) return [];
-  const byId = new Map(
-    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
-  );
-  return patches.map((patch): CampaignPatchOutcome => {
-    const entity = byId.get(patch.id.toLocaleLowerCase());
-    if (entity === undefined) return { patch, status: "target-missing" };
-    const found = patchedFieldValue(entity, patch.field);
-    if ("count" in found)
-      return found.count === 0
-        ? { patch, status: "field-missing" }
-        : { patch, status: "field-ambiguous", count: found.count };
-    return found.value === patch.expect
-      ? { patch, status: "applies" }
-      : { patch, status: "stock-differs", current: found.value };
-  });
+  version: number = CAMPAIGN_TEXT_PATCH_VERSION,
+): readonly CampaignPatchOutcome[] {
+  return runCampaignPatches(entities, patches, version).outcomes;
 }
 
 /** One line on a patch that does not apply, for diagnostics and reports. */
 export function campaignPatchOutcomeMessage(
   outcome: CampaignPatchOutcome,
 ): string {
-  const { id, field, expect } = outcome.patch;
-  const label = `Patch ${id} ${field}`;
+  const { id, field, expect, occurrence } = outcome.patch;
+  const label = patchLabel(outcome.patch);
   switch (outcome.status) {
     case "applies":
       return `${label} applies`;
@@ -1230,9 +1486,15 @@ export function campaignPatchOutcomeMessage(
     case "field-missing":
       return `${label} not applied: ${id} has no ${field} field`;
     case "field-ambiguous":
-      return `${label} not applied: ${id} has ${outcome.count} ${field} fields`;
+      return `${label} not applied: ${id} has ${outcome.count} ${field} fields (name one with occurrence)`;
+    case "occurrence-missing":
+      return `${label} not applied: ${id} has ${outcome.count} ${field} ${outcome.count === 1 ? "field" : "fields"}, not ${occurrence ?? 1}`;
     case "stock-differs":
       return `${label} not applied: the content has ${JSON.stringify(outcome.current)}, the patch expects ${JSON.stringify(expect)}`;
+    case "passage-missing":
+      return `${label} not applied: the ${field} of ${id} does not contain ${JSON.stringify(expect)}`;
+    case "passage-ambiguous":
+      return `${label} not applied: the ${field} of ${id} contains ${JSON.stringify(expect)} ${outcome.count} times, the patch expects 1 (lengthen the passage)`;
   }
 }
 
@@ -1244,61 +1506,22 @@ export function campaignPatchOutcomeMessage(
 export function applyCampaignPatches(
   entities: readonly ContentEntity[],
   patches: readonly CampaignPatch[],
+  version: number = CAMPAIGN_TEXT_PATCH_VERSION,
 ): {
   readonly entities: readonly ContentEntity[];
   readonly diagnostics: readonly ContentDiagnostic[];
 } {
-  const outcomes = campaignPatchOutcomes(entities, patches);
-  if (outcomes.length === 0) return { entities, diagnostics: [] };
-  const diagnostics: ContentDiagnostic[] = [];
-  const applying = new Map<string, CampaignPatch[]>();
-  for (const outcome of outcomes) {
-    if (outcome.status !== "applies") {
-      diagnostics.push({
+  const result = runCampaignPatches(entities, patches, version);
+  return {
+    entities: result.entities,
+    diagnostics: result.outcomes
+      .filter(({ status }) => status !== "applies")
+      .map((outcome) => ({
         severity: "warning",
         code: "campaign.patch-not-applied",
         message: campaignPatchOutcomeMessage(outcome),
         entityId: outcome.patch.id,
-      });
-      continue;
-    }
-    const key = outcome.patch.id.toLocaleLowerCase();
-    applying.set(key, [...(applying.get(key) ?? []), outcome.patch]);
-  }
-  return {
-    entities: entities.map((entity) => {
-      const own = applying.get(entity.id.toLocaleLowerCase());
-      if (own === undefined) return entity;
-      let patched = entity;
-      for (const { field, value } of own) {
-        if (isNameField(field)) {
-          // The stock name stays an alias, so everything that names the
-          // record by its old name still finds it (Deva → Aasimar).
-          patched = renamedEntity(patched, value);
-          continue;
-        }
-        if (isPrerequisitesField(field)) {
-          // The stored `_Prerequisite IR` was parsed from the old text; a
-          // composed campaign profile never keeps stored prerequisite IR
-          // (composeContentPacks), so the engine parses the new one.
-          const { prerequisites: _old, ...rest } = patched;
-          void _old;
-          patched = value === "" ? rest : { ...rest, prerequisites: value };
-          continue;
-        }
-        const folded = field.trim().toLocaleLowerCase();
-        patched = {
-          ...patched,
-          specifics: patched.specifics.map((specific) =>
-            specific.name.trim().toLocaleLowerCase() === folded
-              ? { ...specific, value }
-              : specific,
-          ),
-        };
-      }
-      return patched;
-    }),
-    diagnostics,
+      })),
   };
 }
 
@@ -1668,7 +1891,11 @@ export async function composeCampaignProfile(
     (composed): ComposedCampaignLayer => {
       // Field patches, then rule patches: they touch different parts of a
       // record, and restrictions resolve over the result.
-      const fields = applyCampaignPatches(composed, campaignPatches(campaign));
+      const fields = applyCampaignPatches(
+        composed,
+        campaignPatches(campaign),
+        campaign.version,
+      );
       const rules = applyCampaignRulePatches(
         fields.entities,
         campaignRulePatches(campaign),

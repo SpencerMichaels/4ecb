@@ -171,6 +171,19 @@ describe("campaign.json", () => {
     ).toThrow(
       /patches\[0\]\.rule has unknown keys: delete; remove must be true/,
     );
+    // Version 6: a field patch may name one occurrence of its field.
+    expect(
+      parseCampaignManifest(
+        { ...base, patches: [{ ...patch, field: "Property", occurrence: 2 }] },
+        "/",
+      ).manifest.patches,
+    ).toEqual([{ ...patch, field: "Property", occurrence: 2 }]);
+    expect(() =>
+      parseCampaignManifest(
+        { ...base, patches: [{ ...patch, occurrence: "2" }] },
+        "/",
+      ),
+    ).toThrow(/patches\[0\]\.occurrence must be a number/);
   });
 });
 
@@ -209,16 +222,18 @@ describe("campaign build", () => {
         "field" in patch ? patch.field : "rule",
       ]),
     ).toEqual([
+      ["ID_4ECB_SYNTHETIC_RACE_1", "description"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "name"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "rule"],
     ]);
-    // The DM's description makes it version 5 (D116 amendment).
+    // The description patch makes it version 6 (D116 amendment); the DM's
+    // description is kept.
     expect(summarizeCampaign(campaign)).toMatchObject({
       description:
         "Setting gods replace the stock deities. Everything else is standard.",
-      version: 5,
-      patches: 2,
+      version: 6,
+      patches: 3,
       rulePatches: 1,
     });
     // An authored "Also Known As" is parsed once, at build, into aliases;
@@ -353,6 +368,96 @@ describe("campaign build", () => {
       "Patch ID_GONE name not applied: no record ID_GONE (stock)",
     ]);
     // Patches never reach the legacy campaign block.
+    expect(campaign.legacyHouseRulesXml).toBe("");
+  });
+
+  it("reports description and occurrence patches against the pack", async () => {
+    const pack = await buildContentPack(
+      parseD20Rules(
+        rules(
+          [
+            '<RulesElement internal-id="ID_STAFF" name="Staff of Tongues +1" type="Magic Item"><specific name="Property">You can speak, read, and write Common.</specific><specific name="Property">You can speak, read, and write Supernal.</specific></RulesElement>',
+            '<RulesElement internal-id="ID_HOLY_TONGUE" name="Holy Tongue" type="Class Feature">You are fluent in Supernal. Supernal is old.</RulesElement>',
+          ].join("\n"),
+        ),
+        "stock.xml",
+      ),
+      { packId: "stock", name: "Stock" },
+    );
+    const xml = rules("");
+    const campaign = await buildCampaign(
+      {
+        campaignId: "test-setting",
+        name: "Test Setting",
+        revision: 1,
+        restrictions: { ids: [], types: [] },
+        patches: [
+          {
+            id: "ID_STAFF",
+            field: "Property",
+            occurrence: 2,
+            expect: "You can speak, read, and write Supernal.",
+            value: "You can speak, read, and write Celestial.",
+          },
+          {
+            id: "ID_STAFF",
+            field: "Property",
+            occurrence: 3,
+            expect: "x",
+            value: "y",
+          },
+          {
+            id: "ID_HOLY_TONGUE",
+            field: "description",
+            expect: "fluent in Supernal",
+            value: "fluent in Celestial",
+          },
+          {
+            id: "ID_HOLY_TONGUE",
+            field: "description",
+            expect: "Supernal",
+            value: "Celestial",
+          },
+          {
+            id: "ID_HOLY_TONGUE",
+            field: "description",
+            expect: "Abyssal",
+            value: "Infernal",
+          },
+        ],
+      },
+      parseHouseRules(xml, "house-rules.xml"),
+      houseRulesChildrenXml(xml),
+    );
+    expect(campaign.version).toBe(6);
+    expect(summarizeCampaign(campaign).version).toBe(6);
+    const report = campaignAgainstPack(campaign, pack);
+    expect(
+      report.patches.map(({ id, field, occurrence, status, count }) => ({
+        id,
+        field,
+        occurrence,
+        status,
+        count,
+      })),
+    ).toEqual([
+      // The first passage applies; the second then appears once more.
+      { id: "ID_HOLY_TONGUE", field: "description", status: "applies" },
+      { id: "ID_HOLY_TONGUE", field: "description", status: "applies" },
+      { id: "ID_HOLY_TONGUE", field: "description", status: "passage-missing" },
+      { id: "ID_STAFF", field: "Property", occurrence: 2, status: "applies" },
+      {
+        id: "ID_STAFF",
+        field: "Property",
+        occurrence: 3,
+        status: "occurrence-missing",
+        count: 2,
+      },
+    ]);
+    expect(report.warnings).toEqual([
+      'Patch ID_HOLY_TONGUE description not applied: the description of ID_HOLY_TONGUE does not contain "Abyssal" (stock)',
+      "Patch ID_STAFF Property #3 not applied: ID_STAFF has 2 Property fields, not 3 (stock)",
+    ]);
     expect(campaign.legacyHouseRulesXml).toBe("");
   });
 
