@@ -1,5 +1,8 @@
 import {
+  layoutCardFields,
   learnedRecordFieldLabel,
+  type CardFieldPlace,
+  type CardFieldPlacement,
   type SheetCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
@@ -127,64 +130,78 @@ export function printItemPresentation(card: SheetCard) {
   const remainingStats = combatStats.filter(
     (stat) => !groupedRows.some((values) => values.includes(stat)),
   );
-  // A ritual reads like its published block (owner, 2026-11-06): the
-  // subheader holds the fields whose size does not vary widely, category,
-  // time and skill on line 1; the duration, cost and any prerequisite can
-  // be phrases or sentences, so they lead the body as labelled lines,
-  // above the description. Moving a field is a change to its placement
-  // below. Its level is the type bar's, its market price the footer's.
+  // Fields placed by kind (owner, 2026-11-06), one entry each: a
+  // subheader line holds the fields whose size does not vary widely, and
+  // `"body"` ones lead the body as labelled lines above the description.
+  // Labels are one word (sheet-model's, shared with the printed reference
+  // entry). Moving a field is a change to its placement here.
+  // A ritual reads like its published block: category, time and skill on
+  // line 1; the duration, cost and any prerequisite can be phrases or
+  // sentences. Its level is the type bar's, its market price the footer's.
   const ritualKind = isRitual
     ? field("Type")?.trim() || card.itemType || "Ritual"
     : undefined;
   const ritualCategory = field("Category")?.trim();
-  // [field, value, subheader line (1-based) or "body"]; the one-word
-  // labels are sheet-model's, shared with the printed reference entry.
-  const ritualFields = (
-    [
-      [
-        "Category",
-        ritualCategory?.toLowerCase() === ritualKind?.toLowerCase()
-          ? undefined
-          : ritualCategory,
-        1,
-      ],
-      ["Time", field("Time"), 1],
-      ["Key Skill", field("Key Skill"), 1],
-      ["Duration", field("Duration"), "body"],
-      ["Component Cost", field("Component Cost"), "body"],
-      ["Prerequisite", field("Prerequisite", "Prerequisites"), "body"],
-    ] as const
-  ).flatMap(([name, value, place]) =>
-    isRitual && value?.trim()
-      ? [
-          {
-            place,
-            field: {
-              label: learnedRecordFieldLabel(name),
-              value: value.trim(),
+  const isAlchemical = magicType?.trim().toLowerCase() === "alchemical";
+  const isMundaneArmor =
+    card.itemType === "Armor" && (card.baseItemType ?? "Armor") === "Armor";
+  // The authored field `names[0]` (or another of `names`) at `place`.
+  const placed = (
+    place: CardFieldPlace,
+    ...names: [string, ...string[]]
+  ): CardFieldPlacement => ({
+    label: learnedRecordFieldLabel(names[0]),
+    value: field(...names),
+    place,
+    specifics: names,
+  });
+  const placements: readonly CardFieldPlacement[] = isRitual
+    ? [
+        {
+          ...placed(1, "Category"),
+          value:
+            ritualCategory?.toLowerCase() === ritualKind?.toLowerCase()
+              ? undefined
+              : ritualCategory,
+        },
+        placed(1, "Time"),
+        placed(1, "Key Skill"),
+        placed("body", "Duration"),
+        placed("body", "Component Cost"),
+        placed("body", "Prerequisite", "Prerequisites"),
+      ]
+    : isAlchemical
+      ? // A crafted alchemical item: how long, what it costs and which
+        // skill makes it, all short.
+        [placed(1, "Time"), placed(1, "Formula Cost"), placed(1, "Key Skill")]
+      : isMundaneArmor
+        ? // Special armor's minimum enhancement ("+4") and its extra
+          // bonus ("+1 Reflex", "Resist 5 all").
+          [
+            {
+              label: "Minimum",
+              value: field("Minimum Enhancement Bonus")
+                ?.trim()
+                .replace(/^(\d+)$/, "+$1"),
+              place: 1,
+              specifics: ["Minimum Enhancement Bonus"],
             },
-          },
-        ]
-      : [],
-  );
-  const ritualLines = [
-    ...new Set(
-      ritualFields.flatMap(({ place }) => (place === "body" ? [] : [place])),
-    ),
-  ].sort((left, right) => left - right);
-  const ritualRows = ritualLines.map((line) =>
-    ritualFields.flatMap(({ place, field: value }) =>
-      place === line ? [value] : [],
-    ),
-  );
-  const ritualBodyFields: readonly SheetValue[] = ritualFields.flatMap(
-    ({ place, field: value }) => (place === "body" ? [value] : []),
-  );
+            {
+              label: "Bonus",
+              value: field("Special"),
+              place: 1,
+              specifics: ["Special"],
+            },
+          ]
+        : [];
+  const placedFields = layoutCardFields(placements);
   const statRows = isRitual
-    ? ritualRows
-    : remainingStats.length > 0
-      ? [...groupedRows, remainingStats]
-      : groupedRows;
+    ? placedFields.subheader
+    : [
+        ...groupedRows,
+        ...(remainingStats.length > 0 ? [remainingStats] : []),
+        ...placedFields.subheader,
+      ];
   const stats = statRows.flat();
   const kind =
     ritualKind ??
@@ -298,16 +315,8 @@ export function printItemPresentation(card: SheetCard) {
     "enchantequiv",
     "granted powers",
   ]);
-  if (isRitual)
-    for (const label of [
-      "time",
-      "duration",
-      "component cost",
-      "key skill",
-      "prerequisite",
-      "prerequisites",
-    ])
-      excluded.add(label);
+  for (const { specifics } of placements)
+    for (const name of specifics ?? []) excluded.add(name.toLowerCase());
   if (criticalFormula) excluded.add("critical");
   // A ki focus's or tome's "Implement: Ki Focus" is its type bar, and a
   // mundane weapon's "Size: Large" is in its name ("Club (Large)").
@@ -387,7 +396,7 @@ export function printItemPresentation(card: SheetCard) {
     weaponProperties,
     /** Labelled lines above the description (a ritual's duration, cost
      *  and prerequisite); `rules` follow it. */
-    leadFields: ritualBodyFields,
+    leadFields: placedFields.body,
     rules,
     // Keep unstructured/custom mechanical prose when it has no structured
     // replacement, but never repeat an explicitly identified flavor passage.

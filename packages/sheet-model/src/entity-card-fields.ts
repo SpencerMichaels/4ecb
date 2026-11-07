@@ -210,6 +210,8 @@ const PLACEMENTS: Readonly<
     fields.at("Skills", "body", "Skill Bonuses"),
   ],
   class: classPlacements,
+  // A skill's key ability, one word.
+  skill: (fields) => [fields.at("Ability", 1, "Key Ability")],
   "hybrid class": classPlacements,
   "class feature": featurePlacements,
   "racial trait": featurePlacements,
@@ -224,6 +226,10 @@ const PLACEMENTS: Readonly<
   // Its power's usage, action, keywords, trigger and effect are that
   // power's own card (`godFragmentPowerCard`).
   "god fragment": (fields) => [
+    // Its quirks are three words ("Abrasive, intimidating, lively"); its
+    // constant benefit is a sentence.
+    fields.at("Quirks", 1, "Quirks"),
+    fields.at("Constant Benefits", "body", "Constant Benefits"),
     fields.at("Usage", "drop", "Power Usage"),
     fields.at("Action", "drop", "Action Type"),
     fields.at("Keywords", "drop", "Keywords"),

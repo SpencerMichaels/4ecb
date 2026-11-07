@@ -159,6 +159,50 @@ describe("printed item presentation", () => {
     expect(club("Club (Large)")).toEqual([]);
     expect(club("Club")).toEqual([{ label: "Size", value: "Large" }]);
   });
+  it("puts a crafted alchemical item's Time · Cost · Skill in the subheader", () => {
+    const view = printItemPresentation(
+      card("Magic Item", {
+        "Magic Item Type": "Alchemical",
+        "Key Skill": "Arcana, Nature, or Religion",
+        "Formula Cost": "100 gp",
+        Time: "1 hour",
+        Power: "Power (Consumable) Standard Action. Throw it.",
+      }),
+    );
+    expect(view.statRows).toEqual([
+      [
+        { label: "Time", value: "1 hour" },
+        { label: "Cost", value: "100 gp" },
+        { label: "Skill", value: "Arcana, Nature, or Religion" },
+      ],
+    ]);
+    expect(view.rules.map(({ label }) => label)).toEqual(["Power"]);
+    expect(view.leadFields).toEqual([]);
+  });
+  it("puts mundane armor's Minimum · Bonus in the subheader", () => {
+    const view = printItemPresentation(
+      card("Armor", {
+        "Armor Bonus": "3",
+        "Minimum Enhancement Bonus": "4",
+        Special: "+1 Reflex",
+        Check: "-",
+        Speed: "-",
+      }),
+    );
+    expect(view.statRows).toEqual([
+      [{ label: "AC bonus", value: "+3" }],
+      [
+        { label: "Minimum", value: "+4" },
+        { label: "Bonus", value: "+1 Reflex" },
+      ],
+    ]);
+    expect(view.rules).toEqual([]);
+    // Ordinary armor has neither line.
+    expect(
+      printItemPresentation(card("Armor", { "Armor Bonus": "2", Special: "" }))
+        .statRows,
+    ).toEqual([[{ label: "AC bonus", value: "+2" }]]);
+  });
   it("keeps ranged combat values together on one row", () => {
     const view = printItemPresentation(
       card("Weapon", {

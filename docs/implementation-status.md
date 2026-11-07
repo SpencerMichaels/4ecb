@@ -1695,6 +1695,19 @@ leaving out what was placed or dropped.
   new mismatch (the baseline names the previous pack until it is
   re-accepted). Tests: `entity-card-fields.test.tsx`,
   `StructuredEntityBody.test.ts`.
+- **Skill, god fragment, items, paths:** a skill's subheader is
+  "Ability" (Key Ability); a god fragment's is "Quirks", with Constant
+  Benefits as its body line. A crafted alchemical item (Magic Item Type
+  "Alchemical") shows "Time · Cost · Skill" (Formula Cost labelled "Cost",
+  now in sheet-model's `learnedRecordFieldLabel`); mundane armor shows
+  "Minimum · Bonus" (Minimum Enhancement Bonus as "+4", the Special bonus
+  "+1 Reflex") on a line after its AC and penalties. Both were body rules.
+  `print-item-presentation.ts` now lays every kind's placements (the
+  ritual's too) out with sheet-model's `layoutCardFields`, and excludes
+  each placed field from the body by its placement. A paragon path's,
+  epic destiny's or theme's prerequisite is its "Prerequisite:" body line
+  above the text (unchanged; now tested), no subheader. Tests:
+  `entity-card-fields.test.tsx`, `print-item-presentation.test.ts`.
 
 ## Known-record rows and ritual cards (2026-11-06)
 

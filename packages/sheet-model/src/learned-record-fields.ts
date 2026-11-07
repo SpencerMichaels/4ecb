@@ -8,6 +8,7 @@
  */
 const LEARNED_RECORD_FIELD_LABELS: ReadonlyMap<string, string> = new Map([
   ["component cost", "Cost"],
+  ["formula cost", "Cost"],
   ["key skill", "Skill"],
   ["market price", "Price"],
   ["prerequisites", "Prerequisite"],

@@ -530,3 +530,61 @@ describe("race card", () => {
     expect(bodyLines(render(sparse))).toEqual([]);
   });
 });
+
+describe("skill, god fragment and path cards", () => {
+  it("shows a skill's key Ability in the subheader", () => {
+    const skill = record("ID_SYNTH_SKILL", "Synthetic Diplomacy", "Skill", {
+      "Key Ability": "Charisma",
+    });
+    const markup = render(skill);
+    expect(subheaderLines(markup)).toEqual([["Ability: Charisma"]]);
+    expect(bodyLines(markup)).toEqual([]);
+    expect(body(markup)).not.toContain("Charisma");
+  });
+
+  it("shows a god fragment's Quirks up top and its Constant Benefits below", () => {
+    const fragment = record(
+      "ID_SYNTH_FRAGMENT_2",
+      "Synthetic Fragment",
+      "God Fragment",
+      {
+        "Constant Benefits": "+1 to saving throws.",
+        Quirks: "Abrasive, intimidating, lively",
+        Effect: "One ally gains 5 temporary hit points.",
+      },
+    );
+    const markup = render(fragment);
+    expect(subheaderLines(markup)).toEqual([
+      ["Quirks: Abrasive, intimidating, lively"],
+    ]);
+    expect(bodyLines(markup)).toEqual([
+      "Constant Benefits: +1 to saving throws.",
+    ]);
+    expectNoDuplicateLabels(markup);
+  });
+
+  it.each(["Paragon Path", "Epic Destiny", "Theme"])(
+    "gives a %s its Prerequisite as a body line, no subheader",
+    (type) => {
+      const markup = render(
+        record(
+          "ID_SYNTH_PATH_2",
+          "Synthetic Path",
+          type,
+          {},
+          {
+            description: "You walk a path.",
+            printPrerequisites: "Warlock, dark pact",
+          },
+        ),
+      );
+      expect(subheaderLines(markup)).toBeUndefined();
+      expect(body(markup)).toContain(
+        "<strong>Prerequisite:</strong> Warlock, dark pact",
+      );
+      expect(body(markup).indexOf("Prerequisite:")).toBeLessThan(
+        body(markup).indexOf("You walk a path."),
+      );
+    },
+  );
+});

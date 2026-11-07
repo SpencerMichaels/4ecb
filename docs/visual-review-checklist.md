@@ -1170,6 +1170,24 @@ Moradin, or an item a character holds), build and import or advertise it.
     a normal load."
   - **Wrong if:** the first line wraps between a label and its value,
     the old two-column stat grid remains, or a field shows twice.
+- [ ] **Skill, god fragment, alchemical item and special armor
+      subheaders.** Added 2026-11-06; lines are unit-tested, this is the
+      look.
+  - **Where:** at 140% zoom, light and dark theme: Build → level 1 →
+    skill training, click Diplomacy; a Chosen of a god fragment choice if a
+    character has one (else skip); Shop → Alchemical items, Icening (Level
+    5); Shop → Armor, Feyweave Armor and Githweave Armor; Build → Paragon
+    Path, any path card.
+  - **Expect:** Diplomacy: "ABILITY Charisma" under the title, the
+    description below. A god fragment: "QUIRKS Abrasive, intimidating,
+    lively", then "Constant Benefits: …" in the body. Icening: "TIME 1
+    hour · COST 100 gp · SKILL Arcana" as one line, the power below.
+    Feyweave Armor: "AC BONUS +1", then "MINIMUM +4" (and a "BONUS" when
+    the armor has one: Githweave "BONUS +1 Will"); no "Minimum Enhancement Bonus:"
+    rule in the body. A paragon path: no subheader, "Prerequisite: …"
+    above its text.
+  - **Wrong if:** the alchemical line wraps a label away from its value,
+    or a field also shows in the body.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with
