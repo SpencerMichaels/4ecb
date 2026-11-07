@@ -1139,6 +1139,23 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** the HP line overflows the card or splits a value
     oddly, the body lines look unlike a feat card's "Powers:" lines, or
     role, source, hit points or defenses also appear in the body.
+- [ ] **Background card subheader.** Added 2026-11-06; lines, omissions
+      and order are unit-tested, this is the look.
+  - **Where:** at 140% zoom, light and dark theme: Build → level 1 →
+    Background; click Bloodstone Runehammer (Forgotten Realms,
+    Geography), Occupation - Artisan (General), Spirit Binder (Dark Sun,
+    Campaign) and Wandering Duelist (Scales of War); then print preview's
+    Character Reference, the Background entry of a character that has one.
+  - **Expect:** "CAMPAIGN Forgotten Realms · TYPE Geography" under the
+    title; only "TYPE Occupation" for a General one; only "CAMPAIGN Dark
+    Sun" for a campaign background; a card with neither has no
+    subheader. The body: "Prerequisite: …" (when it has one), "Skills:
+    …", "Languages: …", the description, Benefit, Common knowledge; no
+    small uppercase "Forgotten Realms · Geography" line in the body any
+    more. The printed entry reads "Skills: …", "Languages: …", then
+    "Benefit: …".
+  - **Wrong if:** "Scales of War Adventure Path" overflows the card, or
+    the campaign shows twice.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

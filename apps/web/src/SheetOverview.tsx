@@ -2056,9 +2056,11 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     .flatMap((feature) => {
       const background = feature.group.trim().toLowerCase() === "background";
       const structuredBackground = background && feature.fullTextAvailable;
+      // A background's mechanics only: its card's Skills and Languages
+      // lines (`entityCardFields`), benefit and prerequisite.
       const fields = structuredBackground
         ? feature.fields.filter((field) =>
-            /^(?:benefits?|associated skills|associated languages|prerequisites?)$/i.test(
+            /^(?:benefits?|skills|languages|prerequisites?)$/i.test(
               field.label.trim(),
             ),
           )

@@ -169,6 +169,32 @@ const PLACEMENTS: Readonly<
     fields.at("Associated Power Info", "body", "Associated Power Info"),
     fields.at("Special", "body", "Special"),
   ],
+  // A background's campaign and kind ("Forgotten Realms · Geography"):
+  // the "General" campaign says nothing, nor does the kind "Campaign" next
+  // to a campaign's name. Its skills and languages can be sentences
+  // ("…the knowledge skill that best relates to your enemy"); its Benefit
+  // and Common Knowledge are the card's own sections.
+  background: (fields) => {
+    const campaign = fields.value("Campaign");
+    const type = fields.value("type");
+    return [
+      {
+        label: "Campaign",
+        value:
+          campaign?.toLocaleLowerCase() === "general" ? undefined : campaign,
+        place: 1,
+        specifics: ["Campaign"],
+      },
+      {
+        label: "Type",
+        value: type?.toLocaleLowerCase() === "campaign" ? undefined : type,
+        place: 1,
+        specifics: ["type"],
+      },
+      fields.at("Skills", "body", "Associated Skills"),
+      fields.at("Languages", "body", "Associated Languages"),
+    ];
+  },
   class: classPlacements,
   "hybrid class": classPlacements,
   "class feature": featurePlacements,

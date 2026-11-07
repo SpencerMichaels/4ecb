@@ -1669,6 +1669,17 @@ leaving out what was placed or dropped.
   (beatrix) checks the real Hexblade and Paladin. Tests:
   `entity-card-fields.test.tsx`, `StructuredEntityBody.test.ts`,
   `EntityCard.test.ts`.
+- **Background:** subheader "Campaign · Type", hiding the "General"
+  campaign (518 of 868 backgrounds) and a Type of "Campaign" (beside a
+  campaign's name it adds nothing); the old body context line
+  (`.entity-card-context`) is gone, not duplicated. Body: Prerequisite,
+  then Skills and Languages lines (Associated Skills/Languages, which run
+  to sentences), the description, the Benefit section and Common
+  knowledge. The printed reference entry (`references()` in
+  `SheetOverview.tsx`, which prints a background's mechanics only) labels
+  them "Skills:" and "Languages:" too, before the Benefit. Tests:
+  `entity-card-fields.test.tsx`, `StructuredEntityBody.test.ts`,
+  `overview.test.ts`, `SheetOverview.test.tsx`.
 
 ## Known-record rows and ritual cards (2026-11-06)
 

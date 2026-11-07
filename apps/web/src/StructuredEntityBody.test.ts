@@ -8,7 +8,6 @@ import {
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
-import { dotted } from "./test-dot-list";
 
 function entity(
   id: string,
@@ -136,7 +135,7 @@ describe("structured race, class and background cards", () => {
     expect(markup).not.toContain("Someone else&#x27;s stance.");
   });
 
-  it("puts a background's benefit up front with its campaign", () => {
+  it("puts a background's benefit before its common knowledge", () => {
     const markup = render(
       entity("BACKGROUND_CITY", "Harbor City", "Background", {
         type: "Campaign",
@@ -146,7 +145,8 @@ describe("structured race, class and background cards", () => {
       }),
     );
 
-    expect(dotted(markup)).toContain("Test Realms · Campaign");
+    // Campaign · Type are the card's subheader (entity-card-fields.test.tsx).
+    expect(markup).not.toContain("Test Realms");
     expect(markup).toContain('class="entity-benefit"');
     expect(markup.indexOf("+2 bonus to Diplomacy")).toBeLessThan(
       markup.indexOf("A busy port."),

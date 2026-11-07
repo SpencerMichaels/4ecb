@@ -5,7 +5,6 @@ import { entityCardFields } from "@4ecb/sheet-model";
 
 import { contentSpecificValue } from "./builder-ui";
 import { namedClassFeatures } from "./detail-stack";
-import { DotList } from "./DotList";
 import {
   CardFieldLines,
   EntityAliases,
@@ -273,8 +272,12 @@ function ClassBody({
 function BackgroundBody({ entity }: { readonly entity: ContentEntity }) {
   const benefit = contentSpecificValue(entity, "Benefit");
   const knowledge = contentSpecificValue(entity, "Common Knowledge");
+  // Campaign · Type are the card's subheader (`EntitySubheader`); its
+  // Skills and Languages lines lead the body, after the prerequisite.
+  const placement = entityCardFields(entity);
   return (
     <>
+      <CardFieldLines fields={placement?.body ?? []} />
       {entity.description.trim() === "" ? null : (
         <Prose value={entity.description} />
       )}
@@ -284,18 +287,6 @@ function BackgroundBody({ entity }: { readonly entity: ContentEntity }) {
           <Prose value={benefit} />
         </section>
       )}
-      <StatGrid
-        rows={[
-          {
-            label: "Skills",
-            value: contentSpecificValue(entity, "Associated Skills"),
-          },
-          {
-            label: "Languages",
-            value: contentSpecificValue(entity, "Associated Languages"),
-          },
-        ]}
-      />
       {knowledge === undefined ? null : (
         <CardSection title="Common knowledge">
           <Prose value={knowledge} />
@@ -303,14 +294,7 @@ function BackgroundBody({ entity }: { readonly entity: ContentEntity }) {
       )}
       <MoreFields
         entity={entity}
-        placed={[
-          "Benefit",
-          "Common Knowledge",
-          "Associated Skills",
-          "Associated Languages",
-          "Campaign",
-          "type",
-        ]}
+        placed={[...(placement?.placed ?? []), "Benefit", "Common Knowledge"]}
       />
     </>
   );
@@ -338,24 +322,11 @@ export function StructuredEntityBody({
   // A class's role and power source are its subheader's "Role · Source",
   // so its lede is the short description alone.
   const description = shortDescription?.trim() ?? "";
-  // A background's campaign and kind ("Forgotten Realms · Campaign").
-  const context =
-    kind === "background"
-      ? [
-          contentSpecificValue(entity, "Campaign"),
-          contentSpecificValue(entity, "type"),
-        ].filter(Boolean)
-      : [];
   return (
     <div className="structured-entity-body">
       <EntityAliases entity={entity} />
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
-      )}
-      {context.length === 0 ? null : (
-        <p className="entity-card-context">
-          <DotList items={context} />
-        </p>
       )}
       {description === "" ? null : (
         <p className="entity-card-lede">{description}</p>

@@ -395,3 +395,75 @@ describe("class card", () => {
     ]);
   });
 });
+
+describe("background card", () => {
+  const background = (specifics: Readonly<Record<string, string>>) =>
+    record(
+      "ID_SYNTH_BACKGROUND",
+      "Synthetic Harbor",
+      "Background",
+      {
+        "Associated Skills":
+          "Insight, Perception, or the knowledge skill that best relates to your enemy",
+        "Associated Languages": "Chondathan, Damaran",
+        Benefit: "You gain a +2 bonus to Diplomacy checks.",
+        "Common Knowledge": "A busy port.",
+        ...specifics,
+      },
+      {
+        description: "You grew up by the sea.",
+        printPrerequisites: "Human",
+      },
+    );
+
+  it("shows Campaign · Type, then Prerequisite, Skills, Languages, Benefit, Common knowledge", () => {
+    const markup = render(
+      background({ Campaign: "Forgotten Realms", type: "Geography" }),
+    );
+    expect(subheaderLines(markup)).toEqual([
+      ["Campaign: Forgotten Realms", "Type: Geography"],
+    ]);
+    expect(bodyLines(markup)).toEqual([
+      "Skills: Insight, Perception, or the knowledge skill that best relates to your enemy",
+      "Languages: Chondathan, Damaran",
+    ]);
+    const text = body(markup);
+    const order = [
+      "Prerequisite:",
+      "<dt>Skills</dt>",
+      "<dt>Languages</dt>",
+      "You grew up by the sea.",
+      "<h5>Benefit</h5>",
+      "Common knowledge",
+    ].map((part) => text.indexOf(part));
+    expect(order.every((at) => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("shows each field once: no body context line", () => {
+    const markup = render(
+      background({ Campaign: "Forgotten Realms", type: "Geography" }),
+    );
+    expectNoDuplicateLabels(markup);
+    expect(body(markup)).not.toContain("Forgotten Realms");
+    expect(body(markup)).not.toContain("Geography");
+    expect(markup).not.toContain("entity-card-context");
+    expect(body(markup)).not.toContain("entity-stat-grid");
+  });
+
+  it('hides the "General" campaign and a "Campaign" type', () => {
+    expect(
+      subheaderLines(
+        render(background({ Campaign: "General", type: "Occupation" })),
+      ),
+    ).toEqual([["Type: Occupation"]]);
+    expect(
+      subheaderLines(
+        render(background({ Campaign: "Dark Sun", type: "Campaign" })),
+      ),
+    ).toEqual([["Campaign: Dark Sun"]]);
+    const plain = render(background({ Campaign: "General", type: "Campaign" }));
+    expect(subheaderLines(plain)).toBeUndefined();
+    expect(plain).not.toContain("General");
+  });
+});

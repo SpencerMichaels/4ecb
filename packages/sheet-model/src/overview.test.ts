@@ -217,6 +217,40 @@ describe("printed overview data", () => {
       { label: "Immortality", value: "You ascend to the heavens." },
     ]);
   });
+  it("lists a background's card fields: no General campaign, one-word labels", () => {
+    const field = (name: string, value: string, ordinal: number) => ({
+      name,
+      value,
+      extraAttributes: [],
+      ordinal,
+    });
+    const background = {
+      ...feat,
+      id: "background:harbor",
+      type: "Background",
+      name: "Synthetic harbor",
+      description: "You grew up by the sea.",
+      specifics: [
+        field("Campaign", "General", 0),
+        field("type", "Geography", 1),
+        field("Associated Skills", "Insight, Perception", 2),
+        field("Benefit", "+2 to Diplomacy checks.", 3),
+      ],
+    };
+    const fields = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: [
+          { id: background.id, name: background.name, type: background.type },
+        ],
+      },
+      [background],
+    ).overview?.features[0]?.fields;
+    expect(fields).toEqual([
+      { label: "Skills", value: "Insight, Perception" },
+      { label: "Benefit", value: "+2 to Diplomacy checks." },
+    ]);
+  });
   it("prints a feature's readable prerequisite, never its rule grammar", () => {
     const multiclass = {
       ...feat,

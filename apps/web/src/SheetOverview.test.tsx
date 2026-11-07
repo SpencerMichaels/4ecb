@@ -342,7 +342,7 @@ describe("real-data sheet overview", () => {
             name,
             level: 1,
             description: "",
-            fields: [{ label: "Associated Skills", value: "Stealth" }],
+            fields: [{ label: "Skills", value: "Stealth" }],
           })),
         ],
         reminders: [],
@@ -405,7 +405,7 @@ describe("real-data sheet overview", () => {
             name: "Tomb Robber",
             group: "Background",
             description: "",
-            fields: [{ label: "Associated Skills", value: "Stealth" }],
+            fields: [{ label: "Skills", value: "Stealth" }],
           },
         ],
         reminders: [],
@@ -873,8 +873,8 @@ describe("real-data sheet overview", () => {
       fields: [
         { label: "Common Knowledge", value: "More story and questions." },
         { label: "Benefit", value: "Reroll a failed save once per encounter." },
-        { label: "Associated Skills", value: "History, Nature" },
-        { label: "Associated Languages", value: "Elven" },
+        { label: "Skills", value: "History, Nature" },
+        { label: "Languages", value: "Elven" },
       ],
     };
     const entries = references({
@@ -903,8 +903,8 @@ describe("real-data sheet overview", () => {
     const compact = entries.find((entry) => entry.id === "background")!;
     expect(compact.parts.map((part) => part.label)).toEqual([
       "Benefit",
-      "Associated Skills",
-      "Associated Languages",
+      "Skills",
+      "Languages",
     ]);
     expect(JSON.stringify(compact)).not.toContain(feature.description);
     expect(JSON.stringify(compact)).not.toContain("More story");
