@@ -964,19 +964,25 @@ Moradin, or an item a character holds), build and import or advertise it.
     `.4ecp` or a corrupted file.
   - **Expect:** the Campaigns panel under Game content spans both columns;
     the empty table keeps its headers with a muted "No campaigns in this
-    browser." row and Import campaign… below. A row shows the bold name
-    with the muted ID under it; Revision and Characters narrow and
-    right-aligned. The row buttons sit at the row's right end, the same
-    size and style as the content packs table's Replace…/Remove; a
+    browser." row and Import campaign… below. Columns read Name,
+    Description, Revision, Characters. A row shows the bold name with the
+    muted ID under it; Description (Pathfinder: "Replaced 4e's gods and
+    languages with their equivalents from Pathfinder's campaign
+    setting.") takes the spare width, wraps and is cut off after three
+    lines like the builder tables' Description column, and a campaign
+    without one (e.g. one created from a legacy save) has an empty cell;
+    Revision and Characters narrow and right-aligned. The row buttons sit
+    at the row's right end, the same size and style as the content packs table's Replace…/Remove; a
     disabled one is greyed with a hover reason. Esc in the inline remove
     confirmation closes only it. The confirmation sits under the row and
     the "Copied the invite link…" line under the table, a long URL
     wrapping; a bad file is a "Couldn't import <file>" toast. Right-click
     on a row opens only the browser's own menu.
   - **Wrong if:** the table or the Import button is hidden when empty, a
-    row button is missing instead of disabled, the buttons wrap
-    awkwardly or overflow at 140% zoom, the confirmation overlaps the
-    table, Esc also leaves the page, or the URL overflows.
+    row button is missing instead of disabled, the name is squeezed to
+    one word per line by the Description column at 140% zoom, the
+    buttons wrap awkwardly or overflow at 140% zoom, the confirmation
+    overlaps the table, Esc also leaves the page, or the URL overflows.
 - [ ] **Invite page: join and new character.**
   - **Where:** the copied invite link in a browser without the campaign:
     Join campaign, then New character in <campaign>; reopen the link; then

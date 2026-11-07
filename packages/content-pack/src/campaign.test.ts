@@ -26,6 +26,7 @@ import {
   MAX_CAMPAIGN_LEGACY_XML_BYTES,
   MAX_CAMPAIGN_PATCHES,
   MAX_CAMPAIGN_PATCH_VALUE_LENGTH,
+  MAX_CAMPAIGN_DESCRIPTION_LENGTH,
   campaignPatchOutcomes,
   campaignPatches,
   campaignRulePatchOutcomes,
@@ -389,6 +390,94 @@ describe("campaign documents", () => {
         restrictions: { ids: [], types: [] },
       }),
     ).toEqual([]);
+  });
+
+  it("carries a description as version 5, under the digest", async () => {
+    const plain = await buildCampaign(manifest, houseRuleSource, xml);
+    const described = await buildCampaign(
+      { ...manifest, description: "  Setting gods replace the stock ones.  " },
+      houseRuleSource,
+      xml,
+    );
+    // Trimmed at build; the lowest version the content needs.
+    expect(plain.version).toBe(3);
+    expect(plain).not.toHaveProperty("description");
+    expect(described.version).toBe(5);
+    expect(described.description).toBe("Setting gods replace the stock ones.");
+    expect(described.contentDigest).not.toBe(plain.contentDigest);
+    // Recorded, so the version-5 digest input never changes.
+    expect(described.contentDigest).toBe(
+      "083c3d5326642ce25890b35ab567b73ad104596b80386e2fa3cb86849749bffd",
+    );
+    expect((await validateCampaign(described)).valid).toBe(true);
+    const bytes = encodeCampaign(described);
+    expect(await decodeCampaign(buffer(bytes))).toEqual(described);
+    expect(await decodeCampaign(await gzip(bytes))).toEqual(described);
+    // The description is under the digest.
+    await expect(
+      decodeCampaign(jsonBuffer({ ...described, description: "Other." })),
+    ).rejects.toThrow(/Digest mismatch/);
+    // Only version 5 carries one, and version 5 always does.
+    await expect(
+      decodeCampaign(jsonBuffer({ ...plain, description: "Added." })),
+    ).rejects.toThrow("A version 3 campaign cannot carry a description");
+    await expect(
+      decodeCampaign(jsonBuffer({ ...described, description: undefined })),
+    ).rejects.toThrow("A version 5 campaign must have a description");
+    // Version 5 is version 3 plus the description: no alternate names.
+    expect(
+      (
+        await validateCampaign({
+          ...described,
+          patches: [{ id: "ID_SYN_DEITY_SUN", alternateName: "Sol" }],
+        })
+      ).errors,
+    ).toContain("A version 5 campaign cannot carry alternate names");
+  });
+
+  it("refuses an empty, multi-line or overlong description", async () => {
+    for (const [description, message] of [
+      ["   ", "A campaign description cannot be empty (leave it out)"],
+      [
+        "First line.\nSecond line.",
+        "A campaign description is one line of plain text, without control characters",
+      ],
+      [
+        "x".repeat(MAX_CAMPAIGN_DESCRIPTION_LENGTH + 1),
+        `A campaign description is at most ${MAX_CAMPAIGN_DESCRIPTION_LENGTH} characters`,
+      ],
+    ] as const)
+      await expect(
+        buildCampaign({ ...manifest, description }, houseRuleSource, xml),
+      ).rejects.toThrow(message);
+    const longest = await buildCampaign(
+      {
+        ...manifest,
+        description: "x".repeat(MAX_CAMPAIGN_DESCRIPTION_LENGTH),
+      },
+      houseRuleSource,
+      xml,
+    );
+    expect(longest.description).toHaveLength(MAX_CAMPAIGN_DESCRIPTION_LENGTH);
+    // Decode refuses an oversized one before validating it.
+    await expect(
+      decodeCampaign(
+        jsonBuffer({ ...longest, description: `${longest.description}x` }),
+      ),
+    ).rejects.toThrow(
+      `A campaign description is at most ${MAX_CAMPAIGN_DESCRIPTION_LENGTH} characters`,
+    );
+    const described = await buildCampaign(
+      { ...manifest, description: "Gods." },
+      houseRuleSource,
+      xml,
+    );
+    expect(
+      (await validateCampaign({ ...described, description: " Gods." })).errors,
+    ).toContain("A campaign description must be trimmed");
+    await expect(
+      decodeCampaign(jsonBuffer({ ...described, description: 5 })),
+    ).rejects.toThrow("Campaign field description must be a string");
   });
 
   it("composes a campaign profile whose digest binds the campaign", async () => {
@@ -797,8 +886,8 @@ describe("campaign field patches", () => {
       decodeCampaign(jsonBuffer({ ...v1, patches })),
     ).rejects.toThrow("A version 1 campaign cannot carry patches");
     await expect(
-      decodeCampaign(jsonBuffer({ ...built, version: 5 })),
-    ).rejects.toThrow("Unsupported campaign version: 5");
+      decodeCampaign(jsonBuffer({ ...built, version: 6 })),
+    ).rejects.toThrow("Unsupported campaign version: 6");
   });
 
   it("still decodes version 2 documents with their digests", async () => {

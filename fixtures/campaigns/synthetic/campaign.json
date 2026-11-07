@@ -1,6 +1,7 @@
 {
   "campaignId": "synthetic-setting",
   "name": "Synthetic Setting",
+  "description": "Setting gods replace the stock deities. Everything else is standard.",
   "revision": 1,
   "houseRules": "house-rules.xml",
   "restrict": {

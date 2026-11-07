@@ -85,9 +85,11 @@ optional (identified by magic bytes, as for `.4ecp`):
 
 ```text
 CampaignDocument
-├── format: "4ecb-campaign", version: 3 (1, 2 and 4 still read)
+├── format: "4ecb-campaign", version: 3, or 5 with a description
+│                       (1, 2 and 4 still read)
 ├── campaignId          1-32 pack-ID characters
 ├── name                pack-name rules
+├── description         the DM's plain-text summary; version 5 only
 ├── revision            integer 1..999,999; the DM bumps it on every change
 ├── restrictions
 │   ├── ids[]           record IDs not offered (legacy Restricted)
@@ -109,8 +111,9 @@ record's field patches (by field) before its rule patches, which keep the
 order authored because each sees the record the earlier ones left. IDs,
 types and field patch (ID, field) pairs must be unique ignoring case.
 
-**Versions.** `buildCampaign` writes version 3, which always carries
-`patches` (possibly empty). A version-1 document has no `patches` field and
+**Versions.** `buildCampaign` writes version 3, or version 5 for a campaign
+with a description (below), each always carrying `patches` (possibly
+empty). A version-1 document has no `patches` field and
 reads as having none; its digest input has no `patches` key, so version-1
 documents (installed, in backups, hosted) keep their digests and load
 unchanged. A version-2 document carries field patches only (no rule patches
@@ -121,6 +124,29 @@ version-1 reader would ignore patches, and a version-2 reader would refuse
 rule patches as malformed and treat a `prerequisites` patch as a specific
 of that name; such readers refuse the newer document as an unsupported
 version.
+
+**Description (version 5).** A campaign may carry `description`, the DM's
+short summary of it ("Replaced 4e's gods and languages with their
+equivalents from Pathfinder's campaign setting."), authored in
+`campaign.json` and shown as written in Settings → Campaigns' Description
+column and by `campaign inspect`. It is plain text: one line of 1-500
+characters (UTF-16 code units), trimmed (`buildCampaign` trims it and
+refuses one that is empty or whitespace), without control characters
+(newlines included); it is never read as markup. It sits in the digest
+input after `name`, only when present. A document with a description is
+version 5, which is version 3 plus the description (rule patches and
+`prerequisites` patches allowed, alternate names refused), and a version-5
+document always has one; versions 1-4 cannot carry one. Version 5 exists
+because a version-3 reader, which does not know the field, would compute the
+digest without it and refuse the document as a digest mismatch, as if it
+were corrupt or tampered with; with version 5 it says "Unsupported campaign
+version: 5", which tells the player to update the app. A campaign without a
+description is still built as version 3 with the digest version 3 always
+gave it, so rebuilding one changes nothing, and every earlier document keeps
+loading with its digest. `decodeCampaign` refuses a non-string or over-long
+description before validating. Legacy export drops it silently (the old
+builder's campaign block has only a name), and a campaign created from a
+legacy save has none.
 
 **Version 4 (read-only).** Version 4 added alternate-name patches
 `{id, alternateName}` (a setting's second name shown in a record's title,

@@ -69,9 +69,13 @@ pnpm content-tool campaign inspect x.4ecc
 pnpm content-tool advertise-campaign x.4ecc [--out-dir deploy]   # private-packs/campaigns/ + runtime-config campaigns
 ```
 
-Campaigns (D116): `campaign.json` is `{campaignId, name, revision,
-houseRules: "<xml path>", restrict: {ids, types: {"Deity": "campaign-only"}},
-patches: [{id, field, expect, value} | {id, rule}]}`; a field patch changes
+Campaigns (D116): `campaign.json` is `{campaignId, name, description?,
+revision, houseRules: "<xml path>", restrict: {ids, types: {"Deity":
+"campaign-only"}}, patches: [{id, field, expect, value} | {id, rule}]}`;
+`description` is the DM's one-line plain-text summary (at most 500
+characters, in the digest; it makes the document version 5, shown in
+Settings → Campaigns' Description column and printed by `campaign inspect`,
+dropped by legacy export); a field patch changes
 one field ("name", "prerequisites" or a specific such as "Languages") of a
 server record without copying it, and applies only while the record still
 has `expect`; a rule patch is one operation on its rule elements (`set`,

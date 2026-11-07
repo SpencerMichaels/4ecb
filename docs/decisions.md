@@ -5023,6 +5023,29 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   Pathfinder revision 7 removes the five alternate-name patches; languages
   are unchanged (36 field and 101 rule patches, all applying, 159 records
   restricted over the full pack).
+- **Amendment (2026-11-06): campaign descriptions** (owner decision). A
+  campaign carries an optional DM-written `description`, a short
+  plain-text summary in `campaign.json`, because the generated counts
+  can't say what the DM intends. It is part of the document and its
+  digest; one line of at most 500 trimmed characters, no control
+  characters, never markup. Settings → Campaigns shows it in a Description
+  column (owner: like the builder tables' short-description column,
+  reusing its three-line clamp; empty when absent) and `campaign inspect`
+  prints it; the invite page is left as it was, because the owner decided
+  the same day to remove it (a follow-up makes hosted campaigns install
+  automatically). Legacy export drops it silently (the legacy block has a
+  name only) and legacy import creates none. The document format is
+  version 5 for a campaign with a description, version 3 plus the field:
+  a version-3 reader would otherwise refuse the document as a digest
+  mismatch, as if it were corrupt, instead of as an unsupported version.
+  Builds still write the lowest version their content needs, so a
+  campaign without a description stays version 3 with its digest; versions
+  1-4 keep loading with theirs (a recorded version-5 digest is a test
+  golden). Pathfinder revision 8 adds "Replaced 4e's gods and languages
+  with their equivalents from Pathfinder's campaign setting." and is
+  otherwise unchanged (36 field and 101 rule patches, all applying, 159
+  records restricted over the full pack)
+  (`docs/content-pack-format.md`, Description).
 
 ### D117 — Right-click is a shortcut, never the only way to an action
 

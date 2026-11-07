@@ -123,7 +123,9 @@ until that revision is restored or a migration is previewed and adopted.
 
 A campaign is a DM's house-rule content and limits (for example, which
 deities exist) layered over the game content for the characters in it (D116).
-**Settings → Campaigns** lists the campaigns in this browser: name, newest
+**Settings → Campaigns** lists the campaigns in this browser: name, the DM's
+description of the campaign (empty when it has none; a long one is cut off
+after three lines, like the builder tables' Description column), newest
 installed revision, and how many library characters belong to it.
 
 - **Import campaign…** adds a `.4ecc` file the DM built with

@@ -86,6 +86,20 @@ describe("campaign.json", () => {
     });
   });
 
+  it("reads an optional description", () => {
+    const base = { campaignId: "x", name: "X", revision: 1 };
+    expect(
+      parseCampaignManifest({ ...base, description: "Gods change." }, "/")
+        .manifest,
+    ).toMatchObject({ description: "Gods change." });
+    expect(parseCampaignManifest(base, "/").manifest).not.toHaveProperty(
+      "description",
+    );
+    expect(() =>
+      parseCampaignManifest({ ...base, description: ["Gods"] }, "/"),
+    ).toThrow("campaign.json description must be a string");
+  });
+
   it("refuses unknown keys and other type allowances", () => {
     const base = { campaignId: "x", name: "X", revision: 1 };
     expect(() =>
@@ -199,8 +213,11 @@ describe("campaign build", () => {
       ["ID_4ECB_SYNTHETIC_RACE_1", "Short Description"],
       ["ID_4ECB_SYNTHETIC_RACE_1", "rule"],
     ]);
+    // The DM's description makes it version 5 (D116 amendment).
     expect(summarizeCampaign(campaign)).toMatchObject({
-      version: 3,
+      description:
+        "Setting gods replace the stock deities. Everything else is standard.",
+      version: 5,
       patches: 2,
       rulePatches: 1,
     });

@@ -1,5 +1,36 @@
 # Implementation status
 
+## Campaign descriptions; Pathfinder revision 8 (2026-11-06)
+
+D116 amendment, campaign descriptions. A campaign document may carry an
+optional DM-written `description` (content-pack `campaign.ts`: one line of
+at most `MAX_CAMPAIGN_DESCRIPTION_LENGTH` = 500 trimmed characters, no
+control characters, in the digest input after `name` only when present).
+`buildCampaign` trims it and writes `CAMPAIGN_DESCRIPTION_VERSION` = 5 for
+a campaign with one, still version 3 without (same digest as before);
+`decodeCampaign` reads versions 1-5, refuses a non-string or over-long
+description before validating, and `validateCampaign` refuses one on
+versions 1-4, a version-5 document without one, an untrimmed, empty or
+multi-line one, and alternate names on version 5. `content-tool`'s
+`campaign.json` accepts `description` and `campaign inspect` (and
+`campaign build`'s summary) prints it. Settings → Campaigns has a
+Description column (`CampaignSettings.tsx`, the builder tables'
+`.selection-table-summary` three-line clamp; empty cell when absent;
+Description takes the table's spare width). Legacy export drops it
+(`character-export.ts` note). The invite page is unchanged (owner: it is to
+be removed). The synthetic fixture campaign has a description, so
+`scripts/check.sh` builds and inspects a version-5 document. Pathfinder
+revision 8 (`content/campaigns/pathfinder/campaign.json`) adds "Replaced
+4e's gods and languages with their equivalents from Pathfinder's campaign
+setting."; rebuilt against `tmp/content/full-local.4ecp`: version 5,
+digest `bb5ec562aae392c1944ae96f090e78572bd35f3080316a199eaf713339daeaff`,
+36 field and 101 rule patches all applying, 159 records restricted (not
+advertised). Verification: `campaign.test.ts` (round trip plain and gzip,
+digest golden, tamper, version rules, limits), `campaign-command.test.ts`,
+`CampaignSettings.test.tsx`; `pnpm typecheck`, lint,
+`FOURECB_SKIP_PRINT_CHECK=1 scripts/check.sh` (244 files, 2,379 tests) and
+`pnpm review:verify` (177 rows passed) pass.
+
 ## Repetitive conditional-bonus rows combined (2026-11-06)
 
 Owner, on the drow invoker: the Scarf of Reconciliation's three "+2 item

@@ -32,18 +32,27 @@ import { readLimitedText, sha256 } from "./internal";
 
 export const CAMPAIGN_FORMAT = "4ecb-campaign";
 /**
- * The version `buildCampaign` writes. Version 2 added field `patches`;
- * version 3 added rule patches and the `prerequisites` field. Version 4
- * added alternate-name patches, since removed (D116 amendment): builds
- * write version 3 again, the lowest version their content needs.
+ * The version `buildCampaign` writes for a campaign without a description.
+ * Version 2 added field `patches`; version 3 added rule patches and the
+ * `prerequisites` field. Version 4 added alternate-name patches, since
+ * removed (D116 amendment): builds write the lowest version their content
+ * needs, version 3 or, with a description, `CAMPAIGN_DESCRIPTION_VERSION`.
  */
 export const CAMPAIGN_VERSION = 3;
 /**
- * Versions `decodeCampaign` reads; a version-1 document has no patches, a
- * version-2 document only field patches, and a version-4 document may carry
- * retired alternate-name patches, which load and are ignored.
+ * The version `buildCampaign` writes for a campaign with a `description`:
+ * version 3 plus the description (never alternate names). A version-3
+ * reader would refuse the document as a digest mismatch, as if it were
+ * corrupt; version 5 makes it say "unsupported version" instead.
  */
-export const CAMPAIGN_VERSIONS = [1, 2, 3, 4] as const;
+export const CAMPAIGN_DESCRIPTION_VERSION = 5;
+/**
+ * Versions `decodeCampaign` reads; a version-1 document has no patches, a
+ * version-2 document only field patches, a version-4 document may carry
+ * retired alternate-name patches, which load and are ignored, and only a
+ * version-5 document carries a description.
+ */
+export const CAMPAIGN_VERSIONS = [1, 2, 3, 4, 5] as const;
 export type CampaignVersion = (typeof CAMPAIGN_VERSIONS)[number];
 export const MAX_CAMPAIGN_ENCODED_BYTES = 16 * 1024 * 1024;
 export const MAX_CAMPAIGN_DECODED_BYTES = 16 * 1024 * 1024;
@@ -54,6 +63,8 @@ export const MAX_CAMPAIGN_RESTRICTED_IDS = 50_000;
 export const MAX_CAMPAIGN_TYPE_RULES = 32;
 export const MAX_CAMPAIGN_LEGACY_XML_BYTES = 8 * 1024 * 1024;
 export const MAX_CAMPAIGN_PATCHES = 10_000;
+/** Longest campaign description, in characters (UTF-16 code units). */
+export const MAX_CAMPAIGN_DESCRIPTION_LENGTH = 500;
 /** Longest patch field name (a specific's name). */
 export const MAX_CAMPAIGN_PATCH_FIELD_LENGTH = 120;
 /** Longest `expect` or `value` of a patch. */
@@ -206,6 +217,12 @@ export interface CampaignDocument {
   readonly version: CampaignVersion;
   readonly campaignId: string;
   readonly name: string;
+  /**
+   * The DM's short plain-text description (version 5 only, which always
+   * has one): one line of at most `MAX_CAMPAIGN_DESCRIPTION_LENGTH` trimmed
+   * characters, shown as written, never read as markup.
+   */
+  readonly description?: string;
   /** Orders a campaign's revisions; the DM bumps it on every change. */
   readonly revision: number;
   readonly restrictions: CampaignRestrictions;
@@ -230,6 +247,8 @@ export interface CampaignDocument {
 export interface CampaignManifest {
   readonly campaignId: string;
   readonly name: string;
+  /** Trimmed by `buildCampaign`; empty or whitespace only is an error. */
+  readonly description?: string;
   readonly revision: number;
   readonly restrictions: CampaignRestrictions;
   readonly patches?: readonly CampaignPatchEntry[];
@@ -274,6 +293,11 @@ function campaignDigestInput(
     version: campaign.version,
     campaignId: campaign.campaignId,
     name: campaign.name,
+    // Only version 5 has a description, so earlier documents keep their
+    // digests.
+    ...(campaign.description === undefined
+      ? {}
+      : { description: campaign.description }),
     revision: campaign.revision,
     restrictions: {
       ids: campaign.restrictions.ids,
@@ -774,6 +798,39 @@ function patchErrors(
   return errors;
 }
 
+/** Length and character errors of a campaign description. */
+function descriptionErrors(description: string | undefined): string[] {
+  if (description === undefined) return [];
+  const errors: string[] = [];
+  if (description.trim() === "")
+    errors.push("A campaign description cannot be empty (leave it out)");
+  else if (description !== description.trim())
+    errors.push("A campaign description must be trimmed");
+  if (description.length > MAX_CAMPAIGN_DESCRIPTION_LENGTH)
+    errors.push(
+      `A campaign description is at most ${MAX_CAMPAIGN_DESCRIPTION_LENGTH} characters`,
+    );
+  if (hasControlCharacters(description))
+    errors.push(
+      "A campaign description is one line of plain text, without control characters",
+    );
+  return errors;
+}
+
+/** Version 5 always carries a description, and no other version can. */
+function descriptionVersionErrors(
+  version: number,
+  description: string | undefined,
+): string[] {
+  if (version === CAMPAIGN_DESCRIPTION_VERSION)
+    return description === undefined
+      ? [`A version ${version} campaign must have a description`]
+      : [];
+  return description === undefined
+    ? []
+    : [`A version ${version} campaign cannot carry a description`];
+}
+
 /** What a version allows in `patches`, beyond `patchErrors`. */
 function patchVersionErrors(
   version: number,
@@ -835,8 +892,10 @@ export async function buildCampaign(
       .sort((left, right) => compareIgnoringCase(left.type, right.type)),
   };
   const patches = sortedPatches(manifest.patches ?? []);
+  const description = manifest.description?.trim();
   const errors = [
     ...campaignManifestErrors({ ...manifest, restrictions }),
+    ...descriptionErrors(description),
     ...legacyXmlErrors(legacyHouseRulesXml),
     ...houseRuleCountErrors(houseRules.entities.length),
     ...patchErrors(patches, houseRules.entities),
@@ -849,9 +908,14 @@ export async function buildCampaign(
   });
   const document: Omit<CampaignDocument, "contentDigest"> = {
     format: CAMPAIGN_FORMAT,
-    version: CAMPAIGN_VERSION,
+    // The lowest version the content needs (D116 amendments).
+    version:
+      description === undefined
+        ? CAMPAIGN_VERSION
+        : CAMPAIGN_DESCRIPTION_VERSION,
     campaignId: manifest.campaignId,
     name: manifest.name,
+    ...(description === undefined ? {} : { description }),
     revision: manifest.revision,
     restrictions,
     patches,
@@ -937,6 +1001,14 @@ function assertCampaignShape(
   ] as const)
     if (typeof value[field] !== "string")
       throw new Error(`Campaign field ${field} must be a string`);
+  if (value.description !== undefined) {
+    if (typeof value.description !== "string")
+      throw new Error("Campaign field description must be a string");
+    if (value.description.length > MAX_CAMPAIGN_DESCRIPTION_LENGTH)
+      throw new Error(
+        `A campaign description is at most ${MAX_CAMPAIGN_DESCRIPTION_LENGTH} characters`,
+      );
+  }
   if (typeof value.revision !== "number")
     throw new Error("Campaign field revision must be a number");
   const restrictions = isRecord(value.restrictions)
@@ -993,6 +1065,8 @@ export async function validateCampaign(
     ...campaignManifestErrors(campaign),
     ...legacyXmlErrors(campaign.legacyHouseRulesXml),
     ...houseRuleCountErrors(campaign.houseRules.entities.length),
+    ...descriptionVersionErrors(campaign.version, campaign.description),
+    ...descriptionErrors(campaign.description),
     ...patchVersionErrors(campaign.version, campaign.patches),
     ...patchErrors(campaign.patches ?? [], campaign.houseRules.entities),
   ];

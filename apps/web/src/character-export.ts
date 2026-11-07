@@ -27,7 +27,8 @@ const campaignRepository = new CampaignRepository();
  * (type rules already expanded to IDs, as legacy `Restricted` needs) and the
  * DM's house-rule XML. CountsAsDeity records travel inside that XML; the old
  * builder ignores the type, so the export says nothing about it (owner
- * decision). Undefined outside a campaign, and when the campaign's document
+ * decision). The legacy block has a name only, so the campaign's
+ * description is dropped silently (owner decision). Undefined outside a campaign, and when the campaign's document
  * isn't installed: restrictions without the house rules that replace them
  * would be a different campaign, so the save's own setting is kept as is.
  */

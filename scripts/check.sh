@@ -66,7 +66,9 @@ jq -e '.against.rulePatches == [{
     rule: {match: {name: "statadd", attributes: {name: "Speed", value: "+6"}}, set: {value: "+5"}}
   }]' "$scratch_dir/first.4ecc.json" >/dev/null
 pnpm --silent content-tool campaign inspect "$scratch_dir/first.4ecc" |
-  jq -e '.validation.valid and .version == 3 and .houseRules.recordCount == 4 and
+  jq -e '.validation.valid and .version == 5 and
+    .description == "Setting gods replace the stock deities. Everything else is standard." and
+    .houseRules.recordCount == 4 and
     .patches == 2 and .rulePatches == 1' >/dev/null
 # Record aliases (D116): the authored "Also Known As" is parsed at build.
 gzip -dc "$scratch_dir/first.4ecc" |

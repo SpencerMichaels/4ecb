@@ -65,9 +65,16 @@ function campaign(
   revision: number,
   campaignId = "synthetic-setting",
   name = "Synthetic Setting",
+  description?: string,
 ): Promise<CampaignDocument> {
   return buildCampaign(
-    { campaignId, name, revision, restrictions: { ids: [], types: [] } },
+    {
+      campaignId,
+      name,
+      ...(description === undefined ? {} : { description }),
+      revision,
+      restrictions: { ids: [], types: [] },
+    },
     source,
     "",
   );
@@ -206,7 +213,7 @@ describe("CampaignSettings", () => {
       [...container.querySelectorAll("thead th")].map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Name", "Revision", "Characters", "Actions"]);
+    ).toEqual(["Name", "Description", "Revision", "Characters", "Actions"]);
     expect(bodyRows().map(({ textContent }) => textContent)).toEqual([
       "No campaigns in this browser.",
     ]);
@@ -231,11 +238,37 @@ describe("CampaignSettings", () => {
     ).toEqual([
       [
         "Synthetic Settingsynthetic-setting",
+        "",
         "1",
         "0",
         "ExportCopy invite linkRemove",
       ],
     ]);
+  });
+
+  it("shows the DM's description in its own column", async () => {
+    storage.installed = [
+      await campaign(
+        1,
+        "synthetic-setting",
+        "Synthetic Setting",
+        "Setting gods replace the defaults.",
+      ),
+      await campaign(1, "another", "Another Setting"),
+    ];
+    await render();
+    expect(
+      [...container.querySelectorAll("thead th")].map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Name", "Description", "Revision", "Characters", "Actions"]);
+    const descriptions = bodyRows().map(({ cells }) => cells[1]!);
+    // A campaign without one has an empty cell.
+    expect(descriptions[0]!.innerHTML).toBe("");
+    // Clamped like the builder tables' Description column.
+    expect(
+      descriptions[1]!.querySelector(".selection-table-summary")?.textContent,
+    ).toBe("Setting gods replace the defaults.");
   });
 
   it("reports an import the way pack import does", async () => {
@@ -263,7 +296,7 @@ describe("CampaignSettings", () => {
     storage.members = { active: [{ campaignId: "used" }], deleted: [] };
     await render([hosted(free)]);
     const [freeRow, usedRow] = bodyRows();
-    expect(usedRow?.cells[2]?.textContent).toBe("1");
+    expect(usedRow?.cells[3]?.textContent).toBe("1");
 
     // No right-click menu: the row's actions are always-present buttons.
     expect(container.querySelector("[role=menu]")).toBeNull();

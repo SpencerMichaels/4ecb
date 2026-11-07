@@ -247,17 +247,9 @@
   grid-column: 1 / -1;
 }
 
-/* Settings → Campaigns: the name column takes the width; revision and
-   character counts stay narrow and right-aligned. */
-.campaign-table td:nth-child(2) {
-  width: auto;
-}
-
-.campaign-table td:first-child {
-  width: 100%;
-}
-
-.campaign-table th:not(:first-child),
+/* Settings → Campaigns: the Description column takes the width (the
+   content table's second column); revision and character counts stay
+   narrow and right-aligned. */
 .campaign-table-number {
   text-align: right;
   white-space: nowrap;

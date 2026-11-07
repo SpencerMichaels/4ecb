@@ -59,6 +59,7 @@ export interface CampaignSource {
 const MANIFEST_KEYS = new Set([
   "campaignId",
   "name",
+  "description",
   "revision",
   "houseRules",
   "restrict",
@@ -121,7 +122,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Reads a `campaign.json` value: `{campaignId, name, revision, houseRules?,
+ * Reads a `campaign.json` value: `{campaignId, name, description?,
+ * revision, houseRules?,
  * restrict?: {ids?: [...], types?: {"Deity": "campaign-only"}},
  * patches?: [{id, field, expect, value} | {id, rule}]}`. Unknown
  * keys are refused, so a misspelt restriction never silently restricts
@@ -140,6 +142,9 @@ export function parseCampaignManifest(
     throw new Error("campaign.json campaignId must be a string");
   if (typeof name !== "string")
     throw new Error("campaign.json name must be a string");
+  const { description } = value;
+  if (description !== undefined && typeof description !== "string")
+    throw new Error("campaign.json description must be a string");
   if (typeof revision !== "number")
     throw new Error("campaign.json revision must be a number");
   if (houseRules !== undefined && typeof houseRules !== "string")
@@ -175,6 +180,7 @@ export function parseCampaignManifest(
     manifest: {
       campaignId,
       name,
+      ...(description === undefined ? {} : { description }),
       revision,
       restrictions: { ids: ids as string[], types },
       ...(value.patches === undefined
@@ -425,6 +431,9 @@ export function summarizeCampaign(campaign: CampaignDocument) {
   return {
     campaignId: campaign.campaignId,
     name: campaign.name,
+    ...(campaign.description === undefined
+      ? {}
+      : { description: campaign.description }),
     revision: campaign.revision,
     version: campaign.version,
     contentDigest: campaign.contentDigest,

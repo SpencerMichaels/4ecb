@@ -150,8 +150,13 @@ export function CampaignSettings({
         <thead>
           <tr>
             <th scope="col">Name</th>
-            <th scope="col">Revision</th>
-            <th scope="col">Characters</th>
+            <th scope="col">Description</th>
+            <th className="campaign-table-number" scope="col">
+              Revision
+            </th>
+            <th className="campaign-table-number" scope="col">
+              Characters
+            </th>
             <th scope="col">
               <span className="visually-hidden">Actions</span>
             </th>
@@ -160,7 +165,7 @@ export function CampaignSettings({
         <tbody>
           {rows === undefined ? null : rows.length === 0 ? (
             <tr>
-              <td className="game-content-empty" colSpan={4}>
+              <td className="game-content-empty" colSpan={5}>
                 No campaigns in this browser.
               </td>
             </tr>
@@ -176,6 +181,14 @@ export function CampaignSettings({
                       <span className="content-row-source">
                         {row.campaignId}
                       </span>
+                    </td>
+                    <td>
+                      {row.campaign.description === undefined ? null : (
+                        // Clamped like the builder tables' Description.
+                        <span className="selection-table-summary">
+                          {row.campaign.description}
+                        </span>
+                      )}
                     </td>
                     <td className="campaign-table-number">{row.revision}</td>
                     <td className="campaign-table-number">{row.characters}</td>
@@ -209,7 +222,7 @@ export function CampaignSettings({
                   </tr>
                   {pendingRemove?.campaignId === row.campaignId ? (
                     <tr className="content-row-confirm">
-                      <td colSpan={4}>
+                      <td colSpan={5}>
                         <div
                           className="content-change-review"
                           onKeyDown={(event) => {

@@ -1,7 +1,8 @@
 {
   "campaignId": "pathfinder",
   "name": "Pathfinder (Inner Sea)",
-  "revision": 7,
+  "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting.",
+  "revision": 8,
   "houseRules": "house-rules.xml",
   "restrict": {
     "ids": [
