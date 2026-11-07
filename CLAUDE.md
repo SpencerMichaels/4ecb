@@ -443,7 +443,14 @@ separate header or level rail.
   except those the sheet prints on their own (a deck card or a listed
   feature's entry), flagged `shownElsewhere` by record ID (D078 note).
   Other choices (class, race, feat…) use the same frame via
-  `reference-entity-card` in `CandidateDetail.tsx`.
+  `reference-entity-card` in `CandidateDetail.tsx`. Where a card's fields
+  go — subheader line (`CardSubheader.tsx`), labelled body line, or dropped
+  as a duplicate — is one placement list per type in sheet-model
+  `entity-card-fields.ts` (`entityCardFields`, `layoutCardFields`; deities
+  via `deityCardFields`, rituals/items in `print-item-presentation.ts`), also
+  read by the printed reference entries. Subheader rules (D079 amendment):
+  only fields whose size doesn't vary widely, short fixed-size fields first,
+  one-word labels, never a field the title, type bar or footer already shows.
 - **Special cards.** `sheet-model/src/universal-action-cards.ts` synthesizes
   Action Point (stacked `Action Point`/`ALLY.`/`BEAST.` textstrings via
   `EvaluatedCharacter.textContributions`) and Second Wind, mirroring the
