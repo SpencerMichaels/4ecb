@@ -238,8 +238,9 @@ removed there while hosted) but moves no character into it; players choose
 it per character. Older campaign files stay in
 `deploy/private-packs/campaigns/` until the operator removes them. Whatever
 copies `deploy/` to the server must copy and keep
-`private-packs/campaigns/` (for the homelab, homenet's `apps/4ecb/pack.yml`;
-that change is made in the homenet repo).
+`private-packs/campaigns/`: for the homelab, homenet's `apps/4ecb/pack.yml`
+(run by `scripts/publish-content.sh`) copies the advertised campaign files and
+removes the others from the server, as it does for packs.
 
 **Updates.** Ask testers to back up their libraries before significant changes,
 then rebuild with a new tag as in step 2. Testers see **Reload and update**;

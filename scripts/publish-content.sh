@@ -12,7 +12,7 @@
 # The pack ID is derived from the inputs (local-wotc-corrected-<hash>), so it changes exactly
 # when the content does: characters pin a pack by ID and digest. Browsers on the server's
 # content switch to a new pack on their next load, and characters move to it once their
-# users review the update. The push copies only the advertised pack and removes older
+# users review the update. The push copies only the advertised pack and campaigns and removes older
 # ones from the server (homenet apps/4ecb/pack.yml). HOMENET_DIR overrides the homenet
 # checkout (default: ../homenet next to this checkout).
 set -euo pipefail
