@@ -793,7 +793,7 @@ live site.
   - **Expect:** "ENCOUNTER (2×) … POWER" on one line with the class block at
     the right; the card fits its print slot.
   - **Wrong if:** the bar wraps or the right-hand text is pushed off.
-- [ ] **Beldin: an augmentable power is one card (D118).**
+- [x] **Beldin: an augmentable power is one card (D118).**
   - **Where:** `?preview=1`, the power cards: Stygian Strike, Energizing
     Strike and Adept's Insight; then the Build tab at level 11, the paragon
     path's power choice, Stygian Strike's detail pane (and Energizing Strike's
