@@ -1012,7 +1012,12 @@ Moradin, or an item a character holds), build and import or advertise it.
     None with a hint and Settings link below. Choosing a campaign asks
     "Move <name> into <campaign>?" and None asks "Take <name> out of its
     campaign?"; Cancel leaves the select unchanged. Show all off lists only
-    the campaign's 62 deities; on, the stock ones are greyed and
+    the campaign's 77 deities (revision 9), in bands Inner Sea major
+    deities 19, Other deities 28, Elven 3, Dwarven 10 (Torag among them),
+    Eldest 9 and Archdevils 8, in that order; Barbatos's card reads
+    "Counts as: Bel", Moloch's "Counts as: Bane, Glasya", Dispater's has no
+    "Counts as" line, and each card's source reads "Pathfinder". On, the
+    stock ones are greyed and
     unselectable, labelled "Unavailable in this campaign". The worshipper has one
     issue, "Moradin is not used in this campaign.", whose Review opens the
     Deity choice; a restricted held item stays held, its issue's Review

@@ -34,6 +34,43 @@ unadvertised file never fetched, quiet failure then retry),
 typecheck, lint, format:check, `review:verify`, `scripts/check.sh`
 (print skipped). Owner visual check pending (Pass 24).
 
+## Pathfinder revision 9: archdevils and Eldest; renamed "Pathfinder" (2026-11-06)
+
+D116, owner decisions of 2026-11-06. `content/campaigns/pathfinder/`
+revision 9 completes the wiki's Deities Quick Reference tables: 15 new
+deities in the existing records' shape (alignment, domains and grants,
+"!Deity of the <Domain> domain" for the rest, Pantheon, original
+description). Eldest (8): Imbrex, Magdh, The Lost Prince, Ng, Shyka, Count
+Ranalc, The Green Mother, Ragadahn. Archdevils (7): Baalzebul, Barbatos,
+Belial, Dispater, Geryon, Mammon, Mephistopheles. Eight new CountsAsDeity
+records point at the Forgotten Realms Campaign Guide archdevils: the five
+same-name archdevils count as their namesakes (cards show no "Counts as"
+line for those), Barbatos as Bel, Geryon as Levistus, and Moloch now also
+counts as Glasya (`ID_FMP_DEITY_94`). No stock record has a worship clause
+naming any of these eight, so legality is unchanged. Torag's Pantheon is
+Dwarven (he is in both wiki tables), and his record moved into the Dwarven
+records. The campaign is renamed "Pathfinder" (was "Pathfinder (Inner
+Sea)"), and every house-rule record's source reads "Pathfinder"; the
+campaign ID stays `pathfinder` and the "Inner Sea major deities" Pantheon
+keeps the wiki table's name. Rebuilt against `tmp/content/full-local.4ecp`:
+version 5, digest
+`e8f2ef928c72b17e6948dad63a2576566781f114eee3732dea8a6995eb144204`, 163
+house-rule records (77 Deity, 59 CountsAsDeity, 27 Language), 36 field and
+101 rule patches all applying, 159 records restricted (135 deities), only
+the 12 known language-replacement warnings (not advertised). Private
+probe (`tmp/probe/pf/probe.ts`, ignored): the Deity choice offers exactly
+the 77 deities, in bands Inner Sea major deities 19, Other deities 28,
+Elven 3, Dwarven 10, Eldest 9, Archdevils 8; each grants its domains and
+counts-as records and each counts-as name meets its worship clause;
+Barbatos's card reads "Counts as: Bel", Moloch's "Bane, Glasya".
+Known issue: band order. Records keep the intended order (Inner Sea
+major, Other, Elven, Dwarven, Eldest, Archdevils by first record), but the
+composed profile is sorted by entity ID (content-pack `index.ts`), so
+`deityTableGroup`'s first-mention order currently shows Inner Sea, Other,
+Dwarven, Archdevils, Eldest, Elven (revision 8 already showed Dwarven
+before Elven). A builder fix to order bands by source record position is
+queued separately. Owner visual check pending.
+
 ## Campaign descriptions; Pathfinder revision 8 (2026-11-06)
 
 D116 amendment, campaign descriptions. A campaign document may carry an
