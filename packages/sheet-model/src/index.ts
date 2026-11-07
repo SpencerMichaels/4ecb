@@ -660,6 +660,21 @@ function values(
   );
 }
 
+/**
+ * A psionic character's daily pool (the "Power Points" class-feature stat),
+ * listed only when it is above 0, as legacy's power list printed it
+ * (CharTracker PanelModelPowerList).
+ */
+export const POWER_POINTS_RESOURCE = "Power Points";
+function withPowerPoints(
+  resources: readonly SheetValue[],
+  value: string | undefined,
+): SheetValue[] {
+  return value !== undefined && Number(value) > 0
+    ? [...resources, { label: POWER_POINTS_RESOURCE, value }]
+    : [...resources];
+}
+
 /** The content's records by id, built once per content. */
 function entityMap(
   entities: readonly ContentEntity[],
@@ -1964,14 +1979,17 @@ export function buildSheetModel(
       return score === undefined ? [] : [{ label: name, value: String(score) }];
     }),
     defenses: values(snapshot.stats, ["AC", "Fortitude", "Reflex", "Will"]),
-    resources: values(snapshot.stats, [
-      "Hit Points",
-      "Healing Surges",
-      "Healing Surge Value",
-      "Action Point",
-      "Speed",
-      "Initiative",
-    ]),
+    resources: withPowerPoints(
+      values(snapshot.stats, [
+        "Hit Points",
+        "Healing Surges",
+        "Healing Surge Value",
+        "Action Point",
+        "Speed",
+        "Initiative",
+      ]),
+      snapshot.stats[POWER_POINTS_RESOURCE],
+    ),
     senses: values(snapshot.stats, ["Passive Insight", "Passive Perception"]),
     skills: values(snapshot.stats, SKILLS),
     equipment: lootPresentations.flatMap(({ loot, referenceKind }) =>
@@ -2657,14 +2675,17 @@ export function buildEvaluatedSheetModel(
       ["Reflex", "Reflex Defense", "Reflex"],
       ["Will", "Will Defense", "Will"],
     ]),
-    resources: evaluatedValues([
-      "Hit Points",
-      "Healing Surges",
-      "Healing Surge Value",
-      "Action Point",
-      "Speed",
-      "Initiative",
-    ]),
+    resources: withPowerPoints(
+      evaluatedValues([
+        "Hit Points",
+        "Healing Surges",
+        "Healing Surge Value",
+        "Action Point",
+        "Speed",
+        "Initiative",
+      ]),
+      evaluatedStat(evaluation, POWER_POINTS_RESOURCE),
+    ),
     senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
     skills: evaluatedValues(SKILLS),
     equipment: inventoryRows.flatMap(({ entry, name, referenceKind }) =>

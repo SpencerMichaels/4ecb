@@ -1,5 +1,25 @@
 # Implementation status
 
+## Printed psionic Power Points pool (2026-11-06)
+
+A character whose evaluated "Power Points" stat is above 0 (psionic
+augmentation classes, hybrids, Psionic Dabbler) gets the pool on the
+printed sheet, as legacy printed it beside the power list (CharTracker
+`PanelModelPowerList`, `GetCharStat("Power Points")`). sheet-model lists
+it in `resources` as "Power Points" only when above 0
+(`POWER_POINTS_RESOURCE`, both the evaluated and legacy-cache models); the
+UI only reads it. Page 1's Health stat group carries a fifth tile, "Power
+pts", after Surge HP (the numeric band's columns become 5/5/1/1 for these
+characters only, `.ov-numeric-band.has-power-points`); the play
+scratchpad's Health panel adds a "Power points ___ / N" pencil line under
+Item dailies. Others print exactly as before. The engine's value matches
+the legacy cache on the psionic samples (Beldin Hammertongue 11: 9,
+Azreille: 4; `parity:baseline` unchanged). Verification:
+`overview.test.ts` and `sheet-gaps.test.ts` (listed only above 0, both
+models), `SheetOverview.test.tsx` (tile, write-in, band class, absent for
+others). Owner visual check pending ("Beldin: printed Power Points" in
+`visual-review-checklist.md`).
+
 ## Scratchpad magic item daily power tracker (2026-11-06)
 
 The play scratchpad's Health panel prints an "Item dailies" row on every

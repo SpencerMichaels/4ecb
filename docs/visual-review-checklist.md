@@ -684,6 +684,23 @@ live site.
     hard to tell from the solid ones (or vanish in print), the note crowds
     the boxes, or the Health panel's height pushes power tracking to an
     extra page it did not need before.
+- [ ] **Beldin: printed Power Points (2026-11-06).** Added 2026-11-06; the
+      value and its absence below 1 are unit-tested (`overview.test.ts`,
+      `sheet-gaps.test.ts`, `SheetOverview.test.tsx`), this is the tile's
+      and the write-in's look and fit.
+  - **Where:** Beldin Hammertongue 11, `?preview=1`: page 1's numeric band,
+    then the Play scratchpad's Health panel; at 140% zoom and in both
+    themes, then the browser's print preview in Letter and in A4. Compare
+    with a non-psionic (Hu Sheng-Ming Level 8).
+  - **Expect:** page 1's Health group shows Max HP, Bloodied, Surges, Surge
+    HP, then "Power pts" 9, its tiles the same size as the Defenses tiles;
+    Initiative and Speed keep their single tiles. On the scratchpad, under
+    Item dailies, one line "Power points ____ / 9". Hu's page 1 and
+    scratchpad are unchanged (no tile, no line).
+  - **Wrong if:** "Power pts" or any Health/Defenses label is cut off with
+    an ellipsis, the band overflows the page width, the write-in line wraps
+    or its blank is invisible in print, or the Health panel's growth pushes
+    power tracking to an extra page.
 
 ## Pass 11: Natan (`natan`)
 

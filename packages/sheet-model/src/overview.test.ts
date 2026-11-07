@@ -611,6 +611,19 @@ describe("printed overview data", () => {
       value: "—",
     });
   });
+  it("lists a Power Points pool among the resources only above 0", () => {
+    const pool = (value?: string) =>
+      buildSheetModel({
+        ...snapshot,
+        stats: {
+          "Hit Points": "68",
+          ...(value === undefined ? {} : { "Power Points": value }),
+        },
+      }).resources.find(({ label }) => label === "Power Points");
+    expect(pool("9")).toEqual({ label: "Power Points", value: "9" });
+    expect(pool("0")).toBeUndefined();
+    expect(pool()).toBeUndefined();
+  });
   it("excludes power-access/shared-use wrappers by their rules, not their names", () => {
     const wrapper = {
       ...feat,

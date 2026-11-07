@@ -373,3 +373,25 @@ describe("item sets", () => {
     ).toEqual(["CROWN", "SET", "CLOAK", "OTHER"]);
   });
 });
+
+describe("power points", () => {
+  const pool = (value: number) =>
+    buildEvaluatedSheetModel(
+      snapshot,
+      build,
+      {
+        ...evaluation,
+        stats: {
+          "Power Points": { name: "Power Points", value, contributions: [] },
+        },
+      } as unknown as EvaluatedCharacter,
+      content,
+    ).resources.find(({ label }) => label === "Power Points");
+  it("lists the evaluated pool among the resources only above 0", () => {
+    expect(pool(9)).toEqual({ label: "Power Points", value: "9" });
+    expect(pool(0)).toBeUndefined();
+    expect(
+      sheet.resources.find(({ label }) => label === "Power Points"),
+    ).toBeUndefined();
+  });
+});

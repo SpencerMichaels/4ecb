@@ -27,6 +27,7 @@ import {
   combinedConditionalModifiers,
   CONDITIONAL_MODIFIERS_HEADING,
   featureChoiceText,
+  POWER_POINTS_RESOURCE,
   powerActionRank,
   sheetHiddenSections,
   withoutDanglingChoiceLeadIn,
@@ -175,6 +176,9 @@ function Paper({
 const find = (values: readonly SheetValue[], label: string) =>
   values.find((value) => value.label.toLowerCase() === label.toLowerCase())
     ?.value ?? "—";
+/** A psionic's daily Power Points pool; absent below 1 (sheet-model). */
+const powerPoints = (model: CharacterSheetModel) =>
+  model.resources.find(({ label }) => label === POWER_POINTS_RESOURCE)?.value;
 const signedBonus = (value: string) =>
   /^\d+(?:\.\d+)?$/.test(value.trim()) ? `+${value.trim()}` : value;
 const featureGroups: Readonly<Record<string, string>> = {
@@ -1011,7 +1015,14 @@ function Summary({
           ))}
         </div>
       </section>
-      <section className="ov-numeric-band" aria-label="Combat statistics">
+      <section
+        className={
+          powerPoints(model) === undefined
+            ? "ov-numeric-band"
+            : "ov-numeric-band has-power-points"
+        }
+        aria-label="Combat statistics"
+      >
         <StatGroup
           label="Defenses"
           tone="defenses"
@@ -1044,6 +1055,9 @@ function Summary({
               label: "Surge HP",
               value: find(model.resources, "Healing Surge Value"),
             },
+            ...(powerPoints(model) === undefined
+              ? []
+              : [{ label: "Power pts", value: powerPoints(model)! }]),
           ]}
         />
         <StatGroup
@@ -1564,6 +1578,17 @@ function ItemDailies({ level }: { level: number }) {
     </div>
   );
 }
+/** A pencil line for the psionic pool's remaining points, out of the total. */
+function PowerPointsWriteIn({ total }: { total: string | undefined }) {
+  if (total === undefined) return null;
+  return (
+    <div className="ov-power-points" role="group" aria-label="Power points">
+      <span>Power points</span>
+      <span className="ov-power-points-blank" />
+      <span>/ {total}</span>
+    </div>
+  );
+}
 function Scratchpad({
   model,
   name,
@@ -1780,6 +1805,7 @@ function Scratchpad({
                   </span>
                 </div>
                 <ItemDailies level={model.overview!.level} />
+                <PowerPointsWriteIn total={powerPoints(model)} />
               </div>
             </Panel>
           </div>

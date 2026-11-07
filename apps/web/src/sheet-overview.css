@@ -216,6 +216,13 @@ body:has(.sp-prototype) {
   gap: 0.12in;
   margin-top: 0.1in;
 }
+/* A psionic's Health group carries a fifth tile, Power pts. */
+.ov-numeric-band.has-power-points {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(0, 1fr) minmax(
+      0,
+      1fr
+    );
+}
 /* One quiet pane accent; numeric-band groups retain their distinguishing colors. */
 .sheet-overview .ov-paper[aria-label^="Character summary"] {
   --ov-accent: #3e5f7c;
@@ -1509,6 +1516,18 @@ body:has(.sp-prototype) {
 /* Milestone uses are extra: dashed so they read apart from the tier's. */
 .ov-item-dailies .ov-milestone-box {
   border-style: dashed;
+}
+/* Psionics only: its own line, a pencil blank out of the daily pool. */
+.ov-power-points {
+  flex-basis: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 0.06in;
+  font-size: 9pt;
+}
+.ov-power-points-blank {
+  width: 0.5in;
+  border-bottom: 1px solid var(--sp-border);
 }
 .ov-item-dailies-note {
   font-size: 7.5pt;

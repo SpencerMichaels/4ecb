@@ -1512,6 +1512,43 @@ describe("real-data sheet overview", () => {
     expect(heroic.row).toContain("one per item");
     expect(dailies(25).row).toContain('aria-label="3 uses per day"');
   });
+  it("prints a psionic's Power Points pool on page 1 and as a scratchpad write-in", () => {
+    const render = (resources: typeof model.resources) =>
+      renderToStaticMarkup(
+        <SheetOverview
+          hiddenSections={EVERY_SECTION}
+          model={{ ...model, resources }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+        />,
+      );
+    const plain = render(model.resources);
+    expect(plain).toContain('class="ov-numeric-band"');
+    expect(plain).not.toContain("Power pts");
+    expect(plain).not.toContain('aria-label="Power points"');
+    const psionic = render([
+      ...model.resources,
+      { label: "Power Points", value: "9" },
+    ]);
+    const band = psionic
+      .split('class="ov-numeric-band has-power-points"')[1]!
+      .split('aria-label="Initiative"')[0]!;
+    expect(band).toContain("<dt>Surge HP</dt>");
+    expect(band).toContain("<dt>Power pts</dt><dd>9</dd>");
+    const writeIn = psionic
+      .split('class="ov-health-trackers"')[1]!
+      .split('aria-label="Power points"')[1]!
+      .split("</div>")[0]!;
+    expect(writeIn).toContain(
+      '<span>Power points</span><span class="ov-power-points-blank"></span><span>/ 9</span>',
+    );
+    expect(
+      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
+    ).toMatch(
+      /\.ov-numeric-band\.has-power-points \{\s*grid-template-columns: minmax\(0, 5fr\) minmax\(0, 5fr\)/,
+    );
+  });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
