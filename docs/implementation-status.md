@@ -8,11 +8,11 @@ printed sheet, as legacy printed it beside the power list (CharTracker
 `PanelModelPowerList`, `GetCharStat("Power Points")`). sheet-model lists
 it in `resources` as "Power Points" only when above 0
 (`POWER_POINTS_RESOURCE`, both the evaluated and legacy-cache models); the
-UI only reads it. Page 1's Health stat group carries a fifth tile, "Power
-pts", after Surge HP (the numeric band's columns become 5/5/1/1 for these
+UI only reads it. Page 1's Health stat group carries a fifth tile, "Pwr
+Pts" (the longer "Power pts" was cut off), after Surge HP (the numeric band's columns become 5/5/1/1 for these
 characters only, `.ov-numeric-band.has-power-points`); the play
-scratchpad's Health panel adds a "Power points ___ / N" pencil line under
-Item dailies. Others print exactly as before. The engine's value matches
+scratchpad's Health panel adds a "___ / N" pencil blank labelled "Power
+points" in its tracker row, between Item dailies and Action points. Others print exactly as before. The engine's value matches
 the legacy cache on the psionic samples (Beldin Hammertongue 11: 9,
 Azreille: 4; `parity:baseline` unchanged). Verification:
 `overview.test.ts` and `sheet-gaps.test.ts` (listed only above 0, both
@@ -23,10 +23,12 @@ others). Owner visual check pending ("Beldin: printed Power Points" in
 ## Scratchpad magic item daily power tracker (2026-11-06)
 
 The play scratchpad's Health panel prints an "Item dailies" row on every
-character, under Death saves and Action points: the tier's magic item
-daily uses (PHB 226: one at heroic, two at paragon, three at epic, each
-from a different item, "one per item"), then "Milestone" and four dashed
-boxes for the extra use each milestone grants. Blank pencil boxes, no live
+character, in one tracker row of marks over labels (owner layout,
+2026-11-06: Death saves, Item dailies, a psionic's Power points, Action
+points; two lines tall): the tier's magic item daily uses (PHB 226: one at
+heroic, two at paragon, three at epic, each from a different item) over
+"Item dailies", then four dashed boxes over "Milestones" for the extra use
+each milestone grants. Blank pencil boxes, no live
 state (play state is M6). Counts mirror the legacy CharTracker
 `PanelModelMagicItemList` textstrings (`USAGE_Magic Item <Tier> Use Box
 1–3`, `<Tier> Milestone Box 1–4`, reset by `ApplyExtendedRest`) and come

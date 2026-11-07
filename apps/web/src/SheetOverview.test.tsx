@@ -1499,7 +1499,8 @@ describe("real-data sheet overview", () => {
         .split("</div>")[0]!;
       return {
         row,
-        base: row.split("Milestone")[0]!.match(/class="ov-daily-box"/g)?.length,
+        base: row.split("milestone uses")[0]!.match(/class="ov-daily-box"/g)
+          ?.length,
         milestone: row.match(/class="ov-daily-box ov-milestone-box"/g)?.length,
       };
     };
@@ -1509,7 +1510,28 @@ describe("real-data sheet overview", () => {
     expect(heroic.milestone).toBe(4);
     expect(heroic.row).toContain("Item dailies");
     expect(heroic.row).toContain('aria-label="1 use per day"');
-    expect(heroic.row).toContain("one per item");
+    expect(heroic.row).toContain("Milestones");
+    // One row: death saves, item dailies, then action points.
+    const trackers = renderToStaticMarkup(
+      <SheetOverview
+        hiddenSections={EVERY_SECTION}
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+      />,
+    ).split('class="ov-health-trackers"')[1]!;
+    expect(
+      ["Death saves", "Item dailies", "Action points"].map((label) =>
+        trackers.indexOf(label),
+      ),
+    ).toEqual(
+      [
+        ...["Death saves", "Item dailies", "Action points"].map((label) =>
+          trackers.indexOf(label),
+        ),
+      ].sort((a, b) => a - b),
+    );
     expect(dailies(25).row).toContain('aria-label="3 uses per day"');
   });
   it("prints a psionic's Power Points pool on page 1 and as a scratchpad write-in", () => {
@@ -1525,7 +1547,7 @@ describe("real-data sheet overview", () => {
       );
     const plain = render(model.resources);
     expect(plain).toContain('class="ov-numeric-band"');
-    expect(plain).not.toContain("Power pts");
+    expect(plain).not.toContain("Pwr Pts");
     expect(plain).not.toContain('aria-label="Power points"');
     const psionic = render([
       ...model.resources,
@@ -1535,13 +1557,13 @@ describe("real-data sheet overview", () => {
       .split('class="ov-numeric-band has-power-points"')[1]!
       .split('aria-label="Initiative"')[0]!;
     expect(band).toContain("<dt>Surge HP</dt>");
-    expect(band).toContain("<dt>Power pts</dt><dd>9</dd>");
+    expect(band).toContain("<dt>Pwr Pts</dt><dd>9</dd>");
     const writeIn = psionic
       .split('class="ov-health-trackers"')[1]!
       .split('aria-label="Power points"')[1]!
       .split("</div>")[0]!;
     expect(writeIn).toContain(
-      '<span>Power points</span><span class="ov-power-points-blank"></span><span>/ 9</span>',
+      '<span class="ov-tracker-marks"><span class="ov-power-points-blank"></span>/ 9</span><span>Power points</span>',
     );
     expect(
       readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
@@ -1570,11 +1592,11 @@ describe("real-data sheet overview", () => {
       `<span>Surges</span><strong>${model.resources.find((value) => value.label === "Healing Surges")!.value}</strong>`,
     );
     const ap = html
-      .split('class="ov-action-point-count"')[1]!
+      .split('class="ov-tracker ov-action-point-count"')[1]!
       .split("</div>")[0]!;
     expect(ap.match(/lucide-circle/g)).toHaveLength(3);
     expect(ap).not.toContain("<i");
-    const death = html.split('class="sp-death-saves"')[1]!.split("</div>")[0]!;
+    const death = html.split('class="ov-tracker sp-death-saves"')[1]!.split("</div>")[0]!;
     expect(death.indexOf("lucide-skull")).toBeLessThan(
       death.indexOf("Death saves"),
     );

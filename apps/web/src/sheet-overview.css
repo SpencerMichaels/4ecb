@@ -1466,46 +1466,40 @@ body:has(.sp-prototype) {
   line-height: 1;
   color: var(--sp-muted);
 }
-.ov-scratch-health .sp-death-saves {
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: 0;
-  font-size: 9pt;
-}
+/* One row of pencil trackers, marks over labels: death saves, item dailies,
+   a psionic's power points, action points. */
 .ov-health-trackers {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 0.1in;
   margin-top: auto;
   padding-top: 0.04in;
 }
-.ov-action-point-count {
+.ov-scratch-health .ov-tracker {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.08in;
+  gap: 0.04in;
+  margin: 0;
   font-size: 9pt;
 }
-/* Its own line under death saves and action points, on every character. */
-.ov-item-dailies {
-  flex-basis: 100%;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.04in 0.08in;
-  font-size: 9pt;
-}
-.ov-item-dailies-boxes,
-.ov-item-dailies-milestone {
+.ov-tracker-marks,
+.ov-item-dailies-boxes {
   display: flex;
   align-items: center;
   gap: 0.04in;
+  min-height: 0.2in;
 }
-.ov-item-dailies-milestone {
-  gap: 0.06in;
-  margin-left: auto;
+.ov-item-dailies .ov-tracker-marks,
+.ov-tracker-labels {
+  gap: 0.12in;
+}
+/* Each label sits under its own group of boxes. */
+.ov-tracker-labels {
+  display: flex;
+  justify-content: space-between;
+  align-self: stretch;
 }
 .ov-item-dailies .ov-daily-box {
   width: 0.2in;
@@ -1517,21 +1511,13 @@ body:has(.sp-prototype) {
 .ov-item-dailies .ov-milestone-box {
   border-style: dashed;
 }
-/* Psionics only: its own line, a pencil blank out of the daily pool. */
-.ov-power-points {
-  flex-basis: 100%;
-  display: flex;
-  align-items: baseline;
-  gap: 0.06in;
-  font-size: 9pt;
+.ov-power-points .ov-tracker-marks {
+  align-items: flex-end;
 }
 .ov-power-points-blank {
   width: 0.5in;
+  align-self: stretch;
   border-bottom: 1px solid var(--sp-border);
-}
-.ov-item-dailies-note {
-  font-size: 7.5pt;
-  color: var(--sp-muted);
 }
 .ov-effects-table {
   table-layout: fixed;

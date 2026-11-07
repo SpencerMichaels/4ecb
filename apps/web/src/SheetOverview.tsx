@@ -1057,7 +1057,7 @@ function Summary({
             },
             ...(powerPoints(model) === undefined
               ? []
-              : [{ label: "Power pts", value: powerPoints(model)! }]),
+              : [{ label: "Pwr Pts", value: powerPoints(model)! }]),
           ]}
         />
         <StatGroup
@@ -1550,22 +1550,19 @@ function ItemDailies({ level }: { level: number }) {
   const uses = magicItemDailyUses(level);
   return (
     <div
-      className="ov-item-dailies"
+      className="ov-tracker ov-item-dailies"
       role="group"
       aria-label="Magic item daily powers"
     >
-      <span className="ov-item-dailies-label">Item dailies</span>
-      <span
-        className="ov-item-dailies-boxes"
-        aria-label={`${uses} ${uses === 1 ? "use" : "uses"} per day`}
-      >
-        {Array.from({ length: uses }, (_, index) => (
-          <i className="ov-daily-box" key={index} />
-        ))}
-      </span>
-      <span className="ov-item-dailies-note">one per item</span>
-      <span className="ov-item-dailies-milestone">
-        Milestone
+      <span className="ov-tracker-marks">
+        <span
+          className="ov-item-dailies-boxes"
+          aria-label={`${uses} ${uses === 1 ? "use" : "uses"} per day`}
+        >
+          {Array.from({ length: uses }, (_, index) => (
+            <i className="ov-daily-box" key={index} />
+          ))}
+        </span>
         <span
           className="ov-item-dailies-boxes"
           aria-label={`${MAGIC_ITEM_MILESTONE_USES} milestone uses`}
@@ -1575,17 +1572,26 @@ function ItemDailies({ level }: { level: number }) {
           ))}
         </span>
       </span>
+      <span className="ov-tracker-labels">
+        <span>Item dailies</span>
+        <span>Milestones</span>
+      </span>
     </div>
   );
 }
-/** A pencil line for the psionic pool's remaining points, out of the total. */
+/** A pencil blank for the psionic pool's remaining points, out of the total. */
 function PowerPointsWriteIn({ total }: { total: string | undefined }) {
   if (total === undefined) return null;
   return (
-    <div className="ov-power-points" role="group" aria-label="Power points">
+    <div
+      className="ov-tracker ov-power-points"
+      role="group"
+      aria-label="Power points"
+    >
+      <span className="ov-tracker-marks">
+        <span className="ov-power-points-blank" />/ {total}
+      </span>
       <span>Power points</span>
-      <span className="ov-power-points-blank" />
-      <span>/ {total}</span>
     </div>
   );
 }
@@ -1788,24 +1794,27 @@ function Scratchpad({
                 <div>Temporary HP</div>
               </div>
               <div className="ov-health-trackers">
-                <div className="sp-death-saves">
-                  <span>
+                <div className="ov-tracker sp-death-saves">
+                  <span className="ov-tracker-marks">
                     {[0, 1, 2].map((n) => (
                       <Icon key={n} name="skull" />
                     ))}
                   </span>
                   Death saves
                 </div>
-                <div className="ov-action-point-count">
-                  Action points
-                  <span aria-label="Three action point marks">
+                <ItemDailies level={model.overview!.level} />
+                <PowerPointsWriteIn total={powerPoints(model)} />
+                <div className="ov-tracker ov-action-point-count">
+                  <span
+                    className="ov-tracker-marks"
+                    aria-label="Three action point marks"
+                  >
                     {[0, 1, 2].map((n) => (
                       <Icon key={n} name="circle" />
                     ))}
                   </span>
+                  Action points
                 </div>
-                <ItemDailies level={model.overview!.level} />
-                <PowerPointsWriteIn total={powerPoints(model)} />
               </div>
             </Panel>
           </div>

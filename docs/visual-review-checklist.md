@@ -675,14 +675,14 @@ live site.
     zoom and in both themes; then the browser's print preview in Letter
     and in A4 (Settings → paper size). Repeat on a paragon character
     (Beldin Hammertongue 11 or Max Unger 12).
-  - **Expect:** under Death saves and Action points, one line: "Item
-    dailies", one box at heroic (two at paragon, three at epic), a small
-    grey "one per item", then on the right "Milestone" and four dashed
-    boxes. Boxes match the daily power boxes below in size and stroke. The
+  - **Expect:** one tracker row, two lines tall, marks over labels: three
+    skulls over "Death saves", then one box at heroic (two at paragon,
+    three at epic) over "Item dailies" beside four dashed boxes over
+    "Milestones", then three circles over "Action points" on the right. Boxes match the daily power boxes below in size and stroke. The
     tracking tables below still start on the first page where they did.
   - **Wrong if:** the row wraps at either paper size, the dashed boxes are
-    hard to tell from the solid ones (or vanish in print), the note crowds
-    the boxes, or the Health panel's height pushes power tracking to an
+    hard to tell from the solid ones (or vanish in print), a label doesn't
+    sit under its marks, or the Health panel's height pushes power tracking to an
     extra page it did not need before.
 - [ ] **Beldin: printed Power Points (2026-11-06).** Added 2026-11-06; the
       value and its absence below 1 are unit-tested (`overview.test.ts`,
@@ -693,11 +693,12 @@ live site.
     themes, then the browser's print preview in Letter and in A4. Compare
     with a non-psionic (Hu Sheng-Ming Level 8).
   - **Expect:** page 1's Health group shows Max HP, Bloodied, Surges, Surge
-    HP, then "Power pts" 9, its tiles the same size as the Defenses tiles;
-    Initiative and Speed keep their single tiles. On the scratchpad, under
-    Item dailies, one line "Power points ____ / 9". Hu's page 1 and
+    HP, then "Pwr Pts" 9, its tiles the same size as the Defenses tiles;
+    Initiative and Speed keep their single tiles. On the scratchpad's tracker
+    row, "____ / 9" over "Power points" between Item dailies and Action
+    points, the row still two lines tall. Hu's page 1 and
     scratchpad are unchanged (no tile, no line).
-  - **Wrong if:** "Power pts" or any Health/Defenses label is cut off with
+  - **Wrong if:** "Pwr Pts" or any Health/Defenses label is cut off with
     an ellipsis, the band overflows the page width, the write-in line wraps
     or its blank is invisible in print, or the Health panel's growth pushes
     power tracking to an extra page.
