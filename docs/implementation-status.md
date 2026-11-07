@@ -1707,16 +1707,24 @@ leaving out what was placed or dropped.
   Languages, Skills (Skill Bonuses). The stat grid (`entity-stat-grid`,
   its CSS and `StatGrid`) is gone with the last race, class and
   background use. Content: `content/corrections/9J-race-speeds.part`
-  gives the Pixie the Speed "4 squares, fly 6 (altitude limit 1)" (it was a
+  gives the Pixie the Speed "4 squares, fly 6 (Limited Flight)" (it was a
   119-character rule sentence, every other race's is "6 squares" or
-  similar) and moves "You cannot use your fly speed if you are carrying
-  more than a normal load." to the end of its description (the card's
-  About text); the Speed specific is display text only (the evaluated
-  speed comes from the race's statadd). The pack was rebuilt
-  (`build-private-content.sh`, valid); `pnpm parity:baseline` shows no
-  new mismatch (the baseline names the previous pack until it is
-  re-accepted). Tests: `entity-card-fields.test.tsx`,
-  `StructuredEntityBody.test.ts`.
+  similar); the Speed specific is display text only (the evaluated
+  speed comes from the race's statadd). The rule is a new Racial Trait,
+  Limited Flight (`ID_4ECB_RACIAL_TRAIT_LIMITED_FLIGHT`, Heroes of the
+  Feywild; owner decision 2026-11-06): altitude limit 1 (you fall at the
+  end of your turn if you are using your racial fly speed more than 1
+  square above the ground, as the race's Special Rules word it) and no
+  flying while carrying more than a normal load. `ID_INTERNAL_GRANTS_PIXIE`
+  grants it after the stock traits and the race's "Racial Traits" list
+  names it last, so the race card lists it and the sheet's racial features
+  and page-1 reminders print it (checked on Flint). It is never stored in
+  the build (grants are derived), so a `.dnd4e` export writes it only in
+  the regenerated `RulesElementTally`, not the level tree the old builder
+  loads (D091). The pack was rebuilt (`build-private-content.sh`, valid);
+  the four Pixie saves evaluate with the trait and no new diagnostic;
+  `pnpm parity:baseline` is unchanged (re-accepted on the new pack). Tests:
+  `entity-card-fields.test.tsx`, `StructuredEntityBody.test.ts`.
 - **Skill, god fragment, items, paths:** a skill's subheader is
   "Ability" (Key Ability); a god fragment's is "Quirks", with Constant
   Benefits as its body line. A crafted alchemical item (Magic Item Type

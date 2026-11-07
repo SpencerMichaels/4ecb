@@ -1183,9 +1183,8 @@ Moradin, or an item a character holds), build and import or advertise it.
     "HEIGHT 6' 2"-6' 8" · WEIGHT 220-320 lb."; the body opens with the
     short description, then "Abilities: …", "Languages: …", "Skills: …"
     lines, then Racial traits and About. The Pixie reads "SPEED 4
-    squares, fly 6 (altitude limit 1)" on the first line, and its About
-    text ends "You cannot use your fly speed if you are carrying more than
-    a normal load."
+    squares, fly 6 (Limited Flight)" on the first line, and its racial
+    traits end with Limited Flight.
   - **Wrong if:** the first line wraps between a label and its value,
     the old two-column stat grid remains, or a field shows twice.
 - [ ] **Skill, god fragment, alchemical item and special armor

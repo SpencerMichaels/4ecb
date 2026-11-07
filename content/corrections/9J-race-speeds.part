@@ -4,16 +4,39 @@
   card's subheader reads "Size · Speed · Vision", which holds only short
   fields of steady size; every race's Speed is "6 squares" or similar
   except the Pixie's, whose authored Speed carried a rule sentence (119
-  characters). Its speed keeps the squares; the sentence moves to the end
-  of the race's description (the card's About text). The Speed specific is
-  display text only: the evaluated Speed comes from the race's statadd.
-  Merged after the CBLoader parts by scripts/build-private-content.sh.
+  characters): "4 squares, fly 6 squares (altitude limit 1). You cannot
+  use this fly speed if you are carrying more than a normal load." Its
+  speed now names a racial trait, "4 squares, fly 6 (Limited Flight)", and
+  the Limited Flight trait states both limits (owner decision,
+  2026-11-06): the altitude limit as the race's own Special Rules word it,
+  and the load limit from the authored Speed. Every Pixie gets the trait
+  from ID_INTERNAL_GRANTS_PIXIE, after its stock grants, and the race's
+  "Racial Traits" list names it last, as the stock traits are granted and
+  listed. The Speed specific is display text only: the evaluated Speed
+  comes from the race's statadd. The trait is a record the old builder
+  doesn't have (D091). A grant is derived at evaluation, never stored, so a
+  .dnd4e export writes it only in the regenerated CharacterSheet tally, which
+  the old builder rebuilds on save; the level tree it loads from holds the
+  stock Pixie grants alone. Merged after the CBLoader parts by
+  scripts/build-private-content.sh.
 -->
 <D20Rules game-system="D&amp;D4E">
 
   <!-- Pixie (Heroes of the Feywild, CBLoader 06-races.part). -->
-  <RemoveNodes internal-id="ID_FMP_RACE_61"><specific name="Speed" /></RemoveNodes>
+  <RemoveNodes internal-id="ID_FMP_RACE_61"><specific name="Speed" /><specific name="Racial Traits" /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_RACE_61">
-    <specific name="Speed">4 squares, fly 6 (altitude limit 1)</specific>
-You cannot use your fly speed if you are carrying more than a normal load.</AppendNodes>
+    <specific name="Speed">4 squares, fly 6 (Limited Flight)</specific>
+    <specific name="Racial Traits"> ID_FMP_RACIAL_TRAIT_641, ID_FMP_RACIAL_TRAIT_4119, ID_FMP_RACIAL_TRAIT_4120, ID_FMP_RACIAL_TRAIT_4121, ID_4ECB_RACIAL_TRAIT_LIMITED_FLIGHT </specific>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_PIXIE">
+    <rules>
+      <grant name="ID_4ECB_RACIAL_TRAIT_LIMITED_FLIGHT" type="Racial Trait" />
+    </rules>
+  </AppendNodes>
+  <RulesElement name="Limited Flight" type="Racial Trait" internal-id="ID_4ECB_RACIAL_TRAIT_LIMITED_FLIGHT" source="Heroes of the Feywild">
+    <specific name="Short Description"> You fall if you end your turn more than 1 square up, and can't fly carrying more than a normal load. </specific>
+    <specific name="Level"> 1 </specific>
+    <specific name="Class"> ID_FMP_RACE_61 </specific>
+You have an altitude limit of 1 with your racial fly speed: you fall at the end of your turn if you are using it and are more than 1 square above the ground. You cannot use your racial fly speed while you are carrying more than a normal load.
+  </RulesElement>
 </D20Rules>
