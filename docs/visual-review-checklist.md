@@ -875,6 +875,12 @@ live site.
   - **Wrong if:** the page stays at the top of the feat table, scrolls and
     then jumps back, step 2's heading is hidden under anything, or focus
     stays on the badge list or the page.
+- [ ] **Sylestine: Overview names the pact choice.**
+  - **Where:** `edit?tab=overview`, level 12 (and the Build tab's level 12
+    for comparison).
+  - **Expect:** the row reads "Twofold Pact: Dark Pact", as on the Build
+    tab.
+  - **Wrong if:** it reads "Eldritch Pact: Dark Pact".
 
 ## Pass 21: Character library
 
@@ -1007,6 +1013,19 @@ These need the deployed app, an installed PWA, or your own content.
     and "Level 7 Improved Disruptive Shot — Use three times per encounter".
   - **Wrong if:** "Disruptive Shot" or "Level 3 Improved Disruptive Shot"
     rows show, or a note ends in "@…".
+- [ ] **Akagi: at-will group heading.**
+  - **Where:** import `sample-chars/Akagi 4 2.dnd4e` with your own content;
+    Build tab level 1, then the Overview's level 1.
+  - **Expect:** both head the at-will group "At-Will Powers".
+  - **Wrong if:** the two differ (one reads just "Powers").
+- [ ] **Multiclass power swap stays on the Build tab.**
+  - **Where:** any character with a multiclass feat taking Novice Power
+    (level 4+) or Paragon Multiclassing; that level's Build tab, then
+    Retraining.
+  - **Expect:** the swap is on the Build tab at its level, and step 2 lists
+    powers after a double-click in step 1; Retraining doesn't show it.
+  - **Wrong if:** the swap appears only under Retraining, or step 2 is
+    empty.
 - [ ] **Wren: power swap and retraining replacements.**
   - **Where:** import `sample-chars/Wren.dnd4e` with your own content.
     Build tab, level 13: open the power swap and double-click a power in
