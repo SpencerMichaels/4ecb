@@ -309,6 +309,15 @@ The remaining data is classified as follows:
   `LootTally` row (per-level `loot` rows are always flat), so import recovers
   them from there and edited export writes them there and not in the
   per-level rows, keeping the build's `charelem` tokens unique.
+- The regenerated `RulesElementTally` follows native `SaveElementTally`: one
+  entry per character element (granted ones included) and never a loot item
+  (elements an item grants, such as an Item Set Benefit, are listed). Each
+  entry always carries `legality`, as native `SaveElement` writes it:
+  `houserule` when the occurrence is saved as a house rule or the evaluation
+  flags it as one (`occurrence.houserule`, `occurrence.campaign-restricted`,
+  `occurrence.source-unentitled`, `choice.ineligible`,
+  `prerequisite.failed`; rules-engine `occurrenceLegality`), else
+  `rules-legal`. The level tree keeps each occurrence's saved legality.
 - Campaign policy, structured journal entries, meaningful companion
   presentation, historical wrapper forms, and extra attributes or children in
   recognized authoritative containers are meaningful data not yet completely

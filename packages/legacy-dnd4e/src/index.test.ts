@@ -1488,6 +1488,82 @@ describe("legacy .dnd4e import", () => {
     );
   });
 
+  it("writes each tallied element's evaluated legality and leaves loot to the LootTally", () => {
+    const source = `<?xml version="1.0" encoding="UTF-8"?>
+<D20Character game-system="D&amp;D4E" Version="0.07a" legality="rules-legal">
+  <Level><RulesElement name="1" type="Level" internal-id="L1" charelem="root"><RulesElement name="Ancestry" type="Race" internal-id="RACE" charelem="race" legality="rules-legal"/><RulesElement name="Bent Feat" type="Feat" internal-id="BENT" charelem="bent" legality="houserule"/><RulesElement name="Banned Feat" type="Feat" internal-id="BANNED" charelem="banned" legality="rules-legal"/></RulesElement><loot count="1" equip-count="1" name="Cloak"><RulesElement name="Cloak" type="Magic Item" internal-id="CLOAK"/></loot></Level>
+</D20Character>`;
+    const imported = importDnd4e(source);
+    const content = [
+      entity("L1", "1", "Level"),
+      {
+        ...entity("RACE", "Ancestry", "Race"),
+        rules: [
+          {
+            name: "grant",
+            attributes: [
+              { name: "name", value: "TRAIT" },
+              { name: "type", value: "Racial Trait" },
+            ],
+            text: "",
+            children: [],
+            ordinal: 0,
+          },
+        ],
+      },
+      entity("TRAIT", "Granted Trait", "Racial Trait"),
+      entity("BENT", "Bent Feat", "Feat"),
+      entity("BANNED", "Banned Feat", "Feat"),
+      entity("CLOAK", "Cloak", "Magic Item"),
+    ];
+    const evaluation = evaluateCharacter(
+      {
+        ...projectBuildForEvaluation(imported.build, content),
+        restrictedDefinitionIds: ["BANNED"],
+      },
+      content,
+    );
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build: imported.build,
+      evaluation,
+      content,
+    });
+    const tally = xml.match(
+      /<RulesElementTally>([\s\S]*?)<\/RulesElementTally>/,
+    )?.[1];
+    const legality = (id: string) =>
+      tally
+        ?.match(
+          new RegExp(`<RulesElement\\b[^>]*internal-id="${id}"[^>]*>`),
+        )?.[0]
+        .match(/legality="([^"]*)"/)?.[1];
+    // Native SaveElement always writes the legality; a grant starts legal.
+    expect(legality("L1")).toBe("rules-legal");
+    expect(legality("RACE")).toBe("rules-legal");
+    expect(legality("TRAIT")).toBe("rules-legal");
+    // A saved house rule stays one; a campaign-restricted pick becomes one.
+    expect(legality("BENT")).toBe("houserule");
+    expect(legality("BANNED")).toBe("houserule");
+    // Native SaveElementTally lists character elements, never loot.
+    expect(tally).not.toContain('internal-id="CLOAK"');
+    expect(xml.match(/<LootTally>[\s\S]*?<\/LootTally>/)?.[0]).toContain(
+      'internal-id="CLOAK"',
+    );
+    // The Level tree keeps each occurrence's saved legality.
+    const reimported = importDnd4e(xml);
+    const saved = new Map(
+      reimported.build.levels[0]!.root.children.map((child) => [
+        child.identity.definitionId,
+        child.legality,
+      ]),
+    );
+    expect(saved.get("BENT")).toBe("houserule");
+    expect(saved.get("BANNED")).toBe("rules-legal");
+  });
+
   it("blocks invalid XML characters instead of silently changing user text", () => {
     const imported = importDnd4e(
       `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/></Level></D20Character>`,

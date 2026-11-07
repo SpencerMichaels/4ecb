@@ -1,5 +1,46 @@
 # Implementation status
 
+## Exported RulesElementTally legality (2026-11-06)
+
+Edited `.dnd4e` export wrote `legality="houserule"` on every tally entry
+without a saved legality: every evaluation-granted element (Flint's Pixie
+Limited Flight trait) and every inventory item (all of Flint's, Valria's
+and yew's items), and omitted the attribute on legal ones. The old builder
+rebuilds the tally, but other readers (our own legacy-cache sheet model
+prints "House rule" from it) saw false flags. Legacy evidence: in the 68
+sample-chars and SampleHeroes saves the tally's values are `rules-legal`
+(10,086) and `houserule` (138; Wren, a partial-CBLoader save, has 99
+entries without one); no Weapon, Armor or Magic Item entry appears (Gear
+only as a granted Ritual Book). Native `SaveElementTally` walks the
+character's `CharElement` list (not loot) through `SaveElement`, which
+always writes legality: `houserule` when the `CharElement` legal bit is
+clear (it starts set; load reads the saved attribute; `D20Choice::Sync`
+sets it to `IsLegalChoice`, false for a user edit or a pick whose candidate
+fails its Legal bit) or the record is a stub or custom element, else
+`rules-legal`. The writer now does the same: inventory occurrences are left
+to the `LootTally`, and each entry's legality comes from rules-engine
+`occurrenceLegality` (saved `houserule`, or an `occurrence.houserule`,
+`occurrence.campaign-restricted`, `occurrence.source-unentitled`,
+`choice.ineligible` or `prerequisite.failed` diagnostic on the occurrence;
+`prerequisite.unverified` is not one). The level tree still writes each
+occurrence's saved legality.
+
+Private check (`regenerate:edited-dnd4e`, full pack): tally houserule
+entries Flint 6 → 0, Valria 6 → 0, yew 8 → 0, every entry now explicit
+`rules-legal` like the original saves (156/131/108 there; the exports list
+159/135/108, the extra entries being the new Limited Flight grant and
+repeated occurrences of one record). Across all 59 sample-chars exports no
+diagnostic-derived house rule appears that the save's level tree didn't
+already store; tally houserule entries the legacy save had but the export
+doesn't (Erdan 11's seven powers, Beldin, Gizmo, Lily, Zilvra...) are saved
+house-rule picks the evaluator now finds legal and clears (the existing
+"a saved house-rule flag stands only while the pick is still ineligible"
+rule), unchanged by this fix. `pnpm parity:baseline` unchanged. Tests:
+`legacy-dnd4e` `index.test.ts` (granted trait and race rules-legal, saved
+and campaign-restricted feats houserule, item absent from the tally and
+present in the LootTally, level-tree legality kept),
+`rules-engine` `occurrence-legality.test.ts`.
+
 ## Scratchpad Resources trackers redone (2026-11-06)
 
 Owner feedback on the play scratchpad's tracker row. The panel holding it is

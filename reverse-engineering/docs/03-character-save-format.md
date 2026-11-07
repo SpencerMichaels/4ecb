@@ -40,7 +40,7 @@ The engine recognizes these logical children (some may occur inside containers):
 | `textstring` | User/runtime string state. |
 | `alternate` | Alternate choice attached to a provider/select rule. |
 | `Grabbag` | Unleveled freeform/house-rule selections. |
-| `RulesElementTally` | Derived selected-element cache. |
+| `RulesElementTally` | Derived selected-element cache (character elements only, via `SaveElementTally`; loot is in `LootTally`). |
 | `loot` / `LootTally` | Authoritative level loot or derived current inventory. |
 | `AbilityScores`, `StatBlock` | Base input in old forms or derived snapshot. |
 | `Journal`, `Companions`, `PowerStats`, `Details` | Presentation/export data. |
@@ -61,7 +61,7 @@ Serialized element attributes are:
 |---|---|
 | `internal-id` | Preferred lookup of the game-data record. |
 | `name`, `type` | Fallback lookup and display if the ID disappeared. |
-| `legality` | A non-legal value marks this occurrence as house-ruled. |
+| `legality` | A non-legal value marks this occurrence as house-ruled. Native `SaveElement` always writes it for an occurrence (level trees and `RulesElementTally`): `houserule` when the `CharElement` legal bit is clear (set at construction, read from this attribute on load, recomputed by `D20Choice::Sync` as `IsLegalChoice`) or the record is a stub/custom element, else `rules-legal`. |
 | `replaces` | Link to the occurrence displaced by replacement/retraining. |
 | `charelem` | Serialization-local occurrence-link token. |
 | `url` | Optional body/reference retained for missing illegal stubs. |

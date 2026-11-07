@@ -26,6 +26,7 @@ import {
   legacyEquipCount,
   legacyLoadoutHints,
   legacyLoadoutState,
+  occurrenceLegality,
   parseRules,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
@@ -785,15 +786,24 @@ function statBlockXml(
   );
 }
 
+/**
+ * Native SaveElementTally: one RulesElement per character element, never a
+ * loot item (holdings are the LootTally; elements an item grants, such as an
+ * Item Set Benefit, are character elements). Native SaveElement always
+ * writes the occurrence's legality, "rules-legal" or "houserule"; see
+ * `occurrenceLegality`.
+ */
 function ruleTallyXml(
   evaluation: EvaluatedCharacter,
   entities: ReadonlyMap<string, ContentEntity>,
 ): string {
+  const legality = occurrenceLegality(evaluation);
   return element(
     "RulesElementTally",
     {},
     evaluation.occurrences
       .flatMap((occurrence) => {
+        if (occurrence.kind === "inventory") return [];
         const entity = entities.get(key(occurrence.definitionId));
         if (entity === undefined) return [];
         const fields = applyFieldOverlays(entity, evaluation.overlays);
@@ -804,8 +814,7 @@ function ruleTallyXml(
               name: entity.name,
               type: entity.type,
               "internal-id": entity.id,
-              legality:
-                occurrence.legality === "rules-legal" ? undefined : "houserule",
+              legality: legality(occurrence.id),
             },
             Object.entries(fields)
               .map(([name, value]) =>
