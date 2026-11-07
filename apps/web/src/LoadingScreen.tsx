@@ -25,12 +25,16 @@ export function LoadingScreen({
   detail,
   className,
   routeLoading = false,
+  portraitFrame = false,
   portraitUrl,
 }: {
   readonly label: string;
   readonly detail?: string | undefined;
   readonly className?: string;
   readonly routeLoading?: boolean;
+  /** A character page: the frame is the builder sidebar portrait's size,
+   * with or without a portrait yet. */
+  readonly portraitFrame?: boolean;
   readonly portraitUrl?: string | undefined;
 }) {
   return (
@@ -43,7 +47,14 @@ export function LoadingScreen({
       <div className="loading-screen-body" role="status">
         {/* The frame is the same size with or without a portrait, so the
             portrait appearing mid-load doesn't move anything. */}
-        <span aria-hidden="true" className="loading-spinner-frame">
+        <span
+          aria-hidden="true"
+          className={
+            portraitFrame
+              ? "loading-spinner-frame is-character-portrait"
+              : "loading-spinner-frame"
+          }
+        >
           <span className="loading-spinner" />
           {portraitUrl === undefined ? null : (
             <img alt="" className="loading-portrait" src={portraitUrl} />

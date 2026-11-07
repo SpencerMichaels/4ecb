@@ -1,6 +1,8 @@
 /* Tokens (light and dark), element defaults, buttons and forms, global errors. */
 
+/* The builder sidebar portrait; the character loading screens match it. */
 :root {
+  --character-portrait-size: 9rem;
   --background: #eef2f6;
   --surface: #fff;
   --surface-subtle: #f5f3ea;

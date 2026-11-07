@@ -1439,6 +1439,7 @@ export function CharacterEditorPage({
     return (
       <LoadingScreen
         className="editor-page"
+        portraitFrame
         portraitUrl={character?.portrait?.renderedDataUrl}
         label={
           character === undefined

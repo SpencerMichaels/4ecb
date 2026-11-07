@@ -54,6 +54,13 @@
   width: 6rem;
 }
 
+/* A character page: the portrait inside the ring (inset 0.6rem each side)
+   is the builder sidebar portrait's size. */
+.loading-spinner-frame.is-character-portrait {
+  height: calc(var(--character-portrait-size) + 1.2rem);
+  width: calc(var(--character-portrait-size) + 1.2rem);
+}
+
 .loading-spinner {
   animation: loading-spin 0.9s linear infinite;
   border: 0.3rem solid var(--accent-soft);

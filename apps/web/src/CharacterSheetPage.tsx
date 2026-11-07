@@ -595,6 +595,7 @@ export function CharacterSheetPage({
     return (
       <LoadingScreen
         className="sheet-page"
+        portraitFrame
         portraitUrl={character?.portrait?.renderedDataUrl}
         label={
           character === undefined || !characterDisplayName(character)

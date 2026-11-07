@@ -259,9 +259,9 @@
 }
 
 .builder-sidebar-identity .portrait-trigger {
-  height: 9rem;
+  height: var(--character-portrait-size);
   margin-bottom: 0.5rem;
-  width: 9rem;
+  width: var(--character-portrait-size);
 }
 
 .builder-sidebar-identity h2.builder-character-name-heading {
