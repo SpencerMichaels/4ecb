@@ -1,15 +1,16 @@
 import { useMemo, type ReactNode } from "react";
 
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import { entityCardFields } from "@4ecb/sheet-model";
 
-import {
-  classKeyAbilities,
-  classTableMetadata,
-  contentSpecificValue,
-} from "./builder-ui";
+import { contentSpecificValue } from "./builder-ui";
 import { namedClassFeatures } from "./detail-stack";
 import { DotList } from "./DotList";
-import { EntityAliases, EntityPrerequisites } from "./EntityCard";
+import {
+  CardFieldLines,
+  EntityAliases,
+  EntityPrerequisites,
+} from "./EntityCard";
 import { Prose } from "./Prose";
 
 /**
@@ -227,22 +228,6 @@ function RaceBody({
   );
 }
 
-const CLASS_STATS = [
-  ["Hit Points at 1st Level", "HP at 1st"],
-  ["Hit Points per Level Gained", "HP per level"],
-  ["Healing Surges", "Healing surges"],
-  ["Bonus to Defense", "Defenses"],
-] as const;
-const CLASS_PROFICIENCIES = [
-  ["Armor Proficiencies", "Armor"],
-  ["Weapon Proficiencies", "Weapons"],
-  ["Implements", "Implements"],
-  ["Trained Skills", "Trained"],
-  ["Class Skills", "Class skills"],
-  ["Build Options", "Builds"],
-  ["Secondary Abilities", "Secondary"],
-  ["Hybrid Talent Options", "Hybrid talents"],
-] as const;
 const CLASS_LORE = [
   ["Creating", "Creating"],
   ["Class Features", "Class features"],
@@ -258,29 +243,16 @@ function ClassBody({
   readonly entity: ContentEntity;
   readonly references: ReadonlyMap<string, ContentEntity>;
 }) {
-  // Key abilities get their own labelled row with the other class traits.
-  const keyAbilities = classKeyAbilities(entity).join(", ");
   const features = useMemo(
     () => namedClassFeatures(entity, references).map(traitOf),
     [entity, references],
   );
+  // Role, source, hit points, surges and defenses are the card's
+  // subheader (`EntitySubheader`); its body lines lead the body.
+  const placement = entityCardFields(entity);
   return (
     <>
-      <StatGrid
-        rows={CLASS_STATS.map(([field, label]) => ({
-          label,
-          value: contentSpecificValue(entity, field),
-        }))}
-      />
-      <StatGrid
-        rows={[
-          { label: "Key abilities", value: keyAbilities },
-          ...CLASS_PROFICIENCIES.map(([field, label]) => ({
-            label,
-            value: contentSpecificValue(entity, field),
-          })),
-        ]}
-      />
+      <CardFieldLines fields={placement?.body ?? []} />
       {/* The lore before the long feature list, so it isn't buried. */}
       <CardSection title={`About ${entity.name}`}>
         <LoreFields entity={entity} names={CLASS_LORE} />
@@ -289,13 +261,8 @@ function ClassBody({
       <MoreFields
         entity={entity}
         placed={[
-          ...CLASS_STATS.map(([field]) => field),
-          ...CLASS_PROFICIENCIES.map(([field]) => field),
+          ...(placement?.placed ?? []),
           ...CLASS_LORE.map(([field]) => field),
-          "Role",
-          "Power Source",
-          "Key Abilities",
-          "Power Name",
           "Trait Package",
         ]}
       />
@@ -368,17 +335,8 @@ export function StructuredEntityBody({
   readonly prerequisiteLines?: Readonly<Record<string, string>> | undefined;
 }) {
   const shortDescription = contentSpecificValue(entity, "Short Description");
-  // A class leads with its power source and role, as the books head it:
-  // "Arcane Striker. You wield a deadly weapon…".
-  const classHeading =
-    kind === "class"
-      ? (() => {
-          const metadata = classTableMetadata(entity);
-          return [metadata.powerSource.label, metadata.role.label]
-            .filter(Boolean)
-            .join(" ");
-        })()
-      : "";
+  // A class's role and power source are its subheader's "Role · Source",
+  // so its lede is the short description alone.
   const description = shortDescription?.trim() ?? "";
   // A background's campaign and kind ("Forgotten Realms · Campaign").
   const context =
@@ -399,15 +357,8 @@ export function StructuredEntityBody({
           <DotList items={context} />
         </p>
       )}
-      {classHeading === "" ? (
-        description === "" ? null : (
-          <p className="entity-card-lede">{description}</p>
-        )
-      ) : (
-        <p className="entity-card-lede">
-          <strong className="entity-card-summary">{classHeading}.</strong>
-          {description === "" ? null : ` ${description}`}
-        </p>
+      {description === "" ? null : (
+        <p className="entity-card-lede">{description}</p>
       )}
       <EntityPrerequisites
         entity={entity}

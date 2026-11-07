@@ -124,13 +124,14 @@ describe("structured race, class and background cards", () => {
     );
     const markup = render(classEntity, [otherFeature, ownFeature]);
 
+    // Role · Source and the hit points are the card's subheader
+    // (entity-card-fields.test.tsx), so the lede is the description alone.
+    expect(markup).toContain(`<p class="entity-card-lede">You stand firm.</p>`);
+    expect(markup).not.toContain("Martial Defender");
     expect(markup).toContain(
-      `<p class="entity-card-lede"><strong class="entity-card-summary">Martial Defender.</strong> You stand firm.</p>`,
+      '<dt>Abilities</dt><dd class="preserve-lines">Strength, Constitution</dd>',
     );
-    expect(markup).toContain(
-      "<dt>Key abilities</dt><dd>Strength, Constitution</dd>",
-    );
-    expect(markup).toContain("<dt>HP at 1st</dt>");
+    expect(markup).not.toContain("<dt>HP");
     expect(markup).toContain("Mark adjacent enemies.");
     expect(markup).not.toContain("Someone else&#x27;s stance.");
   });

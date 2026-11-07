@@ -145,7 +145,7 @@ const reviews: ReviewCharacter[] = [
           ],
           [
             "Class detail card",
-            'Select the Class row (Hexblade): the card\'s heading line reads "Arcane Striker"; a "Key abilities" row with the other class traits.',
+            'Select the Class row (Hexblade): the subheader reads "ROLE Striker · SOURCE Arcane", then HP · Level · Surges and Defenses; the body opens with an "Abilities:" line.',
           ],
         ],
       },

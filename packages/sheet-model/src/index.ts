@@ -171,6 +171,7 @@ export {
   type InventoryPackagePair,
 } from "./inventory-packages";
 export {
+  classLeadPhrase,
   entityCardFieldPlacements,
   entityCardFields,
   immortalityText,

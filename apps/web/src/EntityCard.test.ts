@@ -8,8 +8,6 @@ import {
   EntityCardBody,
   EntityCardHeader,
   EntityCardLeadingIcon,
-  groupClassSpecifics,
-  isClassEntity,
   isProseSpecific,
   itemCardIcon,
   itemCardLabel,
@@ -53,28 +51,8 @@ const classFields = [
   field("Class Features", "Psionic Augmentation", 9),
 ] as const;
 
-describe("shared entity-card class details", () => {
-  it("groups every authored field exactly once and retains duplicates in order", () => {
-    const groups = groupClassSpecifics(classFields);
-    expect(groups.map((group) => group.heading)).toEqual([
-      "Role & Power Source",
-      "Starting Statistics",
-      "Proficiencies & Training",
-      "Class Features & Build",
-      "Flavor",
-      "Other",
-    ]);
-    const groupedFields = groups.flatMap((group) => group.fields);
-    expect(groupedFields).toHaveLength(classFields.length);
-    expect(new Set(groupedFields)).toEqual(new Set(classFields));
-    expect(
-      groups
-        .find((group) => group.heading === "Class Features & Build")
-        ?.fields.map((specific) => specific.value),
-    ).toEqual(["Ardent Mantle", "Psionic Augmentation"]);
-  });
-
-  it("renders the same labeled class sections for Class and Hybrid Class cards", () => {
+describe("shared entity-card details", () => {
+  it("lists a class's placed body fields, then its other authored fields", () => {
     const render = (type: string) =>
       renderToStaticMarkup(
         createElement(EntityCardBody, {
@@ -82,23 +60,19 @@ describe("shared entity-card class details", () => {
           hideFlavortext: false,
         }),
       );
-    const classMarkup = render("Class");
-    const hybridMarkup = render("Hybrid Class");
-    for (const markup of [classMarkup, hybridMarkup]) {
-      expect(markup).toContain("Role &amp; Power Source");
-      expect(markup).toContain("Starting Statistics");
-      expect(markup).toContain("Proficiencies &amp; Training");
-      expect(markup).toContain("Class Features &amp; Build");
-      expect(markup).toContain(">Flavor<");
-      expect(markup).toContain(">Other<");
+    for (const markup of [render("Class"), render("Hybrid Class")]) {
+      // Role, source and hit points are the card's subheader.
+      expect(markup).not.toContain("Leader. You aid your allies.");
+      expect(markup).not.toContain("12 + Constitution score");
+      expect(markup).toContain(
+        '<dt>Abilities</dt><dd class="preserve-lines">Charisma, Constitution, Wisdom</dd>',
+      );
       expect(markup.match(/<dt>Implements<\/dt>/g)).toHaveLength(1);
       expect(markup).toContain("Any weapon you wield");
       expect(markup).toContain("Holy symbols");
       expect(markup).toContain("Preserved fallback");
       expect(markup).toContain("Source: Player&#x27;s Handbook Test");
     }
-    expect(isClassEntity(entity("Class", []))).toBe(true);
-    expect(isClassEntity(entity("Hybrid Class", []))).toBe(true);
   });
 
   it("says what else a record is known by, first (D116 aliases)", () => {

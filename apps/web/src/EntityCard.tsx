@@ -16,12 +16,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon, type IconName } from "./Icon";
 import { canonicalItemIcon } from "./item-icons";
 import { Prose } from "./Prose";
-import {
-  classKeyAbilitiesSentence,
-  contentSpecificValue,
-  primaryDetailTypeLabel,
-  splitLabeledDescription,
-} from "./builder-ui";
+import { contentSpecificValue, primaryDetailTypeLabel } from "./builder-ui";
 import { entityTypeIcon } from "./visual-language";
 
 /**
@@ -238,203 +233,43 @@ function SpecificValue({ field }: { readonly field: SpecificField }) {
   return isProseSpecific(field) ? <Prose value={field.value} /> : field.value;
 }
 
-const CLASS_FIELD_GROUPS: readonly {
-  readonly heading: string;
-  readonly fieldNames: readonly string[];
-}[] = [
-  {
-    heading: "Role & Power Source",
-    fieldNames: ["Role", "Power Source", "Key Abilities"],
-  },
-  {
-    heading: "Starting Statistics",
-    fieldNames: [
-      "Hit Points at 1st Level",
-      "Hit Points per Level Gained",
-      "Healing Surges",
-      "Bonus to Defense",
-    ],
-  },
-  {
-    heading: "Proficiencies & Training",
-    fieldNames: [
-      "Armor Proficiencies",
-      "Weapon Proficiencies",
-      "Implements",
-      "Implement",
-      "Trained Skills",
-      "Class Skills",
-      "Secondary Abilities",
-    ],
-  },
-  {
-    heading: "Class Features & Build",
-    fieldNames: [
-      "Class Features",
-      "Build Options",
-      "Hybrid Talent Options",
-      "Trait Package",
-      "Powers",
-      "Power Name",
-    ],
-  },
-  {
-    heading: "Flavor",
-    fieldNames: ["Creating", "Supplemental"],
-  },
-];
-
-export interface ClassSpecificGroup {
-  readonly heading: string;
-  readonly fields: readonly SpecificField[];
-}
-
-export function isClassEntity(entity: ContentEntity): boolean {
-  const type = normalizedFieldName(entity.type);
-  return type === "class" || type === "hybrid class";
-}
-
-/** Groups every authored Class field once, retaining unknown fields in Other. */
-export function groupClassSpecifics(
-  fields: readonly SpecificField[],
-): readonly ClassSpecificGroup[] {
-  const claimed = new Set<SpecificField>();
-  const groups = CLASS_FIELD_GROUPS.map(({ heading, fieldNames }) => {
-    const groupFields = fieldNames.flatMap((name) => {
-      const normalizedName = normalizedFieldName(name);
-      const matches = fields.filter(
-        (field) =>
-          !claimed.has(field) &&
-          normalizedFieldName(field.name) === normalizedName,
-      );
-      for (const field of matches) claimed.add(field);
-      return matches;
-    });
-    return { heading, fields: groupFields };
-  }).filter((group) => group.fields.length > 0);
-  const other = fields.filter((field) => !claimed.has(field));
-  return other.length === 0
-    ? groups
-    : [...groups, { heading: "Other", fields: other }];
-}
-
-function ClassFieldEntries({
-  entity,
+/** One labelled line per field ("Powers: Wolf Strike"), like a power
+ *  card's rule lines; a prose field's text starts on the line below its
+ *  label. A card's body fields (`entityCardFields`) and its other
+ *  authored specifics both read this way. */
+export function CardFieldLines({
   fields,
-  heading,
 }: {
-  readonly entity: ContentEntity;
-  readonly fields: readonly SpecificField[];
-  readonly heading: string;
+  readonly fields: readonly (
+    SpecificField | { readonly label: string; readonly value: string }
+  )[];
 }) {
-  const mergedImplementFields = fields.filter((field) =>
-    ["implements", "implement"].includes(normalizedFieldName(field.name)),
-  );
-  const rest = fields.filter((field) => !mergedImplementFields.includes(field));
-  let keyAbilitiesRendered = false;
-
+  if (fields.length === 0) return null;
   return (
-    <>
-      {mergedImplementFields.length === 0 ? null : (
-        <div>
-          <dt>Implements</dt>
-          {mergedImplementFields.map((field) => (
-            <dd
-              className={isProseSpecific(field) ? undefined : "preserve-lines"}
-              key={`${field.ordinal}-${field.name}`}
-            >
-              <SpecificValue field={field} />
-            </dd>
-          ))}
-        </div>
-      )}
-      {rest.map((field) => {
-        const fieldName = normalizedFieldName(field.name);
-        const labeled =
-          heading === "Role & Power Source" &&
-          (fieldName === "role" || fieldName === "power source")
-            ? splitLabeledDescription(field.value)
-            : undefined;
-        const keyAbilities =
-          fieldName === "key abilities" && !keyAbilitiesRendered
-            ? classKeyAbilitiesSentence(entity)
-            : undefined;
-        if (fieldName === "key abilities") keyAbilitiesRendered = true;
+    <dl className="candidate-fields">
+      {fields.map((field, index) => {
+        const specific: SpecificField =
+          "name" in field
+            ? field
+            : {
+                name: field.label,
+                value: field.value,
+                extraAttributes: [],
+                ordinal: index,
+              };
         return (
-          <div key={`${field.ordinal}-${field.name}`}>
-            <dt>{field.name || "Unnamed field"}</dt>
+          <div key={`${specific.ordinal}-${specific.name}`}>
+            <dt>{specific.name || "Detail"}</dt>
             <dd
-              className={isProseSpecific(field) ? undefined : "preserve-lines"}
+              className={
+                isProseSpecific(specific) ? undefined : "preserve-lines"
+              }
             >
-              {labeled === undefined ? (
-                keyAbilities === undefined ? (
-                  <SpecificValue field={field} />
-                ) : (
-                  keyAbilities
-                )
-              ) : (
-                <>
-                  {labeled.label === undefined ? null : (
-                    <strong>{labeled.label}.</strong>
-                  )}
-                  {labeled.description === undefined
-                    ? null
-                    : labeled.label === undefined
-                      ? labeled.description
-                      : ` ${labeled.description}`}
-                </>
-              )}
+              <SpecificValue field={specific} />
             </dd>
           </div>
         );
       })}
-    </>
-  );
-}
-
-function ClassSpecifics({
-  entity,
-  fields,
-}: {
-  readonly entity: ContentEntity;
-  readonly fields: readonly SpecificField[];
-}) {
-  return groupClassSpecifics(fields).map((group) => (
-    <section key={group.heading}>
-      <h3>{group.heading}</h3>
-      <dl className="field-list">
-        <ClassFieldEntries
-          entity={entity}
-          fields={group.fields}
-          heading={group.heading}
-        />
-      </dl>
-    </section>
-  ));
-}
-
-function DefaultSpecifics({
-  entity,
-  fields,
-}: {
-  readonly entity: ContentEntity;
-  readonly fields: readonly SpecificField[];
-}) {
-  if (fields.length === 0) return null;
-  if (isClassEntity(entity))
-    return <ClassSpecifics entity={entity} fields={fields} />;
-  // One labelled line per field ("Level: 1"), like a power card's rule
-  // lines; a prose field's text starts on the line below its label.
-  return (
-    <dl className="candidate-fields">
-      {fields.map((field) => (
-        <div key={`${field.ordinal}-${field.name}`}>
-          <dt>{field.name || "Detail"}</dt>
-          <dd className={isProseSpecific(field) ? undefined : "preserve-lines"}>
-            <SpecificValue field={field} />
-          </dd>
-        </div>
-      ))}
     </dl>
   );
 }
@@ -556,7 +391,7 @@ export function EntityCardBody({
             <Prose value={entity.description} />
           ))}
       {afterNarrative}
-      <DefaultSpecifics entity={entity} fields={fields} />
+      <CardFieldLines fields={fields} />
       {afterFields}
       {showSource ? (
         <p className="detail-source-note">Source: {entityCardSource(entity)}</p>

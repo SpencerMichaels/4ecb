@@ -1122,6 +1122,23 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** a card loses a line that was not a duplicate (an
     artifact's enhancement, a class feature's Type that grants no power),
     or a card body now opens with a stray empty gap where a row was.
+- [ ] **Class card subheader.** Added 2026-11-06; lines and body lines are
+      unit-tested and checked on the real Hexblade and Paladin
+      (review:verify), this is the look.
+  - **Where:** at 140% zoom, light and dark theme: Build → level 1 →
+    Class, click Hexblade, Paladin, Warden and Ranger; a hybrid character's Hybrid class choice (e.g.
+    Hybrid Fighter).
+  - **Expect:** under the title the shaded subheader: "ROLE Striker ·
+    SOURCE Arcane", then "HP 12+ Constitution Score · LEVEL 5 · SURGES
+    6+ Constitution Modifier" (the three may wrap onto two lines at 140%,
+    a field never splitting), then "DEFENSES +1 Fortitude, +1 Will". The
+    body opens with the short description in plain text (no bold "Arcane
+    Striker."), then "Abilities: …", "Armor: …", "Weapons: …",
+    "Implements: …", "Trained: …", "Class skills: …", "Builds: …" lines,
+    then About and the class features.
+  - **Wrong if:** the HP line overflows the card or splits a value
+    oddly, the body lines look unlike a feat card's "Powers:" lines, or
+    role, source, hit points or defenses also appear in the body.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

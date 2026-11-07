@@ -316,3 +316,82 @@ describe("duplicate fields dropped", () => {
       expect(lines).not.toContain(dropped);
   });
 });
+
+describe("class card", () => {
+  const warden = record("ID_SYNTH_CLASS", "Synthetic Warden", "Class", {
+    Role: "Defender and Striker. You protect your allies.",
+    "Power Source": "Martial and Primal. Training and spirits.",
+    "Hit Points at 1st Level": "15+ Constitution Score",
+    "Hit Points per Level Gained": "6",
+    "Healing Surges": "9+ Constitution Modifier",
+    "Bonus to Defense": "+1 Fortitude, +1 Will",
+    "Key Abilities": "Strength, Constitution, Wisdom",
+    "Armor Proficiencies": "Cloth, leather, hide",
+    "Weapon Proficiencies": "Simple melee, military melee",
+    Implements: "Totems",
+    "Trained Skills":
+      "Nature. From the class skills list below, choose 3 more.",
+    "Class Skills": "Athletics (Str), Nature (Wis)",
+    "Build Options": "Earthstrength Warden",
+    "Power Name": "Evocations",
+    "Short Description": "You guard the wild.",
+  });
+
+  it("shows Role · Source, then HP · Level · Surges, then Defenses", () => {
+    expect(subheaderLines(render(warden))).toEqual([
+      ["Role: Defender and Striker", "Source: Martial and Primal"],
+      [
+        "HP: 15+ Constitution Score",
+        "Level: 6",
+        "Surges: 9+ Constitution Modifier",
+      ],
+      ["Defenses: +1 Fortitude, +1 Will"],
+    ]);
+  });
+
+  it("lists abilities, proficiencies, skills and builds as body lines", () => {
+    expect(bodyLines(render(warden))).toEqual([
+      "Abilities: Strength, Constitution, Wisdom",
+      "Armor: Cloth, leather, hide",
+      "Weapons: Simple melee, military melee",
+      "Implements: Totems",
+      "Trained: Nature. From the class skills list below, choose 3 more.",
+      "Class skills: Athletics (Str), Nature (Wis)",
+      "Builds: Earthstrength Warden",
+    ]);
+  });
+
+  it("shows each field once and drops the lede's role and source", () => {
+    const markup = render(warden);
+    expectNoDuplicateLabels(markup);
+    expect(body(markup)).toContain(
+      '<p class="entity-card-lede">You guard the wild.</p>',
+    );
+    expect(body(markup)).not.toContain("Defender and Striker");
+    expect(body(markup)).not.toContain("15+ Constitution Score");
+    expect(body(markup)).not.toContain("Evocations");
+    expect(body(markup)).not.toContain("entity-stat-grid");
+  });
+
+  it("leaves out empty fields and lines on a hybrid class", () => {
+    const hybrid = record(
+      "ID_SYNTH_HYBRID",
+      "Synthetic Hybrid",
+      "Hybrid Class",
+      {
+        Role: "Leader.",
+        "Power Source": "Divine",
+        "Hit Points per Level Gained": "2.5",
+        "Hybrid Talent Options": "Hybrid Talent: Healer's Lore.",
+      },
+    );
+    const markup = render(hybrid);
+    expect(subheaderLines(markup)).toEqual([
+      ["Role: Leader", "Source: Divine"],
+      ["Level: 2.5"],
+    ]);
+    expect(bodyLines(markup)).toEqual([
+      "Hybrid talents: Hybrid Talent: Healer&#x27;s Lore.",
+    ]);
+  });
+});

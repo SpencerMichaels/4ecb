@@ -32,7 +32,7 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The required replacement choices exist, are filled, and offer only powers of the matching kind to lose.",
   ),
   "beatrix|0|class detail card": auto(
-    'The Hexblade card\'s heading line is "Arcane Striker" (power source, then role; Paladin\'s "Divine Defender" too), and one "Key abilities" row at the head of the class traits grid lists the class\'s key abilities as authored.',
+    'The Hexblade card\'s subheader reads Role · Source ("Striker · Arcane"; Paladin\'s "Defender · Divine"), then HP · Level · Surges and Defenses; the lede is the short description alone; one "Abilities" line heads the body lines and lists the key abilities as authored.',
   ),
   "beatrix|1|revenant past life": auto(
     "The Past life (CountsAsRace) choice is in the Race section, picked as Eladrin.",

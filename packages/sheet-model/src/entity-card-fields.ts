@@ -115,6 +115,46 @@ const pathPlacements = (fields: Fields): readonly CardFieldPlacement[] => [
   },
 ];
 
+/** "Striker" from a class's "Striker. You deal…" (and "Defender and
+ *  Striker", "Martial and Primal"): the role or source it leads with. */
+export function classLeadPhrase(value: string | undefined): string | undefined {
+  const lead = value?.trim().split(".")[0]?.trim();
+  return lead === "" ? undefined : lead;
+}
+
+/** A class's or hybrid class's traits box: its role and power source, its
+ *  hit points and surges (owner: "HP · Level · Surges"), and its defense
+ *  bonuses up top; its key abilities, proficiencies, skills and build
+ *  options, which can run to sentences, in the body. */
+const classPlacements = (fields: Fields): readonly CardFieldPlacement[] => [
+  {
+    label: "Role",
+    value: classLeadPhrase(fields.value("Role")),
+    place: 1,
+    specifics: ["Role"],
+  },
+  {
+    label: "Source",
+    value: classLeadPhrase(fields.value("Power Source")),
+    place: 1,
+    specifics: ["Power Source"],
+  },
+  fields.at("HP", 2, "Hit Points at 1st Level"),
+  fields.at("Level", 2, "Hit Points per Level Gained"),
+  fields.at("Surges", 2, "Healing Surges"),
+  fields.at("Defenses", 3, "Bonus to Defense"),
+  fields.at("Abilities", "body", "Key Abilities"),
+  fields.at("Secondary", "body", "Secondary Abilities"),
+  fields.at("Armor", "body", "Armor Proficiencies"),
+  fields.at("Weapons", "body", "Weapon Proficiencies"),
+  fields.at("Implements", "body", "Implements"),
+  fields.at("Trained", "body", "Trained Skills"),
+  fields.at("Class skills", "body", "Class Skills"),
+  fields.at("Builds", "body", "Build Options"),
+  fields.at("Hybrid talents", "body", "Hybrid Talent Options"),
+  fields.at("Power Name", "drop", "Power Name"),
+];
+
 /** The per-type placements; a type not listed has none. */
 const PLACEMENTS: Readonly<
   Record<string, (fields: Fields) => readonly CardFieldPlacement[]>
@@ -129,6 +169,8 @@ const PLACEMENTS: Readonly<
     fields.at("Associated Power Info", "body", "Associated Power Info"),
     fields.at("Special", "body", "Special"),
   ],
+  class: classPlacements,
+  "hybrid class": classPlacements,
   "class feature": featurePlacements,
   "racial trait": featurePlacements,
   "paragon path": pathPlacements,

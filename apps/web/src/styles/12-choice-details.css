@@ -668,10 +668,6 @@
   text-transform: uppercase;
 }
 
-.entity-card-summary {
-  font-weight: 800;
-}
-
 .entity-stat-grid {
   align-items: baseline;
   display: grid;

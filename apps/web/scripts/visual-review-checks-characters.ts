@@ -533,35 +533,42 @@ rule("beatrix", "Build, level 1: Class", "White Well pact summary", (c) => {
   ];
 });
 
-/** A class's detail card: the heading line and the Key abilities row. */
+/** A class's detail card: its subheader lines, lede and body lines. */
 function classCard(c: ReviewCharacter, entity: ContentEntity) {
   const html = candidateDetailHtml(c, entity);
-  const rows = elementsWithClass(html, "entity-stat-grid").flatMap((grid) =>
-    [...grid.matchAll(/<dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(
+  const subheader = (elementsWithClass(html, "print-item-subheader")[0] ?? "")
+    .split('<div class="print-item-stat-row">')
+    .slice(1)
+    .map((row) =>
+      [...row.matchAll(/<dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(
+        ([, label, value]) => [textOf(label!), textOf(value!)] as const,
+      ),
+    );
+  const rows = elementsWithClass(html, "candidate-fields").flatMap((list) =>
+    [...list.matchAll(/<dt>([\s\S]*?)<\/dt><dd[^>]*>([\s\S]*?)<\/dd>/g)].map(
       ([, label, value]) => [textOf(label!), textOf(value!)] as const,
     ),
   );
-  // The authored fields, independent of the card's own parsing: the first
-  // word of "Striker. You …" and "Arcane. You …"; the key abilities as
-  // written ("Charisma, Dexterity, …").
-  const firstWord = (field: string) =>
-    /^\s*([A-Za-z]+)/.exec(contentSpecificValue(entity, field) ?? "")?.[1];
+  // The authored fields, independent of the card's own parsing: the
+  // phrase before the first "." of "Striker. You …" and "Arcane. You …";
+  // the key abilities as written ("Charisma, Dexterity, …").
+  const lead = (field: string) =>
+    /^\s*([^.]+)/.exec(contentSpecificValue(entity, field) ?? "")?.[1]?.trim();
   return {
-    // The lede leads with the heading: "Arcane Striker. You wield …".
+    subheader,
     lede: elementsWithClass(html, "entity-card-lede").map(textOf),
-    ledeHtml: elementsWithClass(html, "entity-card-lede").join(""),
     text: textOf(html),
     shortDescription: (
       contentSpecificValue(entity, "Short Description") ?? ""
     ).trim(),
     rows,
-    expectedSummary: [firstWord("Power Source"), firstWord("Role")]
-      .filter(Boolean)
-      .join(" "),
-    expectedKeyAbilities: (contentSpecificValue(entity, "Key Abilities") ?? "")
-      .split(/\s*,\s*/)
-      .filter(Boolean)
-      .join(", "),
+    expectedRoleSource: [
+      ["Role", lead("Role")],
+      ["Source", lead("Power Source")],
+    ].filter(([, value]) => value),
+    expectedKeyAbilities: (
+      contentSpecificValue(entity, "Key Abilities") ?? ""
+    ).trim(),
   };
 }
 
@@ -577,43 +584,56 @@ rule("beatrix", "Build, level 1: Class", "Class detail card", (c) => {
   return [
     equal("The Class row's pick", selected?.name, "Hexblade"),
     ...[
-      [hexblade, "Arcane Striker"],
-      [paladin, "Divine Defender"],
-    ].flatMap(([entity, heading]) => {
+      [
+        hexblade,
+        [
+          ["Role", "Striker"],
+          ["Source", "Arcane"],
+        ],
+      ],
+      [
+        paladin,
+        [
+          ["Role", "Defender"],
+          ["Source", "Divine"],
+        ],
+      ],
+    ].flatMap(([entity, roleSource]) => {
       const card = classCard(c, entity as ContentEntity);
       const name = (entity as ContentEntity).name;
-      const keyRow = card.rows.filter(([label]) => label === "Key abilities");
+      const keyRow = card.rows.filter(([label]) => label === "Abilities");
       return [
         equal(
-          `${name}: the lede reads "${heading}." then the short description`,
-          card.lede,
-          [[`${heading}.`, card.shortDescription].filter(Boolean).join(" ")],
+          `${name}: the subheader's first line is Role · Source`,
+          card.subheader[0],
+          roleSource,
         ),
         equal(
-          `${name}: the heading is the power source then the role`,
-          heading,
-          card.expectedSummary,
+          `${name}: Role · Source match the authored fields`,
+          roleSource,
+          card.expectedRoleSource,
         ),
         equal(
-          `${name}: one "Key abilities" row lists the class's key abilities`,
+          `${name}: the next lines are HP · Level · Surges, then Defenses`,
+          card.subheader.slice(1).map((row) => row.map(([label]) => label)),
+          [["HP", "Level", "Surges"], ["Defenses"]],
+        ),
+        equal(`${name}: the lede is the short description alone`, card.lede, [
+          card.shortDescription,
+        ]),
+        equal(
+          `${name}: one "Abilities" line lists the class's key abilities`,
           keyRow.map(([, value]) => value),
           [card.expectedKeyAbilities],
-        ),
-        truthy(
-          `${name}: only "${heading}." is bold, the rest normal weight`,
-          new RegExp(`<strong[^>]*>${heading}\\.</strong>`).test(
-            card.ledeHtml,
-          ) && (card.ledeHtml.match(/<strong[\s>]/g) ?? []).length === 1,
-          card.ledeHtml.slice(0, 240),
         ),
         inOrder(`${name}: About comes before Class features`, card.text, [
           `About ${name}`,
           "Class features",
         ]),
         equal(
-          `${name}: the row heads the class traits grid`,
-          card.rows.findIndex(([label]) => label === "Key abilities"),
-          card.rows.findIndex(([label]) => label === "Armor") - 1,
+          `${name}: Abilities heads the body lines, Armor next`,
+          card.rows.slice(0, 2).map(([label]) => label),
+          ["Abilities", "Armor"],
         ),
       ];
     }),

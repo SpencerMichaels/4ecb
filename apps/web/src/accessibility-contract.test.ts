@@ -540,8 +540,7 @@ describe("release accessibility contract", () => {
     expect(app).toContain(
       "<HideFlavortextContext.Provider value={hideFlavortext}>",
     );
-    expect(entityCard).toContain("groupClassSpecifics(fields)");
-    expect(entityCard).toContain('type === "class" || type === "hybrid class"');
+    expect(entityCard).toContain("entityCardFields(entity)");
     expect(characterEditor).not.toContain("renderSpecifics");
     expect(equipmentWorkspace).not.toContain("renderSpecifics");
   });

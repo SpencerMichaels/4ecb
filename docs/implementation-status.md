@@ -1654,6 +1654,21 @@ leaving out what was placed or dropped.
   carries it. Tests: `entity-card-fields.test.tsx`,
   `print-item-presentation.test.ts`, `EquipmentWorkspace.test.ts`,
   `overview.test.ts`.
+- **Class and hybrid class:** subheader "Role · Source" (the phrase each
+  field leads with, `classLeadPhrase`: "Defender and Striker", "Martial
+  and Primal"), then "HP · Level · Surges" (Hit Points at 1st Level, per
+  Level Gained, Healing Surges as authored), then "Defenses" (owner: both
+  in the subheader). Body lines, above the lore: Abilities (Key Abilities
+  as authored), Secondary, Armor, Weapons, Implements, Trained, Class
+  skills, Builds, Hybrid talents; Power Name dropped. The lede is the short
+  description alone: its bold "Arcane Striker." repeated the subheader
+  (`.entity-card-summary` removed). The two stat grids are gone, and so is
+  `EntityCard.tsx`'s grouped class field list (`groupClassSpecifics`,
+  dead once every class has placements; a card without the reference index
+  lists the same `CardFieldLines`). Review rule "Class detail card"
+  (beatrix) checks the real Hexblade and Paladin. Tests:
+  `entity-card-fields.test.tsx`, `StructuredEntityBody.test.ts`,
+  `EntityCard.test.ts`.
 
 ## Known-record rows and ritual cards (2026-11-06)
 
