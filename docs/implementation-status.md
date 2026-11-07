@@ -1629,6 +1629,31 @@ leaving out what was placed or dropped.
   Powers (Associated Powers), Associated Power Info and Special after it.
   Tier no longer ends the body. Tests: `entity-card-fields.test.tsx`,
   `entity-card-fields.test.ts`.
+- **Duplicates dropped** (`"drop"` placements and item rules): a class
+  feature's or racial trait's Level (the detail stack's "Level N" fold, the
+  sheet's level tag) and, when it grants a power (`Powers` or
+  `_DisplayPowers`), its usage ("type": the power card's band); a paragon
+  path's, epic destiny's, theme's or trait package's legacy Power Name
+  ("Spells"); the "Immortality" (or "Immortality?") first line of an epic
+  destiny's Immortality text (`immortalityText`; another first line such
+  as "Living the Destiny" is a heading and stays); an item set benefit's
+  Piece Count (its name); a god fragment's Power Usage, Action Type,
+  Keywords, Trigger and Effect (its power card, `godFragmentPowerCard`).
+  Items (`print-item-presentation.ts`, every ItemCard: builder panes,
+  Inventory, Shop, printed cards): an Enhancement that only repeats the
+  name's "+N" (`isNamedEnhancement`: a bare "+N", or the kind's standard
+  "+N attack rolls and damage rolls", "+N AC", "+N Fortitude, Reflex, and
+  Will" with the name ending in that "+N"; an artifact's or a familiar
+  item's other enhancement stays a rule); an Implement row naming the item's
+  own kind ("Ki Focus", "Tome", "Wand"); a mundane weapon's Size when its
+  name carries it ("Club (Large)"). The printed Character Reference entries
+  list the same placed fields (`entityCardFieldPlacements`, filtered by the
+  overview's own omissions: level, type, tier, associated powers…), so
+  they drop Power Name and the repeated Immortality line too. The class
+  card's "<Source> <Role>." lede moves with batch 3, when the subheader
+  carries it. Tests: `entity-card-fields.test.tsx`,
+  `print-item-presentation.test.ts`, `EquipmentWorkspace.test.ts`,
+  `overview.test.ts`.
 
 ## Known-record rows and ritual cards (2026-11-06)
 

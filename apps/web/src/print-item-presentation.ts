@@ -55,13 +55,16 @@ export function printItemPresentation(card: SheetCard) {
     /^(?:superior implement|implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)$/i.test(
       magicType ?? card.itemType ?? "",
     );
-  // A bare "+N" repeats the name; one that names what it modifies is a rule.
+  // A bare "+N" repeats the name, and so does its kind's standard phrase
+  // ("+3 attack rolls and damage rolls", "+2 AC", "+2 Fortitude, Reflex,
+  // and Will") on an item whose name ends "+3" (owner, 2026-11-06); any
+  // other enhancement (an artifact's, "+1 to all defenses") is a rule.
   const enhancementField = [...card.fields]
     .reverse()
     .find((entry) => entry.label.trim().toLowerCase() === "enhancement");
   const enhancementRule =
     enhancementField !== undefined &&
-    !/^[+-]?\d+\.?$/.test(enhancementField.value.trim())
+    !isNamedEnhancement(enhancementField.value, card.name)
       ? [enhancementField]
       : [];
   const critical = lastField("Critical");
@@ -306,6 +309,16 @@ export function printItemPresentation(card: SheetCard) {
     ])
       excluded.add(label);
   if (criticalFormula) excluded.add("critical");
+  // A ki focus's or tome's "Implement: Ki Focus" is its type bar, and a
+  // mundane weapon's "Size: Large" is in its name ("Club (Large)").
+  const implement = lower(field("Implement"));
+  if (
+    implement !== undefined &&
+    [lower(magicType), lower(card.itemType), lower(kind)].includes(implement)
+  )
+    excluded.add("implement");
+  const size = lower(field("Size"));
+  if (size && namesWord(card.name, size)) excluded.add("size");
   // A weapon's keyword properties ("Heavy Thrown, High Crit") read as one
   // header row; authored property prose with several lines or a list
   // ("See Below:" plus bullets) is rules text and stays in the body.
@@ -409,6 +422,33 @@ export function printItemPresentation(card: SheetCard) {
       implementGroup: field("Group"),
     }),
   };
+}
+
+/** Whether `text` contains `word` as whole words, ignoring case. */
+function namesWord(text: string, word: string): boolean {
+  const escaped = word.trim().replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`,
+    "iu",
+  ).test(text);
+}
+
+/** Whether an item's Enhancement only repeats its name: a bare "+N", or
+ *  its kind's standard phrase with the "+N" the name ends with. */
+export function isNamedEnhancement(value: string, name: string): boolean {
+  const trimmed = value.trim();
+  if (/^[+-]?\d+\.?$/u.test(trimmed)) return true;
+  const bonus =
+    /^([+-]\d+)\s+(?:to\s+)?(?:attack rolls and damage rolls|AC|Fortitude, Reflex,? and Will)\.?$/iu.exec(
+      trimmed,
+    )?.[1];
+  return (
+    bonus !== undefined &&
+    name
+      .trim()
+      .replace(/\s*\((?:heroic|paragon|epic)\s+tier\)$/iu, "")
+      .endsWith(bonus)
+  );
 }
 
 /** A keyword list ("Heavy Thrown, Energized (fire)") fits an item card's

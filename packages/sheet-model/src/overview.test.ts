@@ -182,6 +182,41 @@ describe("printed overview data", () => {
       value: benefit,
     });
   });
+  it("lists the card's placed fields: duplicates dropped, one-word labels", () => {
+    const destiny = {
+      ...feat,
+      id: "destiny:synthetic",
+      type: "Epic Destiny",
+      name: "Synthetic destiny",
+      description: "You walk the path of legends.",
+      specifics: [
+        {
+          name: "Power Name",
+          value: "Powers",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "Immortality",
+          value: "Immortality\nYou ascend to the heavens.",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const model = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: [
+          { id: destiny.id, name: destiny.name, type: destiny.type },
+        ],
+      },
+      [destiny],
+    );
+    expect(model.overview?.features[0]?.fields).toEqual([
+      { label: "Immortality", value: "You ascend to the heavens." },
+    ]);
+  });
   it("prints a feature's readable prerequisite, never its rule grammar", () => {
     const multiclass = {
       ...feat,

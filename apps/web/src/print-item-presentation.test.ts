@@ -94,6 +94,71 @@ describe("printed item presentation", () => {
       ]);
     },
   );
+  // Owner, 2026-11-06: the name's "+N" and the kind already say it.
+  it.each([
+    ["Neck Slot Item", "+2 Fortitude, Reflex, and Will", "Amulet of Health +2"],
+    ["Weapon", "+2 attack rolls and damage rolls", "Flaming Longsword +2"],
+    ["Ki Focus", "+2 Attack rolls and damage rolls", "Ki Focus of Fury +2"],
+    ["Armor", "+2 AC", "Bloodcut Leather Armor +2 (paragon tier)"],
+  ])(
+    "drops a %s enhancement that repeats the name's bonus",
+    (kind, enhancement, name) => {
+      const view = printItemPresentation({
+        ...card("Magic Item", {
+          "Magic Item Type": kind,
+          Property: "A passive benefit.",
+          Enhancement: enhancement,
+        }),
+        name,
+      });
+      expect(view.rules).toEqual([
+        { label: "Property", value: "A passive benefit." },
+      ]);
+    },
+  );
+  it("keeps an enhancement the name does not carry", () => {
+    for (const [name, enhancement] of [
+      ["Axe of the Dwarvish Lords", "+4 attack rolls and damage rolls"],
+      ["Collar of Defense +2", "+2 to all defenses"],
+      ["Flaming Longsword +3", "+2 attack rolls and damage rolls"],
+    ] as const)
+      expect(
+        printItemPresentation({
+          ...card("Magic Item", {
+            "Magic Item Type": "Weapon",
+            Enhancement: enhancement,
+          }),
+          name,
+        }).rules,
+      ).toEqual([{ label: "Enhancement", value: enhancement }]);
+  });
+  it("drops a ki focus's or tome's Implement row, which its type bar names", () => {
+    for (const kind of ["Ki Focus", "Tome"]) {
+      const view = printItemPresentation(
+        card("Magic Item", {
+          "Magic Item Type": kind,
+          Implement: kind,
+          Property: "A passive benefit.",
+        }),
+      );
+      expect(view.rules.map(({ label }) => label)).toEqual(["Property"]);
+    }
+    // An Implement naming something else stays.
+    expect(
+      printItemPresentation(
+        card("Magic Item", { "Magic Item Type": "Wand", Implement: "Staff" }),
+      ).rules,
+    ).toEqual([{ label: "Implement", value: "Staff" }]);
+  });
+  it("drops a mundane weapon's Size, which its name carries", () => {
+    const club = (name: string) =>
+      printItemPresentation({
+        ...card("Weapon", { Damage: "1d8", Size: "Large" }),
+        name,
+      }).rules;
+    expect(club("Club (Large)")).toEqual([]);
+    expect(club("Club")).toEqual([{ label: "Size", value: "Large" }]);
+  });
   it("keeps ranged combat values together on one row", () => {
     const view = printItemPresentation(
       card("Weapon", {

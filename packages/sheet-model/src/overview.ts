@@ -38,6 +38,10 @@ import { featureReferenceMetadata } from "./feature-reference";
 import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 import { featureRowTitle, soleClassName } from "./feature-titles";
 import type { SheetDeityReference } from "./deity-reference";
+import {
+  entityCardFieldPlacements,
+  layoutCardFields,
+} from "./entity-card-fields";
 import { godFragmentConstantBenefits } from "./god-fragment-card";
 import { featureNoteText, featureReminderText } from "./feature-notes";
 
@@ -464,21 +468,42 @@ export function withSheetOverview(
               input.level,
               input.evaluatedStats,
             );
-      const fields =
-        entity?.specifics
+      // The card's placed fields first (`entityCardFields`: one-word
+      // labels, duplicates dropped), then the other authored fields.
+      const omitted = (name: string) =>
+        /^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
+          name.trim(),
+        );
+      const placements =
+        entity === undefined ? undefined : entityCardFieldPlacements(entity);
+      const placedNames = new Set(
+        (placements ?? []).flatMap(({ specifics }) =>
+          (specifics ?? []).map(key),
+        ),
+      );
+      const placed = layoutCardFields(
+        (placements ?? []).filter(
+          ({ specifics }) => !(specifics ?? []).some(omitted),
+        ),
+      );
+      const fields: SheetValue[] = [
+        ...[...placed.subheader.flat(), ...placed.body].map(
+          ({ label, value }) => ({ label, value }),
+        ),
+        ...(entity?.specifics
           .filter(
             (field) =>
               isUserFacingSpecific(field) &&
               field.value.trim() &&
-              !/^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
-                field.name.trim(),
-              ) &&
+              !omitted(field.name) &&
+              !placedNames.has(key(field.name)) &&
               (field.value.trim() !== description ||
                 (key(group.group) === "background" &&
                   key(field.name) === "benefit")),
           )
           .map((field) => ({ label: field.name.trim(), value: field.value })) ??
-        [];
+          []),
+      ];
       const prerequisites =
         entity === undefined
           ? undefined

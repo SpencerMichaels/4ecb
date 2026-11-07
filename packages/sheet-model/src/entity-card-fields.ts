@@ -72,46 +72,81 @@ export interface EntityCardFields extends CardFieldLayout {
   readonly placed: ReadonlySet<string>;
 }
 
-type Specific = (...names: string[]) => string | undefined;
+interface Fields {
+  /** An authored specific's trimmed value (any case; the first non-empty
+   *  one of `names`), or undefined. */
+  readonly value: (...names: string[]) => string | undefined;
+  /** A placement showing (or dropping) the first of `names` with a value. */
+  readonly at: (
+    label: string,
+    place: CardFieldPlace,
+    ...names: string[]
+  ) => CardFieldPlacement;
+  /** Whether the record grants a power, which has its own card. */
+  readonly grantsPower: boolean;
+}
+
+/** "Immortality" (or "Immortality?") heading an epic destiny's Immortality
+ *  text repeats its label; any other first line ("Living the Destiny") is
+ *  a heading of its own and stays. */
+export function immortalityText(value: string | undefined): string | undefined {
+  return value
+    ?.replace(/^\s*Immortality\s*\??[ \t]*(?:\r?\n|(?=[A-Z]))/u, "")
+    .trim();
+}
+
+/** Usage and level of a class feature or racial trait: its fold heading or
+ *  level tag shows the level, and a granted power's card its usage. */
+const featurePlacements = (fields: Fields): readonly CardFieldPlacement[] => [
+  fields.at("Level", "drop", "Level"),
+  ...(fields.grantsPower ? [fields.at("Usage", "drop", "type")] : []),
+];
+
+/** A paragon path's, epic destiny's, theme's or trait package's legacy
+ *  "Power Name" (the class's word for powers, "Spells") says nothing to a
+ *  player; its prerequisite is the card's own "Prerequisite:" line. */
+const pathPlacements = (fields: Fields): readonly CardFieldPlacement[] => [
+  fields.at("Power Name", "drop", "Power Name"),
+  {
+    label: "Immortality",
+    value: immortalityText(fields.value("Immortality")),
+    place: "body",
+    specifics: ["Immortality"],
+  },
+];
 
 /** The per-type placements; a type not listed has none. */
 const PLACEMENTS: Readonly<
-  Record<string, (specific: Specific) => readonly CardFieldPlacement[]>
+  Record<string, (fields: Fields) => readonly CardFieldPlacement[]>
 > = {
   // A feat's tier and kind are short and bounded; its powers list and
   // rule text vary, so they are body lines (its prerequisite is the
   // card's own "Prerequisite:" line above the text).
-  feat: (specific) => [
-    {
-      label: "Tier",
-      value: specific("Tier"),
-      place: 1,
-      specifics: ["Tier"],
-    },
-    {
-      label: "Type",
-      value: specific("type"),
-      place: 1,
-      specifics: ["type"],
-    },
-    {
-      label: "Powers",
-      value: specific("Associated Powers"),
-      place: "body",
-      specifics: ["Associated Powers"],
-    },
-    {
-      label: "Associated Power Info",
-      value: specific("Associated Power Info"),
-      place: "body",
-      specifics: ["Associated Power Info"],
-    },
-    {
-      label: "Special",
-      value: specific("Special"),
-      place: "body",
-      specifics: ["Special"],
-    },
+  feat: (fields) => [
+    fields.at("Tier", 1, "Tier"),
+    fields.at("Type", 1, "type"),
+    fields.at("Powers", "body", "Associated Powers"),
+    fields.at("Associated Power Info", "body", "Associated Power Info"),
+    fields.at("Special", "body", "Special"),
+  ],
+  "class feature": featurePlacements,
+  "racial trait": featurePlacements,
+  "paragon path": pathPlacements,
+  "epic destiny": pathPlacements,
+  theme: pathPlacements,
+  "trait package": pathPlacements,
+  // Its piece count is in its name ("Aleheart Companions' Gear (2)").
+  "item set benefit": (fields) => [
+    fields.at("Piece Count", "drop", "Piece Count"),
+  ],
+  // Its power's usage, action, keywords, trigger and effect are that
+  // power's own card (`godFragmentPowerCard`).
+  "god fragment": (fields) => [
+    fields.at("Usage", "drop", "Power Usage"),
+    fields.at("Action", "drop", "Action Type"),
+    fields.at("Keywords", "drop", "Keywords"),
+    fields.at("Trigger", "drop", "Trigger"),
+    fields.at("Effect", "drop", "Effect"),
   ],
 };
 
@@ -128,9 +163,27 @@ const PLACEMENTS: Readonly<
 export function entityCardFields(
   entity: ContentEntity,
 ): EntityCardFields | undefined {
+  const placements = entityCardFieldPlacements(entity);
+  return placements === undefined
+    ? undefined
+    : {
+        ...layoutCardFields(placements),
+        placed: new Set(
+          placements.flatMap((placement) =>
+            (placement.specifics ?? []).map(key),
+          ),
+        ),
+      };
+}
+
+/** The placements behind `entityCardFields`, with the specifics each one
+ *  shows or drops (the printed reference entry filters them its own way). */
+export function entityCardFieldPlacements(
+  entity: ContentEntity,
+): readonly CardFieldPlacement[] | undefined {
   const placementsFor = PLACEMENTS[key(entity.type)];
   if (placementsFor === undefined) return undefined;
-  const specific: Specific = (...names) => {
+  const value = (...names: string[]) => {
     // A name matches in any case ("type" and "Type" are one field); the
     // first authored value wins.
     for (const name of names)
@@ -139,11 +192,14 @@ export function entityCardFields(
           return field.value.trim();
     return undefined;
   };
-  const placements = placementsFor(specific);
-  return {
-    ...layoutCardFields(placements),
-    placed: new Set(
-      placements.flatMap((placement) => (placement.specifics ?? []).map(key)),
-    ),
-  };
+  return placementsFor({
+    value,
+    at: (label, place, ...names) => ({
+      label,
+      value: value(...names),
+      place,
+      specifics: names,
+    }),
+    grantsPower: value("Powers", "_DisplayPowers") !== undefined,
+  });
 }

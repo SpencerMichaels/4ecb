@@ -1103,6 +1103,25 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Wrong if:** the subheader differs from a deity or ritual card's, a
     long multiclass Type pushes Tier onto its own line, or Tier or Type
     shows again in the body.
+- [ ] **Duplicate card fields dropped.** Added 2026-11-06; which rows go
+      is unit-tested, this is the look of what remains.
+  - **Where:** at 140% zoom: a fighter's Build → level 1 → Class, the
+    Combat Challenge feature card in the "Level 1" fold; a dragonborn's
+    Race → Dragon Breath trait card; any paragon path card (e.g. Kensei)
+    and an epic destiny (Archmage: its Immortality section); a monk's Shop
+    → Ki Focus of Fury +2 (or any ki focus), a Flaming Longsword +2, a
+    Club (Large) if listed, and the artifact Axe of the Dwarvish Lords
+    (Details or Inventory, if a character holds it); print
+    preview's Character Reference for a level-21 character's epic destiny.
+  - **Expect:** no "Level: 1", "Type: At-Will" or "Power Name: Spells"
+    lines; the Immortality section starts with its text (or its own
+    heading such as "Living the Destiny"), not a repeated "Immortality"
+    line; the ki focus has no "Implement: Ki Focus" and the magic items no
+    "Enhancement: +2 attack rolls and damage rolls" rule (an artifact
+    without "+N" in its name keeps its Enhancement); the club no "Size".
+  - **Wrong if:** a card loses a line that was not a duplicate (an
+    artifact's enhancement, a class feature's Type that grants no power),
+    or a card body now opens with a stray empty gap where a row was.
 - [ ] **One label per status: "Unavailable" or "Illegal".**
   - **Where:** a Pathfinder campaign character, Build → Deity, Show all
     on: a stock deity's row, then click it for its card. A feat table with

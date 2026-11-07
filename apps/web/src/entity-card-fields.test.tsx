@@ -199,3 +199,120 @@ describe("feat card", () => {
     ]);
   });
 });
+
+describe("duplicate fields dropped", () => {
+  it("drops a class feature's Level, and its Usage when it grants a power", () => {
+    const feature = record(
+      "ID_SYNTH_CF",
+      "Synthetic Challenge",
+      "Class Feature",
+      {
+        Level: "1",
+        type: "At-Will",
+        Powers: "ID_SYNTH_POWER",
+        "Short Description": "Mark an enemy.",
+      },
+      { description: "You can mark an enemy." },
+    );
+    const markup = renderGranted(feature);
+    expect(subheaderLines(markup)).toBeUndefined();
+    expect(bodyLines(markup)).toEqual([]);
+    expect(body(markup)).not.toContain("At-Will");
+    expect(body(markup)).not.toMatch(/<dt>Level<\/dt>/u);
+  });
+
+  it("keeps a class feature's Type when it grants no power", () => {
+    const feature = record(
+      "ID_SYNTH_CF_2",
+      "Synthetic Aspect",
+      "Class Feature",
+      {
+        Level: "3",
+        Type: "Aspect of the Wild (Scout)",
+      },
+    );
+    expect(bodyLines(renderGranted(feature))).toEqual([
+      "Type: Aspect of the Wild (Scout)",
+    ]);
+  });
+
+  it("drops a racial trait's Level and its granted power's usage", () => {
+    const trait = record("ID_SYNTH_RT", "Synthetic Breath", "Racial Trait", {
+      Level: "1",
+      type: "Encounter",
+      _DisplayPowers: "ID_SYNTH_BREATH",
+    });
+    expect(bodyLines(renderGranted(trait))).toEqual([]);
+  });
+
+  it.each(["Paragon Path", "Epic Destiny", "Theme", "Trait Package"])(
+    "drops a %s's Power Name",
+    (type) => {
+      const path = record("ID_SYNTH_PATH", "Synthetic Path", type, {
+        "Power Name": "Spells",
+      });
+      const markup = renderGranted(path);
+      expect(bodyLines(markup)).toEqual([]);
+      expect(markup).not.toContain("Spells");
+    },
+  );
+
+  it("strips the Immortality text's repeated first line", () => {
+    const destiny = (immortality: string) =>
+      bodyLines(
+        renderGranted(
+          record("ID_SYNTH_ED", "Synthetic Destiny", "Epic Destiny", {
+            Immortality: immortality,
+          }),
+        ),
+      ).join("|");
+    expect(destiny("Immortality\nYou ascend.")).not.toContain(
+      '<p class="prose-paragraph">Immortality</p>',
+    );
+    expect(destiny("Immortality\nYou ascend.")).toContain("You ascend.");
+    expect(destiny("Immortality?\nYou ascend.")).not.toMatch(/Immortality\?/u);
+    // Another heading is the text's own and stays.
+    expect(destiny("Living the Destiny\nYou ascend.")).toContain(
+      "Living the Destiny",
+    );
+  });
+
+  it("drops an item set benefit's Piece Count", () => {
+    const benefit = record(
+      "ID_SYNTH_SET_BENEFIT",
+      "Synthetic Gear (2)",
+      "Item Set Benefit",
+      { "Piece Count": "2" },
+      { description: "+1 to saving throws." },
+    );
+    expect(bodyLines(renderGranted(benefit))).toEqual([]);
+  });
+
+  it("drops a god fragment's power rows, which its power card shows", () => {
+    const fragment = record(
+      "ID_SYNTH_FRAGMENT",
+      "Synthetic Fragment",
+      "God Fragment",
+      {
+        "Power Usage": "Encounter",
+        "Action Type": "Free",
+        Keywords: "Fear",
+        Trigger: "You use a divine encounter attack power.",
+        Effect: "One ally gains 5 temporary hit points.",
+        "Constant Benefits": "+1 to saving throws.",
+        Quirks: "Abrasive, intimidating, lively",
+      },
+    );
+    const lines = bodyLines(renderGranted(fragment)).map((line) =>
+      line.slice(0, line.indexOf(":")),
+    );
+    for (const dropped of [
+      "Power Usage",
+      "Action Type",
+      "Keywords",
+      "Trigger",
+      "Effect",
+    ])
+      expect(lines).not.toContain(dropped);
+  });
+});

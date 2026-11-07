@@ -337,7 +337,9 @@ describe("equipment item details", () => {
     expect(markup).not.toContain("+2d6 damage");
     expect(markup).toContain("<dt>Properties</dt>");
     expect(markup).toContain("2,600 gp");
-    expect(markup).toContain("+2 attack rolls and damage rolls");
+    // The enhancement repeats the name's "+2" (owner, 2026-11-06).
+    expect(markup).not.toContain("+2 attack rolls and damage rolls");
+    expect(markup).not.toContain("Enhancement");
     expect(markup).not.toContain("Weapon: Any");
     expect(markup).not.toContain("Damage: 1d10. Group: Hammer.");
     expect(markup).toContain(
