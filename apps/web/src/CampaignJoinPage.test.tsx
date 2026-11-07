@@ -5,9 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type * as BrowserStorage from "@4ecb/browser-storage";
 import type { ParsedContentSource } from "@4ecb/content-domain";
-import { buildCampaign, type CampaignDocument } from "@4ecb/content-pack";
+import {
+  buildCampaign,
+  type CampaignDocument,
+  type CampaignRemovedRecordCount,
+  type ContentPackManifest,
+} from "@4ecb/content-pack";
 
-import { campaignJoinState, campaignSummaryLines } from "./campaign-join-ui";
+import {
+  campaignInviteIntro,
+  campaignJoinState,
+  campaignSummaryLines,
+  contentTypeCount,
+  contentTypePlural,
+} from "./campaign-join-ui";
 import type { AdvertisedCampaign } from "./runtime-content";
 import type * as RuntimeContent from "./runtime-content";
 
@@ -20,6 +31,7 @@ const storage = vi.hoisted(() => ({
   install: vi.fn(),
   download: vi.fn(),
   start: vi.fn(),
+  count: vi.fn(),
 }));
 
 vi.mock("@4ecb/browser-storage", async (importOriginal) => ({
@@ -37,6 +49,9 @@ vi.mock("./runtime-content", async (importOriginal) => ({
   downloadAdvertisedCampaign: storage.download,
 }));
 vi.mock("./create-character", () => ({ startNewCharacter: storage.start }));
+vi.mock("./content-worker-client", () => ({
+  countCampaignRemovedRecordsInWorker: storage.count,
+}));
 
 const { CampaignJoinPage } = await import("./CampaignJoinPage");
 
@@ -112,13 +127,77 @@ describe("campaign invite states", () => {
       );
   });
 
+  it("introduces the campaign with the owner's wording", () => {
+    expect(campaignInviteIntro("Golarion", undefined, 1)).toBe(
+      "You're invited to Golarion. Join it to add campaign-specific content to your character builder, including house rules and content additions/changes. Your existing characters will remain unchanged. You can opt a character in to the new content and rules by selecting \"Golarion\" in the character's Details pane.",
+    );
+    expect(campaignInviteIntro("Golarion", 1, 2)).toMatch(
+      /Details pane\. This browser has revision 1; this adds revision 2\.$/,
+    );
+  });
+
+  it("names content types in plain plurals", () => {
+    expect(
+      [
+        "Deity",
+        "Language",
+        "Class Feature",
+        "Epic Destiny",
+        "Hybrid Class",
+        "Background Choice",
+        "Gear",
+      ].map(contentTypePlural),
+    ).toEqual([
+      "Deities",
+      "Languages",
+      "Class Features",
+      "Epic Destinies",
+      "Hybrid Classes",
+      "Background options",
+      "Gear items",
+    ]);
+    expect(contentTypeCount("Deity", 1)).toBe("1 deity");
+    expect(contentTypeCount("Deity", 135)).toBe("135 deities");
+    expect(contentTypeCount("Background Choice", 11)).toBe(
+      "11 background options",
+    );
+    expect(contentTypeCount("Background Choice", 1)).toBe(
+      "1 background option",
+    );
+  });
+
   it("summarizes revision, house rules and restrictions", async () => {
-    expect(campaignSummaryLines(await campaign(3))).toEqual([
+    const document_ = await campaign(3);
+    const head = [
       { label: "Revision", value: "3" },
       { label: "House rules", value: "None" },
-      { label: "Deity", value: "Only the campaign's own" },
-      { label: "Not offered", value: "2 records" },
+      { label: "Deities", value: "Fully replaces the originals" },
+    ];
+    // No active content to count over: no Removed line.
+    expect(campaignSummaryLines(document_)).toEqual(head);
+    expect(campaignSummaryLines(document_, { kind: "pending" })).toEqual([
+      ...head,
+      { label: "Removed", value: "Counting…", pending: true },
     ]);
+    expect(
+      campaignSummaryLines(document_, {
+        kind: "counted",
+        counts: [
+          { type: "Deity", count: 135 },
+          { type: "Language", count: 13 },
+          { type: "Background Choice", count: 11 },
+        ],
+      }),
+    ).toEqual([
+      ...head,
+      {
+        label: "Removed",
+        value: "135 deities, 13 languages, 11 background options",
+      },
+    ]);
+    expect(
+      campaignSummaryLines(document_, { kind: "counted", counts: [] }),
+    ).toEqual([...head, { label: "Removed", value: "None" }]);
     const patched = await buildCampaign(
       {
         campaignId: "synthetic-setting",
@@ -140,7 +219,10 @@ describe("campaign invite states", () => {
       source,
       "",
     );
-    expect(campaignSummaryLines(patched)).toEqual([
+    // Nothing restricted: no Removed line even when counted.
+    expect(
+      campaignSummaryLines(patched, { kind: "counted", counts: [] }),
+    ).toEqual([
       { label: "Revision", value: "4" },
       { label: "House rules", value: "None" },
       { label: "Changed fields", value: "2 fields" },
@@ -158,6 +240,8 @@ describe("CampaignJoinPage", () => {
     storage.install.mockReset();
     storage.download.mockReset();
     storage.start.mockReset();
+    storage.count.mockReset();
+    storage.count.mockResolvedValue([]);
     window.location.hash = "#/campaigns/join/synthetic-setting";
     container = document.createElement("div");
     document.body.append(container);
@@ -173,6 +257,7 @@ describe("CampaignJoinPage", () => {
     options: {
       advertisedLoaded?: boolean;
       activePackId?: string | undefined;
+      activeManifest?: ContentPackManifest;
     } = {},
   ) {
     await act(async () => {
@@ -186,6 +271,9 @@ describe("CampaignJoinPage", () => {
               ? {}
               : { activePackId: options.activePackId }
             : { activePackId: "server.content" })}
+          {...(options.activeManifest === undefined
+            ? {}
+            : { activeManifest: options.activeManifest })}
         />,
       );
     });
@@ -208,18 +296,21 @@ describe("CampaignJoinPage", () => {
       "Join Synthetic Setting?",
     );
     expect(storage.download).toHaveBeenCalledWith(hosted(document_));
-    expect(container.textContent).toContain("Only the campaign's own");
-    expect(container.textContent).toContain("2 records");
+    expect(container.textContent).toContain(
+      "You're invited to Synthetic Setting. Join it to add",
+    );
+    expect(container.textContent).toContain("Fully replaces the originals");
+    // No active content in this render: nothing to count over.
+    expect(container.textContent).not.toContain("Removed");
+    expect(storage.count).not.toHaveBeenCalled();
     expect(button("Cancel")).toBeDefined();
     expect(container.textContent).not.toMatch(/Not now|Maybe later/);
 
     await act(async () => {
-      button("Add campaign")!.click();
+      button("Join campaign")!.click();
     });
     expect(storage.install).toHaveBeenCalledWith(document_);
-    expect(container.textContent).toContain(
-      "Added Synthetic Setting to this browser.",
-    );
+    expect(container.textContent).toContain("Joined Synthetic Setting.");
     const create = button("New character in Synthetic Setting");
     expect(create).toBeDefined();
 
@@ -266,7 +357,7 @@ describe("CampaignJoinPage", () => {
     );
     await act(async () => button("Try again")!.click());
     expect(storage.download).toHaveBeenCalledTimes(2);
-    expect(button("Add campaign")?.disabled).toBe(false);
+    expect(button("Join campaign")?.disabled).toBe(false);
   });
 
   it("explains an unknown campaign and leads back or to Settings", async () => {
@@ -276,6 +367,48 @@ describe("CampaignJoinPage", () => {
     expect(settings?.textContent).toBe("Settings → Campaigns");
     button("Back to characters")!.click();
     expect(window.location.hash).toBe("#/characters");
+  });
+
+  it("counts the removed records over the active content in the worker", async () => {
+    const document_ = await campaign(1);
+    storage.download.mockResolvedValue(document_);
+    let finish: (counts: CampaignRemovedRecordCount[]) => void = () =>
+      undefined;
+    storage.count.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const manifest = {
+      packId: "server.content",
+      contentDigest: "server-digest",
+    } as ContentPackManifest;
+    await render([hosted(document_)], { activeManifest: manifest });
+    expect(storage.count).toHaveBeenCalledWith(["server.content"], document_);
+    // Pending without holding up the rest of the page.
+    const removed = [...container.querySelectorAll("dt")].find(
+      (term) => term.textContent === "Removed",
+    );
+    expect(removed?.nextElementSibling?.textContent).toBe("Counting…");
+    expect(removed?.nextElementSibling?.getAttribute("aria-busy")).toBe("true");
+    expect(button("Join campaign")?.disabled).toBe(false);
+    await act(async () => {
+      finish([
+        { type: "Deity", count: 135 },
+        { type: "Background Choice", count: 11 },
+      ]);
+    });
+    expect(removed?.nextElementSibling?.textContent).toBe(
+      "135 deities, 11 background options",
+    );
+    // Joining shows the same document: no second count.
+    storage.install.mockImplementation((installed: CampaignDocument) => {
+      storage.installed.push(installed);
+      return Promise.resolve(installed);
+    });
+    await act(async () => button("Join campaign")!.click());
+    expect(container.textContent).toContain("135 deities");
+    expect(storage.count).toHaveBeenCalledTimes(1);
   });
 
   it("waits for the server's list before calling a campaign unknown", async () => {

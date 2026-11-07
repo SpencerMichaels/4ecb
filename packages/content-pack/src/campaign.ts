@@ -1080,6 +1080,52 @@ export function resolveCampaignRestrictions(
   return [...restricted.values()].sort(compareIgnoringCase);
 }
 
+/** How many base records of one type a campaign makes unavailable. */
+export interface CampaignRemovedRecordCount {
+  readonly type: string;
+  readonly count: number;
+}
+
+/**
+ * The base records a campaign makes unavailable, counted by type: its
+ * restrictions (type rules and IDs) resolved as `composeCampaignProfile`
+ * resolves them, over `baseLayers` (the base packs' records, in layer order,
+ * later layers replacing an ID ignoring case) with the house rules on top.
+ * Only records the base supplies count: a restricted ID no base record has,
+ * or a house-rule record, is not a removed record. Sorted by count, most
+ * first, then by type. Field and rule patches change neither IDs nor types,
+ * so they are not applied.
+ */
+export function campaignRemovedRecordCounts(
+  baseLayers: readonly (readonly Pick<ContentEntity, "id" | "type">[])[],
+  campaign: Pick<CampaignDocument, "restrictions" | "houseRules">,
+): CampaignRemovedRecordCount[] {
+  const base = new Map<string, Pick<ContentEntity, "id" | "type">>();
+  for (const entities of baseLayers)
+    for (const entity of entities)
+      base.set(entity.id.toLocaleLowerCase(), entity);
+  const composed = new Map(base);
+  for (const entity of campaign.houseRules.entities)
+    composed.set(entity.id.toLocaleLowerCase(), entity);
+  const counts = new Map<string, number>();
+  for (const id of resolveCampaignRestrictions(
+    [...composed.values()],
+    campaign,
+  )) {
+    const key = id.toLocaleLowerCase();
+    const record = base.get(key);
+    // A house-rule record replacing a base ID is the campaign's, not removed.
+    if (record === undefined || composed.get(key) !== record) continue;
+    counts.set(record.type, (counts.get(record.type) ?? 0) + 1);
+  }
+  return [...counts]
+    .map(([type, count]) => ({ type, count }))
+    .sort(
+      (left, right) =>
+        right.count - left.count || compareIgnoringCase(left.type, right.type),
+    );
+}
+
 /** What a patch finds on the records it is applied to. */
 export type CampaignPatchOutcome =
   | { readonly patch: CampaignPatch; readonly status: "applies" }

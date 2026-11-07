@@ -5,9 +5,13 @@ import {
   decodeAndValidateContentPackForStorage,
   storeAlreadyValidatedContentPack,
 } from "@4ecb/browser-storage/validated-pack-storage";
-import type { CampaignDocument } from "@4ecb/content-pack";
+import {
+  campaignRemovedRecordCounts,
+  type CampaignDocument,
+} from "@4ecb/content-pack";
 
 import type {
+  CampaignRemovedRecordsResponse,
   ContentWorkerRequest,
   ImportPackResponse,
   MaterializeCampaignProfileResponse,
@@ -21,6 +25,7 @@ const worker = self as DedicatedWorkerGlobalScope;
 
 function respond(
   message:
+    | CampaignRemovedRecordsResponse
     | ImportPackResponse
     | MaterializeCampaignProfileResponse
     | MaterializeProfileResponse,
@@ -36,6 +41,11 @@ worker.onmessage = (event: MessageEvent<ContentWorkerRequest>) => {
   const request = event.data;
   if (request.type === "materialize-campaign-profile")
     void materializeCampaignProfile(request.baseLayerPackIds, request.campaign);
+  else if (request.type === "campaign-removed-records")
+    void countCampaignRemovedRecords(
+      request.baseLayerPackIds,
+      request.campaign,
+    );
   else if (request.type === "materialize-profile")
     void materializeProfile(
       request.profileId,
@@ -89,6 +99,28 @@ async function materializeProfile(
       layerPackIds,
     );
     respond({ type: "profile", definition });
+  } catch (error: unknown) {
+    respond({ type: "error", message: errorMessage(error) });
+  }
+}
+
+async function countCampaignRemovedRecords(
+  baseLayerPackIds: readonly string[],
+  campaign: CampaignDocument,
+): Promise<void> {
+  try {
+    const repository = new ContentPackRepository();
+    const layers = [];
+    for (const packId of baseLayerPackIds) {
+      const pack = await repository.get(packId);
+      if (pack === undefined)
+        throw new Error(`Missing content profile layer ${packId}`);
+      layers.push(pack.entities);
+    }
+    respond({
+      type: "campaign-removed-records",
+      counts: campaignRemovedRecordCounts(layers, campaign),
+    });
   } catch (error: unknown) {
     respond({ type: "error", message: errorMessage(error) });
   }

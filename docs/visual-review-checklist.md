@@ -979,19 +979,25 @@ Moradin, or an item a character holds), build and import or advertise it.
     table, Esc also leaves the page, or the URL overflows.
 - [ ] **Invite page: join and new character.**
   - **Where:** the copied invite link in a browser without the campaign:
-    Add campaign, then New character in <campaign>; reopen the link; then
-    `#/campaigns/join/nope`. Once at a narrow width.
-  - **Expect:** "Join <name>?" with its explanation and a two-column
-    summary (Revision, House rules, Deity "Only the campaign's own", Not
-    offered), Add campaign and Cancel, no second spinner after the details
-    load. After adding, "Added <name> to this browser." with the New
-    character button; "Creating character…" keeps the page responsive and
+    Join campaign, then New character in <campaign>; reopen the link; then
+    `#/campaigns/join/nope`. Once at a narrow width and at 140% zoom.
+  - **Expect:** "Join <name>?" with the intro ("You're invited to <name>.
+    Join it to add campaign-specific content …selecting "<name>" in the
+    character's Details pane.") and a two-column summary (Revision, House
+    rules, "Deities: Fully replaces the originals", "Languages: …", then
+    "Removed: Counting…" turning into "135 deities, 13 languages, 11
+    background options" for Pathfinder over the full pack without the rest
+    of the page moving or waiting), Join campaign and Cancel, no second
+    spinner after the details load. After joining, "Joined <name>." with
+    the New character button; "Creating character…" keeps the page responsive and
     lands on the Build tab. Reopened, "<name> is in this browser." and
     nothing is downloaded. The unknown ID explains itself with working
     Settings → Campaigns and Back to characters links. Narrow: 1rem
     gutters, no horizontal scroll, the summary still two columns.
-  - **Wrong if:** a "Not now"-style button, a layout jump after loading,
-    or a frozen page while creating.
+  - **Wrong if:** a "Not now"-style button, a layout jump after loading
+    (including when the Removed count arrives), a long Removed value
+    overflowing its column instead of wrapping, or a frozen page while
+    creating.
 - [ ] **Pathfinder character: Details, deity, items and Shop.**
   - **Where:** a character in the campaign: Details → Campaign select;
     Build → Deity with Show all off and on; a character that worships

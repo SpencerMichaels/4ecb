@@ -1054,8 +1054,14 @@ D116 step 9. Route `#/campaigns/join/<campaignId>` (`routes.ts`
 runtime config before calling an ID unknown; a hosted campaign the browser
 lacks (or has an older revision of) is fetched with
 `downloadAdvertisedCampaign` (size-limited, identity and digest checked) to
-show revision, house-rule record count and restrictions, then Add campaign
-installs it and dispatches `CAMPAIGNS_CHANGED_EVENT`; Cancel returns to the
+show the intro (`campaignInviteIntro`), revision, house-rule record count,
+each type rule ("<plural type>: Fully replaces the originals") and one
+"Removed" line: the base records the type and ID rules take away, by type
+(content-pack `campaignRemovedRecordCounts`, counted over
+`activeBaseLayers` in the content worker's `campaign-removed-records`
+request, "Counting…" meanwhile, left out with no active content or a failed
+count; plural type names in `campaign-join-ui.ts`), then Join campaign
+installs it ("Joined <name>.") and dispatches `CAMPAIGNS_CHANGED_EVENT`; Cancel returns to the
 library; a failed fetch offers Try again. An installed campaign offers "New
 character in <name>" (`create-character.ts` `startNewCharacter`, shared with
 the library's New character: the campaign target is materialized, busy label

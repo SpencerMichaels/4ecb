@@ -10,6 +10,7 @@ import { campaignProfileMaterializer } from "./campaign-profile";
 import {
   composeCampaignProfileInWorker,
   composeProfileInWorker,
+  countCampaignRemovedRecordsInWorker,
   type ContentWorkerPort,
 } from "./content-worker-client";
 import type { ContentWorkerRequest } from "./worker-messages";
@@ -63,9 +64,23 @@ const profile: ContentProfileDefinition = {
   contentDigest: "composed-active",
 };
 
+// Base layers by pack ID, for the removed-records count.
+const basePacks: Record<string, { id: string; type: string }[]> = {
+  server: [
+    { id: "ID_DEITY_A", type: "Deity" },
+    { id: "ID_DEITY_B", type: "Deity" },
+    { id: "ID_FEAT", type: "Feat" },
+  ],
+  personal: [{ id: "ID_DEITY_C", type: "Deity" }],
+};
+
 vi.mock("@4ecb/browser-storage", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ContentPackRepository: class {
+    async get(packId: string) {
+      const entities = basePacks[packId];
+      return entities === undefined ? undefined : { entities };
+    }
     async materializeProfile(
       profileId: string,
       name: string,
@@ -191,5 +206,23 @@ describe("content profile compose in the content worker", () => {
     ).rejects.toThrow("Missing content profile layer personal");
     expect(worker.terminated()).toBe(2);
     storage.failure = undefined;
+  });
+});
+
+describe("campaign removed-record count in the content worker", () => {
+  it("counts over the base layers through the worker", async () => {
+    const worker = await inProcessWorker();
+    const before = worker.terminated();
+    await expect(
+      countCampaignRemovedRecordsInWorker(
+        ["server", "personal"],
+        campaign,
+        worker.create,
+      ),
+    ).resolves.toEqual([{ type: "Deity", count: 3 }]);
+    expect(worker.terminated()).toBe(before + 1);
+    await expect(
+      countCampaignRemovedRecordsInWorker(["missing"], campaign, worker.create),
+    ).rejects.toThrow("Missing content profile layer missing");
   });
 });

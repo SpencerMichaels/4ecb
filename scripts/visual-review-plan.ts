@@ -2108,7 +2108,7 @@ const general: GeneralSection[] = [
       ],
       [
         "Invite page: join and new character",
-        "The invite link before and after Add campaign, New character in <campaign>, an unknown ID, and a narrow window.",
+        "The invite link before and after Join campaign (intro, Removed counts), New character in <campaign>, an unknown ID, and a narrow window.",
       ],
       [
         "Pathfinder character: Details, deity, items and Shop",

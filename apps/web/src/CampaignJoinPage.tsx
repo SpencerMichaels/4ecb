@@ -1,18 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   CampaignRepository,
   ContentPackRepository,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import type { CampaignDocument } from "@4ecb/content-pack";
+import type {
+  CampaignDocument,
+  CampaignRemovedRecordCount,
+  ContentPackManifest,
+} from "@4ecb/content-pack";
 
 import {
+  campaignInviteIntro,
   campaignJoinState,
   campaignSummaryLines,
   type CampaignJoinState,
+  type CampaignRemovedRecords,
 } from "./campaign-join-ui";
-import { CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
+import { activeBaseLayers, CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
+import { countCampaignRemovedRecordsInWorker } from "./content-worker-client";
 import { startNewCharacter } from "./create-character";
 import { LoadingPane } from "./LoadingScreen";
 import {
@@ -33,6 +40,7 @@ export interface CampaignJoinPageProps {
   /** Whether the server's runtime configuration has been read (or failed). */
   readonly advertisedLoaded: boolean;
   readonly activePackId?: string;
+  readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
 }
 
@@ -42,36 +50,92 @@ function message(reason: unknown): string {
 
 function CampaignSummary({
   campaign,
+  removed,
 }: {
   readonly campaign: CampaignDocument;
+  readonly removed: CampaignRemovedRecords | undefined;
 }) {
   return (
     <dl className="campaign-join-summary">
-      {campaignSummaryLines(campaign).map(({ label, value }) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
+      {campaignSummaryLines(campaign, removed).map(
+        ({ label, value, pending }) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd aria-busy={pending}>{value}</dd>
+          </div>
+        ),
+      )}
     </dl>
   );
 }
 
 /**
+ * The stock records `campaign` removes from the active content, counted in
+ * the content worker over the base a campaign character's profile would be
+ * composed on (`activeBaseLayers`). Undefined with no active content, no
+ * restrictions to count, or a failed count (the line is left out).
+ */
+function useRemovedRecords(
+  campaign: CampaignDocument | undefined,
+  baseLayerPackIds: readonly string[] | undefined,
+): CampaignRemovedRecords | undefined {
+  const key =
+    campaign === undefined || baseLayerPackIds === undefined
+      ? undefined
+      : JSON.stringify([campaign.contentDigest, baseLayerPackIds]);
+  const [result, setResult] = useState<{
+    readonly key: string;
+    readonly counts?: readonly CampaignRemovedRecordCount[];
+  }>();
+  const restricted =
+    campaign !== undefined &&
+    (campaign.restrictions.ids.length > 0 ||
+      campaign.restrictions.types.length > 0);
+  useEffect(() => {
+    if (
+      key === undefined ||
+      !restricted ||
+      campaign === undefined ||
+      baseLayerPackIds === undefined
+    )
+      return;
+    let cancelled = false;
+    void countCampaignRemovedRecordsInWorker(baseLayerPackIds, campaign)
+      .then((counts) => {
+        if (!cancelled) setResult({ key, counts });
+      })
+      .catch(() => {
+        if (!cancelled) setResult({ key });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // The key stands for the campaign and the base layers, so joining the
+    // campaign (a new copy of the same document) counts nothing again.
+  }, [key, restricted]);
+  if (key === undefined || !restricted) return undefined;
+  if (result?.key !== key) return { kind: "pending" };
+  return result.counts === undefined
+    ? undefined
+    : { kind: "counted", counts: result.counts };
+}
+
+/**
  * The invite link's page (D116, `#/campaigns/join/<id>`): what the hosted
- * campaign is, "Add campaign" to put it in this browser, then "New
- * character in <name>". Adding changes no character.
+ * campaign is, "Join campaign" to put it in this browser, then "New
+ * character in <name>". Joining changes no character.
  */
 export function CampaignJoinPage({
   campaignId,
   advertisedCampaigns,
   advertisedLoaded,
   activePackId,
+  activeManifest,
   activeProfile,
 }: CampaignJoinPageProps) {
   const [installed, setInstalled] = useState<readonly CampaignDocument[]>();
   const [loadError, setLoadError] = useState<string>();
-  // The hosted copy, fetched (digest-checked) to show before adding.
+  // The hosted copy, fetched (digest-checked) to show before joining.
   const [preview, setPreview] = useState<{
     readonly digest: string;
     readonly campaign?: CampaignDocument;
@@ -108,6 +172,22 @@ export function CampaignJoinPage({
     installed,
   );
   const hosted = state.kind === "available" ? state.advertised : undefined;
+  const baseLayerPackIds = useMemo(
+    () =>
+      activeBaseLayers({
+        manifest: activeManifest,
+        profile: activeProfile,
+      })?.map(({ packId }) => packId),
+    [activeManifest, activeProfile],
+  );
+  const shownCampaign =
+    state.kind === "installed"
+      ? state.campaign
+      : state.kind === "available" &&
+          preview?.digest === state.advertised.contentDigest
+        ? preview.campaign
+        : undefined;
+  const removed = useRemovedRecords(shownCampaign, baseLayerPackIds);
 
   useEffect(() => {
     if (hosted === undefined) return;
@@ -135,7 +215,7 @@ export function CampaignJoinPage({
       // Open pages (and this one) re-read the installed campaigns.
       window.dispatchEvent(new Event(CAMPAIGNS_CHANGED_EVENT));
     } catch (reason: unknown) {
-      setActionError(`Couldn't add ${campaign.name}: ${message(reason)}`);
+      setActionError(`Couldn't join ${campaign.name}: ${message(reason)}`);
     } finally {
       setAdding(false);
     }
@@ -198,15 +278,14 @@ export function CampaignJoinPage({
     body = (
       <>
         <p>
-          Your DM invites you to {state.advertised.name}. Adding it puts the
-          campaign&apos;s house rules and limits in this browser; no character
-          changes until you choose the campaign for it.
-          {state.installedRevision === undefined
-            ? null
-            : ` This browser has revision ${state.installedRevision}; this adds revision ${state.advertised.revision}.`}
+          {campaignInviteIntro(
+            state.advertised.name,
+            state.installedRevision,
+            state.advertised.revision,
+          )}
         </p>
         {ready?.campaign !== undefined ? (
-          <CampaignSummary campaign={ready.campaign} />
+          <CampaignSummary campaign={ready.campaign} removed={removed} />
         ) : ready?.error !== undefined ? (
           <p className="error" role="alert">
             Couldn&apos;t download {state.advertised.name}: {ready.error}
@@ -230,7 +309,7 @@ export function CampaignJoinPage({
                 if (ready?.campaign !== undefined) void add(ready.campaign);
               }}
             >
-              {adding ? "Adding campaign…" : "Add campaign"}
+              {adding ? "Joining campaign…" : "Join campaign"}
             </button>
           )}
           <button type="button" onClick={toLibrary}>
@@ -247,12 +326,12 @@ export function CampaignJoinPage({
       <>
         <p aria-live="polite">
           {added
-            ? `Added ${campaign.name} to this browser.`
+            ? `Joined ${campaign.name}.`
             : `${campaign.name} is in this browser.`}{" "}
           Start a new character in it, or choose it for an existing character in
           that character&apos;s Details tab.
         </p>
-        <CampaignSummary campaign={campaign} />
+        <CampaignSummary campaign={campaign} removed={removed} />
         <div className="inline-actions">
           <button
             type="button"

@@ -667,6 +667,9 @@ export function App() {
                       advertisedCampaigns={advertisedCampaigns}
                       advertisedLoaded={runtimeContentLoaded}
                       {...(activePackId === undefined ? {} : { activePackId })}
+                      {...(activeManifest === undefined
+                        ? {}
+                        : { activeManifest })}
                       {...(activeProfile === undefined
                         ? {}
                         : { activeProfile })}

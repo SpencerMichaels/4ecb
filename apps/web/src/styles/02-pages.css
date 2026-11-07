@@ -309,6 +309,11 @@
   margin: 0;
 }
 
+/* The Removed count while the content worker works it out. */
+.campaign-join-summary dd[aria-busy="true"] {
+  color: var(--muted);
+}
+
 .settings-options {
   display: grid;
   gap: 1rem;

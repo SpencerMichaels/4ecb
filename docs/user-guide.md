@@ -147,12 +147,17 @@ then offer the update the same way as a content update.
 ### Joining a campaign
 
 An invite link (`#/campaigns/join/<campaign ID>`) opens the campaign's
-invite page. It shows the hosted campaign's name, revision, how many
-house-rule records it adds and what it limits (types where only the
-campaign's own records are offered, and how many other records it doesn't
-offer). **Add campaign** downloads it, checks it is exactly the copy the
-server advertises, and puts it in this browser; **Cancel** returns to the
-characters. Adding a campaign changes no character. Then **New character in
+invite page. It says what joining does, then shows the hosted campaign's
+revision, how many house-rule records it adds and what it changes: each type
+whose records the campaign fully replaces ("Deities: Fully replaces the
+originals"), and a **Removed** line counting every record of this browser's
+content the campaign takes away, by type ("135 deities, 13 languages, 11
+background options"). The count is worked out from your active content in
+the background, so it reads "Counting…" for a moment; with no game content
+turned on there is nothing to count and the line is left out. **Join
+campaign** downloads it, checks it is exactly the copy the server
+advertises, and puts it in this browser ("Joined <campaign>."); **Cancel**
+returns to the characters. Joining a campaign changes no character. Then **New character in
 <campaign>** starts a level-1 character in it (the campaign's content is
 prepared first, so the button shows "Creating character…" for a moment). If
 the campaign is already in this browser the page says so and offers the same
