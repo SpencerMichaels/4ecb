@@ -1,6 +1,5 @@
-// The library's New character and the campaign invite page's "New character
-// in <campaign>" (D116): one way to start a character, held as an unsaved
-// draft until its first change.
+// The library's New character: one way to start a character, held as an
+// unsaved draft until its first change.
 
 import type { ContentProfileDefinition } from "@4ecb/browser-storage";
 import type {
@@ -8,12 +7,8 @@ import type {
   CharacterRecord,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
+import type { ContentPackManifest } from "@4ecb/content-pack";
 
-import {
-  campaignChangeTarget,
-  type CampaignProfileMaterializer,
-} from "./campaign-profile";
 import { holdCharacterDraft } from "./character-drafts";
 import { createNativeCharacter } from "./new-character";
 import { characterEditorHash } from "./routes";
@@ -29,18 +24,12 @@ export interface NewCharacterContent {
       }
     | undefined
   >;
-  /** Composes a campaign profile; the app's default when omitted. */
-  readonly materializer?: CampaignProfileMaterializer;
 }
 
-/**
- * A new level-1 character on the active content, or, given `campaign`, on
- * the active content plus that campaign (its profile composed, or the stored
- * copy reused, before the character opens).
- */
+/** A new level-1 character on the active content (a campaign is chosen
+ *  later, in Details). */
 export async function newCharacter(
   content: NewCharacterContent,
-  campaign?: CampaignDocument,
 ): Promise<CharacterRecord> {
   const { activePackId, activeProfile } = content;
   if (activePackId === undefined)
@@ -48,25 +37,15 @@ export async function newCharacter(
   const pack = await content.loadPack(activePackId);
   if (pack === undefined)
     throw new Error("The active content profile is not installed.");
-  let profileBinding: CharacterProfileBinding | undefined;
-  if (campaign !== undefined) {
-    const target = campaignChangeTarget(
-      campaign,
-      { manifest: pack.manifest, profile: activeProfile },
-      ...(content.materializer === undefined ? [] : [content.materializer]),
-    );
-    if (target === undefined)
-      throw new Error(
-        "Activate a content profile before creating a character.",
-      );
-    profileBinding = (await target.materialize()).binding;
-  } else if (activeProfile !== undefined)
-    profileBinding = {
-      packId: activeProfile.materializedPackId,
-      contentDigest: activeProfile.contentDigest,
-      layers: activeProfile.layers,
-      resolutionPolicy: activeProfile.resolutionPolicy,
-    };
+  const profileBinding: CharacterProfileBinding | undefined =
+    activeProfile === undefined
+      ? undefined
+      : {
+          packId: activeProfile.materializedPackId,
+          contentDigest: activeProfile.contentDigest,
+          layers: activeProfile.layers,
+          resolutionPolicy: activeProfile.resolutionPolicy,
+        };
   // The level-1 record is read from the base content.
   return createNativeCharacter(
     "New Character",
@@ -80,12 +59,11 @@ export async function newCharacter(
  *  until its first change, so closing it adds nothing to the library. */
 export async function startNewCharacter(
   content: NewCharacterContent,
-  campaign?: CampaignDocument,
   navigate: (hash: string) => void = (hash) => {
     window.location.hash = hash;
   },
 ): Promise<CharacterRecord> {
-  const character = await newCharacter(content, campaign);
+  const character = await newCharacter(content);
   holdCharacterDraft(character);
   navigate(characterEditorHash(character.id, { workspace: "build" }));
   return character;

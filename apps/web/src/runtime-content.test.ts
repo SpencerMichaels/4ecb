@@ -8,10 +8,10 @@ import {
 } from "@4ecb/content-pack";
 import type { ParsedContentSource } from "@4ecb/content-domain";
 import {
+  advertisedCampaignsToInstall,
   downloadAdvertisedCampaign,
   downloadAdvertisedPack,
   MAX_ADVERTISED_CAMPAIGNS,
-  newerAdvertisedCampaigns,
   parseRuntimeContentConfig,
   refreshInstalledCampaigns,
   type AdvertisedCampaign,
@@ -282,29 +282,30 @@ describe("runtime campaigns", () => {
     }
   });
 
-  it("selects only newer revisions of installed campaigns", async () => {
+  it("selects hosted campaigns not installed and newer revisions", async () => {
     const first = await campaign(1);
     const second = await campaign(2);
-    const stranger = await campaign(1, "not-added");
+    const fresh = await campaign(1, "not-added");
     expect(
-      newerAdvertisedCampaigns(
+      advertisedCampaignsToInstall(
         [first],
-        [advertisement(second), advertisement(stranger)],
+        [advertisement(second), advertisement(fresh)],
       ),
-    ).toEqual([advertisement(second)]);
+    ).toEqual([advertisement(second), advertisement(fresh)]);
     // Same or older revisions, and an exact copy already present, are skipped.
     expect(
-      newerAdvertisedCampaigns([first, second], [advertisement(second)]),
+      advertisedCampaignsToInstall([first, second], [advertisement(second)]),
     ).toEqual([]);
-    expect(newerAdvertisedCampaigns([second], [advertisement(first)])).toEqual(
-      [],
-    );
+    expect(
+      advertisedCampaignsToInstall([second], [advertisement(first)]),
+    ).toEqual([]);
   });
 
-  it("refreshes installed campaigns from the server in the background", async () => {
+  it("installs hosted campaigns from the server in the background", async () => {
     const first = await campaign(1);
     const second = await campaign(2);
-    const stranger = await campaign(3, "not-added");
+    const fresh = await campaign(3, "not-added");
+    const unadvertised = await campaign(1, "not-hosted");
     const installed: CampaignDocument[] = [first];
     const repository = {
       list: async () => [...installed],
@@ -313,25 +314,69 @@ describe("runtime campaigns", () => {
         return document;
       },
     };
-    const { fetcher, requested } = campaignServer([second, stranger]);
+    // The server holds a file it doesn't advertise: it is never fetched.
+    const { fetcher, requested } = campaignServer([
+      second,
+      fresh,
+      unadvertised,
+    ]);
     const added = await refreshInstalledCampaigns(
       repository,
-      [advertisement(second), advertisement(stranger)],
+      [advertisement(second), advertisement(fresh)],
       fetcher,
     );
-    expect(added.map(({ revision }) => revision)).toEqual([2]);
-    expect(requested).toEqual([advertisement(second).url]);
+    // A newer revision of an installed campaign, and one not installed yet.
+    expect(
+      added.map(({ campaignId, revision }) => `${campaignId} r${revision}`),
+    ).toEqual([`${first.campaignId} r2`, "not-added r3"]);
+    expect(requested).toEqual([
+      advertisement(second).url,
+      advertisement(fresh).url,
+    ]);
     expect(installed.map(({ campaignId }) => campaignId)).not.toContain(
-      "not-added",
+      "not-hosted",
     );
-    // Nothing newer: nothing is fetched.
+    // Everything advertised is installed: nothing is fetched.
     requested.length = 0;
-    await refreshInstalledCampaigns(
-      repository,
-      [advertisement(second)],
-      fetcher,
-    );
+    expect(
+      await refreshInstalledCampaigns(
+        repository,
+        [advertisement(second), advertisement(fresh)],
+        fetcher,
+      ),
+    ).toEqual([]);
     expect(requested).toEqual([]);
+  });
+
+  it("retries a failed hosted campaign on the next load", async () => {
+    const fresh = await campaign(1, "not-added");
+    const installed: CampaignDocument[] = [];
+    const repository = {
+      list: async () => [...installed],
+      install: async (document: CampaignDocument) => {
+        installed.push(document);
+        return document;
+      },
+    };
+    // The server fails once; the refresh resolves quietly with nothing.
+    expect(
+      await refreshInstalledCampaigns(
+        repository,
+        [advertisement(fresh)],
+        campaignServer([]).fetcher,
+      ),
+    ).toEqual([]);
+    expect(installed).toEqual([]);
+    const { fetcher } = campaignServer([fresh]);
+    expect(
+      (
+        await refreshInstalledCampaigns(
+          repository,
+          [advertisement(fresh)],
+          fetcher,
+        )
+      ).map(({ campaignId }) => campaignId),
+    ).toEqual(["not-added"]);
   });
 
   it("quietly skips a hosted campaign that fails or doesn't match", async () => {

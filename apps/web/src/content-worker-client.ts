@@ -6,14 +6,9 @@ import type {
   CampaignProfileDefinition,
   ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import type {
-  CampaignDocument,
-  CampaignRemovedRecordCount,
-} from "@4ecb/content-pack";
+import type { CampaignDocument } from "@4ecb/content-pack";
 
 import type {
-  CampaignRemovedRecordsRequest,
-  CampaignRemovedRecordsResponse,
   MaterializeCampaignProfileRequest,
   MaterializeCampaignProfileResponse,
   MaterializeProfileRequest,
@@ -21,13 +16,9 @@ import type {
 } from "./worker-messages";
 
 type ContentWorkerAwaitedRequest =
-  | CampaignRemovedRecordsRequest
-  | MaterializeCampaignProfileRequest
-  | MaterializeProfileRequest;
+  MaterializeCampaignProfileRequest | MaterializeProfileRequest;
 type ContentWorkerAwaitedResponse =
-  | CampaignRemovedRecordsResponse
-  | MaterializeCampaignProfileResponse
-  | MaterializeProfileResponse;
+  MaterializeCampaignProfileResponse | MaterializeProfileResponse;
 
 /** The subset of `Worker` the client uses, so tests can drive the worker
  *  module in process. */
@@ -103,24 +94,6 @@ export function composeProfileInWorker(
     { type: "materialize-profile", profileId, name, layerPackIds },
     (response) =>
       response.type === "profile" ? response.definition : undefined,
-    createWorker,
-  );
-}
-
-/** Counts, by type, the base records `campaign` makes unavailable over the
- *  given base layers (the invite page's "Removed" line), in the content
- *  worker, so decoding a large pack never blocks the page. */
-export function countCampaignRemovedRecordsInWorker(
-  baseLayerPackIds: readonly string[],
-  campaign: CampaignDocument,
-  createWorker: ContentWorkerFactory = createContentWorker,
-): Promise<readonly CampaignRemovedRecordCount[]> {
-  return requestContentWorker(
-    { type: "campaign-removed-records", baseLayerPackIds, campaign },
-    (response) =>
-      response.type === "campaign-removed-records"
-        ? response.counts
-        : undefined,
     createWorker,
   );
 }

@@ -10,7 +10,6 @@ import {
   buildCampaign,
   buildContentPack,
   campaignHouseRulesPackId,
-  campaignRemovedRecordCounts,
   composeCampaignProfile,
   composeContentPacks,
   decodeCampaign,
@@ -353,43 +352,6 @@ describe("campaign documents", () => {
         restrictions: { ids: ["id_syn_deity_stone"], types: [] },
       }),
     ).toEqual(["ID_SYN_DEITY_STONE"]);
-  });
-
-  it("counts the base records a campaign removes, by type", async () => {
-    const campaign = await buildCampaign(manifest, houseRuleSource, xml);
-    const base = await buildContentPack(stock, {
-      packId: "synthetic",
-      name: "Synthetic",
-    });
-    // Two stock deities (the replaced Forge one is the campaign's, the
-    // Stone one only the campaign's) and the feat; the unknown ID has no
-    // record to remove.
-    expect(campaignRemovedRecordCounts([base.entities], campaign)).toEqual([
-      { type: "Deity", count: 2 },
-      { type: "Feat", count: 1 },
-    ]);
-    // A later layer replaces an ID (ignoring case) and adds records.
-    expect(
-      campaignRemovedRecordCounts(
-        [
-          base.entities,
-          [
-            { id: "id_syn_feat_old", type: "Background Choice" },
-            { id: "ID_EXTRA_DEITY", type: "Deity" },
-          ],
-        ],
-        campaign,
-      ),
-    ).toEqual([
-      { type: "Deity", count: 3 },
-      { type: "Background Choice", count: 1 },
-    ]);
-    expect(
-      campaignRemovedRecordCounts([base.entities], {
-        ...campaign,
-        restrictions: { ids: [], types: [] },
-      }),
-    ).toEqual([]);
   });
 
   it("carries a description as version 5, under the digest", async () => {

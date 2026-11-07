@@ -2,11 +2,7 @@ import type {
   CampaignProfileDefinition,
   ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import type {
-  CampaignDocument,
-  CampaignRemovedRecordCount,
-  ContentPackManifest,
-} from "@4ecb/content-pack";
+import type { CampaignDocument, ContentPackManifest } from "@4ecb/content-pack";
 
 export interface ImportPackRequest {
   readonly type: "import-pack";
@@ -55,25 +51,8 @@ export type MaterializeProfileResponse =
     }
   | { readonly type: "error"; readonly message: string };
 
-/** Counts, by type, the base records a campaign makes unavailable (D116)
- *  over the given base layers, off the main thread: content-pack
- *  `campaignRemovedRecordCounts`. Nothing is stored. */
-export interface CampaignRemovedRecordsRequest {
-  readonly type: "campaign-removed-records";
-  readonly baseLayerPackIds: readonly string[];
-  readonly campaign: CampaignDocument;
-}
-
-export type CampaignRemovedRecordsResponse =
-  | {
-      readonly type: "campaign-removed-records";
-      readonly counts: readonly CampaignRemovedRecordCount[];
-    }
-  | { readonly type: "error"; readonly message: string };
-
 /** Everything the content worker accepts; one worker serves one request. */
 export type ContentWorkerRequest =
   | ContentImportRequest
   | MaterializeCampaignProfileRequest
-  | MaterializeProfileRequest
-  | CampaignRemovedRecordsRequest;
+  | MaterializeProfileRequest;

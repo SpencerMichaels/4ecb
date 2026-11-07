@@ -299,8 +299,13 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   legacy block in legacy-dnd4e `campaign-setting.ts`, storage in
   browser-storage `campaign-repository.ts` (settings store), engine
   `restrictedDefinitionIds`; web `campaign-profile.ts` (per-character
-  content target, composed in the content worker), `CampaignSettings.tsx`,
-  `CampaignJoinPage.tsx`, `imported-campaign.ts`.
+  content target, composed in the content worker), `CampaignSettings.tsx`
+  (Import/Export/Remove; a hosted campaign's Remove is disabled),
+  `imported-campaign.ts`. Hosted campaigns (runtime-config `campaigns`)
+  install by themselves: `App.tsx`'s background `refreshInstalledCampaigns`
+  (`runtime-content.ts`) downloads, verifies and installs every advertised
+  campaign not installed and every newer revision, quietly retrying next
+  load; there is no invite or join page.
 
 ### Web app routes (`apps/web`)
 
@@ -310,10 +315,8 @@ Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 Diagnostics and House rules open from the status badges; Overview (D113,
 `BuildOverview.tsx` over `build-overview.ts`) lists every level's choices
 as the Build tab's folded items, from the editor's planning evaluation, and
-each row opens its choice the way an issue's Review does), `#/campaigns/join/:campaignId` (a campaign invite, D116:
-`CampaignJoinPage.tsx` adds the hosted campaign, then offers "New
-character in <campaign>"; a character's campaign is the Details tab's
-Campaign select), `#/characters/:id`
+each row opens its choice the way an issue's Review does; a character's
+campaign is the Details tab's Campaign select), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode
 for the per-character sheet layout: right-click hide/show and drag-to-reorder on cards
 (`SheetEditTarget.tsx`; the overlay is focusable, Enter/Space/Menu
@@ -323,7 +326,7 @@ toolbar hint saying so (`sheet-edit-hint`; no on-card controls, which
 would cover the power cards' usage icons) and the
 toolbar Sections menu of sections
 (`SheetSectionsMenu.tsx`: hide/show and reorder) — D099, `?print=1` auto-opens the print
-dialog), `#/settings`. The interactive (non-print) View sheet is deferred to M6,
+dialog), `#/settings` (old `#/campaigns/join/…` invite links canonicalize to it). The interactive (non-print) View sheet is deferred to M6,
 so the builder tab and library sheet action link to `?preview=1`. Hash-route
 changes move focus to the new main landmark. Each history entry records the
 in-app entry before it in `history.state` (`commitHashNavigation` on push,

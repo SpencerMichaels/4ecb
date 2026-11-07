@@ -79,10 +79,6 @@ const loadSettingsPage = () =>
   import("./SettingsPage").then((module) => ({
     default: module.SettingsPage,
   }));
-const loadCampaignJoinPage = () =>
-  import("./CampaignJoinPage").then((module) => ({
-    default: module.CampaignJoinPage,
-  }));
 
 const initialRoute = parseHashRoute(window.location.hash);
 const initialEditorPage =
@@ -97,8 +93,6 @@ const initialSheetPage =
     : undefined;
 const initialSettingsPage =
   initialRoute.page === "settings" ? loadSettingsPage() : undefined;
-const initialCampaignJoinPage =
-  initialRoute.page === "campaign-join" ? loadCampaignJoinPage() : undefined;
 
 let initialEditorPageComponent:
   Awaited<ReturnType<typeof loadCharacterEditorPage>>["default"] | undefined;
@@ -106,8 +100,6 @@ let initialSheetPageComponent:
   Awaited<ReturnType<typeof loadCharacterSheetPage>>["default"] | undefined;
 let initialSettingsPageComponent:
   Awaited<ReturnType<typeof loadSettingsPage>>["default"] | undefined;
-let initialCampaignJoinPageComponent:
-  Awaited<ReturnType<typeof loadCampaignJoinPage>>["default"] | undefined;
 
 export const initialRouteReady = Promise.all([
   initialEditorPage?.then(({ default: component }) => {
@@ -119,9 +111,6 @@ export const initialRouteReady = Promise.all([
   initialSettingsPage?.then(({ default: component }) => {
     initialSettingsPageComponent = component;
   }),
-  initialCampaignJoinPage?.then(({ default: component }) => {
-    initialCampaignJoinPageComponent = component;
-  }),
 ]);
 
 const CharacterEditorPage = lazy(
@@ -131,9 +120,6 @@ const CharacterSheetPage = lazy(
   () => initialSheetPage ?? loadCharacterSheetPage(),
 );
 const SettingsPage = lazy(() => initialSettingsPage ?? loadSettingsPage());
-const CampaignJoinPage = lazy(
-  () => initialCampaignJoinPage ?? loadCampaignJoinPage(),
-);
 
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 const SHOW_ENTITY_SOURCE_STORAGE_KEY = "4ecb.showEntitySource.v1";
@@ -188,9 +174,6 @@ export function App() {
     Readonly<Record<string, ContentDownloadState>>
   >({});
   const [runtimeContentError, setRuntimeContentError] = useState<string>();
-  // Whether runtime-config.json has been read (or failed), so the invite page
-  // can tell an unknown campaign from one not listed yet.
-  const [runtimeContentLoaded, setRuntimeContentLoaded] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [error, setError] = useState<string>();
   const [theme, setTheme] = useState<ThemePreference>(() => {
@@ -303,8 +286,6 @@ export function App() {
   const EditorRoute = initialEditorPageComponent ?? CharacterEditorPage;
   const SheetRoute = initialSheetPageComponent ?? CharacterSheetPage;
   const SettingsRoute = initialSettingsPageComponent ?? SettingsPage;
-  const CampaignJoinRoute =
-    initialCampaignJoinPageComponent ?? CampaignJoinPage;
   const navigateBuilder = useCallback(
     (characterId: string, navigation: BuilderNavigation, replace = false) => {
       const next = characterEditorHash(characterId, navigation);
@@ -540,7 +521,6 @@ export function App() {
       const configured = parseRuntimeContentConfig(await response.json());
       setAdvertisedPacks(configured.contentPacks);
       setAdvertisedCampaigns(configured.campaigns);
-      setRuntimeContentLoaded(true);
       for (const problem of configured.campaignProblems)
         console.warn(`runtime-config.json campaigns ignored: ${problem}`);
       setRuntimeContentError(undefined);
@@ -556,9 +536,10 @@ export function App() {
       // composed in the content worker, and awaited so screens open on it.
       if (await followAdvertisedContent(repository, configured.contentPacks))
         await refreshAfterContentChange();
-      // In the background, newer hosted revisions of the campaigns this
-      // browser has (never one it hasn't added); they reach characters as
-      // the content-update issue. Failures are quiet and retried next load.
+      // In the background, every hosted campaign this browser lacks and
+      // newer revisions of the ones it has (D116): new ones appear in
+      // Details and Settings, newer ones reach characters as the
+      // content-update issue. Failures are quiet and retried next load.
       void refreshInstalledCampaigns(campaignRepository, configured.campaigns)
         .then((installed) => {
           if (installed.length > 0)
@@ -569,7 +550,6 @@ export function App() {
       setRuntimeContentError(
         reason instanceof Error ? reason.message : String(reason),
       );
-      setRuntimeContentLoaded(true);
     }
   }, [installAdvertisedPack, refreshAfterContentChange]);
 
@@ -661,20 +641,7 @@ export function App() {
                 }
               >
                 <RouteFocusOnMount enabled={focusRouteOnMount} focusKey={hash}>
-                  {route.page === "campaign-join" ? (
-                    <CampaignJoinRoute
-                      campaignId={route.campaignId}
-                      advertisedCampaigns={advertisedCampaigns}
-                      advertisedLoaded={runtimeContentLoaded}
-                      {...(activePackId === undefined ? {} : { activePackId })}
-                      {...(activeManifest === undefined
-                        ? {}
-                        : { activeManifest })}
-                      {...(activeProfile === undefined
-                        ? {}
-                        : { activeProfile })}
-                    />
-                  ) : route.page === "settings" ? (
+                  {route.page === "settings" ? (
                     <SettingsRoute
                       installedPacks={installedPacks}
                       advertisedPacks={advertisedPacks}

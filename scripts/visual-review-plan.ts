@@ -2100,15 +2100,15 @@ const general: GeneralSection[] = [
   {
     title: "Campaigns",
     steps:
-      "Build the Pathfinder (or synthetic) campaign with content-tool campaign build, import it in #/settings → Campaigns, and advertise it with content-tool advertise-campaign for the invite link; see the checklist's Pass 24 setup.",
+      "Build the Pathfinder (or synthetic) campaign with content-tool campaign build, import it in #/settings → Campaigns, and advertise it with content-tool advertise-campaign for the hosted entries; see the checklist's Pass 24 setup.",
     items: [
       [
-        "Settings → Campaigns: table, menu and remove",
-        "The empty table, an imported row, its right-click menu, the remove confirmation and the copied invite line.",
+        "Settings → Campaigns: table, row buttons and remove",
+        "The empty table, an imported row, its Export and Remove buttons and the remove confirmation.",
       ],
       [
-        "Invite page: join and new character",
-        "The invite link before and after Join campaign (intro, Removed counts), New character in <campaign>, an unknown ID, and a narrow window.",
+        "Hosted campaigns: automatic install, Remove disabled",
+        "A browser without the hosted campaign: it appears in Settings → Campaigns and Details by itself; its Remove is greyed with the reason.",
       ],
       [
         "Pathfinder character: Details, deity, items and Shop",

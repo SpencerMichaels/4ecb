@@ -10,7 +10,6 @@ import { campaignProfileMaterializer } from "./campaign-profile";
 import {
   composeCampaignProfileInWorker,
   composeProfileInWorker,
-  countCampaignRemovedRecordsInWorker,
   type ContentWorkerPort,
 } from "./content-worker-client";
 import type { ContentWorkerRequest } from "./worker-messages";
@@ -206,23 +205,5 @@ describe("content profile compose in the content worker", () => {
     ).rejects.toThrow("Missing content profile layer personal");
     expect(worker.terminated()).toBe(2);
     storage.failure = undefined;
-  });
-});
-
-describe("campaign removed-record count in the content worker", () => {
-  it("counts over the base layers through the worker", async () => {
-    const worker = await inProcessWorker();
-    const before = worker.terminated();
-    await expect(
-      countCampaignRemovedRecordsInWorker(
-        ["server", "personal"],
-        campaign,
-        worker.create,
-      ),
-    ).resolves.toEqual([{ type: "Deity", count: 3 }]);
-    expect(worker.terminated()).toBe(before + 1);
-    await expect(
-      countCampaignRemovedRecordsInWorker(["missing"], campaign, worker.create),
-    ).rejects.toThrow("Missing content profile layer missing");
   });
 });

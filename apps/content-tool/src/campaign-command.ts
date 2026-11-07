@@ -479,7 +479,8 @@ export function advertisedCampaignFileName(
 /**
  * Copies a verified campaign to `<outDir>/private-packs/campaigns/` and
  * advertises it in `<outDir>/runtime-config.json`, keeping every other key.
- * Hosting a campaign applies it to nobody (D116).
+ * Every browser of the group installs it on its next load, but no character
+ * is moved into it (D116).
  */
 export async function advertiseCampaignFile(source: string, outDir: string) {
   const { campaign, bytes } = await readCampaignFile(resolve(source));

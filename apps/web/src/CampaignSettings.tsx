@@ -17,9 +17,7 @@ import {
 import { CAMPAIGNS_CHANGED_EVENT } from "./campaign-profile";
 import {
   campaignFileName,
-  campaignInviteUrl,
   campaignRows,
-  inviteDisabledReason,
   removeDisabledReason,
   type CampaignMembers,
   type CampaignRow,
@@ -37,8 +35,9 @@ export interface CampaignSettingsProps {
 
 /**
  * Settings → Campaigns (D116): the campaigns installed in this browser, with
- * import, and per-row Export, Copy invite link and Remove buttons laid out
- * like the content packs table's (a disabled one says why on hover).
+ * import, and per-row Export and Remove buttons laid out like the content
+ * packs table's (a disabled one says why on hover). Hosted campaigns arrive
+ * by themselves (`refreshInstalledCampaigns`) and can't be removed.
  */
 export function CampaignSettings({
   advertisedCampaigns,
@@ -51,13 +50,6 @@ export function CampaignSettings({
   }>();
   const [importing, setImporting] = useState<string>();
   const [pendingRemove, setPendingRemove] = useState<CampaignRow>();
-  // The last copied (or, without clipboard access, the to-copy) invite link:
-  // copying shows nothing on the page, so it is stated here.
-  const [invite, setInvite] = useState<{
-    readonly name: string;
-    readonly url: string;
-    readonly copied: boolean;
-  }>();
 
   // The latest error handler, without reloading the table when it changes.
   const onErrorRef = useRef(onError);
@@ -79,7 +71,7 @@ export function CampaignSettings({
   );
 
   // Loads now, and again when campaigns change elsewhere (the background
-  // refresh of hosted revisions).
+  // install of hosted campaigns and their revisions).
   useEffect(() => {
     const reload = () =>
       void load().catch((reason: unknown) =>
@@ -116,18 +108,6 @@ export function CampaignSettings({
       campaignFileName(row),
       new TextDecoder().decode(encodeCampaign(row.campaign)),
     );
-  }
-
-  async function copyInvite(row: CampaignRow): Promise<void> {
-    const url = campaignInviteUrl(row.campaignId);
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(url);
-      copied = true;
-    } catch {
-      // Without clipboard access the link is shown to copy by hand.
-    }
-    setInvite({ name: row.name, url, copied });
   }
 
   async function remove(row: CampaignRow): Promise<void> {
@@ -171,7 +151,6 @@ export function CampaignSettings({
             </tr>
           ) : (
             rows.map((row) => {
-              const inviteReason = inviteDisabledReason(row);
               const removeReason = removeDisabledReason(row);
               return (
                 <Fragment key={row.campaignId}>
@@ -196,16 +175,6 @@ export function CampaignSettings({
                       <div className="content-row-actions">
                         <button type="button" onClick={() => exportFile(row)}>
                           Export
-                        </button>
-                        <button
-                          type="button"
-                          {...actionState(inviteReason)}
-                          onClick={() => {
-                            if (inviteReason === undefined)
-                              void copyInvite(row);
-                          }}
-                        >
-                          Copy invite link
                         </button>
                         <button
                           type="button"
@@ -297,14 +266,6 @@ export function CampaignSettings({
           </p>
         )}
       </div>
-      {invite === undefined ? null : (
-        <p className="status" aria-live="polite">
-          {invite.copied
-            ? `Copied the invite link for ${invite.name}: `
-            : `Copy this invite link for ${invite.name}: `}
-          <code className="campaign-invite-url">{invite.url}</code>
-        </p>
-      )}
     </section>
   );
 }

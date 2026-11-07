@@ -1,5 +1,39 @@
 # Implementation status
 
+## Hosted campaigns install by themselves; invite page removed (2026-11-06)
+
+D116 amendment (owner: "there's no need for a shortcut - all the hosted
+campaigns are already added"). `App.tsx`'s existing background
+`refreshInstalledCampaigns` (`runtime-content.ts`) now installs every
+campaign in runtime-config `campaigns` the browser lacks as well as newer
+revisions of installed ones (`advertisedCampaignsToInstall`, which
+replaces `newerAdvertisedCampaigns`), with the same size-limited, identity-
+and digest-checked `downloadAdvertisedCampaign`; failures are quiet and
+retried next load, and `CAMPAIGNS_CHANGED_EVENT` makes Details' Campaign
+select and Settings → Campaigns list them. Removed: route
+`#/campaigns/join/<id>` (`routes.ts`: any `#/campaigns/join…` hash now
+canonicalizes to `#/settings`), `CampaignJoinPage.tsx`,
+`campaign-join-ui.ts` and their test, the `campaign-join-*` and
+`campaign-invite-url` CSS, Settings' Copy invite link
+(`campaignInviteUrl`, `inviteDisabledReason`), the content worker's
+`campaign-removed-records` request (`worker-messages.ts`,
+`content-worker-client.ts`) and content-pack
+`campaignRemovedRecordCounts`, and `create-character.ts`'s campaign
+argument (only the invite page used it). Settings → Campaigns keeps Import
+campaign…, Export and the Description column; `removeDisabledReason`
+disables a hosted campaign's Remove ("Hosted by your group's server",
+`aria-disabled` plus title) and an imported one's while a character uses
+it. Details' empty-state hint no longer mentions invite links. User guide
+(Campaigns), CLAUDE.md routes, D116 amendment, visual-review checklist Pass
+24 and `scripts/visual-review-plan.ts` updated. Verification:
+`runtime-content.test.ts` (not-installed and newer-revision install,
+unadvertised file never fetched, quiet failure then retry),
+`CampaignSettings.test.tsx` (hosted Remove disabled with the reason),
+`routes.test.ts` (old join hashes), `create-character.test.ts`,
+`content-worker-client.test.ts`, `campaign.test.ts`; `pnpm test`,
+typecheck, lint, format:check, `review:verify`, `scripts/check.sh`
+(print skipped). Owner visual check pending (Pass 24).
+
 ## Campaign descriptions; Pathfinder revision 8 (2026-11-06)
 
 D116 amendment, campaign descriptions. A campaign document may carry an

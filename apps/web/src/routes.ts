@@ -61,8 +61,6 @@ export type BuilderNavigation =
 
 export type AppRoute =
   | { readonly page: "settings" }
-  /** A campaign invite (D116): the hosted campaign, by ID. */
-  | { readonly page: "campaign-join"; readonly campaignId: string }
   | {
       readonly page: "characters";
       readonly characterId?: string;
@@ -216,13 +214,10 @@ export function parseHashRoute(hash: string): AppRoute {
   const [path = "/characters", query = ""] = route.split("?", 2);
   if (path === "/settings") return { page: "settings" };
   if (path === "/characters") return { page: "characters" };
-  const join = /^\/campaigns\/join\/([^/]+)$/.exec(path);
-  if (join !== null) {
-    const campaignId = decodedPathSegment(join[1]!);
-    return campaignId === undefined || campaignId.length === 0
-      ? { page: "characters" }
-      : { page: "campaign-join", campaignId };
-  }
+  // The removed campaign invite page (D116): hosted campaigns install by
+  // themselves now, so an old invite link opens Settings, where the
+  // campaign is listed.
+  if (/^\/campaigns\/join(\/|$)/.test(path)) return { page: "settings" };
   const match = /^\/characters\/(.+?)(\/edit)?$/.exec(path);
   if (match !== null) {
     const characterId = decodedPathSegment(match[1]!);
@@ -381,7 +376,6 @@ export function sheetBackLabel(
     return "Return to builder";
   const route = parseHashRoute(previousHash);
   if (route.page === "settings") return "Return to settings";
-  if (route.page === "campaign-join") return "Return to campaign invite";
   if (route.characterId === undefined) return "Return to library";
   return route.mode === "edit" ? "Return to builder" : "Return to sheet";
 }
@@ -408,7 +402,6 @@ export function commitHashNavigation(
 
 function hashForRoute(route: AppRoute): string {
   if (route.page === "settings") return "#/settings";
-  if (route.page === "campaign-join") return campaignJoinHash(route.campaignId);
   if (route.characterId === undefined) return "#/characters";
   if (route.mode === "edit")
     return characterEditorHash(
@@ -445,10 +438,4 @@ export function characterSheetHash(
 export function canonicalHashRedirect(hash: string): string | undefined {
   const canonical = hashForRoute(parseHashRoute(hash));
   return hash === canonical ? undefined : canonical;
-}
-
-/** A campaign's invite page (D116); Settings → Campaigns copies it as an
- *  absolute link. */
-export function campaignJoinHash(campaignId: string): string {
-  return `#/campaigns/join/${encodeURIComponent(campaignId)}`;
 }

@@ -4821,12 +4821,12 @@ and it stops the browser following server revisions (D004 amendment).
   schema bump; backups carry them). The web app's per-character target and
   materializer are `campaign-profile.ts`, the compose running in the content
   worker, off the main thread; Settings → Campaigns is
-  `CampaignSettings.tsx`, the invite page `CampaignJoinPage.tsx`, legacy
-  import's join-or-create offer `imported-campaign.ts`. An invite link is
-  `<app>#/campaigns/join/<campaignId>`: it carries only the ID, and the
-  revision and digest come from the `campaigns` entry of
-  `runtime-config.json`, so the browser installs only the advertised,
-  digest-checked document. Creating a campaign from a legacy save parses its
+  `CampaignSettings.tsx`, legacy import's join-or-create offer
+  `imported-campaign.ts`. (The invite page `CampaignJoinPage.tsx` at
+  `<app>#/campaigns/join/<campaignId>` was removed the same day: hosted
+  campaigns install by themselves, amendment below.) The revision and
+  digest come from the `campaigns` entry of `runtime-config.json`, so
+  the browser installs only the advertised, digest-checked document. Creating a campaign from a legacy save parses its
   `Houserules` in the browser, which D082 otherwise leaves to the content
   tool, because it is a handful of records from a character file the browser
   already reads, parsed once into the stored document
@@ -5046,6 +5046,30 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   otherwise unchanged (36 field and 101 rule patches, all applying, 159
   records restricted over the full pack)
   (`docs/content-pack-format.md`, Description).
+- **Amendment (2026-11-06): hosted campaigns install by themselves; no
+  invite page** (owner: "there's no need for a shortcut - all the hosted
+  campaigns are already added"). This replaces the invite link of
+  Distribution and "New character in <campaign>" of the owner decisions
+  above. Every campaign in runtime-config `campaigns` is installed in the
+  background on app load, with the same size-limited, identity- and
+  digest-checked download as a newer revision (`App.tsx`'s
+  `refreshInstalledCampaigns`, `runtime-content.ts`
+  `advertisedCampaignsToInstall`: every advertised campaign not installed,
+  and every newer revision of one installed); a failure is quiet and
+  retried next load, and only what the server advertises is fetched.
+  Hosting a campaign therefore adds it to every browser of the group, in
+  Details' Campaign select and Settings → Campaigns, but still moves no
+  character into it. Removed: the `#/campaigns/join/<id>` route (an old
+  link canonicalizes to `#/settings`, where the campaign is listed),
+  `CampaignJoinPage.tsx`, `campaign-join-ui.ts`, Settings' Copy invite
+  link, the content worker's `campaign-removed-records` request and
+  content-pack `campaignRemovedRecordCounts` (nothing else used them),
+  and `newCharacter`'s campaign argument. Settings → Campaigns keeps
+  Import campaign… (a campaign file still works for a campaign the server
+  doesn't host) and Export; a hosted campaign's Remove stays visible but
+  disabled (aria-disabled, hover reason "Hosted by your group's server"),
+  since it would come back on the next load; an imported one removes as
+  before, blocked while a character uses it.
 
 ### D117 — Right-click is a shortcut, never the only way to an action
 

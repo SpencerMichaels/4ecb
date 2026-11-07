@@ -20,9 +20,9 @@ export interface AdvertisedContentPack {
   readonly name?: string;
 }
 
-/** A campaign copy hosted beside the private packs (D116). Advertising one
- *  installs it nowhere: browsers only fetch newer revisions of campaigns
- *  they already have, and the invite link names the campaign's ID. */
+/** A campaign copy hosted beside the private packs (D116). Every browser
+ *  of the group installs it in the background on load (and its newer
+ *  revisions later): there is nothing to join. */
 export interface AdvertisedCampaign {
   readonly campaignId: string;
   readonly name: string;
@@ -141,7 +141,7 @@ function parseAdvertisedPacks(
  * The advertised campaigns. A campaign entry the server got wrong drops only
  * itself (a duplicated ID drops every copy of it; a non-list or oversized
  * value, the whole list), never the content packs: campaigns are optional,
- * and a broken invite must not stop the group's content loading. Each drop is
+ * and a broken campaign entry must not stop the group's content loading. Each drop is
  * named in `problems`, for the administrator.
  */
 function parseAdvertisedCampaigns(
@@ -289,11 +289,11 @@ async function readLimitedBody(
 }
 
 /**
- * The advertised campaigns this browser should fetch: a newer revision of a
- * campaign it already has whose exact copy it doesn't. Campaigns it hasn't
- * added are never fetched (joining is the player's choice).
+ * The advertised campaigns this browser should fetch: every campaign it
+ * doesn't have, and a newer revision of one it has whose exact copy it
+ * doesn't. An older or equal hosted revision is never fetched.
  */
-export function newerAdvertisedCampaigns(
+export function advertisedCampaignsToInstall(
   installed: readonly Pick<
     CampaignDocument,
     "campaignId" | "revision" | "contentDigest"
@@ -305,8 +305,8 @@ export function newerAdvertisedCampaigns(
     newest.set(campaignId, Math.max(revision, newest.get(campaignId) ?? 0));
   return advertised.filter((entry) => {
     const revision = newest.get(entry.campaignId);
+    if (revision === undefined) return true;
     return (
-      revision !== undefined &&
       entry.revision > revision &&
       !installed.some(
         (campaign) =>
@@ -351,11 +351,12 @@ export async function downloadAdvertisedCampaign(
 }
 
 /**
- * Background refresh (D116): fetches and installs the newer advertised
- * revisions of installed campaigns, so they reach their characters through
- * the content-update issue. A failure skips that campaign: it is retried on
- * the next load, and the player's characters keep the revision they have.
- * Returns the revisions installed.
+ * Background refresh (D116): fetches and installs the hosted campaigns this
+ * browser lacks, so they appear in Details' Campaign select and Settings →
+ * Campaigns, and the newer hosted revisions of installed ones, so they reach
+ * their characters through the content-update issue. A failure skips that
+ * campaign: it is retried on the next load, and the player's characters
+ * keep the revision they have. Returns the revisions installed.
  */
 export async function refreshInstalledCampaigns(
   repository: {
@@ -367,7 +368,7 @@ export async function refreshInstalledCampaigns(
 ): Promise<CampaignDocument[]> {
   if (advertised.length === 0) return [];
   const installed: CampaignDocument[] = [];
-  for (const entry of newerAdvertisedCampaigns(
+  for (const entry of advertisedCampaignsToInstall(
     await repository.list(),
     advertised,
   )) {

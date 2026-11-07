@@ -942,15 +942,14 @@ These need the deployed app, an installed PWA, or your own content.
 
 Added 2026-11-06, not yet walked. The campaign UI's labels, states and
 outcomes are checked by its unit tests (`CampaignSettings`,
-`campaign-settings-ui`, `CampaignJoinPage`, `campaign-join-ui`,
-`CharacterCampaignField`, `content-update`, `imported-campaign`,
+`campaign-settings-ui`, `runtime-content`, `CharacterCampaignField`, `content-update`, `imported-campaign`,
 `builder-diagnostics`); these entries are the layout and the end-to-end
 flow. No review character covers them.
 
 **Setup.** Build the Pathfinder campaign:
 `pnpm content-tool campaign build --manifest content/campaigns/pathfinder/campaign.json --output tmp/campaigns/pathfinder.4ecc --against tmp/content/full-local.4ecp`
 (or the synthetic one from `fixtures/campaigns/synthetic/campaign.json`).
-For the invite entries, also host it on a local container:
+For the hosted entries, also host it on a local container:
 `pnpm content-tool advertise-campaign tmp/campaigns/pathfinder.4ecc --out-dir deploy`
 and restart it (`docs/public-deployment.md`). For a second revision, bump
 `revision` in a copy of `campaign.json` (restrict another deity, e.g.
@@ -958,10 +957,9 @@ Moradin, or an item a character holds), build and import or advertise it.
 
 - [ ] **Settings → Campaigns: table, row buttons and remove.**
   - **Where:** `#/settings` in a browser with no campaigns, then Import
-    campaign… with the built `.4ecc`; use its row's Export, Copy invite
-    link and Remove buttons, with and without a hosted copy (any revision)
-    and with a character in the campaign; once at 140% zoom. Also import a
-    `.4ecp` or a corrupted file.
+    campaign… with the built `.4ecc` (not hosted); use its row's Export
+    and Remove buttons, with and without a character in the campaign; once
+    at 140% zoom. Also import a `.4ecp` or a corrupted file.
   - **Expect:** the Campaigns panel under Game content spans both columns;
     the empty table keeps its headers with a muted "No campaigns in this
     browser." row and Import campaign… below. Columns read Name,
@@ -974,36 +972,34 @@ Moradin, or an item a character holds), build and import or advertise it.
     Revision and Characters narrow and right-aligned. The row buttons sit
     at the row's right end, the same size and style as the content packs table's Replace…/Remove; a
     disabled one is greyed with a hover reason. Esc in the inline remove
-    confirmation closes only it. The confirmation sits under the row and
-    the "Copied the invite link…" line under the table, a long URL
-    wrapping; a bad file is a "Couldn't import <file>" toast. Right-click
+    confirmation closes only it. The confirmation sits under the row; a
+    bad file is a "Couldn't import <file>" toast. Right-click
     on a row opens only the browser's own menu.
   - **Wrong if:** the table or the Import button is hidden when empty, a
     row button is missing instead of disabled, the name is squeezed to
     one word per line by the Description column at 140% zoom, the
     buttons wrap awkwardly or overflow at 140% zoom, the confirmation
-    overlaps the table, Esc also leaves the page, or the URL overflows.
-- [ ] **Invite page: join and new character.**
-  - **Where:** the copied invite link in a browser without the campaign:
-    Join campaign, then New character in <campaign>; reopen the link; then
-    `#/campaigns/join/nope`. Once at a narrow width and at 140% zoom.
-  - **Expect:** "Join <name>?" with the intro ("You're invited to <name>.
-    Join it to add campaign-specific content …selecting "<name>" in the
-    character's Details pane.") and a two-column summary (Revision, House
-    rules, "Deities: Fully replaces the originals", "Languages: …", then
-    "Removed: Counting…" turning into "135 deities, 13 languages, 11
-    background options" for Pathfinder over the full pack without the rest
-    of the page moving or waiting), Join campaign and Cancel, no second
-    spinner after the details load. After joining, "Joined <name>." with
-    the New character button; "Creating character…" keeps the page responsive and
-    lands on the Build tab. Reopened, "<name> is in this browser." and
-    nothing is downloaded. The unknown ID explains itself with working
-    Settings → Campaigns and Back to characters links. Narrow: 1rem
-    gutters, no horizontal scroll, the summary still two columns.
-  - **Wrong if:** a "Not now"-style button, a layout jump after loading
-    (including when the Removed count arrives), a long Removed value
-    overflowing its column instead of wrapping, or a frozen page while
-    creating.
+    overlaps the table, Esc also leaves the page, or a Copy invite link
+    button is still there.
+- [ ] **Hosted campaigns: automatic install, Remove disabled.**
+  - **Where:** the local container advertising the campaign, in a clean
+    browser profile (or after removing the campaign in a browser where it
+    was imported and not hosted): load the app, wait a moment on the
+    library, then open `#/settings` → Campaigns and a character's Details
+    → Campaign select. Hover the hosted row's Remove; then open an old
+    invite link `#/campaigns/join/pathfinder`. Once at 140% zoom and in
+    dark theme.
+  - **Expect:** with no click, the hosted campaign is listed in Settings →
+    Campaigns (name, description, revision, 0 characters) and offered in
+    the Details select; no Join button or invite page anywhere. Its Remove
+    is visible, greyed like the other disabled row buttons, with the hover
+    reason "Hosted by your group's server", and clicking it does nothing.
+    The old invite link lands on Settings with the address bar reading
+    `#/settings`.
+  - **Wrong if:** the campaign needs a reload or a click to appear, a
+    toast or banner reports the background download, Remove is hidden or
+    opens the confirmation, the greyed button is illegible in dark theme,
+    or the old link shows a blank page or the library.
 - [ ] **Pathfinder character: Details, deity, items and Shop.**
   - **Where:** a character in the campaign: Details → Campaign select;
     Build → Deity with Show all off and on; a character that worships

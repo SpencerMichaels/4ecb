@@ -10,12 +10,7 @@ import {
   type CampaignDocument,
 } from "@4ecb/content-pack";
 
-import {
-  campaignInviteUrl,
-  campaignRows,
-  inviteDisabledReason,
-  removeDisabledReason,
-} from "./campaign-settings-ui";
+import { campaignRows, removeDisabledReason } from "./campaign-settings-ui";
 import type { AdvertisedCampaign } from "./runtime-content";
 
 (
@@ -118,30 +113,29 @@ describe("campaign settings rows", () => {
       ["Another Setting", 1, 0, 1],
       ["Synthetic Setting", 2, 2, 0],
     ]);
-    // The invite link names only the campaign: any hosted revision will do,
-    // here an older one than the installed revision 2.
-    expect(inviteDisabledReason(rows[0]!)).toBeUndefined();
-    expect(inviteDisabledReason(rows[1]!)).toBeUndefined();
-    expect(
-      inviteDisabledReason(
-        campaignRows([second], { active: [], deleted: [] }, [
-          hosted(other),
-        ])[0]!,
-      ),
-    ).toMatch(/doesn't host this campaign/);
-    expect(removeDisabledReason(rows[0]!)).toMatch(/1 in the trash/);
-    expect(removeDisabledReason(rows[1]!)).toMatch(/^2 characters belong/);
+    // A hosted campaign (any hosted revision, here an older one than the
+    // installed revision 2) can't be removed: it would only come back.
+    expect(removeDisabledReason(rows[0]!)).toBe(
+      "Hosted by your group's server",
+    );
+    expect(removeDisabledReason(rows[1]!)).toBe(
+      "Hosted by your group's server",
+    );
+    const imported = campaignRows(
+      [second, other],
+      {
+        active: [{ campaignId: "synthetic-setting" }],
+        deleted: [{ campaignId: "another" }],
+      },
+      [],
+    );
+    expect(removeDisabledReason(imported[0]!)).toMatch(/1 in the trash/);
+    expect(removeDisabledReason(imported[1]!)).toMatch(/^1 character belongs/);
     expect(
       removeDisabledReason(
         campaignRows([first], { active: [], deleted: [] }, [])[0]!,
       ),
     ).toBeUndefined();
-  });
-
-  it("builds the invite link on the join route", () => {
-    expect(
-      campaignInviteUrl("path:finder", "https://group.test/app/?x=1#/settings"),
-    ).toBe("https://group.test/app/#/campaigns/join/path%3Afinder");
   });
 });
 
@@ -236,13 +230,7 @@ describe("CampaignSettings", () => {
     expect(
       bodyRows().map(({ cells }) => [...cells].map((cell) => cell.textContent)),
     ).toEqual([
-      [
-        "Synthetic Settingsynthetic-setting",
-        "",
-        "1",
-        "0",
-        "ExportCopy invite linkRemove",
-      ],
+      ["Synthetic Settingsynthetic-setting", "", "1", "0", "ExportRemove"],
     ]);
   });
 
@@ -289,13 +277,14 @@ describe("CampaignSettings", () => {
     );
   });
 
-  it("enables invite and remove only when they can be used", async () => {
+  it("enables Remove only for an unused, imported campaign", async () => {
     const used = await campaign(2, "used", "Used Setting");
     const free = await campaign(1, "free", "Free Setting");
-    storage.installed = [used, free];
+    const group = await campaign(1, "group", "Group Setting");
+    storage.installed = [used, free, group];
     storage.members = { active: [{ campaignId: "used" }], deleted: [] };
-    await render([hosted(free)]);
-    const [freeRow, usedRow] = bodyRows();
+    await render([hosted(group)]);
+    const [freeRow, groupRow, usedRow] = bodyRows();
     expect(usedRow?.cells[3]?.textContent).toBe("1");
 
     // No right-click menu: the row's actions are always-present buttons.
@@ -303,34 +292,40 @@ describe("CampaignSettings", () => {
     const usedMenu = actions(usedRow!);
     expect(usedMenu.map(({ textContent }) => textContent)).toEqual([
       "Export",
-      "Copy invite link",
       "Remove",
     ]);
     expect(usedMenu.map((item) => item.getAttribute("aria-disabled"))).toEqual([
       null,
       "true",
-      "true",
     ]);
-    expect(usedMenu[1]?.title).toMatch(/doesn't host this campaign/);
-    expect(usedMenu[2]?.title).toMatch(/^1 character belongs to it/);
+    expect(usedMenu[1]?.title).toMatch(/^1 character belongs to it/);
     await act(async () => usedMenu[1]?.click());
-    expect(container.querySelector("p.status")).toBeNull();
-    await act(async () => usedMenu[2]?.click());
+    expect(container.querySelector(".content-change-review")).toBeNull();
+
+    // The hosted campaign's Remove stays visible, inert, with the reason.
+    const groupMenu = actions(groupRow!);
+    expect(groupMenu.map(({ textContent }) => textContent)).toEqual([
+      "Export",
+      "Remove",
+    ]);
+    expect(groupMenu[0]?.getAttribute("aria-disabled")).toBeNull();
+    expect(groupMenu[1]?.getAttribute("aria-disabled")).toBe("true");
+    expect(groupMenu[1]?.title).toBe("Hosted by your group's server");
+    await act(async () => groupMenu[1]?.click());
     expect(container.querySelector(".content-change-review")).toBeNull();
 
     const freeMenu = actions(freeRow!);
     expect(freeMenu.map((item) => item.getAttribute("aria-disabled"))).toEqual([
       null,
       null,
-      null,
     ]);
-    expect(freeMenu.map(({ title }) => title)).toEqual(["", "", ""]);
-    await act(async () => freeMenu[2]?.click());
+    expect(freeMenu.map(({ title }) => title)).toEqual(["", ""]);
+    await act(async () => freeMenu[1]?.click());
     expect(
       container.querySelector(".content-change-review")?.textContent,
     ).toContain("Remove Free Setting from this browser?");
     storage.remove.mockImplementation(async () => {
-      storage.installed = [used];
+      storage.installed = [used, group];
       return 1;
     });
     const confirm = [
@@ -347,7 +342,7 @@ describe("CampaignSettings", () => {
     await act(async () => cancel.click());
     expect(container.querySelector(".content-change-review")).toBeNull();
     expect(storage.remove).not.toHaveBeenCalled();
-    await act(async () => actions(bodyRows()[0]!)[2]?.click());
+    await act(async () => actions(bodyRows()[0]!)[1]?.click());
     const confirmAgain = [
       ...container.querySelectorAll<HTMLButtonElement>(
         ".content-change-review button",
@@ -359,30 +354,6 @@ describe("CampaignSettings", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(storage.remove).toHaveBeenCalledWith("free");
-    expect(bodyRows()).toHaveLength(1);
-  });
-
-  it("copies the invite link for any hosted revision and says so", async () => {
-    const older = await campaign(1, "free", "Free Setting");
-    const free = await campaign(2, "free", "Free Setting");
-    storage.installed = [free];
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText },
-    });
-    // The server hosts revision 1; this browser has revision 2.
-    await render([hosted(older)]);
-    const menu = actions(bodyRows()[0]!);
-    expect(menu[1]?.getAttribute("aria-disabled")).toBeNull();
-    await act(async () => {
-      menu[1]?.click();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-    const link = campaignInviteUrl("free");
-    expect(writeText).toHaveBeenCalledWith(link);
-    expect(container.querySelector("p.status")?.textContent).toBe(
-      `Copied the invite link for Free Setting: ${link}`,
-    );
+    expect(bodyRows()).toHaveLength(2);
   });
 });

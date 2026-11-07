@@ -232,7 +232,10 @@ verifies a built file. `advertise-campaign` verifies the file, copies it to
 `deploy/runtime-config.json`, replacing that campaign's older revision and
 keeping everything else. It refuses an older revision, or the same revision
 with different content: bump `revision` on every change. Hosting a campaign
-applies it to nobody; players join it. Older campaign files stay in
+adds it to every player's browser in the background on the next load (it
+appears in Settings → Campaigns and the Details Campaign select, and can't be
+removed there while hosted) but moves no character into it; players choose
+it per character. Older campaign files stay in
 `deploy/private-packs/campaigns/` until the operator removes them. Whatever
 copies `deploy/` to the server must copy and keep
 `private-packs/campaigns/` (for the homelab, homenet's `apps/4ecb/pack.yml`;

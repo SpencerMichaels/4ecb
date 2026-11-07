@@ -355,8 +355,7 @@ ID, record name, line, old name, occurrences and resolved references;
 rules-engine `prerequisiteDisplayLines`). `campaign inspect` prints the version, `patches` (field
 patches) and `rulePatches` counts. Legacy export drops patches of both kinds
 silently (the `D20CampaignSetting` block cannot express them) and legacy
-import creates none. The invite page's summary shows the counts ("Changed
-fields", "Changed rules").
+import creates none.
 
 ## Compatibility policy
 

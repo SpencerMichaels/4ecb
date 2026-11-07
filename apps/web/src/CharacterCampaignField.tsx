@@ -116,8 +116,8 @@ export function CharacterCampaignField({
       </label>
       {none ? (
         <p className="field-help">
-          No campaigns in this browser. Open your DM&apos;s invite link, or
-          import their campaign file in{" "}
+          No campaigns in this browser. Your group&apos;s campaigns appear here
+          by themselves; otherwise import your DM&apos;s campaign file in{" "}
           <a href="#/settings">Settings → Campaigns</a>.
         </p>
       ) : null}

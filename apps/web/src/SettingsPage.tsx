@@ -103,7 +103,7 @@ function phaseLabel(phase: ImportPackProgressPhase): string {
 export interface SettingsPageProps {
   readonly installedPacks: readonly InstalledContentPack[];
   readonly advertisedPacks: readonly AdvertisedContentPack[];
-  /** Campaigns the server hosts (D116), for invite links. */
+  /** Campaigns the server hosts (D116): they can't be removed. */
   readonly advertisedCampaigns?: readonly AdvertisedCampaign[];
   readonly activeProfile?: ContentProfileDefinition;
   readonly contentDownloads: Readonly<Record<string, ContentDownloadState>>;

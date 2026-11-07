@@ -128,44 +128,38 @@ description of the campaign (empty when it has none; a long one is cut off
 after three lines, like the builder tables' Description column), newest
 installed revision, and how many library characters belong to it.
 
+### Your group's campaigns
+
+The campaigns your group's server hosts appear by themselves: each time the
+app loads, the browser downloads in the background every hosted campaign it
+doesn't have yet, and the newer revision of one it has, checks each is
+exactly the copy the server advertises, and adds it. There is nothing to
+join; a hosted campaign is then listed in **Settings → Campaigns** and
+offered in every character's **Details → Campaign** select. If a download
+fails, nothing is shown and it is tried again the next time the app loads.
+Adding a campaign changes no character; characters already in it offer a
+newer revision the same way as a content update. (An old invite link,
+`#/campaigns/join/<campaign ID>`, now opens Settings.)
+
+### Importing a campaign file
+
+A campaign your group's server doesn't host (one a DM sends you as a file)
+is added by hand:
+
 - **Import campaign…** adds a `.4ecc` file the DM built with
   `content-tool campaign build`. Its digest is checked before it is stored; a
   file with the same revision as an installed one but different content is
   refused (the DM bumps the revision for every change).
-- Each campaign's row has **Export** (the newest revision as `.4ecc`),
-  **Copy invite link** and **Remove** buttons, like the content packs
-  table's; a button that can't be used is greyed and says why on hover.
-  Copy invite link is available whenever your group's server hosts any
-  revision of the campaign (the link names only the campaign, and joining
-  takes the hosted revision); it opens the campaign's invite page (below).
-  Remove asks to confirm, deletes every revision and is unavailable while
-  any character, including one in the trash, belongs to the campaign.
 
-When the group's server hosts a newer revision of a campaign you have, the
-browser fetches and verifies it in the background after the app loads; a
-campaign you haven't added is never downloaded. Characters in the campaign
-then offer the update the same way as a content update.
+### Exporting and removing
 
-### Joining a campaign
-
-An invite link (`#/campaigns/join/<campaign ID>`) opens the campaign's
-invite page. It says what joining does, then shows the hosted campaign's
-revision, how many house-rule records it adds and what it changes: each type
-whose records the campaign fully replaces ("Deities: Fully replaces the
-originals"), and a **Removed** line counting every record of this browser's
-content the campaign takes away, by type ("135 deities, 13 languages, 11
-background options"). The count is worked out from your active content in
-the background, so it reads "Counting…" for a moment; with no game content
-turned on there is nothing to count and the line is left out. **Join
-campaign** downloads it, checks it is exactly the copy the server
-advertises, and puts it in this browser ("Joined <campaign>."); **Cancel**
-returns to the characters. Joining a campaign changes no character. Then **New character in
-<campaign>** starts a level-1 character in it (the campaign's content is
-prepared first, so the button shows "Creating character…" for a moment). If
-the campaign is already in this browser the page says so and offers the same
-button. A link to a campaign the server doesn't host leads back to the
-characters and to **Settings → Campaigns**, where a campaign file from the
-DM can be imported instead.
+Each campaign's row has **Export** (the newest revision as `.4ecc`) and
+**Remove** buttons, like the content packs table's; a button that can't be
+used is greyed and says why on hover. Remove asks to confirm and deletes
+every revision. It is unavailable for a hosted campaign ("Hosted by your
+group's server": it would only come back on the next load) and, for an
+imported one, while any character, including one in the trash, belongs to
+the campaign.
 
 ### Choosing a character's campaign
 

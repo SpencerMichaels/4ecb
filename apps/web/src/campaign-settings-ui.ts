@@ -3,7 +3,6 @@
 
 import type { CampaignDocument } from "@4ecb/content-pack";
 
-import { campaignJoinHash } from "./routes";
 import type { AdvertisedCampaign } from "./runtime-content";
 
 /** One installed campaign: its newest revision, and who uses it. */
@@ -18,8 +17,8 @@ export interface CampaignRow {
   readonly trashed: number;
   /** The newest installed revision, for Export file. */
   readonly campaign: CampaignDocument;
-  /** The server's hosted copy of this campaign (any revision): the invite
-   *  link names only the campaign, and joining takes the hosted revision. */
+  /** The server's hosted copy of this campaign (any revision): every
+   *  browser installs it by itself, so it can't be removed here. */
   readonly hosted?: AdvertisedCampaign;
 }
 
@@ -70,27 +69,10 @@ export function campaignRows(
     );
 }
 
-/** The invite link players open to join (`campaignJoinHash`; the runtime
- *  config pins the digest). */
-export function campaignInviteUrl(
-  campaignId: string,
-  base: string = globalThis.location?.href ?? "https://localhost/",
-): string {
-  const url = new URL(base);
-  url.hash = campaignJoinHash(campaignId);
-  url.search = "";
-  return url.href;
-}
-
-/** Why Copy invite link can't be used, or undefined when it can. */
-export function inviteDisabledReason(row: CampaignRow): string | undefined {
-  return row.hosted === undefined
-    ? "Your group's server doesn't host this campaign. Ask the DM to publish it with the content tool, or share the campaign file."
-    : undefined;
-}
-
-/** Why Remove can't be used, or undefined when it can. */
+/** Why Remove can't be used, or undefined when it can. A hosted campaign
+ *  would only be installed again on the next load. */
 export function removeDisabledReason(row: CampaignRow): string | undefined {
+  if (row.hosted !== undefined) return "Hosted by your group's server";
   const total = row.characters + row.trashed;
   if (total === 0) return undefined;
   const used = `${total} ${total === 1 ? "character belongs" : "characters belong"} to it`;

@@ -759,9 +759,9 @@ advertisement contains a revision-qualified pack ID, exact content digest, and
 same-origin immutable URL. An optional `campaigns` list (at most 64; D116)
 advertises hosted campaign documents as `{campaignId, name, revision,
 contentDigest, url}`, one entry per campaign, same-origin URLs only;
-advertising one installs it nowhere: the browser only fetches newer revisions
-of campaigns it already has (digest-verified, in the background) and builds
-invite links for hosted revisions. The file stays outside the
+every browser installs each advertised campaign it lacks, and newer
+revisions of those it has, in the background on load (digest-verified, quiet
+on failure, retried next load); it moves no character into one. The file stays outside the
 service-worker precache and is network-only so later operator overrides cannot
 be shadowed by the build-time default. The image has a health endpoint,
 read-only root filesystem support, no bundled proprietary corpus, and documented
