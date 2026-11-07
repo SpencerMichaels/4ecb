@@ -59,6 +59,9 @@ export function entityTypeIcon(type: string): IconName {
       return "item";
     case "ritual":
       return "book";
+    // The sheet's Deity reference group uses the same church.
+    case "deity":
+      return "church";
     default:
       return "content";
   }

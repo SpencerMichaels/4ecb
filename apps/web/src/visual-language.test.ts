@@ -93,6 +93,7 @@ describe("legacy-derived visual language", () => {
     expect(entityTypeIcon("Feat")).toBe("feat");
     expect(entityTypeIcon("Power")).toBe("power");
     expect(entityTypeIcon("Armor")).toBe("item");
+    expect(entityTypeIcon("Deity")).toBe("church");
   });
 
   it("maps every power action type to the tabletop-dashboard symbol", () => {
