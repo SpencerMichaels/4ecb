@@ -22,6 +22,10 @@ import {
   conditionalModifiers,
   type ConditionalModifier,
 } from "./conditional-modifiers";
+import {
+  backgroundPlayBenefit,
+  inherentBackgroundBenefit,
+} from "./background-benefits";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import { proseBonusRows, type ProseBonusSource } from "./prose-bonus-modifiers";
 import {
@@ -490,6 +494,17 @@ export function withSheetOverview(
         description.split(/\bBenefit:\s*/i).at(-1) ||
         description;
       const cards = grantedCards(entity, cardedPowers, definitions);
+      // A background's benefit applies when chosen (the group's own
+      // "Background benefit" row) or, for a background that implements it
+      // itself, always.
+      const backgroundBenefit =
+        key(group.group) !== "background"
+          ? undefined
+          : entity === undefined
+            ? entry.choices?.length && entry.value.trim()
+              ? entry.value.trim()
+              : undefined
+            : inherentBackgroundBenefit(entity);
       const reminderText =
         entity === undefined || input.evaluatedStats === undefined
           ? summary
@@ -570,9 +585,16 @@ export function withSheetOverview(
         fullTextAvailable: Boolean(description || fields.length),
         ...(entity ? referenceMetadata.get(key(entity.id)) : undefined),
         playReminder:
-          !accessOnly(entity, benefit || summary, cards, summary) &&
-          hasPlayReminder(summary, benefit, keywordScopedBonus(entity)),
-        ...(reminderText === summary ? {} : { reminderText }),
+          backgroundBenefit !== undefined
+            ? backgroundPlayBenefit(backgroundBenefit)
+            : key(group.group) !== "background" &&
+              !accessOnly(entity, benefit || summary, cards, summary) &&
+              hasPlayReminder(summary, benefit, keywordScopedBonus(entity)),
+        ...(backgroundBenefit !== undefined && backgroundBenefit !== summary
+          ? { reminderText: backgroundBenefit }
+          : reminderText === summary
+            ? {}
+            : { reminderText }),
         accessOnly: accessOnly(entity, benefit || summary, cards, summary),
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
@@ -793,7 +815,9 @@ export function withSheetOverview(
     feature.reminderText ?? (feature.summary || feature.description);
   for (const feature of features)
     if (
-      ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
+      ["Feat", "Class Feature", "Racial Trait", "Background"].includes(
+        feature.group,
+      ) &&
       feature.playReminder
     ) {
       addReminder(
