@@ -75,10 +75,10 @@
 .print-utility-usage-badge.usage-daily {
   background: #777;
 }
-/* Channel Divinity: the builder reference cards' (deity, class…) slate teal,
+/* Channel Divinity: celestial blue under the header's white text,
    and wide enough for its two letters. */
 .print-channel-divinity-badge {
-  background: var(--tone-neutral);
+  background: #1f6fb2;
   min-width: 0.18in;
   padding: 0 0.02in;
   width: auto;
