@@ -20,7 +20,7 @@ import {
   type SheetSectionId,
 } from "@4ecb/character-domain";
 import {
-  combinedDefenseModifiers,
+  combinedConditionalModifiers,
   CONDITIONAL_MODIFIERS_HEADING,
   featureChoiceText,
   powerActionRank,
@@ -531,7 +531,7 @@ function ConditionalModifiers({ model }: { model: CharacterSheetModel }) {
       trait.label;
     add(group, defensiveBonusText(trait), trait.source ?? "Source unavailable");
   }
-  for (const modifier of combinedDefenseModifiers(
+  for (const modifier of combinedConditionalModifiers(
     model.overview?.conditionalModifiers ?? [],
   ))
     add(

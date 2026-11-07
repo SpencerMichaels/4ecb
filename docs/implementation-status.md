@@ -1,5 +1,31 @@
 # Implementation status
 
+## Repetitive conditional-bonus rows combined (2026-11-06)
+
+Owner, on the drow invoker: the Scarf of Reconciliation's three "+2 item
+bonus to X checks and Y checks while you have a <race> ally …" properties
+printed as six page-1 Conditional modifiers rows. The rows came from
+sheet-model `conditionalModifiers` (one per evaluated stat contribution);
+its display combiner, which joined only defenses, is now
+`combinedConditionalModifiers` (`conditional-modifiers.ts`): rows of one
+surface, source and wording-with-the-target-removed (so the same amount,
+bonus type and condition) become one row listing the targets in row
+(authored) order, "+2 item bonus to Intimidate and Stealth checks while you
+have a drow ally within 10 squares of you"; defenses keep AC/Fortitude/
+Reflex/Will order and "all defenses". It serves page 1's pane and the Play
+data card's notes; the builder's per-stat tooltips and the reminder dedup
+(by provenance, on the separate rows) are unchanged. Invoker-drow's pane
+goes from 10 to 4 rows; executioner-fighter's Unexpected Escape now reads
+"+4 to Athletics and Acrobatics checks to escape a grab". 68 pack records
+carry same-condition statadds on two or more skills (Mnemonic Staff,
+Headband of Intellect, Delthuntle Sailor, Slave Sympathy, Scale of the
+Serpent, …); no other sample character has one.
+
+Verification: `conditional-modifiers.test.ts` (two conditions × two skills
+→ two rows; amount, type, condition and source each keep rows apart; row
+order), `pnpm review:verify` (invoker-drow "Grouped skill bonuses": the
+three rows printed on page 1, no per-skill row, no Scarf reminder).
+
 ## Companion speed shrinks instead of wrapping (2026-11-06)
 
 Owner: "The speed text in the familiar cards (and maybe analogous

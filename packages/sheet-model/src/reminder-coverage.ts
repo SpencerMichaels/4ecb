@@ -234,7 +234,7 @@ const DEFENSE_NAMES = ["AC", "Fortitude", "Reflex", "Will"] as const;
 /** The pane's per-defense rows of one bonus ("+1 to AC against …", "+1 to
  *  Fortitude against …", …) as the one "+1 to all defenses against …" a
  *  reminder says, when all four defenses carry the same text (the pane
- *  shows them combined, `combinedDefenseModifiers`). Words only: amounts
+ *  shows them combined, `combinedConditionalModifiers`). Words only: amounts
  *  still count once per row. */
 function allDefenseEntries(entries: readonly string[]): string[] {
   const pattern = new RegExp(`\\bto (${DEFENSE_NAMES.join("|")})\\b`);

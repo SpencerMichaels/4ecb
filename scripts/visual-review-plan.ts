@@ -1278,6 +1278,10 @@ const reviews: ReviewCharacter[] = [
             "The scythe's item card: Properties and its bullets in the body, the card still fits.",
           ],
           [
+            "Grouped skill bonuses",
+            'Page 1\'s Conditional modifiers pane lists the Scarf of Reconciliation as three rows, one per ally kind, each naming both skills ("+2 item bonus to Intimidate and Stealth checks while you have a drow ally …"), and no reminder repeats them.',
+          ],
+          [
             "Summoned creature card",
             'Summon Blade Angel keeps its Effect but no attack band; a "Blade Angel" card after the familiar, "Summoned creature · Daily" in its type bar, with the Minor Action and Opportunity Attack commands, each with its own "Attack … · Damage …" row.',
           ],

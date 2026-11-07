@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { StatAccumulator, type StatContribution } from "@4ecb/rules-engine";
 import {
-  combinedDefenseModifiers,
+  combinedConditionalModifiers,
   conditionalModifiers,
 } from "./conditional-modifiers";
 
-const SKILLS = ["Athletics", "Perception", "Stealth"];
+const SKILLS = [
+  "Arcana",
+  "Athletics",
+  "History",
+  "Intimidate",
+  "Perception",
+  "Stealth",
+];
 
 function project(
   additions: readonly Omit<StatContribution, "providerId">[],
@@ -337,7 +344,7 @@ describe("conditional modifier projection", () => {
   });
 });
 
-describe("combined defense modifiers", () => {
+describe("combined conditional modifiers", () => {
   it("joins a source's same bonus to several defenses", () => {
     const defenses = ["AC", "Fortitude", "Reflex", "Will"];
     const modifiers = project([
@@ -373,11 +380,9 @@ describe("combined defense modifiers", () => {
     ]);
     expect(modifiers).toHaveLength(8);
     expect(
-      combinedDefenseModifiers(modifiers).map(({ target, text, source }) => [
-        target,
-        text,
-        source,
-      ]),
+      combinedConditionalModifiers(modifiers).map(
+        ({ target, text, source }) => [target, text, source],
+      ),
     ).toEqual([
       [
         "AC, Fortitude, Reflex, Will",
@@ -395,6 +400,80 @@ describe("combined defense modifiers", () => {
         "Other source",
       ],
       ["Speed", "+2 to speed when charging", "Stride"],
+    ]);
+  });
+});
+
+describe("combined conditional modifiers across skills", () => {
+  const scarf = (stat: string, condition: string, index: number) => ({
+    id: `scarf:${index}`,
+    stat: `${stat} checks`,
+    value: "+2",
+    bonusType: "Item",
+    condition,
+    providerName: "Scarf of Reconciliation",
+  });
+  const drow = "while you have a drow ally within 10 squares of you";
+  const eladrin = "while you have an eladrin ally within 10 squares of you";
+
+  it("joins one source's same bonus to several skills, in row order", () => {
+    const modifiers = project([
+      scarf("Intimidate", drow, 0),
+      scarf("Stealth", drow, 1),
+      scarf("Arcana", eladrin, 2),
+      scarf("History", eladrin, 3),
+    ]);
+    expect(modifiers).toHaveLength(4);
+    expect(
+      combinedConditionalModifiers(modifiers).map(
+        ({ surface, target, text, source }) => [surface, target, text, source],
+      ),
+    ).toEqual([
+      [
+        "skills",
+        "Intimidate, Stealth",
+        `+2 item bonus to Intimidate and Stealth checks ${drow}`,
+        "Scarf of Reconciliation",
+      ],
+      [
+        "skills",
+        "Arcana, History",
+        `+2 item bonus to Arcana and History checks ${eladrin}`,
+        "Scarf of Reconciliation",
+      ],
+    ]);
+  });
+
+  it("keeps rows apart that differ in amount, type, condition or source", () => {
+    const modifiers = project([
+      scarf("Stealth", drow, 0),
+      { ...scarf("Perception", drow, 1), value: "+3" },
+      { ...scarf("Athletics", drow, 2), bonusType: "Power" },
+      scarf("Arcana", eladrin, 3),
+      { ...scarf("History", drow, 4), providerName: "Other source" },
+      {
+        id: "pair",
+        stat: "Intimidate checks",
+        value: "+2",
+        bonusType: "Item",
+        condition: drow,
+        providerName: "Scarf of Reconciliation",
+      },
+    ]);
+    expect(
+      combinedConditionalModifiers(modifiers).map(({ text, source }) => [
+        text,
+        source,
+      ]),
+    ).toEqual([
+      [
+        `+2 item bonus to Stealth and Intimidate checks ${drow}`,
+        "Scarf of Reconciliation",
+      ],
+      [`+3 item bonus to Perception checks ${drow}`, "Scarf of Reconciliation"],
+      [`+2 power bonus to Athletics checks ${drow}`, "Scarf of Reconciliation"],
+      [`+2 item bonus to Arcana checks ${eladrin}`, "Scarf of Reconciliation"],
+      [`+2 item bonus to History checks ${drow}`, "Other source"],
     ]);
   });
 });

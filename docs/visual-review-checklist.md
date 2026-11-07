@@ -394,6 +394,16 @@ live site.
     warning-coloured, the columns shift, a menu is clipped, the button row
     overflows the pane or squeezes the card, a toggle's on state shows only
     by colour, or the pane and the menu disagree.
+- [ ] **Drow invoker: grouped Conditional modifiers rows.**
+  - **Where:** `?preview=1`, page 1's Conditional modifiers pane (also at
+    140% zoom).
+  - **Expect:** the Scarf of Reconciliation is three rows ("+2 item bonus to
+    Intimidate and Stealth checks while you have a drow ally within 10
+    squares of you", then Arcana and History, then Perception and Nature),
+    each wrapping inside the Effect column with the Source column readable;
+    the reminders below gain the freed space.
+  - **Wrong if:** a row's wrap pushes the Source column narrow or overlaps,
+    or the pane is taller than before.
 - [x] **Drow invoker: Rose Scythe properties.**
   - **Where:** `edit?tab=inventory`, select the Rose Scythe of Chauntea;
     then `?preview=1`, its item card.

@@ -347,6 +347,9 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   "invoker-drow|11|summoned creature card (d111)": auto(
     'A "Blade Angel" creature card in the companions run with the "Summoned creature" type bar, Medium blade angel, HP your bloodied value, AC your AC + 4, speed 6, fly 6 (hover), its Minor Action and Opportunity Attack commands with personalized modifiers; Summon Blade Angel keeps its Effect and drops the commands.',
   ),
+  "invoker-drow|11|grouped skill bonuses": auto(
+    "The Conditional modifiers pane's Scarf of Reconciliation rows are three grouped rows (Intimidate and Stealth, Arcana and History, Perception and Nature), each with its condition, in authored order; no Scarf reminder.",
+  ),
   "invoker-drow|13|summoned creature in power detail (d111)": auto(
     "Summon Blade Angel's detail pane has a creature panel card with its commands; the power card above it has none.",
   ),

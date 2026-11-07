@@ -9,7 +9,7 @@ import { CharacterTransaction } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   applySheetLayout,
-  combinedDefenseModifiers,
+  combinedConditionalModifiers,
   sheetCreatureCardKeyBase,
   summonCommandRows,
   summonCommandVariants,
@@ -290,7 +290,9 @@ rule("beatrix", "Print preview", "Print Play data card", (c) => {
 rule("natan", "Print preview", "Play data Defenses line", (c) => {
   const play = printedDeck(c)[0];
   const html = play?.html ?? "";
-  const pane = combinedDefenseModifiers(c.sheet.overview.conditionalModifiers)
+  const pane = combinedConditionalModifiers(
+    c.sheet.overview.conditionalModifiers,
+  )
     .filter(({ surface }) => surface === "defenses")
     .map(({ text, source }) => `${text} (${source})`);
   const reminders = c.sheet.overview.reminders.map(
@@ -1719,6 +1721,41 @@ function summonVariants(c: ReviewCharacter, powerId: string) {
 /** Your evaluated value of a stat, for the owner-relative numbers. */
 const ownerStat = (c: ReviewCharacter, name: string) =>
   c.evaluation.stats[name]?.value ?? NaN;
+
+rule("invoker-drow", "Print preview", "Grouped skill bonuses", (c) => {
+  const scarf = combinedConditionalModifiers(
+    c.sheet.overview.conditionalModifiers,
+  )
+    .filter(({ source }) => source.startsWith("Scarf of Reconciliation"))
+    .map(({ surface, text }) => `${surface}: ${text}`);
+  const page = printedPagesFor(c).text;
+  const reminders = c.sheet.overview.reminders.map(
+    ({ label, value }) => `${label}: ${value}`,
+  );
+  const rows = [
+    "+2 item bonus to Intimidate and Stealth checks while you have a drow ally within 10 squares of you",
+    "+2 item bonus to Arcana and History checks while you have an eladrin ally within 10 squares of you",
+    "+2 item bonus to Perception and Nature checks while you have an elf ally within 10 squares of you",
+  ];
+  return [
+    equal(
+      "The pane's Scarf rows, grouped by condition in authored order",
+      scarf,
+      rows.map((row) => `skills: ${row}`),
+    ),
+    inOrder("Page 1 prints the grouped rows in order", page, rows),
+    lacks(
+      "Page 1 prints no per-skill Scarf row",
+      page,
+      "+2 item bonus to Intimidate checks while",
+    ),
+    truthy(
+      "No Scarf reminder repeats the pane",
+      !reminders.some((reminder) => reminder.includes("Scarf")),
+      reminders.join(" | "),
+    ),
+  ];
+});
 
 rule("invoker-drow", "Print preview", "Summoned creature card", (c) => {
   const deck = printedDeck(c);

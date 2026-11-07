@@ -1,5 +1,5 @@
 import {
-  combinedDefenseModifiers,
+  combinedConditionalModifiers,
   playDataDefenseLine,
   type CharacterSheetModel,
   type SheetValue,
@@ -55,7 +55,7 @@ export function playData(model: CharacterSheetModel): PlayData {
   const conditional = (
     surface: OverviewConditionalModifier["surface"],
   ): string =>
-    combinedDefenseModifiers(overview?.conditionalModifiers ?? [])
+    combinedConditionalModifiers(overview?.conditionalModifiers ?? [])
       .filter((modifier) => modifier.surface === surface)
       .map(conditionalModifierText)
       .join("; ");

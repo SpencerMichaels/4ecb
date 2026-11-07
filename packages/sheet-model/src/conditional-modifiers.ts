@@ -195,14 +195,27 @@ export function conditionalModifiers(
 
 const DEFENSE_ORDER = ["AC", "Fortitude", "Reflex", "Will"];
 
+const listed = (names: readonly string[]) =>
+  names.length < 2
+    ? names.join("")
+    : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+
 /**
- * For display: one entry per bonus that several defenses share, as a
- * source's "+1 to AC, Fortitude, Reflex and Will against ..." usually is.
- * The same amount, condition and source to all four defenses reads "+1 to
- * all defenses against ...". Other entries pass through unchanged; per-stat
- * consumers (the builder's stat tooltips) keep the separate entries.
+ * For display: one entry per bonus a source grants to several stats of one
+ * surface with the same amount, type and condition, as an item's "+2 item
+ * bonus to Intimidate checks and Stealth checks while ..." or a feat's "+1
+ * to AC, Fortitude, Reflex and Will against ..." is authored. The joined
+ * targets take the one target's place in the row's own wording ("+2 item
+ * bonus to Intimidate and Stealth checks while ..."): defenses in AC,
+ * Fortitude, Reflex, Will order, everything else in row order; the same
+ * bonus to all four defenses reads "+1 to all defenses against ...". Rows
+ * that differ in surface, source, amount, type or condition stay separate,
+ * and a group sits where its first row was. Every list surface (page 1's
+ * Conditional modifiers pane, the Play data card's notes) goes through this
+ * one function; per-stat consumers (the builder's stat tooltips, page 1's
+ * reminder dedup by provenance) keep the separate rows.
  */
-export function combinedDefenseModifiers(
+export function combinedConditionalModifiers(
   modifiers: readonly ConditionalModifier[],
 ): ConditionalModifier[] {
   const groups = new Map<
@@ -213,7 +226,7 @@ export function combinedDefenseModifiers(
   for (const modifier of modifiers) {
     const marker = ` to ${modifier.target} `;
     const at = modifier.text.indexOf(marker);
-    if (!DEFENSE_ORDER.includes(modifier.target) || at < 0) {
+    if (at < 0) {
       result.push(modifier);
       continue;
     }
@@ -229,13 +242,15 @@ export function combinedDefenseModifiers(
     if (typeof entry !== "string") return entry;
     const { template, entries } = groups.get(entry)!;
     if (entries.length === 1) return entries[0]!;
-    const targets = DEFENSE_ORDER.filter((name) =>
-      entries.some((modifier) => modifier.target === name),
-    );
+    const named = [...new Set(entries.map(({ target }) => target))];
+    const defenses = named.every((name) => DEFENSE_ORDER.includes(name));
+    const targets = defenses
+      ? DEFENSE_ORDER.filter((name) => named.includes(name))
+      : named;
     const label =
-      targets.length === DEFENSE_ORDER.length
+      defenses && targets.length === DEFENSE_ORDER.length
         ? "all defenses"
-        : `${targets.slice(0, -1).join(", ")} and ${targets.at(-1)}`;
+        : listed(targets);
     return {
       ...entries[0]!,
       target: targets.join(", "),

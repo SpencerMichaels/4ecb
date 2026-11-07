@@ -267,7 +267,7 @@ export type {
   OverviewReminderCandidate,
 } from "./overview";
 export {
-  combinedDefenseModifiers,
+  combinedConditionalModifiers,
   conditionalModifiers,
   type ConditionalModifier,
   type ConditionalModifierSurface,

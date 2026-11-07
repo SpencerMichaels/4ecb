@@ -321,9 +321,12 @@ Conditional modifiers (owner decision, 2026-10-23): the pane is renamed
 lists sheet-model `overview.conditionalModifiers`, the legacy CharTracker
 "CONDITIONAL BONUSES"/"CONDITIONAL MODIFIERS"/"SPECIAL MOVEMENT" blocks. Rows
 group as Resistances, Immunities, Vulnerabilities, Saving throws, Defenses,
-Initiative, Speed, Skills & checks, Health, Allies (one source's same bonus to
-several defenses reads as one row, "+1 to all defenses against …",
-`combinedDefenseModifiers`), with continuous striping
+Initiative, Speed, Skills & checks, Health, Allies (one source's same bonus,
+amount, type and condition to several stats of one group reads as one row
+naming them in authored order — "+2 item bonus to Intimidate and Stealth
+checks while …", defenses in AC/Fortitude/Reflex/Will order and "+1 to all
+defenses against …" for all four; `combinedConditionalModifiers`, owner
+request 2026-11-06), with continuous striping
 and the same Effect/Source columns. Group names are screen-reader only, never
 visible headings: most groups hold one row, so labels would roughly double the
 pane's height, and each row's text already names its stat (owner decision,
