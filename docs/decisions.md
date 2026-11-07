@@ -894,6 +894,32 @@ Pantheon", then Domains and any Counts as on their own lines, each only
 when it has a value (sheet-model `deitySubheaderRows`). The body is the
 description. The printed Deity reference entry lists the same fields.
 
+Amendment (2026-11-07, owner: language table bands for the Pathfinder
+campaign, "Common, Regional, Uncommon, Ancient"): the deity bands are one
+general mechanism, and a language choice's table uses it too. A banded
+table is described by `AuthoredTableBands` in `builder-ui.ts` (the
+records' type, the authored specific naming the band, the key prefix, the
+"Other" fallback, and whether it bands when no candidate has the
+specific): `DEITY_TABLE_BANDS` (Pantheon, always banded) and
+`LANGUAGE_TABLE_BANDS` (an authored `Language Group` specific, banded only
+when a candidate language has one). `candidateTableBands(kind, candidates,
+byId)` picks the bands a table uses: the Deity table's always, an option
+table's (languages are option tables, not buttons) when its candidates are
+records of a banded type with the specific. `authoredTableGroup` and
+`authoredOfferedBands` are the old `deityTableGroup`/`deityOfferedBands`
+(kept as thin deity wrappers), with the same behavior for every banded
+table: bands at their earliest record's authored position, offered bands
+before all-restricted ones, all bands open, records without a value in a
+final "Other" band, positions cached per entity map and band kind. So a
+campaign's language table shows its groups in its file's order, the kept
+ungrouped records (Secret Language, The language of the mind) and, under
+Show all, the restricted stock languages in "Other"; stock content, whose
+languages have no group, keeps one unbanded list exactly as before. A
+language card's subheader shows the group as "Group: Regional" (one-word
+label, a short bounded value, the Pantheon precedent; sheet-model
+`entityCardFields`' `language` placement). Grouping any other choice table
+still needs the owner's OK.
+
 ### D043 — Inactive provider rules preserve but suppress their saved children
 
 Statement-level `requires` controls whether a `select`, `grant`, or other rule
@@ -5129,6 +5155,36 @@ campaign-only` type rule exempts only house-rule records (and Giant, Deep
   disabled (aria-disabled, hover reason "Hosted by your group's server"),
   since it would come back on the next load; an imported one removes as
   before, blocked while a character uses it.
+- **Amendment (2026-11-07): Pathfinder's wider language list; no Learn
+  choice restricted** (owner decisions). Revision 10 adds 42 PathfinderWiki
+  languages as new records (monster-named ones and sign languages left
+  out): 26 regional human languages with the Starting category, so every
+  unspecified "choice of one other" offers them beside the 11 common ones;
+  and, without it, 7 ancient and 9 planar and Darklands languages,
+  offered where a feature names them or takes any language. Every
+  campaign language authors a `Language Group` (Common, Regional,
+  Uncommon, Ancient) that bands the language tables (D042 amendment of
+  2026-11-07). A stock language with a convincing Pathfinder equivalent
+  is that language's "Also Known As" (Netherese: Thassilonian, Shou: Tien,
+  Tulgan: Hongali, Untheric: Ancient Osiriani, Thayan: Osiriani, Damaran:
+  Hallit), so a requirement naming it resolves; the stock records stay
+  restricted. Swap, don't restrict: none of the 11 "Learn <language>"
+  background choices is restricted any more. Each with an equivalent is
+  renamed and grants it, its background association renamed to match
+  (Learn Hallit, Thassilonian, Tien, Osiriani, Hongali, Ancient Osiriani;
+  Argon, an altered Common of northern sea-raiding barbarians, becomes
+  Learn Skald without an alias, since nothing names Argon); the rest have
+  no single equivalent and become a choice of one language: Chondathan
+  "Learn a regional language" (the 26), Riedran "Learn a Tian language"
+  (the 7 of Tian Xia; Tien alone would duplicate Learn Tien), Quori
+  "Learn a planar language" (15), Thri-kreen "Learn an uncommon
+  language" (22). The Shifter backgrounds that granted Damaran, Netherese
+  and Shou grant Hallit, Thassilonian and Tien instead of a common
+  choice. The race picks that add an uncommon language to the common
+  ones (Tiefling, Deva, Shadar-kai, Shade, Revenant, Vryloka) offer
+  "Starting" plus their extras, so they include the regional languages.
+  Scholar L10, the Ioun Stone of Perfect Language and the Helm of
+  Languages grant all 66 campaign languages.
 
 ### D117 — Right-click is a shortcut, never the only way to an action
 

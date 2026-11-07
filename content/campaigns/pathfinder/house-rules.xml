@@ -1467,26 +1467,40 @@
   </RulesElement>
   <!--
     Pathfinder languages (D116). The campaign restricts every stock Language
-    (campaign.json: "Language": "campaign-only") and supplies these: the 11
-    common Pathfinder languages carry the Starting category (so an
-    unspecified "choice of one other" offers exactly them) and the 13
-    uncommon ones do not, being offered only where a race or feature calls
-    for them. A Pathfinder language with a stock equivalent keeps that stock
-    record's ID, so existing grants, picks and prerequisites reach it (Celestial
-    is the stock Supernal, Jotun the stock Giant, Undercommon the stock Deep
-    Speech); the rest are new records. Each is "Also Known As" its stock
-    name (Celestial: Supernal, Jotun: Giant, Undercommon: Deep Speech, and
-    each of the six elemental tongues: Primordial), so requirements naming
-    the stock language ("fluent in Supernal", "Primordial language") are
-    met by it and prerequisite lines show its Pathfinder name. All, Secret
-    Language and The language of the mind are unchanged copies the campaign
-    keeps (a stock record would be restricted by the type rule).
-    Descriptions of new and renamed languages are original. Primordial and
-    the Forgotten Realms, Eberron and Dark Sun languages stay restricted
-    stock records.
+    (campaign.json: "Language": "campaign-only") and supplies these 66, each
+    with an authored "Language Group" that bands the builder's language
+    tables (Common, Regional, Uncommon, Ancient, in this file's order). The
+    11 common (Common, Draconic, Dwarven, Elven, Sylvan, Gnomish, Goblin,
+    Halfling, Jotun, Orcish, Undercommon) and the 26 regional human
+    languages (Calda through Xanmba; Taldane is Common) carry the Starting
+    category, so an unspecified "choice of one other" offers exactly them.
+    The 22 uncommon (the core rulebook's 13, then the planar Daemonic,
+    Protean, Utopian, Requian and First Speech and the Darklands' Caligni,
+    Canto, Orvian and Darklands Slang) and the 7 ancient (Thassilonian,
+    Azlanti, Ancient Osiriani, Jistka, Shory, Tekritanin, Senzar) do not,
+    being offered only where a race or feature calls for them or a choice
+    takes any language. A Pathfinder language with a stock equivalent keeps
+    that stock record's ID, so existing grants, picks and prerequisites
+    reach it (Celestial is the stock Supernal, Jotun the stock Giant,
+    Undercommon the stock Deep Speech); the rest are new records. Each
+    language with a stock equivalent is "Also Known As" its stock name
+    (Celestial: Supernal, Jotun: Giant, Undercommon: Deep Speech, each of
+    the six elemental tongues: Primordial; Hallit: Damaran, Thassilonian:
+    Netherese, Tien: Shou, Osiriani: Thayan, Hongali: Tulgan, Ancient
+    Osiriani: Untheric), so requirements naming the stock language ("fluent
+    in Supernal", "Primordial language") are met by it and prerequisite
+    lines show its Pathfinder name. All, Secret Language and The language
+    of the mind are unchanged copies the campaign keeps (a stock record
+    would be restricted by the type rule); having no group, they share the
+    tables' last "Other" band. Descriptions of new and renamed languages
+    are original. Primordial and the other Forgotten Realms, Eberron and
+    Dark Sun languages stay restricted stock records; their "Learn"
+    background choices are patched to a Pathfinder language or a choice of
+    one (campaign.json).
   -->
   <RulesElement name="Common" type="Language" internal-id="ID_FMP_LANGUAGE_1" source="Player's Handbook" revision-date="8/30/2010 3:41:50 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1495,6 +1509,7 @@
 
   <RulesElement name="Draconic" type="Language" internal-id="ID_FMP_LANGUAGE_2" source="Player's Handbook" revision-date="8/30/2010 3:41:59 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1503,6 +1518,7 @@
 
   <RulesElement name="Dwarven" type="Language" internal-id="ID_FMP_LANGUAGE_3" source="Player's Handbook" revision-date="8/30/2010 3:42:08 PM">
     <Category> ID_FMP_RACE_37,ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1511,6 +1527,7 @@
 
   <RulesElement name="Elven" type="Language" internal-id="ID_FMP_LANGUAGE_4" source="Player's Handbook" revision-date="8/30/2010 3:42:15 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1519,6 +1536,7 @@
 
   <RulesElement name="Sylvan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SYLVAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1527,6 +1545,7 @@
 
   <RulesElement name="Gnomish" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_GNOMISH" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1535,6 +1554,7 @@
 
   <RulesElement name="Goblin" type="Language" internal-id="ID_FMP_LANGUAGE_20" source="Player's Handbook" revision-date="8/30/2010 3:43:12 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1543,6 +1563,7 @@
 
   <RulesElement name="Halfling" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HALFLING" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1551,6 +1572,7 @@
 
   <RulesElement name="Jotun" type="Language" internal-id="ID_FMP_LANGUAGE_19" source="Player's Handbook" revision-date="8/30/2010 3:43:06 PM">
     <Category> ID_FMP_RACE_37,ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <specific name="Also Known As"> Giant </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1560,6 +1582,7 @@
 
   <RulesElement name="Orcish" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_ORCISH" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1568,6 +1591,7 @@
 
   <RulesElement name="Undercommon" type="Language" internal-id="ID_FMP_LANGUAGE_18" source="Player's Handbook" revision-date="8/30/2010 3:42:59 PM">
     <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Common </specific>
     <specific name="Also Known As"> Deep Speech </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1575,7 +1599,246 @@
     The trade tongue of the Darklands, shared by drow, duergar, svirfneblin and the other peoples who live far below the surface.
   </RulesElement>
 
+  <RulesElement name="Calda" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_CALDA" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Caldaru of Senghor, a tongue of the Mwangi Expanse that shares no roots with its neighbors.
+  </RulesElement>
+
+  <RulesElement name="Erutaki" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_ERUTAKI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Erutaki, hunters and fishers of the frozen Crown of the World.
+  </RulesElement>
+
+  <RulesElement name="Hallit" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HALLIT" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <specific name="Also Known As"> Damaran </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The harsh, rapid language of the Kellid tribes of northern Avistan, more often spoken than written.
+  </RulesElement>
+
+  <RulesElement name="Hongali" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HONGALI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <specific name="Also Known As"> Tulgan </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Tian-La horse nomads of Hongal and Shanguang, on the northern steppes of Tian Xia.
+  </RulesElement>
+
+  <RulesElement name="Hwan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_HWAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of Hwanggot, taken up across Tian Xia by those who rose against Lung Wa's rule.
+  </RulesElement>
+
+  <RulesElement name="Iblydosi" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_IBLYDOSI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Iblydan isles of Casmaron, a distant cousin of Kelish.
+  </RulesElement>
+
+  <RulesElement name="Iobarian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_IOBARIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The runic language of Iobaria's forests and steppes, spoken there by many peoples besides humans.
+  </RulesElement>
+
+  <RulesElement name="Kelish" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_KELISH" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The throaty, poetic language of the Padishah Empire of Kelesh and its satrapy Qadira, heard in markets all around the Inner Sea.
+  </RulesElement>
+
+  <RulesElement name="Kibwani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_KIBWANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The trade language of Kibwe in the Mwangi Expanse, built from kobold, iruxi and Kelish words.
+  </RulesElement>
+
+  <RulesElement name="Lirgeni" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_LIRGENI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Lirgeni, kept alive in Jaha and among the scattered descendants of lost Lirgen.
+  </RulesElement>
+
+  <RulesElement name="Minatan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_MINATAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The shared tongue of the Wandering Isles of Minata, carried from island to island by its sailors.
+  </RulesElement>
+
+  <RulesElement name="Minkaian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_MINKAIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Minkai Empire, a relative of Tien spoken widely in northern Tian Xia.
+  </RulesElement>
+
+  <RulesElement name="Mwangi" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_MWANGI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The family of related dialects spoken through the jungles of the Mwangi Expanse, the common tongue of western Garund.
+  </RulesElement>
+
+  <RulesElement name="Mzunu" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_MZUNU" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The old imperial language of Mzali in the Mwangi Expanse, revived there in its archaic forms.
+  </RulesElement>
+
+  <RulesElement name="Ocotan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_OCOTAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    A soft, flowing tongue spoken in parts of the Mwangi Expanse.
+  </RulesElement>
+
+  <RulesElement name="Osiriani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_OSIRIANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <specific name="Also Known As"> Thayan </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of Osirion and its neighbors, the most widely spoken tongue of Garund, with a deep store of words for magic.
+  </RulesElement>
+
+  <RulesElement name="Razatlani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_RAZATLANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the old Razatlan Empire of Arcadia, still the common tongue of Xopatl.
+  </RulesElement>
+
+  <RulesElement name="Shoanti" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SHOANTI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The proud language of the Shoanti clans of Varisia's highlands, rich in metaphor.
+  </RulesElement>
+
+  <RulesElement name="Skald" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SKALD" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The long-worded, chanting language of the Lands of the Linnorm Kings, written with Dwarven letters.
+  </RulesElement>
+
+  <RulesElement name="Taltien" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TALTIEN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    A blend of Taldane and Tien that grew up in Linvarre, once a Taldan colony in Tian Xia.
+  </RulesElement>
+
+  <RulesElement name="Tang" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TANG" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Tian-Tang of Tang Mai, in southeastern Tian Xia.
+  </RulesElement>
+
+  <RulesElement name="Tien" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TIEN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <specific name="Also Known As"> Shou </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The tonal, pictographic language of fallen Lung Wa, the common tongue of Tian Xia.
+  </RulesElement>
+
+  <RulesElement name="Varisian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_VARISIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The subtle language of the wandering Varisian people, full of nuance and double meanings.
+  </RulesElement>
+
+  <RulesElement name="Varki" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_VARKI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the semi-nomadic Varki of the Icemark, in the far north of the world.
+  </RulesElement>
+
+  <RulesElement name="Vudrani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_VUDRANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of distant Vudra and of Jalmeray, its long words heaped with prefixes and suffixes.
+  </RulesElement>
+
+  <RulesElement name="Xanmba" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_XANMBA" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <Category> ID_INTERNAL_CATEGORY_STARTING </Category>
+    <specific name="Language Group"> Regional </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The archaic language of Nantambu, which some scholars call the root of modern Mwangi.
+  </RulesElement>
+
   <RulesElement name="Aklo" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_AKLO" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1583,6 +1846,7 @@
   </RulesElement>
 
   <RulesElement name="Abyssal" type="Language" internal-id="ID_FMP_LANGUAGE_7" source="Player's Handbook" revision-date="8/30/2010 3:42:33 PM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1590,6 +1854,7 @@
   </RulesElement>
 
   <RulesElement name="Infernal" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_INFERNAL" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1597,6 +1862,7 @@
   </RulesElement>
 
   <RulesElement name="Celestial" type="Language" internal-id="ID_FMP_LANGUAGE_8" source="Player's Handbook" revision-date="8/30/2010 3:42:41 PM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Supernal </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1605,6 +1871,7 @@
   </RulesElement>
 
   <RulesElement name="Gnoll" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_GNOLL" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1612,6 +1879,7 @@
   </RulesElement>
 
   <RulesElement name="Necril" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_NECRIL" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1619,6 +1887,7 @@
   </RulesElement>
 
   <RulesElement name="Terran" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TERRAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1627,6 +1896,7 @@
   </RulesElement>
 
   <RulesElement name="Ignan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_IGNAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1635,6 +1905,7 @@
   </RulesElement>
 
   <RulesElement name="Auran" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_AURAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1643,6 +1914,7 @@
   </RulesElement>
 
   <RulesElement name="Aquan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_AQUAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1651,6 +1923,7 @@
   </RulesElement>
 
   <RulesElement name="Shadowtongue" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SHADOWTONGUE" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
@@ -1658,6 +1931,7 @@
   </RulesElement>
 
   <RulesElement name="Muan" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_MUAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
@@ -1666,11 +1940,142 @@
   </RulesElement>
 
   <RulesElement name="Talican" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TALICAN" source="Pathfinder" revision-date="11/6/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
     <specific name="Also Known As"> Primordial </specific>
     <rules>
       <statadd name="Language Count" value="+1" />
     </rules>
     The ringing language of the Plane of Metal, spoken by metal elementals and the creatures of that plane.
+  </RulesElement>
+
+  <RulesElement name="Daemonic" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_DAEMONIC" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the daemons of Abaddon, heralds of oblivion.
+  </RulesElement>
+
+  <RulesElement name="Protean" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_PROTEAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The hissing, ever-changing language of the proteans of the Maelstrom, nearly impossible to set down in writing.
+  </RulesElement>
+
+  <RulesElement name="Utopian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_UTOPIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The formulaic language of Axis, spoken by aeons, axiomites and inevitables.
+  </RulesElement>
+
+  <RulesElement name="Requian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_REQUIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The slow, melodic language of Pharasma's Boneyard, also used in the writings of her faith.
+  </RulesElement>
+
+  <RulesElement name="First Speech" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_FIRST_SPEECH" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The common tongue of the First World's fey, close kin to both Sylvan and Aklo.
+  </RulesElement>
+
+  <RulesElement name="Caligni" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_CALIGNI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The secretive language of the caligni, the dark folk of the Darklands.
+  </RulesElement>
+
+  <RulesElement name="Canto" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_CANTO" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    A Darklands language of beats struck on bodies, weapons and stone, made to carry far through echoing tunnels.
+  </RulesElement>
+
+  <RulesElement name="Orvian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_ORVIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    An ancient language of the Orvian Vaults, deep in the Darklands, shaped by both Aklo and Terran.
+  </RulesElement>
+
+  <RulesElement name="Darklands Slang" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Uncommon </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The shared slang of the Darklands' peoples, whose words have crept into every tongue spoken below.
+  </RulesElement>
+
+  <RulesElement name="Thassilonian" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_THASSILONIAN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <specific name="Also Known As"> Netherese </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The dead language of the runelords' Thassilon, written in three runic scripts and still echoed in Varisian, Shoanti and Jotun.
+  </RulesElement>
+
+  <RulesElement name="Azlanti" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_AZLANTI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of drowned Azlant, root of many Inner Sea tongues and still spoken by the elves of the Mordant Spire.
+  </RulesElement>
+
+  <RulesElement name="Ancient Osiriani" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <specific name="Also Known As"> Untheric </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The hieroglyphic language of Osirion's ancient god-kings, which speakers of modern Osiriani can still partly read.
+  </RulesElement>
+
+  <RulesElement name="Jistka" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_JISTKA" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The language of the Jistka Imperium, whose letters and numerals live on in many human scripts.
+  </RulesElement>
+
+  <RulesElement name="Shory" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SHORY" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The runic language of the Shory Empire and its flying cities, extinct for thousands of years.
+  </RulesElement>
+
+  <RulesElement name="Tekritanin" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_TEKRITANIN" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The clipped language of the ancient Tekritanin League of northern Garund, rich in words for heat, desert and rule.
+  </RulesElement>
+
+  <RulesElement name="Senzar" type="Language" internal-id="ID_4ECB_PF_LANGUAGE_SENZAR" source="Pathfinder" revision-date="11/7/2026 12:00:00 AM">
+    <specific name="Language Group"> Ancient </specific>
+    <rules>
+      <statadd name="Language Count" value="+1" />
+    </rules>
+    The ancient tongue of the spirits of Tian Xia, spoken by kami and kitsune and thought to be the root of the continent's languages.
   </RulesElement>
 
   <RulesElement name="All" type="Language" internal-id="ID_INTERNAL_LANGUAGE_ALL" source="Core">

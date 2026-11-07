@@ -1350,9 +1350,9 @@ Moradin, or an item a character holds), build and import or advertise it.
     hides the stock ones.
   - **Wrong if:** the dialogs differ in width or button order from the
     content-update dialog, or focus stays trapped after closing.
-- [ ] **Pathfinder languages (campaign revision 4).** Added 2026-11-06;
-      the choice contents are checked by a private probe, these are the
-      surfaces.
+- [ ] **Pathfinder languages (campaign revision 4; revision 10 lists).**
+      Added 2026-11-06; the choice contents are checked by a private
+      probe, these are the surfaces.
   - **Where:** a new character in the Pathfinder campaign: Race step with
     a Gnome, Genasi, Tiefling and Thri-Kreen (race cards and their
     language picks); the Human's "choice of one other"; a background with
@@ -1362,20 +1362,51 @@ Moradin, or an item a character holds), build and import or advertise it.
   - **Expect:** race cards read the Pathfinder lines ("Common, Gnomish,
     Sylvan"; Genasi "Common, choice of Aquan, Auran, Ignan, or Terran";
     Thri-Kreen "Common, choice of one other"). Genasi shows one language
-    choice of the four tongues; Tiefling's pick lists the 11 common
-    languages plus Abyssal and Infernal; the Human's lists the 11 only.
-    Backgrounds list "Learn Celestial", "Learn Jotun", "Learn Undercommon"
-    and "Learn an elemental tongue" (which opens a choice of four), and no
-    Damaran, Netherese or other restricted Learn row unless Show all is
-    on. A Deva cleric's Holy Speech reads "fluent in Celestial" (from
-    revision 5, with no "met through" note: Celestial is the language
-    Supernal under its own name). The
+    choice of the four tongues; Tiefling's pick lists the 11 common and
+    26 regional languages plus Abyssal and Infernal; the Human's lists the
+    37 only (revision 10). Backgrounds list "Learn Celestial", "Learn
+    Jotun", "Learn Undercommon" and "Learn an elemental tongue" (which
+    opens a choice of four); an any-language background (Occupation -
+    Bounty Hunter) also lists Learn Hallit, Thassilonian, Tien, Osiriani,
+    Hongali, Ancient Osiriani and Skald and "Learn a regional language",
+    "a Tian language", "a planar language", none greyed, and no Damaran,
+    Netherese or other stock-language Learn row anywhere. A Deva
+    cleric's Holy Speech reads "fluent in Celestial" (from revision 5,
+    with no "met through" note: Celestial is the language Supernal under
+    its own name). The
     saved Primordial pick has one "Primordial is not used in this
     campaign." issue whose Review opens its choice.
   - **Wrong if:** a stock name (Giant, Deep Speech, Supernal, Primordial)
     shows anywhere a player picks, a CountsAsLanguage ("Supernal",
     "Primordial") appears in the Languages list, or a race or background is
     greyed out over a language.
+- [ ] **Language table bands and the language card's Group (D042
+      amendment, 2026-11-07).** Added 2026-11-07; band contents and order
+      are unit-tested and probed, this is the look.
+  - **Where:** at 140% zoom, light and dark theme: a new Pathfinder
+    character, Human, Build → level 1 → the race's "choice of one other"
+    language table, with Show all off, then on; collapse and reopen the
+    Regional band; type "ti" in the filter; click Tien to see its card.
+    Then a Tiefling's language pick, and the Linguist feat's picks (any
+    language), where Thassilonian's card is. Then a character outside any
+    campaign, the same Human language table.
+  - **Expect:** the Pathfinder table has open bands "Common" (10, Common
+    itself already known) and "Regional" (26), styled exactly like the
+    Deity table's pantheon bands (chevron toggle, muted count), rows
+    alphabetical inside each; Show all adds an "Other" band last holding
+    the greyed stock languages ("Unavailable in this campaign"). A
+    Tiefling's pick shows Common, Regional, then Uncommon (Abyssal,
+    Infernal); Linguist's picks show Common, Regional, Uncommon,
+    Ancient, Other in that order. Collapsing Regional keeps its band row and count. Filtering
+    "ti" shows Taltien and Tien (and any other match) under their bands
+    only. Tien's card subheader reads "GROUP Regional" and its body has an
+    "Also known as: Shou" line, no "Language Group" body line;
+    Thassilonian's reads "GROUP Ancient", "Also known as: Netherese". The
+    outside character's table has no bands at all, as before.
+  - **Wrong if:** a stock (non-campaign) language table shows any band,
+    the bands are out of order or start collapsed, a band row's width
+    doesn't span the table, or the Group subheader wraps oddly beside the
+    title.
 - [ ] **Record aliases ("Also known as").** Added 2026-11-06; matching and
       search are unit-tested, this is the card line.
   - **Where:** a campaign with a `name` patch or an "Also Known As" record

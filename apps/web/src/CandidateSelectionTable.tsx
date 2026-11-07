@@ -19,21 +19,23 @@ import {
 } from "@4ecb/rules-engine";
 
 import {
+  authoredOfferedBands,
+  authoredTableGroup,
   backgroundAssociatedSkills,
+  candidateTableBands,
   candidateTableTypeGroup,
   choiceTableSummary,
   classTableMetadata,
   contentSpecificValue,
   deityTableDescription,
   deityTableDomains,
-  deityOfferedBands,
-  deityTableGroup,
   type groupParameterizedCandidates,
   isCandidateSelectable,
   powerTableActionLabel,
   powerTableAttackLabel,
   powerTableAttackTitle,
   powerTableLevel,
+  type AuthoredTableBands,
   type CandidateTableTypeGroup,
   type ChoiceSelectionTableKind,
   unavailablePresentation,
@@ -200,10 +202,14 @@ type FeatPresentationGroup = ReturnType<
   typeof groupParameterizedCandidates
 >[number];
 
-/** Kinds whose rows the table bands into collapsible sections: feats and
- *  powers by type, deities by authored Pantheon (D042 amendment). */
-function candidateTableHasSections(kind: ChoiceSelectionTableKind): boolean {
-  return kind === "feat" || kind === "power" || kind === "deity";
+/** Whether the table bands its rows into collapsible sections: feats and
+ *  powers by type; deities by authored Pantheon (D042 amendment) and a
+ *  campaign's languages by authored Language Group (`candidateTableBands`). */
+function candidateTableHasSections(
+  kind: ChoiceSelectionTableKind,
+  bands: AuthoredTableBands | undefined,
+): boolean {
+  return kind === "feat" || kind === "power" || bands !== undefined;
 }
 
 /**
@@ -461,9 +467,16 @@ export function CandidateSelectionTable({
     }
     return profiles;
   }, [byId, candidates, evaluation, kind]);
-  const offeredDeityBands = useMemo(
-    () => (kind === "deity" ? deityOfferedBands(candidates, byId) : undefined),
+  const authoredBands = useMemo(
+    () => candidateTableBands(kind, candidates, byId),
     [byId, candidates, kind],
+  );
+  const offeredAuthoredBands = useMemo(
+    () =>
+      authoredBands === undefined
+        ? undefined
+        : authoredOfferedBands(candidates, byId, authoredBands),
+    [authoredBands, byId, candidates],
   );
   const facetValuesFor = (
     facet: CandidateFacet,
@@ -502,8 +515,13 @@ export function CandidateSelectionTable({
     });
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
-    if (kind === "deity")
-      return deityTableGroup(entity, byId, offeredDeityBands);
+    if (authoredBands !== undefined)
+      return authoredTableGroup(
+        entity,
+        byId,
+        authoredBands,
+        offeredAuthoredBands,
+      );
     return entity === undefined || (kind !== "feat" && kind !== "power")
       ? { key: "other", label: "Other", order: 900 }
       : cachedTypeGroup(entity, kind, byId);
@@ -909,8 +927,9 @@ export function CandidateSelectionTable({
       normalizedFilter !== "" ||
       (typeExpansion.get(section.key) ??
         (expandSections ||
-          // Deity bands all start open, as the Inventory's and Shop's do.
-          kind === "deity" ||
+          // Authored bands (deities, languages) all start open, as the
+          // Inventory's and Shop's do.
+          authoredBands !== undefined ||
           selected ||
           sectionIndex === 0));
     const rows: ResultRow[] = [];
@@ -1380,7 +1399,7 @@ export function CandidateSelectionTable({
                 );
                 return (
                   <Fragment key={section.key}>
-                    {candidateTableHasSections(kind) ? (
+                    {candidateTableHasSections(kind, authoredBands) ? (
                       <tr className="selection-type-row table-section-row">
                         <th
                           colSpan={candidateTableColumnCount(kind)}

@@ -2,22 +2,9 @@
   "campaignId": "pathfinder",
   "name": "Pathfinder",
   "description": "Replaced 4e's gods and languages with their equivalents from Pathfinder's campaign setting.",
-  "revision": 9,
+  "revision": 10,
   "houseRules": "house-rules.xml",
   "restrict": {
-    "ids": [
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
-      "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN"
-    ],
     "types": {
       "Deity": "campaign-only",
       "Language": "campaign-only"
@@ -608,7 +595,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL"
+          "Category": "Starting|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL"
         }
       }
     },
@@ -624,7 +611,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_8"
+          "Category": "Starting|ID_FMP_LANGUAGE_8"
         }
       }
     },
@@ -640,7 +627,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
+          "Category": "Starting|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
         }
       }
     },
@@ -656,7 +643,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
+          "Category": "Starting|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE"
         }
       }
     },
@@ -672,7 +659,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_NECRIL"
+          "Category": "Starting|ID_4ECB_PF_LANGUAGE_NECRIL"
         }
       }
     },
@@ -688,7 +675,7 @@
           }
         },
         "set": {
-          "Category": "ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4|ID_4ECB_PF_LANGUAGE_SYLVAN|ID_4ECB_PF_LANGUAGE_GNOMISH|ID_FMP_LANGUAGE_20|ID_4ECB_PF_LANGUAGE_HALFLING|ID_FMP_LANGUAGE_19|ID_4ECB_PF_LANGUAGE_ORCISH|ID_FMP_LANGUAGE_18|ID_4ECB_PF_LANGUAGE_NECRIL"
+          "Category": "Starting|ID_4ECB_PF_LANGUAGE_NECRIL"
         }
       }
     },
@@ -1965,13 +1952,8 @@
             "type": "Language"
           }
         },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "Starting"
-          }
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_HALLIT"
         }
       }
     },
@@ -1985,13 +1967,8 @@
             "type": "Language"
           }
         },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "Starting"
-          }
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN"
         }
       }
     },
@@ -2005,13 +1982,8 @@
             "type": "Language"
           }
         },
-        "replaceWith": {
-          "name": "select",
-          "attributes": {
-            "type": "Language",
-            "number": "1",
-            "Category": "Starting"
-          }
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TIEN"
         }
       }
     },
@@ -2068,6 +2040,1223 @@
         },
         "set": {
           "Category": "Starting"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
+      "field": "name",
+      "expect": "Learn Damaran",
+      "value": "Learn Hallit"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_DAMARAN",
+      "field": "name",
+      "expect": "Damaran",
+      "value": "Hallit"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_DAMARAN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_28",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_HALLIT"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
+      "field": "name",
+      "expect": "Learn Netherese",
+      "value": "Learn Thassilonian"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_NETHERESE",
+      "field": "name",
+      "expect": "Netherese",
+      "value": "Thassilonian"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_NETHERESE",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_29",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
+      "field": "name",
+      "expect": "Learn Shou",
+      "value": "Learn Tien"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_SHOU",
+      "field": "name",
+      "expect": "Shou",
+      "value": "Tien"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_SHOU",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_30",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_TIEN"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
+      "field": "name",
+      "expect": "Learn Thayan",
+      "value": "Learn Osiriani"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_THAYAN",
+      "field": "name",
+      "expect": "Thayan",
+      "value": "Osiriani"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THAYAN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_31",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_OSIRIANI"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
+      "field": "name",
+      "expect": "Learn Tulgan",
+      "value": "Learn Hongali"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_TULGAN",
+      "field": "name",
+      "expect": "Tulgan",
+      "value": "Hongali"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_TULGAN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_32",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_HONGALI"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
+      "field": "name",
+      "expect": "Learn Untheric",
+      "value": "Learn Ancient Osiriani"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_UNTHERIC",
+      "field": "name",
+      "expect": "Untheric",
+      "value": "Ancient Osiriani"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_UNTHERIC",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_33",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
+      "field": "name",
+      "expect": "Learn Argon",
+      "value": "Learn Skald"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_ASSOCIATION_ARGON",
+      "field": "name",
+      "expect": "Argon",
+      "value": "Skald"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_ARGON",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_37",
+            "type": "Language"
+          }
+        },
+        "set": {
+          "name": "ID_4ECB_PF_LANGUAGE_SKALD"
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
+      "field": "name",
+      "expect": "Learn Chondathan",
+      "value": "Learn a regional language"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_CHONDATHAN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_34",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_CALDA|ID_4ECB_PF_LANGUAGE_ERUTAKI|ID_4ECB_PF_LANGUAGE_HALLIT|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_IBLYDOSI|ID_4ECB_PF_LANGUAGE_IOBARIAN|ID_4ECB_PF_LANGUAGE_KELISH|ID_4ECB_PF_LANGUAGE_KIBWANI|ID_4ECB_PF_LANGUAGE_LIRGENI|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_MWANGI|ID_4ECB_PF_LANGUAGE_MZUNU|ID_4ECB_PF_LANGUAGE_OCOTAN|ID_4ECB_PF_LANGUAGE_OSIRIANI|ID_4ECB_PF_LANGUAGE_RAZATLANI|ID_4ECB_PF_LANGUAGE_SHOANTI|ID_4ECB_PF_LANGUAGE_SKALD|ID_4ECB_PF_LANGUAGE_TALTIEN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_VARISIAN|ID_4ECB_PF_LANGUAGE_VARKI|ID_4ECB_PF_LANGUAGE_VUDRANI|ID_4ECB_PF_LANGUAGE_XANMBA"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
+      "field": "name",
+      "expect": "Learn Riedran",
+      "value": "Learn a Tian language"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_RIEDRAN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_40",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_TIEN|ID_4ECB_PF_LANGUAGE_HONGALI|ID_4ECB_PF_LANGUAGE_HWAN|ID_4ECB_PF_LANGUAGE_MINATAN|ID_4ECB_PF_LANGUAGE_MINKAIAN|ID_4ECB_PF_LANGUAGE_TANG|ID_4ECB_PF_LANGUAGE_TALTIEN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
+      "field": "name",
+      "expect": "Learn Quori",
+      "value": "Learn a planar language"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_QUORI",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_38",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_FMP_LANGUAGE_8|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN",
+      "field": "name",
+      "expect": "Learn Thri-kreen",
+      "value": "Learn an uncommon language"
+    },
+    {
+      "id": "ID_INTERNAL_BACKGROUND_CHOICE_LEARN_THRI_KREEN",
+      "rule": {
+        "match": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_FMP_LANGUAGE_43",
+            "type": "Language"
+          }
+        },
+        "replaceWith": {
+          "name": "select",
+          "attributes": {
+            "type": "Language",
+            "number": "1",
+            "Category": "ID_4ECB_PF_LANGUAGE_AKLO|ID_FMP_LANGUAGE_7|ID_4ECB_PF_LANGUAGE_INFERNAL|ID_FMP_LANGUAGE_8|ID_4ECB_PF_LANGUAGE_GNOLL|ID_4ECB_PF_LANGUAGE_NECRIL|ID_4ECB_PF_LANGUAGE_TERRAN|ID_4ECB_PF_LANGUAGE_IGNAN|ID_4ECB_PF_LANGUAGE_AURAN|ID_4ECB_PF_LANGUAGE_AQUAN|ID_4ECB_PF_LANGUAGE_SHADOWTONGUE|ID_4ECB_PF_LANGUAGE_MUAN|ID_4ECB_PF_LANGUAGE_TALICAN|ID_4ECB_PF_LANGUAGE_DAEMONIC|ID_4ECB_PF_LANGUAGE_PROTEAN|ID_4ECB_PF_LANGUAGE_UTOPIAN|ID_4ECB_PF_LANGUAGE_REQUIAN|ID_4ECB_PF_LANGUAGE_FIRST_SPEECH|ID_4ECB_PF_LANGUAGE_CALIGNI|ID_4ECB_PF_LANGUAGE_CANTO|ID_4ECB_PF_LANGUAGE_ORVIAN|ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_CLASS_FEATURE_3884",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALDA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ERUTAKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALLIT",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HONGALI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HWAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IBLYDOSI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IOBARIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KELISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KIBWANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_LIRGENI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINATAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINKAIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MWANGI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MZUNU",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OCOTAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_RAZATLANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHOANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SKALD",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TALTIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARISIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VUDRANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_XANMBA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DAEMONIC",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_PROTEAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_UTOPIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_REQUIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_FIRST_SPEECH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALIGNI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CANTO",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ORVIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AZLANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_JISTKA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHORY",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TEKRITANIN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SENZAR",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_TALICAN",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_FMP_MAGIC_ITEM_3486",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALDA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ERUTAKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALLIT",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HONGALI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HWAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IBLYDOSI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IOBARIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KELISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KIBWANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_LIRGENI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINATAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINKAIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MWANGI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MZUNU",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OCOTAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_RAZATLANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHOANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SKALD",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TALTIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARISIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VUDRANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_XANMBA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DAEMONIC",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_PROTEAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_UTOPIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_REQUIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_FIRST_SPEECH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALIGNI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CANTO",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ORVIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AZLANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_JISTKA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHORY",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TEKRITANIN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SENZAR",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_TALICAN",
+            "type": "Language"
+          }
+        }
+      }
+    },
+    {
+      "id": "ID_TIV_MAGIC_ITEM_MME_HEAD_6-1",
+      "rule": {
+        "add": [
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALDA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ERUTAKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HALLIT",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HONGALI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_HWAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IBLYDOSI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_IOBARIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KELISH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_KIBWANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_LIRGENI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINATAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MINKAIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MWANGI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_MZUNU",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OCOTAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_RAZATLANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHOANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SKALD",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TALTIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TIEN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARISIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VARKI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_VUDRANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_XANMBA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DAEMONIC",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_PROTEAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_UTOPIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_REQUIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_FIRST_SPEECH",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CALIGNI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_CANTO",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ORVIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_DARKLANDS_SLANG",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_THASSILONIAN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_AZLANTI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_ANCIENT_OSIRIANI",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_JISTKA",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SHORY",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_TEKRITANIN",
+              "type": "Language"
+            }
+          },
+          {
+            "name": "grant",
+            "attributes": {
+              "name": "ID_4ECB_PF_LANGUAGE_SENZAR",
+              "type": "Language"
+            }
+          }
+        ],
+        "after": {
+          "name": "grant",
+          "attributes": {
+            "name": "ID_4ECB_PF_LANGUAGE_TALICAN",
+            "type": "Language"
+          }
         }
       }
     }

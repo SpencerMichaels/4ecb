@@ -210,6 +210,9 @@ const PLACEMENTS: Readonly<
     fields.at("Skills", "body", "Skill Bonuses"),
   ],
   class: classPlacements,
+  // A campaign language's authored group, one word ("Regional"), as a
+  // deity's Pantheon is its subheader (the table bands by both).
+  language: (fields) => [fields.at("Group", 1, "Language Group")],
   // A skill's key ability, one word.
   skill: (fields) => [fields.at("Ability", 1, "Key Ability")],
   "hybrid class": classPlacements,

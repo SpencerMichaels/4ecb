@@ -1101,44 +1101,129 @@ export function candidateTableTypeGroup(
   return tableTypeGroup("General");
 }
 
-/** The Deity table's band for deities without an authored Pantheon. */
-export const DEITY_PANTHEON_FALLBACK = "Other";
+/**
+ * A table whose rows band by an authored specific of their records (D042
+ * amendment; languages, D116 amendment 2026-11-07): the deity's Pantheon,
+ * the language's Language Group. One mechanism for every such table.
+ */
+export interface AuthoredTableBands {
+  /** The banded records' type, lowercase. */
+  readonly type: string;
+  /** The authored specific naming a record's band. */
+  readonly specific: string;
+  /** The band key prefix ("pantheon:core"). */
+  readonly keyPrefix: string;
+  /** The final band of records without the specific. */
+  readonly fallback: string;
+  /** Whether the table bands when no candidate has the specific (stock
+   *  languages have none, so their table stays one unbanded list). */
+  readonly withoutAuthoredValues: boolean;
+}
 
-interface DeityBandPositions {
-  /** Each authored Pantheon's band, by its earliest record, in order. */
+/** The Deity table's bands, by authored Pantheon; always banded. */
+export const DEITY_TABLE_BANDS: AuthoredTableBands = {
+  type: "deity",
+  specific: "Pantheon",
+  keyPrefix: "pantheon",
+  fallback: "Other",
+  withoutAuthoredValues: true,
+};
+
+/** A language table's bands, by authored Language Group (a campaign's
+ *  Common, Regional, Uncommon, Ancient); only when a language has one. */
+export const LANGUAGE_TABLE_BANDS: AuthoredTableBands = {
+  type: "language",
+  specific: "Language Group",
+  keyPrefix: "language-group",
+  fallback: "Other",
+  withoutAuthoredValues: false,
+};
+
+/** The Deity table's band for deities without an authored Pantheon. */
+export const DEITY_PANTHEON_FALLBACK = DEITY_TABLE_BANDS.fallback;
+
+const AUTHORED_TABLE_BANDS: readonly AuthoredTableBands[] = [
+  DEITY_TABLE_BANDS,
+  LANGUAGE_TABLE_BANDS,
+];
+
+/**
+ * The authored bands a candidate table uses, if any: the Deity table's
+ * always; an option table's when its candidates are records of a banded
+ * type and one of them has the authored specific (a campaign's languages),
+ * so content without it (stock languages) keeps one unbanded list.
+ */
+export function candidateTableBands(
+  kind: ChoiceSelectionTableKind,
+  candidates: readonly CandidateDecision[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): AuthoredTableBands | undefined {
+  if (kind === "deity") return DEITY_TABLE_BANDS;
+  if (kind !== "option") return undefined;
+  for (const { definitionId } of candidates) {
+    const entity = byId.get(definitionId.toLocaleLowerCase());
+    if (entity === undefined) continue;
+    const type = entity.type.trim().toLocaleLowerCase();
+    const bands = AUTHORED_TABLE_BANDS.find((spec) => spec.type === type);
+    if (
+      bands !== undefined &&
+      (bands.withoutAuthoredValues ||
+        contentSpecificValue(entity, bands.specific) !== undefined)
+    )
+      return bands;
+  }
+  return undefined;
+}
+
+interface AuthoredBandPositions {
+  /** Each authored value's band, by its earliest record, in order. */
   readonly keys: readonly string[];
   /** Band orders by the bands offered, keyed by their sorted band keys. */
   readonly orders: Map<string, ReadonlyMap<string, number>>;
 }
 
-const deityBandPositions = new WeakMap<
+const authoredBandPositions = new WeakMap<
   ReadonlyMap<string, ContentEntity>,
-  DeityBandPositions
+  Map<AuthoredTableBands, AuthoredBandPositions>
 >();
 
-function pantheonKey(pantheon: string): string {
-  return `pantheon:${pantheon.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
+function authoredBandValue(
+  entity: ContentEntity | undefined,
+  bands: AuthoredTableBands,
+): string | undefined {
+  return entity === undefined
+    ? undefined
+    : contentSpecificValue(entity, bands.specific);
 }
 
-function deityBandKey(entity: ContentEntity | undefined): string {
-  const pantheon =
-    entity === undefined ? undefined : contentSpecificValue(entity, "Pantheon");
-  return pantheonKey(pantheon ?? DEITY_PANTHEON_FALLBACK);
+function authoredBandKey(
+  entity: ContentEntity | undefined,
+  bands: AuthoredTableBands,
+): string {
+  const value = authoredBandValue(entity, bands) ?? bands.fallback;
+  return `${bands.keyPrefix}:${value.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
 }
 
 /**
- * Each authored deity Pantheon's band position: its records' earliest place
- * in the content as authored (stock content lists its Player's Handbook
- * deities first, so Core leads). Composition sorts records by ID, so the
- * place is each record's provenance: within one source its `sourceOrdinal`;
- * across sources (e.g. a personal pack beside the server's) the larger
- * source first, then by source key, since the composed pack names no layer
- * per record. Computed once per content, by its immutable entity map.
+ * Each authored value's band position: its records' earliest place in the
+ * content as authored (stock content lists its Player's Handbook deities
+ * first, so Core leads; a campaign lists its language groups in order).
+ * Composition sorts records by ID, so the place is each record's
+ * provenance: within one source its `sourceOrdinal`; across sources (e.g. a
+ * personal pack beside the server's) the larger source first, then by
+ * source key, since the composed pack names no layer per record. Computed
+ * once per content and band kind, by its immutable entity map.
  */
-function deityBandPositionsFor(
+function authoredBandPositionsFor(
   byId: ReadonlyMap<string, ContentEntity>,
-): DeityBandPositions {
-  const cached = deityBandPositions.get(byId);
+  bands: AuthoredTableBands,
+): AuthoredBandPositions {
+  let byBands = authoredBandPositions.get(byId);
+  if (byBands === undefined) {
+    byBands = new Map();
+    authoredBandPositions.set(byId, byBands);
+  }
+  const cached = byBands.get(bands);
   if (cached !== undefined) return cached;
   const sourceSizes = new Map<string, number>();
   for (const { provenance } of byId.values())
@@ -1158,51 +1243,53 @@ function deityBandPositionsFor(
   };
   const earliest = new Map<string, ContentProvenance>();
   for (const entity of byId.values()) {
-    if (entity.type.trim().toLocaleLowerCase() !== "deity") continue;
-    if (contentSpecificValue(entity, "Pantheon") === undefined) continue;
-    const key = deityBandKey(entity);
+    if (entity.type.trim().toLocaleLowerCase() !== bands.type) continue;
+    if (authoredBandValue(entity, bands) === undefined) continue;
+    const key = authoredBandKey(entity, bands);
     const previous = earliest.get(key);
     if (previous === undefined || before(entity.provenance, previous) < 0)
       earliest.set(key, entity.provenance);
   }
-  const positions: DeityBandPositions = {
+  const positions: AuthoredBandPositions = {
     keys: [...earliest]
       .sort(([, left], [, right]) => before(left, right))
       .map(([key]) => key),
     orders: new Map(),
   };
-  deityBandPositions.set(byId, positions);
+  byBands.set(bands, positions);
   return positions;
 }
 
 /**
- * The deity bands with a deity the character may pick: those whose
- * candidates are not all campaign-restricted (D116; restricted ones are
- * listed only under Show all). Pass it to `deityTableGroup`.
+ * The bands with a record the character may pick: those whose candidates
+ * are not all campaign-restricted (D116; restricted ones are listed only
+ * under Show all). Pass it to `authoredTableGroup`.
  */
-export function deityOfferedBands(
+export function authoredOfferedBands(
   candidates: readonly CandidateDecision[],
   byId: ReadonlyMap<string, ContentEntity>,
+  bands: AuthoredTableBands,
 ): ReadonlySet<string> {
   return new Set(
     candidates
       .filter(({ reasons }) => !reasons.includes("campaign-restricted"))
       .map(({ definitionId }) =>
-        deityBandKey(byId.get(definitionId.toLocaleLowerCase())),
+        authoredBandKey(byId.get(definitionId.toLocaleLowerCase()), bands),
       ),
   );
 }
 
-function deityBandOrder(
+function authoredBandOrder(
   byId: ReadonlyMap<string, ContentEntity>,
+  bands: AuthoredTableBands,
   offered: ReadonlySet<string> | undefined,
 ): ReadonlyMap<string, number> {
-  const positions = deityBandPositionsFor(byId);
+  const positions = authoredBandPositionsFor(byId, bands);
   const offeredKey =
     offered === undefined ? "*" : [...offered].sort().join("\n");
   const cached = positions.orders.get(offeredKey);
   if (cached !== undefined) return cached;
-  // Bands with a pickable deity come first (a campaign's, over the stock
+  // Bands with a pickable record come first (a campaign's, over the stock
   // bands it restricts), each part in content order.
   const isOffered = (key: string) => offered === undefined || offered.has(key);
   const order = new Map(
@@ -1216,25 +1303,42 @@ function deityBandOrder(
 }
 
 /**
- * The Deity table's band (D042 amendment): the deity's authored Pantheon
- * (a setting for stock deities, a source table for a campaign's), offered
- * bands (`deityOfferedBands`) before campaign-restricted ones, each in
- * content order; deities without one share a final "Other" band.
+ * A banded table's band: the record's authored value (a deity's Pantheon:
+ * a setting for stock deities, a source table for a campaign's; a
+ * campaign language's Language Group), offered bands
+ * (`authoredOfferedBands`) before campaign-restricted ones, each in content
+ * order; records without one share a final "Other" band.
  */
+export function authoredTableGroup(
+  entity: ContentEntity | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+  bands: AuthoredTableBands,
+  offered?: ReadonlySet<string>,
+): CandidateTableTypeGroup {
+  const key = authoredBandKey(entity, bands);
+  const order = authoredBandOrder(byId, bands, offered).get(key);
+  return {
+    key,
+    label: authoredBandValue(entity, bands) ?? bands.fallback,
+    order: order ?? Number.MAX_SAFE_INTEGER,
+  };
+}
+
+/** The Deity table's bands offered (`authoredOfferedBands`). */
+export function deityOfferedBands(
+  candidates: readonly CandidateDecision[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlySet<string> {
+  return authoredOfferedBands(candidates, byId, DEITY_TABLE_BANDS);
+}
+
+/** The Deity table's band, by authored Pantheon (`authoredTableGroup`). */
 export function deityTableGroup(
   entity: ContentEntity | undefined,
   byId: ReadonlyMap<string, ContentEntity>,
   offered?: ReadonlySet<string>,
 ): CandidateTableTypeGroup {
-  const pantheon =
-    entity === undefined ? undefined : contentSpecificValue(entity, "Pantheon");
-  const key = deityBandKey(entity);
-  const order = deityBandOrder(byId, offered).get(key);
-  return {
-    key,
-    label: pantheon ?? DEITY_PANTHEON_FALLBACK,
-    order: order ?? Number.MAX_SAFE_INTEGER,
-  };
+  return authoredTableGroup(entity, byId, DEITY_TABLE_BANDS, offered);
 }
 
 export function buildPresetSuggestionNames(

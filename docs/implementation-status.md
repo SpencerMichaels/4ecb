@@ -1,5 +1,80 @@
 # Implementation status
 
+## Pathfinder revision 10: 66 languages, banded language tables (2026-11-07)
+
+D116 and D042 amendments of 2026-11-07, owner decisions.
+`content/campaigns/pathfinder/` revision 10 adds 42 PathfinderWiki
+languages as `ID_4ECB_PF_LANGUAGE_*` records (source Pathfinder,
+`Language Count +1`, original one-sentence descriptions), 66 in all:
+
+- **Common** (11, Starting): Common, Draconic, Dwarven, Elven, Sylvan,
+  Gnomish, Goblin, Halfling, Jotun, Orcish, Undercommon.
+- **Regional** (26, new, Starting): Calda, Erutaki, Hallit, Hongali, Hwan,
+  Iblydosi, Iobarian, Kelish, Kibwani, Lirgeni, Minatan, Minkaian, Mwangi,
+  Mzunu, Ocotan, Osiriani, Razatlani, Shoanti, Skald, Taltien, Tang, Tien,
+  Varisian, Varki, Vudrani, Xanmba.
+- **Uncommon** (22): the core 13 (Aklo, Abyssal, Infernal, Celestial,
+  Gnoll, Necril, Terran, Ignan, Auran, Aquan, Shadowtongue, Muan, Talican)
+  and, new, Daemonic, Protean, Utopian, Requian, First Speech, Caligni,
+  Canto, Orvian, Darklands Slang.
+- **Ancient** (7, new): Thassilonian, Azlanti, Ancient Osiriani, Jistka,
+  Shory, Tekritanin, Senzar.
+
+Every one authors a `Language Group` with its band's name; All, Secret
+Language and The language of the mind stay ungrouped copies. New aliases:
+Hallit "Damaran", Thassilonian "Netherese", Tien "Shou", Osiriani
+"Thayan", Hongali "Tulgan", Ancient Osiriani "Untheric" (no stock record
+names Mulhorandi or Tuigan; Argon, Quori, Riedran, Thri-Kreen and
+Chondathan get none). The 11 "Learn <language>" background choices are no
+longer restricted (`restrict.ids` is gone): Learn Hallit, Thassilonian,
+Tien, Osiriani, Hongali, Ancient Osiriani and Skald (from Damaran,
+Netherese, Shou, Thayan, Tulgan, Untheric, Argon) grant that language,
+their background associations renamed to match; Chondathan, Riedran,
+Quori and Thri-kreen become "Learn a regional language" (26), "Learn a
+Tian language" (Tien, Hongali, Hwan, Minatan, Minkaian, Tang, Taltien),
+"Learn a planar language" (Celestial, Abyssal, Infernal, the five new
+planar ones, Shadowtongue, the six elemental tongues) and "Learn an
+uncommon language" (22). Shifter - Rashemen, Sembia and Luskan grant
+Hallit, Thassilonian and Tien; the six race picks adding an uncommon
+language now read `Starting|<extras>`; Scholar L10, the Ioun Stone of
+Perfect Language and the Helm of Languages add the 42.
+
+Builder (`builder-ui.ts`, `CandidateSelectionTable.tsx`): the deity band
+code is now `AuthoredTableBands` (`DEITY_TABLE_BANDS`,
+`LANGUAGE_TABLE_BANDS`), `candidateTableBands`, `authoredTableGroup` and
+`authoredOfferedBands` (`deityTableGroup`/`deityOfferedBands` wrap them).
+A language option table bands by Language Group only when a candidate has
+one, so stock content is unchanged; bands open, in authored order, offered
+before restricted, ungrouped records in a final "Other". The language
+card's subheader shows "Group" (sheet-model `entityCardFields`).
+
+Verification: `content-tool campaign build --against
+tmp/content/full-local.4ecp`: valid, 0 errors, version 5, digest
+`24d226d8aa769f99ac5f7d4b144347d65b1fc1b4986f84c316f2ab59fea2781c`, 205
+house-rule records (77 Deity, 59 CountsAsDeity, 69 Language), 54 field
+and 115 rule patches all applying, 148 records restricted (135 deities,
+13 languages), 13 prerequisite lines renamed, only the 12 known
+language-replacement warnings (not advertised). Private probe
+(`tmp/pf-languages/probe.rev10.ts`, ignored): 100 pass, 0 fail: Human's
+pick offers exactly the 11 common and 26 regional languages, no uncommon
+or ancient one, banded Common 10 (Common known) and Regional 26 by the
+web code over the composed pack (stock Human: unbanded); the Tiefling,
+Deva, Shadar-kai, Shade, Revenant and Vryloka picks add their extras;
+every Learn choice is offered on an any-language background (Thri-kreen
+on Tablelands - Herder) and grants its language or offers exactly its
+list; "Netherese", "Shou", "Tulgan", "Untheric", "Thayan", "Damaran"
+(and "<name> language") are met by the Pathfinder language and not
+without it; Scholar L10 and both items grant all 66; every campaign
+language has its group, all from the house rules (Common, Regional,
+Uncommon, Ancient by file position); the earlier race, Genasi, Moteborn,
+Holy Speech and Primordial checks still pass. Tests:
+`CandidateSelectionTable.language-bands.test.tsx` (new),
+`CandidateSelectionTable.deity-bands.test.tsx`,
+`entity-card-fields.test.ts`; `scripts/check.sh` with
+`FOURECB_SKIP_PRINT_CHECK=1`: all public checks passed (253 test files,
+2466 tests). Owner visual check pending (Pass 24, "Language table
+bands").
+
 ## Scoped builder requests guarded (2026-11-06)
 
 The empty Build-tab swap step (e0633d5d) slipped past every audit because

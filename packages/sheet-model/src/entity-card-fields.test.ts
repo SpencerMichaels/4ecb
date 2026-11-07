@@ -56,9 +56,23 @@ describe("layoutCardFields", () => {
 
 describe("entityCardFields", () => {
   it("has none for a type without placements", () => {
-    expect(entityCardFields(entity("Language", { Script: "Davek" }))).toBe(
+    expect(entityCardFields(entity("Domain", { Script: "Davek" }))).toBe(
       undefined,
     );
+  });
+
+  it("puts a campaign language's group in its subheader", () => {
+    // Spelled as content/campaigns/pathfinder/house-rules.xml spells it.
+    const fields = entityCardFields(
+      entity("Language", { "Language Group": " Regional ", Script: "Davek" }),
+    );
+    expect(fields?.subheader).toEqual([
+      [{ label: "Group", value: "Regional" }],
+    ]);
+    expect(fields?.body).toEqual([]);
+    expect([...(fields?.placed ?? [])]).toEqual(["language group"]);
+    // A stock language has no group, so no subheader.
+    expect(entityCardFields(entity("Language", {}))?.subheader).toEqual([]);
   });
 
   it("places a feat's fields and accounts for their specifics", () => {

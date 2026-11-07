@@ -943,7 +943,8 @@ Torag" prerequisite explanation and the deity card's "Counts as" line
 followed the same day), legacy `D20CampaignSetting`
 export/import, and a Pathfinder campaign (Inner Sea major and other deities,
 mapped alignments, domains and equivalents; its 24 languages followed the
-same day) as the first real campaign. The
+same day, widened to 66 with banded language tables on 2026-11-07) as the
+first real campaign. The
 form editor stays in M8. The owner's walk-through is the visual-review
 checklist's Campaigns pass.
 
@@ -980,6 +981,13 @@ Follow-ups (not done):
   readable with its alternate names ignored; Pathfinder revision 7 has
   plain 4e race names (`docs/implementation-status.md`, Campaign
   alternate names removed).
+- Done (2026-11-07): Pathfinder revision 10: 42 more PathfinderWiki
+  languages (26 regional, 7 ancient, 9 planar and Darklands), every
+  campaign language in a Language Group that bands the language tables
+  (the deity band mechanism generalized), stock-language aliases
+  (Netherese: Thassilonian and five more) and none of the 11 "Learn
+  <language>" choices restricted (`docs/implementation-status.md`,
+  Pathfinder revision 10).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on
