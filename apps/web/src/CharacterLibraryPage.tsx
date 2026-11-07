@@ -297,9 +297,12 @@ export function CharacterLibraryPage({
       <header className="page-heading library-heading">
         <div className="library-brand">
           <h1 className="app-brand">
-            <span className="app-brand-mark" aria-hidden="true">
-              4E
-            </span>
+            <img
+              className="app-brand-mark"
+              src={`${import.meta.env.BASE_URL}icon.svg`}
+              alt=""
+              aria-hidden="true"
+            />
             <span className="app-brand-name">Character Builder</span>
             <span className="visually-hidden"> — Characters</span>
           </h1>

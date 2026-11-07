@@ -15,3 +15,18 @@ describe("page heading layout", () => {
     expect(appStyles).not.toMatch(/\.page-heading \{[^}]*display: grid;/);
   });
 });
+
+describe("library brand mark", () => {
+  it("uses the app icon, not a text mark", async () => {
+    const { readFileSync } = await import("node:fs");
+    const library = readFileSync(
+      new URL("./CharacterLibraryPage.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(library).toMatch(
+      /<img\s+className="app-brand-mark"\s+src=\{`\$\{import\.meta\.env\.BASE_URL\}icon\.svg`\}/,
+    );
+    expect(library).not.toMatch(/app-brand-mark[^>]*>\s*4E/);
+    expect(appStyles).toMatch(/\.app-brand-mark \{[^}]*inline-size: 2\.25rem;/);
+  });
+});

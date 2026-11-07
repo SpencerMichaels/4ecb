@@ -53,33 +53,14 @@
   margin: 0;
 }
 
-/* The "4E" mark: negative tracking also trims space after the last glyph,
-   so the right padding gets that 0.04em back; capitals-only text sits above
-   the em box's descender space, so where supported the box is trimmed to
-   cap height and baseline and padded evenly. */
+/* The app icon (public/icon.svg, the installed app's icon) as the brand
+   mark, sized to the heading's cap-and-padding height the old "4E" mark
+   had. */
 .app-brand-mark {
-  border: 1px solid currentcolor;
-  border-block-width: 3px;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-variant-numeric: lining-nums; /* EB Garamond's default "4" dips below the line */
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  padding: 0.3rem calc(0.38rem + 0.04em) 0.3rem 0.38rem;
-}
-
-@supports (text-box: trim-both cap alphabetic) {
-  .app-brand-mark {
-    padding-block: 0.42rem;
-    text-box: trim-both cap alphabetic;
-  }
-
-  /* Trimmed the same way, so flex centering lines up the two pieces' capitals
-     rather than the name's descender-padded line box with the trimmed mark. */
-  .app-brand-name {
-    text-box: trim-both cap alphabetic;
-  }
+  block-size: 2.25rem;
+  display: block;
+  flex: none;
+  inline-size: 2.25rem;
 }
 
 /* The library's brand with the running version beside it. */
