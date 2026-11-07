@@ -849,6 +849,22 @@ The deity card shows the Pantheon as an ordinary authored field beside
 Alignment. Only the Deity table is grouped this way; grouping another
 choice table needs the owner's OK.
 
+Amendment (2026-11-06, band order): "first names" means the content's
+authored order, not the composed pack's record order (composition sorts
+records by ID, which put Pathfinder's Dwarven before Elven). A band sits at
+its earliest record's provenance: within one source by `sourceOrdinal`
+(the stock part's records and a campaign's house-rules file each keep
+theirs through the pack build and composition); bands with a pickable
+deity come before bands whose deities are all campaign-restricted (shown
+only under Show all), so a campaign's bands lead; between offered bands
+from different sources (a personal pack beside the server's) the larger
+source comes first, then by source key, since the composed pack names no
+layer per record. Pathfinder: Inner Sea major deities, Other deities,
+Elven, Dwarven, Eldest, Archdevils; stock: Core, Forgotten Realms, Eberron,
+Dragon Magazine; "Other" stays last. The positions are cached per entity
+map and the order per set of offered bands (`deityTableGroup`,
+`deityOfferedBands`).
+
 Amendment (2026-11-06, owner: "it should list the domains for each deity,
 if there is space"; "searching deities by name should also search their
 'counts as' entries … The same should be true for races and languages"):

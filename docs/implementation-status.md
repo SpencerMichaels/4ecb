@@ -63,13 +63,13 @@ the 77 deities, in bands Inner Sea major deities 19, Other deities 28,
 Elven 3, Dwarven 10, Eldest 9, Archdevils 8; each grants its domains and
 counts-as records and each counts-as name meets its worship clause;
 Barbatos's card reads "Counts as: Bel", Moloch's "Bane, Glasya".
-Known issue: band order. Records keep the intended order (Inner Sea
-major, Other, Elven, Dwarven, Eldest, Archdevils by first record), but the
-composed profile is sorted by entity ID (content-pack `index.ts`), so
-`deityTableGroup`'s first-mention order currently shows Inner Sea, Other,
-Dwarven, Archdevils, Eldest, Elven (revision 8 already showed Dwarven
-before Elven). A builder fix to order bands by source record position is
-queued separately. Owner visual check pending.
+Band order (fixed): the composed profile is sorted by entity ID
+(content-pack `index.ts`), so `deityTableGroup`'s old first-mention order
+showed Inner Sea, Other, Dwarven, Archdevils, Eldest, Elven; bands now
+follow each record's source position (D042 band-order amendment, "Order
+the Deity table's bands by authored position"), and revision 9 composed
+over the full pack shows Inner Sea major deities, Other deities, Elven,
+Dwarven, Eldest, Archdevils. Owner visual check pending.
 
 ## Campaign descriptions; Pathfinder revision 8 (2026-11-06)
 
@@ -980,9 +980,18 @@ type-section bands (`selection-type-row table-section-row`, the
 Inventory's and Shop's band). Deity bands all start open; a band with no
 visible row under the filter is not drawn; under a campaign the restricted
 stock deities appear in their bands only under Show all. Band order is the
-content's first mention of each pantheon, cached per entity map
-(`deityTableGroup`, `builder-ui.ts`); deities without one share a final
-"Other" band. The deity card shows "Pantheon" as an ordinary authored
+content's authored order (D042 band-order amendment): each band at its
+earliest record's provenance `sourceOrdinal`, bands with a pickable deity
+before all-campaign-restricted ones, then larger source first between
+sources; positions cached per entity map, the order per offered-band set
+(`deityTableGroup`, `deityOfferedBands`, `builder-ui.ts`); deities
+without one share a final "Other" band. Composition's ID sort had put
+Pathfinder r9 in Inner Sea, Other, Dwarven, Archdevils, Eldest, Elven
+order; it now reads Inner Sea major deities 19, Other deities 28, Elven 3,
+Dwarven 10, Eldest 9, Archdevils 8, then under Show all the restricted
+Core 20, Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (r9 composed
+over the full pack; the full pack alone: Core, Forgotten Realms, Eberron,
+Dragon Magazine). The deity card shows "Pantheon" as an ordinary authored
 field, after Alignment. Stock content: `content/corrections/9I-deity-pantheons.part`
 (generated from the pack) gives all 135 stock deities a Pantheon: Core 20,
 Forgotten Realms 85, Eberron 24, Dragon Magazine 6 (none missing on the

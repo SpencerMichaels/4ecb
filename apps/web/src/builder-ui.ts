@@ -5,7 +5,11 @@ import {
   type CharacterRecord,
   type BuildOccurrence,
 } from "@4ecb/character-domain";
-import { contentEntitiesById, type ContentEntity } from "@4ecb/content-domain";
+import {
+  contentEntitiesById,
+  type ContentEntity,
+  type ContentProvenance,
+} from "@4ecb/content-domain";
 import {
   classifyPowerEntity,
   deityDomainsText,
@@ -1094,50 +1098,132 @@ export function candidateTableTypeGroup(
 /** The Deity table's band for deities without an authored Pantheon. */
 export const DEITY_PANTHEON_FALLBACK = "Other";
 
-const deityPantheonOrders = new WeakMap<
+interface DeityBandPositions {
+  /** Each authored Pantheon's band, by its earliest record, in order. */
+  readonly keys: readonly string[];
+  /** Band orders by the bands offered, keyed by their sorted band keys. */
+  readonly orders: Map<string, ReadonlyMap<string, number>>;
+}
+
+const deityBandPositions = new WeakMap<
   ReadonlyMap<string, ContentEntity>,
-  ReadonlyMap<string, number>
+  DeityBandPositions
 >();
 
 function pantheonKey(pantheon: string): string {
   return `pantheon:${pantheon.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
 }
 
+function deityBandKey(entity: ContentEntity | undefined): string {
+  const pantheon =
+    entity === undefined ? undefined : contentSpecificValue(entity, "Pantheon");
+  return pantheonKey(pantheon ?? DEITY_PANTHEON_FALLBACK);
+}
+
 /**
- * Each authored deity Pantheon's band position: where the content first
- * names it (stock content lists its Player's Handbook deities first, so
- * Core leads). Computed once per content, by its immutable entity map.
+ * Each authored deity Pantheon's band position: its records' earliest place
+ * in the content as authored (stock content lists its Player's Handbook
+ * deities first, so Core leads). Composition sorts records by ID, so the
+ * place is each record's provenance: within one source its `sourceOrdinal`;
+ * across sources (e.g. a personal pack beside the server's) the larger
+ * source first, then by source key, since the composed pack names no layer
+ * per record. Computed once per content, by its immutable entity map.
  */
-function deityPantheonOrder(
+function deityBandPositionsFor(
   byId: ReadonlyMap<string, ContentEntity>,
-): ReadonlyMap<string, number> {
-  const cached = deityPantheonOrders.get(byId);
+): DeityBandPositions {
+  const cached = deityBandPositions.get(byId);
   if (cached !== undefined) return cached;
-  const order = new Map<string, number>();
+  const sourceSizes = new Map<string, number>();
+  for (const { provenance } of byId.values())
+    sourceSizes.set(
+      provenance.sourceKey,
+      (sourceSizes.get(provenance.sourceKey) ?? 0) + 1,
+    );
+  const before = (left: ContentProvenance, right: ContentProvenance) => {
+    if (left.sourceKey === right.sourceKey)
+      return left.sourceOrdinal - right.sourceOrdinal;
+    const bySize =
+      (sourceSizes.get(right.sourceKey) ?? 0) -
+      (sourceSizes.get(left.sourceKey) ?? 0);
+    return bySize !== 0
+      ? bySize
+      : left.sourceKey.localeCompare(right.sourceKey);
+  };
+  const earliest = new Map<string, ContentProvenance>();
   for (const entity of byId.values()) {
     if (entity.type.trim().toLocaleLowerCase() !== "deity") continue;
-    const pantheon = contentSpecificValue(entity, "Pantheon");
-    if (pantheon === undefined) continue;
-    const key = pantheonKey(pantheon);
-    if (!order.has(key)) order.set(key, order.size);
+    if (contentSpecificValue(entity, "Pantheon") === undefined) continue;
+    const key = deityBandKey(entity);
+    const previous = earliest.get(key);
+    if (previous === undefined || before(entity.provenance, previous) < 0)
+      earliest.set(key, entity.provenance);
   }
-  deityPantheonOrders.set(byId, order);
+  const positions: DeityBandPositions = {
+    keys: [...earliest]
+      .sort(([, left], [, right]) => before(left, right))
+      .map(([key]) => key),
+    orders: new Map(),
+  };
+  deityBandPositions.set(byId, positions);
+  return positions;
+}
+
+/**
+ * The deity bands with a deity the character may pick: those whose
+ * candidates are not all campaign-restricted (D116; restricted ones are
+ * listed only under Show all). Pass it to `deityTableGroup`.
+ */
+export function deityOfferedBands(
+  candidates: readonly CandidateDecision[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlySet<string> {
+  return new Set(
+    candidates
+      .filter(({ reasons }) => !reasons.includes("campaign-restricted"))
+      .map(({ definitionId }) =>
+        deityBandKey(byId.get(definitionId.toLocaleLowerCase())),
+      ),
+  );
+}
+
+function deityBandOrder(
+  byId: ReadonlyMap<string, ContentEntity>,
+  offered: ReadonlySet<string> | undefined,
+): ReadonlyMap<string, number> {
+  const positions = deityBandPositionsFor(byId);
+  const offeredKey =
+    offered === undefined ? "*" : [...offered].sort().join("\n");
+  const cached = positions.orders.get(offeredKey);
+  if (cached !== undefined) return cached;
+  // Bands with a pickable deity come first (a campaign's, over the stock
+  // bands it restricts), each part in content order.
+  const isOffered = (key: string) => offered === undefined || offered.has(key);
+  const order = new Map(
+    [
+      ...positions.keys.filter(isOffered),
+      ...positions.keys.filter((key) => !isOffered(key)),
+    ].map((key, index) => [key, index] as const),
+  );
+  positions.orders.set(offeredKey, order);
   return order;
 }
 
 /**
  * The Deity table's band (D042 amendment): the deity's authored Pantheon
- * (a setting for stock deities, a source table for a campaign's), in
+ * (a setting for stock deities, a source table for a campaign's), offered
+ * bands (`deityOfferedBands`) before campaign-restricted ones, each in
  * content order; deities without one share a final "Other" band.
  */
 export function deityTableGroup(
   entity: ContentEntity | undefined,
   byId: ReadonlyMap<string, ContentEntity>,
+  offered?: ReadonlySet<string>,
 ): CandidateTableTypeGroup {
   const pantheon =
     entity === undefined ? undefined : contentSpecificValue(entity, "Pantheon");
-  const key = pantheonKey(pantheon ?? DEITY_PANTHEON_FALLBACK);
-  const order = deityPantheonOrder(byId).get(key);
+  const key = deityBandKey(entity);
+  const order = deityBandOrder(byId, offered).get(key);
   return {
     key,
     label: pantheon ?? DEITY_PANTHEON_FALLBACK,

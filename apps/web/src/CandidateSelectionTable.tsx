@@ -26,6 +26,7 @@ import {
   contentSpecificValue,
   deityTableDescription,
   deityTableDomains,
+  deityOfferedBands,
   deityTableGroup,
   type groupParameterizedCandidates,
   isCandidateSelectable,
@@ -460,6 +461,10 @@ export function CandidateSelectionTable({
     }
     return profiles;
   }, [byId, candidates, evaluation, kind]);
+  const offeredDeityBands = useMemo(
+    () => (kind === "deity" ? deityOfferedBands(candidates, byId) : undefined),
+    [byId, candidates, kind],
+  );
   const facetValuesFor = (
     facet: CandidateFacet,
     candidate: CandidateDecision,
@@ -497,7 +502,8 @@ export function CandidateSelectionTable({
     });
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
-    if (kind === "deity") return deityTableGroup(entity, byId);
+    if (kind === "deity")
+      return deityTableGroup(entity, byId, offeredDeityBands);
     return entity === undefined || (kind !== "feat" && kind !== "power")
       ? { key: "other", label: "Other", order: 900 }
       : cachedTypeGroup(entity, kind, byId);

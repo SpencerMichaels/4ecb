@@ -8,6 +8,7 @@ import type { CandidateDecision } from "@4ecb/rules-engine";
 
 import {
   DEITY_PANTHEON_FALLBACK,
+  deityOfferedBands,
   deityTableGroup,
   isCandidateVisible,
 } from "./builder-ui";
@@ -21,6 +22,7 @@ function deity(
   index: number,
   name: string,
   pantheon: string | undefined,
+  provenance = { sourceKey: "test", sourceOrdinal: index },
 ): ContentEntity {
   return {
     id: `ID_TEST_DEITY_${index}`,
@@ -46,8 +48,16 @@ function deity(
     rules: [],
     description: `${name} is a deity.`,
     extensions: [],
-    provenance: { sourceKey: "test", sourceOrdinal: index },
+    provenance,
   };
+}
+
+function entityMap(
+  records: readonly ContentEntity[],
+): Map<string, ContentEntity> {
+  return new Map(
+    records.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
 }
 
 // Content order: Core first, then Eberron, then Inner Sea; one homebrew
@@ -102,12 +112,89 @@ describe("deityTableGroup", () => {
     expect(deityTableGroup(undefined, byId).key).toBe(groups[3]!.key);
   });
 
-  it("takes the band order from each content's own entity map", () => {
-    const reversed = new Map([...byId].reverse());
-    const order = (map: ReadonlyMap<string, ContentEntity>, index: number) =>
-      deityTableGroup(entities[index]!, map).order;
-    expect(order(byId, 0)).toBeLessThan(order(byId, 4));
-    expect(order(reversed, 4)).toBeLessThan(order(reversed, 0));
+  it("orders bands by source position, not by record ID", () => {
+    // Composition sorts records by ID; the IDs here run against the
+    // authored order (ID_TEST_DEITY_1 is authored last).
+    const records = [
+      deity(1, "Zon-Kuthon", "Archdevils", {
+        sourceKey: "rules.xml",
+        sourceOrdinal: 30,
+      }),
+      deity(2, "Torag", "Dwarven", {
+        sourceKey: "rules.xml",
+        sourceOrdinal: 20,
+      }),
+      deity(3, "Calistria", "Elven", {
+        sourceKey: "rules.xml",
+        sourceOrdinal: 10,
+      }),
+      deity(4, "Abadar", "Inner Sea major deities", {
+        sourceKey: "rules.xml",
+        sourceOrdinal: 0,
+      }),
+      deity(5, "Erastil", "Inner Sea major deities", {
+        sourceKey: "rules.xml",
+        sourceOrdinal: 1,
+      }),
+    ];
+    const map = entityMap(records);
+    const order = (index: number) => deityTableGroup(records[index], map).order;
+    expect([3, 2, 1, 0].map(order)).toEqual([0, 1, 2, 3]);
+    expect(order(4)).toBe(order(3));
+  });
+
+  it("puts the base content's bands before a smaller overlay's", () => {
+    const base = Array.from({ length: 4 }, (_, index) =>
+      deity(10 + index, `Stock ${index}`, index < 2 ? "Core" : "Eberron", {
+        sourceKey: "base",
+        sourceOrdinal: 500 + index,
+      }),
+    );
+    const overlay = deity(1, "Abadar", "Inner Sea major deities", {
+      sourceKey: "house-rules.xml",
+      sourceOrdinal: 0,
+    });
+    const map = entityMap([overlay, ...base]);
+    const label = (entity: ContentEntity) => deityTableGroup(entity, map);
+    expect(
+      [overlay, base[0]!, base[2]!]
+        .map(label)
+        .sort((left, right) => left.order - right.order)
+        .map(({ label }) => label),
+    ).toEqual(["Core", "Eberron", "Inner Sea major deities"]);
+    expect(deityTableGroup(undefined, map).order).toBeGreaterThan(
+      label(overlay).order,
+    );
+  });
+
+  it("puts bands with a pickable deity before campaign-restricted ones", () => {
+    const decisions = entities.map((entity) =>
+      candidate(entity, !/^Inner Sea/.test(entity.specifics[1]?.value ?? "")),
+    );
+    const offered = deityOfferedBands(decisions, byId);
+    const order = (index: number) =>
+      deityTableGroup(entities[index], byId, offered).order;
+    // Inner Sea (offered) leads; Core and Eberron keep their order after it.
+    expect(order(4)).toBeLessThan(order(0));
+    expect(order(0)).toBeLessThan(order(2));
+    expect(order(3)).toBeGreaterThan(order(2));
+  });
+
+  it("computes the band positions once per content", () => {
+    let scans = 0;
+    class CountingMap extends Map<string, ContentEntity> {
+      override values() {
+        scans += 1;
+        return super.values();
+      }
+    }
+    const map = new CountingMap(byId);
+    for (let round = 0; round < 3; round += 1)
+      for (const entity of entities) deityTableGroup(entity, map);
+    const first = scans;
+    for (const entity of entities) deityTableGroup(entity, map, new Set());
+    expect(first).toBeGreaterThan(0);
+    expect(scans).toBe(first);
   });
 
   it("shows the Pantheon on the deity card as an authored field", () => {
@@ -244,9 +331,9 @@ describe("Deity table bands", () => {
     ]);
     render(decisions.filter((item) => isCandidateVisible(item, true)));
     expect(bands().map(({ label }) => label)).toEqual([
+      "Inner Sea major deities",
       "Core",
       "Eberron",
-      "Inner Sea major deities",
       "Other",
     ]);
   });
