@@ -135,7 +135,9 @@ scripts/deploy.sh    # --skip-checks, --no-wait
 ```
 
 Content updates are separate from code releases (private data, homenet's deploy
-key, Admin VLAN only): rebuild the corrections pack and push it to the homelab:
+key, Admin VLAN only): rebuild the corrections pack, build every campaign in
+`content/campaigns/`, and push them to the homelab. Run it after every campaign
+revision too, or the server keeps the old one:
 
 ```sh
 scripts/publish-content.sh    # --no-push, --rebuild

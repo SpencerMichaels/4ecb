@@ -279,7 +279,10 @@ For the product owner's homelab, `scripts/publish-content.sh` does the whole
 content update in one step, separately from code releases: it rebuilds the pack
 from the supplied legacy data, the CBLoader parts and `content/corrections/`
 under an ID derived from those inputs (`local-wotc-corrected-<hash>`, so the ID
-changes exactly when the content does), advertises it in `deploy/`, and copies
+changes exactly when the content does), builds every
+`content/campaigns/<id>/campaign.json` against it, advertises the pack and the
+campaigns in `deploy/` (a changed campaign whose `revision` was not bumped stops
+the script), and copies
 `deploy/` to the server with the homenet repo's `apps/4ecb/pack.yml` (from the
 Admin VLAN; `HOMENET_DIR` overrides `../homenet`). `--no-push` stops after
 `deploy/`; unchanged inputs skip the rebuild.

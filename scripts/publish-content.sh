@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Publishes the private content pack to the homelab: rebuilds it from the supplied legacy
-# data, the CBLoader parts and content/corrections/, advertises it in the ignored deploy/
+# Publishes the private content pack and every campaign to the homelab: rebuilds the pack
+# from the supplied legacy data, the CBLoader parts and content/corrections/, builds each
+# content/campaigns/<id>/campaign.json against it, advertises them all in the ignored deploy/
 # directory, and copies deploy/ to the server with the homenet repo's playbook. Code releases
 # are separate (scripts/deploy.sh): content is private, ships on its own cadence, and needs
 # homenet's deploy key, which only works from the Admin VLAN.
@@ -23,7 +24,7 @@ for arg in "$@"; do
   case "$arg" in
     --no-push) push=false ;;
     --rebuild) rebuild=true ;;
-    -h | --help) sed -n '2,16p' "$0"; exit 0 ;;
+    -h | --help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "publish-content: unknown option $arg (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -62,6 +63,20 @@ else
   pnpm --silent content-tool advertise "$pack" --out-dir deploy | jq -r '.advertised.url' |
     sed 's/^/  /'
 fi
+
+# Every campaign, every time: a revision already advertised with the same content is a
+# no-op, and a changed campaign whose revision wasn't bumped stops here (advertise-campaign
+# refuses it) rather than staying at its old revision on the server unnoticed.
+mkdir -p tmp/campaigns
+for manifest in content/campaigns/*/campaign.json; do
+  id=$(jq -r .campaignId "$manifest")
+  say "Building campaign $id revision $(jq -r .revision "$manifest") and advertising it"
+  pnpm --silent content-tool campaign build --manifest "$manifest" \
+    --output "tmp/campaigns/$id.4ecc" --against "$pack" >/dev/null ||
+    die "campaign $id failed to build"
+  pnpm --silent content-tool advertise-campaign "tmp/campaigns/$id.4ecc" --out-dir deploy \
+    >/dev/null || die "campaign $id could not be advertised (changed without a revision bump?)"
+done
 
 if ! $push; then
   echo "deploy/ is ready; copy it to the server with homenet's apps/4ecb/pack.yml."
