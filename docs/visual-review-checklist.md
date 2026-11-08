@@ -1453,16 +1453,16 @@ Moradin, or an item a character holds), build and import or advertise it.
       2026-11-07; slot counts per level, inactive extra picks and the
       export round trip are unit-tested and probed, this is how the rows
       read.
-  - **Where:** at 140% zoom: a Pathfinder character at revision 14 with
+  - **Where:** at 140% zoom: a Pathfinder character at revision 15 with
     Intelligence 16 or more at 1st level (a new one, or one moved there by
     the content-update dialog): Build → level 1 (Race section), then a
     level whose ability increase raises the Intelligence modifier (e.g.
     Int 17 → 18 at level 4); the Overview tab; lower Intelligence below
     16 on the ability-score step and look at level 1 again.
-  - **Expect:** level 1 shows one "Bonus Language" choice per point of the
-    modifier (one at Intelligence 13 or lower), each listing the 66
+  - **Expect:** level 1 shows one "Bonus Languages" choice per point of the
+    modifier (none at Intelligence 11 or lower), each listing the 66
     languages in the banded table with the languages the character knows
-    unavailable; the raising level shows one more "Bonus Language" choice;
+    unavailable; the raising level shows one more "Bonus Languages" choice;
     levels where the modifier doesn't rise show none; lowering
     Intelligence removes the extra slot and its pick from the sheet's
     languages, and raising it back restores the pick.

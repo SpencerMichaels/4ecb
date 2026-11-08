@@ -5567,3 +5567,5 @@ on device B takes the code and adds the character to the library. Manual
   description says "(if positive)". A character with a saved 1st-level
   pick and a modifier of 0 or less keeps it, inactive (the over-count
   rule above).
+  The select's name, the Build tab's choice title, is now "Bonus
+  Languages".

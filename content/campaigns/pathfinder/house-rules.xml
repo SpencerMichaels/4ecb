@@ -46,7 +46,7 @@
     effect, or circumstance, never always-on bonuses to attack, damage,
     defenses, hit points, or skills.").
   - Every level, 1 through 30 (revision 14, D121): select
-    name="Bonus Language", type="Language",
+    name="Bonus Languages", type="Language",
     number="GAIN(ABILITYMOD(Intelligence))", Category listing the 66
     languages below (not All, Secret Language or The language of the
     mind): the Intelligence modifier's languages (none if 0 or less;

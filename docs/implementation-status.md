@@ -5,7 +5,8 @@
 Owner change to D121: the Intelligence-modifier bonus languages have a
 minimum of 0, not 1. `content/campaigns/pathfinder/` revision 15: the 30
 rule patches use `GAIN(ABILITYMOD(Intelligence))` (was `MINONEMOD`); the
-description says "(if positive)". Content only; the deployed engine
+description says "(if positive)". The select is renamed "Bonus Languages"
+(the Build tab's choice title). Content only; the deployed engine
 already reads `ABILITYMOD`, and `GAIN` already counts from 0.
 
 Verification: `content-tool campaign build --against
