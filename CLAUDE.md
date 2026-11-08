@@ -328,7 +328,7 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   over `character-share.ts` (gzip'd `.4ecb` package, error kinds). A
   received share and a `.4ecb` file import go through one flow
   (`CharacterLibraryPage.tsx` `importNativePackage`); an ID already in the
-  library asks Replace it / Keep both / Cancel in `CharacterConflictDialog`
+  library asks Replace / Keep both / Cancel in `CharacterConflictDialog`
   (`RestoreBackupDialog.tsx`, also the restore's dialog).
 
 ### Web app routes (`apps/web`)

@@ -27,7 +27,7 @@ minutes; **Receive** on another device takes the code and adds it.
   sharing is off or the browser is offline.
 - Import: `.4ecb` files and received shares share one flow
   (`CharacterLibraryPage.tsx` `importNativePackage`); an ID already in
-  the library (or its trash) asks Replace it / Keep both / Cancel in
+  the library (or its trash) asks Replace / Keep both / Cancel in
   `CharacterConflictDialog` (extracted from `RestoreBackupDialog.tsx`).
   browser-storage: `exportCharacter(id, {prepare})`,
   `importCharacters(value, {replaceExisting})`.

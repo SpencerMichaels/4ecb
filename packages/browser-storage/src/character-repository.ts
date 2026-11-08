@@ -864,7 +864,7 @@ export class CharacterRepository {
   /** Adds the characters in a native package (.4ecb or full backup) to the
    *  library as active records. By default it never overwrites: a character
    *  whose ID is already stored (active or trashed) is added under a fresh
-   *  ID. With `replaceExisting` (the player chose "Replace it") such a
+   *  ID. With `replaceExisting` (the player chose "Replace") such a
    *  character replaces the stored one, leaving the trash if it was there. */
   async importCharacters(
     backup: unknown,

@@ -65,7 +65,7 @@ export function RestoreBackupDialog({
 
 /** The one replace-or-keep-both question for characters already in the
  *  library (restoring a backup, importing a .4ecb file, receiving a shared
- *  character): Cancel, Keep both, Replace it/them. Focus starts on Cancel
+ *  character): Cancel, Keep both, Replace/Replace them. Focus starts on Cancel
  *  and Esc cancels. */
 export function CharacterConflictDialog({
   title,
@@ -77,7 +77,7 @@ export function CharacterConflictDialog({
 }: {
   readonly title: string;
   readonly text: string;
-  /** How many characters would be replaced (picks "Replace it/them"). */
+  /** How many characters would be replaced (picks "Replace/Replace them"). */
   readonly count: number;
   readonly onReplace: () => void;
   readonly onKeepBoth: () => void;
@@ -135,7 +135,7 @@ export function CharacterConflictDialog({
           type="button"
           onClick={() => finish(onReplace)}
         >
-          {count === 1 ? "Replace it" : "Replace them"}
+          {count === 1 ? "Replace" : "Replace them"}
         </button>
       </footer>
     </dialog>

@@ -1620,7 +1620,7 @@ look and feel.
   - **Where:** receive a character the library already has (and once with
     that character in the trash); also import its .4ecb file.
   - **Expect:** "<Name> is already in your library." ("…library's trash.")
-    with Cancel / Keep both / Replace it, focus on Cancel. Replace
+    with Cancel / Keep both / Replace, focus on Cancel. Replace
     overwrites it (out of the trash); Keep both adds a copy.
   - **Wrong if:** the dialog appears while the Receive dialog is still
     open, or a choice does something else.

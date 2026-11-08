@@ -5555,7 +5555,7 @@ on device B takes the code and adds the character to the library. Manual
   gate covers sharing and receiving with no auth of its own.
 - **Receiving reuses native import.** The download goes through the same
   validated path as a `.4ecb` file. When its character's ID is already in
-  the library, a modal asks Replace it / Keep both / Cancel; native
+  the library, a modal asks Replace / Keep both / Cancel; native
   `.4ecb` file import asks the same way (it used to keep both silently).
 - **Always-present controls.** Share and Receive are shown even when the
   server doesn't offer sharing or the browser is offline; the dialog says

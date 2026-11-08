@@ -129,7 +129,7 @@ describe("library .4ecb import", () => {
     expect(storage.importCharacters).toHaveBeenCalledWith(backup);
   });
 
-  it("asks Replace it / Keep both / Cancel for a character already there", async () => {
+  it("asks Replace / Keep both / Cancel for a character already there", async () => {
     storage.inspectBackup.mockResolvedValue(inspection(["lily"]));
     await pick();
     expect(storage.importCharacters).not.toHaveBeenCalled();
@@ -141,10 +141,10 @@ describe("library .4ecb import", () => {
       [...dialog()!.querySelectorAll("footer button")].map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Cancel", "Keep both", "Replace it"]);
+    ).toEqual(["Cancel", "Keep both", "Replace"]);
     expect(document.activeElement?.textContent).toBe("Cancel");
 
-    act(() => button("Replace it").click());
+    act(() => button("Replace").click());
     await settle();
     expect(storage.importCharacters).toHaveBeenCalledWith(backup, {
       replaceExisting: true,

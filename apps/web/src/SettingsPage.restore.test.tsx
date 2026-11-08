@@ -211,7 +211,7 @@ describe("SettingsPage backup restore", () => {
   it("Replace restores over the library", async () => {
     storage.inspectBackup.mockResolvedValue(inspection(["Lily"]));
     await pick(JSON.stringify(backup));
-    await click(button("Replace it"));
+    await click(button("Replace"));
     expect(storage.restoreBackup).toHaveBeenCalledWith(backup);
     expect(storage.restoreBackupKeepingBoth).not.toHaveBeenCalled();
     expect(dialog()).toBeNull();
