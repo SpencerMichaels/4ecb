@@ -86,6 +86,12 @@ The relay is a small independent WebSocket service. It orders and temporarily
 stores opaque encrypted envelopes; it does not own characters, interpret rules,
 or require user accounts. It is absent from MVP deployment and introduced in M7.
 
+Ahead of it, D122's character-share relay (`apps/share-relay`) is a small
+Node service in the web image, behind nginx at `/api/share/`, enabled by
+`features.characterShare`: a store-and-forward handoff that holds one
+gzip'd `.4ecb` package per 6-digit code in memory, in plaintext, until its
+first download or ten minutes.
+
 ## Monorepo organization
 
 ```text

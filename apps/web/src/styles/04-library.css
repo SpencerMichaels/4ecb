@@ -173,7 +173,7 @@
   font-size: 0.8rem;
   gap: 0.2rem 0.5rem;
 }
-/* Five equal buttons, icon over a one-word label, in one row at any width
+/* Six equal buttons, icon over a one-word label, in one row at any width
    (labels ellipsize rather than wrap). The 1px gaps over the rule color
    draw the dividers. */
 .library-detail-actions {
@@ -181,7 +181,7 @@
   border-top: 1px solid var(--library-band-rule);
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .library-detail-actions > .action-menu {
   display: flex;

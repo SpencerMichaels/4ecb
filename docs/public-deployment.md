@@ -93,8 +93,10 @@ proxy and forward ordinary HTTP to port 8080. Preserve the `/healthz` path and d
 not add blanket long-lived caching to HTML, the service worker, manifest, or
 runtime configuration.
 
-The static container has no account database, analytics endpoint, content upload
-endpoint, or relay. Browser character and pack data remain in each user's
+The container has no account database, analytics endpoint, content upload
+endpoint, or session relay; its optional character-share relay (D122, below)
+holds a shared character in memory for at most ten minutes. Browser
+character and pack data remain in each user's
 IndexedDB. Backups are the user's recovery path; container volumes do not back up
 browser data.
 
@@ -241,6 +243,24 @@ copies `deploy/` to the server must copy and keep
 `private-packs/campaigns/`: for the homelab, homenet's `apps/4ecb/pack.yml`
 (run by `scripts/publish-content.sh`) copies the advertised campaign files and
 removes the others from the server, as it does for packs.
+
+**Character sharing (D122).** Set `"characterShare": true` under `features`
+in `deploy/runtime-config.json` and restart the container: the entrypoint
+reads the flag only at start, and a restart drops every active share. The
+image then runs a small Node relay beside nginx (`apps/share-relay`,
+127.0.0.1:8081 inside the container) behind `/api/share/`; with the flag off
+no Node process runs and `/api/share/` answers 503. The relay keeps shared
+characters in memory only, in plaintext, until their first download or ten
+minutes, and nothing logs share paths. It is same-origin, so the proxy's
+access control covers it like any other path. Limits come from
+environment variables on the container: `FOURECB_SHARE_TTL_SECONDS` (600),
+`FOURECB_SHARE_MAX_PAYLOAD_BYTES` (8 MiB), `FOURECB_SHARE_MAX_PER_IP` (5),
+`FOURECB_SHARE_MAX_ACTIVE` (100), `FOURECB_SHARE_MAX_TOTAL_BYTES` (256 MiB),
+`FOURECB_SHARE_MAX_FAILED_LOOKUPS_PER_MINUTE` (10) and `FOURECB_SHARE_PORT`.
+Per-address limits use the client nginx's realip module takes from
+`X-Forwarded-For`, trusting every private address: the proxy in front must
+set that header itself rather than pass on a client's (Caddy's default), and
+players behind one NAT share one address's limit.
 
 **Updates.** Ask testers to back up their libraries before significant changes,
 then rebuild with a new tag as in step 2. Testers see **Reload and update**;

@@ -5520,3 +5520,43 @@ Category="…the 66 languages…">` after each level record's last rule
   All, Secret Language and The language of the mind records. Existing
   characters see the new choice as an open choice once they move to
   revision 14. The campaign description names the rule.
+
+### D122 — Share a character between devices with a 6-digit code
+
+Status: accepted (2026-11-07, owner).
+
+A player moves a character from one device to another the way Pathbuilder
+does: **Share** on device A uploads it and shows a 6-digit code; **Receive**
+on device B takes the code and adds the character to the library. Manual
+`.4ecb` export/import stays the fallback (D013, D015).
+
+- **Trusted relay for handoff (amends D010).** The share relay stores the
+  character in plaintext, in memory only, for at most ten minutes and until
+  its first download; TLS protects it in transit. A 6-digit code cannot
+  carry a key the relay couldn't brute-force, and the owner runs the relay
+  for their own group: a guessed code exposes one character the owner of
+  the code can re-share in seconds. D010's end-to-end encryption still
+  governs M7's live sessions and QR handoff, which may be added later
+  without changing this relay's contract.
+- **Store-and-forward HTTP, not WebSocket.** The two devices need not be
+  online together. `POST /api/share` returns `{code, expiresAt}`;
+  `GET /api/share/<code>` returns the bytes once and deletes them. The
+  payload is the `.4ecb` single-character package (record, digest, bound
+  campaign), gzip'd; the relay never parses it.
+- **Limits** (environment-configurable): 10-minute TTL, single use, 8 MiB
+  payload, 5 active shares per client IP, 100 in total, 256 MiB stored in
+  total, and about 10 wrong codes per IP per minute. The client IP comes
+  from the proxy's `X-Forwarded-For` through nginx's realip module.
+- **Same container.** The relay is a small Node service
+  (`apps/share-relay`) started beside nginx in the existing image, behind
+  nginx at `/api/share/`, so homenet and CI publish one image as before.
+  It runs only when `runtime-config.json` sets
+  `features.characterShare`. Same origin, so the hosting proxy's invite
+  gate covers sharing and receiving with no auth of its own.
+- **Receiving reuses native import.** The download goes through the same
+  validated path as a `.4ecb` file. When its character's ID is already in
+  the library, a modal asks Replace it / Keep both / Cancel; native
+  `.4ecb` file import asks the same way (it used to keep both silently).
+- **Always-present controls.** Share and Receive are shown even when the
+  server doesn't offer sharing or the browser is offline; the dialog says
+  why.

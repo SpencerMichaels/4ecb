@@ -815,6 +815,45 @@ describe("CharacterRepository", () => {
     expect(fresh?.id).toBe("kept");
   });
 
+  it("replaces a stored character, trashed or not, when asked to", async () => {
+    const source = repository();
+    await source.put({ ...character("kept"), portrait });
+    const exported = await source.exportCharacter("kept");
+    await source.updateMetadata("kept", { portrait: null, title: "Renamed" });
+    await source.moveToTrash("kept");
+
+    const [replaced] = await source.importCharacters(exported, {
+      replaceExisting: true,
+    });
+
+    expect(replaced?.id).toBe("kept");
+    await expect(source.get("kept")).resolves.toEqual({
+      ...character("kept"),
+      portrait,
+    });
+    const { active, deleted } = await source.listMetadataPartitioned();
+    expect(active.map(({ id }) => id)).toEqual(["kept"]);
+    expect(deleted).toEqual([]);
+  });
+
+  it("exports a prepared copy whose digest matches it", async () => {
+    const source = repository();
+    await source.put({ ...character("kept"), portrait });
+
+    const exported = await source.exportCharacter("kept", {
+      prepare: ({ portrait: removed, ...rest }) => {
+        void removed;
+        return rest;
+      },
+    });
+
+    expect(exported.characters[0]).not.toHaveProperty("portrait");
+    await expect(source.get("kept")).resolves.toHaveProperty("portrait");
+    const destination = repository();
+    const [copy] = await destination.importCharacters(exported);
+    expect(copy).not.toHaveProperty("portrait");
+  });
+
   it("names conflicts and restores alongside them when keeping both", async () => {
     const source = repository();
     await source.put({ ...character("shared"), portrait });

@@ -1015,6 +1015,11 @@ Follow-ups (not done):
   (`GAIN(MINONEMOD(Intelligence))`, D121; `docs/implementation-status.md`,
   Pathfinder revision 14). Release order: deploy the code before
   publishing revision 14 (older code reads the formula as 0 slots).
+- Done (2026-11-07): character sharing by 6-digit code (D122): Share
+  and Receive through a small in-memory relay that runs in the web
+  image when `features.characterShare` is on, ahead of M7. It is a
+  plaintext store-and-forward handoff, not M7's encrypted QR handoff or
+  linked sessions (`docs/implementation-status.md`, Character sharing).
 
 Owner action outside the repo: homenet `apps/4ecb/pack.yml` must copy and
 keep `private-packs/campaigns/` so hosted campaigns and invite links work on

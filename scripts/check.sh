@@ -27,6 +27,24 @@ if find apps/web/dist -type f \( -name '*.4ecp' -o -name '*.4ecc' -o -name '*.dn
   exit 1
 fi
 
+# The image's character-share relay bundle (Dockerfile share-relay-build):
+# it builds, the shipped runtime config leaves sharing off, and it renders
+# the nginx share locations completely.
+pnpm --filter @4ecb/share-relay build
+relay_bundle=apps/share-relay/dist/server.mjs
+if node "$relay_bundle" enabled apps/web/public/runtime-config.json; then
+  echo "The shipped runtime-config.json must leave characterShare off" >&2
+  exit 1
+fi
+echo '{"features":{"characterShare":true}}' >"$scratch_dir/share-on.json"
+node "$relay_bundle" enabled "$scratch_dir/share-on.json"
+node "$relay_bundle" nginx-config docker/share-enabled.conf.template \
+  >"$scratch_dir/share.conf"
+if grep -q '@SHARE_' "$scratch_dir/share.conf"; then
+  echo "Unrendered placeholder in the nginx share locations" >&2
+  exit 1
+fi
+
 build_pack() {
   local output="$1"
   pnpm content-tool build \

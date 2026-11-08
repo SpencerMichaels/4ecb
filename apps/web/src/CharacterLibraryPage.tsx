@@ -46,6 +46,14 @@ import {
 } from "./character-library-ui";
 import { CharacterLibraryDetail } from "./CharacterLibraryDetail";
 import { CharacterLibraryTable } from "./CharacterLibraryTable";
+import {
+  ReceiveCharacterDialog,
+  ShareCharacterDialog,
+} from "./CharacterShareDialogs";
+import {
+  CharacterConflictDialog,
+  importConflictText,
+} from "./RestoreBackupDialog";
 import { RulesWorkerClient } from "./rules-client";
 import {
   exportCharacterBackup,
@@ -95,6 +103,8 @@ export interface CharacterLibraryPageProps {
   readonly activeProfile?: ContentProfileDefinition;
   /** Settings: point saved IDs the active content lacks at same-named records. */
   readonly matchMissingContentByName?: boolean;
+  /** runtime-config.json's features.characterShare (D122). */
+  readonly characterShare?: boolean;
 }
 
 export function CharacterLibraryPage({
@@ -102,6 +112,7 @@ export function CharacterLibraryPage({
   activePackId,
   activeProfile,
   matchMissingContentByName = true,
+  characterShare,
 }: CharacterLibraryPageProps) {
   const [characters, setCharacters] = useState<
     readonly CharacterLibraryEntry[]
@@ -134,6 +145,20 @@ export function CharacterLibraryPage({
   // elsewhere or pressing Escape disarms it.
   const trashAction = useArmedAction("character-trash-trigger");
   const [trashOpen, setTrashOpen] = useState(false);
+  // Share (D122): the character whose code is shown; Receive's dialog.
+  const [sharing, setSharing] = useState<{
+    readonly id: string;
+    readonly title: string;
+  }>();
+  const [receiving, setReceiving] = useState(false);
+  // A .4ecb package (imported or received) holding characters already in
+  // the library waits here for Replace / Keep both / Cancel.
+  const [pendingImport, setPendingImport] = useState<{
+    readonly value: unknown;
+    readonly title: string;
+    readonly text: string;
+    readonly count: number;
+  }>();
   // Sort and selection are remembered per browser.
   const [view, setView] = useState<LibraryView>(() => readLibraryView());
   const updateView = useCallback(
@@ -250,8 +275,6 @@ export function CharacterLibraryPage({
     if (offer !== undefined) setCampaignOffer({ character, offer });
   }
 
-  /** A .4ecb package keeps its own content binding and portrait; it is
-   *  added alongside, never over, characters already in the library. */
   async function importNativeCharacters(file: File): Promise<void> {
     if (file.size > 100 * 1024 * 1024)
       throw new Error("Character package exceeds the 100 MiB import limit");
@@ -261,8 +284,49 @@ export function CharacterLibraryPage({
     } catch {
       throw new Error("Not a valid .4ecb character package");
     }
-    const imported = await repository.importCharacters(value);
-    await refreshRevealing(imported.map(({ id }) => id));
+    (await importNativePackage(value, "Import character"))?.();
+  }
+
+  /**
+   * The one native import, for a .4ecb file and a received share alike: a
+   * package keeps its own content binding and portrait. When none of its
+   * characters is in the library (active or trashed) it is added at once;
+   * otherwise the returned step asks Replace / Keep both / Cancel (run it
+   * once any dialog that led here has closed).
+   */
+  async function importNativePackage(
+    value: unknown,
+    title: string,
+  ): Promise<(() => void) | undefined> {
+    const inspection = await repository.inspectBackup(value);
+    if (inspection.conflictingIds.length === 0) {
+      const imported = await repository.importCharacters(value);
+      await refreshRevealing(imported.map(({ id }) => id));
+      return undefined;
+    }
+    const trashed = new Set(trash.map(({ id }) => id));
+    return () =>
+      setPendingImport({
+        value,
+        title,
+        text: importConflictText(
+          inspection.conflictingTitles,
+          inspection.conflictingIds.map((id) => trashed.has(id)),
+        ),
+        count: inspection.conflictingIds.length,
+      });
+  }
+
+  function finishPendingImport(replaceExisting: boolean): void {
+    if (pendingImport === undefined) return;
+    const { value, title } = pendingImport;
+    setPendingImport(undefined);
+    void repository
+      .importCharacters(value, { replaceExisting })
+      .then((imported) => refreshRevealing(imported.map(({ id }) => id)))
+      .catch((reason: unknown) =>
+        reportFailure(reason, `Couldn't ${title.toLowerCase()}`),
+      );
   }
 
   async function createCharacter(): Promise<void> {
@@ -351,6 +415,18 @@ export function CharacterLibraryPage({
             />
           </label>
           <button
+            aria-label="Receive a shared character"
+            className="button-icon"
+            title="Receive a shared character"
+            type="button"
+            onClick={() => setReceiving(true)}
+          >
+            <Icon name="download" />
+            <span aria-hidden="true" className="page-action-label">
+              Receive
+            </span>
+          </button>
+          <button
             aria-label={`Trash, ${characterCount(trash.length)}`}
             className="button-icon"
             title={`Trash (${trash.length})`}
@@ -417,6 +493,9 @@ export function CharacterLibraryPage({
             onExportDnd4e={() =>
               exportCharacter(selected, exportCharacterDnd4e)
             }
+            onShare={() =>
+              setSharing({ id: selected.id, title: selected.title })
+            }
             onDuplicate={() =>
               void repository
                 .duplicate(selected.id)
@@ -480,6 +559,33 @@ export function CharacterLibraryPage({
             setCampaignMove(undefined);
             void refresh().catch((reason: unknown) => reportFailure(reason));
           }}
+        />
+      )}
+      {sharing === undefined ? null : (
+        <ShareCharacterDialog
+          characterId={sharing.id}
+          characterName={sharing.title || "character"}
+          enabled={characterShare}
+          onClose={() => setSharing(undefined)}
+        />
+      )}
+      {receiving ? (
+        <ReceiveCharacterDialog
+          enabled={characterShare}
+          onReceived={(value) =>
+            importNativePackage(value, "Receive character")
+          }
+          onClose={() => setReceiving(false)}
+        />
+      ) : null}
+      {pendingImport === undefined ? null : (
+        <CharacterConflictDialog
+          title={pendingImport.title}
+          text={pendingImport.text}
+          count={pendingImport.count}
+          onCancel={() => setPendingImport(undefined)}
+          onKeepBoth={() => finishPendingImport(false)}
+          onReplace={() => finishPendingImport(true)}
         />
       )}
       {trashOpen ? (

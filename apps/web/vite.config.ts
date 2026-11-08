@@ -6,6 +6,9 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+// A relative import, so Vite bundles the TypeScript source into the loaded
+// config (a workspace package import would be left to Node to load).
+import { handleShareRequest, ShareStore } from "../share-relay/src/index";
 import { deployFileForRequest } from "./src/dev-deploy-path";
 import { themeBackgrounds } from "./src/theme-tokens";
 import { WEB_MANIFEST, WEB_MANIFEST_FILENAME } from "./src/web-manifest";
@@ -73,6 +76,23 @@ function developmentDeployDirectory(): Plugin {
   };
 }
 
+/** Character sharing's relay (apps/share-relay) on the dev server at
+ *  /api/share, the path the image's nginx proxies to it, so `pnpm dev`
+ *  shares work without a separate process. Whether the app offers sharing
+ *  is still runtime-config.json's features.characterShare. */
+function developmentShareRelay(): Plugin {
+  return {
+    name: "development-share-relay",
+    apply: "serve",
+    configureServer(server) {
+      const store = new ShareStore();
+      server.middlewares.use((request, response, next) => {
+        if (!handleShareRequest(store, request, response)) next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   define: {
     __BUILD_COMMIT__: JSON.stringify(buildCommit()),
@@ -126,6 +146,7 @@ export default defineConfig({
       },
     },
     developmentDeployDirectory(),
+    developmentShareRelay(),
     react(),
     VitePWA({
       injectRegister: "auto",

@@ -197,7 +197,7 @@ describe("SettingsPage backup restore", () => {
     expect(storage.restoreBackup).not.toHaveBeenCalled();
     expect(dialog()?.open).toBe(true);
     expect(dialog()?.querySelector("h2")?.textContent).toBe("Restore backup");
-    expect(dialog()?.querySelector("#restore-backup-text")?.textContent).toBe(
+    expect(dialog()?.querySelector(".restore-backup-body")?.textContent).toBe(
       "3 characters in this backup are already in your library: Lily, Beatrix and Hu.",
     );
     expect(

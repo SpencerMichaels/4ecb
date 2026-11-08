@@ -1,0 +1,49 @@
+# Character sharing on (features.characterShare in runtime-config.json):
+# docker/entrypoint.sh renders this template into /tmp/nginx/share.conf with
+# the relay's port and body limit (apps/share-relay config.ts). The relay
+# listens on 127.0.0.1 only, so these locations are its only way in.
+
+# The container is healthy only while the relay answers too.
+location = /healthz {
+  include /etc/nginx/security-headers.conf;
+  access_log off;
+  proxy_pass http://127.0.0.1:@SHARE_PORT@/api/share/health;
+}
+
+location ~ ^/api/share(/|$) {
+  include /etc/nginx/security-headers.conf;
+  # Request paths carry share codes: never log them.
+  access_log off;
+  error_log /dev/stderr crit;
+  client_max_body_size @SHARE_BODY_LIMIT@;
+  # Stream bodies straight through, so payloads never reach nginx's temp
+  # files.
+  proxy_request_buffering off;
+  proxy_buffering off;
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+  proxy_set_header Host $host;
+  # The client address after realip (nginx.conf); the relay's per-address
+  # limits read it.
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For "";
+  error_page 413 = @share_too_large;
+  error_page 502 503 504 = @share_unavailable;
+  proxy_pass http://127.0.0.1:@SHARE_PORT@;
+}
+
+location @share_too_large {
+  include /etc/nginx/security-headers.conf;
+  access_log off;
+  default_type application/json;
+  add_header Cache-Control "no-store" always;
+  return 413 '{"error":"too-large"}';
+}
+
+location @share_unavailable {
+  include /etc/nginx/security-headers.conf;
+  access_log off;
+  default_type application/json;
+  add_header Cache-Control "no-store" always;
+  return 503 '{"error":"unavailable"}';
+}

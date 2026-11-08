@@ -78,6 +78,7 @@ import {
   SaveCheck,
   SaveOff,
   SavePen,
+  Share2,
   Scale,
   ScanLine,
   Search,
@@ -211,6 +212,7 @@ export type IconName =
   | "scale"
   | "search"
   | "settings"
+  | "share"
   | "sheet"
   | "back"
   | "change-level"
@@ -333,6 +335,7 @@ const icons: Record<IconName, LucideIcon> = {
   scale: Scale,
   search: Search,
   settings: Settings,
+  share: Share2,
   sheet: FileText,
   back: ArrowLeft,
   "change-level": ArrowDownUp,

@@ -4,6 +4,7 @@
   "contentPacks": [],
   "features": {
     "playMode": false,
-    "sessionRelay": false
+    "sessionRelay": false,
+    "characterShare": false
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import { Icon } from "./Icon";
 
@@ -26,15 +26,26 @@ export function restoreSuccessText(count: number, trashed = 0): string {
     : `Restored ${characters} (${trashed} to the trash).`;
 }
 
+/** The sentence asking about a character package (a .4ecb file or a
+ *  shared character) whose characters are already in the library, active
+ *  or in the trash: "Lily is already in your library." */
+export function importConflictText(
+  names: readonly string[],
+  trashed: readonly boolean[] = [],
+): string {
+  if (names.length === 1)
+    return trashed[0] === true
+      ? `${names[0]!} is already in your library's trash.`
+      : `${names[0]!} is already in your library.`;
+  return `${names.length} characters in this file are already in your library: ${naturalList(names)}.`;
+}
+
 /** Asks what to do when a backup holds characters already in the library:
  *  replace them, keep both (the backup's copies are added alongside), or
- *  cancel. Only shown when there is a conflict; focus starts on Cancel and
- *  Esc cancels. */
+ *  cancel. Only shown when there is a conflict. */
 export function RestoreBackupDialog({
   names,
-  onReplace,
-  onKeepBoth,
-  onCancel,
+  ...actions
 }: {
   /** The library's names for the characters the backup would replace. */
   readonly names: readonly string[];
@@ -42,6 +53,37 @@ export function RestoreBackupDialog({
   readonly onKeepBoth: () => void;
   readonly onCancel: () => void;
 }) {
+  return (
+    <CharacterConflictDialog
+      title="Restore backup"
+      text={restoreConflictText(names)}
+      count={names.length}
+      {...actions}
+    />
+  );
+}
+
+/** The one replace-or-keep-both question for characters already in the
+ *  library (restoring a backup, importing a .4ecb file, receiving a shared
+ *  character): Cancel, Keep both, Replace it/them. Focus starts on Cancel
+ *  and Esc cancels. */
+export function CharacterConflictDialog({
+  title,
+  text,
+  count,
+  onReplace,
+  onKeepBoth,
+  onCancel,
+}: {
+  readonly title: string;
+  readonly text: string;
+  /** How many characters would be replaced (picks "Replace it/them"). */
+  readonly count: number;
+  readonly onReplace: () => void;
+  readonly onKeepBoth: () => void;
+  readonly onCancel: () => void;
+}) {
+  const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -56,8 +98,8 @@ export function RestoreBackupDialog({
   };
   return (
     <dialog
-      aria-describedby="restore-backup-text"
-      aria-labelledby="restore-backup-title"
+      aria-describedby={`${id}-text`}
+      aria-labelledby={`${id}-title`}
       className="restore-backup-dialog dialog-shell"
       ref={dialog}
       role="alertdialog"
@@ -67,7 +109,7 @@ export function RestoreBackupDialog({
       }}
     >
       <header>
-        <h2 id="restore-backup-title">Restore backup</h2>
+        <h2 id={`${id}-title`}>{title}</h2>
         <button
           aria-label="Close"
           className="button-icon dialog-close"
@@ -78,8 +120,8 @@ export function RestoreBackupDialog({
           <Icon name="remove" />
         </button>
       </header>
-      <p className="restore-backup-body" id="restore-backup-text">
-        {restoreConflictText(names)}
+      <p className="restore-backup-body" id={`${id}-text`}>
+        {text}
       </p>
       <footer>
         <button ref={cancel} type="button" onClick={() => finish(onCancel)}>
@@ -93,7 +135,7 @@ export function RestoreBackupDialog({
           type="button"
           onClick={() => finish(onReplace)}
         >
-          {names.length === 1 ? "Replace it" : "Replace them"}
+          {count === 1 ? "Replace it" : "Replace them"}
         </button>
       </footer>
     </dialog>

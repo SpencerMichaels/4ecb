@@ -304,7 +304,8 @@ Open the export icon on a character card and choose one of three formats:
 
 - **.4ecb** creates a checksummed, versioned native package containing the
   complete current character record, including its portrait. Import it from
-  the character library's **Import** button (adds a copy, never overwrites), or
+  the character library's **Import** button (if the character is already in
+  your library, it asks whether to replace it or keep both), or
   restore it from **Settings → Backups & storage** like a full-library JSON
   backup (asks before replacing a character already in the library).
 - **.dnd4e** always evaluates and regenerates the current edited state for
@@ -326,6 +327,17 @@ characters. The public structural round-trip gate and the accepted
 representative original Windows Character Builder open/save/reopen matrix pass.
 That evidence does not promise that every future character-specific export is
 free of an ordinary compatibility bug.
+
+### Share to another device
+
+When your server offers sharing, **Share** (in the library's character
+actions and the builder toolbar) uploads the character and shows a 6-digit
+code. On the other device, choose **Receive** in the character library and
+type the code. A code works once and expires after ten minutes; anyone with
+it can receive the character, so share it only with the person meant to
+have it. If the character is already in that library, you choose whether to
+replace it or keep both. Sharing needs a connection; without one, or on a
+server without sharing, export a .4ecb file instead.
 
 ## Sheets and PDF printing
 

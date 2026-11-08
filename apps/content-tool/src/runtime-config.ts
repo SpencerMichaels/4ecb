@@ -28,7 +28,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   relayUrl: null,
   defaultPackUrl: null,
   contentPacks: [],
-  features: { playMode: false, sessionRelay: false },
+  features: { playMode: false, sessionRelay: false, characterShare: false },
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

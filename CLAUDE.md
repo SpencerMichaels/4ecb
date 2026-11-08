@@ -181,6 +181,10 @@ FOURECB_TAG=$(git rev-parse --short HEAD) docker compose up -d --build
 
 The image serves `/private-packs/` from the read-only `deploy/` mount; see
 `docs/public-deployment.md` and `docs/m5.7-beta-deployment.md` for status.
+With runtime-config `features.characterShare` on, `docker/entrypoint.sh`
+also starts the character-share relay (D122, `apps/share-relay` bundled to
+`dist/server.mjs`, limits from `FOURECB_SHARE_*`) beside nginx at
+`/api/share/`; `pnpm dev` serves the same handler as Vite middleware.
 
 ## Monorepo layout
 
@@ -193,6 +197,7 @@ a single `src/index.ts` entry point.
 apps/
   web/                 React + TypeScript + Vite PWA (the product)
   content-tool/        CLI: decrypt/import/merge/compile/inspect content packs
+  share-relay/         6-digit-code character handoff relay (D122, in-memory, runs in the web image)
   session-relay/       (planned, post-MVP) opaque-envelope WebSocket relay
   dm/                  (planned, out of builder-1.0 scope)
 
@@ -318,6 +323,13 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   (`runtime-content.ts`) downloads, verifies and installs every advertised
   campaign not installed and every newer revision, quietly retrying next
   load; there is no invite or join page.
+- **Character sharing (D122)**: Share (library detail actions, builder
+  toolbar) and Receive (library header) in `CharacterShareDialogs.tsx`
+  over `character-share.ts` (gzip'd `.4ecb` package, error kinds). A
+  received share and a `.4ecb` file import go through one flow
+  (`CharacterLibraryPage.tsx` `importNativePackage`); an ID already in the
+  library asks Replace it / Keep both / Cancel in `CharacterConflictDialog`
+  (`RestoreBackupDialog.tsx`, also the restore's dialog).
 
 ### Web app routes (`apps/web`)
 

@@ -11,7 +11,7 @@ import type { LibraryRoleLine } from "./use-library-summary";
 /**
  * The Characters page's detail pane for the selected row: just a navy
  * header band with who the character is (portrait, name, identity, role
- * line, paragon path, epic destiny, last edit) and the five actions along
+ * line, paragon path, epic destiny, last edit) and the six actions along
  * its bottom edge. Everything but the role line comes from library
  * metadata, so it renders at once; the role line comes from the library
  * summary (`roleLine`), holds its place with a bar while that loads, and
@@ -25,6 +25,7 @@ export function CharacterLibraryDetail({
   trashArmed,
   onExportBackup,
   onExportDnd4e,
+  onShare,
   onDuplicate,
   onTrash,
 }: {
@@ -36,6 +37,8 @@ export function CharacterLibraryDetail({
   readonly trashArmed: boolean;
   readonly onExportBackup: () => void;
   readonly onExportDnd4e: () => void;
+  /** Opens the Share dialog (a 6-digit code for another device, D122). */
+  readonly onShare: () => void;
   readonly onDuplicate: () => void;
   readonly onTrash: () => void;
 }) {
@@ -123,6 +126,16 @@ export function CharacterLibraryDetail({
               { label: ".dnd4e", onSelect: onExportDnd4e },
             ]}
           />
+          <button
+            aria-label={`Share ${title}`}
+            className="library-detail-action"
+            title="Share by code"
+            type="button"
+            onClick={onShare}
+          >
+            <Icon name="share" />
+            <span>Share</span>
+          </button>
           <button
             aria-label={`Duplicate ${title}`}
             className="library-detail-action"

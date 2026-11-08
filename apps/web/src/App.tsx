@@ -174,6 +174,9 @@ export function App() {
     Readonly<Record<string, ContentDownloadState>>
   >({});
   const [runtimeContentError, setRuntimeContentError] = useState<string>();
+  // runtime-config.json's features.characterShare (D122); unknown until it
+  // loads, and the Share/Receive dialogs explain when it's off.
+  const [characterShare, setCharacterShare] = useState<boolean>();
   const [storageReady, setStorageReady] = useState(false);
   const [error, setError] = useState<string>();
   const [theme, setTheme] = useState<ThemePreference>(() => {
@@ -521,6 +524,7 @@ export function App() {
       const configured = parseRuntimeContentConfig(await response.json());
       setAdvertisedPacks(configured.contentPacks);
       setAdvertisedCampaigns(configured.campaigns);
+      setCharacterShare(configured.characterShare);
       for (const problem of configured.campaignProblems)
         console.warn(`runtime-config.json campaigns ignored: ${problem}`);
       setRuntimeContentError(undefined);
@@ -687,6 +691,9 @@ export function App() {
                   ) : route.characterId === undefined ? (
                     <CharacterLibraryPage
                       manifests={manifests}
+                      {...(characterShare === undefined
+                        ? {}
+                        : { characterShare })}
                       matchMissingContentByName={matchContentByName}
                       {...(activePackId === undefined ? {} : { activePackId })}
                       {...(activeProfile === undefined
@@ -702,6 +709,9 @@ export function App() {
                       resolveAbilityChoices={resolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}
                       abbreviateAbilityValues={abbreviateAbilityValues}
+                      {...(characterShare === undefined
+                        ? {}
+                        : { characterShare })}
                       {...(activeManifest === undefined
                         ? {}
                         : { activeManifest })}

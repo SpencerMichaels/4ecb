@@ -25,6 +25,7 @@ function pane(roleLine: LibraryRoleLine): string {
       trashArmed={false}
       onExportBackup={() => undefined}
       onExportDnd4e={() => undefined}
+      onShare={() => undefined}
       onDuplicate={() => undefined}
       onTrash={() => undefined}
     />,
@@ -63,5 +64,18 @@ describe("character library detail pane", () => {
     expect(failed).not.toContain("library-detail-role");
     expect(failed).not.toContain("Pack missing");
     expect(failed).toContain("<h2>Ingi</h2>");
+  });
+
+  it("offers Share beside Export", () => {
+    const markup = pane({ status: "ready" });
+    const at = (label: string) => markup.indexOf(label);
+    expect(at('aria-label="Export Ingi"')).toBeGreaterThan(-1);
+    expect(at('aria-label="Share Ingi"')).toBeGreaterThan(
+      at('aria-label="Export Ingi"'),
+    );
+    expect(at('aria-label="Duplicate Ingi"')).toBeGreaterThan(
+      at('aria-label="Share Ingi"'),
+    );
+    expect(markup).toContain('aria-label="Share Ingi"');
   });
 });

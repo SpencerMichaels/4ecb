@@ -222,6 +222,16 @@ describe("runtime campaigns", () => {
     expect(parseRuntimeContentConfig({}).campaigns).toEqual([]);
   });
 
+  it("turns on sharing by code only when the server says so", () => {
+    const share = (value: unknown) =>
+      parseRuntimeContentConfig(value).characterShare;
+    expect(share({ features: { characterShare: true } })).toBe(true);
+    expect(share({ features: { characterShare: false } })).toBe(false);
+    expect(share({ features: { characterShare: "yes" } })).toBe(false);
+    expect(share({ features: null })).toBe(false);
+    expect(share({})).toBe(false);
+  });
+
   it("drops malformed, cross-origin, duplicate, or too many campaigns", () => {
     const other = { ...entry, campaignId: "eberron", name: "Eberron" };
     const parse = (campaigns: unknown) =>

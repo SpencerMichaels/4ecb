@@ -36,7 +36,7 @@ describe("runtime-config.json", () => {
       relayUrl: null,
       defaultPackUrl: null,
       contentPacks: [pack("server")],
-      features: { playMode: false, sessionRelay: false },
+      features: { playMode: false, sessionRelay: false, characterShare: false },
     });
   });
 

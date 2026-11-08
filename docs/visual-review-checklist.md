@@ -1572,6 +1572,55 @@ diffed on every sample save; this pass is how the rows sit on page 1.
   - **Wrong if:** a row is in the wrong group, a long row breaks the table,
     or a reminder repeats what a row says.
 
+## Pass 26: Character sharing (D122)
+
+Use `pnpm dev` with `"characterShare": true` under `features` in
+`deploy/runtime-config.json` (or the hosted site once it's on there), two
+browsers or profiles, at 140% zoom, light and dark theme. The transport,
+errors and the conflict flow are unit-tested; this pass is how the dialogs
+look and feel.
+
+- [ ] **Library header and actions.** Added 2026-11-07.
+  - **Where:** `#/characters`, select any character.
+  - **Expect:** the header reads New, Import, **Receive**, Trash | Update,
+    Settings on one row; the detail pane shows Edit, Sheet, Export,
+    **Share**, Duplicate, Trash.
+  - **Wrong if:** the header wraps, Receive's icon is easily mistaken for
+    Import's, or "Duplicate" is cut off in the side pane.
+- [ ] **Share.** Added 2026-11-07.
+  - **Where:** Share from the library, then from the builder toolbar (the
+    icon after Export).
+  - **Expect:** a spinner and "Uploading <name>…" briefly, then a large
+    "123 456" code, "Expires in 9:59" counting down, Close and Copy code
+    ("Copied." at the left); the builder's dialog is titled "Share <name>".
+  - **Wrong if:** the code wraps, the countdown text jumps in width, or the
+    dialog freezes the page while uploading.
+- [ ] **Receive.** Added 2026-11-07.
+  - **Where:** on the second browser, Receive; paste "123-456", submit.
+    Then a wrong code, and the same code a second time.
+  - **Expect:** focus in the field; Receive enables at 6 digits; a spinner,
+    then the dialog closes and the new character is selected and scrolled
+    into view. A wrong or used code keeps the typed code and shows a
+    message that no character is waiting under it.
+  - **Wrong if:** the new character isn't visible after receiving, or the
+    error clears the field.
+- [ ] **Already in the library.** Added 2026-11-07.
+  - **Where:** receive a character the library already has (and once with
+    that character in the trash); also import its .4ecb file.
+  - **Expect:** "<Name> is already in your library." ("…library's trash.")
+    with Cancel / Keep both / Replace it, focus on Cancel. Replace
+    overwrites it (out of the trash); Keep both adds a copy.
+  - **Wrong if:** the dialog appears while the Receive dialog is still
+    open, or a choice does something else.
+- [ ] **Sharing off, offline, expiry.** Added 2026-11-07.
+  - **Where:** `characterShare` false; then DevTools → Offline; then leave
+    a share open past 0:00.
+  - **Expect:** with sharing off, Share explains with only Close and
+    Receive explains above a disabled field; offline, both say so and
+    re-enable once back online; at expiry "This code has expired." with
+    Share again.
+  - **Wrong if:** a control is missing or greyed out with no explanation.
+
 ## Decisions
 
 Open judgement calls, not pass/fail checks. Look while you are on the

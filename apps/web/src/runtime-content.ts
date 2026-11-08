@@ -39,6 +39,9 @@ export interface RuntimeContentConfig {
   readonly campaigns: readonly AdvertisedCampaign[];
   /** Why advertised campaign entries were dropped (the packs never are). */
   readonly campaignProblems: readonly string[];
+  /** `features.characterShare`: this server hosts the share relay, so a
+   *  character can be shared by a 6-digit code (D122). Off unless `true`. */
+  readonly characterShare: boolean;
 }
 
 /**
@@ -91,6 +94,10 @@ export function parseRuntimeContentConfig(
       campaignProblems,
     ),
     campaignProblems,
+    characterShare:
+      typeof record.features === "object" &&
+      record.features !== null &&
+      (record.features as Record<string, unknown>).characterShare === true,
   };
 }
 

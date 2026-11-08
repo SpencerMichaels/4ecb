@@ -1,5 +1,48 @@
 # Implementation status
 
+## Character sharing by 6-digit code (2026-11-07)
+
+D122: **Share** uploads a character and shows a 6-digit code for ten
+minutes; **Receive** on another device takes the code and adds it.
+
+- Relay (`apps/share-relay`, `@4ecb/share-relay`): in-memory
+  store/handler (`share-store.ts`, `http-handler.ts`) with the D122
+  limits from `FOURECB_SHARE_*` environment variables (`config.ts`), a
+  `node:http` entry (`server.ts`, 127.0.0.1:8081) bundled by esbuild to
+  `dist/server.mjs`. The same handler is Vite dev middleware
+  (`apps/web/vite.config.ts` `developmentShareRelay`).
+- Image: the final nginx stage carries `node` (from the build stage) and
+  the bundle; `docker/entrypoint.sh` starts the relay only when
+  `runtime-config.json` sets `features.characterShare`, and stops the
+  container if nginx or the relay exits. nginx renders
+  `/tmp/nginx/share.conf` from `docker/share-enabled.conf.template` or
+  `share-disabled.conf` (503 `disabled`); realip takes the client from
+  the proxy's `X-Forwarded-For`; share paths are never logged and bodies
+  stream unbuffered. `/healthz` includes the relay when it runs.
+- Web: `character-share.ts` (gzip transport, error kinds and messages,
+  code helpers; one retry without the portrait's original image when the
+  package is over 8 MiB), `CharacterShareDialogs.tsx`. Share sits after
+  Export in the library detail actions and the builder toolbar; Receive
+  after Import in the library header. Both always open and explain when
+  sharing is off or the browser is offline.
+- Import: `.4ecb` files and received shares share one flow
+  (`CharacterLibraryPage.tsx` `importNativePackage`); an ID already in
+  the library (or its trash) asks Replace it / Keep both / Cancel in
+  `CharacterConflictDialog` (extracted from `RestoreBackupDialog.tsx`).
+  browser-storage: `exportCharacter(id, {prepare})`,
+  `importCharacters(value, {replaceExisting})`.
+
+Verification: 30 relay tests, 16 `character-share.test.ts`, 8
+`CharacterShareDialogs.test.tsx`, 3 `CharacterLibraryPage.import.test.tsx`,
+repository tests; full suite, typecheck, lint, format. A real round trip
+through the dev middleware (upload, identical download, single use, wrong
+code). The production image, read-only with the `/tmp` tmpfs, checked with
+sharing off (nginx only, 503 `disabled`, healthy) and on (round trip,
+per-address limit keyed by `X-Forwarded-For` including a spoofed prefix,
+413 for declared, mid-size and chunked bodies, wrong-code lockout, clean
+stop, container exit when either process dies). Owner visual check pending
+(checklist "Character sharing").
+
 ## Pathfinder revision 14: bonus languages; select count formulas (2026-11-07)
 
 Owner house rule (D121): bonus languages equal to the 1st-level

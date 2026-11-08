@@ -136,7 +136,7 @@ describe("character library table and detail pane", () => {
     expect(library).not.toContain("preserve-original");
     expect(library).not.toContain("exportDnd4e");
     expect(styles).toMatch(
-      /\.library-detail-actions \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/,
+      /\.library-detail-actions \{[^}]*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/,
     );
     expect(styles).toMatch(
       /\.library-detail-action > span:not\(\.icon\) \{[^}]*white-space: nowrap/,

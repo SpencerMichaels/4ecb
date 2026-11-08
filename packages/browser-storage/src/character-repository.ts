@@ -741,11 +741,17 @@ export class CharacterRepository {
   }
 
   /** One character, with the campaign revision it is bound to when that
-   *  revision is installed (D116). */
+   *  revision is installed (D116). `prepare` adjusts the exported copy
+   *  (a share drops the portrait's source image) before the package's
+   *  digest is taken; the stored character is unchanged. */
   async exportCharacter(
     id: string,
+    options: {
+      readonly prepare?: (character: CharacterRecord) => CharacterRecord;
+    } = {},
   ): Promise<CharacterBackup<CampaignDocument>> {
-    const character = await this.required(id);
+    const stored = await this.required(id);
+    const character = options.prepare?.(stored) ?? stored;
     const characters = [character];
     const membership = character.profileBinding?.campaign;
     let campaigns: CampaignDocument[] = [];
@@ -856,14 +862,22 @@ export class CharacterRepository {
   }
 
   /** Adds the characters in a native package (.4ecb or full backup) to the
-   *  library as active records. Unlike a restore, it never overwrites: a
-   *  character whose ID is already stored (active or trashed) is added under
-   *  a fresh ID. */
-  async importCharacters(backup: unknown): Promise<CharacterRecord[]> {
+   *  library as active records. By default it never overwrites: a character
+   *  whose ID is already stored (active or trashed) is added under a fresh
+   *  ID. With `replaceExisting` (the player chose "Replace it") such a
+   *  character replaces the stored one, leaving the trash if it was there. */
+  async importCharacters(
+    backup: unknown,
+    options: { readonly replaceExisting?: boolean } = {},
+  ): Promise<CharacterRecord[]> {
     const supported = await validateBackup(backup);
     const db = await database(this.#databaseName);
     try {
-      const existing = new Set(await db.getAllKeys("characters"));
+      const existing = new Set(
+        options.replaceExisting === true
+          ? []
+          : await db.getAllKeys("characters"),
+      );
       const characters = supported.characters.map((stored) => {
         const { deletedAt: _deletedAt, id, ...record } = upgradeRecord(stored);
         void _deletedAt;

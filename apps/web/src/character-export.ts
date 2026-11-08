@@ -12,6 +12,7 @@ import {
 import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
 import { appContentRuntime } from "./app-runtime";
+import { shareCharacter, type UploadedShare } from "./character-share";
 import { download } from "./download";
 import { contentProfileMatchesRevision } from "./profile-migration";
 
@@ -123,4 +124,18 @@ export async function exportCharacterDnd4e(id: string): Promise<void> {
       `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
     );
   download(`${fileBase(character)}.dnd4e`, xml, "application/xml");
+}
+
+/** Shares a stored character by code (D122): its .4ecb package, uploaded to
+ *  the share relay, retried without the portrait's original image when too
+ *  large. */
+export function shareStoredCharacter(
+  id: string,
+  options: Parameters<typeof shareCharacter>[1] = {},
+): Promise<UploadedShare> {
+  return shareCharacter(
+    (prepare) =>
+      repository.exportCharacter(id, prepare === undefined ? {} : { prepare }),
+    options,
+  );
 }

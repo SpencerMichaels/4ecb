@@ -184,7 +184,7 @@ button.toast-dismiss:not(:disabled):hover {
   gap: 0.4rem 0.8rem;
 }
 
-/* The Characters page header: New, Import, Trash (its count as a small square-cornered tag, as the app has no
+/* The Characters page header: New, Import, Receive, Trash (its count as a small square-cornered tag, as the app has no
    pill-shaped chrome), then
    Update and Settings, each with a one-word label beside the icon. The
    builder keeps its tighter icon-only controls. Phones drop the labels. */
@@ -352,6 +352,79 @@ button.toast-dismiss:not(:disabled):hover {
 
 .restore-backup-dialog > footer {
   flex-wrap: wrap;
+}
+
+/* Share and Receive (D122): the code, large and grouped "123 456", with its
+   countdown; Receive's one code field. */
+.share-dialog {
+  overflow: auto;
+  width: 28rem;
+}
+
+.share-dialog-body {
+  display: grid;
+  gap: 0.75rem;
+  overflow-wrap: anywhere;
+  padding: 1rem;
+}
+
+.share-dialog-body p {
+  margin: 0;
+}
+
+.share-dialog > footer,
+.share-dialog > form > footer {
+  flex-wrap: wrap;
+}
+
+.share-dialog-status {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.share-dialog-status > .loading-spinner {
+  flex: none;
+  height: 1.75rem;
+  position: relative;
+  width: 1.75rem;
+}
+
+.share-code {
+  font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.share-countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.share-dialog-problem {
+  border-left: 4px solid var(--danger);
+  padding-left: 0.6rem;
+}
+
+.share-copy-status {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.share-code-field {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.share-code-input {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  max-width: 12rem;
 }
 
 /* Retraining tab: the levels that can retrain (one retrain per level), then

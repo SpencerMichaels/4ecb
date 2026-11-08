@@ -1,5 +1,6 @@
 import {
   Fragment,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -158,9 +159,11 @@ import { ActionMenu } from "./ActionMenu";
 import { SetLevelDialog } from "./SetLevelDialog";
 import {
   exportCharacterBackup,
+  shareStoredCharacter,
   exportCharacterDnd4e,
 } from "./character-export";
 import { ToastRegion, useToasts } from "./Toasts";
+import { ShareCharacterDialog } from "./CharacterShareDialogs";
 import { RetrainingWorkspace } from "./RetrainingWorkspace";
 import { CompanionNameFields, hasCompanionChoice } from "./CompanionNameFields";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
@@ -307,6 +310,7 @@ export function CharacterEditorPage({
   resolveAbilityChoices,
   proficientEquipmentOnly = true,
   abbreviateAbilityValues,
+  characterShare,
   activeManifest,
   activeProfile,
 }: {
@@ -321,6 +325,8 @@ export function CharacterEditorPage({
   readonly resolveAbilityChoices: boolean;
   readonly proficientEquipmentOnly?: boolean;
   readonly abbreviateAbilityValues: boolean;
+  /** runtime-config.json's features.characterShare (D122). */
+  readonly characterShare?: boolean;
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
 }) {
@@ -417,6 +423,16 @@ export function CharacterEditorPage({
       )
       .finally(() => setExporting(false));
   };
+  // Share (D122) uploads the stored record too, after the same wait.
+  const [sharing, setSharing] = useState(false);
+  const shareSaved = useCallback<typeof shareStoredCharacter>(
+    async (id, options) => {
+      await saveQueue.current?.whenIdle();
+      await persistCharacterDraft(characters, id);
+      return shareStoredCharacter(id, options);
+    },
+    [],
+  );
   const [accordionOverride, setAccordionOverride] = useState<{
     readonly tab: string;
     readonly key: string | null;
@@ -2306,6 +2322,18 @@ export function CharacterEditorPage({
             <BuildVersion />
           </BuilderSidebar>
           <div className="builder-main">
+            {sharing ? (
+              <ShareCharacterDialog
+                characterId={characterId}
+                characterName={
+                  characterDisplayName({ build, title: character.title }) ||
+                  "character"
+                }
+                enabled={characterShare}
+                share={shareSaved}
+                onClose={() => setSharing(false)}
+              />
+            ) : null}
             {settingLevel ? (
               <SetLevelDialog
                 name={
@@ -2617,6 +2645,15 @@ export function CharacterEditorPage({
                     },
                   ]}
                 />
+                <button
+                  aria-label="Share"
+                  className="icon-only-button button-icon"
+                  title="Share by code"
+                  type="button"
+                  onClick={() => setSharing(true)}
+                >
+                  <Icon name="share" />
+                </button>
                 <UpdateButton />
                 <a
                   aria-label="Settings"
