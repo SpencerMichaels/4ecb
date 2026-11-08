@@ -1,5 +1,16 @@
 # Implementation status
 
+## Pathfinder revision 15: bonus languages minimum 0 (2026-11-07)
+
+Owner change to D121: the Intelligence-modifier bonus languages have a
+minimum of 0, not 1. `content/campaigns/pathfinder/` revision 15: the 30
+rule patches use `GAIN(ABILITYMOD(Intelligence))` (was `MINONEMOD`); the
+description says "(if positive)". Content only; the deployed engine
+already reads `ABILITYMOD`, and `GAIN` already counts from 0.
+
+Verification: `content-tool campaign build --against
+tmp/content/full-local.4ecp`: all 360 patch outcomes `applies`.
+
 ## Character sharing by 6-digit code (2026-11-07)
 
 D122: **Share** uploads a character and shows a 6-digit code for ten

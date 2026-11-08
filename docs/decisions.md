@@ -5560,3 +5560,10 @@ on device B takes the code and adds the character to the library. Manual
 - **Always-present controls.** Share and Receive are shown even when the
   server doesn't offer sharing or the browser is offline; the dialog says
   why.
+- Amendment (2026-11-07, owner, Pathfinder revision 15): the minimum is
+  0, not 1. The patches' formula is `GAIN(ABILITYMOD(Intelligence))`: a
+  modifier of 0 or less gives no bonus language at 1st level, and since
+  `GAIN` measures from 0 a later rise counts only above 0. The campaign
+  description says "(if positive)". A character with a saved 1st-level
+  pick and a modifier of 0 or less keeps it, inactive (the over-count
+  rule above).

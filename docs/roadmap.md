@@ -1015,6 +1015,8 @@ Follow-ups (not done):
   (`GAIN(MINONEMOD(Intelligence))`, D121; `docs/implementation-status.md`,
   Pathfinder revision 14). Release order: deploy the code before
   publishing revision 14 (older code reads the formula as 0 slots).
+- Done (2026-11-07): Pathfinder revision 15: the bonus languages' minimum
+  is 0 (`GAIN(ABILITYMOD(Intelligence))`, D121 amendment).
 - Done (2026-11-07): character sharing by 6-digit code (D122): Share
   and Receive through a small in-memory relay that runs in the web
   image when `features.characterShare` is on, ahead of M7. It is a

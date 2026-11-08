@@ -25,7 +25,7 @@
   descriptions are original. CountsAsDeity is a modern type the old
   builder ignores.
 
-  Bonus slots (owner's house rules, revisions 13 and 14): campaign.json's rule
+  Bonus slots (owner's house rules, revisions 13 to 15): campaign.json's rule
   patches add one select to stock level records, after each record's last
   rule so the stock selects keep their ordinals (saved choices key by them).
   - Levels 4, 8, 12, 16, 20, 24, 28 (ID_INTERNAL_LEVEL_N): select
@@ -47,10 +47,10 @@
     defenses, hit points, or skills.").
   - Every level, 1 through 30 (revision 14, D121): select
     name="Bonus Language", type="Language",
-    number="GAIN(MINONEMOD(Intelligence))", Category listing the 66
+    number="GAIN(ABILITYMOD(Intelligence))", Category listing the 66
     languages below (not All, Secret Language or The language of the
-    mind): the Intelligence modifier's languages (at least 1) at 1st
-    level, and at a later level one per point the modifier rises above
+    mind): the Intelligence modifier's languages (none if 0 or less;
+    revision 15, at least 1 before) at 1st level, and at a later level one per point the modifier rises above
     its highest so far. The count formula is a modern extension.
   The select's name attribute is the Build tab's choice title. Legacy
   export drops rule patches (D116): the picks are written as ordinary
