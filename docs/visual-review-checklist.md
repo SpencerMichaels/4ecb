@@ -910,13 +910,14 @@ Open `#/characters` with the review characters restored.
 - [x] **Library: detail pane.**
   - **Where:** select "Review – Summer Sentinel Druid L25 (Bear)", "Review –
     Fey Warlock L11" and "Review – Hybrid Executioner/Fighter L27"; hover
-    and use the five buttons. Duplicate a character and select the copy;
+    and use the six buttons. Duplicate a character and select the copy;
     edit `beatrix`'s name, wait 2 seconds and come back; select "Review –
     Missing content (Runepriest copy)".
-  - **Expect:** a navy band: a white-bordered portrait about a third of the
-    pane wide, the name in the large display font, then the identity, bold
-    white role, and paler paragon, epic and Edited lines. Five equal
-    buttons, each an icon over a word, in one row at any width; hover
+  - **Expect:** a navy band: a portrait about a third of the pane wide
+    with the 3px gray ring every portrait has, the name in the large
+    display font, then the identity, bold white role, and paler paragon,
+    epic and Edited lines. Six equal buttons, each an icon over a word, in
+    one row along the bottom (to the right when stacked, below); hover
     lightens a button and adds a light-blue bottom line; Export's menu
     opens below the pane with a spinner on .dnd4e; Trash turns pink, then
     dark red "Confirm". The copy shows a faint bar about 9rem wide where the
@@ -925,6 +926,17 @@ Open `#/characters` with the review characters restored.
   - **Wrong if:** a button wraps to two lines, the menu is clipped by the
     pane, lines jump while the role line loads, holding Arrow Down through
     the table feels sluggish, or a bar stays.
+- [x] **Library: stacked detail pane actions.**
+  - **Where:** narrow the window until the detail pane moves above the
+    table (a window below 60rem), then narrow it
+    further to phone width.
+  - **Expect:** while the pane is at least 36rem wide, the six buttons sit
+    as a three-by-two block on the right of the portrait and text, filling
+    the band's height, with a thin divider on their left and no row along
+    the bottom; narrower, they return to one row along the bottom.
+  - **Wrong if:** the pane is taller than the portrait block needs, a
+    button label wraps or ellipsizes at the wide size, the Export menu is
+    clipped, or the side-by-side layout (pane beside the table) changes.
 - [x] **Library: trash.**
   - **Where:** trash "Review – Update waiting" and "Review – Missing
     content", click Trash in the header, restore one, then click Empty

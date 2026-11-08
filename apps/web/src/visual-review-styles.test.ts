@@ -99,8 +99,26 @@ describe("visual-review facts decided by CSS", () => {
     expect(wait).toContain("width: 9rem");
     expect(wait).toContain("background: rgb(255 255 255 / 25%)");
     expect(declarations(".library-detail-portrait")).toContain(
-      "border: 3px solid rgb(255 255 255 / 85%)",
+      "--portrait-border-width: 3px",
     );
+    expect(
+      declarations(".character-portrait, .portrait-placeholder"),
+    ).toContain(
+      "border: var(--portrait-border-width, 2px) solid var(--border-strong)",
+    );
+  });
+
+  it("moves the library pane's actions to its right side once the pane is stacked and wide", () => {
+    expect(declarations(".library-detail")).toContain(
+      "container: library-detail / inline-size",
+    );
+    const wide = appStyles
+      .replace(/\s+/g, " ")
+      .match(
+        /@container library-detail \(min-width: 36rem\) \{(.*?\}.*?\})\s*\}/,
+      )?.[1];
+    expect(wide).toContain("grid-template-columns: minmax(0, 1fr) 16.5rem");
+    expect(wide).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
   });
 
   it("puts a familiar card's HP and Speed tiles on one row, Speed three times wider", () => {

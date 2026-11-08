@@ -91,6 +91,7 @@
   color: var(--muted);
 }
 .library-table-portrait {
+  --portrait-border-width: 1px;
   height: 2.25rem;
   width: 2.25rem;
 }
@@ -119,6 +120,7 @@
 .library-detail {
   background: var(--surface);
   border: 1px solid var(--border);
+  container: library-detail / inline-size;
   min-width: 0;
   position: sticky;
   top: 1rem;
@@ -145,7 +147,7 @@
 }
 /* The builder sidebar's portrait size, shrinking in a narrow pane. */
 .library-detail-portrait {
-  border: 3px solid rgb(255 255 255 / 85%);
+  --portrait-border-width: 3px;
   flex: none;
   height: auto;
   width: min(9rem, 38%);
@@ -173,15 +175,29 @@
   font-size: 0.8rem;
   gap: 0.2rem 0.5rem;
 }
-/* Six equal buttons, icon over a one-word label, in one row at any width
-   (labels ellipsize rather than wrap). The 1px gaps over the rule color
-   draw the dividers. */
+/* Six equal buttons, icon over a one-word label, in one row along the
+   bottom edge (labels ellipsize rather than wrap). The 1px gaps over the
+   rule color draw the dividers. */
 .library-detail-actions {
   background: var(--library-band-rule);
   border-top: 1px solid var(--library-band-rule);
   display: grid;
   gap: 1px;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+/* A pane this wide is stacked above the table (a side pane is at most
+   30rem), where height is scarce: the actions move from the bottom edge to
+   a three-by-two block on the right of the identity. */
+@container library-detail (min-width: 36rem) {
+  .library-detail-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 16.5rem;
+  }
+  .library-detail-actions {
+    border-left: 1px solid var(--library-band-rule);
+    border-top: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .library-detail-actions > .action-menu {
   display: flex;
@@ -302,9 +318,13 @@
   outline: 3px solid var(--focus);
   outline-offset: -1px;
 }
+/* Every portrait, set or not, has the same gray ring at the detail pane's
+   proportions (3px at 9rem); smaller portraits set a thinner
+   --portrait-border-width. */
 .character-portrait,
 .portrait-placeholder {
   aspect-ratio: 1;
+  border: var(--portrait-border-width, 2px) solid var(--border-strong);
   border-radius: 50%;
   display: block;
   object-fit: cover;
@@ -312,7 +332,6 @@
 .portrait-placeholder {
   align-items: center;
   background: var(--surface-subtle);
-  border: 2px solid var(--border-strong);
   color: var(--muted);
   display: flex;
   justify-content: center;

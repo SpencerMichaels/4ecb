@@ -928,7 +928,7 @@
   justify-content: flex-start;
 }
 .print-play-portrait {
-  border: 1.5px solid var(--card-color);
+  border: 2px solid var(--card-color);
   border-radius: 50%;
   flex: none;
   height: 0.46in;

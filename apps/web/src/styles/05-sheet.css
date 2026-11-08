@@ -67,7 +67,6 @@
 }
 
 .view-sheet-portrait {
-  border: 2px solid var(--border-strong);
   height: 5rem;
   width: 5rem;
 }
@@ -364,11 +363,6 @@
   justify-content: space-between;
   margin-bottom: 0.75rem;
 }
-.sheet-portrait {
-  border: 2px solid #20272a;
-  height: 4.5rem;
-  width: 4.5rem;
-}
 .identity-block {
   border-bottom: 1px solid #777;
   margin-bottom: 0.8rem;
@@ -478,12 +472,6 @@
 }
 .print-notes-column {
   align-content: start;
-}
-.print-reference-portrait {
-  border: 1px solid #777;
-  height: 2.4in;
-  object-fit: contain;
-  width: 100%;
 }
 .print-note-panel {
   max-height: 1.6in;

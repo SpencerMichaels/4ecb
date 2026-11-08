@@ -273,6 +273,7 @@ button.toast-dismiss:not(:disabled):hover {
 }
 
 .trash-portrait {
+  --portrait-border-width: 1px;
   flex: 0 0 auto;
   height: 2.75rem;
   width: 2.75rem;

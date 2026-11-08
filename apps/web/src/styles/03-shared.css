@@ -76,6 +76,7 @@
    An <img> keeps its natural size under `inset`, so size it explicitly. */
 .loading-portrait {
   animation: loading-portrait-in 0.2s ease-out;
+  border: 3px solid var(--border-strong);
   border-radius: 50%;
   height: calc(100% - 1.2rem);
   left: 0.6rem;

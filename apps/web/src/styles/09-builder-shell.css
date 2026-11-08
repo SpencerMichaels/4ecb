@@ -259,6 +259,7 @@
 }
 
 .builder-sidebar-identity .portrait-trigger {
+  --portrait-border-width: 3px;
   height: var(--character-portrait-size);
   margin-bottom: 0.5rem;
   width: var(--character-portrait-size);
