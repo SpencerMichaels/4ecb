@@ -782,8 +782,9 @@
     --card-color: var(--power-item);
   }
 }
-/* Dark-theme card colors for builder and on-screen panel cards. Printed
-   cards and the print preview always stay on light paper (D079). */
+/* Dark-theme card colors for builder and on-screen panel cards. The fills
+   share D124's chroma cap and each takes a white title. Printed cards and
+   the print preview always stay on light paper (D079). */
 @media screen {
   :root[data-theme="dark"] .print-reference-card.is-panel {
     --card-paper: #1b2130;
@@ -796,19 +797,24 @@
     --card-color: #2d6644;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.usage-encounter {
-    --card-color: #8c3535;
+    --card-color: #853c3b;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.usage-daily {
     --card-color: #6b7280;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.usage-feature {
-    --card-color: #7a4b9c;
+    --card-color: #74538f;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.utility-power {
-    --card-color: #3346b5;
+    --card-color: #40518d;
   }
   :root[data-theme="dark"] .print-item-card.is-panel {
-    --card-color: #e08a12;
+    --card-color: #a06b31;
+  }
+  /* The darker item fill takes the power cards' white title and type bar. */
+  :root[data-theme="dark"] .print-item-card.is-panel > header,
+  :root[data-theme="dark"] .print-item-card.is-panel .print-card-type {
+    color: #fff;
   }
   :root[data-theme="dark"]
     .print-reference-card.is-panel
@@ -848,19 +854,24 @@
     --card-color: #2d6644;
   }
   :root:not([data-theme]) .print-power-card.is-panel.usage-encounter {
-    --card-color: #8c3535;
+    --card-color: #853c3b;
   }
   :root:not([data-theme]) .print-power-card.is-panel.usage-daily {
     --card-color: #6b7280;
   }
   :root:not([data-theme]) .print-power-card.is-panel.usage-feature {
-    --card-color: #7a4b9c;
+    --card-color: #74538f;
   }
   :root:not([data-theme]) .print-power-card.is-panel.utility-power {
-    --card-color: #3346b5;
+    --card-color: #40518d;
   }
   :root:not([data-theme]) .print-item-card.is-panel {
-    --card-color: #e08a12;
+    --card-color: #a06b31;
+  }
+  /* The darker item fill takes the power cards' white title and type bar. */
+  :root:not([data-theme]) .print-item-card.is-panel > header,
+  :root:not([data-theme]) .print-item-card.is-panel .print-card-type {
+    color: #fff;
   }
   :root:not([data-theme])
     .print-reference-card.is-panel

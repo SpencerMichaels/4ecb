@@ -213,6 +213,13 @@ describe("release accessibility contract", () => {
       ["#111727", "#8d9fe0"],
       ["#111727", "#b08ecd"],
       ["#111727", "#e8ab5c"],
+      // Dark-theme panel card fills under their white titles (D124).
+      ["#ffffff", "#2d6644"],
+      ["#ffffff", "#853c3b"],
+      ["#ffffff", "#6b7280"],
+      ["#ffffff", "#40518d"],
+      ["#ffffff", "#74538f"],
+      ["#ffffff", "#a06b31"],
     ] as const;
     for (const [foreground, background] of pairs)
       expect(

@@ -121,7 +121,8 @@ instances listed.
   green, encounter red) were far more saturated than the muted navy UI. Rule:
   every hard-coded dark-theme color is checked against the surrounding
   palette; lower saturation and lightness, keep the hue, keep white-on-color
-  text above 4.5:1. Item orange (`#e08a12`) still to review.
+  text above 4.5:1. Item orange (`#e08a12`) became `#a06b31` with a white
+  title (D124).
 - **Colors that already mean something.** Selected rows in background, theme
   and deity tables were green, the at-will power color, while their cards are
   navy. Rule: a color with a game meaning (power usage tones) is used only for

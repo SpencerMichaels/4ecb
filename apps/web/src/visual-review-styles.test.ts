@@ -208,6 +208,30 @@ describe("visual-review facts decided by CSS", () => {
     }
   });
 
+  it("tones dark-theme panel card fills to D124's chroma cap under white titles", () => {
+    for (const root of [
+      ':root[data-theme="dark"]',
+      ":root:not([data-theme])",
+    ]) {
+      for (const [selector, color] of [
+        [".print-reference-card.is-panel", "#2d6644"],
+        [".print-power-card.is-panel.usage-encounter", "#853c3b"],
+        [".print-power-card.is-panel.usage-daily", "#6b7280"],
+        [".print-power-card.is-panel.usage-feature", "#74538f"],
+        [".print-power-card.is-panel.utility-power", "#40518d"],
+        [".print-item-card.is-panel", "#a06b31"],
+      ] as const)
+        expect(declarations(`${root} ${selector}`)).toContain(
+          `--card-color: ${color}`,
+        );
+      expect(
+        declarations(
+          `${root} .print-item-card.is-panel > header, ${root} .print-item-card.is-panel .print-card-type`,
+        ),
+      ).toContain("color: #fff");
+    }
+  });
+
   it("sizes the Party pieces box about five characters wide beside its label", () => {
     expect(declarations(".item-set-party-pieces input")).toContain(
       "width: 5em",

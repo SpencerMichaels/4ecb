@@ -5613,8 +5613,16 @@ printed cards keep the vivid legacy colors.
   and item panel cards take the tokens above. Daily keeps the printed `#777`
   (the token `#808080` is 3.95:1 under the white title) and feature was
   already the token. This amends D079's "builder tones match printed cards"
-  for color only. The dark-theme panel card colors (`#2d6644`, `#8c3535`, …,
-  under white titles) are unchanged.
+  for color only.
+- Dark-theme panel cards (`06-cards.css`, both dark scopes) take the same
+  OKLCH chroma cap of 0.10 at their hue and lightness, under white titles:
+  at-will `#2d6644` and daily `#6b7280` unchanged, encounter `#853c3b`
+  (was `#8c3535`), utility `#40518d` (was `#3346b5`), feature `#74538f` (was
+  `#7a4b9c`), item `#a06b31` (was `#e08a12`). The item panel card was darkened
+  for a white title and type bar like the power cards (its `#111` text would
+  read 4.2:1 on the new fill). White title contrast: 6.8, 7.8, 4.8, 7.6, 6.2,
+  4.5:1. The color-mix bands and the dark item-power headings still read
+  above 7.7:1 under the `#e7e9ee` card ink.
 - Every `.print-*` rule keeps its color, and `--success`/`--danger` keep
   `#006400`/`#8b0000`.
 - Title text and contrast: white on at-will 7.5:1, encounter 9.7:1, utility
