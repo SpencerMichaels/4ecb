@@ -81,6 +81,10 @@ if ! $skip_checks; then
   log="$worktree.log"
   trap 'git worktree remove --force "$worktree" >/dev/null 2>&1 || true' EXIT
   git worktree add -q --detach "$worktree" "$commit"
+  # A new worktree has no submodules checked out; the build needs the shared 4e-kit (`@kit`),
+  # as CI does (cbloader-source is reference material only).
+  git -C "$worktree" submodule update -q --init vendor/4e-kit ||
+    die "couldn't check out vendor/4e-kit (is its commit pushed to GitHub?)"
   if ! (cd "$worktree" && FOURECB_SKIP_PRINT_CHECK=1 nix develop --command bash -c \
       'pnpm install --frozen-lockfile && bash scripts/check.sh') >"$log" 2>&1; then
     tail -n 40 "$log" >&2
