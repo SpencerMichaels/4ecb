@@ -764,6 +764,24 @@
 .candidate-card-panel > .detail-source-note {
   margin: 0;
 }
+/* Light-theme builder panel cards take the softened power tones (D124);
+   printed cards keep the vivid colors above. Daily keeps the printed #777,
+   which its white title text needs, and feature is the same plum in both.
+   The dark-theme rules below are more specific and win there. */
+@media screen {
+  .print-power-card.is-panel.usage-at-will {
+    --card-color: var(--power-at-will);
+  }
+  .print-power-card.is-panel.usage-encounter {
+    --card-color: var(--power-encounter);
+  }
+  .print-power-card.is-panel.utility-power {
+    --card-color: var(--power-utility);
+  }
+  .print-item-card.is-panel {
+    --card-color: var(--power-item);
+  }
+}
 /* Dark-theme card colors for builder and on-screen panel cards. Printed
    cards and the print preview always stay on light paper (D079). */
 @media screen {

@@ -483,11 +483,11 @@
 }
 
 :root[data-theme="dark"] .tone-at-will {
-  --tone: #63c37a;
+  --tone: #7dbc8a;
   --tone-contrast: #111727;
 }
 :root[data-theme="dark"] .tone-encounter {
-  --tone: #f07474;
+  --tone: #d68784;
   --tone-contrast: #111727;
 }
 :root[data-theme="dark"] .tone-daily {
@@ -495,24 +495,25 @@
   --tone-contrast: #111727;
 }
 :root[data-theme="dark"] .tone-utility {
-  --tone: #829bff;
+  --tone: #8d9fe0;
+  --tone-contrast: #111727;
 }
 :root[data-theme="dark"] .tone-feature {
-  --tone: #b48ad6;
+  --tone: #b08ecd;
   --tone-contrast: #111727;
 }
 :root[data-theme="dark"] .tone-item {
-  --tone: #f2a73b;
+  --tone: #e8ab5c;
   --tone-contrast: #111727;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .tone-at-will {
-    --tone: #63c37a;
+    --tone: #7dbc8a;
     --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-encounter {
-    --tone: #f07474;
+    --tone: #d68784;
     --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-daily {
@@ -520,14 +521,15 @@
     --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-utility {
-    --tone: #829bff;
+    --tone: #8d9fe0;
+    --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-feature {
-    --tone: #b48ad6;
+    --tone: #b08ecd;
     --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-item {
-    --tone: #f2a73b;
+    --tone: #e8ab5c;
     --tone-contrast: #111727;
   }
 }

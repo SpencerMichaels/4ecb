@@ -5590,3 +5590,36 @@ the pinned version.
 - First use: `powerActionSymbol` maps a power's action text to a kit
   `ActionType` and prints the kit's `ACTION_TYPE_SYMBOLS`, so both apps show
   the same glyphs.
+
+### D124 — Softened power-usage tones on screen; printed cards stay vivid
+
+Status: accepted (2026-11-12, owner).
+
+The visual language adopted the exact legacy sheet colors (at-will
+`#006400`, encounter `#8B0000`, utility `#000080`, item `#FF8C00`) for every
+surface. The owner approved softer power tones for the on-screen builder;
+printed cards keep the vivid legacy colors.
+
+- Light tokens (`01-base.css`): at-will `#286023`, encounter `#782b22`,
+  utility `#09205b`, item `#f49340`; daily `#808080` and feature `#5e3a78`
+  are unchanged. The `-soft` tints are unchanged.
+- Dark `.tone-*` overrides (`12-choice-details.css`): at-will `#7dbc8a`,
+  encounter `#d68784`, utility `#8d9fe0`, feature `#b08ecd`, item `#e8ab5c`;
+  daily `#b8bec7` is unchanged. Dark utility now also sets
+  `--tone-contrast: #111727` like the others (white on its light blue was
+  2.6:1).
+- Builder panel cards (`.is-panel`, D079) no longer share the printed
+  `--card-color` in the light theme: on screen, at-will, encounter, utility
+  and item panel cards take the tokens above. Daily keeps the printed `#777`
+  (the token `#808080` is 3.95:1 under the white title) and feature was
+  already the token. This amends D079's "builder tones match printed cards"
+  for color only. The dark-theme panel card colors (`#2d6644`, `#8c3535`, …,
+  under white titles) are unchanged.
+- Every `.print-*` rule keeps its color, and `--success`/`--danger` keep
+  `#006400`/`#8b0000`.
+- Title text and contrast: white on at-will 7.5:1, encounter 9.7:1, utility
+  15.3:1, feature 8.9:1; `#251506` on item 7.7:1 (the panel item title's
+  `#111` 8.2:1). Dark tones under `#111727`: 8.0, 6.5, 9.6 (daily), 6.9,
+  6.5, 8.9:1.
+- The shared 4e-kit `styles/tokens.css` carries the same values, with the
+  dark tones as dark-theme `--power-*` overrides.

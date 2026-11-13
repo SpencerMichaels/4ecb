@@ -65,6 +65,21 @@ describe("visual-review facts decided by CSS", () => {
     expect(declarations(".print-item-card")).toContain("--card-color: #ff8c00");
   });
 
+  it("gives builder panel cards the softened power tones and printed cards the vivid ones (D124)", () => {
+    expect(declarations(".print-power-card.usage-encounter")).toContain(
+      "--card-color: #8b0000",
+    );
+    expect(
+      declarations(".print-power-card.is-panel.usage-encounter"),
+    ).toContain("--card-color: var(--power-encounter)");
+    expect(declarations(".print-power-card.is-panel.utility-power")).toContain(
+      "--card-color: var(--power-utility)",
+    );
+    expect(declarations(".print-item-card.is-panel")).toContain(
+      "--card-color: var(--power-item)",
+    );
+  });
+
   it("fades a set's locked benefits to 60% once the count is known", () => {
     expect(
       declarations(

@@ -199,6 +199,20 @@ describe("release accessibility contract", () => {
       ["#111111", "#808080"],
       ["#ffffff", "#000080"],
       ["#211406", "#ff8c00"],
+      // Softened builder power tones (D124) with their title text.
+      ["#ffffff", "#286023"],
+      ["#ffffff", "#782b22"],
+      ["#ffffff", "#09205b"],
+      ["#ffffff", "#5e3a78"],
+      ["#251506", "#f49340"],
+      ["#111111", "#f49340"],
+      // Dark-theme tones under their dark title text.
+      ["#111727", "#7dbc8a"],
+      ["#111727", "#d68784"],
+      ["#111727", "#b8bec7"],
+      ["#111727", "#8d9fe0"],
+      ["#111727", "#b08ecd"],
+      ["#111727", "#e8ab5c"],
     ] as const;
     for (const [foreground, background] of pairs)
       expect(
@@ -806,11 +820,11 @@ describe("release accessibility contract", () => {
 
   it("keeps the legacy semantic palette and uses no pill-shaped chrome", () => {
     for (const token of [
-      "--power-at-will: #006400",
-      "--power-encounter: #8b0000",
+      "--power-at-will: #286023",
+      "--power-encounter: #782b22",
       "--power-daily: #808080",
-      "--power-utility: #000080",
-      "--power-item: #ff8c00",
+      "--power-utility: #09205b",
+      "--power-item: #f49340",
     ])
       expect(styles).toContain(token);
     // Shop filter chips square off like every other builder button.
