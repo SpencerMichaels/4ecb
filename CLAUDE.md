@@ -31,6 +31,10 @@ Do not use `nix develop path:.`: it copies and hashes the entire working tree,
 including the multi-GB `tmp/`, on every invocation (~3 minutes vs ~5 seconds).
 Plain `nix develop` copies only git-tracked files.
 
+The shared 4e kit is a git submodule at `vendor/4e-kit` (D123): clone with
+`--recurse-submodules`, or run `git submodule update --init vendor/4e-kit` in
+an existing checkout; the build and tests need it.
+
 ## Common commands
 
 Run from repo root:
@@ -220,7 +224,17 @@ packages/
 
 docs/                  Product plan, architecture, roadmap, decisions (source of truth)
 reverse-engineering/   Legacy evidence, recovered spec, schemas, fixtures
+vendor/4e-kit/         Submodule: 4e vocabulary/schema shared with 4e DM Dashboard (`@kit`)
 ```
+
+`vendor/4e-kit` (D123) is TypeScript source with no build step, imported
+through the `@kit` alias (`@kit` is its `src/index.ts`, `@kit/<module>` one
+file), mapped in `apps/web/vite.config.ts`, `apps/web/tsconfig.app.json`, the
+root `vitest.config.ts`, and the root `tsconfig.json` (for `tsx` scripts). It
+keeps its own style (single quotes, no semicolons) and is excluded from
+ESLint and Prettier. Change shared code in the 4e-kit repo first (with its
+own tests), then bump the submodule here (`git -C vendor/4e-kit pull`, commit
+`vendor/4e-kit`); never edit the submodule's files from this repo.
 
 Packages are independently testable domain/runtime boundaries. Feature UI
 pages stay in `apps/web` until a second real consumer justifies extracting a

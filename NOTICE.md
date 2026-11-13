@@ -16,6 +16,12 @@ selected browser profile unless the user explicitly exports or transfers them.
 The synthetic fixtures in this repository are original test data. This notice is
 an engineering and distribution boundary, not legal advice.
 
+## Shared 4e kit
+
+`vendor/4e-kit` is a git submodule of 4e-kit, the D&D 4e vocabulary and
+content schema shared with the sibling 4e DM Dashboard project, by the same
+author and also licensed GPL-3.0-or-later (see its own `LICENSE`).
+
 ## Third-party interface assets
 
 General-purpose interface icons are provided by Lucide through `lucide-react`

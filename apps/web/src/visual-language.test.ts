@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  ACTION_TYPE_LABELS,
+  ACTION_TYPE_SYMBOLS,
+  ACTION_TYPES,
+  type ActionType,
+} from "@kit";
 
 import { choiceSectionIcon } from "./builder-ui";
 import {
   entityTypeIcon,
   entityVisualTone,
   powerActionSymbol,
+  powerActionType,
   powerAttackIcon,
   sheetReferenceIcon,
 } from "./visual-language";
@@ -150,16 +157,27 @@ describe("legacy-derived visual language", () => {
     expect(sheetReferenceIcon("Class features")).not.toBe("class");
   });
 
-  it("maps every power action type to the tabletop-dashboard symbol", () => {
-    expect(powerActionSymbol("Standard Action")).toBe("●");
-    expect(powerActionSymbol("Minor Action")).toBe("◔");
-    expect(powerActionSymbol("Move Action")).toBe("≫");
-    expect(powerActionSymbol("Free Action")).toBe("○");
-    expect(powerActionSymbol("No Action")).toBe("–");
-    expect(powerActionSymbol("Immediate Reaction")).toBe("↻");
-    expect(powerActionSymbol("Opportunity Action")).toBe("↻");
-    expect(powerActionSymbol("Immediate Interrupt")).toBe("↯");
-    expect(powerActionSymbol(undefined)).toBe("–");
+  it("maps every power action type to the shared kit's symbol", () => {
+    const symbol = (type: ActionType) => ACTION_TYPE_SYMBOLS[type];
+    expect(powerActionSymbol("Standard Action")).toBe(symbol("standard"));
+    expect(powerActionSymbol("Minor Action")).toBe(symbol("minor"));
+    expect(powerActionSymbol("Move Action")).toBe(symbol("move"));
+    expect(powerActionSymbol("Free Action")).toBe(symbol("free"));
+    expect(powerActionSymbol("No Action")).toBe(symbol("no-action"));
+    expect(powerActionSymbol("Immediate Reaction")).toBe(
+      symbol("immediate-reaction"),
+    );
+    expect(powerActionSymbol("Opportunity Action")).toBe(symbol("opportunity"));
+    expect(powerActionSymbol("Immediate Interrupt")).toBe(
+      symbol("immediate-interrupt"),
+    );
+    expect(powerActionSymbol(undefined)).toBe(symbol("no-action"));
+  });
+
+  it("reads each of the kit's action type labels as that type", () => {
+    for (const type of ACTION_TYPES) {
+      expect(powerActionType(ACTION_TYPE_LABELS[type])).toBe(type);
+    }
   });
 
   it("maps power attack metadata to compact semantic icons", () => {

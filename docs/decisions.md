@@ -5569,3 +5569,24 @@ on device B takes the code and adds the character to the library. Manual
   rule above).
   The select's name, the Build tab's choice title, is now "Bonus
   Languages".
+
+### D123 — Shared 4e code lives in the 4e-kit submodule
+
+Status: accepted (2026-11-12, owner).
+
+4ecb and the sibling 4e DM Dashboard share D&D 4e vocabulary (action types
+and their glyphs, usages, defenses, damage types, conditions, the XP table),
+the content schema, and the `CharacterSnapshot` 4ecb will export. That code
+lives in its own GPL-3.0-or-later repository, 4e-kit, included in both apps
+as a git submodule (`vendor/4e-kit`) and imported as TypeScript source
+through the `@kit` alias; it has no build step, and the submodule commit is
+the pinned version.
+
+- Shared code changes in 4e-kit first, then each app bumps its submodule.
+  The kit keeps its own style and tests and is excluded from 4ecb's ESLint,
+  Prettier and test run; 4ecb's typecheck covers the kit modules it imports.
+- The Docker build copies `vendor/4e-kit`; CI initializes that submodule
+  only (`cbloader-source` stays reference material).
+- First use: `powerActionSymbol` maps a power's action text to a kit
+  `ActionType` and prints the kit's `ACTION_TYPE_SYMBOLS`, so both apps show
+  the same glyphs.

@@ -1,19 +1,23 @@
-import { powerActionSymbol, type PowerActionSymbol } from "./visual-language";
+import type { ActionType } from "@kit";
+
+import { powerActionType } from "./visual-language";
 import { Icon, type IconName } from "./Icon";
 
 /**
- * Lucide icons for the action symbols. As text glyphs (● ◔ ≫ ○) they took
- * their size from whichever symbol font a computer had, so printed cards
- * differed between browsers. Standard is the free circle, filled by CSS.
+ * Lucide icons for the action types' symbols (powerActionSymbol). As text
+ * glyphs (● ◔ ≫ ○) they took their size from whichever symbol font a computer
+ * had, so printed cards differed between browsers. Standard is the free
+ * circle, filled by CSS.
  */
-const SYMBOL_ICONS: Readonly<Record<PowerActionSymbol, IconName>> = {
-  "●": "circle",
-  "◔": "action-minor",
-  "≫": "action-move",
-  "○": "circle",
-  "↻": "action-reaction",
-  "↯": "trending-up",
-  "–": "action-none",
+const ACTION_TYPE_ICONS: Readonly<Record<ActionType, IconName>> = {
+  standard: "circle",
+  minor: "action-minor",
+  move: "action-move",
+  free: "circle",
+  "immediate-reaction": "action-reaction",
+  opportunity: "action-reaction",
+  "immediate-interrupt": "trending-up",
+  "no-action": "action-none",
 };
 
 export function ActionTypeIcon({
@@ -25,11 +29,11 @@ export function ActionTypeIcon({
 }) {
   const label = value?.trim();
   if (!label) return null;
-  const symbol = powerActionSymbol(value);
+  const actionType = powerActionType(value);
 
   return (
     <span
-      className={`selection-metadata-icon action-type-icon${symbol === "●" ? " is-standard-action" : ""}`}
+      className={`selection-metadata-icon action-type-icon${actionType === "standard" ? " is-standard-action" : ""}`}
       aria-hidden={decorative ? "true" : undefined}
       aria-label={decorative ? undefined : label}
       title={label}
@@ -43,7 +47,7 @@ export function ActionTypeIcon({
       ) : /\breaction\b/i.test(label) ? (
         <Icon name="action-reaction" />
       ) : (
-        <Icon name={SYMBOL_ICONS[symbol]} />
+        <Icon name={ACTION_TYPE_ICONS[actionType]} />
       )}
     </span>
   );

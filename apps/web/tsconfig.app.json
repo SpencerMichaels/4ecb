@@ -2,6 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "paths": {
+      "@kit": ["../../vendor/4e-kit/src/index.ts"],
+      "@kit/*": ["../../vendor/4e-kit/src/*"]
+    },
     "types": ["vite/client", "vite-plugin-pwa/react", "node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]

@@ -5,6 +5,7 @@ reverse-engineering/generated/
 reverse-engineering/reference/cbloader-source/
 reverse-engineering/tools/dotnet/
 tmp/
+vendor/
 scratch/
 .claude/worktrees/
 node_modules/

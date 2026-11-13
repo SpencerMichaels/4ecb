@@ -14,6 +14,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+      # Only the shared 4e-kit (`@kit`); cbloader-source is reference material.
+      - run: git submodule update --init vendor/4e-kit
       - uses: cachix/install-nix-action@v31
       - name: Run tests and deterministic fixture build
         # The print check runs in print-checks below.
@@ -32,6 +34,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+      # Only the shared 4e-kit (`@kit`); cbloader-source is reference material.
+      - run: git submodule update --init vendor/4e-kit
       - uses: cachix/install-nix-action@v31
       - name: Build and run the print check
         run: nix develop --command bash -c 'pnpm build && pnpm check:print'
@@ -51,6 +55,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+      # Only the shared 4e-kit (`@kit`); cbloader-source is reference material.
+      - run: git submodule update --init vendor/4e-kit
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:

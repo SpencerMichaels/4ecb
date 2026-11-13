@@ -13,6 +13,16 @@ import { deployFileForRequest } from "./src/dev-deploy-path";
 import { themeBackgrounds } from "./src/theme-tokens";
 import { WEB_MANIFEST, WEB_MANIFEST_FILENAME } from "./src/web-manifest";
 
+/** The shared D&D 4e kit (git submodule vendor/4e-kit, TypeScript source with
+ *  no build step): `@kit` is its index, `@kit/<file>` one of its modules.
+ *  The root vitest.config.ts, tsconfig.json and apps/web/tsconfig.app.json
+ *  map the same paths. */
+const kitSource = join(import.meta.dirname, "../../vendor/4e-kit/src");
+const kitAliases = [
+  { find: /^@kit$/, replacement: join(kitSource, "index.ts") },
+  { find: /^@kit\//, replacement: `${kitSource}/` },
+];
+
 /** Page backgrounds from the theme definitions, the one source for the
  *  browser/installed-app chrome colors (theme.ts keeps them in sync at run
  *  time; the manifest has none, see web-manifest.ts). */
@@ -172,6 +182,9 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: kitAliases,
+  },
   worker: {
     format: "es",
   },

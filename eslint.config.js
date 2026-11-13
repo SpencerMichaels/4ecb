@@ -11,6 +11,8 @@ export default tseslint.config(
       "CharacterBuilder/**",
       "CBLoader/**",
       "tmp/**",
+      // The shared 4e-kit submodule keeps its own style; lint it there.
+      "vendor/**",
       ".claude/worktrees/**",
     ],
   },

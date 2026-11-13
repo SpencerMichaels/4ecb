@@ -1,3 +1,6 @@
 [submodule "reverse-engineering/reference/cbloader-source"]
 	path = reverse-engineering/reference/cbloader-source
 	url = https://github.com/CBLoader/CBLoader.git
+[submodule "vendor/4e-kit"]
+	path = vendor/4e-kit
+	url = /home/smichaels/Projects/4e-kit

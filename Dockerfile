@@ -6,6 +6,9 @@ RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json vitest.config.ts ./
 COPY apps ./apps
 COPY packages ./packages
+# The shared 4e-kit submodule (`@kit`); check it out first
+# (git submodule update --init vendor/4e-kit).
+COPY vendor/4e-kit ./vendor/4e-kit
 RUN pnpm install --frozen-lockfile
 
 FROM build AS development

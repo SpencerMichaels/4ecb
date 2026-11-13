@@ -104,6 +104,9 @@ These instructions apply to the entire repository.
   them separate from the public suite.
 - Make coherent checkpoint commits after verification. Do not declare a
   milestone complete from a dirty or unverified worktree.
+- D&D 4e code shared with 4e DM Dashboard lives in the `vendor/4e-kit`
+  submodule (`@kit`, D123; clone with `--recurse-submodules`). Never edit it
+  here: change the 4e-kit repo first, then bump the submodule in 4ecb.
 - Do heavy text parsing of content once, at content-pack generation, and store
   the result in the pack (normalized fields, rule IR); never re-parse content
   prose or stat blocks each time the app loads content or evaluates a

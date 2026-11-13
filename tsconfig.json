@@ -1,0 +1,13 @@
+{
+  // Only for tsx, which reads the tsconfig.json in the working directory:
+  // root scripts (pnpm audit:*, review:build) import apps/web modules that
+  // use the shared kit's `@kit` alias. It compiles nothing; each package
+  // type-checks with its own tsconfig.
+  "compilerOptions": {
+    "paths": {
+      "@kit": ["./vendor/4e-kit/src/index.ts"],
+      "@kit/*": ["./vendor/4e-kit/src/*"]
+    }
+  },
+  "files": []
+}

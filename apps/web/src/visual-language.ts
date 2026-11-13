@@ -1,5 +1,6 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 import { classifyPowerEntity } from "@4ecb/sheet-model";
+import { ACTION_TYPE_SYMBOLS, type ActionType } from "@kit";
 
 import type { IconName } from "./Icon";
 
@@ -91,21 +92,25 @@ export function entityTypeIcon(type: string): IconName {
   }
 }
 
-export type PowerActionSymbol = "●" | "◔" | "≫" | "○" | "↻" | "↯" | "–";
-
-export function powerActionSymbol(
-  value: string | undefined,
-): PowerActionSymbol {
+/** The shared kit's action type for a power's free-text action ("Minor
+ *  Action", "Immediate Reaction"…); none or "No Action" is no-action, and
+ *  anything unrecognized a standard action. */
+export function powerActionType(value: string | undefined): ActionType {
   const normalized = value?.trim().toLocaleLowerCase() ?? "";
-  if (normalized.includes("no action")) return "–";
-  if (normalized === "") return "–";
-  if (normalized.includes("interrupt")) return "↯";
-  if (normalized.includes("reaction")) return "↻";
-  if (normalized.includes("opportunity")) return "↻";
-  if (normalized.includes("minor")) return "◔";
-  if (normalized.includes("move")) return "≫";
-  if (normalized.includes("free")) return "○";
-  return "●";
+  if (normalized.includes("no action")) return "no-action";
+  if (normalized === "") return "no-action";
+  if (normalized.includes("interrupt")) return "immediate-interrupt";
+  if (normalized.includes("reaction")) return "immediate-reaction";
+  if (normalized.includes("opportunity")) return "opportunity";
+  if (normalized.includes("minor")) return "minor";
+  if (normalized.includes("move")) return "move";
+  if (normalized.includes("free")) return "free";
+  return "standard";
+}
+
+/** The action glyph both apps print (the kit's ACTION_TYPE_SYMBOLS). */
+export function powerActionSymbol(value: string | undefined): string {
+  return ACTION_TYPE_SYMBOLS[powerActionType(value)];
 }
 
 export function powerAttackIcon(value: string | undefined): IconName {
