@@ -3,4 +3,4 @@
 	url = https://github.com/CBLoader/CBLoader.git
 [submodule "vendor/4e-kit"]
 	path = vendor/4e-kit
-	url = /home/smichaels/Projects/4e-kit
+	url = https://github.com/SpencerMichaels/4e-kit.git
