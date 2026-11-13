@@ -32,7 +32,7 @@ done
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 if [[ -z "${IN_NIX_SHELL:-}" ]]; then
-  exec nix develop path:"$project_root" --command bash "$0" "$@"
+  exec nix develop "$project_root" --command bash "$0" "$@"
 fi
 homenet="${HOMENET_DIR:-$(dirname "$project_root")/homenet}"
 say() { printf '\033[1m==> %s\033[0m\n' "$*"; }

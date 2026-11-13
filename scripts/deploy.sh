@@ -36,7 +36,7 @@ cd "$project_root"
 # Project tools (jq, curl, git) come from the project-local Nix environment, as for every
 # other project command; re-run inside it unless already there.
 if [[ -z "${IN_NIX_SHELL:-}" ]]; then
-  exec nix develop path:"$project_root" --command bash "$0" "$@"
+  exec nix develop "$project_root" --command bash "$0" "$@"
 fi
 repo=SpencerMichaels/4ecb
 image=spencermichaels/4ecb
