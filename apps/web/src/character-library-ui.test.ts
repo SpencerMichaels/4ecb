@@ -34,6 +34,10 @@ const characterExport = readFileSync(
   new URL("./character-export.ts", import.meta.url),
   "utf8",
 );
+const backupSnapshots = readFileSync(
+  new URL("./backup-snapshots.ts", import.meta.url),
+  "utf8",
+);
 const sheet = readFileSync(
   new URL("./CharacterSheetPage.tsx", import.meta.url),
   "utf8",
@@ -153,7 +157,8 @@ describe("character library table and detail pane", () => {
       "exportCharacter(selected, exportCharacterDnd4e)",
     );
     expect(characterExport).toContain('target: "legacy-builder-0.07a"');
-    expect(characterExport).toContain(
+    expect(characterExport).toContain("evaluateStoredCharacter(");
+    expect(backupSnapshots).toContain(
       "projectBuildForEvaluation(character.build",
     );
     expect(characterExport).not.toContain("?print=1");

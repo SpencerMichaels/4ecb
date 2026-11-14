@@ -346,6 +346,13 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   (`CharacterLibraryPage.tsx` `importNativePackage`); an ID already in the
   library asks Replace / Keep both / Cancel in `CharacterConflictDialog`
   (`RestoreBackupDialog.tsx`, also the restore's dialog).
+- **Snapshots for 4e DM Dashboard (D125)**: `.4ecb` exports and full
+  backups carry `snapshots`, each character's kit `CharacterSnapshot`
+  (`character-snapshot.ts` `characterSnapshot`, projected from the
+  evaluated sheet model; added by `backup-snapshots.ts`
+  `withCharacterSnapshots` after the repository's export). Derived data:
+  outside `payloadDigest`, ignored on restore/import; a character that
+  can't be evaluated has none.
 
 ### Web app routes (`apps/web`)
 

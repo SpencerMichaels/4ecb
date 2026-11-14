@@ -19,6 +19,7 @@ const storage = vi.hoisted(() => ({
   restoreBackupKeepingBoth: vi.fn(),
 }));
 
+vi.mock("./character-export", () => ({ downloadCharacterBackup: vi.fn() }));
 vi.mock("@4ecb/browser-storage", () => ({
   CharacterRepository: class {
     inspectBackup = storage.inspectBackup;

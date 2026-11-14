@@ -29,7 +29,7 @@ import {
   type PersistenceStatus,
 } from "./browser-persistence";
 import { CampaignSettings } from "./CampaignSettings";
-import { downloadCharacterBackup } from "./download";
+import { downloadCharacterBackup } from "./character-export";
 import type { ContentDownloadState } from "./App";
 import { Icon } from "./Icon";
 import { RestoreBackupDialog, restoreSuccessText } from "./RestoreBackupDialog";

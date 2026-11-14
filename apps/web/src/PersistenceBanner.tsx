@@ -5,7 +5,7 @@ import {
   readPersistenceStatus,
   requestPersistentStorage,
 } from "./browser-persistence";
-import { downloadCharacterBackup } from "./download";
+import { downloadCharacterBackup } from "./character-export";
 import { Icon } from "./Icon";
 
 function dismissedBefore(): boolean {

@@ -218,6 +218,11 @@ export interface CharacterBackup<Campaign = unknown> {
   readonly payloadDigest: string;
   readonly characters: readonly CharacterRecord[];
   readonly campaigns?: readonly Campaign[];
+  /** Each character's evaluated numbers for other apps (the shared kit's
+   *  `CharacterSnapshot`, `sourceId` = the character's id), added by the
+   *  web app's file exports. Derived data: outside `payloadDigest`, and
+   *  ignored on import, which re-evaluates from the build. */
+  readonly snapshots?: readonly unknown[];
 }
 
 export interface LegacyCharacterBackup {

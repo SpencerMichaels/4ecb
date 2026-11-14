@@ -792,6 +792,29 @@ describe("CharacterRepository", () => {
     await expect(destination.get("first")).resolves.toBeUndefined();
   });
 
+  it("ignores a package's derived snapshots on restore and import", async () => {
+    const source = repository();
+    await source.put(character("snap"));
+    const exported = {
+      ...(await source.exportCharacter("snap")),
+      // Outside payloadDigest: the web export adds them after the digest,
+      // and a stale or foreign value never reaches the stored character.
+      snapshots: [{ version: 1, sourceId: "snap", name: "Stale numbers" }],
+    };
+
+    const restored = repository();
+    await expect(restored.inspectBackup(exported)).resolves.toMatchObject({
+      checksumVerified: true,
+    });
+    await expect(restored.restoreBackup(exported)).resolves.toBe(1);
+    await expect(restored.get("snap")).resolves.toEqual(character("snap"));
+
+    const imported = repository();
+    const [record] = await imported.importCharacters(exported);
+    expect(record).toEqual(character("snap"));
+    expect(record).not.toHaveProperty("snapshots");
+  });
+
   it("imports a character package as new active records without overwriting", async () => {
     const source = repository();
     await source.put({ ...character("kept"), portrait });

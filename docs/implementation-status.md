@@ -1,5 +1,26 @@
 # Implementation status
 
+## Evaluated snapshots in .4ecb exports (2026-11-13)
+
+D125: a `.4ecb` character export and the full backup carry a top-level
+`snapshots` list of kit `CharacterSnapshot`s (one per character that
+evaluates, `sourceId` = its id) for 4e DM Dashboard. apps/web
+`character-snapshot.ts` (`characterSnapshot`, pure, from the evaluated
+sheet model) and `backup-snapshots.ts` (`withCharacterSnapshots`,
+`evaluateStoredCharacter`, now also used by the `.dnd4e` export);
+`downloadCharacterBackup` moved to `character-export.ts`. Backup format
+unchanged at version 2; restore/import ignore the field.
+
+Verification: `character-snapshot.test.ts` (native character end to end,
+incomplete build and legacy-cache sheet omitted), a
+`character-repository.test.ts` round trip with snapshots. Private: all 59
+`sample-chars/` saves on their parity profiles produce a snapshot; against
+each save's own `<CharacterSheet>` cache, defenses 230/236, HP 58/59,
+surges 59/59, initiative 57/59, speed and passives 59/59, skill totals
+990/1003, skill training 1003/1003; every difference is an accepted
+`parity:baseline` mismatch (DV, Hystan_8, Mellivora-L7, oleander_8/9,
+yew).
+
 ## Pathfinder revision 15: bonus languages minimum 0 (2026-11-07)
 
 Owner change to D121: the Intelligence-modifier bonus languages have a

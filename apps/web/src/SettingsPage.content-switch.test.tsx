@@ -19,6 +19,7 @@ const activation = vi.hoisted(() => ({
 
 vi.mock("./profile-activation", () => activation);
 
+vi.mock("./character-export", () => ({ downloadCharacterBackup: vi.fn() }));
 vi.mock("@4ecb/browser-storage", () => ({
   CharacterRepository: class {
     listMetadataPartitioned = () =>

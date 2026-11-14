@@ -5631,3 +5631,36 @@ printed cards keep the vivid legacy colors.
   6.5, 8.9:1.
 - The shared 4e-kit `styles/tokens.css` carries the same values, with the
   dark tones as dark-theme `--power-*` overrides.
+
+### D125 — .4ecb exports carry evaluated CharacterSnapshots for 4e DM Dashboard
+
+Status: accepted (2026-11-13, owner handoff from the dashboard project).
+
+4e DM Dashboard imports player characters but has no rules engine, so a
+`.4ecb` file carries each character's printed numbers as the shared kit's
+`CharacterSnapshot` (D123), as a legacy save carries its `<CharacterSheet>`.
+It is not a new file type.
+
+- Backups gain a top-level `snapshots` list, one per character that
+  evaluates, `sourceId` = the character's id. Single-character exports and
+  full backups carry it; share packages (D122) and the content-update
+  dialog's safety backup don't (nothing reads them outside 4ecb).
+- Snapshots are derived data: outside `payloadDigest`, never read by
+  4ecb's restore/import, which re-evaluate from the build. The backup stays
+  version 2 (an added optional field; older 4ecb builds already ignore it).
+- The web app adds them after the repository's export
+  (`backup-snapshots.ts` `withCharacterSnapshots`): each character is
+  evaluated on its exact bound content through the shared rules worker and
+  projected from `buildEvaluatedSheetModel` by `characterSnapshot`
+  (`character-snapshot.ts`), never recomputed. A character that can't be
+  evaluated, or whose sheet lacks a required number (no class, no
+  defenses), gets no snapshot; the export still succeeds.
+- Field choices: class and hybrid names as the sheet prints them ("Warlord /
+  Fighter"); ability `modifier` is the sheet's check column (with half
+  level); `resist` lists positive `resist:<type>` totals for a kit
+  `DAMAGE_TYPES` type or `all` (resistances against attackers or areas,
+  and the few malformed content stat names, are left out); `actionPoints`
+  is the evaluated `_BaseActionPoints` (1); `markType` comes from the
+  class feature or power that marks, in the dashboard's id list, and a
+  swordmage's Aegis of Shielding/Ensnarement has none; `powers` is empty
+  (the dashboard doesn't read them yet).

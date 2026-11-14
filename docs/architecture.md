@@ -695,7 +695,10 @@ Storage rules:
   revision, a single-character package its bound revision), outside
   `payloadDigest`: each document is re-verified by its own digest and
   installed idempotently in the restore's transaction, a conflict aborting
-  the whole restore; backups without the field restore unchanged.
+  the whole restore; backups without the field restore unchanged; and
+- a backup v2 written by the web app's file exports carries `snapshots`
+  (D125): each character's evaluated kit `CharacterSnapshot` for 4e DM
+  Dashboard, outside `payloadDigest` and ignored by restore and import.
 
 The service worker precaches the application shell and manages versioned static
 assets. It does not cache user content through ordinary HTTP cache semantics.
