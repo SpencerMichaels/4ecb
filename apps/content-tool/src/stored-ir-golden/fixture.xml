@@ -511,4 +511,13 @@ A cursed item looks and functions like a normal magic item. To remove an item cu
 Communication Speech
 Persona The ogre is gruff.
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ARTIFACT_TABLE" name="Golden Rod of Merging" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Artifact</specific>
+Sages say the rod is a crack in the world.
+
+Merging Table
+&lt;table&gt;1d4	Effect
+1-2	The creature is dazed (save ends).
+3-4	The creature is slowed (save ends).&lt;/table&gt;
+  </RulesElement>
 </D20Rules>

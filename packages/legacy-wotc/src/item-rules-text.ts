@@ -13,6 +13,11 @@ const CONCORDANCE =
  *  "Moving On"), for an artifact whose table has no heading line. */
 const STATE =
   /^[ \t]*(?:(?:Transcendent|Pleased|Satisfied|Normal|Unsatisfied|Angered)[ \t]*\(|Moving On[ \t]*$)/im;
+/** An artifact table its powers roll on, under its own heading ("Negative
+ *  Convergence Table" over a "<table>" block), in an artifact without a
+ *  concordance (the Rod of Convergence). */
+const ARTIFACT_TABLE = /^[ \t]*[^\n<]*\bTable[ \t]*\r?\n[ \t]*<table>/im;
+
 /** The published cursed-item rule, which item curses repeat. */
 const CURSE_RULE =
   /\bA cursed item looks and functions like a normal magic item\b/i;
@@ -21,7 +26,8 @@ const CURSE_RULE =
  * A magic item's printed description part (see content-domain
  * `item-rules-text.ts`): a cursed item's whole description (its curse
  * rules), else an artifact's description from its concordance heading (or
- * its first concordance state) on. Undefined for any other record.
+ * its first concordance state) on, else from the heading of a table its
+ * powers roll on. Undefined for any other record.
  */
 export function parseItemRulesText(
   type: string,
@@ -36,9 +42,17 @@ export function parseItemRulesText(
     .some((field) => /\bcurse/i.test(field.value));
   if (special || CURSE_RULE.test(text)) return { kind: "curse", text };
   const start = CONCORDANCE.exec(text)?.index ?? STATE.exec(text)?.index;
-  return start === undefined
+  if (start !== undefined)
+    return { kind: "concordance", text: text.slice(start).trim() };
+  const artifact = specifics.some(
+    (field) =>
+      field.name.trim().toLocaleLowerCase() === "magic item type" &&
+      field.value.trim().toLocaleLowerCase() === "artifact",
+  );
+  const table = artifact ? ARTIFACT_TABLE.exec(text)?.index : undefined;
+  return table === undefined
     ? undefined
-    : { kind: "concordance", text: text.slice(start).trim() };
+    : { kind: "table", text: text.slice(table).trim() };
 }
 
 /** The record's {@link ITEM_RULES_TEXT_FIELD}, appended after its fields. */

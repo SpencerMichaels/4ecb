@@ -431,8 +431,9 @@ export interface SheetCard {
    * rules (`_Item Rules Text IR`). Builder panes show the whole description.
    */
   readonly rulesText?: string;
-  /** What `rulesText` is: an artifact's concordance, or a curse. */
-  readonly rulesTextKind?: "concordance" | "curse";
+  /** What `rulesText` is: an artifact's concordance or roll table, or a
+   *  curse. */
+  readonly rulesTextKind?: "concordance" | "table" | "curse";
   readonly source?: string;
   readonly variants?: readonly SheetPowerVariant[];
   /** Calculation diagnostics, never authored rules or physical-card sections. */

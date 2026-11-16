@@ -1,21 +1,26 @@
 {
-  "version": 1,
-  "fixture": "02bec558beffc1203c81847919a4099f15dc493dd55ad8b44572591f668724a8",
+  "version": 2,
+  "fixture": "1237f18fda18e5c392b6bf877b31ed8a884e32e53f5c96fd2b1b4b662b6d4ea9",
   "output": {
     "ID_GOLDEN_ARTIFACT": {
-      "version": 1,
+      "version": 2,
       "kind": "concordance",
       "text": "<table>Concordance\nStarting score\t5\nOwner gains a level\t+1d10</table>\n\nPleased (16–20)\nThe Spear grants greater power.\nProperty: You gain a +1 bonus to attack rolls.\n\nMoving On\nThe Spear leaps from its owner's hand."
     },
     "ID_GOLDEN_ARTIFACT_STATES": {
-      "version": 1,
+      "version": 2,
       "kind": "concordance",
       "text": "Satisfied (12–15)\nPower (Encounter): Minor Action. Your sword shines."
     },
     "ID_GOLDEN_CURSED": {
-      "version": 1,
+      "version": 2,
       "kind": "curse",
       "text": "A cursed item looks and functions like a normal magic item. To remove an item curse, a character makes an Arcana check."
+    },
+    "ID_GOLDEN_ARTIFACT_TABLE": {
+      "version": 2,
+      "kind": "table",
+      "text": "Merging Table\n<table>1d4\tEffect\n1-2\tThe creature is dazed (save ends).\n3-4\tThe creature is slowed (save ends).</table>"
     }
   }
 }

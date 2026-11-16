@@ -56,3 +56,18 @@ describe("a magic item's printed description part", () => {
     ).toBeUndefined();
   });
 });
+
+describe("an artifact table without a concordance", () => {
+  const artifact = [{ name: "Magic Item Type", value: "Artifact" }];
+  const description =
+    "Sages say it is old.\n\nNegative Convergence Table\n<table>2d4\tEffect\n2\tEnslaved</table>";
+  it("takes the description from the table's heading on (v2)", () => {
+    expect(parseItemRulesText("Magic Item", artifact, description)).toEqual({
+      kind: "table",
+      text: "Negative Convergence Table\n<table>2d4\tEffect\n2\tEnslaved</table>",
+    });
+  });
+  it("leaves a non-artifact's table alone", () => {
+    expect(parseItemRulesText("Magic Item", [], description)).toBeUndefined();
+  });
+});

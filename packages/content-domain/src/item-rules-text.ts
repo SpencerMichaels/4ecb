@@ -13,13 +13,14 @@
 /** The internal field holding a magic item's printed description part. */
 export const ITEM_RULES_TEXT_FIELD = "_Item Rules Text IR";
 /** Bump when the detection or the stored shape changes. */
-export const ITEM_RULES_TEXT_VERSION = 1;
+export const ITEM_RULES_TEXT_VERSION = 2;
 
 export interface ItemRulesText {
   readonly version: typeof ITEM_RULES_TEXT_VERSION;
-  /** What the text is: an artifact's concordance and states, or a
-   *  cursed item's curse rules. */
-  readonly kind: "concordance" | "curse";
+  /** What the text is: an artifact's concordance and states, a table an
+   *  artifact's powers roll on (v2: the Rod of Convergence's), or a cursed
+   *  item's curse rules. */
+  readonly kind: "concordance" | "table" | "curse";
   /** The description from that part on, exactly as authored. */
   readonly text: string;
 }
@@ -36,7 +37,9 @@ export function readItemRulesText(
   try {
     const parsed = JSON.parse(raw) as Partial<ItemRulesText>;
     return parsed.version === ITEM_RULES_TEXT_VERSION &&
-      (parsed.kind === "concordance" || parsed.kind === "curse") &&
+      (parsed.kind === "concordance" ||
+        parsed.kind === "table" ||
+        parsed.kind === "curse") &&
       typeof parsed.text === "string" &&
       parsed.text.trim() !== ""
       ? (parsed as ItemRulesText)

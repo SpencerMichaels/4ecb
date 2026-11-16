@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "fixture": "02bec558beffc1203c81847919a4099f15dc493dd55ad8b44572591f668724a8",
+  "fixture": "1237f18fda18e5c392b6bf877b31ed8a884e32e53f5c96fd2b1b4b662b6d4ea9",
   "output": {
     "ID_GOLDEN_FEAT_ABILITIES": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Str 13, Dex 13",
       "ir": {
         "kind": "all",
@@ -27,7 +27,7 @@
     },
     "ID_GOLDEN_FEAT_RACE_OR": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Dwarf or Elf; Con 15",
       "ir": {
         "kind": "all",
@@ -66,7 +66,7 @@
     },
     "ID_GOLDEN_FEAT_CLASS_FEATURE": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Fighter, Two-Blade Fighting Style class feature",
       "ir": {
         "kind": "all",
@@ -93,7 +93,7 @@
     },
     "ID_GOLDEN_FEAT_TRAINING": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Trained in Athletics",
       "ir": {
         "kind": "training",
@@ -103,7 +103,7 @@
     },
     "ID_GOLDEN_FEAT_TIER": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Paragon Tier, Toughness",
       "ir": {
         "kind": "all",
@@ -127,7 +127,7 @@
     },
     "ID_GOLDEN_FEAT_LEVEL": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "11th level, Wis 15",
       "ir": {
         "kind": "all",
@@ -149,7 +149,7 @@
     },
     "ID_GOLDEN_FEAT_HEROIC": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Heroic tier",
       "ir": {
         "kind": "level",
@@ -160,7 +160,7 @@
     },
     "ID_GOLDEN_FEAT_WORSHIP": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Must worship Pelor",
       "ir": {
         "kind": "worship",
@@ -170,7 +170,7 @@
     },
     "ID_GOLDEN_FEAT_DOMAIN": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Must worship a deity of the Sun domain",
       "ir": {
         "kind": "worship-domain",
@@ -180,7 +180,7 @@
     },
     "ID_GOLDEN_FEAT_PROFICIENCY": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Proficiency with longsword",
       "ir": {
         "kind": "proficiency",
@@ -190,7 +190,7 @@
     },
     "ID_GOLDEN_FEAT_SOURCE": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Arcane class",
       "ir": {
         "kind": "class-source",
@@ -200,7 +200,7 @@
     },
     "ID_GOLDEN_FEAT_NEGATED": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Wizard, not Elf",
       "ir": {
         "kind": "all",
@@ -223,7 +223,7 @@
     },
     "ID_GOLDEN_FEAT_NESTED": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Fighter or Wizard, trained in Athletics or Dex 15; 11th level",
       "ir": {
         "kind": "all",
@@ -284,7 +284,7 @@
     },
     "ID_GOLDEN_FEAT_HYBRID": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Hybrid fighter",
       "ir": {
         "kind": "unverified",
@@ -293,7 +293,7 @@
     },
     "ID_GOLDEN_FEAT_UNKNOWN": {
       "version": 2,
-      "definitions": "78:9a8d6af33410fa5b",
+      "definitions": "79:7f0a0077b86802f9",
       "text": "Member of the Order of the Golden Fixture",
       "ir": {
         "kind": "unverified",
