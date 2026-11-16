@@ -102,6 +102,16 @@ export function printItemPresentation(card: SheetCard) {
     ["Hands", field("Hands Required")],
     ["Armor type", field("Armor Type")],
     ["Rarity", lastField("Rarity")],
+    // A weapon that is also a shield (a spiked shield): its shield size,
+    // from its Armor Category ("Light Shields" → "Light"; owner, 2026-11-16).
+    [
+      "Shield",
+      isWeapon
+        ? field("Armor Category")
+            ?.trim()
+            .replace(/\s*shields?$/i, "") || undefined
+        : undefined,
+    ],
     ["Key ability", field("Key Ability")],
   ].flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
   const meaningfulPenalty = (value: string) =>
@@ -125,7 +135,7 @@ export function printItemPresentation(card: SheetCard) {
     );
   const groupedRows = (
     isWeapon
-      ? [row("Range", "Proficiency", "Damage", "Critical")]
+      ? [row("Range", "Proficiency", "Damage", "Critical", "Shield")]
       : isArmor
         ? [row("AC bonus"), row("Check penalty", "Speed penalty")]
         : [

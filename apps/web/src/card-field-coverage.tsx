@@ -531,6 +531,13 @@ const specificValue = (entity: ContentEntity, name: string) =>
 /** Deliberate merges: the field shows, in another form. */
 export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
   {
+    types: ["weapon"],
+    fields: ["Armor Category"],
+    reason:
+      'a shield weapon's subheader "Shield Light" (owner, 2026-11-16)',
+    form: (value) => `Shield ${value.trim().replace(/\s*shields?$/i, "")}`,
+  },
+  {
     types: ["gear"],
     fields: ["count"],
     reason:
@@ -769,11 +776,6 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
     fields: ["count"],
     values: /^[01]$/,
     reason: "a purchase of one names no count",
-  },
-  {
-    types: ["weapon"],
-    fields: ["Armor Category"],
-    reason: "OPEN: a spiked shield's shield category",
   },
 ];
 

@@ -785,3 +785,19 @@ describe("gear counts", () => {
     ).toBe("Bedroll");
   });
 });
+
+describe("shield weapons", () => {
+  it("names a spiked shield's shield size in its subheader", () => {
+    const view = printItemPresentation(
+      card("Weapon", {
+        Damage: "1d6",
+        "Proficiency Bonus": "2",
+        "Armor Category": "Light Shields",
+      }),
+    );
+    expect(view.statRows.flat()).toContainEqual({
+      label: "Shield",
+      value: "Light",
+    });
+  });
+});
