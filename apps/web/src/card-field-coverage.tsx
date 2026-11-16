@@ -595,7 +595,7 @@ export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
     types: ["class", "hybrid class"],
     fields: ["Role", "Power Source"],
     reason:
-      'the subheader\'s "Role · Source", the sentence\'s lead phrase ("Defender"); the rest of the sentence is the class\'s pitch',
+      'the subheader\'s "Role · Source" keeps the lead word only ("Defender"; owner, 2026-11-16); the rest of the sentence is the class\'s pitch',
     form: (value) => classLeadPhrase(value),
   },
   {
@@ -707,7 +707,7 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
     fields: ["Power Type"],
     values: /^(?:attack|feature)$/i,
     reason:
-      'OPEN: the type bar says "<usage> power" for an attack power, and for a feature power with an action (a utility says "Utility power"; legacy "ATTACK POWER", "FEATURE POWER")',
+      'the attack band shows it\'s an attack (owner, 2026-11-16: the type bar stays "<usage> power"; a utility\'s says "Utility power")',
   },
   {
     types: ["power"],
