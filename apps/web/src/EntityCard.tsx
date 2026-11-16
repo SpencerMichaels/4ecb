@@ -322,11 +322,11 @@ export function EntityPrerequisites({
   /** The evaluation's `prerequisiteLines`. */
   readonly renamedLines?: Readonly<Record<string, string>> | undefined;
 }) {
-  // The authored print line only, with renamed records' current names.
+  // The line every card shows (the authored print line, else a plain-prose
+  // rule: a class feature's "21st-level wizard"), with renamed records'
+  // current names.
   const line = prerequisiteLine(
-    entity.printPrerequisites?.trim()
-      ? (displayPrerequisites(entity, renamedLines) ?? "")
-      : "",
+    displayPrerequisites(entity, renamedLines) ?? "",
   );
   // A granter the line already names adds nothing: the campaign's Asmodeus
   // meets "Must worship Asmodeus" through the stock Asmodeus it counts as.

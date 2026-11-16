@@ -266,3 +266,24 @@ describe("shared power and item cards", () => {
     ).toBe("shield");
   });
 });
+
+describe("entity card prerequisites", () => {
+  const body = (prerequisites: string) =>
+    renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: { ...entity("Class Feature", []), prerequisites },
+        hideFlavortext: false,
+        showSource: false,
+      }),
+    );
+
+  it("shows a plain-prose rule prerequisite with no print line", () => {
+    expect(body("21st-level wizard")).toContain(
+      "<strong>Prerequisite:</strong> 21st-level wizard",
+    );
+  });
+
+  it("leaves out legacy bookkeeping", () => {
+    expect(body("Unselectable, 2nd Level")).not.toContain("Prerequisite");
+  });
+});

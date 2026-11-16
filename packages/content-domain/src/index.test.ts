@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  displayPrerequisites,
   getAttribute,
   getElementText,
   isUserFacingSpecific,
@@ -109,5 +110,29 @@ describe("content-domain helpers", () => {
     expect(isUserFacingSpecific(field("Keywords", "Arcane, Implement"))).toBe(
       true,
     );
+  });
+});
+
+describe("displayPrerequisites", () => {
+  const line = (prerequisites: string, printPrerequisites?: string) =>
+    displayPrerequisites({
+      prerequisites,
+      ...(printPrerequisites === undefined ? {} : { printPrerequisites }),
+    });
+
+  it("shows a plain-prose rule when no print line is authored", () => {
+    expect(line("21st-level wizard")).toBe("21st-level wizard");
+    expect(line("Drow, Eladrin, or Gnome")).toBe("Drow, Eladrin, or Gnome");
+  });
+
+  it("hides legacy bookkeeping no reader can meet", () => {
+    expect(line("Unselectable")).toBeUndefined();
+    expect(line("Unselectable; Unselectable")).toBeUndefined();
+    expect(line("Unselectable, 2nd Level")).toBeUndefined();
+    expect(line("Order Adept Theme, Level 5, Not Selectable")).toBeUndefined();
+  });
+
+  it("keeps an authored print line as written", () => {
+    expect(line("Unselectable", "Any divine class")).toBe("Any divine class");
   });
 });

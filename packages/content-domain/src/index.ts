@@ -215,7 +215,11 @@ export function displayPrerequisites(
   const rule = entity.prerequisites?.trim();
   if (
     !rule ||
-    rule.toLocaleLowerCase() === "unselectable" ||
+    // Legacy bookkeeping, not a requirement a reader can meet: a record
+    // no one picks ("Unselectable; 2nd Level", "…, Not Selectable").
+    rule
+      .split(/\s*[;,]\s*/)
+      .some((clause) => /^(?:unselectable|not selectable)$/i.test(clause)) ||
     /(?:^|[;,\s])[~!]|\bID_[A-Z0-9_]|\bCountsAs/.test(rule) ||
     !isUserFacingSpecific({
       name: "Prerequisite",
