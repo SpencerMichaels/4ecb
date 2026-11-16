@@ -736,7 +736,6 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
       "Hit",
       "Effect",
       "Keyword",
-      "Keywords",
       "Attack Type",
       "Move Action",
       "Immediate Interrupt",

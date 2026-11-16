@@ -196,10 +196,13 @@ export function combinedAugmentCard(
         block?.augment ||
         /AUGMENT_(\d+)\)?$/i.exec(version.id ?? "")?.[1] ||
         String(at),
-      fields:
+      fields: withVersionKeywords(
         block === undefined || block.fields.length === 0
           ? differingFields(base, version)
           : block.fields,
+        base,
+        version,
+      ),
       ...(numbers.length === 0 ? {} : { numbers }),
     };
   });
@@ -284,4 +287,29 @@ export function withCombinedAugmentCards(
     );
     return combined === undefined ? [card] : [combined];
   });
+}
+
+const keywordSet = (keywords: string | undefined) =>
+  [...new Set((keywords ?? "").split(",").map(key).filter(Boolean))]
+    .sort()
+    .join(",");
+
+/**
+ * An augment section's fields, led by "Keywords: …" when that version's
+ * keywords differ from the base power's (Dancing Strike's Augment 4 adds
+ * Force and Psychic; owner, 2026-11-16), unless the section already
+ * states a keyword line.
+ */
+function withVersionKeywords(
+  fields: readonly SheetValue[],
+  base: SheetCard,
+  version: SheetCard,
+): readonly SheetValue[] {
+  const keywords = version.keywords?.trim();
+  return keywords === undefined ||
+    keywords === "" ||
+    keywordSet(keywords) === keywordSet(base.keywords) ||
+    fields.some(({ label }) => /^keywords?$/.test(key(label)))
+    ? fields
+    : [{ label: "Keywords", value: keywords }, ...fields];
 }

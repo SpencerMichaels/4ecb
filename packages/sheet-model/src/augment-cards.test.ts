@@ -330,3 +330,19 @@ describe("an augmentable power's one card (D118)", () => {
     expect(card?.augmentVersionIds).toEqual([0, 2, 4].map(versionId));
   });
 });
+
+describe("augment version keywords", () => {
+  it("prints a version's keywords when they differ from the base power's", () => {
+    const forceful = {
+      ...evaluated(4, 1),
+      keywords: ["Augmentable", "Force", "Psionic", "Weapon"],
+    };
+    const [card] = strikeCards([evaluated(0, 1), evaluated(2, 1), forceful]);
+    const [two, four] = card!.augments!;
+    expect(two!.fields.map(({ label }) => label)).not.toContain("Keywords");
+    expect(four!.fields[0]).toEqual({
+      label: "Keywords",
+      value: "Augmentable, Force, Psionic, Weapon",
+    });
+  });
+});
