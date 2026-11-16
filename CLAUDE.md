@@ -163,6 +163,7 @@ pnpm audit:saved-selections       # every saved element active or accounted for;
 pnpm audit:record-drift           # which content each save was made on: saved records vs full/stock pack (--verbose)
 pnpm audit:power-text             # power text the stored parse did not consume, by pattern (tmp/audit/power-text.md)
 pnpm audit:scoped-requests        # builder scoped requests vs unscoped, every save/tab/level (--shard K/N; tmp/audit/scoped-requests.json)
+pnpm audit:card-fields            # every card-type record's fields vs print card, builder pane, reference entry (tmp/audit/card-fields.md; --json)
 pnpm regenerate:edited-dnd4e
 ```
 

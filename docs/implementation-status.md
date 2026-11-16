@@ -33,6 +33,27 @@ Cache `evaluated-character-v129`. Verification: `scripts/check.sh` and
 `parity:baseline` on the rebuilt pack. Visual checks:
 `docs/visual-review-checklist.md` Pass 27.
 
+Follow-ups (same day, cache `evaluated-character-v130`):
+
+- **Inline formatting** stays stripped (owner: 12 italic power names in the
+  whole pack would look inconsistent). The prose renderer tolerates
+  malformed legacy tables (a second `<table>` closes the first, `</table`
+  without `>`, stray closers) and renders tab-less artifact concordance
+  tables as two columns without a header (`99fb12cd`; 47 fields change).
+- **Ranged basic attack substitutes** (D126 amendment, `e3e1624e`):
+  `_Power Text IR` v7 `basicAttackSubstitutes` ({melee|ranged,
+  any|charge|opportunity, unaugmented}); any-time substitutes list
+  ranged/melee basic riders "when used as a … basic attack".
+- **Card-field audit** (`pnpm audit:card-fields`, guard test
+  `apps/web/src/card-field-coverage.test.tsx`, `63ee854f`): renders every
+  card-type record (36,398) through the print card, builder pane and
+  reference entry and reports fields shown nowhere. Fixed: power Attack
+  lines beyond the band and defense-less phases (~600 powers), follow-up
+  attacks, prerequisites on builder/item/familiar cards and "Unselectable"
+  junk, feats' Associated Power Info on reference entries, god-fragment
+  ability in the pane. Remaining: 14 content quirks; 8 open layout
+  questions allowlisted as `OPEN` in `card-field-coverage.tsx`.
+
 ## Evaluated snapshots in .4ecb exports (2026-11-13)
 
 D125: a `.4ecb` character export and the full backup carry a top-level

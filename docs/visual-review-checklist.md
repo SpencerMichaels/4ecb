@@ -1685,6 +1685,40 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     Fire Armor's property, the fighter loses it.
   - **Wrong if:** blank lines or gaps where the text was removed, or the
     label wraps badly at 140% zoom.
+- [ ] **Power Attack lines restored.** Added 2026-11-16.
+  - **Where:** Hystan_8 `?preview=1`, Twin Strike; its Build-tab pane at
+    140% zoom; a follow-up attack (Slash and Burn, Wolf's Rend) in a pane.
+  - **Expect:** the band "STR vs AC", then "Attack: Strength vs. AC (melee;
+    main weapon and off-hand weapon) or Dexterity vs. AC (ranged), two
+    attacks" above Requirement and Hit; follow-up attacks as two stacked
+    bands, each with its own Hit.
+  - **Wrong if:** the line missing or doubled, or cards that gained a line
+    (~600 powers) shrink unreadably.
+- [ ] **Prerequisite lines.** Added 2026-11-16.
+  - **Where:** builder panes for background choice Feydark Refugees, feat
+    Critical Targeting, a wizard's epic destiny features, a familiar
+    (Daolanin, Sha'ir); a warforged component or Monk Unarmed Strike in the
+    Shop and in print.
+  - **Expect:** "Prerequisite: …" spaced like other cards; items start
+    their body with it; paragon/epic familiars show no tier line.
+  - **Wrong if:** "Prerequisite: Unselectable…" anywhere.
+- [ ] **Reference entries and god fragments.** Added 2026-11-16.
+  - **Where:** KrizDevvon or Hu, `?preview=1` reference pages (turn them
+    on in Sections), a domain/style feat entry; a god fragment pane.
+  - **Expect:** the feat entry ends "Powers: …" and "Associated Power
+    Info: …"; the fragment card is followed by its power card.
+- [ ] **Legacy tables.** Added 2026-11-16.
+  - **Where:** Shop detail panes for Wave, Skull of Sartine, Eye of Vecna;
+    the Easy Passage ritual; at 140% zoom and dark theme.
+  - **Expect:** concordance as a two-column table with no header row
+    ("Starting score | 5" is the first row), long labels wrapping; no
+    literal `<table>`/`</table`.
+- [ ] **Ranged basic attack riders.** Added 2026-11-16.
+  - **Where:** a psion with Mind Thrust or Kinetic Trawl and Bracers of the
+    Perfect Shot equipped, `?preview=1`.
+  - **Expect:** "… when used as a ranged basic attack - Bracers of the
+    Perfect Shot (heroic tier)." under Additional Effects on the combined
+    augment card, not in the Augment N sections.
 
 ## Decisions
 

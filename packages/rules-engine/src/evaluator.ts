@@ -104,7 +104,7 @@ import {
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v129-2026-11-16-melee-basic-substitute-riders";
+  "evaluated-character-v130-2026-11-16-basic-attack-substitutes";
 
 export interface CharacterOccurrence {
   readonly id: string;
