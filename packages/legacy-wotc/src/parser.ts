@@ -49,6 +49,32 @@ function directElements(
   );
 }
 
+/**
+ * Legacy display text is HTML the old builder rendered in its panes; inline
+ * emphasis (`<i>dragon breath</i>`) has no plain-text meaning, so it is
+ * dropped here, once, for every record's description, flavor, prerequisites
+ * and fields: an inline formatting tag keeps its text, and an empty element
+ * of any name (`<i></i>`, `<b> </b>`) goes entirely. Block structure
+ * (`<table>`, `<br>`, `<p>`) stays for the renderer, which lays it out.
+ */
+const INLINE_FORMATTING_TAG = /<\/?(?:i|b|em|strong|u)(?:\s[^<>]*)?>/giu;
+const EMPTY_ELEMENT = /<([a-z][\w-]*)(?:\s[^<>]*)?>\s*<\/\1\s*>/giu;
+
+export function withoutInlineMarkup(value: string): string {
+  if (!value.includes("<")) return value;
+  let text = value;
+  for (;;) {
+    const next = text.replace(EMPTY_ELEMENT, "");
+    if (next === text) break;
+    text = next;
+  }
+  return text.replace(INLINE_FORMATTING_TAG, "");
+}
+
+function displayText(value: string): string {
+  return normalizeDisplayText(withoutInlineMarkup(value));
+}
+
 function splitCommaList(value: string): string[] {
   return value
     .split(",")
@@ -62,14 +88,14 @@ function optionalText(
 ): string | undefined {
   const element = directElements(node, name)[0];
   if (element === undefined) return undefined;
-  const value = normalizeDisplayText(getElementText(element));
+  const value = displayText(getElementText(element));
   return value.length === 0 ? undefined : value;
 }
 
 function buildSpecifics(node: ContentElementNode): SpecificField[] {
   return directElements(node, "specific").map((element, ordinal) => ({
     name: getAttribute(element.attributes, "name") ?? "",
-    value: normalizeDisplayText(getElementText(element)),
+    value: displayText(getElementText(element)),
     extraAttributes: element.attributes.filter(
       (attribute) => attribute.name.toLocaleLowerCase() !== "name",
     ),
@@ -115,7 +141,7 @@ function buildRules(node: ContentElementNode): RuleStatement[] {
 }
 
 function buildDescription(node: ContentElementNode): string {
-  return normalizeDisplayText(
+  return displayText(
     node.children
       .filter((child) => child.kind === "text")
       .map((child) => child.value)

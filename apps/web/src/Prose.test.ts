@@ -100,6 +100,19 @@ describe("shared prose renderer", () => {
     expect(markup).toContain("Then continue &amp; resolve it.");
     expect(markup).not.toContain("&lt;br&gt;");
   });
+  it("sets a legacy <rule> callout apart as its own paragraph", () => {
+    expect(
+      proseBlocks(
+        "Walk the rope.\n<rule>Balance: The check is part of a move action.</rule>",
+      ),
+    ).toEqual([
+      { kind: "paragraph", text: "Walk the rope." },
+      {
+        kind: "paragraph",
+        text: "Balance: The check is part of a move action.",
+      },
+    ]);
+  });
   it("renders legacy tab-delimited tables without fusing headings, cells or surrounding prose", () => {
     const value =
       "An effect before the table.\n<table>Level\tExtra damage\n1–8\t+1d8\n9–16\t+2d8\n17–24\t+3d8</table>\nAn effect after the table.";

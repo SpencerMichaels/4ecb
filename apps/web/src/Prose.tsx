@@ -34,14 +34,18 @@ const HEADING_CONNECTORS = new Set([
 ]);
 
 /**
- * Some legacy compendium fields contain presentation-only table or paragraph
- * tags. Convert only that small, known-safe vocabulary to plain-text structure;
+ * Some legacy compendium fields contain presentation-only table, paragraph
+ * or `<rule>` callout tags (inline emphasis is dropped at pack build).
+ * Convert only that small, known-safe vocabulary to plain-text structure;
  * unfamiliar markup remains literal text and is escaped by React.
  */
 function normalizeLegacyStructure(value: string): string {
   return value
     .replace(/<br\s*\/?>/giu, "\n")
-    .replace(/<\/?(?:table|thead|tbody|tfoot|tr|p|div)(?:\s[^>]*)?>/giu, "\n")
+    .replace(
+      /<\/?(?:table|thead|tbody|tfoot|tr|p|div|rule)(?:\s[^>]*)?>/giu,
+      "\n",
+    )
     .replace(/<(?:td|th)(?:\s[^>]*)?>/giu, "")
     .replace(/<\/(?:td|th)>/giu, " · ")
     .replace(/\s*·\s*\n/gu, "\n")

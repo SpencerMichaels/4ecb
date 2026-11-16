@@ -18,6 +18,23 @@ const sample = `<?xml version="1.0" encoding="utf-8"?>
 </D20Rules>`;
 
 describe("D20RulesParser", () => {
+  it("drops inline formatting and empty elements from display text, keeping block markup", () => {
+    const parsed = parseD20Rules(`<D20Rules game-system="D&amp;D4E">
+      <RulesElement internal-id="ID_TEST_TRAIT_1" name="Breath Strength" type="Racial Trait" source="Synthetic">
+        <Flavor>A &lt;b&gt;bold&lt;/b&gt; claim.</Flavor>
+        <specific name="Short Description">Use &lt;em&gt;Str&lt;/em&gt;&lt;i&gt;&lt;/i&gt;</specific>
+        You use Strength as your key ability with &lt;i&gt;dragon breath&lt;/i&gt;.&lt;i&gt; &lt;/i&gt;
+&lt;table&gt;Level	Bonus
+1st	+2&lt;/table&gt;
+      </RulesElement>
+    </D20Rules>`);
+    const entity = parsed.entities[0];
+    expect(entity?.description).toBe(
+      "You use Strength as your key ability with dragon breath.\n<table>Level\tBonus\n1st\t+2</table>",
+    );
+    expect(entity?.flavor).toBe("A bold claim.");
+    expect(entity?.specifics[0]?.value).toBe("Use Str");
+  });
   it("normalizes a rules element and accounts for raw root content", () => {
     const parsed = parseD20Rules(sample, "sample.xml");
     expect(parsed.gameSystem).toBe("D&D4E");
