@@ -226,6 +226,44 @@ describe("stat evaluation", () => {
     expect(stats.evaluate("Skill Misc").value).toBe(3);
   });
 
+  it("lets an Ability bonus in a skill's Misc stat replace the skill's own ability, higher wins (Enlightened Spirit)", () => {
+    // Enlightened Spirit ("use your Constitution modifier instead of your
+    // Strength modifier for Athletics checks") is spelled as an Ability
+    // statadd on "Athletics Misc"; the skill's own ability is an Ability
+    // statadd on "Athletics". Native shares the caps through the link.
+    const athletics = (strength: string, constitution: string) => {
+      const stats = new StatAccumulator();
+      add(stats, "str", "Strength", strength);
+      add(stats, "con", "Constitution", constitution);
+      add(
+        stats,
+        "con-mod",
+        "Constitution modifier",
+        "+ABILITYMOD(Constitution)",
+      );
+      add(stats, "skill-str", "Athletics", "+ABILITYMOD(Strength)", "Ability");
+      add(stats, "skill-misc", "Athletics", "+Athletics Misc");
+      add(
+        stats,
+        "enlightened",
+        "Athletics Misc",
+        "+Constitution modifier",
+        "Ability",
+      );
+      add(stats, "focus", "Athletics Misc", "+3", "Feat");
+      const skill = stats.evaluate("Athletics");
+      expect(
+        skill.contributions
+          .filter((entry) => entry.applied)
+          .reduce((sum, entry) => sum + (entry.numericValue ?? 0), 0),
+      ).toBe(skill.value);
+      return skill.value;
+    };
+    expect(athletics("12", "18")).toBe(4 + 3);
+    expect(athletics("16", "8")).toBe(3 + 3);
+    expect(athletics("8", "14")).toBe(2 + 3);
+  });
+
   it("adds a typed link's result under its own type after the linked caps", () => {
     // Native: the linked stat records its "Ward" cap first, so a link typed
     // "Ward" finds the cap already at its result and adds nothing.
