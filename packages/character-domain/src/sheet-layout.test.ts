@@ -42,8 +42,14 @@ describe("sheet layout", () => {
     );
   });
 
-  it("prints the overview, scratchpad, artifacts and cards by default, nothing else", () => {
-    const byDefault = ["summary", "scratchpad", "reference:artifacts", "cards"];
+  it("prints the overview, equipment, scratchpad, artifacts and cards by default, nothing else", () => {
+    const byDefault = [
+      "summary",
+      "reference:items",
+      "scratchpad",
+      "reference:artifacts",
+      "cards",
+    ];
     expect(
       SHEET_SECTION_IDS.filter((id) => SHEET_SECTION_DEFAULT_SHOWN[id]),
     ).toEqual(byDefault);
@@ -64,20 +70,56 @@ describe("sheet layout", () => {
   });
 
   it("turns default-hidden sections on through shownSections", () => {
-    const shown = withSheetSectionShown(undefined, "reference:items", true);
-    expect(shown).toEqual({ version: 1, shownSections: ["reference:items"] });
-    expect(sheetSectionShown(shown, "reference:items")).toBe(true);
+    const shown = withSheetSectionShown(undefined, "reference:features", true);
+    expect(shown).toEqual({
+      version: 1,
+      shownSections: ["reference:features"],
+    });
+    expect(sheetSectionShown(shown, "reference:features")).toBe(true);
     expect(normalizeSheetLayout(JSON.parse(JSON.stringify(shown)))).toEqual(
       shown,
     );
     // Hiding it again is the default: nothing is stored.
-    expect(withSheetSectionShown(shown, "reference:items", false)).toBe(
+    expect(withSheetSectionShown(shown, "reference:features", false)).toBe(
       undefined,
     );
     // Hiding an already hidden section stores nothing either.
     expect(withSheetSectionShown(undefined, "session-notes", false)).toBe(
       undefined,
     );
+  });
+
+  it("keeps a stored choice about the Equipment page, now shown by default", () => {
+    // A layout from when it was hidden by default turned it on: still shown.
+    const turnedOn = normalizeSheetLayout({
+      version: 1,
+      shownSections: ["reference:items"],
+    });
+    expect(sheetSectionShown(turnedOn, "reference:items")).toBe(true);
+    // Hiding it now stores the delta, and shows it again as nothing stored.
+    const hidden = withSheetSectionShown(turnedOn, "reference:items", false);
+    expect(hidden).toEqual({
+      version: 1,
+      hiddenSections: ["reference:items"],
+    });
+    expect(sheetSectionShown(hidden, "reference:items")).toBe(false);
+    expect(withSheetSectionShown(hidden, "reference:items", true)).toBe(
+      undefined,
+    );
+    // A stored order (from the old default) keeps its position for it.
+    const oldOrder = [
+      "summary",
+      "scratchpad",
+      "reference:features",
+      "reference:items",
+      "reference:power-index",
+      "reference:rituals",
+      "reference:profile",
+      "reference:artifacts",
+      "session-notes",
+      "cards",
+    ];
+    expect(sheetSectionOrder(oldOrder)).toEqual(oldOrder);
   });
 
   it("ignores a section stored in the list for the other default", () => {
@@ -97,12 +139,12 @@ describe("sheet layout", () => {
     });
   });
 
-  it("lists every section in default print order, the overview first", () => {
+  it("lists every section in default print order, the overview then equipment first", () => {
     expect(SHEET_SECTION_IDS).toEqual([
       "summary",
+      "reference:items",
       "scratchpad",
       "reference:features",
-      "reference:items",
       "reference:power-index",
       "reference:rituals",
       "reference:profile",

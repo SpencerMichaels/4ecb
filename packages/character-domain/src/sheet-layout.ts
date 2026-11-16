@@ -10,7 +10,10 @@ import type { BuildInventoryEntry } from "./build";
  * builder.
  */
 
-/** The full-reference page groups, in print order. */
+/** The full-reference page groups. "items" is the Equipment page (currency,
+ *  worn/held and carried items, proficiencies), printed second by default
+ *  (`SHEET_SECTION_IDS`); its id predates that name and stays, as stored
+ *  layouts use it. */
 export const SHEET_REFERENCE_GROUP_IDS = [
   "features",
   "items",
@@ -32,20 +35,27 @@ export type SheetSectionId =
   | "session-notes"
   | `reference:${SheetReferenceGroupId}`;
 
-/** In default print order. */
+/** In default print order: the Equipment page second, so a duplex print
+ *  puts it on the back of page 1 (owner, 2026-11-16; the legacy sheet's
+ *  second page held the equipment too), then the scratchpad. */
 export const SHEET_SECTION_IDS: readonly SheetSectionId[] = [
   "summary",
+  "reference:items",
   "scratchpad",
-  ...SHEET_REFERENCE_GROUP_IDS.map((group) => `reference:${group}` as const),
+  ...SHEET_REFERENCE_GROUP_IDS.filter((group) => group !== "items").map(
+    (group) => `reference:${group}` as const,
+  ),
   "cards",
   "session-notes",
 ];
 
 /**
- * Whether each section prints by default (D099 amendment, 2026-11-06): the
- * overview, scratchpad and card pages, and the Artifacts reference (empty
- * without a held artifact); the other reference pages and Session notes
- * only when the player turns them on.
+ * Whether each section prints by default (D099 amendments, 2026-11-06 and
+ * 2026-11-16): the overview, the Equipment page, the scratchpad and card
+ * pages, and the Artifacts reference (empty without a held artifact); the
+ * other reference pages and Session notes only when the player turns them
+ * on. Layouts store only deltas, so a player who had turned the Equipment
+ * page on keeps it, and one who never touched it now gets it.
  */
 export const SHEET_SECTION_DEFAULT_SHOWN: Readonly<
   Record<SheetSectionId, boolean>
@@ -53,7 +63,8 @@ export const SHEET_SECTION_DEFAULT_SHOWN: Readonly<
   summary: true,
   scratchpad: true,
   "reference:features": false,
-  "reference:items": false,
+  // The Equipment page (owner, 2026-11-16).
+  "reference:items": true,
   "reference:power-index": false,
   "reference:rituals": false,
   "reference:profile": false,

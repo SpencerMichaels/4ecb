@@ -69,10 +69,9 @@ describe("applySheetLayout", () => {
       ["item:b", false],
       ["item:def:cached", false],
     ]);
-    // Only the overview, scratchpad and cards print by default.
+    // Only the overview, equipment, scratchpad and cards print by default.
     expect([...resolved.hiddenSections]).toEqual([
       "reference:features",
-      "reference:items",
       "reference:power-index",
       "reference:rituals",
       "reference:profile",
