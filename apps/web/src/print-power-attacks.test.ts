@@ -271,3 +271,18 @@ describe("attack lines the band can't show", () => {
     expect(groupedPrintRules(fields, headers).leading).toEqual(fields);
   });
 });
+
+describe("abbreviated authored attack lines", () => {
+  it("heads a builder card's abbreviated attack with its ability", () => {
+    const [attack] = fallbackPrintAttacks(
+      {
+        kind: "power",
+        name: "Synthetic Storm",
+        fields: [{ label: "Attack", value: "CON + 2 vs. Fortitude" }],
+      },
+      undefined,
+    );
+    expect(attack).toMatchObject({ ability: "CON", powerBonus: 2 });
+    expect(printAttackHeader(attack!)).toBe("CON+2 vs Fort");
+  });
+});

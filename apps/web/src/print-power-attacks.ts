@@ -249,6 +249,8 @@ export function fallbackPrintAttacks(
         line.match(
           /\b(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|Primary ability)\b/i,
         )?.[1] ??
+        // A builder card before evaluation abbreviates ("CON vs. Fortitude").
+        line.match(/\b(STR|CON|DEX|INT|WIS|CHA)\b/)?.[1] ??
         "Ability";
       const defense = line.match(/\bvs\.?\s+([A-Za-z]+)/i)?.[1] ?? "defense";
       const target = targets.get(ordinal);
@@ -261,7 +263,7 @@ export function fallbackPrintAttacks(
             ? variant.powerBonus
             : Number(
                 line.match(
-                  /\b(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|Primary ability|ability)\s*\+\s*(\d+)/i,
+                  /\b(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|Primary ability|ability|STR|CON|DEX|INT|WIS|CHA)\s*\+\s*(\d+)/i,
                 )?.[1] ?? 0,
               ),
         attack:
