@@ -350,3 +350,33 @@ describe("power card phase fields", () => {
     expect(markup.split("Melee weapon")).toHaveLength(2);
   });
 });
+
+describe("power card description", () => {
+  const withSidebar: SheetCard = {
+    ...card,
+    description: "Cowardly pack fighters see your lack of armor as a chance.",
+  };
+  it("adds a power's book sidebar to the builder pane's flavor band", () => {
+    const markup = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: withSidebar,
+        characterLevel: 1,
+        layout: "panel",
+        panel: {
+          flavor: "Flames leap.",
+          description: withSidebar.description!,
+        },
+      }),
+    );
+    expect(markup).toMatch(
+      /<p class="print-card-flavor">Flames leap\.<br\/>Cowardly pack fighters/,
+    );
+  });
+  it("leaves it off the printed card", () => {
+    expect(
+      renderToStaticMarkup(
+        createElement(PowerCard, { card: withSidebar, characterLevel: 1 }),
+      ),
+    ).not.toContain("Cowardly");
+  });
+});

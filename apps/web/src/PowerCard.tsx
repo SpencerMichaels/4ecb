@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import {
   classifyPowerCard,
@@ -25,7 +25,7 @@ import {
   printSustainActions,
 } from "./print-power-attacks";
 import { powerTextAtLevel } from "./power-level-text";
-import { Prose } from "./Prose";
+import { Prose, proseBlocks } from "./Prose";
 import { usePrintCardFit } from "./use-print-card-fit";
 
 /**
@@ -227,6 +227,9 @@ export interface CardPanelProps {
   readonly subheading?: ReactNode;
   /** Shown first in the body; physical cards omit flavor. */
   readonly flavor?: string;
+  /** Descriptive text (a power's book sidebar) the flavor band adds when
+   *  the body doesn't print it; physical cards omit it too. */
+  readonly description?: string;
   /** Appended after the body (e.g. an unavailable reason). */
   readonly afterBody?: ReactNode;
   /** A control at the right end of the title band (e.g. a favorite star). */
@@ -298,6 +301,16 @@ export function PowerCard({
     (field) => !isPowerCardRuleExcluded(field.label),
   );
   const groupedRules = groupedPrintRules(rules, attacks, characterLevel);
+  // The builder pane's descriptive text: its flavor, then the record's
+  // description when the body doesn't print it (a power with rules).
+  const flavorBand = [
+    ...(panel.flavor === undefined ? [] : [panel.flavor]),
+    ...(panel.description === undefined || rules.length === 0
+      ? []
+      : proseBlocks(panel.description).flatMap((block) =>
+          block.kind === "paragraph" ? [block.text] : [],
+        )),
+  ];
   // Card frame color follows usage; an unknown usage keeps the at-will frame.
   const usageTone = classification.feature
     ? "feature"
@@ -366,9 +379,17 @@ export function PowerCard({
         ) : null}
         {panel.headerAction}
       </header>
-      {/* Like published power blocks: italic flavor right under the name. */}
-      {panel.flavor === undefined ? null : (
-        <p className="print-card-flavor">{panel.flavor}</p>
+      {/* Like published power blocks: italic flavor right under the name,
+          then any descriptive text the body leaves out (a book sidebar). */}
+      {flavorBand.length === 0 ? null : (
+        <p className="print-card-flavor">
+          {flavorBand.map((text, index) => (
+            <Fragment key={index}>
+              {index === 0 ? null : <br />}
+              {text}
+            </Fragment>
+          ))}
+        </p>
       )}
       <CardPanelSubheading subheading={panel.subheading} />
       {card.keywords?.trim() ? (

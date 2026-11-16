@@ -405,6 +405,9 @@ export function BuilderPowerCard({
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
+        ...(hideFlavortext || card.description === undefined
+          ? {}
+          : { description: card.description }),
         textPresentation: cardTextPresentation(
           settings.abbreviateAbilityValues,
         ),

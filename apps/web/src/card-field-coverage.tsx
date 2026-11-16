@@ -741,8 +741,9 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
   {
     types: ["power"],
     fields: ["(description)"],
+    surfaces: ["print"],
     reason:
-      "OPEN: a power's description (book sidebar text) prints only on a card with no rules",
+      "a power's book sidebar is descriptive text: the builder pane's flavor band shows it (owner, 2026-11-16); printed cards print it only when it is the rules (no rule fields)",
   },
   {
     types: ITEM_TYPES,
