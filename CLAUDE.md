@@ -307,7 +307,11 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   Additional Effects, D126) and `_Resource Clauses IR` (item property
   sentences that need power points or Channel Divinity, content-domain
   `resource-clauses.ts`; sheet-model `applicable-properties.ts` drops them
-  under Settings' "Hide item properties you can't use"); bump the field's version
+  under Settings' "Hide item properties you can't use") and
+  `_Item Rules Text IR` (the mechanical part of an item description: a
+  curse, an artifact's Concordance and moods, or its rules table;
+  content-domain `item-rules-text.ts`; the printed card prints a curse, an
+  artifact points to its "Artifacts" Character Reference entry); bump the field's version
   when its parse changes. `apps/content-tool/src/stored-ir-golden.test.ts`
   enforces it: it snapshots each kind's output for a synthetic fixture with
   its version, fails when output changes under an unchanged version, and

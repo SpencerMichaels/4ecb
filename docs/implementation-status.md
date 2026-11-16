@@ -51,8 +51,19 @@ Follow-ups (same day, cache `evaluated-character-v130`):
   lines beyond the band and defense-less phases (~600 powers), follow-up
   attacks, prerequisites on builder/item/familiar cards and "Unselectable"
   junk, feats' Associated Power Info on reference entries, god-fragment
-  ability in the pane. Remaining: 14 content quirks; 8 open layout
-  questions allowlisted as `OPEN` in `card-field-coverage.tsx`.
+  ability in the pane. Remaining: 14 content quirks.
+- **Owner's card-field layout decisions:** power book sidebars in the
+  builder flavor band; item descriptions in the builder pane after the
+  rules; printed cards are mechanics only: `_Item Rules Text IR` (v2) keeps
+  a cursed item's curse (printed on the card, "— Curse" split card when it
+  overflows) and an artifact's Concordance and moods or rules table
+  (printed as a `reference:artifacts` Character Reference entry, shown by
+  default, the card saying "Concordance: see Reference pages"); gear count
+  in the title ("Arrows (30)"); class "Options:" (trait packages); weapon
+  "Shield Light"; augment sections print differing keywords. Type bar
+  "attack" and class role sentences deliberately unchanged. Known fit
+  issue: Crystal of Ebon Flame, Rod of Convergence and Rod of Kruthik
+  Command overflow at 6 pt on their rules alone.
 
 ## Evaluated snapshots in .4ecb exports (2026-11-13)
 

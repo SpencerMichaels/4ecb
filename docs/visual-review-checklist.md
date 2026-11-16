@@ -1719,6 +1719,37 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
   - **Expect:** "… when used as a ranged basic attack - Bracers of the
     Perfect Shot (heroic tier)." under Additional Effects on the combined
     augment card, not in the Augment N sections.
+- [ ] **Descriptions on cards.** Added 2026-11-16.
+  - **Where:** Build tab, Burning Hands (or any power with a book
+    sidebar); Shop, Spear of the Skylord, Hailstorm Ki Focus, Mrtok; with
+    Settings › Hide flavor text off and on.
+  - **Expect:** the power's sidebar in the flavor band after the flavor
+    (hidden with flavor text); item descriptions after the rules in the
+    pane; the printed cards carry neither.
+- [ ] **Artifacts on the reference pages.** Added 2026-11-16.
+  - **Where:** a character holding Spear of the Skylord, then Eye of Vecna
+    or a Rod of Seven Parts, `?preview=1`; Edit → Sections; a character
+    with no artifact.
+  - **Expect:** the card's rules then "Concordance: see Reference pages";
+    an "Artifacts" entry on the Character Reference pages without turning
+    anything on, the concordance table and moods flowing across pages; the
+    Sections menu lists "Artifacts", ticked, and unticking persists; no
+    Artifacts pages without an artifact.
+  - **Wrong if:** a clipped table, an orphaned heading, Goals/Roleplaying
+    printed.
+- [ ] **Curse cards.** Added 2026-11-16.
+  - **Where:** Necklace of Strangulation and Periapt of Foul Rotting
+    (Cursed), print.
+  - **Expect:** the necklace's curse rules after its powers on one card;
+    the periapt as a rules card plus "— Curse" card, hidden together by
+    Edit-mode right-click.
+- [ ] **Small card fields.** Added 2026-11-16.
+  - **Where:** Shop, Arrows and Bedroll; Spiked shield; class choice
+    Warpriest/Cavalier/Hexblade; battlemind Dancing Strike (level 17).
+  - **Expect:** "Arrows (30)", Bedroll with no count; subheader
+    "Proficiency +2 · Damage 1d6 · Shield Light" without awkward wrapping
+    at 140%; "Options: Storm Domain, …" after Builds; "Augment 4" starting
+    "Keywords: Force, Psychic".
 
 ## Decisions
 
