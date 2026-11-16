@@ -113,6 +113,98 @@ describe("shared prose renderer", () => {
       },
     ]);
   });
+  it("tolerates unbalanced legacy block tags without swallowing the text after them", () => {
+    // An unclosed <rule> (Hop Down) reads like a closed one.
+    expect(
+      proseBlocks(
+        "Hop down 10 feet.\n<rule>Hop Down: Part of a move action.\n♦\tDC: DC 15.",
+      ),
+    ).toEqual([
+      { kind: "paragraph", text: "Hop down 10 feet." },
+      { kind: "paragraph", text: "Hop Down: Part of a move action." },
+      { kind: "paragraph", text: "♦\tDC: DC 15." },
+    ]);
+    // A stray </table> (Create Scarecrow) is only a line break.
+    expect(
+      proseBlocks(
+        "Make a DC 25 Arcana check.\nMaster's Sight * Encounter</table>",
+      ),
+    ).toEqual([
+      { kind: "paragraph", text: "Make a DC 25 Arcana check." },
+      { kind: "paragraph", text: "Master's Sight * Encounter" },
+    ]);
+    // A second <table> where </table> belonged (Wave) closes the table.
+    const twice =
+      "CONCORDANCE\n<table>Level\tScore\n1st\t+2<table>\n\nPleased (16–20)\nThe bonus becomes +4.";
+    expect(proseBlocks(twice)).toEqual([
+      { kind: "heading", text: "CONCORDANCE" },
+      { kind: "table", headers: ["Level", "Score"], rows: [["1st", "+2"]] },
+      { kind: "heading", text: "Pleased (16–20)" },
+      { kind: "paragraph", text: "The bonus becomes +4." },
+    ]);
+    // A closing tag without its ">" (Skull of Sartine) still closes it.
+    expect(
+      proseBlocks(
+        "<table>Level\tScore\n1st\t+2</table\n\nAfter the table.",
+      ).map((block) => block.kind),
+    ).toEqual(["table", "paragraph"]);
+    const markup = renderToStaticMarkup(createElement(Prose, { value: twice }));
+    expect(markup).not.toContain("&lt;table");
+    expect(markup).toContain("The bonus becomes +4.");
+  });
+  it("reads an artifact's tab-less concordance table as label and score rows", () => {
+    expect(
+      proseBlocks(
+        [
+          "CONCORDANCE",
+          "<table>Starting score 5",
+          "Owner gains a level +1d10",
+          "Owner kills an aquatic creature ",
+          "that does not worship Melora (maximum 1/day) +1",
+          "Owner attacks a creature that worships Melora –2<table>",
+          "Pleased (16–20)",
+          "The artifact is content.",
+        ].join("\n"),
+      ),
+    ).toEqual([
+      { kind: "heading", text: "CONCORDANCE" },
+      {
+        kind: "table",
+        rows: [
+          ["Starting score", "5"],
+          ["Owner gains a level", "+1d10"],
+          [
+            "Owner kills an aquatic creature that does not worship Melora (maximum 1/day)",
+            "+1",
+          ],
+          ["Owner attacks a creature that worships Melora", "–2"],
+        ],
+      },
+      { kind: "heading", text: "Pleased (16–20)" },
+      { kind: "paragraph", text: "The artifact is content." },
+    ]);
+    // A tab-less table whose last line has no score stays plain lines.
+    expect(
+      proseBlocks(
+        "<table>Result Destination Plane\n2 Feywild\n3 Shadowfell</table>",
+      ).map((block) => block.kind),
+    ).not.toContain("table");
+    // A tabbed concordance has no header row, and a doubled tab is spacing.
+    expect(
+      proseBlocks(
+        "<table>Starting score\t5\nOwner is an eladrin\t\t+2\nOwner is an elf\t+1</table>",
+      ),
+    ).toEqual([
+      {
+        kind: "table",
+        rows: [
+          ["Starting score", "5"],
+          ["Owner is an eladrin", "+2"],
+          ["Owner is an elf", "+1"],
+        ],
+      },
+    ]);
+  });
   it("renders legacy tab-delimited tables without fusing headings, cells or surrounding prose", () => {
     const value =
       "An effect before the table.\n<table>Level\tExtra damage\n1–8\t+1d8\n9–16\t+2d8\n17–24\t+3d8</table>\nAn effect after the table.";

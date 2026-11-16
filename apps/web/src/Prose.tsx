@@ -43,7 +43,7 @@ function normalizeLegacyStructure(value: string): string {
   return value
     .replace(/<br\s*\/?>/giu, "\n")
     .replace(
-      /<\/?(?:table|thead|tbody|tfoot|tr|p|div|rule)(?:\s[^>]*)?>/giu,
+      /<\/?(?:table|thead|tbody|tfoot|tr|p|div|rule)(?:\s[^>]*)?>|<\/(?:table|rule)(?=\s|$)/giu,
       "\n",
     )
     .replace(/<(?:td|th)(?:\s[^>]*)?>/giu, "")
@@ -150,15 +150,55 @@ function plainProseBlocks(
   return blocks;
 }
 
+/** An artifact's concordance row ends in its score change ("+1d10",
+ *  "–2", "5"); a line without one wraps on into the next line. */
+const SCORE_ROW = /^(.*\S)\s+([+\-–−]?\d+(?:d\d+)?)$/u;
+const SCORE = /^[+\-–−]?\d+(?:d\d+)?$/u;
+
+/** The rows of a table authored without tabs whose every row ends in a
+ *  score (the artifacts' concordance tables): the label, wrapped lines
+ *  joined, and the score. Undefined for any other shape. */
+function scoreRows(value: string): string[][] | undefined {
+  const lines = value
+    .split(/\r?\n/u)
+    .map((line) => normalizeLegacyStructure(line).trim())
+    .filter((line) => line !== "");
+  const rows: string[][] = [];
+  let label: string[] = [];
+  for (const line of lines) {
+    const match = line.match(SCORE_ROW);
+    if (match === null) {
+      label.push(line);
+      continue;
+    }
+    rows.push([[...label, match[1] ?? ""].join(" "), match[2] ?? ""]);
+    label = [];
+  }
+  return label.length === 0 && rows.length >= 2 ? rows : undefined;
+}
+
 /** Legacy tables occur both as HTML cells and tab-separated lines inside
- * <table>. Extract text only; never inject corpus markup into the DOM. */
+ * <table>, and the concordance tables as score-ended lines without tabs.
+ * Extract text only; never inject corpus markup into the DOM. */
 function legacyTable(
   value: string,
 ): Extract<ProseBlock, { kind: "table" }> | undefined {
   const taggedRows = [
     ...value.matchAll(/<tr(?:\s[^>]*)?>([\s\S]*?)<\/tr\s*>/giu),
   ];
-  const rows =
+  const tabRows = (separator: string | RegExp) =>
+    value
+      .trim()
+      .split(/\r?\n/u)
+      .filter((line) => line.trim())
+      .map((line) =>
+        line
+          .split(separator)
+          .map((cell) => normalizeLegacyStructure(cell).trim()),
+      );
+  const uniform = (table: readonly (readonly string[])[]) =>
+    table.every((row) => row.length === table[0]?.length);
+  let rows =
     taggedRows.length > 0
       ? taggedRows.map((row) =>
           [
@@ -167,15 +207,18 @@ function legacyTable(
             ),
           ].map((cell) => normalizeLegacyStructure(cell[2] ?? "").trim()),
         )
-      : value
-          .trim()
-          .split(/\r?\n/u)
-          .filter((line) => line.trim())
-          .map((line) =>
-            line
-              .split("\t")
-              .map((cell) => normalizeLegacyStructure(cell).trim()),
-          );
+      : tabRows("\t");
+  // A doubled tab in one row (the Unconquered Standard of Arkhosia's
+  // concordance) is spacing, not an empty cell, when collapsing it evens
+  // the rows out.
+  if (taggedRows.length === 0 && !uniform(rows)) {
+    const collapsed = tabRows(/\t+/u);
+    if (uniform(collapsed)) rows = collapsed;
+  }
+  if (taggedRows.length === 0 && !value.includes("\t")) {
+    const scored = scoreRows(value);
+    return scored === undefined ? undefined : { kind: "table", rows: scored };
+  }
   const columns = rows[0]?.length ?? 0;
   if (
     columns < 2 ||
@@ -183,8 +226,12 @@ function legacyTable(
     rows.some((row) => row.length !== columns)
   )
     return undefined;
+  // A tab-separated table's first row names its columns, unless it ends in
+  // a score: a concordance table starts with "Starting score\t5".
   const hasHeaders =
-    taggedRows.length === 0 || /<th(?:\s|>)/iu.test(taggedRows[0]?.[1] ?? "");
+    taggedRows.length === 0
+      ? !SCORE.test(rows[0]?.at(-1) ?? "")
+      : /<th(?:\s|>)/iu.test(taggedRows[0]?.[1] ?? "");
   return hasHeaders
     ? { kind: "table", headers: rows[0]!, rows: rows.slice(1) }
     : { kind: "table", rows };
@@ -207,16 +254,47 @@ function withoutSeeBelowLead(
     : blocks;
 }
 
+const TABLE_OPEN = /<table(?:\s[^>]*)?>/giu;
+const TABLE_END = /<\/table(?:\s*>|(?=\s|$))|<table(?:\s[^>]*)?>/iu;
+
+/**
+ * The legacy tables in a value, tolerating the corpus's unbalanced markup:
+ * a table ends at its `</table>` (also when authored without its `>`, as
+ * in the Skull of Sartine and Unconquered Standard of Arkhosia artifacts),
+ * at a second `<table>` (authored where the closing tag belonged, as in the
+ * Wave artifact), or at the end of the text. A stray `</table>` outside a
+ * table is only a line break.
+ */
+function legacyTableSpans(
+  value: string,
+): { start: number; end: number; body: string }[] {
+  const spans: { start: number; end: number; body: string }[] = [];
+  TABLE_OPEN.lastIndex = 0;
+  for (;;) {
+    const open = TABLE_OPEN.exec(value);
+    if (open === null) break;
+    const bodyStart = open.index + open[0].length;
+    const close = TABLE_END.exec(value.slice(bodyStart));
+    const bodyEnd = close === null ? value.length : bodyStart + close.index;
+    const end = close === null ? bodyEnd : bodyEnd + close[0].length;
+    spans.push({
+      start: open.index,
+      end,
+      body: value.slice(bodyStart, bodyEnd),
+    });
+    TABLE_OPEN.lastIndex = end;
+  }
+  return spans;
+}
+
 export function proseBlocks(value: string): readonly ProseBlock[] {
   const blocks: ProseBlock[] = [];
   let start = 0;
-  for (const match of value.matchAll(
-    /<table(?:\s[^>]*)?>([\s\S]*?)<\/table\s*>/giu,
-  )) {
-    const table = legacyTable(match[1] ?? "");
+  for (const span of legacyTableSpans(value)) {
+    const table = legacyTable(span.body);
     if (table === undefined) continue;
-    blocks.push(...plainProseBlocks(value.slice(start, match.index)), table);
-    start = match.index + match[0].length;
+    blocks.push(...plainProseBlocks(value.slice(start, span.start)), table);
+    start = span.end;
   }
   return withoutSeeBelowLead([
     ...blocks,
