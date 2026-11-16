@@ -97,6 +97,13 @@ export function FamiliarCard({
       )}
       <CardPanelSubheading subheading={panel.subheading} />
       <div className="print-card-body print-play-body">
+        {/* Who may choose it, in the builder pane only: the printed card is
+            for play. */}
+        {!isPanel || card.prerequisites === undefined ? null : (
+          <p className="print-card-rule-line">
+            <strong>Prerequisite:</strong> {card.prerequisites}
+          </p>
+        )}
         {showStats ? (
           <>
             <StatGroup

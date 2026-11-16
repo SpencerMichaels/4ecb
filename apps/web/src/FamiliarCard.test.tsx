@@ -128,3 +128,19 @@ describe("familiar card", () => {
     expect(familiarCardTitle(card)).toBe("Test Sprite");
   });
 });
+
+describe("familiar card prerequisites", () => {
+  const withPrerequisite = { ...card, prerequisites: "Sha'ir" };
+  it("shows who may choose it in the builder pane", () => {
+    expect(
+      renderToStaticMarkup(
+        <FamiliarCard card={withPrerequisite} layout="panel" />,
+      ),
+    ).toContain("<strong>Prerequisite:</strong> Sha&#x27;ir");
+  });
+  it("leaves it off the printed card", () => {
+    expect(
+      renderToStaticMarkup(<FamiliarCard card={withPrerequisite} />),
+    ).not.toContain("Prerequisite");
+  });
+});

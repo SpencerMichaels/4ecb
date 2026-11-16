@@ -143,3 +143,35 @@ describe("split familiar cards (D110)", () => {
     expect(parts(hidden.deck)).toEqual([]);
   });
 });
+
+describe("familiar prerequisites", () => {
+  const familiar = (prerequisites: string, tier?: string) =>
+    sheetFamiliarCard(
+      {
+        id: "FAMILIAR_PREREQ",
+        name: "Synthetic Familiar",
+        type: "Familiar",
+        source: "Test",
+        sources: ["Test"],
+        attributes: [],
+        categories: [],
+        rules: [],
+        description: "",
+        extensions: [],
+        provenance: { sourceKey: "test", sourceOrdinal: 0 },
+        prerequisites,
+        specifics:
+          tier === undefined
+            ? []
+            : [{ name: "Tier", value: tier, extraAttributes: [], ordinal: 0 }],
+      },
+      {},
+    ).prerequisites;
+  it("names who may choose it", () => {
+    expect(familiar("Sha'ir", "Heroic")).toBe("Sha'ir");
+  });
+  it("leaves out a prerequisite that only restates its tier", () => {
+    expect(familiar("Paragon Tier", "Paragon")).toBeUndefined();
+    expect(familiar("Epic Tier", "Epic Tier")).toBeUndefined();
+  });
+});

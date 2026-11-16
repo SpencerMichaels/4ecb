@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { displayPrerequisites, type ContentEntity } from "@4ecb/content-domain";
 import {
   FAMILIAR_HIT_POINTS,
   familiarDefenses,
@@ -36,6 +36,8 @@ export interface SheetFamiliarCard {
   readonly activeBenefits?: string;
   readonly quirks?: string;
   readonly description?: string;
+  /** Who may choose it ("Sha'ir"), unless it only restates its tier. */
+  readonly prerequisites?: string;
   readonly source: string;
 }
 
@@ -104,6 +106,7 @@ export function sheetFamiliarCard(
     quirks: field(entity, "Quirks"),
     description:
       entity.description.trim() || entity.flavor?.trim() || undefined,
+    prerequisites: familiarPrerequisites(entity),
   };
   return {
     kind: "familiar",
@@ -119,4 +122,21 @@ export function sheetFamiliarCard(
       Object.entries(optional).filter(([, value]) => value !== undefined),
     ),
   };
+}
+
+/** A familiar's prerequisite line, unless it only restates the tier its
+ *  identity line shows ("Paragon Tier"). */
+function familiarPrerequisites(entity: ContentEntity): string | undefined {
+  const line = displayPrerequisites(entity);
+  const tier = field(entity, "Tier")
+    ?.replace(/\s+tier$/i, "")
+    .toLocaleLowerCase();
+  return line === undefined ||
+    (tier !== undefined &&
+      line
+        .trim()
+        .toLocaleLowerCase()
+        .replace(/\s+tier$/, "") === tier)
+    ? undefined
+    : line;
 }

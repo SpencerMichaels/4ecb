@@ -694,3 +694,26 @@ describe("printed item presentation", () => {
     ).toBeUndefined();
   });
 });
+
+describe("item prerequisites", () => {
+  it("leads the body with the record's prerequisite", () => {
+    const view = printItemPresentation({
+      ...card("Weapon", { Damage: "1d8" }),
+      prerequisites: "Unarmed Combatant Class Feature",
+    });
+    expect(view.leadFields).toEqual([
+      { label: "Prerequisite", value: "Unarmed Combatant Class Feature" },
+    ]);
+  });
+
+  it("states a prerequisite field once", () => {
+    const view = printItemPresentation({
+      ...card("Ritual", { Prerequisite: "Trained in Arcana" }),
+      itemType: "Ritual",
+      prerequisites: "Trained in Arcana",
+    });
+    expect(
+      view.leadFields.filter((field) => field.label === "Prerequisite"),
+    ).toHaveLength(1);
+  });
+});

@@ -395,8 +395,19 @@ export function printItemPresentation(card: SheetCard) {
     ),
     weaponProperties,
     /** Labelled lines above the description (a ritual's duration, cost
-     *  and prerequisite); `rules` follow it. */
-    leadFields: placedFields.body,
+     *  and prerequisite); `rules` follow it. An item's record-level
+     *  prerequisite (a monk's unarmed strike, a warforged component) leads
+     *  them when no field states one. */
+    leadFields:
+      card.prerequisites === undefined ||
+      card.fields.some((entry) =>
+        /^prerequisites?$/i.test(entry.label.trim()),
+      )
+        ? placedFields.body
+        : [
+            { label: "Prerequisite", value: card.prerequisites },
+            ...placedFields.body,
+          ],
     rules,
     // Keep unstructured/custom mechanical prose when it has no structured
     // replacement, but never repeat an explicitly identified flavor passage.
