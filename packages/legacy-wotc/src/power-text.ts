@@ -6,6 +6,7 @@ import {
   levelHeaderText,
   namesSummonedCreature,
   parsePowerFieldBonuses,
+  meleeBasicSubstitute,
   parsePowerText,
   powerAttackSlots,
   requiredPowerItem,
@@ -149,6 +150,7 @@ export function powerTextField(
   }
   const fieldBonuses = power ? parsePowerFieldBonuses(specifics) : undefined;
   const requiredItem = power ? requiredPowerItem(specifics) : undefined;
+  const substitute = power ? meleeBasicSubstitute(specifics) : [];
   const store: PowerTextStore = {
     version: POWER_TEXT_VERSION,
     ...(slots.length === 0 ? {} : { slots }),
@@ -160,6 +162,7 @@ export function powerTextField(
       ? {}
       : { fieldBonuses }),
     ...(requiredItem === undefined ? {} : { requiredItem }),
+    ...(substitute.length === 0 ? {} : { meleeBasicSubstitute: substitute }),
     texts,
   };
   return {

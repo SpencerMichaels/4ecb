@@ -25,8 +25,9 @@ export const POWER_TEXT_FIELD = "_Power Text IR";
  *  is then ignored and the engine parses the text itself. 3: a summoned
  *  creature's command rolls (D111). 4: native CalcDamage's "+" chain,
  *  level lines anywhere, level header fields. 5: the item a Requirement
- *  names ({@link requiredPowerItem}). */
-export const POWER_TEXT_VERSION = 5;
+ *  names ({@link requiredPowerItem}). 6: the situations it may replace a
+ *  melee basic attack in ({@link meleeBasicSubstitute}). */
+export const POWER_TEXT_VERSION = 6;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",
@@ -248,6 +249,9 @@ export interface PowerTextStore {
   /** The item its Requirement says the power must be used with
    *  ({@link requiredPowerItem}). */
   readonly requiredItem?: string;
+  /** The situations the power may be used in place of a melee basic
+   *  attack in ({@link meleeBasicSubstitute}). */
+  readonly meleeBasicSubstitute?: readonly MeleeBasicSubstitute[];
   readonly texts: Readonly<Record<string, PowerTextEntry>>;
 }
 
@@ -392,6 +396,49 @@ export function requiredPowerItem(
     if (item !== undefined && item !== "") return item;
   }
   return undefined;
+}
+
+/* ------------------------------------------- melee basic substitutes */
+
+/** A situation in which a melee basic attack is made: a charge, or an
+ *  opportunity attack. */
+export type MeleeBasicSubstitute = "charge" | "opportunity";
+
+const IN_PLACE_OF_MELEE_BASIC =
+  /\bin place of (?:a|the) melee basic attack\b/iu;
+const SUBSTITUTE_FIELD = /^(?:special|requirement|effect)$/iu;
+
+/**
+ * The situations a power says it may be used in place of a melee basic
+ * attack in, from its Special, Requirement and Effect sentences: "When
+ * charging, you can use this power in place of a melee basic attack."
+ * (Life-Ending Strike), "You must charge and use this power in place of a
+ * melee basic attack.", "You charge and make the following attack in place
+ * of a melee basic attack." are a charge; "When making an opportunity
+ * attack, you can use this power in place of a melee basic attack." an
+ * opportunity attack; "You can use this power in place of a melee basic
+ * attack." either. Empty for none (a ranged basic attack substitute too).
+ */
+export function meleeBasicSubstitute(
+  specifics: readonly { readonly name: string; readonly value: string }[],
+): MeleeBasicSubstitute[] {
+  const found = new Set<MeleeBasicSubstitute>();
+  for (const specific of specifics) {
+    if (!SUBSTITUTE_FIELD.test(specific.name.trim())) continue;
+    for (const sentence of specific.value.split(/(?<=[.!?])\s+/u)) {
+      if (!IN_PLACE_OF_MELEE_BASIC.test(sentence)) continue;
+      if (/\bcharg(?:e|es|ing)\b/iu.test(sentence)) found.add("charge");
+      else if (/\bopportunity attack/iu.test(sentence))
+        found.add("opportunity");
+      else if (
+        /\b(?:use|make) (?:this|the) (?:power|attack)\b/iu.test(sentence)
+      ) {
+        found.add("charge");
+        found.add("opportunity");
+      }
+    }
+  }
+  return (["charge", "opportunity"] as const).filter((kind) => found.has(kind));
 }
 
 /* --------------------------------------------------------- attack lines */

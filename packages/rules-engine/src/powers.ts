@@ -12,6 +12,7 @@ import {
   type ContentEntity,
   type DamageClauseIr,
   type HitLineIr,
+  type MeleeBasicSubstitute,
   type PowerRecoveryIr,
   type SpecialHitIr,
 } from "@4ecb/content-domain";
@@ -2540,6 +2541,7 @@ function powerAdditionalEffects(input: {
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly basicAttackKind?: "melee" | "ranged" | undefined;
   readonly nativeKeywords?: readonly string[];
+  readonly meleeBasicSubstitute?: readonly MeleeBasicSubstitute[];
 }): readonly PowerAdditionalEffect[] {
   const tags = new Set([
     ...(input.nativeKeywords ?? []),
@@ -2567,6 +2569,24 @@ function powerAdditionalEffects(input: {
     tags.add("basic");
     tags.add(`${tags.has("ranged") ? "ranged" : "melee"} basic`);
   }
+  // Divergence (D126, D091): native BasicAttackOnly (`-Module-.cs`
+  // ~24975) keeps a rider for an opportunity attack or a charge, and
+  // CalcConditionals a `melee basic` stat, to IsBasicAttack powers (a basic
+  // attack's name or `_BasicAttack`). A melee power its text lets replace a
+  // melee basic attack on a charge (Life-Ending Strike) or an opportunity
+  // attack is that attack when so used (Player's Handbook p287, Charge:
+  // "make a melee basic attack"), so the riders of that situation apply to
+  // it too: "Your charge attacks deal +1d6 damage" (Horned Helm).
+  const substitute =
+    basicAttack || !tags.has("melee")
+      ? new Set<MeleeBasicSubstitute>()
+      : new Set(input.meleeBasicSubstitute ?? []);
+  const substituteSituation = (condition: string | undefined) =>
+    (substitute.has("charge") &&
+      /\bcharg(?:e|es|ing)\b/i.test(condition ?? "")) ||
+    (substitute.has("opportunity") &&
+      /\bopportunity attack/i.test(condition ?? ""));
+  const substituteTags = new Set([...tags, "basic", "melee basic"]);
   const damageRoll = /\d+d\d+/i.test(input.damage ?? "");
   const globals = new Map([
     ["attack rolls", "attack"],
@@ -2607,9 +2627,15 @@ function powerAdditionalEffects(input: {
     if (kind === "damage-roll" && !damageRoll) return [];
     // Native comma keywords are a conjunction; parenthesized limits name the
     // selected weapon/base/enchantment, not another owned inventory variant.
+    let asSubstitute = false;
     if (qualified !== null && qualified !== undefined) {
-      if (!qualified[1]?.split(",").every((tag) => tags.has(key(tag))))
-        return [];
+      const qualifies = (available: ReadonlySet<string>) =>
+        qualified[1]?.split(",").every((tag) => available.has(key(tag))) ===
+        true;
+      if (!qualifies(tags)) {
+        if (substitute.size === 0 || !qualifies(substituteTags)) return [];
+        asSubstitute = true;
+      }
       const limiter = qualified[3];
       if (
         limiter !== undefined &&
@@ -2620,12 +2646,15 @@ function powerAdditionalEffects(input: {
     return stat.contributions.flatMap((contribution) => {
       const identity = `${contribution.id}:${kind === "damage-roll" ? "damage" : kind}`;
       if (seen.has(identity) || contribution.reason === "equipment") return [];
+      if (asSubstitute && !substituteSituation(contribution.condition))
+        return [];
       if (
         !basicAttack &&
         (/opportunity attack/i.test(contribution.condition ?? "") ||
           /^(?:on any successful charge|when you charge)$/i.test(
             contribution.condition ?? "",
-          ))
+          )) &&
+        !substituteSituation(contribution.condition)
       )
         return [];
       if (kind === "info") {
@@ -4503,6 +4532,7 @@ export function evaluatePowers(input: {
                   byId,
                   basicAttackKind,
                   nativeKeywords,
+                  meleeBasicSubstitute: texts.meleeBasicSubstitute,
                 }),
               ],
         ...(critical === undefined || beastOnly ? {} : { critical }),

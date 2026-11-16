@@ -11,6 +11,7 @@ import {
   parseRecoveries,
   powerAttackSlots,
   readPowerTextStore,
+  meleeBasicSubstitute,
   requiredPowerItem,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
@@ -463,6 +464,70 @@ describe("a power's required item", () => {
         },
       ]),
     ).toBeUndefined();
+  });
+});
+
+describe("a power used in place of a melee basic attack", () => {
+  const field = (name: string, value: string) => [{ name, value }];
+  it("reads the situations its Special, Requirement or Effect names", () => {
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Special",
+          "When charging, you can use this power in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(["charge"]);
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Requirement",
+          "You must be wielding a light blade, and you must charge and use this power in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(["charge"]);
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Effect",
+          "You charge and make the following attack in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(["charge"]);
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Special",
+          "When making an opportunity attack, you can use this power in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(["opportunity"]);
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Special",
+          "You can use this power in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(["charge", "opportunity"]);
+  });
+  it("ignores ranged basic attacks and other fields", () => {
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Special",
+          "You can use this power in place of a ranged basic attack.",
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      meleeBasicSubstitute(
+        field(
+          "Hit",
+          "The target can make a melee basic attack in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual([]);
   });
 });
 

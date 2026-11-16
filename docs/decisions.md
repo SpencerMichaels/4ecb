@@ -5664,3 +5664,28 @@ It is not a new file type.
   class feature or power that marks, in the dashboard's id list, and a
   swordmage's Aegis of Shielding/Ensnarement has none; `powers` is empty
   (the dashboard doesn't read them yet).
+
+### D126 — Power cards' Additional Effects: charge and opportunity-attack riders on substitute powers; feats and items that name a power
+
+Status: accepted (2026-11-16, owner playtest reports).
+
+Two kinds of rider reach a power card's Additional Effects that legacy
+never puts there.
+
+- **Riders of a melee basic attack's situation (D091 divergence).**
+  Native CalcConditionals keeps a rider whose condition is an opportunity
+  attack, "when you charge" or "on any successful charge" (BasicAttackOnly,
+  `-Module-.cs` ~24975), and any `melee basic:*` stat, to IsBasicAttack
+  powers (~34377: a basic attack's name or `_BasicAttack`), so Life-Ending
+  Strike ("When charging, you can use this power in place of a melee basic
+  attack.") lists neither Horned Helm ("Your charge attacks deal +1d6
+  damage") nor Powerful Charge. A charge is a melee basic attack made at the
+  end of the move (Player's Handbook p287, Charge), and such a power is
+  that attack when so used, so a melee power whose Special, Requirement or
+  Effect lets it replace a melee basic attack on a charge (or an
+  opportunity attack, or either) gets the riders of that situation: one
+  whose condition names a charge (or an opportunity attack), including
+  `melee basic:*` stats with such a condition. Its other `melee basic`
+  riders still don't apply. The pack build parses the situations into
+  `_Power Text IR` (`meleeBasicSubstitute`, version 6); like the IR's other
+  facts the engine parses them itself for a pack without that version.

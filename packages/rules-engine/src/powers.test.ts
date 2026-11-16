@@ -692,6 +692,107 @@ describe("power evaluation", () => {
       ).toBe("1d8+4");
     },
   );
+  it("gives a power usable in place of a melee basic attack that situation's riders (D126)", () => {
+    const rider = (
+      name: string,
+      value: string,
+      condition: string | undefined,
+      provider: string,
+    ): EvaluatedStat => ({
+      name,
+      value: 0,
+      contributions: [
+        {
+          id: `rider:${name}`,
+          stat: name,
+          value,
+          ...(/^[-+]?\d+$/.test(value) ? { numericValue: Number(value) } : {}),
+          providerId: provider,
+          providerName: provider,
+          ...(condition === undefined ? {} : { condition }),
+          applied: false,
+          reason: "conditional",
+        },
+      ],
+    });
+    const strike = (id: string, name: string, special?: string) =>
+      entity(id, name, "Power", {
+        Keywords: "Primal, Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "4[W] + Strength modifier damage.",
+        ...(special === undefined ? {} : { Special: special }),
+      });
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["CHARGER", "WARDER", "ANY", "PLAIN"],
+      overlays: [],
+      entities: [
+        strike(
+          "CHARGER",
+          "Synthetic Charger",
+          "When charging, you can use this power in place of a melee basic attack.",
+        ),
+        strike(
+          "WARDER",
+          "Synthetic Warder",
+          "When making an opportunity attack, you can use this power in place of a melee basic attack.",
+        ),
+        strike(
+          "ANY",
+          "Synthetic Anytime",
+          "You can use this power in place of a melee basic attack.",
+        ),
+        strike("PLAIN", "Synthetic Plain"),
+        entity("AXE", "Synthetic Axe", "Weapon", { Damage: "1d12" }),
+      ],
+      inventory: [
+        {
+          id: "axe",
+          definitionIds: ["AXE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "melee basic:damage": {
+          ...rider("melee basic:damage", "+1d6", "when charging", "Helm"),
+          contributions: [
+            rider("melee basic:damage", "+1d6", "when charging", "Helm")
+              .contributions[0]!,
+            rider(
+              "melee basic:damage",
+              "+2",
+              "against undamaged enemies",
+              "Gloves",
+            ).contributions[0]!,
+          ],
+        },
+        Damage: rider("Damage", "+2", "when you charge", "Charger feat"),
+        "attack rolls": rider(
+          "attack rolls",
+          "+1",
+          "with opportunity attacks",
+          "Reflexes feat",
+        ),
+      },
+    });
+    const effects = (name: string) =>
+      powers
+        .find((power) => power.name === name)
+        ?.variants[0]?.additionalEffects?.map((effect) => effect.source)
+        .sort();
+    expect(effects("Synthetic Charger")).toEqual(["Charger feat", "Helm"]);
+    expect(effects("Synthetic Warder")).toEqual(["Reflexes feat"]);
+    expect(effects("Synthetic Anytime")).toEqual([
+      "Charger feat",
+      "Helm",
+      "Reflexes feat",
+    ]);
+    expect(effects("Synthetic Plain")).toEqual([]);
+  });
   it("keeps conditional reminders and keyword info separate from totals and alternate equipment", () => {
     const conditional = (
       name: string,

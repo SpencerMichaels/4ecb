@@ -1,9 +1,9 @@
 {
-  "version": 5,
+  "version": 6,
   "fixture": "737f4acbbbdfa9e7ec05a37f6696ebff21ac505dea2781ef36d94fa04e39f3c5",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -115,7 +115,7 @@
       }
     },
     "ID_GOLDEN_POWER_PACT_BLADE": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -189,7 +189,7 @@
       }
     },
     "ID_GOLDEN_POWER_HIGHEST": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -259,7 +259,7 @@
       }
     },
     "ID_GOLDEN_POWER_TWO_WEAPON": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -416,7 +416,7 @@
       }
     },
     "ID_GOLDEN_POWER_MELEE_RANGED": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -597,7 +597,7 @@
       }
     },
     "ID_GOLDEN_POWER_IMPLEMENT": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -729,7 +729,7 @@
       }
     },
     "ID_GOLDEN_POWER_BEAST": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -803,7 +803,7 @@
       }
     },
     "ID_GOLDEN_POWER_SUMMON": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -877,7 +877,7 @@
       }
     },
     "ID_GOLDEN_FEAT_MODIFY": {
-      "version": 5,
+      "version": 6,
       "texts": {
         "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
           "hit": {
@@ -960,7 +960,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 5,
+      "version": 6,
       "slots": [
         [
           3,
@@ -1049,7 +1049,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 5,
+      "version": 6,
       "summonedCreature": true,
       "texts": {
         "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.": {
@@ -1138,7 +1138,7 @@
       }
     },
     "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
-      "version": 5,
+      "version": 6,
       "summonedCreature": true,
       "texts": {
         "2d8 + your Charisma modifier radiant damage.": {
