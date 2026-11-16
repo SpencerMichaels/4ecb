@@ -2339,7 +2339,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.BasicAttackOnly": code(
       "Charge/opportunity-attack-only modifiers apply to basic attacks.",
-      "powers.ts powerAdditionalEffects; D126 divergence: a melee power whose Special/Requirement/Effect lets it replace a melee basic attack on a charge or an opportunity attack (_Power Text IR meleeBasicSubstitute) also gets that situation's riders, melee basic:* ones included",
+      "powers.ts powerAdditionalEffects; D126 divergence: a power whose Special/Requirement/Effect lets it be used as a melee or ranged basic attack (_Power Text IR basicAttackSubstitutes, version 7) and has no _BasicAttack gets that use's riders: on a charge or an opportunity attack only, that situation's riders (melee basic:* ones included); any time (Mind Thrust 'unaugmented as a ranged basic attack', not its augment versions above 0), every <kind> basic:* rider, said to apply 'when used as a <kind> basic attack'",
       test(
         POWERS,
         "uses the effective BA flag for eligibility and native basic-specific combat channels",
@@ -2347,6 +2347,10 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       test(
         POWERS,
         "gives a power usable in place of a melee basic attack that situation's riders (D126)",
+      ),
+      test(
+        POWERS,
+        "gives a power usable as a ranged basic attack every ranged basic attack rider (D126)",
       ),
     ),
     "?A0x7555d940.BuildKeywordSet": code(

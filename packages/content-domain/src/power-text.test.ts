@@ -11,7 +11,7 @@ import {
   parseRecoveries,
   powerAttackSlots,
   readPowerTextStore,
-  meleeBasicSubstitute,
+  basicAttackSubstitutes,
   requiredPowerItem,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
@@ -467,61 +467,114 @@ describe("a power's required item", () => {
   });
 });
 
-describe("a power used in place of a melee basic attack", () => {
+describe("a power used as a basic attack", () => {
   const field = (name: string, value: string) => [{ name, value }];
-  it("reads the situations its Special, Requirement or Effect names", () => {
+  const melee = (situation: string) => [{ kind: "melee", situation }];
+  it("reads the melee situations its Special, Requirement or Effect names", () => {
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
         field(
           "Special",
           "When charging, you can use this power in place of a melee basic attack.",
         ),
       ),
-    ).toEqual(["charge"]);
+    ).toEqual(melee("charge"));
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
         field(
           "Requirement",
           "You must be wielding a light blade, and you must charge and use this power in place of a melee basic attack.",
         ),
       ),
-    ).toEqual(["charge"]);
+    ).toEqual(melee("charge"));
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
         field(
           "Effect",
           "You charge and make the following attack in place of a melee basic attack.",
         ),
       ),
-    ).toEqual(["charge"]);
+    ).toEqual(melee("charge"));
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
+        field(
+          "Effect",
+          "Using your Hunter's Quarry, you designate the target as your quarry. You and your beast companion charge the target. You can make the following attack in place of a melee basic attack.",
+        ),
+      ),
+    ).toEqual(melee("charge"));
+    expect(
+      basicAttackSubstitutes(
         field(
           "Special",
           "When making an opportunity attack, you can use this power in place of a melee basic attack.",
         ),
       ),
-    ).toEqual(["opportunity"]);
+    ).toEqual(melee("opportunity"));
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
         field(
           "Special",
           "You can use this power in place of a melee basic attack.",
         ),
       ),
-    ).toEqual(["charge", "opportunity"]);
-  });
-  it("ignores ranged basic attacks and other fields", () => {
+    ).toEqual(melee("any"));
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
         field(
           "Special",
-          "You can use this power in place of a ranged basic attack.",
+          "You can use this power unaugmented as a melee basic attack.",
+        ),
+      ),
+    ).toEqual([{ kind: "melee", situation: "any", unaugmented: true }]);
+  });
+  it("reads a ranged basic attack substitute, any time", () => {
+    for (const text of [
+      "You can use this power as a ranged basic attack.",
+      "This power can be used as a ranged basic attack.",
+      "This power counts as a ranged basic attack.",
+      "In addition, you can use this power as a ranged basic attack.",
+      "You can use this power in place of a ranged basic attack.",
+    ])
+      expect(basicAttackSubstitutes(field("Special", text))).toEqual([
+        { kind: "ranged", situation: "any" },
+      ]);
+    expect(
+      basicAttackSubstitutes(
+        field(
+          " Special",
+          "You can use this power unaugmented as a ranged basic attack.",
+        ),
+      ),
+    ).toEqual([{ kind: "ranged", situation: "any", unaugmented: true }]);
+  });
+  it("ignores other powers, other attacks and other fields", () => {
+    expect(
+      basicAttackSubstitutes(
+        field(
+          "Effect",
+          "In addition, you can use the Veil of the Dragon Attack power, which can be used as a melee basic attack.",
         ),
       ),
     ).toEqual([]);
     expect(
-      meleeBasicSubstitute(
+      basicAttackSubstitutes(
+        field(
+          "Effect",
+          "If the first attack roll hits, you can choose to use the second attack roll as a melee basic attack against another enemy within reach.",
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      basicAttackSubstitutes(
+        field(
+          "Effect",
+          "The target makes a ranged basic attack against the target of your opportunity attack as a free action.",
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      basicAttackSubstitutes(
         field(
           "Hit",
           "The target can make a melee basic attack in place of a melee basic attack.",

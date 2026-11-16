@@ -1,9 +1,9 @@
 {
-  "version": 6,
+  "version": 7,
   "fixture": "49bf42c37959fdcd556d7241388f8f7613456fc2de8cf38388cc58da4e21e91b",
   "output": {
     "ID_GOLDEN_POWER_PENALTY": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -115,7 +115,7 @@
       }
     },
     "ID_GOLDEN_POWER_PACT_BLADE": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -189,7 +189,7 @@
       }
     },
     "ID_GOLDEN_POWER_HIGHEST": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -259,7 +259,7 @@
       }
     },
     "ID_GOLDEN_POWER_TWO_WEAPON": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -416,7 +416,7 @@
       }
     },
     "ID_GOLDEN_POWER_MELEE_RANGED": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -597,7 +597,7 @@
       }
     },
     "ID_GOLDEN_POWER_IMPLEMENT": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -729,7 +729,7 @@
       }
     },
     "ID_GOLDEN_POWER_BEAST": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -803,7 +803,7 @@
       }
     },
     "ID_GOLDEN_POWER_SUMMON": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -877,7 +877,7 @@
       }
     },
     "ID_GOLDEN_FEAT_MODIFY": {
-      "version": 6,
+      "version": 7,
       "texts": {
         "1[W] + Constitution modifier damage. Level 21: 2[W] + Constitution modifier damage.": {
           "hit": {
@@ -960,7 +960,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_HERON": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -1049,7 +1049,7 @@
       }
     },
     "ID_GOLDEN_SUMMON_WRAITH": {
-      "version": 6,
+      "version": 7,
       "summonedCreature": true,
       "texts": {
         "1d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.\nLevel 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.": {
@@ -1138,7 +1138,7 @@
       }
     },
     "ID_GOLDEN_COMPANION_1_POWERCARD_0": {
-      "version": 6,
+      "version": 7,
       "summonedCreature": true,
       "texts": {
         "2d8 + your Charisma modifier radiant damage.": {
@@ -1193,7 +1193,7 @@
       }
     },
     "ID_GOLDEN_POWER_CHARGE_STRIKE": {
-      "version": 6,
+      "version": 7,
       "slots": [
         [
           3,
@@ -1211,8 +1211,11 @@
           1
         ]
       ],
-      "meleeBasicSubstitute": [
-        "charge"
+      "basicAttackSubstitutes": [
+        {
+          "kind": "melee",
+          "situation": "charge"
+        }
       ],
       "texts": {
         "4[W] + Strength modifier damage.": {
@@ -1268,15 +1271,15 @@
       }
     },
     "ID_GOLDEN_POWER_ABJURE": {
-      "version": 6,
+      "version": 7,
       "texts": {}
     },
     "ID_GOLDEN_POWER_SHROUD": {
-      "version": 6,
+      "version": 7,
       "texts": {}
     },
     "ID_GOLDEN_POWER_SHROUD_NIGHT": {
-      "version": 6,
+      "version": 7,
       "texts": {}
     }
   }

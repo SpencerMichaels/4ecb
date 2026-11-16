@@ -12,7 +12,7 @@ import {
   type ContentEntity,
   type DamageClauseIr,
   type HitLineIr,
-  type MeleeBasicSubstitute,
+  type BasicAttackSubstitute,
   type PowerRecoveryIr,
   type SpecialHitIr,
 } from "@4ecb/content-domain";
@@ -2541,7 +2541,7 @@ function powerAdditionalEffects(input: {
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly basicAttackKind?: "melee" | "ranged" | undefined;
   readonly nativeKeywords?: readonly string[];
-  readonly meleeBasicSubstitute?: readonly MeleeBasicSubstitute[];
+  readonly basicAttackSubstitutes?: readonly BasicAttackSubstitute[];
 }): readonly PowerAdditionalEffect[] {
   const tags = new Set([
     ...(input.nativeKeywords ?? []),
@@ -2571,22 +2571,52 @@ function powerAdditionalEffects(input: {
   }
   // Divergence (D126, D091): native BasicAttackOnly (`-Module-.cs`
   // ~24975) keeps a rider for an opportunity attack or a charge, and
-  // CalcConditionals a `melee basic` stat, to IsBasicAttack powers (a basic
-  // attack's name or `_BasicAttack`). A melee power its text lets replace a
-  // melee basic attack on a charge (Life-Ending Strike) or an opportunity
-  // attack is that attack when so used (Player's Handbook p287, Charge:
-  // "make a melee basic attack"), so the riders of that situation apply to
-  // it too: "Your charge attacks deal +1d6 damage" (Horned Helm).
-  const substitute =
-    basicAttack || !tags.has("melee")
-      ? new Set<MeleeBasicSubstitute>()
-      : new Set(input.meleeBasicSubstitute ?? []);
+  // CalcConditionals a `melee basic`/`ranged basic` stat, to IsBasicAttack
+  // powers (~34377: a basic attack's name or `_BasicAttack`). A power its
+  // text lets be used as a basic attack is that attack when so used
+  // (Player's Handbook p287, Basic Attack and Charge; Heroes of the
+  // Forgotten Kingdoms p25: "Some classes provide alternatives to these
+  // default powers"), so it gets the riders of that use. On a charge
+  // (Life-Ending Strike) or an opportunity attack only, the riders whose
+  // condition names that situation: "Your charge attacks deal +1d6 damage"
+  // (Horned Helm). Any time a basic attack of its kind is allowed ("You can
+  // use this power unaugmented as a ranged basic attack.", Mind Thrust),
+  // every rider of that kind of basic attack, said to apply when it is so
+  // used; a melee one's charge and opportunity riders too.
+  const augmentParent = input.byId.get(
+    key(field(input.power, "_AugmentParent") ?? ""),
+  );
+  const augmented =
+    augmentParent !== undefined &&
+    key(
+      (field(augmentParent, "_AugmentVersions") ?? "").split(",")[0] ?? "",
+    ) !== key(input.power.id);
+  const substitutes = basicAttack
+    ? []
+    : (input.basicAttackSubstitutes ?? []).filter(
+        (substitute) =>
+          tags.has(substitute.kind) && !(substitute.unaugmented && augmented),
+      );
+  const substituteKind = substitutes[0]?.kind;
+  const substituteAnyTime = substitutes.some(
+    (substitute) => substitute.situation === "any",
+  );
   const substituteSituation = (condition: string | undefined) =>
-    (substitute.has("charge") &&
-      /\bcharg(?:e|es|ing)\b/i.test(condition ?? "")) ||
-    (substitute.has("opportunity") &&
-      /\bopportunity attack/i.test(condition ?? ""));
-  const substituteTags = new Set([...tags, "basic", "melee basic"]);
+    substitutes.some(
+      (substitute) =>
+        substitute.kind === "melee" &&
+        ((substitute.situation !== "opportunity" &&
+          /\bcharg(?:e|es|ing)\b/i.test(condition ?? "")) ||
+          (substitute.situation !== "charge" &&
+            /\bopportunity attack/i.test(condition ?? ""))),
+    );
+  const substituteTags = new Set([
+    ...tags,
+    ...(substituteKind === undefined
+      ? []
+      : ["basic", `${substituteKind} basic`]),
+  ]);
+  const substituteUse = `when used as a ${substituteKind ?? "basic"} basic attack`;
   const damageRoll = /\d+d\d+/i.test(input.damage ?? "");
   const globals = new Map([
     ["attack rolls", "attack"],
@@ -2633,7 +2663,7 @@ function powerAdditionalEffects(input: {
         qualified[1]?.split(",").every((tag) => available.has(key(tag))) ===
         true;
       if (!qualifies(tags)) {
-        if (substitute.size === 0 || !qualifies(substituteTags)) return [];
+        if (substitutes.length === 0 || !qualifies(substituteTags)) return [];
         asSubstitute = true;
       }
       const limiter = qualified[3];
@@ -2646,8 +2676,20 @@ function powerAdditionalEffects(input: {
     return stat.contributions.flatMap((contribution) => {
       const identity = `${contribution.id}:${kind === "damage-roll" ? "damage" : kind}`;
       if (seen.has(identity) || contribution.reason === "equipment") return [];
-      if (asSubstitute && !substituteSituation(contribution.condition))
+      if (
+        asSubstitute &&
+        !substituteAnyTime &&
+        !substituteSituation(contribution.condition)
+      )
         return [];
+      // An any-time substitute's rider applies when the power is used as
+      // that basic attack, which its condition then says.
+      const condition =
+        !asSubstitute || substituteSituation(contribution.condition)
+          ? contribution.condition
+          : [contribution.condition, substituteUse]
+              .filter((part) => part?.trim())
+              .join(" ");
       if (
         !basicAttack &&
         (/opportunity attack/i.test(contribution.condition ?? "") ||
@@ -2671,7 +2713,12 @@ function powerAdditionalEffects(input: {
           },
         ];
       }
-      if (contribution.reason !== "conditional" || !contribution.condition)
+      const anyTimeRider =
+        asSubstitute && substituteAnyTime && contribution.applied;
+      if (
+        !anyTimeRider &&
+        (contribution.reason !== "conditional" || !contribution.condition)
+      )
         return [];
       const value = contribution.numericValue;
       if (value === 0) return [];
@@ -2683,7 +2730,7 @@ function powerAdditionalEffects(input: {
         (contribution.bonusType ?? "").trim() === ""
           ? ""
           : ` ${contribution.bonusType} bonus`;
-      const text = `${amount}${bonus} to ${kind === "attack" ? "attack rolls" : "damage rolls"} ${contribution.condition} - ${contribution.providerName}.`;
+      const text = `${amount}${bonus} to ${kind === "attack" ? "attack rolls" : "damage rolls"} ${condition} - ${contribution.providerName}.`;
       seen.add(identity);
       return [
         {
@@ -4532,7 +4579,7 @@ export function evaluatePowers(input: {
                   byId,
                   basicAttackKind,
                   nativeKeywords,
-                  meleeBasicSubstitute: texts.meleeBasicSubstitute,
+                  basicAttackSubstitutes: texts.basicAttackSubstitutes,
                 }),
               ],
         ...(critical === undefined || beastOnly ? {} : { critical }),

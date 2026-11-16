@@ -5689,6 +5689,32 @@ never puts there.
   riders still don't apply. The pack build parses the situations into
   `_Power Text IR` (`meleeBasicSubstitute`, version 6); like the IR's other
   facts the engine parses them itself for a pack without that version.
+  **Amendment (2026-11-16, owner: "We should do this for ranged BAs as
+  well").** Generalized to either kind of basic attack and to "any time"
+  (`basicAttackSubstitutes`: a kind, melee or ranged; a situation,
+  any, charge or opportunity; and whether only unaugmented;
+  `_Power Text IR` version 7).
+  The pack has 29 powers usable "as" or "in place of" a ranged basic
+  attack (44 records with augment versions), every one any time (Magic
+  Missile, Eldritch Blast, the seeker's spirit shots, Leader of the
+  Bowmen, Mind Thrust "unaugmented"); none names a situation, since a
+  charge and an opportunity attack are melee basic attacks (Player's
+  Handbook p287; Heroes of the Forgotten Kingdoms p25). 23 carry
+  native `_BasicAttack` and so are basic attacks outright; the ones that
+  don't (Mind Thrust, Mind Break, Psychic Brand, Kinetic Trawl, Decerebrate
+  and their augment versions, Lunar Transposition; on the melee side
+  Intent Laid Bare, Clarifying Impact and [Boon] Chasme Gore) now get
+  every rider of their kind of basic attack (`ranged basic:*` such as
+  Bracers of the Perfect Shot, Eagle Eye Goggles, Draw First Blood), a
+  melee one its charge and opportunity riders too, listed in Additional
+  Effects with "when used as a <kind> basic attack" added to the rider,
+  not folded into the numbers, since the power may also be used normally.
+  A substitute only "unaugmented" gets none on an augment version above
+  version 0. The parse now also reads "as a melee basic attack" (it read
+  only "in place of"), "the charge's melee basic attack", and a charge an
+  Effect's earlier sentence names ("You and your beast companion charge
+  the target. You can make the following attack in place of a melee basic
+  attack.", Coordinated Charge).
 - **Feats and items that name a power.** Legacy's Additional Effects are
   the engine's Conditions only (CharTracker `PowerCardPower.cs`
   `AddPowerDetails`), so a feat with no rules (Wrenching Abjuration: "When

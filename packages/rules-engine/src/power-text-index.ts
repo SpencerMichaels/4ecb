@@ -1,6 +1,6 @@
 import {
   POWER_TEXT_FIELD,
-  meleeBasicSubstitute,
+  basicAttackSubstitutes,
   namesSummonedCreature,
   parseAttackField,
   parsePowerFieldBonuses,
@@ -10,9 +10,9 @@ import {
   readPowerTextStore,
   requiredPowerItem,
   type AttackFieldIr,
+  type BasicAttackSubstitute,
   type ContentEntity,
   type HitFieldIr,
-  type MeleeBasicSubstitute,
   type PowerAttackSlot,
   type PowerFieldBonuses,
   type PowerRecoveryIr,
@@ -69,8 +69,8 @@ export interface PowerTexts {
   readonly fieldBonuses: PowerFieldBonuses;
   /** The item its Requirement says it must be used with. */
   readonly requiredItem: string | undefined;
-  /** The situations it may replace a melee basic attack in. */
-  readonly meleeBasicSubstitute: readonly MeleeBasicSubstitute[];
+  /** When it may be used as a melee or ranged basic attack. */
+  readonly basicAttackSubstitutes: readonly BasicAttackSubstitute[];
   attack(text: string): AttackFieldIr;
   hit(text: string): HitFieldIr;
   recoveries(text: string): readonly PowerRecoveryIr[];
@@ -108,10 +108,10 @@ export function powerTexts(
         : (own.fieldBonuses ?? {}),
     requiredItem:
       own === undefined ? requiredPowerItem(power.specifics) : own.requiredItem,
-    meleeBasicSubstitute:
+    basicAttackSubstitutes:
       own === undefined
-        ? meleeBasicSubstitute(power.specifics)
-        : (own.meleeBasicSubstitute ?? []),
+        ? basicAttackSubstitutes(power.specifics)
+        : (own.basicAttackSubstitutes ?? []),
     attack: (text) =>
       stored(text, "attack") ??
       memo(attackFallback, text, () => parseAttackField(text)),

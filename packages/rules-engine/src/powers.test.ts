@@ -762,12 +762,15 @@ describe("power evaluation", () => {
           contributions: [
             rider("melee basic:damage", "+1d6", "when charging", "Helm")
               .contributions[0]!,
-            rider(
-              "melee basic:damage",
-              "+2",
-              "against undamaged enemies",
-              "Gloves",
-            ).contributions[0]!,
+            {
+              ...rider(
+                "melee basic:damage",
+                "+2",
+                "against undamaged enemies",
+                "Gloves",
+              ).contributions[0]!,
+              id: "rider:gloves",
+            },
           ],
         },
         Damage: rider("Damage", "+2", "when you charge", "Charger feat"),
@@ -788,10 +791,121 @@ describe("power evaluation", () => {
     expect(effects("Synthetic Warder")).toEqual(["Reflexes feat"]);
     expect(effects("Synthetic Anytime")).toEqual([
       "Charger feat",
+      "Gloves",
       "Helm",
       "Reflexes feat",
     ]);
+    expect(
+      powers
+        .find((power) => power.name === "Synthetic Anytime")
+        ?.variants[0]?.additionalEffects?.find(
+          (effect) => effect.source === "Gloves",
+        )?.text,
+    ).toBe(
+      "+2 to damage rolls against undamaged enemies when used as a melee basic attack - Gloves.",
+    );
     expect(effects("Synthetic Plain")).toEqual([]);
+  });
+  it("gives a power usable as a ranged basic attack every ranged basic attack rider (D126)", () => {
+    const contribution = (
+      name: string,
+      value: number,
+      provider: string,
+      condition?: string,
+    ) => ({
+      id: `rider:${provider}`,
+      stat: name,
+      value: `+${value}`,
+      numericValue: value,
+      providerId: provider,
+      providerName: provider,
+      ...(condition === undefined
+        ? { applied: true }
+        : { condition, applied: false, reason: "conditional" as const }),
+    });
+    const bolt = (id: string, name: string, extra: Record<string, string>) =>
+      entity(id, name, "Power", {
+        Keywords: "Augmentable, Implement, Psionic, Psychic",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Will",
+        Hit: "1d6 + Intelligence modifier psychic damage.",
+        ...extra,
+      });
+    const special = {
+      Special: "You can use this power unaugmented as a ranged basic attack.",
+    };
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["THRUST", "THRUST_0", "THRUST_1", "BASIC", "SWING"],
+      overlays: [],
+      entities: [
+        bolt("THRUST", "Synthetic Thrust", {
+          ...special,
+          _AugmentVersions: "THRUST_0,THRUST_1",
+        }),
+        bolt("THRUST_0", "Synthetic Thrust (Augment 0)", {
+          ...special,
+          _AugmentParent: "THRUST",
+        }),
+        bolt("THRUST_1", "Synthetic Thrust (Augment 1)", {
+          ...special,
+          _AugmentParent: "THRUST",
+        }),
+        bolt("BASIC", "Synthetic Missile", {
+          Special: "You can use this power as a ranged basic attack.",
+          _BasicAttack: "Ranged",
+        }),
+        entity("SWING", "Synthetic Swing", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+          Special: "You can use this power as a ranged basic attack.",
+        }),
+      ],
+      inventory: [],
+      stats: {
+        "Intelligence modifier": stat("Intelligence modifier", 4),
+        "ranged basic:damage": {
+          name: "ranged basic:damage",
+          value: 2,
+          contributions: [
+            contribution("ranged basic:damage", 2, "Bracers"),
+            contribution(
+              "ranged basic:damage",
+              1,
+              "First Blood",
+              "against undamaged enemies",
+            ),
+          ],
+        },
+        "ranged basic:attack": {
+          name: "ranged basic:attack",
+          value: 1,
+          contributions: [contribution("ranged basic:attack", 1, "Goggles")],
+        },
+      },
+    });
+    const texts = (name: string) =>
+      powers
+        .find((power) => power.name === name)
+        ?.variants[0]?.additionalEffects?.map((effect) => effect.text)
+        .sort();
+    const riders = [
+      "+1 to attack rolls when used as a ranged basic attack - Goggles.",
+      "+1 to damage rolls against undamaged enemies when used as a ranged basic attack - First Blood.",
+      "+2 to damage rolls when used as a ranged basic attack - Bracers.",
+    ];
+    expect(texts("Synthetic Thrust (Augment 0)")).toEqual(riders);
+    // Augmented, it is not a basic attack.
+    expect(texts("Synthetic Thrust (Augment 1)")).toEqual([]);
+    // A native basic attack takes them in its numbers.
+    const missile = powers.find((power) => power.name === "Synthetic Missile");
+    expect(missile?.variants[0]?.additionalEffects ?? []).toEqual([
+      expect.objectContaining({ source: "First Blood" }),
+    ]);
+    // A melee power is no ranged basic attack.
+    expect(texts("Synthetic Swing") ?? []).toEqual([]);
   });
   it("keeps conditional reminders and keyword info separate from totals and alternate equipment", () => {
     const conditional = (

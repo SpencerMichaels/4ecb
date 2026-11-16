@@ -26,8 +26,9 @@ export const POWER_TEXT_FIELD = "_Power Text IR";
  *  creature's command rolls (D111). 4: native CalcDamage's "+" chain,
  *  level lines anywhere, level header fields. 5: the item a Requirement
  *  names ({@link requiredPowerItem}). 6: the situations it may replace a
- *  melee basic attack in ({@link meleeBasicSubstitute}). */
-export const POWER_TEXT_VERSION = 6;
+ *  melee basic attack in. 7: those of a ranged basic attack too, and any
+ *  time ({@link basicAttackSubstitutes}). */
+export const POWER_TEXT_VERSION = 7;
 
 export const POWER_TEXT_ABILITIES = [
   "Strength",
@@ -249,9 +250,9 @@ export interface PowerTextStore {
   /** The item its Requirement says the power must be used with
    *  ({@link requiredPowerItem}). */
   readonly requiredItem?: string;
-  /** The situations the power may be used in place of a melee basic
-   *  attack in ({@link meleeBasicSubstitute}). */
-  readonly meleeBasicSubstitute?: readonly MeleeBasicSubstitute[];
+  /** When the power may be used as a melee or ranged basic attack
+   *  ({@link basicAttackSubstitutes}). */
+  readonly basicAttackSubstitutes?: readonly BasicAttackSubstitute[];
   readonly texts: Readonly<Record<string, PowerTextEntry>>;
 }
 
@@ -398,47 +399,99 @@ export function requiredPowerItem(
   return undefined;
 }
 
-/* ------------------------------------------- melee basic substitutes */
+/* ------------------------------------------------ basic attack substitutes */
 
-/** A situation in which a melee basic attack is made: a charge, or an
- *  opportunity attack. */
-export type MeleeBasicSubstitute = "charge" | "opportunity";
+/** A power that may be used as (in place of) a melee or ranged basic
+ *  attack, and when: at any time a basic attack of that kind is allowed,
+ *  or only on a charge or an opportunity attack (melee). */
+export interface BasicAttackSubstitute {
+  readonly kind: "melee" | "ranged";
+  readonly situation: "any" | "charge" | "opportunity";
+  /** Only unaugmented: "You can use this power unaugmented as a ranged
+   *  basic attack." (Mind Thrust), so not an augment version above 0. */
+  readonly unaugmented?: true;
+}
 
-const IN_PLACE_OF_MELEE_BASIC =
-  /\bin place of (?:a|the) melee basic attack\b/iu;
 const SUBSTITUTE_FIELD = /^(?:special|requirement|effect)$/iu;
+const IN_PLACE_OF_BASIC =
+  /\bin place of (?:a|the|the charge's) (melee|ranged) basic attack\b/iu;
+const AS_BASIC = /\bas an? (melee|ranged) basic attack\b/iu;
+/** The sentence's subject is the power itself: "use this power", "this
+ *  power can be used / counts", "make the following attack". */
+const SUBSTITUTE_SUBJECT =
+  /\b(?:this|the) (?:power|attack)\b|\bthe following attack\b/iu;
+const CHARGE = /\bcharg(?:e|es|ing)\b/iu;
+const OPPORTUNITY = /\bopportunity attack/iu;
+const SITUATIONS = ["any", "charge", "opportunity"] as const;
 
 /**
- * The situations a power says it may be used in place of a melee basic
- * attack in, from its Special, Requirement and Effect sentences: "When
- * charging, you can use this power in place of a melee basic attack."
- * (Life-Ending Strike), "You must charge and use this power in place of a
- * melee basic attack.", "You charge and make the following attack in place
- * of a melee basic attack." are a charge; "When making an opportunity
- * attack, you can use this power in place of a melee basic attack." an
- * opportunity attack; "You can use this power in place of a melee basic
- * attack." either. Empty for none (a ranged basic attack substitute too).
+ * When a power says it may be used as a melee or ranged basic attack, from
+ * its Special, Requirement and Effect sentences. "When charging, you can
+ * use this power in place of a melee basic attack." (Life-Ending Strike),
+ * "You must charge and use this power in place of a melee basic attack.",
+ * "You charge and make the following attack in place of a melee basic
+ * attack." are a charge, as is "You and your beast companion charge the
+ * target. You can make the following attack in place of a melee basic
+ * attack." (the field's earlier sentence names the charge); "When making an
+ * opportunity attack, you can use this power in place of a melee basic
+ * attack." an opportunity attack. "You can use this power in place of a
+ * melee basic attack.", "You can use this power unaugmented as a ranged
+ * basic attack." (Mind Thrust), "This power counts as a ranged basic
+ * attack." (Eldritch Blast) are any time. A sentence about another power or
+ * attack ("you can use the Veil of the Dragon Attack power, which can be
+ * used as a melee basic attack", "use the second attack roll as a melee
+ * basic attack") is none. "Any" subsumes a kind's other situations.
  */
-export function meleeBasicSubstitute(
+export function basicAttackSubstitutes(
   specifics: readonly { readonly name: string; readonly value: string }[],
-): MeleeBasicSubstitute[] {
-  const found = new Set<MeleeBasicSubstitute>();
+): BasicAttackSubstitute[] {
+  const found = new Map<"melee" | "ranged", Map<string, boolean>>();
   for (const specific of specifics) {
     if (!SUBSTITUTE_FIELD.test(specific.name.trim())) continue;
-    for (const sentence of specific.value.split(/(?<=[.!?])\s+/u)) {
-      if (!IN_PLACE_OF_MELEE_BASIC.test(sentence)) continue;
-      if (/\bcharg(?:e|es|ing)\b/iu.test(sentence)) found.add("charge");
-      else if (/\bopportunity attack/iu.test(sentence))
-        found.add("opportunity");
+    const sentences = specific.value.split(/(?<=[.!?])\s+/u);
+    sentences.forEach((sentence, index) => {
+      const inPlace = IN_PLACE_OF_BASIC.exec(sentence);
+      const match = inPlace ?? AS_BASIC.exec(sentence);
+      if (match === null) return;
+      const kind = match[1]!.toLowerCase() as "melee" | "ranged";
+      const subject = SUBSTITUTE_SUBJECT.test(sentence);
+      let situation: BasicAttackSubstitute["situation"] | undefined;
+      if (kind === "melee" && CHARGE.test(sentence)) situation = "charge";
+      else if (kind === "melee" && OPPORTUNITY.test(sentence))
+        situation = "opportunity";
+      else if (!subject) situation = undefined;
       else if (
-        /\b(?:use|make) (?:this|the) (?:power|attack)\b/iu.test(sentence)
-      ) {
-        found.add("charge");
-        found.add("opportunity");
-      }
-    }
+        kind === "melee" &&
+        inPlace !== null &&
+        sentences.slice(0, index).some((earlier) => CHARGE.test(earlier))
+      )
+        situation = "charge";
+      else situation = "any";
+      if (situation === undefined) return;
+      const situations = found.get(kind) ?? new Map<string, boolean>();
+      const unaugmented = /\bunaugmented\b/iu.test(sentence);
+      situations.set(
+        situation,
+        (situations.get(situation) ?? true) && unaugmented,
+      );
+      found.set(kind, situations);
+    });
   }
-  return (["charge", "opportunity"] as const).filter((kind) => found.has(kind));
+  return (["melee", "ranged"] as const).flatMap((kind) => {
+    const situations = found.get(kind);
+    if (situations === undefined) return [];
+    return SITUATIONS.filter(
+      (situation) =>
+        situations.has(situation) &&
+        (situation === "any" || !situations.has("any")),
+    ).map((situation) => ({
+      kind,
+      situation,
+      ...(situations.get(situation) === true
+        ? { unaugmented: true as const }
+        : {}),
+    }));
+  });
 }
 
 /* --------------------------------------------------------- attack lines */
