@@ -1,5 +1,38 @@
 # Implementation status
 
+## Playtest fixes (2026-11-16)
+
+Eight owner playtest reports, fixed as one batch:
+
+- **Wary Fighter** (`62130d38`): page-1 reminders drop ability-substitution
+  sentences the record's own `type="Ability"` statadd applies (Wary
+  Fighter, Battlewise, Haunted Blade L10). Perception's +1 was correct
+  (Power of Skill's feat bonus doesn't stack); initiative already used Wis.
+  Enlightened Spirit's Con on Athletics Misc was checked: it replaces Str
+  per D103's shared caps (`11483dc1`, test only).
+- **Builder stat tooltips** (`bd7aa0ca`, `900661c1`): rules-element rows
+  (SkillRules, level increases, Misc/class-bonus totals) are named by what
+  they add; passive senses show Base 10 plus the skill's own breakdown;
+  ability-score rows name their race or "Level N increase".
+- **Power card Target** (`e9360727`): a target field prints in the body
+  unless the attack band shows it (legacy `PowerCardUtility`); 1,426 pack
+  powers had lost theirs.
+- **Additional Effects** (D126; `1675b07d`, `5f460230`, `78ec3b9f`,
+  `82c4b95f`): powers usable in place of a melee basic attack take that
+  situation's charge/OA riders (`_Power Text IR` v6); new stored
+  `_Power Mentions IR` puts a feat's or equipped item's text on the card of
+  each owned power it names (815 feats, 340 items).
+- **Text cleanup** (`1aa7e64e`, `164407bd`): inline emphasis tags stripped
+  at pack build (12 records); legacy `<rule>` callouts render; Shop
+  enchantment names drop "the" after a removed "<base> of" (78 families).
+- **Hide item properties you can't use** (`c801fbdc`, `ba431f7b`): new
+  stored `_Resource Clauses IR` (power-point and Channel Divinity property
+  sentences, 51 records); Settings → Printed sheet option, on by default.
+
+Cache `evaluated-character-v129`. Verification: `scripts/check.sh` and
+`parity:baseline` on the rebuilt pack. Visual checks:
+`docs/visual-review-checklist.md` Pass 27.
+
 ## Evaluated snapshots in .4ecb exports (2026-11-13)
 
 D125: a `.4ecb` character export and the full backup carry a top-level

@@ -1633,6 +1633,59 @@ look and feel.
     Share again.
   - **Wrong if:** a control is missing or greyed out with no explanation.
 
+## Pass 27: Playtest fixes (2026-11-16)
+
+Use the dev server with the rebuilt `tmp/content/full-local.4ecp` (accept
+each character's content-update badge first: the text cleanup, resource
+clauses and power mentions are stored at pack build). Hu Sheng-Ming Level 8
+and Mellivora-L7 are the `sample-chars/` saves; on Hu, add Wary Fighter and
+Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
+
+- [ ] **Builder stat tooltips.** Added 2026-11-16.
+  - **Where:** Hu, builder sidebar; hover Pass Ins, Pass Perc, Init, WIS.
+  - **Expect:** Pass Ins "Base 10 / Insight +11" with Half level +4,
+    Wisdom modifier +5, Level 5 Ordained Priest Feature +2 indented under
+    it; Init lists Helm of Battle (heroic tier) +1; WIS "Base 16 / Human
+    +2 / Level 4 increase +1 / Level 8 increase +1".
+  - **Wrong if:** any "SkillRules", "Other contribution" or bare "Wisdom
+    +1" row, or the indented rows aren't visibly indented (Firefox and
+    Chrome).
+- [ ] **Wary Fighter.** Added 2026-11-16.
+  - **Where:** Hu with Wary Fighter, `?preview=1`.
+  - **Expect:** no Wary Fighter row in page 1's reminders; Insight +2,
+    Perception +1 (Power of Skill's +1 feat bonus doesn't stack with it),
+    Initiative uses Wisdom.
+- [ ] **Target lines.** Added 2026-11-16.
+  - **Where:** Hu's (or Akagi's) Healer's Mercy and Opportunity Attack,
+    Sylestine's Majestic Word, a monk's targeted movement technique; print
+    and builder panes.
+  - **Expect:** "Target: …" just above the Effect line on powers without an
+    attack; attack powers show the target once, in the attack band.
+- [ ] **Additional Effects from feats and items (D126).** Added 2026-11-16.
+  - **Where:** Hu's Abjure Undead (Wrenching Abjuration); Mellivora's
+    Life-Ending Strike (Powerful Charge, Horned Helm) and Dragon Breath
+    (Adaptable Breath); a ranger's Hunter's Quarry (Lethal Hunter; Drizzt
+    gains two lines). Print and builder panes.
+  - **Expect:** the line under Additional Effects naming its source; the
+    feat's page-1 reminder off by default (still offered in Edit mode).
+  - **Wrong if:** a printed card that gained lines (Life-Ending Strike also
+    has its new Target line) overflows or shrinks unreadably.
+- [ ] **Text cleanup.** Added 2026-11-16.
+  - **Where:** Mellivora, Build tab level 1, Dragon Breath Strength (and the
+    sheet's racial traits); Shop → Implement enchantments.
+  - **Expect:** no literal `<i>` tags; "War Mage +1" sorted under W, "Pyre",
+    "World Tree"; "The Skinsplitter" keeps its "The".
+- [ ] **Hide item properties you can't use.** Added 2026-11-16.
+  - **Where:** Settings → Printed sheet; then a non-psionic character with
+    Quicksilver Armor +1 and Boots of Resolute Reflexes, `?preview=1`, with
+    the option on and off; a fighter and a cleric with Astral Fire Armor.
+  - **Expect:** the checkbox, checked, under "Count coin weight"; with it
+    on, the armor has no Property line and the boots read only "You gain a
+    +1 item bonus to Reflex."; off, both full texts; the cleric keeps Astral
+    Fire Armor's property, the fighter loses it.
+  - **Wrong if:** blank lines or gaps where the text was removed, or the
+    label wraps badly at 140% zoom.
+
 ## Decisions
 
 Open judgement calls, not pass/fail checks. Look while you are on the

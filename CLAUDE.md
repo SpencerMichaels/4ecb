@@ -293,12 +293,20 @@ build`), and is stored as normalized fields or IR in the pack; the app and
   Conditional modifiers pane or defensive traits, D120),
   `_Prerequisite IR` (prerequisite trees, content-domain
   `prerequisite-ir.ts`, stored by `content-tool build` against the whole
-  pack and used only for that same record set) and `_Formula Items IR`
+  pack and used only for that same record set), `_Formula Items IR`
   (the item versions, level and gold, an alchemical formula whose cost is
   "See below"/"See Alchemical Item" creates, content-domain
   `formula-items.ts`: linked by `content-tool build` and again by
   `composeContentPacks` over a multi-layer pack; sheet-model `entityFields`
-  turns it into the card's "Item's price" cost and "Creates" line); bump the field's version
+  turns it into the card's "Item's price" cost and "Creates" line),
+  `_Power Mentions IR` (the powers a feat's description or magic item's
+  Property names as the character's own, content-domain
+  `power-mentions.ts`, linked like `_Formula Items IR`; sheet-model
+  `power-mention-effects.ts` prints the text in that power card's
+  Additional Effects, D126) and `_Resource Clauses IR` (item property
+  sentences that need power points or Channel Divinity, content-domain
+  `resource-clauses.ts`; sheet-model `applicable-properties.ts` drops them
+  under Settings' "Hide item properties you can't use"); bump the field's version
   when its parse changes. `apps/content-tool/src/stored-ir-golden.test.ts`
   enforces it: it snapshots each kind's output for a synthetic fixture with
   its version, fails when output changes under an unchanged version, and
