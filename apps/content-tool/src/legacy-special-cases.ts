@@ -2339,10 +2339,14 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.BasicAttackOnly": code(
       "Charge/opportunity-attack-only modifiers apply to basic attacks.",
-      "powers.ts powerAdditionalEffects",
+      "powers.ts powerAdditionalEffects; D126 divergence: a melee power whose Special/Requirement/Effect lets it replace a melee basic attack on a charge or an opportunity attack (_Power Text IR meleeBasicSubstitute) also gets that situation's riders, melee basic:* ones included",
       test(
         POWERS,
         "uses the effective BA flag for eligibility and native basic-specific combat channels",
+      ),
+      test(
+        POWERS,
+        "gives a power usable in place of a melee basic attack that situation's riders (D126)",
       ),
     ),
     "?A0x7555d940.BuildKeywordSet": code(
