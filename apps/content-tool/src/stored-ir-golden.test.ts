@@ -2,7 +2,8 @@
  * Guard against stale stored parses. The pack build parses content text once
  * and stores the result with a version (`_Power Text IR`, `_Prerequisite
  * IR`, `_Associate Stat Block`, `_Creature Stat Block`,
- * `_Note Values IR`, `_Formula Items IR`, `_Prose Bonuses IR`); the engine
+ * `_Note Values IR`, `_Formula Items IR`, `_Prose Bonuses IR`,
+ * `_Resource Clauses IR`); the engine
  * trusts a stored field whose
  * version matches. A parser change without a version bump would leave every
  * older pack with stale IR that synthetic tests never see.
@@ -39,6 +40,8 @@ import {
   PREREQUISITE_IR_VERSION,
   PROSE_BONUSES_FIELD,
   PROSE_BONUSES_VERSION,
+  RESOURCE_CLAUSES_FIELD,
+  RESOURCE_CLAUSES_VERSION,
   withStoredFormulaItems,
 } from "@4ecb/content-domain";
 import { parseD20Rules } from "@4ecb/legacy-wotc";
@@ -120,6 +123,13 @@ const kinds = [
     constant:
       "PROSE_BONUSES_VERSION (packages/content-domain/src/prose-bonuses.ts)",
     file: "prose-bonuses.golden.json",
+  },
+  {
+    field: RESOURCE_CLAUSES_FIELD,
+    version: RESOURCE_CLAUSES_VERSION,
+    constant:
+      "RESOURCE_CLAUSES_VERSION (packages/content-domain/src/resource-clauses.ts)",
+    file: "resource-clauses.golden.json",
   },
 ] as const;
 

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "fixture": "737f4acbbbdfa9e7ec05a37f6696ebff21ac505dea2781ef36d94fa04e39f3c5",
+  "output": {
+    "ID_GOLDEN_ITEM_PSI_ARMOR": {
+      "version": 1,
+      "clauses": [
+        {
+          "field": "Property",
+          "occurrence": 1,
+          "text": "While you have at least 1 power point, you gain a +1 item bonus to speed.",
+          "resource": "power-points"
+        }
+      ]
+    },
+    "ID_GOLDEN_ITEM_PSI_BOOTS": {
+      "version": 1,
+      "clauses": [
+        {
+          "field": "Property",
+          "occurrence": 1,
+          "text": "You can spend 1 power point as a free action during your turn to increase the bonus to +3 until the end of your next turn.",
+          "resource": "power-points"
+        }
+      ]
+    },
+    "ID_GOLDEN_ITEM_DIVINE_ARMOR": {
+      "version": 1,
+      "clauses": [
+        {
+          "field": "Property",
+          "occurrence": 1,
+          "text": "When you use any Channel Divinity power, you gain a +2 item bonus to AC and Fortitude until the end of your next turn.",
+          "resource": "channel-divinity"
+        }
+      ]
+    }
+  }
+}

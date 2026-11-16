@@ -23,6 +23,7 @@ import { creatureStatBlockField } from "./creature-stat-block";
 import { noteValuesField } from "./note-values";
 import { powerTextField } from "./power-text";
 import { proseBonusesField } from "./prose-bonuses";
+import { resourceClausesField } from "./resource-clauses";
 import { mergeSummonCommunityCards } from "./summon-community-cards";
 import { summonCreatureField } from "./summon-creature";
 import { applyLoadTimeSelfModifies } from "./self-modify";
@@ -486,6 +487,12 @@ export class D20RulesParser {
       specifics.length,
     );
     if (proseBonuses !== undefined) specifics.push(proseBonuses);
+
+    // Property sentences that need a resource the character may lack
+    // (power points, Channel Divinity), found once here for the printed
+    // sheet's "hide inapplicable properties" option.
+    const resourceClauses = resourceClausesField(specifics, specifics.length);
+    if (resourceClauses !== undefined) specifics.push(resourceClauses);
 
     const base = {
       id,

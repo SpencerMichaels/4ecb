@@ -253,3 +253,4 @@ export * from "./content-cache";
 export * from "./counts-as";
 export * from "./note-values";
 export * from "./prose-bonuses";
+export * from "./resource-clauses";

@@ -426,4 +426,17 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
   <RulesElement internal-id="ID_GOLDEN_FEAT_PROSE_RESIST" name="Golden Plating" type="Feat" source="Synthetic">
     You gain resist 2 to all damage while you are bloodied.
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ITEM_PSI_ARMOR" name="Golden Quickmetal Armor +1" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Armor</specific>
+    <specific name="Property">While you have at least 1 power point, you gain a +1 item bonus to speed.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ITEM_PSI_BOOTS" name="Golden Resolute Boots" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Wondrous</specific>
+    <specific name="Property">You gain a +1 item bonus to Reflex. You can spend 1 power point as a free action during your turn to increase the bonus to +3 until the end of your next turn.</specific>
+    <specific name="Property">Any creature that becomes bloodied in your aura cannot spend action points, healing surges, or power points (save ends).</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ITEM_DIVINE_ARMOR" name="Golden Starfire Armor +1" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Armor</specific>
+    <specific name="Property">When you use any Channel Divinity power, you gain a +2 item bonus to AC and Fortitude until the end of your next turn.</specific>
+  </RulesElement>
 </D20Rules>

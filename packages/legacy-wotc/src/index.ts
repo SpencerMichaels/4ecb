@@ -13,3 +13,4 @@ export { parseCreatureStatBlock } from "./creature-stat-block";
 export { parseSummonCreature } from "./summon-creature";
 export { noteValuesField, parseNote } from "./note-values";
 export { parseProseBonuses, proseBonusesField } from "./prose-bonuses";
+export { parseResourceClauses, resourceClausesField } from "./resource-clauses";
