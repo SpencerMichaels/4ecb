@@ -1190,6 +1190,95 @@ describe("printed overview data", () => {
       examples.map(([name, , , expected]) => [name, expected]),
     );
   });
+  it("leaves an ability substitution its ability-typed stat addition applies to the evaluator", () => {
+    const statadd = (name: string, value: string, type: string) => ({
+      name: "statadd",
+      attributes: [
+        { name: "name", value: name },
+        { name: "value", value },
+        { name: "type", value: type },
+      ],
+      children: [],
+      text: "",
+      ordinal: 0,
+    });
+    // [name, short description, full text, rules, reminder?]
+    const examples = [
+      // Native typed stacking keeps the higher Ability bonus on Initiative:
+      // every effect is calculated.
+      [
+        "Wary Fighter",
+        "+2 to Insight and Perception; substitute Wisdom for Dexterity for initiative",
+        "You use your Wisdom modifier instead of your Dexterity modifier when rolling initiative. You also gain a +2 feat bonus to Insight and Perception checks.",
+        [
+          statadd("Initiative", "+Wisdom modifier", "Ability"),
+          statadd("Insight Misc", "+2", "Feat"),
+          statadd("Perception Misc", "+2", "Feat"),
+        ],
+        false,
+      ],
+      [
+        "Battlewise",
+        "Use Wisdom in place of Dexterity for initiative",
+        "You can substitute your Wisdom modifier for your Dexterity modifier when making initiative checks.",
+        [statadd("Initiative", "+Wisdom modifier", "Ability")],
+        false,
+      ],
+      // No stat addition applies it: the substitution stays a reminder.
+      [
+        "Archer Training",
+        "Use Strength for ranged basic attacks with a bow",
+        "When you make a ranged basic attack with a bow, you can use Strength instead of Dexterity for the attack roll and the damage roll.",
+        [],
+        true,
+      ],
+      // The substituted ability differs from the stat addition's.
+      [
+        "Odd Instinct",
+        "Use Charisma for initiative",
+        "You can substitute your Charisma modifier for your Dexterity modifier when making initiative checks.",
+        [statadd("Initiative", "+Wisdom modifier", "Ability")],
+        true,
+      ],
+      // Another benefit in the same sentence still counts.
+      [
+        "Quick Start",
+        "Use Wisdom for initiative and shift",
+        "When you roll initiative, you can use your Wisdom modifier in place of your Dexterity modifier, and you can shift 1 square.",
+        [statadd("Initiative", "+Wisdom modifier", "Ability")],
+        true,
+      ],
+    ] as const;
+    const definitions = examples.map(([name, summary, text, rules], i) => ({
+      ...feat,
+      id: `feat:ability-substitution:${i}`,
+      name,
+      description: text,
+      rules: [...rules],
+      specifics: [
+        {
+          name: "Short Description",
+          value: summary,
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    }));
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: definitions.map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: "Feat",
+        })),
+      },
+      definitions,
+    );
+    expect(m.overview?.features.map((f) => [f.name, f.playReminder])).toEqual(
+      examples.map(([name, , , , expected]) => [name, expected]),
+    );
+  });
   it("retains full selected rules separately from authored short descriptions", () => {
     const m = buildSheetModel(snapshot, [feat]);
     expect(m.overview?.features[0]).toMatchObject({

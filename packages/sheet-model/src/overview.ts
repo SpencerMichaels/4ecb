@@ -186,10 +186,49 @@ export interface SheetOverview {
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
+const ABILITY_NAMES =
+  "strength|constitution|dexterity|intelligence|wisdom|charisma";
+/** The abilities a record's own `type="Ability"` stat additions put on a
+ *  statistic ("+Wisdom modifier" or "+ABILITYMOD(Wisdom)" on Initiative):
+ *  native typed stacking keeps the higher of it and the statistic's own
+ *  ability, which is how the legacy engine applies an ability substitution
+ *  ("use your Wisdom modifier instead of your Dexterity modifier"). */
+function substitutedAbilities(entity: ContentEntity | undefined): Set<string> {
+  const abilities = new Set<string>();
+  for (const rule of entity?.rules ?? []) {
+    if (
+      key(rule.name) !== "statadd" ||
+      key(getAttribute(rule.attributes, "type") ?? "") !== "ability"
+    )
+      continue;
+    const match = new RegExp(
+      `^\\+\\s*(?:(${ABILITY_NAMES})\\s+modifier|abilitymod\\((${ABILITY_NAMES})\\))$`,
+      "i",
+    ).exec((getAttribute(rule.attributes, "value") ?? "").trim());
+    const ability = match?.[1] ?? match?.[2];
+    if (ability !== undefined) abilities.add(key(ability));
+  }
+  return abilities;
+}
+/** A sentence substituting one of `abilities` for another ("You use your
+ *  Wisdom modifier instead of your Dexterity modifier when rolling
+ *  initiative", "substitute Wisdom for Dexterity for initiative"): the
+ *  record's ability-typed stat addition applies it, so its "when rolling
+ *  initiative" scope is not an in-play condition. A sentence that joins
+ *  another clause (", and", ";") keeps its other benefit. */
+function abilitySubstitutionPattern(abilities: ReadonlySet<string>): RegExp {
+  if (abilities.size === 0) return /(?!)/g;
+  const substitute = [...abilities].join("|");
+  return new RegExp(
+    `[^.;\\n]*\\b(?:use|substitute)\\s+(?:your\\s+)?(?:${substitute})(?:\\s+modifier)?\\s+(?:instead\\s+of|in\\s+place\\s+of|for)\\s+(?:your\\s+)?(?:${ABILITY_NAMES})\\b(?![^.;\\n]*,\\s*and\\b)[^.;\\n]*`,
+    "gi",
+  );
+}
 function hasPlayReminder(
   summary: string,
   description: string,
   keywordScoped = false,
+  abilitySubstitutions: ReadonlySet<string> = new Set(),
 ): boolean {
   // One clause per line: a short description often has no closing period, and
   // a stripped condition must not run on into the benefit text.
@@ -222,7 +261,8 @@ function hasPlayReminder(
         ? /\bwhen(?:ever)?\s+you\s+use\s+an?\s+(?:[\w-]+\s+){0,3}?(?:power|attack)\s+(?:that\s+has|with)\s+the\s+[^.;\n]*?\bkeywords?\b/gi
         : /(?!)/g,
       "",
-    );
+    )
+    .replace(abilitySubstitutionPattern(abilitySubstitutions), "");
   // Require an in-play condition, choice, or changed action. Passive proficiency,
   // training, numeric bonuses and power grants alone are not useful reminders.
   return /\b(?:when|whenever|if|unless|trigger|bloodied|combat advantage|opportunity|reroll|draw|shift(?:s|ing)?|push|pull|slide|teleport|spend|forgo|give up|once per)\b/i.test(
@@ -589,7 +629,12 @@ export function withSheetOverview(
             ? backgroundPlayBenefit(backgroundBenefit)
             : key(group.group) !== "background" &&
               !accessOnly(entity, benefit || summary, cards, summary) &&
-              hasPlayReminder(summary, benefit, keywordScopedBonus(entity)),
+              hasPlayReminder(
+                summary,
+                benefit,
+                keywordScopedBonus(entity),
+                substitutedAbilities(entity),
+              ),
         ...(backgroundBenefit !== undefined && backgroundBenefit !== summary
           ? { reminderText: backgroundBenefit }
           : reminderText === summary
