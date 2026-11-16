@@ -112,8 +112,8 @@ export function applySheetLayout(
      *  card (D110). */
     readonly splitCompanions?: ReadonlySet<string>;
     /** Item cards (by deck key) whose whole card overflows the printed card
-     *  at the minimum text size with its rules-bearing description (an
-     *  artifact's concordance): each prints as a rules card and a lore
+     *  at the minimum text size with its description mechanics (an
+     *  artifact's concordance): each prints as a rules card and a rules-text
      *  card, sharing one layout key (D110's split). */
     readonly splitItems?: ReadonlySet<string>;
   } = {},
@@ -333,10 +333,10 @@ function splitFamiliarCard(
   ];
 }
 
-/** The deck key suffix of an item's lore card (`splitItemCard`). */
-export const ITEM_LORE_KEY_SUFFIX = ":lore";
+/** The deck key suffix of an item's rules-text card (`splitItemCard`). */
+export const ITEM_RULES_TEXT_KEY_SUFFIX = ":rules-text";
 
-/** An item's rules card then its lore card, kept together under one
+/** An item's rules card then its rules-text card, kept together under one
  *  layout key, as a split companion's. */
 function splitItemCard(
   entry: SheetLayoutCard,
@@ -346,9 +346,9 @@ function splitItemCard(
     { ...entry, card: { ...card, part: "rules" } },
     {
       ...entry,
-      key: `${entry.key}${ITEM_LORE_KEY_SUFFIX}`,
+      key: `${entry.key}${ITEM_RULES_TEXT_KEY_SUFFIX}`,
       layoutKey: entry.key,
-      card: { ...card, part: "lore" },
+      card: { ...card, part: "rules-text" },
     },
   ];
 }

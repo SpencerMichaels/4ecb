@@ -1,4 +1,4 @@
-import type { SheetCard } from "@4ecb/sheet-model";
+import { itemRulesTextTitle, type SheetCard } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { CardSubheader } from "./CardSubheader";
@@ -41,25 +41,25 @@ export function ItemCard({
   // creature's: its card shows it (in print, its tables only).
   const description =
     card.descriptionOnCreatureCard === true ? undefined : item.description;
-  // After the rules: a rules-bearing description (an artifact's, an
-  // intelligent or cursed item's) on every card, and in a builder pane any
-  // description the body leaves out (owner, 2026-11-16).
-  // A split card's rules half leaves it to the lore half.
+  // After the rules (owner, 2026-11-16): a builder pane shows any
+  // description the body leaves out, whole; a printed card only its
+  // mechanics (an artifact's concordance and states, a cursed item's curse
+  // rules), which a split card's rules half leaves to its second card.
   const trailingDescription =
     card.descriptionOnCreatureCard === true || card.part === "rules"
       ? undefined
-      : (item.trailingDescription ??
-        (isPanel &&
-        description === undefined &&
-        card.description?.trim() &&
-        card.description !== card.flavor
+      : isPanel
+        ? description === undefined &&
+          card.description?.trim() &&
+          card.description !== card.flavor
           ? card.description
-          : undefined));
+          : undefined
+        : item.trailingDescription;
   const hasSubheader =
     item.statRows.length > 0 || item.weaponProperties.length > 0;
-  if (card.part === "lore")
+  if (card.part === "rules-text")
     return (
-      <ItemLoreCard
+      <ItemRulesTextCard
         card={card}
         cardRef={cardRef}
         icon={item.icon}
@@ -238,11 +238,12 @@ export function ItemCard({
 }
 
 /**
- * The second card of an item printed in two (`part: "lore"`): its
- * rules-bearing description alone (an artifact's goals and concordance),
- * titled "<name> — Lore", in the item card's frame.
+ * The second card of an item printed in two (`part: "rules-text"`): its
+ * description's mechanics alone (an artifact's concordance and states, a
+ * curse), titled "<name> — Concordance" or "— Curse"
+ * (`itemRulesTextTitle`), in the item card's frame.
  */
-function ItemLoreCard({
+function ItemRulesTextCard({
   card,
   cardRef,
   icon,
@@ -261,18 +262,18 @@ function ItemLoreCard({
     <article
       ref={cardRef}
       className="print-reference-card print-item-card no-subheader"
-      data-item-part="lore"
+      data-item-part="rules-text"
     >
       <header>
         <h3>
           <Icon name={icon} />
-          <span>{`${name} — Lore`}</span>
+          <span>{itemRulesTextTitle(card, name)}</span>
         </h3>
       </header>
       <div className="print-card-body print-item-body">
-        {card.description === undefined ? null : (
+        {card.rulesText === undefined ? null : (
           <CardText
-            value={card.description}
+            value={card.rulesText}
             textPresentation={textPresentation}
           />
         )}

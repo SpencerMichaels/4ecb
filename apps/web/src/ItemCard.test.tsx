@@ -35,32 +35,44 @@ describe("item card descriptions", () => {
       "Dran claimed it",
     );
   });
-  it("prints an artifact's description after its rules", () => {
-    const artifact = item(
-      { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
-      "Concordance: starting score 5.",
+  it("prints only an artifact's mechanics after its rules", () => {
+    const artifact = {
+      ...item(
+        { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
+        "Goals: rule the sky.\nConcordance: starting score 5.",
+      ),
+      rulesText: "Concordance: starting score 5.",
+    };
+    const printed = renderToStaticMarkup(<ItemCard card={artifact} />);
+    expect(after(printed, "Your reach is 3.", "Concordance")).toBe(true);
+    expect(printed).not.toContain("Goals");
+    const pane = renderToStaticMarkup(
+      <ItemCard card={artifact} layout="panel" />,
     );
-    const markup = renderToStaticMarkup(<ItemCard card={artifact} />);
-    expect(after(markup, "Your reach is 3.", "Concordance")).toBe(true);
+    expect(after(pane, "Your reach is 3.", "Goals")).toBe(true);
   });
 });
 
 describe("item card printed in two", () => {
-  const artifact = item(
-    { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
-    "Concordance: starting score 5.",
-  );
-  it("leaves the description to the lore card", () => {
+  const artifact: SheetCard = {
+    ...item(
+      { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
+      "Goals: rule.\nConcordance: starting score 5.",
+    ),
+    rulesText: "Concordance: starting score 5.",
+    rulesTextKind: "concordance",
+  };
+  it("leaves its mechanics to the second card", () => {
     const rules = renderToStaticMarkup(
       <ItemCard card={{ ...artifact, part: "rules" }} />,
     );
     expect(rules).toContain("Your reach is 3.");
-    expect(rules).not.toContain("Concordance");
-    const lore = renderToStaticMarkup(
-      <ItemCard card={{ ...artifact, part: "lore" }} />,
+    expect(rules).not.toContain("starting score");
+    const second = renderToStaticMarkup(
+      <ItemCard card={{ ...artifact, part: "rules-text" }} />,
     );
-    expect(lore).toContain("Synthetic Item — Lore");
-    expect(lore).toContain("Concordance");
-    expect(lore).not.toContain("Your reach is 3.");
+    expect(second).toContain("Synthetic Item — Concordance");
+    expect(second).toContain("starting score 5");
+    expect(second).not.toContain("Your reach is 3.");
   });
 });

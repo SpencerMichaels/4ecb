@@ -2,6 +2,7 @@ import type { SheetSectionId } from "@4ecb/character-domain";
 import {
   creatureCardTitle,
   isSheetPlayCard,
+  itemRulesTextTitle,
   type SheetLayoutCard,
 } from "@4ecb/sheet-model";
 
@@ -24,8 +25,8 @@ export function sheetCardLabel(entry: Pick<SheetLayoutCard, "card">): string {
   if (isSheetPlayCard(card))
     return card.kind === "play-character" ? "Play data" : "Skills";
   if (card.kind === "creature") return creatureCardTitle(card);
-  // An item printed in two names its lore half (`splitItemCard`).
-  return card.kind === "item" && card.part === "lore"
-    ? `${card.name} — Lore`
+  // An item printed in two names its second card (`splitItemCard`).
+  return card.kind === "item" && card.part === "rules-text"
+    ? itemRulesTextTitle(card)
     : card.name;
 }

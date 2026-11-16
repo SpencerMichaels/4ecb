@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  ITEM_RULES_TEXT_FIELD,
+  ITEM_RULES_TEXT_VERSION,
+  type ContentEntity,
+} from "@4ecb/content-domain";
 
 import {
   CARD_FIELD_ALLOWLIST,
@@ -264,8 +268,16 @@ const RECORDS: readonly ContentEntity[] = [
       Tier: "Paragon",
       Weapon: "Longspear",
       Property: "Your reach with this weapon is 3.",
+      [ITEM_RULES_TEXT_FIELD]: JSON.stringify({
+        version: ITEM_RULES_TEXT_VERSION,
+        kind: "concordance",
+        text: "Concordance\nOwner slays a servant of a god: +1",
+      }),
     },
-    { description: "Goals of the Synthetic Spear: kill servants of the gods." },
+    {
+      description:
+        "Goals of the Synthetic Spear: kill servants of the gods.\n\nConcordance\nOwner slays a servant of a god: +1",
+    },
   ),
   record("SYN_ARROWS", "Synthetic Arrows", "Gear", {
     count: "30",

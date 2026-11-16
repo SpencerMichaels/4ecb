@@ -438,16 +438,13 @@ export function printItemPresentation(card: SheetCard) {
     // replacement, but never repeat an explicitly identified flavor passage.
     // A ritual's description is its rules text, never a repeat.
     description: leadDescription,
-    /** The description after the rules: an artifact's, intelligent item's
-     *  or cursed item's, which is rules (goals and concordance, persona,
-     *  the curse; owner, 2026-11-16). A builder pane shows any other
-     *  description there too. */
+    /** What the printed card prints of the description after the rules:
+     *  only its mechanics (an artifact's concordance and states, a cursed
+     *  item's curse rules; `rulesText`). Printed cards are for mechanics,
+     *  not flavor (owner, 2026-11-16); a builder pane shows the whole
+     *  description there instead. */
     trailingDescription:
-      leadDescription === undefined &&
-      card.description !== card.flavor &&
-      rulesDescriptionItem(card)
-        ? card.description
-        : undefined,
+      leadDescription === undefined ? card.rulesText : undefined,
     kind,
     /** A ritual's subheader lines read as one block, without dividers. */
     isRitual,
@@ -607,32 +604,4 @@ export function printItemPowerClauses(text: string): readonly SheetValue[] {
   }
   clauses.push({ label, value: text.slice(start).trim() });
   return clauses;
-}
-
-/**
- * Whether an item's description is rules rather than background: an
- * artifact's (its goals, roleplaying and concordance), an intelligent
- * item's (its communication, persona and conflict entries) or a cursed
- * item's (the curse). Read from the record's data: its Magic Item Type
- * ("Artifact", "Intelligent Item"), its Special ("Cursed Item", "Item
- * Curse"), or a description that is an intelligent item's block (it opens
- * with "Communication") or states the cursed-item rule.
- */
-export function rulesDescriptionItem(card: SheetCard): boolean {
-  const values = (name: string) =>
-    card.fields
-      .filter((entry) => entry.label.trim().toLowerCase() === name)
-      .map((entry) => entry.value.trim());
-  const description = card.description?.trim() ?? "";
-  return (
-    description !== "" &&
-    (values("magic item type").some((type) =>
-      /^(?:artifact|intelligent item)$/i.test(type),
-    ) ||
-      values("special").some((special) => /\bcurse/i.test(special)) ||
-      /^Communication\b/.test(description) ||
-      /\bA cursed item looks and functions like a normal magic item\b/i.test(
-        description,
-      ))
-  );
 }

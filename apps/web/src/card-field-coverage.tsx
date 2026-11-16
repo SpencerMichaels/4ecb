@@ -11,6 +11,7 @@ import { Fragment, createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
+import { readItemRulesText } from "@4ecb/content-domain";
 import {
   displayPrerequisites,
   isUserFacingSpecific,
@@ -55,7 +56,6 @@ import {
   isNamedEnhancement,
   printItemPower,
   printItemPowerClauses,
-  rulesDescriptionItem,
 } from "./print-item-presentation";
 import {
   bandShowsAttackLine,
@@ -531,6 +531,14 @@ const specificValue = (entity: ContentEntity, name: string) =>
 /** Deliberate merges: the field shows, in another form. */
 export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
   {
+    types: ITEM_TYPES,
+    fields: ["(description)"],
+    surfaces: ["print"],
+    reason:
+      "a printed card prints only the description's mechanics: an artifact's concordance and states, a cursed item's curse rules (_Item Rules Text IR; owner, 2026-11-16)",
+    form: (_value, entity) => readItemRulesText(entity.specifics)?.text,
+  },
+  {
     types: ["weapon"],
     fields: ["Armor Category"],
     reason: 'a shield weapon\'s subheader "Shield Light" (owner, 2026-11-16)',
@@ -762,12 +770,9 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
     types: ITEM_TYPES,
     fields: ["(description)"],
     surfaces: ["print"],
-    records: (entity) =>
-      !rulesDescriptionItem(
-        sheetItemCard({ name: entity.name, entities: [entity] }),
-      ),
+    records: (entity) => readItemRulesText(entity.specifics) === undefined,
     reason:
-      "an ordinary item's description is background: the builder pane shows it after the rules; printed cards print an artifact's, intelligent or cursed item's (rulesDescriptionItem) or a rules-less item's (owner, 2026-11-16)",
+      "printed cards are for mechanics, not flavor (owner, 2026-11-16): the builder pane shows an item's description after its rules; a printed card prints it only when the card has no rules (a mundane item's text) or its mechanics part (_Item Rules Text IR)",
   },
   {
     types: ["gear"],

@@ -6,7 +6,7 @@ import { isSheetPlayCard, sheetCardDeck } from "./card-deck";
 import type { SheetCard } from "./index";
 import type { SheetItemSetCard } from "./item-set-card";
 import {
-  ITEM_LORE_KEY_SUFFIX,
+  ITEM_RULES_TEXT_KEY_SUFFIX,
   applySheetLayout,
   orderedCards,
 } from "./sheet-layout";
@@ -221,7 +221,7 @@ describe("item cards printed in two", () => {
     ).toEqual(["whole"]);
   });
 
-  it("prints a split item as rules then lore, under one layout key", () => {
+  it("prints a split item as rules then its rules text, under one layout key", () => {
     const resolved = applySheetLayout(model, undefined, {
       splitItems: new Set([key]),
     });
@@ -229,10 +229,10 @@ describe("item cards printed in two", () => {
       resolved.deck
         .filter(({ card }) => card.kind === "item")
         .map(({ card }) => (card as SheetCard).part),
-    ).toEqual(["rules", "lore"]);
-    const lore = resolved.cards.at(-1)!;
-    expect(lore.key).toBe(`${key}${ITEM_LORE_KEY_SUFFIX}`);
-    expect(lore.layoutKey).toBe(key);
-    expect(resolved.defaultCardOrder).not.toContain(lore.key);
+    ).toEqual(["rules", "rules-text"]);
+    const second = resolved.cards.at(-1)!;
+    expect(second.key).toBe(`${key}${ITEM_RULES_TEXT_KEY_SUFFIX}`);
+    expect(second.layoutKey).toBe(key);
+    expect(resolved.defaultCardOrder).not.toContain(second.key);
   });
 });

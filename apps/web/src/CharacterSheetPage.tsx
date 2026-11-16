@@ -61,7 +61,6 @@ import { BeastCompanionCard } from "./BeastCompanionCard";
 import { CreatureCard } from "./CreatureCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
-import { rulesDescriptionItem } from "./print-item-presentation";
 import { ItemSetCard } from "./ItemSetCard";
 import { LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
@@ -458,10 +457,10 @@ export function CharacterSheetPage({
       return next;
     });
   }, []);
-  // Item cards whose rules-bearing description (an artifact's concordance,
-  // an intelligent or cursed item's rules) makes the whole card overflow at
-  // the minimum text size: each prints as a rules card and a lore card,
-  // as a companion splits (D110).
+  // Item cards whose description mechanics (an artifact's concordance and
+  // states, a curse; `rulesText`) make the whole card overflow at the
+  // minimum text size: each prints as a rules card and a "— Concordance"
+  // or "— Curse" card, as a companion splits (D110).
   const [splitItems, setSplitItems] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -474,13 +473,13 @@ export function CharacterSheetPage({
       return next;
     });
   }, []);
-  const loreItems = useMemo(
+  const rulesTextItems = useMemo(
     () =>
       model === undefined
         ? []
         : sheetCardDeck(model).flatMap((entry) =>
             entry.card.kind === "item" &&
-            rulesDescriptionItem(entry.card as SheetCard)
+            (entry.card as SheetCard).rulesText !== undefined
               ? [{ key: entry.key, card: entry.card as SheetCard }]
               : [],
           ),
@@ -1030,11 +1029,11 @@ export function CharacterSheetPage({
       </div>
 
       {/* Each creature's, beast's and familiar's whole card, and each item
-          card with a rules-bearing description, measured at print size: one
+          card whose description mechanics print (`rulesText`), measured at print size: one
           that overflows at the minimum text size prints as two cards (D110).
           Never printed or seen. */}
       {model.companions.some((card) => card.kind !== "associate") ||
-      loreItems.length > 0 ? (
+      rulesTextItems.length > 0 ? (
         <div className="print-card-probe print-excluded" aria-hidden="true">
           {model.companions.flatMap((card) => {
             const key = sheetCompanionCardKeyBase(card);
@@ -1049,7 +1048,7 @@ export function CharacterSheetPage({
               return [<FamiliarCard card={card} key={key} onFit={onFit} />];
             return [];
           })}
-          {loreItems.map(({ key, card }) => (
+          {rulesTextItems.map(({ key, card }) => (
             <ItemCard
               card={card}
               key={key}

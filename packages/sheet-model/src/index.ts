@@ -16,6 +16,7 @@ import {
   powerAttackSlots,
   readCreatureStatBlock,
   readFormulaItems,
+  readItemRulesText,
   weaponPropertyText,
   type ClauseResource,
   type ContentEntity,
@@ -247,7 +248,7 @@ export {
 } from "./card-deck";
 export {
   applySheetLayout,
-  ITEM_LORE_KEY_SUFFIX,
+  ITEM_RULES_TEXT_KEY_SUFFIX,
   sheetHiddenSections,
   sheetLayoutCardKey,
   sheetLayoutCardKeys,
@@ -424,6 +425,14 @@ export interface SheetCard {
    * its item parts (`itemCardBesideCreature`).
    */
   readonly descriptionOnCreatureCard?: true;
+  /**
+   * The part of an item's description its printed card prints after its
+   * rules: an artifact's concordance and states, a cursed item's curse
+   * rules (`_Item Rules Text IR`). Builder panes show the whole description.
+   */
+  readonly rulesText?: string;
+  /** What `rulesText` is: an artifact's concordance, or a curse. */
+  readonly rulesTextKind?: "concordance" | "curse";
   readonly source?: string;
   readonly variants?: readonly SheetPowerVariant[];
   /** Calculation diagnostics, never authored rules or physical-card sections. */
@@ -445,11 +454,11 @@ export interface SheetCard {
   readonly foldedIntoCreature?: boolean;
   /**
    * An item card printed in two (D110's companion split, applied to an
-   * item whose rules-bearing description overflows its card at the
-   * minimum text size): `rules` leaves the description out, `lore` is the
-   * description alone, titled "<name> — Lore".
+   * item whose `rulesText` overflows its card at the minimum text size):
+   * `rules` leaves that text out, `rules-text` is that text alone, titled
+   * by `itemRulesTextTitle` ("<name> — Concordance").
    */
-  readonly part?: "rules" | "lore";
+  readonly part?: "rules" | "rules-text";
 }
 
 /** The movement technique part of a monk full discipline's card. */
@@ -1800,6 +1809,8 @@ export function sheetItemCard(input: {
       : withoutInapplicableClauses(overlaid, missing);
   });
   const entity = entities.at(-1);
+  const rulesText =
+    entity === undefined ? undefined : readItemRulesText(entity.specifics);
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
     ...(input.holdingId === undefined ? {} : { holdingId: input.holdingId }),
@@ -1817,6 +1828,9 @@ export function sheetItemCard(input: {
         : [{ label: "Equipped", value: String(input.equippedQuantity) }]),
       ...entities.flatMap((candidate) => entityFields(candidate)),
     ],
+    ...(rulesText === undefined
+      ? {}
+      : { rulesText: rulesText.text, rulesTextKind: rulesText.kind }),
     ...entityPresentation(entity, input.prerequisiteLines),
   };
 }
@@ -3076,4 +3090,13 @@ function sumWeights(weights: readonly (number | undefined)[]) {
   return listed.length === 0
     ? undefined
     : listed.reduce((total, weight) => total + weight, 0);
+}
+
+/** The title of an item's second printed card (`part: "rules-text"`):
+ *  "Spear of the Skylord — Concordance", "Ring of Weakness — Curse". */
+export function itemRulesTextTitle(
+  card: Pick<SheetCard, "name" | "rulesTextKind">,
+  name: string = card.name,
+): string {
+  return `${name} — ${card.rulesTextKind === "curse" ? "Curse" : "Concordance"}`;
 }
