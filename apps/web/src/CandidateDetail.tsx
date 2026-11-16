@@ -2,7 +2,7 @@ import { Fragment, useContext, useState } from "react";
 
 import type { CandidateDecision } from "@4ecb/rules-engine";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { isFamiliarEntity } from "@4ecb/sheet-model";
+import { godFragmentPowerCard, isFamiliarEntity } from "@4ecb/sheet-model";
 
 import { primaryDetailTypeLabel, themePowerGroups } from "./builder-ui";
 import {
@@ -12,6 +12,7 @@ import {
   BuilderItemCard,
   BuilderCreatureCard,
   BuilderPowerCard,
+  cardTextPresentation,
 } from "./BuilderCards";
 import {
   toggleCandidateFavorite,
@@ -43,6 +44,7 @@ import {
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
+import { PowerCard } from "./PowerCard";
 import { UnavailableLabel } from "./UnavailableLabel";
 
 export function CandidateDetail({
@@ -405,68 +407,91 @@ export function CandidateDetailCard({
         />
       </div>
     );
+  // A god fragment's ability is its own power card after its card, as
+  // the sheet prints it (`godFragmentPowerCard`).
+  const fragmentPower = godFragmentPowerCard(entity);
   // Other choices use the printed card's frame: a solid title band, card
   // border and type bar, around the familiar detail body (D079).
   return (
-    <div className="candidate-card-panel">
-      <aside
-        aria-labelledby={headingId}
-        className="candidate-detail reference-entity-card"
-        tabIndex={0}
-      >
-        <header className="reference-card-title">
-          <h3>
-            <EntityCardLeadingIcon entity={entity} />
-            <span id={headingId}>{entity.name}</span>
-          </h3>
-          {headerAction}
-        </header>
-        {subheading === undefined ? null : (
-          <div className="reference-card-subheading">{subheading}</div>
-        )}
-        <EntitySubheader entity={entity} references={references} />
-        <div className="reference-card-body">
-          {structuredKind !== undefined && references !== undefined ? (
-            <StructuredEntityBody
-              entity={entity}
-              hideFlavortext={hideFlavortext}
-              kind={structuredKind}
-              references={references}
-              {...prerequisiteProps}
-            />
-          ) : (
-            <EntityCardBody
-              beforeNarrative={
-                <DeityBodyFields entity={entity} references={references} />
-              }
-              entity={entity}
-              hideFlavortext={hideFlavortext}
-              showSource={false}
-              {...prerequisiteProps}
-              {...(isThemeCandidate
-                ? {
-                    renderDescription: (description: string) => (
-                      <ThemeCandidateDescription
-                        key={entity.id}
-                        description={description}
-                        entityName={entity.name}
-                        id={`${headingId}-description`}
-                      />
-                    ),
-                  }
-                : {})}
-            />
+    <>
+      <div className="candidate-card-panel">
+        <aside
+          aria-labelledby={headingId}
+          className="candidate-detail reference-entity-card"
+          tabIndex={0}
+        >
+          <header className="reference-card-title">
+            <h3>
+              <EntityCardLeadingIcon entity={entity} />
+              <span id={headingId}>{entity.name}</span>
+            </h3>
+            {headerAction}
+          </header>
+          {subheading === undefined ? null : (
+            <div className="reference-card-subheading">{subheading}</div>
           )}
+          <EntitySubheader entity={entity} references={references} />
+          <div className="reference-card-body">
+            {structuredKind !== undefined && references !== undefined ? (
+              <StructuredEntityBody
+                entity={entity}
+                hideFlavortext={hideFlavortext}
+                kind={structuredKind}
+                references={references}
+                {...prerequisiteProps}
+              />
+            ) : (
+              <EntityCardBody
+                beforeNarrative={
+                  <DeityBodyFields entity={entity} references={references} />
+                }
+                entity={entity}
+                hideFlavortext={hideFlavortext}
+                showSource={false}
+                {...prerequisiteProps}
+                {...(isThemeCandidate
+                  ? {
+                      renderDescription: (description: string) => (
+                        <ThemeCandidateDescription
+                          key={entity.id}
+                          description={description}
+                          entityName={entity.name}
+                          id={`${headingId}-description`}
+                        />
+                      ),
+                    }
+                  : {})}
+              />
+            )}
+          </div>
+          {showSource ? (
+            <footer className="reference-card-source">
+              Source: {entityCardSource(entity)}
+            </footer>
+          ) : null}
+          <div className="print-card-type">
+            <span>{primaryDetailTypeLabel(entity)}</span>
+          </div>
+        </aside>
+      </div>
+      {fragmentPower === undefined ? null : (
+        <div className="candidate-card-panel">
+          <PowerCard
+            card={fragmentPower}
+            characterLevel={builderCards.characterLevel}
+            layout="panel"
+            panel={{
+              headingId: `${headingId}-power`,
+              ...(hideFlavortext || fragmentPower.flavor === undefined
+                ? {}
+                : { flavor: fragmentPower.flavor }),
+              textPresentation: cardTextPresentation(
+                builderCards.abbreviateAbilityValues,
+              ),
+            }}
+          />
         </div>
-        {showSource ? (
-          <footer className="reference-card-source">
-            Source: {entityCardSource(entity)}
-          </footer>
-        ) : null}
-        <div className="print-card-type">
-          <span>{primaryDetailTypeLabel(entity)}</span>
-        </div>
-      </aside>
-    </div>
+      )}
+    </>
   );
 }

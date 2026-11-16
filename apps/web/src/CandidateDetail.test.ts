@@ -662,3 +662,39 @@ describe("counts-as on option details (D116)", () => {
     );
   });
 });
+
+describe("god fragment detail", () => {
+  it("follows the fragment's card with its ability's power card", () => {
+    const specific = (name: string, value: string, ordinal: number) => ({
+      name,
+      value,
+      extraAttributes: [],
+      ordinal,
+    });
+    const fragment: ContentEntity = {
+      ...alignment,
+      id: "ID_SYNTH_FRAGMENT",
+      name: "Synthetic Fragment",
+      type: "God Fragment",
+      description: "",
+      specifics: [
+        specific("Constant Benefits", "+1 to saving throws.", 0),
+        specific("Power Usage", "Encounter", 1),
+        specific("Action Type", "Free", 2),
+        specific("Trigger", "You use a divine encounter attack power.", 3),
+        specific("Effect", "One ally gains 5 temporary hit points.", 4),
+      ],
+    };
+    const markup = renderToStaticMarkup(
+      createElement(CandidateDetail, {
+        candidate: { ...candidate, definitionId: fragment.id },
+        entity: fragment,
+        byId: new Map([[fragment.id.toLocaleLowerCase(), fragment]]),
+      }),
+    );
+    expect(markup).toContain("reference-entity-card");
+    expect(markup).toContain("print-power-card is-panel");
+    expect(markup).toContain("You use a divine encounter attack power.");
+    expect(markup).toContain("One ally gains 5 temporary hit points.");
+  });
+});
