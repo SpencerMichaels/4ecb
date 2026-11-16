@@ -238,6 +238,59 @@ const RECORDS: readonly ContentEntity[] = [
     },
     { prerequisites: "Sha'ir" },
   ),
+  record(
+    "SYN_POWER_SIDEBAR",
+    "Synthetic Sidebar",
+    "Power",
+    [
+      ["Power Usage", "At-Will"],
+      ["Keywords", "Arcane, Fire, Implement"],
+      ["Action Type", "Standard action"],
+      ["Attack Type", "Close blast 3"],
+      ["Target", "Each creature in the blast"],
+      ["Attack", "Intelligence vs. Reflex"],
+      ["Hit", "1d6 + Intelligence modifier fire damage."],
+      ["Level", "1"],
+      ["Power Type", "Attack"],
+    ],
+    { description: "Pack fighters see your lack of armor as a chance." },
+  ),
+  record(
+    "SYN_ARTIFACT",
+    "Synthetic Spear",
+    "Magic Item",
+    {
+      "Magic Item Type": "Artifact",
+      Tier: "Paragon",
+      Weapon: "Longspear",
+      Property: "Your reach with this weapon is 3.",
+    },
+    { description: "Goals of the Synthetic Spear: kill servants of the gods." },
+  ),
+  record("SYN_ARROWS", "Synthetic Arrows", "Gear", {
+    count: "30",
+    Category: "Ammunition",
+    Gold: "1",
+    Weight: "3",
+  }),
+  record("SYN_SPIKED_SHIELD", "Synthetic Spiked Shield", "Weapon", {
+    Damage: "1d6",
+    "Proficiency Bonus": "2",
+    "Weapon Category": "Superior Melee",
+    "Armor Category": "Light Shields",
+    "Hands Required": "One-Handed",
+  }),
+  record(
+    "SYN_CLASS",
+    "Synthetic Warpriest",
+    "Class",
+    {
+      Role: "Leader. You heal.",
+      "Power Source": "Divine. Your god guides you.",
+      "Trait Package": "Storm Domain, Sun Domain",
+    },
+    { description: "Warpriests guard the faith." },
+  ),
   record("SYN_FRAGMENT", "Synthetic Fragment", "God Fragment", {
     "Constant Benefits": "You gain a +1 bonus to saving throws.",
     Quirks: "Abrasive, intimidating, lively",
@@ -316,6 +369,9 @@ describe("card field coverage", () => {
   });
 
   it("gives every deliberate omission and merge a reason", () => {
+    expect(
+      CARD_FIELD_ALLOWLIST.filter((rule) => /^OPEN\b/.test(rule.reason)),
+    ).toEqual([]);
     for (const rule of [...CARD_FIELD_ALLOWLIST, ...CARD_FIELD_MERGES]) {
       expect(rule.fields.length).toBeGreaterThan(0);
       expect(rule.reason.trim().length).toBeGreaterThan(20);
