@@ -533,8 +533,7 @@ export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
   {
     types: ["weapon"],
     fields: ["Armor Category"],
-    reason:
-      'a shield weapon's subheader "Shield Light" (owner, 2026-11-16)',
+    reason: 'a shield weapon\'s subheader "Shield Light" (owner, 2026-11-16)',
     form: (value) => `Shield ${value.trim().replace(/\s*shields?$/i, "")}`,
   },
   {
