@@ -6,6 +6,7 @@ import {
   printItemPresentation,
   printItemPower,
   printItemPowerClauses,
+  rulesDescriptionItem,
 } from "./print-item-presentation";
 
 function card(
@@ -715,5 +716,55 @@ describe("item prerequisites", () => {
     expect(
       view.leadFields.filter((field) => field.label === "Prerequisite"),
     ).toHaveLength(1);
+  });
+});
+
+describe("rules-bearing item descriptions", () => {
+  const artifact: SheetCard = {
+    ...card("Magic Item", {
+      "Magic Item Type": "Artifact",
+      Property: "Your reach with this weapon is 3.",
+    }),
+    description: "Goals of the Synthetic Spear\n• Kill servants of the gods.",
+  };
+  it("prints an artifact's description after its rules", () => {
+    const view = printItemPresentation(artifact);
+    expect(view.description).toBeUndefined();
+    expect(view.trailingDescription).toBe(artifact.description);
+  });
+  it.each([
+    ["an intelligent item's type", { "Magic Item Type": "Intelligent Item" }],
+    ["a cursed item's Special", { Special: "Cursed Item" }],
+  ])("reads %s", (_label, values) => {
+    expect(
+      rulesDescriptionItem({
+        ...card("Magic Item", { ...values, Property: "A rule." }),
+        description: "Persona: gruff.",
+      }),
+    ).toBe(true);
+  });
+  it("reads an intelligent item's block and the cursed-item rule", () => {
+    const item = card("Magic Item", { Property: "A rule." });
+    expect(
+      rulesDescriptionItem({
+        ...item,
+        description: "Communication Speech\nPersona Calm.",
+      }),
+    ).toBe(true);
+    expect(
+      rulesDescriptionItem({
+        ...item,
+        description:
+          "A cursed item looks and functions like a normal magic item until…",
+      }),
+    ).toBe(true);
+  });
+  it("leaves an ordinary item's background off the printed card", () => {
+    const item = {
+      ...card("Magic Item", { Property: "A rule." }),
+      description: "Dran claimed it in a storm.",
+    };
+    expect(rulesDescriptionItem(item)).toBe(false);
+    expect(printItemPresentation(item).trailingDescription).toBeUndefined();
   });
 });

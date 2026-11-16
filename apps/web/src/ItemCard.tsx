@@ -37,6 +37,19 @@ export function ItemCard({
   // creature's: its card shows it (in print, its tables only).
   const description =
     card.descriptionOnCreatureCard === true ? undefined : item.description;
+  // After the rules: a rules-bearing description (an artifact's, an
+  // intelligent or cursed item's) on every card, and in a builder pane any
+  // description the body leaves out (owner, 2026-11-16).
+  const trailingDescription =
+    card.descriptionOnCreatureCard === true
+      ? undefined
+      : (item.trailingDescription ??
+        (isPanel &&
+        description === undefined &&
+        card.description?.trim() &&
+        card.description !== card.flavor
+          ? card.description
+          : undefined));
   const hasSubheader =
     item.statRows.length > 0 || item.weaponProperties.length > 0;
   return (
@@ -181,6 +194,12 @@ export function ItemCard({
             </section>
           );
         })}
+        {trailingDescription === undefined ? null : (
+          <CardText
+            value={trailingDescription}
+            textPresentation={textPresentation}
+          />
+        )}
       </div>
       <footer className="print-item-footer">
         <span>

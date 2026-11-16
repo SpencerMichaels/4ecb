@@ -358,6 +358,16 @@ export function printItemPresentation(card: SheetCard) {
         ),
       ]
     : [...enhancementRule, ...bodyFields];
+  const leadDescription =
+    (isRitual ||
+      (rules.length === 0 &&
+        weaponProperties.length === 0 &&
+        stats.every((stat) =>
+          ["Category", "Rarity", "Key ability"].includes(stat.label),
+        ))) &&
+    card.description !== card.flavor
+      ? card.description
+      : undefined;
   const weight = field("Weight");
   const coins = [
     [lastField("Gold"), "gp"],
@@ -410,14 +420,15 @@ export function printItemPresentation(card: SheetCard) {
     // Keep unstructured/custom mechanical prose when it has no structured
     // replacement, but never repeat an explicitly identified flavor passage.
     // A ritual's description is its rules text, never a repeat.
-    description:
-      (isRitual ||
-        (rules.length === 0 &&
-          weaponProperties.length === 0 &&
-          stats.every((stat) =>
-            ["Category", "Rarity", "Key ability"].includes(stat.label),
-          ))) &&
-      card.description !== card.flavor
+    description: leadDescription,
+    /** The description after the rules: an artifact's, intelligent item's
+     *  or cursed item's, which is rules (goals and concordance, persona,
+     *  the curse; owner, 2026-11-16). A builder pane shows any other
+     *  description there too. */
+    trailingDescription:
+      leadDescription === undefined &&
+      card.description !== card.flavor &&
+      rulesDescriptionItem(card)
         ? card.description
         : undefined,
     kind,
@@ -579,4 +590,32 @@ export function printItemPowerClauses(text: string): readonly SheetValue[] {
   }
   clauses.push({ label, value: text.slice(start).trim() });
   return clauses;
+}
+
+/**
+ * Whether an item's description is rules rather than background: an
+ * artifact's (its goals, roleplaying and concordance), an intelligent
+ * item's (its communication, persona and conflict entries) or a cursed
+ * item's (the curse). Read from the record's data: its Magic Item Type
+ * ("Artifact", "Intelligent Item"), its Special ("Cursed Item", "Item
+ * Curse"), or a description that is an intelligent item's block (it opens
+ * with "Communication") or states the cursed-item rule.
+ */
+export function rulesDescriptionItem(card: SheetCard): boolean {
+  const values = (name: string) =>
+    card.fields
+      .filter((entry) => entry.label.trim().toLowerCase() === name)
+      .map((entry) => entry.value.trim());
+  const description = card.description?.trim() ?? "";
+  return (
+    description !== "" &&
+    (values("magic item type").some((type) =>
+      /^(?:artifact|intelligent item)$/i.test(type),
+    ) ||
+      values("special").some((special) => /\bcurse/i.test(special)) ||
+      /^Communication\b/.test(description) ||
+      /\bA cursed item looks and functions like a normal magic item\b/i.test(
+        description,
+      ))
+  );
 }

@@ -55,6 +55,7 @@ import {
   isNamedEnhancement,
   printItemPower,
   printItemPowerClauses,
+  rulesDescriptionItem,
 } from "./print-item-presentation";
 import {
   bandShowsAttackLine,
@@ -748,8 +749,13 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
   {
     types: ITEM_TYPES,
     fields: ["(description)"],
+    surfaces: ["print"],
+    records: (entity) =>
+      !rulesDescriptionItem(
+        sheetItemCard({ name: entity.name, entities: [entity] }),
+      ),
     reason:
-      "OPEN: an item's description prints only on a card with no rules or stats (artifacts' goals and concordance, intelligent and cursed items' rules, mundane gear's descriptions)",
+      "an ordinary item's description is background: the builder pane shows it after the rules; printed cards print an artifact's, intelligent or cursed item's (rulesDescriptionItem) or a rules-less item's (owner, 2026-11-16)",
   },
   {
     types: ["gear"],
