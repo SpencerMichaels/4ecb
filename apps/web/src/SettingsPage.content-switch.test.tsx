@@ -78,6 +78,8 @@ describe("SettingsPage content switch", () => {
           onShowEntitySourceChange={noop}
           countCoinWeight={false}
           onCountCoinWeightChange={noop}
+          hideInapplicableItemProperties
+          onHideInapplicableItemPropertiesChange={noop}
           mergeFunds={false}
           onMergeFundsChange={noop}
           matchContentByName={false}

@@ -17,6 +17,7 @@ import {
   readCreatureStatBlock,
   readFormulaItems,
   weaponPropertyText,
+  type ClauseResource,
   type ContentEntity,
   type FormulaItems,
   type SpecificField,
@@ -55,6 +56,10 @@ import {
   type SheetCreatureCard,
 } from "./creature-card";
 import { universalPowerDefinitionIds } from "./power-reference";
+import {
+  missingClauseResources,
+  withoutInapplicableClauses,
+} from "./applicable-properties";
 import { mergeAdditionalEffects } from "./additional-effects";
 import { withUniversalActionCards } from "./universal-action-cards";
 import {
@@ -575,6 +580,13 @@ export interface SheetModelOptions {
    * defaults to true.
    */
   readonly proficientEquipmentOnly?: boolean;
+  /**
+   * Leave out of item cards the Property sentences that need a resource the
+   * character lacks (power points, Channel Divinity), as stored at pack
+   * build (`_Resource Clauses IR`). The printed sheet's setting; off by
+   * default here.
+   */
+  readonly hideInapplicableItemProperties?: boolean;
   readonly inventoryCategory?: (
     elements: readonly BuildInventoryElement[],
   ) => string | undefined;
@@ -1727,11 +1739,18 @@ export function sheetItemCard(input: {
   readonly overlays?: readonly FieldOverlay[] | undefined;
   /** An evaluation's `prerequisiteLines` (D116 aliases). */
   readonly prerequisiteLines?: Readonly<Record<string, string>> | undefined;
+  /** Resources the character lacks: their Property sentences are left
+   *  out (`hideInapplicableItemProperties`). */
+  readonly missingResources?: ReadonlySet<ClauseResource> | undefined;
 }): SheetCard {
   const overlays = input.overlays ?? [];
-  const entities = input.entities.map((candidate) =>
-    overlaidEntity(candidate, overlays),
-  );
+  const missing = input.missingResources;
+  const entities = input.entities.map((candidate) => {
+    const overlaid = overlaidEntity(candidate, overlays);
+    return missing === undefined
+      ? overlaid
+      : withoutInapplicableClauses(overlaid, missing);
+  });
   const entity = entities.at(-1);
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
@@ -2548,25 +2567,6 @@ export function buildEvaluatedSheetModel(
       },
     ];
   });
-  const itemCards: SheetCard[] = inventoryRows.flatMap(
-    ({ entry, original, entity, itemEntities, name, referenceKind }) => {
-      if (referenceKind !== undefined) return [];
-      return [
-        sheetItemCard({
-          holdingId: entry.id,
-          hiddenByDefault: original?.showPowerCard === false,
-          name,
-          entities: itemEntities,
-          itemType: entity?.type ?? original?.elements.at(-1)?.type,
-          baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
-          quantity: entry.quantity,
-          equippedQuantity: entry.equippedQuantity,
-          overlays: evaluation.overlays,
-          prerequisiteLines: evaluation.prerequisiteLines,
-        }),
-      ];
-    },
-  );
   // A held mount's creature card (D110), after the companions above.
   const creatureCards: SheetCreatureCard[] = inventoryRows.flatMap(
     ({ entry, itemEntities, name, referenceKind }) => {
@@ -2716,6 +2716,35 @@ export function buildEvaluatedSheetModel(
       ...godFragmentPowerCards(active.map(({ entity }) => entity)),
     ],
     evaluation,
+  );
+  // Item cards come after the power cards: hiding inapplicable properties
+  // reads the character's Channel Divinity cards.
+  const missingResources =
+    options.hideInapplicableItemProperties === true
+      ? missingClauseResources({
+          powerPoints: evaluatedStat(evaluation, POWER_POINTS_RESOURCE),
+          powers: powerCards,
+        })
+      : undefined;
+  const itemCards: SheetCard[] = inventoryRows.flatMap(
+    ({ entry, original, entity, itemEntities, name, referenceKind }) => {
+      if (referenceKind !== undefined) return [];
+      return [
+        sheetItemCard({
+          holdingId: entry.id,
+          hiddenByDefault: original?.showPowerCard === false,
+          name,
+          entities: itemEntities,
+          itemType: entity?.type ?? original?.elements.at(-1)?.type,
+          baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
+          quantity: entry.quantity,
+          equippedQuantity: entry.equippedQuantity,
+          overlays: evaluation.overlays,
+          prerequisiteLines: evaluation.prerequisiteLines,
+          missingResources,
+        }),
+      ];
+    },
   );
   const lookup = (id: string) => entities.get(id.toLocaleLowerCase());
   const itemSets = sheetItemSetCards(

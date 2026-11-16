@@ -120,6 +120,8 @@ export interface SettingsPageProps {
   readonly onShowEntitySourceChange: (showEntitySource: boolean) => void;
   readonly countCoinWeight: boolean;
   readonly onCountCoinWeightChange: (value: boolean) => void;
+  readonly hideInapplicableItemProperties: boolean;
+  readonly onHideInapplicableItemPropertiesChange: (value: boolean) => void;
   readonly mergeFunds: boolean;
   readonly onMergeFundsChange: (value: boolean) => void;
   readonly matchContentByName: boolean;
@@ -197,6 +199,8 @@ export function SettingsPage({
   onShowEntitySourceChange,
   countCoinWeight,
   onCountCoinWeightChange,
+  hideInapplicableItemProperties,
+  onHideInapplicableItemPropertiesChange,
   mergeFunds,
   onMergeFundsChange,
   matchContentByName,
@@ -661,6 +665,12 @@ export function SettingsPage({
                 onChange={onCountCoinWeightChange}
                 label="Count coin weight"
                 help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
+              />
+              <CheckboxSetting
+                checked={hideInapplicableItemProperties}
+                onChange={onHideInapplicableItemPropertiesChange}
+                label="Hide item properties you can't use"
+                help="Leave out of printed item cards the properties that need power points or Channel Divinity when your character has none."
               />
               <div className="settings-option">
                 <label

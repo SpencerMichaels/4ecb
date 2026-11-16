@@ -105,6 +105,15 @@ describe("release accessibility contract", () => {
       'localStorage.setItem(COUNT_COIN_WEIGHT_STORAGE_KEY, "0")',
     );
     expect(app).toContain("countCoinWeight={countCoinWeight}");
+    // Hiding item properties the character can't use: on unless turned off.
+    expect(settingsPage).toContain("Hide item properties you can't use");
+    expect(settingsPage).toContain("checked={hideInapplicableItemProperties}");
+    expect(app).toMatch(
+      /localStorage\.getItem\(\s*HIDE_INAPPLICABLE_ITEM_PROPERTIES_STORAGE_KEY,?\s*\) !==\s*"0"/u,
+    );
+    expect(app).toMatch(
+      /hideInapplicableItemProperties=\{\s*hideInapplicableItemProperties\s*\}[\s\S]*resolveAbilityChoices=\{resolveAbilityChoices\}\s*proficientEquipmentOnly=\{proficientEquipmentOnly\}\s*abbreviateAbilityValues=\{abbreviateAbilityValues\}\s*printCardTextSize/u,
+    );
     expect(settingsPage).toContain(
       "Use the best ability in power descriptions",
     );

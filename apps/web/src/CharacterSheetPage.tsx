@@ -150,6 +150,7 @@ export function CharacterSheetPage({
   abbreviateAbilityValues = true,
   printCardTextSize = 8,
   countCoinWeight = true,
+  hideInapplicableItemProperties = true,
   paper = "letter",
   sheetEditing = false,
   onSheetModeChange,
@@ -165,6 +166,8 @@ export function CharacterSheetPage({
   readonly abbreviateAbilityValues?: boolean;
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
+  /** Leave item properties the character can't use off the cards. */
+  readonly hideInapplicableItemProperties?: boolean;
   /** The app-wide paper size (a preference, not per-character data). */
   readonly paper?: PaperSize;
   /** The print preview's Edit mode (`?preview=1&edit=1`, D099). */
@@ -294,6 +297,7 @@ export function CharacterSheetPage({
     );
     const options = {
       countCoinWeight,
+      hideInapplicableItemProperties,
       resolveAbilityChoices,
       proficientEquipmentOnly,
       inventoryCategory: (
@@ -321,6 +325,7 @@ export function CharacterSheetPage({
     resolveAbilityChoices,
     proficientEquipmentOnly,
     countCoinWeight,
+    hideInapplicableItemProperties,
   ]);
   const evaluatedSheetReady =
     !exactProfile || evaluation !== undefined || evaluationError !== undefined;

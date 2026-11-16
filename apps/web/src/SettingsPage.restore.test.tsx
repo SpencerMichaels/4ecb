@@ -90,6 +90,8 @@ describe("SettingsPage backup restore", () => {
           onShowEntitySourceChange={noop}
           countCoinWeight={false}
           onCountCoinWeightChange={noop}
+          hideInapplicableItemProperties
+          onHideInapplicableItemPropertiesChange={noop}
           mergeFunds={false}
           onMergeFundsChange={noop}
           matchContentByName={false}

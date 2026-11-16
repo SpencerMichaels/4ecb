@@ -132,6 +132,8 @@ export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
 export const PRINT_CARD_TEXT_SIZE_STORAGE_KEY = "4ecb.printCardTextSize.v1";
 export const COUNT_COIN_WEIGHT_STORAGE_KEY = "4ecb.countCoinWeight.v1";
+export const HIDE_INAPPLICABLE_ITEM_PROPERTIES_STORAGE_KEY =
+  "4ecb.hideInapplicableItemProperties.v1";
 
 function RouteFocusOnMount({
   children,
@@ -266,6 +268,31 @@ export function App() {
       // The encumbrance preference still applies for this session.
     }
   }, [countCoinWeight]);
+  const [hideInapplicableItemProperties, setHideInapplicableItemProperties] =
+    useState(() => {
+      try {
+        return (
+          localStorage.getItem(
+            HIDE_INAPPLICABLE_ITEM_PROPERTIES_STORAGE_KEY,
+          ) !== "0"
+        );
+      } catch {
+        return true;
+      }
+    });
+  useEffect(() => {
+    try {
+      if (hideInapplicableItemProperties)
+        localStorage.removeItem(HIDE_INAPPLICABLE_ITEM_PROPERTIES_STORAGE_KEY);
+      else
+        localStorage.setItem(
+          HIDE_INAPPLICABLE_ITEM_PROPERTIES_STORAGE_KEY,
+          "0",
+        );
+    } catch {
+      // The preference still applies for this session.
+    }
+  }, [hideInapplicableItemProperties]);
   const runtimeContentStarted = useRef(false);
   const [printCardTextSize, setPrintCardTextSize] = useState(() => {
     try {
@@ -671,6 +698,12 @@ export function App() {
                       onMatchContentByNameChange={setMatchContentByName}
                       countCoinWeight={countCoinWeight}
                       onCountCoinWeightChange={setCountCoinWeight}
+                      hideInapplicableItemProperties={
+                        hideInapplicableItemProperties
+                      }
+                      onHideInapplicableItemPropertiesChange={
+                        setHideInapplicableItemProperties
+                      }
                       resolveAbilityChoices={resolveAbilityChoices}
                       onResolveAbilityChoicesChange={setResolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}
@@ -732,6 +765,9 @@ export function App() {
                       onBack={() => returnFromSheet(route.characterId!)}
                       backLabel={sheetBackLabel(entryPreviousHash)}
                       countCoinWeight={countCoinWeight}
+                      hideInapplicableItemProperties={
+                        hideInapplicableItemProperties
+                      }
                       resolveAbilityChoices={resolveAbilityChoices}
                       proficientEquipmentOnly={proficientEquipmentOnly}
                       abbreviateAbilityValues={abbreviateAbilityValues}
