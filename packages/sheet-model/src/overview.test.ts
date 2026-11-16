@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { buildSheetModel } from "./index";
-import { withSheetOverview } from "./overview";
+import { featureReferenceFields, withSheetOverview } from "./overview";
 
 const snapshot = {
   details: { name: "Overview hero", Level: "8" },
@@ -1345,5 +1345,48 @@ describe("printed overview data", () => {
     );
     expect(m.overview?.features).toHaveLength(1);
     expect(m.overview?.reminders).toHaveLength(0);
+  });
+});
+
+describe("feature reference fields", () => {
+  it("keeps a feat's associated powers and what they gain", () => {
+    const field = (name: string, value: string, ordinal: number) => ({
+      name,
+      value,
+      extraAttributes: [],
+      ordinal,
+    });
+    const domainFeat = {
+      id: "feat:synthetic-domain",
+      name: "Synthetic Domain Feat",
+      type: "Feat",
+      source: "Test",
+      sources: ["Test"],
+      attributes: [],
+      categories: [],
+      rules: [],
+      description: "You gain a +2 feat bonus to Diplomacy checks.",
+      extensions: [],
+      provenance: { sourceKey: "test", sourceOrdinal: 0 },
+      specifics: [
+        field("Tier", "Heroic", 0),
+        field("Associated Powers", "Leading Strike, Valiant Strike", 1),
+        field(
+          "Associated Power Info",
+          "When you use a power associated with this feat, you gain a +1 bonus to the damage roll.",
+          2,
+        ),
+      ],
+    };
+    expect(
+      featureReferenceFields(domainFeat, "Feat", domainFeat.description),
+    ).toEqual([
+      { label: "Powers", value: "Leading Strike, Valiant Strike" },
+      {
+        label: "Associated Power Info",
+        value:
+          "When you use a power associated with this feat, you gain a +1 bonus to the damage roll.",
+      },
+    ]);
   });
 });

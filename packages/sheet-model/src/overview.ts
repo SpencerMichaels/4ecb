@@ -104,8 +104,12 @@ export function featureReferenceFields(
   description: string,
   prerequisiteLines?: Readonly<Record<string, string>>,
 ): SheetValue[] {
+  // A record's selection metadata and bookkeeping: its level and tier
+  // (the level tag), kind, short summary (page 1's rows), granted powers
+  // (their own cards). A feat's associated powers and what they gain
+  // ("When you use a power associated with this feat…") are its rules.
   const omitted = (name: string) =>
-    /^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
+    /^(?:short description|full text|level|type|class|power|powers|tier|source)$/i.test(
       name.trim(),
     );
   const placements =
