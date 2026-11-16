@@ -12,6 +12,7 @@ import {
   MAX_ENTITY_ALIASES,
   withoutStoredPrerequisiteIr,
   withStoredFormulaItems,
+  withStoredPowerMentions,
 } from "@4ecb/content-domain";
 
 import { readLimitedText, sha256 } from "./internal";
@@ -292,14 +293,15 @@ export async function composeContentPacks(
     left.id.localeCompare(right.id),
   );
   const layer = campaignLayer?.(layered);
-  // A formula's stored item versions were linked within its own pack; over
-  // several layers (or a campaign's patches) a later layer may add, replace
-  // or rename a version, so the composed records are linked again.
+  // A formula's stored item versions and a feat's or item's stored power
+  // mentions were linked within its own pack; over several layers (or a
+  // campaign's patches) a later layer may add, replace or rename a version
+  // or a power, so the composed records are linked again.
   const patched = layer?.entities ?? layered;
   const entities =
     packs.length === 1 && layer === undefined
       ? patched
-      : withStoredFormulaItems(patched);
+      : withStoredPowerMentions(withStoredFormulaItems(patched));
   const pack = await buildPack(
     {
       gameSystem: gameSystem ?? "D&D4E",

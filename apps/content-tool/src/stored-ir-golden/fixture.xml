@@ -439,4 +439,39 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
     <specific name="Magic Item Type">Armor</specific>
     <specific name="Property">When you use any Channel Divinity power, you gain a +2 item bonus to AC and Fortitude until the end of your next turn.</specific>
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_CHARGE_STRIKE" name="Golden Charging Blow" type="Power" source="Synthetic">
+    <specific name="Power Usage">Daily</specific>
+    <specific name="Keywords">Primal, Weapon</specific>
+    <specific name="Action Type">Standard Action</specific>
+    <specific name="Attack Type">Melee weapon</specific>
+    <specific name="Attack">Strength vs. AC</specific>
+    <specific name="Hit">4[W] + Strength modifier damage.</specific>
+    <specific name="Special">When charging, you can use this power in place of a melee basic attack.</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_ABJURE" name="Golden Abjure Undead" type="Power" source="Synthetic">
+    <specific name="Power Usage">Encounter</specific>
+    <specific name="Action Type">Standard Action</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_SHROUD" name="Golden Shroud" type="Power" source="Synthetic">
+    <specific name="Power Usage">At-Will</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_POWER_SHROUD_NIGHT" name="Golden Shroud of Night" type="Power" source="Synthetic">
+    <specific name="Power Usage">Encounter</specific>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_WRENCHING" name="Golden Wrenching" type="Feat" source="Synthetic">
+    When you hit with your golden abjure undead class feature, you can slide the target instead of pulling it.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_SHADOWS" name="Golden Shadows" type="Feat" source="Synthetic">
+    While your golden shroud of night is active, your golden shroud power also blinds. A golden shroud you see is only a word.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_FEAT_INITIATE" name="Golden Initiate" type="Feat" source="Synthetic">
+    You can use your golden abjure undead once per day.
+    <rules>
+      <grant name="ID_GOLDEN_POWER_ABJURE" type="Power" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ITEM_WARDING" name="Golden Warding Armor +1" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Armor</specific>
+    <specific name="Property">If you use your Golden Abjure Undead while bloodied, regain 5 hit points.</specific>
+  </RulesElement>
 </D20Rules>

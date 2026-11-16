@@ -3,7 +3,7 @@
  * and stores the result with a version (`_Power Text IR`, `_Prerequisite
  * IR`, `_Associate Stat Block`, `_Creature Stat Block`,
  * `_Note Values IR`, `_Formula Items IR`, `_Prose Bonuses IR`,
- * `_Resource Clauses IR`); the engine
+ * `_Resource Clauses IR`, `_Power Mentions IR`); the engine
  * trusts a stored field whose
  * version matches. A parser change without a version bump would leave every
  * older pack with stale IR that synthetic tests never see.
@@ -34,6 +34,8 @@ import {
   FORMULA_ITEMS_VERSION,
   NOTE_VALUES_FIELD,
   NOTE_VALUES_VERSION,
+  POWER_MENTIONS_FIELD,
+  POWER_MENTIONS_VERSION,
   POWER_TEXT_FIELD,
   POWER_TEXT_VERSION,
   PREREQUISITE_IR_FIELD,
@@ -43,6 +45,7 @@ import {
   RESOURCE_CLAUSES_FIELD,
   RESOURCE_CLAUSES_VERSION,
   withStoredFormulaItems,
+  withStoredPowerMentions,
 } from "@4ecb/content-domain";
 import { parseD20Rules } from "@4ecb/legacy-wotc";
 import { withStoredPrerequisiteIr } from "@4ecb/rules-engine";
@@ -55,8 +58,8 @@ const UPDATE_COMMAND =
   "UPDATE_STORED_IR_GOLDEN=1 pnpm vitest run apps/content-tool/src/stored-ir-golden.test.ts";
 
 const parsed = parseD20Rules(fixture, "stored-ir-golden/fixture.xml");
-const entities = withStoredFormulaItems(
-  withStoredPrerequisiteIr(parsed.entities),
+const entities = withStoredPowerMentions(
+  withStoredFormulaItems(withStoredPrerequisiteIr(parsed.entities)),
 );
 
 interface Golden {
@@ -130,6 +133,13 @@ const kinds = [
     constant:
       "RESOURCE_CLAUSES_VERSION (packages/content-domain/src/resource-clauses.ts)",
     file: "resource-clauses.golden.json",
+  },
+  {
+    field: POWER_MENTIONS_FIELD,
+    version: POWER_MENTIONS_VERSION,
+    constant:
+      "POWER_MENTIONS_VERSION (packages/content-domain/src/power-mentions.ts)",
+    file: "power-mentions.golden.json",
   },
 ] as const;
 

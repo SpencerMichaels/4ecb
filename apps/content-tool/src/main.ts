@@ -13,7 +13,10 @@ import {
   summarizeContentPack,
   validateContentPack,
 } from "@4ecb/content-pack";
-import { withStoredFormulaItems } from "@4ecb/content-domain";
+import {
+  withStoredFormulaItems,
+  withStoredPowerMentions,
+} from "@4ecb/content-domain";
 import { D20RulesParser } from "@4ecb/legacy-wotc";
 import { withStoredPrerequisiteIr } from "@4ecb/rules-engine";
 
@@ -48,13 +51,14 @@ async function build(arguments_: ParsedArguments): Promise<void> {
   }
 
   const parsed = parser.close();
-  // Prerequisites are internalized, and alchemical formulas linked to the
-  // item versions they create, against the finished record set, once.
+  // Prerequisites are internalized, alchemical formulas linked to the item
+  // versions they create, and feats and items to the powers they name,
+  // against the finished record set, once.
   const pack = await buildContentPack(
     {
       ...parsed,
-      entities: withStoredFormulaItems(
-        withStoredPrerequisiteIr(parsed.entities),
+      entities: withStoredPowerMentions(
+        withStoredFormulaItems(withStoredPrerequisiteIr(parsed.entities)),
       ),
     },
     { packId, name },
