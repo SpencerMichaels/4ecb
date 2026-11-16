@@ -85,7 +85,8 @@ const content = [
     "Power Usage": "At-Will",
     Keywords: "Full Discipline",
     "Action Type": "Move Action",
-    "Attack Type": "Personal",
+    "Attack Type": "Close burst 1",
+    Target: "One ally in burst",
     Effect: "You shift 2 squares.",
     _ParentPower: "DISCIPLINE",
     Class: "CLASS",
@@ -340,8 +341,12 @@ describe("evaluated sheet", () => {
         id: "TECHNIQUE",
         name: "Synthetic Storms [Movement Technique]",
         actionType: "Move Action",
-        attackType: "Personal",
-        fields: [{ label: "Effect", value: "You shift 2 squares." }],
+        attackType: "Close burst 1",
+        // The technique has no attack band, so its target is a rule line.
+        fields: [
+          { label: "Target", value: "One ally in burst" },
+          { label: "Effect", value: "You shift 2 squares." },
+        ],
       },
     });
     expect(card("Synthetic Storms")?.spellbook).toBeUndefined();

@@ -109,6 +109,7 @@ import { characterClassName } from "./class-identity";
 import { featureNoteHidden, featureNoteText } from "./feature-notes";
 import {
   POWER_CARD_BODY_EXCLUDES,
+  POWER_CARD_RULE_EXCLUDES,
   movementTechniqueOf,
   powerClassBlock,
   spellbookPowerIds,
@@ -148,6 +149,8 @@ export {
 } from "./power-variant-label";
 export {
   POWER_CARD_BODY_EXCLUDES,
+  POWER_CARD_RULE_EXCLUDES,
+  isPowerTargetLabel,
   movementTechniqueOf,
   powerClassBlock,
   spellbookPowerIds,
@@ -922,7 +925,7 @@ function powerRecordParts(
             fields: techniqueFields
               .filter(
                 ({ label }) =>
-                  !POWER_CARD_BODY_EXCLUDES.has(
+                  !POWER_CARD_RULE_EXCLUDES.has(
                     label.trim().toLocaleLowerCase(),
                   ),
               )

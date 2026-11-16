@@ -66,6 +66,27 @@ export const POWER_CARD_BODY_EXCLUDES: ReadonlySet<string> = new Set([
   "primary target",
 ]);
 
+const POWER_TARGET_LABEL =
+  /^(?:(?:primary|secondary|tertiary|quaternary) )?targets?$/;
+
+/** A power target field's label: "Target", "Targets", "Secondary Target"…. */
+export function isPowerTargetLabel(label: string): boolean {
+  return POWER_TARGET_LABEL.test(label.trim().toLocaleLowerCase());
+}
+
+/**
+ * The power card body's excluded fields less the target fields. Legacy
+ * prints a target in the attack box (`PowerCardBasic.Target`) or, on a
+ * utility card, as a body line (`PowerCardUtility` re-includes "Target" and
+ * "Targets"), never nowhere. Our card shows a target in an attack band only
+ * when that attack has one, so target fields stay in the rules and the card
+ * drops just those an attack band shows (`groupedPrintRules`): a power with
+ * no attack roll (Majestic Word, Healer's Mercy) prints its "Target:" line.
+ */
+export const POWER_CARD_RULE_EXCLUDES: ReadonlySet<string> = new Set(
+  [...POWER_CARD_BODY_EXCLUDES].filter((label) => !isPowerTargetLabel(label)),
+);
+
 /**
  * Powers known only through a spellbook slot (a legacy `<alternate>`, the
  * wizard's second daily or utility of a level): legacy prints their cards

@@ -1,8 +1,9 @@
-import type {
-  SheetCard,
-  SheetPowerAttack,
-  SheetPowerVariant,
-  SheetValue,
+import {
+  isPowerTargetLabel,
+  type SheetCard,
+  type SheetPowerAttack,
+  type SheetPowerVariant,
+  type SheetValue,
 } from "@4ecb/sheet-model";
 
 import { LEVEL_ATTACK_STAT } from "@4ecb/rules-engine";
@@ -116,6 +117,10 @@ export function printAttackHeader(attack: SheetPowerAttack): string {
   return `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
 }
 
+/** Splits a power card's rule fields by attack phase. A target field is a
+ * rule line unless its phase's attack band shows the same target (the
+ * band's text is authored; the field may carry the sheet's "(+N)" value
+ * annotations), so a power with no attack roll keeps its "Target:" line. */
 export function groupedPrintRules(
   fields: readonly SheetValue[],
   headers: readonly SheetPowerAttack[] = [],
@@ -125,11 +130,7 @@ export function groupedPrintRules(
   let currentAttack: number | undefined;
   for (const field of fields) {
     const targetLabel = field.label.trim().toLocaleLowerCase();
-    if (
-      /^(?:(?:primary|secondary|tertiary|quaternary) )?targets?$/.test(
-        targetLabel,
-      )
-    ) {
+    if (isPowerTargetLabel(targetLabel)) {
       const targetOrdinal =
         namedOrdinal(targetLabel.replace(/targets?$/, "attack")) ??
         currentAttack ??
@@ -138,7 +139,11 @@ export function groupedPrintRules(
         (header) => header.ordinal === targetOrdinal,
       )?.target;
       const normalized = (value: string) =>
-        value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+        value
+          .replace(/\s*\([+-]\d+\)/g, "")
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLocaleLowerCase();
       if (
         headerTarget !== undefined &&
         normalized(headerTarget) === normalized(field.value)
@@ -183,7 +188,7 @@ export function fallbackPrintAttacks(
       /^(primary|secondary|tertiary|quaternary) targets?$/.test(name)
         ? namedOrdinal(name.replace(/targets?$/, "attack"))
         : undefined;
-    if (/^(?:(?:primary|secondary|tertiary|quaternary) )?targets?$/.test(name))
+    if (isPowerTargetLabel(name))
       targets.set(targetOrdinal ?? active, field.value);
   }
   const primaryTotal = variant?.attack ?? card.attack;

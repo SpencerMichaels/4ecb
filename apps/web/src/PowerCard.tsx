@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import {
-  POWER_CARD_BODY_EXCLUDES,
+  POWER_CARD_RULE_EXCLUDES,
   classifyPowerCard,
   powerActionLabel,
   powerActionName,
@@ -296,7 +296,7 @@ export function PowerCard({
   const attacks = defaultPrintAttacks(card);
   const rules = card.fields.filter(
     (field) =>
-      !POWER_CARD_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
+      !POWER_CARD_RULE_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
   const groupedRules = groupedPrintRules(rules, attacks);
   // Card frame color follows usage; an unknown usage keeps the at-will frame.

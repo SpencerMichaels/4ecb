@@ -256,3 +256,71 @@ describe("augmentable power card (D118)", () => {
     }
   });
 });
+
+describe("power card targets", () => {
+  it("prints a target as a rule line when the power has no attack roll", () => {
+    const utility: SheetCard = {
+      id: "synthetic-word",
+      kind: "power",
+      name: "Synthetic Word",
+      usage: "Encounter (Special)",
+      actionType: "Minor Action",
+      keywords: "Arcane, Healing",
+      fields: [
+        { label: "Attack Type", value: "Close burst 5" },
+        { label: "Target", value: "You or one ally in burst" },
+        { label: "Effect", value: "The target can spend a healing surge." },
+        { label: "Power Type", value: "Feature" },
+      ],
+    };
+    for (const layout of ["print", "panel"] as const) {
+      const markup = renderToStaticMarkup(
+        createElement(PowerCard, { card: utility, characterLevel: 1, layout }),
+      );
+      expect(markup).toContain("You or one ally in burst");
+      expect(markup.indexOf("You or one ally in burst")).toBeLessThan(
+        markup.indexOf("spend a healing surge"),
+      );
+      expect(markup).not.toContain("print-card-combat-band");
+    }
+  });
+
+  it("prints an attack's target once, in its attack band", () => {
+    const markup = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: {
+          ...card,
+          fields: [
+            card.fields[0]!,
+            { label: "Target", value: "One creature" },
+            ...card.fields.slice(1),
+          ],
+        },
+        characterLevel: 1,
+      }),
+    );
+    expect(markup.split("One creature")).toHaveLength(2);
+    expect(markup).toContain("print-card-attack-target");
+  });
+
+  it("keeps a primary target whose phase has no attack roll", () => {
+    const markup = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: {
+          ...card,
+          fields: [
+            card.fields[0]!,
+            { label: "Primary Target", value: "One willing ally" },
+            { label: "Effect", value: "You teleport the primary target." },
+            { label: "Secondary Target", value: "One creature" },
+            { label: "Secondary Attack", value: "Strength vs. AC" },
+            { label: "Hit", value: "1[W] damage." },
+          ],
+        },
+        characterLevel: 1,
+      }),
+    );
+    expect(markup).toContain("One willing ally");
+    expect(markup.split("One creature")).toHaveLength(2);
+  });
+});

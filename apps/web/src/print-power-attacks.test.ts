@@ -189,3 +189,37 @@ describe("printed authored attack phases", () => {
     }
   });
 });
+
+describe("power target rule lines", () => {
+  it("drops a target its band shows despite the sheet's value annotations", () => {
+    const fields = [
+      {
+        label: "Target",
+        value: "One ally within Wisdom modifier (+4) squares",
+      },
+      { label: "Attack", value: "Wisdom vs. Will" },
+    ];
+    const headers = fallbackPrintAttacks(
+      {
+        kind: "power",
+        name: "Synthetic Shift",
+        fields: [
+          { label: "Target", value: "One ally within Wisdom modifier squares" },
+          fields[1]!,
+        ],
+      },
+      undefined,
+    );
+    const grouped = groupedPrintRules(fields, headers);
+    expect(grouped.leading).toEqual([]);
+    expect(grouped.attacks.get(1)).toEqual([]);
+  });
+
+  it("keeps every target of a power without an attack roll", () => {
+    const fields = [
+      { label: "Target", value: "You or one ally in burst" },
+      { label: "Effect", value: "The target regains hit points." },
+    ];
+    expect(groupedPrintRules(fields, []).leading).toEqual(fields);
+  });
+});
