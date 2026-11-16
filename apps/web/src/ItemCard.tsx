@@ -24,12 +24,16 @@ export function ItemCard({
   card,
   layout = "print",
   panel = {},
+  onFit,
 }: {
   readonly card: SheetCard;
   readonly layout?: CardLayout;
   readonly panel?: CardPanelProps;
+  /** A measuring copy's report: whether the card fits at the minimum
+   *  text size. */
+  readonly onFit?: (fits: boolean) => void;
 }) {
-  const cardRef = usePrintCardFit(layout === "print");
+  const cardRef = usePrintCardFit(layout === "print", onFit);
   const isPanel = layout === "panel";
   const textPresentation = panel.textPresentation;
   const item = printItemPresentation(card);
@@ -40,8 +44,9 @@ export function ItemCard({
   // After the rules: a rules-bearing description (an artifact's, an
   // intelligent or cursed item's) on every card, and in a builder pane any
   // description the body leaves out (owner, 2026-11-16).
+  // A split card's rules half leaves it to the lore half.
   const trailingDescription =
-    card.descriptionOnCreatureCard === true
+    card.descriptionOnCreatureCard === true || card.part === "rules"
       ? undefined
       : (item.trailingDescription ??
         (isPanel &&
@@ -52,6 +57,17 @@ export function ItemCard({
           : undefined));
   const hasSubheader =
     item.statRows.length > 0 || item.weaponProperties.length > 0;
+  if (card.part === "lore")
+    return (
+      <ItemLoreCard
+        card={card}
+        cardRef={cardRef}
+        icon={item.icon}
+        kind={item.kind}
+        name={nameWithBoundEnhancement(item.name)}
+        textPresentation={textPresentation}
+      />
+    );
   return (
     <article
       ref={cardRef}
@@ -216,6 +232,54 @@ export function ItemCard({
       <div className="print-card-type">
         <span>{item.kind}</span>
         <span>{item.level ? `Level ${item.level}` : ""}</span>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * The second card of an item printed in two (`part: "lore"`): its
+ * rules-bearing description alone (an artifact's goals and concordance),
+ * titled "<name> — Lore", in the item card's frame.
+ */
+function ItemLoreCard({
+  card,
+  cardRef,
+  icon,
+  kind,
+  name,
+  textPresentation,
+}: {
+  readonly card: SheetCard;
+  readonly cardRef: ReturnType<typeof usePrintCardFit>;
+  readonly icon: Parameters<typeof Icon>[0]["name"];
+  readonly kind: string;
+  readonly name: string;
+  readonly textPresentation?: CardPanelProps["textPresentation"];
+}) {
+  return (
+    <article
+      ref={cardRef}
+      className="print-reference-card print-item-card no-subheader"
+      data-item-part="lore"
+    >
+      <header>
+        <h3>
+          <Icon name={icon} />
+          <span>{`${name} — Lore`}</span>
+        </h3>
+      </header>
+      <div className="print-card-body print-item-body">
+        {card.description === undefined ? null : (
+          <CardText
+            value={card.description}
+            textPresentation={textPresentation}
+          />
+        )}
+      </div>
+      <div className="print-card-type">
+        <span>{kind}</span>
+        <span />
       </div>
     </article>
   );

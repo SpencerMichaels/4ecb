@@ -44,3 +44,23 @@ describe("item card descriptions", () => {
     expect(after(markup, "Your reach is 3.", "Concordance")).toBe(true);
   });
 });
+
+describe("item card printed in two", () => {
+  const artifact = item(
+    { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
+    "Concordance: starting score 5.",
+  );
+  it("leaves the description to the lore card", () => {
+    const rules = renderToStaticMarkup(
+      <ItemCard card={{ ...artifact, part: "rules" }} />,
+    );
+    expect(rules).toContain("Your reach is 3.");
+    expect(rules).not.toContain("Concordance");
+    const lore = renderToStaticMarkup(
+      <ItemCard card={{ ...artifact, part: "lore" }} />,
+    );
+    expect(lore).toContain("Synthetic Item — Lore");
+    expect(lore).toContain("Concordance");
+    expect(lore).not.toContain("Your reach is 3.");
+  });
+});

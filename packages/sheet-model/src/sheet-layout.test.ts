@@ -5,7 +5,11 @@ import { SHEET_SECTION_IDS } from "@4ecb/character-domain";
 import { isSheetPlayCard, sheetCardDeck } from "./card-deck";
 import type { SheetCard } from "./index";
 import type { SheetItemSetCard } from "./item-set-card";
-import { applySheetLayout, orderedCards } from "./sheet-layout";
+import {
+  ITEM_LORE_KEY_SUFFIX,
+  applySheetLayout,
+  orderedCards,
+} from "./sheet-layout";
 
 const power = (id: string): SheetCard => ({
   kind: "power",
@@ -193,5 +197,42 @@ describe("applySheetLayout", () => {
         ({ card }) => !isSheetPlayCard(card) && card.id === "PIECE_A",
       ),
     ).toBe(false);
+  });
+});
+
+describe("item cards printed in two", () => {
+  const artifact: SheetCard = {
+    id: "ID_SYN_ARTIFACT",
+    kind: "item",
+    name: "Synthetic Spear",
+    fields: [{ label: "Magic Item Type", value: "Artifact" }],
+    description: "Goals of the Synthetic Spear…",
+  };
+  const model = { powers: [], items: [artifact], companions: [] };
+  const key = sheetCardDeck(model).find(
+    (entry) => entry.card.kind === "item",
+  )!.key;
+
+  it("prints one card unless measured as overflowing", () => {
+    expect(
+      applySheetLayout(model, undefined)
+        .deck.filter(({ card }) => card.kind === "item")
+        .map(({ card }) => (card as SheetCard).part ?? "whole"),
+    ).toEqual(["whole"]);
+  });
+
+  it("prints a split item as rules then lore, under one layout key", () => {
+    const resolved = applySheetLayout(model, undefined, {
+      splitItems: new Set([key]),
+    });
+    expect(
+      resolved.deck
+        .filter(({ card }) => card.kind === "item")
+        .map(({ card }) => (card as SheetCard).part),
+    ).toEqual(["rules", "lore"]);
+    const lore = resolved.cards.at(-1)!;
+    expect(lore.key).toBe(`${key}${ITEM_LORE_KEY_SUFFIX}`);
+    expect(lore.layoutKey).toBe(key);
+    expect(resolved.defaultCardOrder).not.toContain(lore.key);
   });
 });

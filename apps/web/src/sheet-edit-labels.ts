@@ -23,5 +23,9 @@ export function sheetCardLabel(entry: Pick<SheetLayoutCard, "card">): string {
   const { card } = entry;
   if (isSheetPlayCard(card))
     return card.kind === "play-character" ? "Play data" : "Skills";
-  return card.kind === "creature" ? creatureCardTitle(card) : card.name;
+  if (card.kind === "creature") return creatureCardTitle(card);
+  // An item printed in two names its lore half (`splitItemCard`).
+  return card.kind === "item" && card.part === "lore"
+    ? `${card.name} — Lore`
+    : card.name;
 }

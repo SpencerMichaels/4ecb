@@ -247,6 +247,7 @@ export {
 } from "./card-deck";
 export {
   applySheetLayout,
+  ITEM_LORE_KEY_SUFFIX,
   sheetHiddenSections,
   sheetLayoutCardKey,
   sheetLayoutCardKeys,
@@ -442,6 +443,13 @@ export interface SheetCard {
    * the creature card's type bar shows its usage.
    */
   readonly foldedIntoCreature?: boolean;
+  /**
+   * An item card printed in two (D110's companion split, applied to an
+   * item whose rules-bearing description overflows its card at the
+   * minimum text size): `rules` leaves the description out, `lore` is the
+   * description alone, titled "<name> — Lore".
+   */
+  readonly part?: "rules" | "lore";
 }
 
 /** The movement technique part of a monk full discipline's card. */

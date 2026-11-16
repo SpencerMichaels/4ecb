@@ -111,6 +111,11 @@ export function applySheetLayout(
      *  card and an actions card, a beast or familiar as a stats card and a notes
      *  card (D110). */
     readonly splitCompanions?: ReadonlySet<string>;
+    /** Item cards (by deck key) whose whole card overflows the printed card
+     *  at the minimum text size with its rules-bearing description (an
+     *  artifact's concordance): each prints as a rules card and a lore
+     *  card, sharing one layout key (D110's split). */
+    readonly splitItems?: ReadonlySet<string>;
   } = {},
 ): ResolvedSheetLayout {
   const hiddenCards = new Set(layout?.hiddenCards ?? []);
@@ -188,6 +193,11 @@ export function applySheetLayout(
           ? { layoutAliases: aliases.get(entry.key)! }
           : {}),
       };
+      if (
+        entry.card.kind === "item" &&
+        options.splitItems?.has(entry.key) === true
+      )
+        return splitItemCard(card, card.card as SheetCard);
       if (options.splitCompanions?.has(entry.key) !== true) return [card];
       if (entry.card.kind === "creature")
         return splitCreatureCard(card, entry.card);
@@ -319,6 +329,26 @@ function splitFamiliarCard(
       key: `${entry.key}${FAMILIAR_NOTES_KEY_SUFFIX}`,
       layoutKey: entry.key,
       card: { ...card, part: "notes" },
+    },
+  ];
+}
+
+/** The deck key suffix of an item's lore card (`splitItemCard`). */
+export const ITEM_LORE_KEY_SUFFIX = ":lore";
+
+/** An item's rules card then its lore card, kept together under one
+ *  layout key, as a split companion's. */
+function splitItemCard(
+  entry: SheetLayoutCard,
+  card: SheetCard,
+): SheetLayoutCard[] {
+  return [
+    { ...entry, card: { ...card, part: "rules" } },
+    {
+      ...entry,
+      key: `${entry.key}${ITEM_LORE_KEY_SUFFIX}`,
+      layoutKey: entry.key,
+      card: { ...card, part: "lore" },
     },
   ];
 }
