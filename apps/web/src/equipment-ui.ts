@@ -833,27 +833,39 @@ function browseCategoryOf(entity: ContentEntity): ShopBrowseId | undefined {
   return undefined;
 }
 
+/** Each enchantment category's base words: a leading "<word> of" (with the
+ *  article it leaves) and a trailing "<word>" before any "+N". */
+const ENCHANTMENT_BASE_WORDS = new Map<
+  ShopBrowseId,
+  { readonly leading: RegExp; readonly trailing: RegExp }
+>(
+  (
+    [
+      ["weapon-enchantments", "Weapon"],
+      ["armor-enchantments", "Armor|Shield"],
+      [
+        "implement-enchantments",
+        "Implement|Orb|Rod|Staff|Wand|Tome|Totem|Symbol|Ki Focus",
+      ],
+    ] as const
+  ).map(([category, words]) => [
+    category,
+    {
+      leading: new RegExp(`^(?:${words}) of (?:the )?`, "iu"),
+      trailing: new RegExp(` (?:${words})(?= \\+\\d+$|$)`, "iu"),
+    },
+  ]),
+);
+
+/** An enchantment's name without its base word ("Weapon of Testing +2" →
+ *  "Testing +2", "Flaming Weapon" → "Flaming"). The article a dropped
+ *  "<base> of" leaves goes too: "Staff of the War Mage" → "War Mage". */
 export function shopDisplayName(entity: ContentEntity): string {
   const category = shopBrowseCategory(entity);
-  if (category === "weapon-enchantments")
-    return entity.name
-      .replace(/^Weapon of /iu, "")
-      .replace(/ Weapon(?= \+\d+$|$)/iu, "");
-  if (category === "armor-enchantments")
-    return entity.name
-      .replace(/^(?:Armor|Shield) of /iu, "")
-      .replace(/ (?:Armor|Shield)(?= \+\d+$|$)/iu, "");
-  if (category === "implement-enchantments")
-    return entity.name
-      .replace(
-        /^(?:Implement|Orb|Rod|Staff|Wand|Tome|Totem|Symbol|Ki Focus) of /iu,
-        "",
-      )
-      .replace(
-        / (?:Implement|Orb|Rod|Staff|Wand|Tome|Totem|Symbol|Ki Focus)(?= \+\d+$|$)/iu,
-        "",
-      );
-  return entity.name;
+  const words =
+    category === undefined ? undefined : ENCHANTMENT_BASE_WORDS.get(category);
+  if (words === undefined) return entity.name;
+  return entity.name.replace(words.leading, "").replace(words.trailing, "");
 }
 
 export function shopItemLevel(entity: ContentEntity): number {

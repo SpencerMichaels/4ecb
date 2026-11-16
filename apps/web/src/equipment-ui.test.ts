@@ -125,6 +125,35 @@ describe("Shop presentation model", () => {
     expect(shopSubtype(weapon)).toBe("Heavy blade");
     expect(shopSubtype(scroll)).toBe("Scrolls");
     expect(shopDisplayName(enchantment)).toBe("Testing +2");
+    // The article a dropped "<base> of" leaves goes with it.
+    expect(
+      shopDisplayName(
+        entity("WAR_MAGE", "Staff of the War Mage +1", "Magic Item", {
+          "Magic Item Type": "Staff",
+          "Item Slot": "Off-hand",
+          Level: "3",
+        }),
+      ),
+    ).toBe("War Mage +1");
+    expect(
+      shopDisplayName(
+        entity("THEME", "Weapon of the Ravenous Beast +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Weapon: "Any",
+          Level: "4",
+        }),
+      ),
+    ).toBe("Ravenous Beast +1");
+    // A name that is not "<base> of …" keeps its own words.
+    expect(
+      shopDisplayName(
+        entity("PLAIN", "Theurgic Weapon +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Weapon: "Any",
+          Level: "4",
+        }),
+      ),
+    ).toBe("Theurgic +1");
   });
 
   it("normalizes player-facing subtypes and classifies corpus edge cases", () => {
