@@ -474,4 +474,41 @@ Level 21: 2d10 + your Intelligence, Wisdom, or Charisma modifier cold damage.</s
     <specific name="Magic Item Type">Armor</specific>
     <specific name="Property">If you use your Golden Abjure Undead while bloodied, regain 5 hit points.</specific>
   </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ARTIFACT" name="Golden Spear of the Sky" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Artifact</specific>
+    <specific name="Property">Your reach with this weapon is 3.</specific>
+Goals of the Golden Spear
+• Be wielded by a ruler of the sky.
+
+Roleplaying the Golden Spear
+The Spear does not speak.
+
+&lt;table&gt;Concordance
+Starting score	5
+Owner gains a level	+1d10&lt;/table&gt;
+
+Pleased (16–20)
+The Spear grants greater power.
+Property: You gain a +1 bonus to attack rolls.
+
+Moving On
+The Spear leaps from its owner's hand.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_ARTIFACT_STATES" name="Golden Broken Blade" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Artifact</specific>
+The blade remembers its warlord.
+
+Satisfied (12–15)
+Power (Encounter): Minor Action. Your sword shines.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_CURSED" name="Golden Ring of Weakness (Cursed)" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Ring</specific>
+    <specific name="Special">Cursed Item</specific>
+A cursed item looks and functions like a normal magic item. To remove an item curse, a character makes an Arcana check.
+  </RulesElement>
+  <RulesElement internal-id="ID_GOLDEN_INTELLIGENT" name="Golden Ogre Chief" type="Magic Item" source="Synthetic">
+    <specific name="Magic Item Type">Intelligent Item</specific>
+Communication Speech
+Persona The ogre is gruff.
+  </RulesElement>
 </D20Rules>

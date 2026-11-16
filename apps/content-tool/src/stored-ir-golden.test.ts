@@ -3,7 +3,7 @@
  * and stores the result with a version (`_Power Text IR`, `_Prerequisite
  * IR`, `_Associate Stat Block`, `_Creature Stat Block`,
  * `_Note Values IR`, `_Formula Items IR`, `_Prose Bonuses IR`,
- * `_Resource Clauses IR`, `_Power Mentions IR`); the engine
+ * `_Resource Clauses IR`, `_Power Mentions IR`, `_Item Rules Text IR`); the engine
  * trusts a stored field whose
  * version matches. A parser change without a version bump would leave every
  * older pack with stale IR that synthetic tests never see.
@@ -32,6 +32,8 @@ import {
   CREATURE_STAT_BLOCK_VERSION,
   FORMULA_ITEMS_FIELD,
   FORMULA_ITEMS_VERSION,
+  ITEM_RULES_TEXT_FIELD,
+  ITEM_RULES_TEXT_VERSION,
   NOTE_VALUES_FIELD,
   NOTE_VALUES_VERSION,
   POWER_MENTIONS_FIELD,
@@ -140,6 +142,13 @@ const kinds = [
     constant:
       "POWER_MENTIONS_VERSION (packages/content-domain/src/power-mentions.ts)",
     file: "power-mentions.golden.json",
+  },
+  {
+    field: ITEM_RULES_TEXT_FIELD,
+    version: ITEM_RULES_TEXT_VERSION,
+    constant:
+      "ITEM_RULES_TEXT_VERSION (packages/content-domain/src/item-rules-text.ts)",
+    file: "item-rules-text.golden.json",
   },
 ] as const;
 

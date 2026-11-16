@@ -20,6 +20,7 @@ import { SaxesParser } from "saxes";
 
 import { associateStatBlockField } from "./associate-stat-block";
 import { creatureStatBlockField } from "./creature-stat-block";
+import { itemRulesTextField } from "./item-rules-text";
 import { noteValuesField } from "./note-values";
 import { powerTextField } from "./power-text";
 import { proseBonusesField } from "./prose-bonuses";
@@ -493,6 +494,16 @@ export class D20RulesParser {
     // sheet's "hide inapplicable properties" option.
     const resourceClauses = resourceClausesField(specifics, specifics.length);
     if (resourceClauses !== undefined) specifics.push(resourceClauses);
+
+    // The part of a magic item's description its printed card prints (an
+    // artifact's concordance and states, a cursed item's curse rules).
+    const itemRulesText = itemRulesTextField(
+      type,
+      specifics,
+      description,
+      specifics.length,
+    );
+    if (itemRulesText !== undefined) specifics.push(itemRulesText);
 
     const base = {
       id,
