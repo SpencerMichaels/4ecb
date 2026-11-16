@@ -120,3 +120,17 @@ export function spellbookPowerIds(evaluation: {
   for (const id of otherwise) result.delete(id);
   return result;
 }
+
+/**
+ * Whether a power card leaves a field out of its rules: a header field
+ * (`POWER_CARD_RULE_EXCLUDES`) at the top level only. An indented field
+ * belongs to an attack phase or augment block (a secondary attack's
+ * " Attack Type: Close burst 3") and prints as a rule line; legacy's
+ * `lPowerExcludes` matched exact lowercase names, so it printed them too.
+ */
+export function isPowerCardRuleExcluded(label: string): boolean {
+  return (
+    !/^\s/.test(label) &&
+    POWER_CARD_RULE_EXCLUDES.has(label.trim().toLocaleLowerCase())
+  );
+}

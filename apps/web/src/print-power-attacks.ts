@@ -9,6 +9,7 @@ import {
 import { LEVEL_ATTACK_STAT } from "@4ecb/rules-engine";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
+import { powerTextAtLevel } from "./power-level-text";
 
 function namedOrdinal(label: string): number | undefined {
   return new Map([
@@ -120,14 +121,31 @@ export function printAttackHeader(attack: SheetPowerAttack): string {
 /** Splits a power card's rule fields by attack phase. A target field is a
  * rule line unless its phase's attack band shows the same target (the
  * band's text is authored; the field may carry the sheet's "(+N)" value
- * annotations), so a power with no attack roll keeps its "Target:" line. */
+ * annotations), so a power with no attack roll keeps its "Target:" line;
+ * an attack line likewise unless the band shows all of it
+ * (`bandShowsAttackLine`, at `level`). A phase without a band (its attack
+ * line has no defense) prints its fields with the band before it, or
+ * before the bands. */
 export function groupedPrintRules(
   fields: readonly SheetValue[],
   headers: readonly SheetPowerAttack[] = [],
+  level = 0,
 ) {
   const leading: SheetValue[] = [];
   const attacks = new Map<number, SheetValue[]>();
   let currentAttack: number | undefined;
+  const banded = new Set(headers.map((header) => header.ordinal));
+  // The section a phase's fields print in: its own band's, else the
+  // nearest earlier band's, else the lines before the bands.
+  const sectionFor = (ordinal: number): SheetValue[] => {
+    const shown = [...banded]
+      .filter((candidate) => candidate <= ordinal)
+      .sort((left, right) => right - left)[0];
+    if (shown === undefined) return leading;
+    const section = attacks.get(shown) ?? [];
+    attacks.set(shown, section);
+    return section;
+  };
   for (const field of fields) {
     const targetLabel = field.label.trim().toLocaleLowerCase();
     if (isPowerTargetLabel(targetLabel)) {
@@ -158,12 +176,37 @@ export function groupedPrintRules(
     if (ordinal !== undefined) {
       currentAttack = ordinal;
       if (!attacks.has(ordinal)) attacks.set(ordinal, []);
+      // The band shows the attack's ability and defense; anything else the
+      // line says ("…, two attacks", "(off-hand weapon)", other defenses,
+      // a level's bonus) or a line with no attack roll at all ("Attack:
+      // You can shift 1 square, then make a basic attack") stays a rule.
+      const header = headers.find((candidate) => candidate.ordinal === ordinal);
+      if (header === undefined || !bandShowsAttackLine(field.value, level))
+        sectionFor(ordinal).push(field);
       continue;
     }
     if (currentAttack === undefined) leading.push(field);
-    else attacks.get(currentAttack)?.push(field);
+    else sectionFor(currentAttack).push(field);
   }
   return { leading, attacks };
+}
+
+const ABILITY_NAME =
+  "(?:your\\s+)?(?:strength|constitution|dexterity|intelligence|wisdom|charisma|str|con|dex|int|wis|cha|primary ability|level)(?:\\s+modifier)?(?:\\s*\\([+-]?\\d+\\))?";
+
+/** An attack line the band says all of: "Strength vs. AC", "Wisdom + 2
+ *  vs. Will", "Charisma or Intelligence (+4) vs. Reflex". */
+const BAND_ATTACK_LINE = new RegExp(
+  `^${ABILITY_NAME}(?:\\s*(?:,|or|and|/)\\s*${ABILITY_NAME})*(?:\\s*[+-]\\s*\\d+)?(?:\\s*\\([+-]?\\d+\\))?\\s+vs\\.?\\s+(?:ac|armor class|fortitude|fort|reflex|ref|will)\\.?$`,
+  "i",
+);
+
+/** Whether an attack band (ability and defense) shows all of an authored
+ *  attack line at the card's level; a line of only punctuation (a legacy
+ *  "Secondary Attack" heading over its indented fields) says nothing. */
+export function bandShowsAttackLine(value: string, level: number): boolean {
+  const text = powerTextAtLevel(value, level).replace(/\s+/g, " ").trim();
+  return !/[\p{L}\p{N}]/u.test(text) || BAND_ATTACK_LINE.test(text);
 }
 
 /** Cached exports supply only a primary total; preserve other authored phases

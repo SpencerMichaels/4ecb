@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SheetCard } from "@4ecb/sheet-model";
 import {
+  bandShowsAttackLine,
   fallbackPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
@@ -129,9 +130,10 @@ describe("printed authored attack phases", () => {
       { ordinal: 2, ability: "Dexterity", powerBonus: 2, attack: "— vs AC" },
     ]);
     expect(attacks[1]?.target).toBeUndefined();
-    const grouped = groupedPrintRules(card.fields);
-    expect(grouped.attacks.get(1)).toEqual([card.fields[2]]);
-    expect(grouped.attacks.get(2)).toEqual([card.fields[4]]);
+    // Each attack line names its weapon, which the band does not show.
+    const grouped = groupedPrintRules(card.fields, attacks);
+    expect(grouped.attacks.get(1)).toEqual(card.fields.slice(1, 3));
+    expect(grouped.attacks.get(2)).toEqual(card.fields.slice(3, 5));
   });
   it("keeps generic Attack fields within an explicit secondary section", () => {
     const fields = [
@@ -141,9 +143,13 @@ describe("printed authored attack phases", () => {
       { label: "Attack", value: "Wisdom vs. Will" },
       { label: "Hit", value: "The target is dazed." },
     ];
-    const grouped = groupedPrintRules(fields);
-    expect(grouped.attacks.get(1)).toEqual([card.fields[2]]);
-    expect(grouped.attacks.get(2)).toEqual([fields[4], fields[6]]);
+    const grouped = groupedPrintRules(
+      fields,
+      fallbackPrintAttacks({ ...card, fields }, undefined),
+    );
+    expect(grouped.attacks.get(1)).toEqual(card.fields.slice(1, 3));
+    // The bare "." heading and the bands' target and attack lines drop.
+    expect(grouped.attacks.get(2)).toEqual([fields[6]]);
     expect(fallbackPrintAttacks({ ...card, fields }, undefined)).toMatchObject([
       { ordinal: 1, ability: "Strength", attack: "— vs Reflex" },
       {
@@ -172,8 +178,8 @@ describe("printed authored attack phases", () => {
     const headers = fallbackPrintAttacks({ ...card, fields }, undefined);
     const grouped = groupedPrintRules(fields, headers);
     expect(grouped.leading).toEqual([]);
-    expect(grouped.attacks.get(1)).toEqual([card.fields[2]]);
-    expect(grouped.attacks.get(2)).toEqual([card.fields[4]]);
+    expect(grouped.attacks.get(1)).toEqual(card.fields.slice(1, 3));
+    expect(grouped.attacks.get(2)).toEqual(card.fields.slice(3, 5));
     for (const secondary of [undefined, "A different target description"]) {
       const changed = headers.map((header) => {
         const updated = { ...header };
@@ -221,5 +227,47 @@ describe("power target rule lines", () => {
       { label: "Effect", value: "The target regains hit points." },
     ];
     expect(groupedPrintRules(fields, []).leading).toEqual(fields);
+  });
+});
+
+describe("attack lines the band can't show", () => {
+  it("keeps an attack line's rest beyond its ability and defense", () => {
+    const fields = [
+      { label: "Attack", value: "Strength vs. AC, two attacks" },
+      { label: "Hit", value: "1[W] damage per attack." },
+    ];
+    const headers = fallbackPrintAttacks(
+      { kind: "power", name: "Synthetic Flurry", fields },
+      undefined,
+    );
+    expect(groupedPrintRules(fields, headers).attacks.get(1)).toEqual(fields);
+  });
+
+  it("drops an attack line the band shows, at the card's level", () => {
+    expect(bandShowsAttackLine("Strength vs. AC", 1)).toBe(true);
+    expect(bandShowsAttackLine("Wisdom + 2 vs. Will", 1)).toBe(true);
+    expect(bandShowsAttackLine("Charisma (+4) vs. Reflex", 1)).toBe(true);
+    expect(bandShowsAttackLine("Intelligence vs. Fortitude, Reflex", 1)).toBe(
+      false,
+    );
+    const tiers =
+      "Constitution + 2 vs. AC\nLevel 11: Constitution + 4 vs. AC\nLevel 21: Constitution + 6 vs. AC";
+    expect(bandShowsAttackLine(tiers, 15)).toBe(true);
+    expect(bandShowsAttackLine(tiers, 0)).toBe(false);
+  });
+
+  it("prints the fields of an attack with no defense, which has no band", () => {
+    const fields = [
+      { label: "Target", value: "One creature" },
+      { label: "Attack", value: "Strength" },
+      { label: "Hit", value: "3[W] + Strength modifier damage." },
+      { label: "Miss", value: "Half damage." },
+    ];
+    const headers = fallbackPrintAttacks(
+      { kind: "power", name: "Synthetic Rage", fields },
+      undefined,
+    );
+    expect(headers).toEqual([]);
+    expect(groupedPrintRules(fields, headers).leading).toEqual(fields);
   });
 });

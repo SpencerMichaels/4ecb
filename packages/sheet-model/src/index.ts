@@ -121,7 +121,7 @@ import { characterClassName } from "./class-identity";
 import { featureNoteHidden, featureNoteText } from "./feature-notes";
 import {
   POWER_CARD_BODY_EXCLUDES,
-  POWER_CARD_RULE_EXCLUDES,
+  isPowerCardRuleExcluded,
   movementTechniqueOf,
   powerClassBlock,
   spellbookPowerIds,
@@ -162,6 +162,7 @@ export {
 export {
   POWER_CARD_BODY_EXCLUDES,
   POWER_CARD_RULE_EXCLUDES,
+  isPowerCardRuleExcluded,
   isPowerTargetLabel,
   movementTechniqueOf,
   powerClassBlock,
@@ -219,6 +220,7 @@ export {
   deityCardFields,
   deitySubheaderRows,
   DEITY_SUBHEADER_SPECIFICS,
+  sheetDeityReference,
   type DeityCardFields,
   type DeityField,
   type SheetDeityReference,
@@ -947,12 +949,7 @@ function powerRecordParts(
             ...(actionType === undefined ? {} : { actionType }),
             ...(attackType === undefined ? {} : { attackType }),
             fields: techniqueFields
-              .filter(
-                ({ label }) =>
-                  !POWER_CARD_RULE_EXCLUDES.has(
-                    label.trim().toLocaleLowerCase(),
-                  ),
-              )
+              .filter(({ label }) => !isPowerCardRuleExcluded(label))
               .map(({ label, value }) => ({
                 label,
                 value: personalize(value),

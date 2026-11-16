@@ -324,3 +324,29 @@ describe("power card targets", () => {
     expect(markup.split("One creature")).toHaveLength(2);
   });
 });
+
+describe("power card phase fields", () => {
+  it("prints a secondary attack's own attack type, which the header doesn't show", () => {
+    const markup = renderToStaticMarkup(
+      createElement(PowerCard, {
+        card: {
+          ...card,
+          fields: [
+            { label: "Attack Type", value: "Melee weapon" },
+            { label: "Primary Target", value: "One creature" },
+            { label: "Primary Attack", value: "Strength vs. AC" },
+            { label: "Hit", value: "2[W] damage. Make a secondary attack." },
+            { label: "Secondary Attack", value: "­" },
+            { label: " Attack Type", value: "Close burst 3" },
+            { label: " Secondary Target", value: "Each enemy in the burst" },
+            { label: " Attack", value: "Strength vs. Will" },
+            { label: " Hit", value: "The target is pushed 1 square." },
+          ],
+        },
+        characterLevel: 1,
+      }),
+    );
+    expect(markup).toContain("Close burst 3");
+    expect(markup.split("Melee weapon")).toHaveLength(2);
+  });
+});
