@@ -3,6 +3,7 @@ import {
   bloodiedValue,
   evaluatedHealingSurgeValue,
   healingSurgeValue,
+  type CharacterOccurrence,
   type EvaluatedCharacter,
   type EvaluatedContribution,
   type EvaluatedStat,
@@ -14,7 +15,8 @@ import {
 
 import { StatGroup, type StatTileValue } from "./StatTiles";
 
-type HeaderEvaluation = Pick<EvaluatedCharacter, "stats">;
+type HeaderEvaluation = Pick<EvaluatedCharacter, "stats"> &
+  Partial<Pick<EvaluatedCharacter, "occurrences">>;
 
 const defenses = [
   ["AC", ["AC", "Armor Class"], "AC"],
@@ -97,13 +99,78 @@ const baseTenStats =
 
 const abilityScoreStats = new Set(Object.values(abilityNames));
 
+interface Provenance {
+  readonly occurrences: ReadonlyMap<string, CharacterOccurrence>;
+  /** Each contributing occurrence's element name, from the stats. */
+  readonly names: ReadonlyMap<string, string>;
+}
+
+const provenanceCache = new WeakMap<HeaderEvaluation, Provenance>();
+
+function provenance(evaluation: HeaderEvaluation): Provenance {
+  const cached = provenanceCache.get(evaluation);
+  if (cached !== undefined) return cached;
+  const names = new Map<string, string>();
+  for (const stat of Object.values(evaluation.stats))
+    for (const contribution of stat.contributions)
+      names.set(contribution.providerId, contribution.providerName.trim());
+  const built = {
+    occurrences: new Map(
+      (evaluation.occurrences ?? []).map((occurrence) => [
+        occurrence.id,
+        occurrence,
+      ]),
+    ),
+    names,
+  };
+  provenanceCache.set(evaluation, built);
+  return built;
+}
+
+/** An ability bonus element is named after its ability (a race's ability
+ *  bonus pick "Wisdom", a level's ability increase pick), which says
+ *  nothing in that ability's breakdown. Name it by the nearest selection
+ *  above it that has a name of its own: the race, or the level that
+ *  granted the pick. (Other stats named after a feat or feature keep the
+ *  element's name: there it is the useful one.) */
+function selfNamedSourceLabel(
+  statName: string,
+  contribution: EvaluatedContribution,
+  evaluation: HeaderEvaluation | undefined,
+): string | undefined {
+  if (evaluation === undefined || !abilityScoreStats.has(statName))
+    return undefined;
+  const key = statName.trim().toLocaleLowerCase();
+  if (contribution.providerName.trim().toLocaleLowerCase() !== key)
+    return undefined;
+  const { occurrences, names } = provenance(evaluation);
+  const seen = new Set<string>();
+  let parentId = occurrences.get(contribution.providerId)?.parentId;
+  while (parentId !== undefined && !seen.has(parentId)) {
+    seen.add(parentId);
+    const name = names.get(parentId);
+    if (name !== undefined && /^\d+$/.test(name))
+      return `Level ${name} increase`;
+    if (
+      name !== undefined &&
+      !coreRulesProvider(name) &&
+      name.toLocaleLowerCase() !== key
+    )
+      return name;
+    parentId = occurrences.get(parentId)?.parentId;
+  }
+  return undefined;
+}
+
 export function contributionLabel(
   statName: string,
   contribution: EvaluatedContribution,
+  evaluation?: HeaderEvaluation,
 ): string {
   if (contribution.providerId === "base-abilities") return "Base";
   const provider = contribution.providerName.trim();
-  if (!coreRulesProvider(provider)) return provider;
+  if (!coreRulesProvider(provider))
+    return selfNamedSourceLabel(statName, contribution, evaluation) ?? provider;
 
   const linked = linkedStatLabel(contribution.value);
   if (linked !== undefined) return linked;
@@ -143,13 +210,13 @@ const nestedIndent = "\u2003";
 function linkedStat(
   contribution: EvaluatedContribution,
   value: number,
-  stats: HeaderEvaluation["stats"] | undefined,
+  evaluation: HeaderEvaluation | undefined,
 ): EvaluatedStat | undefined {
-  if (stats === undefined) return undefined;
+  if (evaluation === undefined) return undefined;
   if (!coreRulesProvider(contribution.providerName.trim())) return undefined;
   const name = contribution.value.trim().replace(/^\+/, "");
   if (!/^[A-Za-z][A-Za-z ]*$/.test(name)) return undefined;
-  const stat = stats[name];
+  const stat = evaluation.stats[name];
   if (stat === undefined) return undefined;
   const sum = stat.contributions.reduce(
     (total, child) =>
@@ -161,14 +228,14 @@ function linkedStat(
 
 function appliedContributions(
   stat: EvaluatedStat,
-  stats?: HeaderEvaluation["stats"],
+  evaluation?: HeaderEvaluation,
   depth = 0,
 ): readonly TooltipContribution[] {
   const rows = stat.contributions.flatMap((contribution) => {
     if (!contribution.applied) return [];
     const value = contributionValue(contribution);
     if (value === undefined) return [];
-    const label = contributionLabel(stat.name, contribution);
+    const label = contributionLabel(stat.name, contribution, evaluation);
     const row = { label, value: formatContributionValue(label, value) };
     const bucket = label === "Miscellaneous" || label === "Class bonus";
     // Untrained, or an empty bucket: nothing to explain.
@@ -176,10 +243,10 @@ function appliedContributions(
     const named = label === contribution.value.trim().replace(/^\+/, "");
     const linked =
       depth < 2 && (bucket || named)
-        ? linkedStat(contribution, value, stats)
+        ? linkedStat(contribution, value, evaluation)
         : undefined;
     if (linked === undefined) return [row];
-    const children = appliedContributions(linked, stats, depth + 1);
+    const children = appliedContributions(linked, evaluation, depth + 1);
     // A bucket (`Insight Misc`, a class bonus) is replaced by its sources;
     // a named stat (a passive sense's skill) heads its own breakdown.
     if (bucket) return children;
@@ -262,11 +329,11 @@ function statTooltip(
   value: string,
   stat: EvaluatedStat,
   conditional: readonly ConditionalModifier[] = [],
-  stats?: HeaderEvaluation["stats"],
+  evaluation?: HeaderEvaluation,
 ): string {
   return [
     `${label} ${value}`,
-    ...collapsePerLevelHitPoints(appliedContributions(stat, stats)).map(
+    ...collapsePerLevelHitPoints(appliedContributions(stat, evaluation)).map(
       contributionLine,
     ),
     ...conditionalLines(conditional),
@@ -301,13 +368,7 @@ function statTile(
     ? {
         label,
         value,
-        title: statTooltip(
-          tooltipLabel,
-          value,
-          stat,
-          conditional,
-          evaluation?.stats,
-        ),
+        title: statTooltip(tooltipLabel, value, stat, conditional, evaluation),
       }
     : { label, value };
 }
@@ -332,7 +393,7 @@ function surgeValueTile(
       `Quarter of max HP ${healingSurgeValue(hitPoints, 0)}`,
       ...(bonus === undefined
         ? []
-        : appliedContributions(bonus, evaluation?.stats).map(contributionLine)),
+        : appliedContributions(bonus, evaluation).map(contributionLine)),
       ...conditionalLines(conditional),
     ].join("\n"),
   };
@@ -379,13 +440,7 @@ function abilityTile(
     ...(scoreStat === undefined || score === undefined
       ? {}
       : {
-          title: statTooltip(
-            label,
-            String(score),
-            scoreStat,
-            [],
-            evaluation?.stats,
-          ),
+          title: statTooltip(label, String(score), scoreStat, [], evaluation),
         }),
   };
 }

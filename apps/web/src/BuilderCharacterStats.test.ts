@@ -493,3 +493,88 @@ describe("BuilderCharacterStats linked-stat breakdowns", () => {
     expect(markup).not.toContain("Other contribution");
   });
 });
+
+describe("BuilderCharacterStats ability bonus sources", () => {
+  it("names an ability's own-named bonus picks by their race or level", () => {
+    const occurrence = (id: string, parentId?: string) => ({
+      id,
+      definitionId: `def:${id}`,
+      acquiredLevel: 1,
+      kind: "choice" as const,
+      ...(parentId === undefined ? {} : { parentId }),
+    });
+    const wisdom = (providerId: string, numericValue: number) =>
+      contribution({
+        id: `${providerId}:0`,
+        numericValue,
+        providerId,
+        providerName: "Wisdom",
+        stat: "Wisdom",
+        value: `+${numericValue}`,
+      });
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {
+        evaluation: {
+          occurrences: [
+            occurrence("level-1"),
+            occurrence("level-4"),
+            occurrence("race", "level-1"),
+            occurrence("race-bonus", "race"),
+            occurrence("increase-4", "level-4"),
+            occurrence("feat"),
+          ],
+          stats: {
+            Wisdom: {
+              name: "Wisdom",
+              value: 20,
+              contributions: [
+                contribution({
+                  numericValue: 16,
+                  providerId: "base-abilities",
+                  providerName: "Base ability score",
+                  value: "16",
+                }),
+                wisdom("race-bonus", 2),
+                wisdom("increase-4", 1),
+                // No named selection above it: the element's name stays.
+                wisdom("feat", 1),
+              ],
+            },
+            Speed: {
+              name: "Speed",
+              value: 6,
+              contributions: [
+                contribution({
+                  numericValue: 6,
+                  providerId: "race",
+                  providerName: "Human",
+                  value: "+6",
+                }),
+              ],
+            },
+            Level: {
+              name: "Level",
+              value: 4,
+              contributions: [
+                contribution({
+                  numericValue: 1,
+                  providerId: "level-1",
+                  providerName: "1",
+                }),
+                contribution({
+                  numericValue: 1,
+                  providerId: "level-4",
+                  providerName: "4",
+                }),
+              ],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(markup).toContain(
+      'title="WIS 20\nBase 16\nHuman +2\nLevel 4 increase +1\nWisdom +1"',
+    );
+  });
+});
