@@ -286,3 +286,26 @@ describe("abbreviated authored attack lines", () => {
     expect(printAttackHeader(attack!)).toBe("CON+2 vs Fort");
   });
 });
+
+describe("follow-up attack lines", () => {
+  it("starts a new phase for a second attack line in the same phase", () => {
+    const fields = [
+      { label: "Target", value: "One creature" },
+      { label: "Attack", value: "Intelligence vs. AC" },
+      { label: "Hit", value: "2[W] damage. Make the following attack." },
+      { label: " Attack", value: "Intelligence vs. Fortitude" },
+      { label: " Hit", value: "The target is dazed." },
+    ];
+    const headers = fallbackPrintAttacks(
+      { kind: "power", name: "Synthetic Follow-up", fields },
+      undefined,
+    );
+    expect(headers.map(printAttackHeader)).toEqual([
+      "INT vs AC",
+      "INT vs Fort",
+    ]);
+    const grouped = groupedPrintRules(fields, headers);
+    expect(grouped.attacks.get(1)).toEqual([fields[2]]);
+    expect(grouped.attacks.get(2)).toEqual([fields[4]]);
+  });
+});

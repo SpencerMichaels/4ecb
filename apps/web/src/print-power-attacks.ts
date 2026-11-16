@@ -134,6 +134,7 @@ export function groupedPrintRules(
   const leading: SheetValue[] = [];
   const attacks = new Map<number, SheetValue[]>();
   let currentAttack: number | undefined;
+  const phaseOf = attackPhases();
   const banded = new Set(headers.map((header) => header.ordinal));
   // The section a phase's fields print in: its own band's, else the
   // nearest earlier band's, else the lines before the bands.
@@ -168,11 +169,7 @@ export function groupedPrintRules(
       )
         continue;
     }
-    const ordinal =
-      namedOrdinal(field.label) ??
-      (field.label.trim().toLocaleLowerCase() === "attack"
-        ? (currentAttack ?? 1)
-        : undefined);
+    const ordinal = phaseOf(field);
     if (ordinal !== undefined) {
       currentAttack = ordinal;
       if (!attacks.has(ordinal)) attacks.set(ordinal, []);
@@ -218,14 +215,12 @@ export function fallbackPrintAttacks(
   const definitions = new Map<number, string>();
   const targets = new Map<number, string>();
   let active = 1;
+  const phaseOf = attackPhases();
   for (const field of card.fields) {
     const name = field.label.trim().toLocaleLowerCase();
-    const named = namedOrdinal(name);
-    if (named !== undefined) active = named;
-    if (
-      (named !== undefined || name === "attack") &&
-      /\bvs\.?\s+[A-Za-z]+/i.test(field.value)
-    )
+    const phase = phaseOf(field);
+    if (phase !== undefined) active = phase;
+    if (phase !== undefined && /\bvs\.?\s+[A-Za-z]+/i.test(field.value))
       definitions.set(active, field.value);
     const targetOrdinal =
       /^(primary|secondary|tertiary|quaternary) targets?$/.test(name)
@@ -273,4 +268,29 @@ export function fallbackPrintAttacks(
         ...(target === undefined ? {} : { target }),
       };
     });
+}
+
+/**
+ * Numbers a power's attack lines by phase, field by field: "Primary/
+ * Secondary/Tertiary Attack" name theirs; a plain "Attack" line belongs to
+ * the current phase, unless that phase already has one, when it starts the
+ * next (Slash and Burn's " Attack: Intelligence vs. Fortitude" after "Make
+ * the following attack"). A heading of only punctuation ("Secondary
+ * Attack: ­") opens its phase without an attack line. Undefined for a
+ * field that is no attack line.
+ */
+function attackPhases(): (field: SheetValue) => number | undefined {
+  const withLine = new Set<number>();
+  let current: number | undefined;
+  return ({ label, value }) => {
+    let ordinal = namedOrdinal(label);
+    if (ordinal === undefined && label.trim().toLocaleLowerCase() === "attack")
+      ordinal = withLine.has(current ?? 1)
+        ? Math.max(...withLine) + 1
+        : (current ?? 1);
+    if (ordinal === undefined) return undefined;
+    current = ordinal;
+    if (/[\p{L}\p{N}]/u.test(value)) withLine.add(ordinal);
+    return ordinal;
+  };
 }
