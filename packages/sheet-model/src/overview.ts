@@ -76,10 +76,82 @@ export interface OverviewFeature {
   readonly fieldsFirst?: boolean;
 }
 
+/** A feature's reference-entry text: its description, else its legacy
+ *  "Full Text". */
+export function featureReferenceDescription(
+  entity: ContentEntity | undefined,
+): string {
+  return (
+    entity?.description.trim() ||
+    entity?.specifics
+      .find((field) => key(field.name) === "full text")
+      ?.value.trim() ||
+    ""
+  );
+}
+
+/**
+ * A feature's printed reference-entry fields, before the entry's own
+ * per-group filtering (`references` in the web sheet): the card's placed
+ * fields first (`entityCardFields`: one-word labels, duplicates dropped),
+ * then the other authored fields, then its prerequisite. `group` is its
+ * sheet features group ("Feat", "Background"…), `description` its
+ * `featureReferenceDescription`.
+ */
+export function featureReferenceFields(
+  entity: ContentEntity | undefined,
+  group: string,
+  description: string,
+  prerequisiteLines?: Readonly<Record<string, string>>,
+): SheetValue[] {
+  const omitted = (name: string) =>
+    /^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
+      name.trim(),
+    );
+  const placements =
+    entity === undefined ? undefined : entityCardFieldPlacements(entity);
+  const placedNames = new Set(
+    (placements ?? []).flatMap(({ specifics }) => (specifics ?? []).map(key)),
+  );
+  const placed = layoutCardFields(
+    (placements ?? []).filter(
+      ({ specifics }) => !(specifics ?? []).some(omitted),
+    ),
+  );
+  const fields: SheetValue[] = [
+    ...[...placed.subheader.flat(), ...placed.body].map(({ label, value }) => ({
+      label,
+      value,
+    })),
+    ...(entity?.specifics
+      .filter(
+        (field) =>
+          isUserFacingSpecific(field) &&
+          field.value.trim() &&
+          !omitted(field.name) &&
+          !placedNames.has(key(field.name)) &&
+          (field.value.trim() !== description ||
+            (key(group) === "background" && key(field.name) === "benefit")),
+      )
+      .map((field) => ({ label: field.name.trim(), value: field.value })) ??
+      []),
+  ];
+  const prerequisites =
+    entity === undefined
+      ? undefined
+      : displayPrerequisites(entity, prerequisiteLines);
+  if (
+    prerequisites !== undefined &&
+    !fields.some((field) => /^prerequisites?$/i.test(field.label))
+  )
+    fields.unshift({ label: "Prerequisite", value: prerequisites });
+  return fields;
+}
+
 /** The deity's reference entry: its card's subheader fields (Alignment,
  *  Pantheon, Domains, any Counts as; `deityCardFields`), then its
  *  description. Page 1's identity table keeps just the name. */
-function deityFeature(deity: SheetDeityReference): OverviewFeature {
+export function deityFeature(deity: SheetDeityReference): OverviewFeature {
   return {
     id: deity.id,
     name: deity.name,
@@ -521,12 +593,7 @@ export function withSheetOverview(
           });
       const summary =
         (entity === undefined ? "" : featureNoteText(entity)) || entry.value;
-      const description =
-        entity?.description.trim() ||
-        entity?.specifics
-          .find((field) => key(field.name) === "full text")
-          ?.value.trim() ||
-        "";
+      const description = featureReferenceDescription(entity);
       const benefit =
         entity?.specifics
           .find((field) => key(field.name) === "benefit")
@@ -554,51 +621,12 @@ export function withSheetOverview(
               input.level,
               input.evaluatedStats,
             );
-      // The card's placed fields first (`entityCardFields`: one-word
-      // labels, duplicates dropped), then the other authored fields.
-      const omitted = (name: string) =>
-        /^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
-          name.trim(),
-        );
-      const placements =
-        entity === undefined ? undefined : entityCardFieldPlacements(entity);
-      const placedNames = new Set(
-        (placements ?? []).flatMap(({ specifics }) =>
-          (specifics ?? []).map(key),
-        ),
+      const fields = featureReferenceFields(
+        entity,
+        group.group,
+        description,
+        input.prerequisiteLines,
       );
-      const placed = layoutCardFields(
-        (placements ?? []).filter(
-          ({ specifics }) => !(specifics ?? []).some(omitted),
-        ),
-      );
-      const fields: SheetValue[] = [
-        ...[...placed.subheader.flat(), ...placed.body].map(
-          ({ label, value }) => ({ label, value }),
-        ),
-        ...(entity?.specifics
-          .filter(
-            (field) =>
-              isUserFacingSpecific(field) &&
-              field.value.trim() &&
-              !omitted(field.name) &&
-              !placedNames.has(key(field.name)) &&
-              (field.value.trim() !== description ||
-                (key(group.group) === "background" &&
-                  key(field.name) === "benefit")),
-          )
-          .map((field) => ({ label: field.name.trim(), value: field.value })) ??
-          []),
-      ];
-      const prerequisites =
-        entity === undefined
-          ? undefined
-          : displayPrerequisites(entity, input.prerequisiteLines);
-      if (
-        prerequisites !== undefined &&
-        !fields.some((field) => /^prerequisites?$/i.test(field.label))
-      )
-        fields.unshift({ label: "Prerequisite", value: prerequisites });
       // A group's own choice row (Background benefit) has no entity; the
       // chosen benefit's text is its benefit.
       if (entity === undefined && entry.choices?.length && entry.value.trim())

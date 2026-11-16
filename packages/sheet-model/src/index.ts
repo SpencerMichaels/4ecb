@@ -314,6 +314,11 @@ export type {
   OverviewReminderCandidate,
 } from "./overview";
 export {
+  deityFeature,
+  featureReferenceDescription,
+  featureReferenceFields,
+} from "./overview";
+export {
   combinedConditionalModifiers,
   conditionalModifiers,
   type ConditionalModifier,
@@ -984,7 +989,8 @@ export function learnedReferenceKindOf(
   return "ritual";
 }
 
-function learnedReference(
+/** A known record's sheet entry: its card and printed reference fields. */
+export function learnedReference(
   kind: SheetLearnedReferenceKind,
   name: string,
   entity: ContentEntity | undefined,
