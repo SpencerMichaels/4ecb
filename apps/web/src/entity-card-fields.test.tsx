@@ -333,6 +333,7 @@ describe("class card", () => {
       "Nature. From the class skills list below, choose 3 more.",
     "Class Skills": "Athletics (Str), Nature (Wis)",
     "Build Options": "Earthstrength Warden",
+    "Trait Package": "Storm Domain, Sun Domain",
     "Power Name": "Evocations",
     "Short Description": "You guard the wild.",
   });
@@ -349,7 +350,7 @@ describe("class card", () => {
     ]);
   });
 
-  it("lists abilities, proficiencies, skills and builds as body lines", () => {
+  it("lists abilities, proficiencies, skills, builds and options as body lines", () => {
     expect(bodyLines(render(warden))).toEqual([
       "Abilities: Strength, Constitution, Wisdom",
       "Armor: Cloth, leather, hide",
@@ -358,6 +359,7 @@ describe("class card", () => {
       "Trained: Nature. From the class skills list below, choose 3 more.",
       "Class skills: Athletics (Str), Nature (Wis)",
       "Builds: Earthstrength Warden",
+      "Options: Storm Domain, Sun Domain",
     ]);
   });
 

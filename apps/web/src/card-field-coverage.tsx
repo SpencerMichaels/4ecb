@@ -775,12 +775,6 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
     fields: ["Armor Category"],
     reason: "OPEN: a spiked shield's shield category",
   },
-  {
-    types: ["class"],
-    fields: ["Trait Package"],
-    reason:
-      "OPEN: an Essentials class's options (Warpriest domains, Cavalier virtues)",
-  },
 ];
 
 function ruleFor<Rule extends CardFieldRule>(

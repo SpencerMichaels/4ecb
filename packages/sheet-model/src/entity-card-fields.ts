@@ -151,6 +151,9 @@ const classPlacements = (fields: Fields): readonly CardFieldPlacement[] => [
   fields.at("Trained", "body", "Trained Skills"),
   fields.at("Class skills", "body", "Class Skills"),
   fields.at("Builds", "body", "Build Options"),
+  // An Essentials class's package choices (a warpriest's domains, a
+  // cavalier's virtues; owner, 2026-11-16).
+  fields.at("Options", "body", "Trait Package"),
   fields.at("Hybrid talents", "body", "Hybrid Talent Options"),
   fields.at("Power Name", "drop", "Power Name"),
 ];
