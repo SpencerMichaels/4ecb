@@ -5689,3 +5689,21 @@ never puts there.
   riders still don't apply. The pack build parses the situations into
   `_Power Text IR` (`meleeBasicSubstitute`, version 6); like the IR's other
   facts the engine parses them itself for a pack without that version.
+- **Feats and items that name a power.** Legacy's Additional Effects are
+  the engine's Conditions only (CharTracker `PowerCardPower.cs`
+  `AddPowerDetails`), so a feat with no rules (Wrenching Abjuration: "When
+  you hit with your abjure undead class feature, …") stays a page-1 feat
+  reminder. The pack build stores, on each feat and magic item, the Power
+  names its description or Property marks as the character's
+  (`_Power Mentions IR`: "your <name>" for a name of several words, or
+  "<name> power / class feature / racial power / attack power / utility power";
+  the longest name at a place; not a sentence that gains the power, "swap
+  … for the <name> power", nor a power the record grants). Linked against
+  the whole record set like `_Formula Items IR`, and again when packs are
+  composed. The sheet (`power-mention-effects.ts`) adds an active feat's
+  page-1 note, or an equipped item's Property, to the card of each owned
+  power so named (the Second Wind card too), as "<text> - <source>.",
+  unless a rider of that source is already there; the page-1 reminder it
+  covers is then a rider, off by default (D099). A pack without the field
+  gets no such lines: the link needs the whole pack, so there is no
+  evaluation-time fallback.

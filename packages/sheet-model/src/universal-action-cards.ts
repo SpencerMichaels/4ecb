@@ -4,6 +4,10 @@ import {
 } from "@4ecb/rules-engine";
 
 import type { SheetAdditionalEffect, SheetCard } from "./index";
+import {
+  powerCardMentionEffects,
+  type PowerMentionEffect,
+} from "./power-mention-effects";
 
 const key = (value: string) => value.trim().toLocaleLowerCase();
 
@@ -95,8 +99,22 @@ function secondWindOverlays(evaluation: EvaluatedCharacter) {
 }
 
 /** Legacy SecondWindCard; healing uses the shared surge value calculation. */
-function secondWindCard(evaluation: EvaluatedCharacter): SheetCard {
-  const { actionType, notes } = secondWindOverlays(evaluation);
+function secondWindCard(
+  evaluation: EvaluatedCharacter,
+  mentions: ReadonlyMap<string, readonly PowerMentionEffect[]>,
+): SheetCard {
+  const overlays = secondWindOverlays(evaluation);
+  const { actionType } = overlays;
+  // Feats and items that name second wind (Improved Second Wind's note,
+  // Battleforged Armor's property, D126).
+  const notes: SheetAdditionalEffect[] = [
+    ...overlays.notes,
+    ...powerCardMentionEffects(
+      mentions,
+      { name: "Second Wind" },
+      overlays.notes.map((note) => note.provider),
+    ),
+  ];
   const surgeValue = evaluatedHealingSurgeValue(evaluation.stats ?? {});
   const regained =
     surgeValue === undefined
@@ -129,6 +147,7 @@ function secondWindCard(evaluation: EvaluatedCharacter): SheetCard {
 export function withUniversalActionCards(
   cards: readonly SheetCard[],
   evaluation: EvaluatedCharacter,
+  mentions: ReadonlyMap<string, readonly PowerMentionEffect[]> = new Map(),
 ): SheetCard[] {
   // Always built here; a content-supplied Second Wind would print twice.
   const others = cards.filter(
@@ -143,7 +162,7 @@ export function withUniversalActionCards(
         ? { ...card, sharedUsage: "Second Wind" as const }
         : card,
     ),
-    secondWindCard(evaluation),
+    secondWindCard(evaluation, mentions),
   ];
   const effects = actionPointEffects(evaluation);
   return [

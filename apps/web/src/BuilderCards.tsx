@@ -21,6 +21,7 @@ import {
   createSheetPowerCardFinder,
   creatureRecord,
   itemCardBesideCreature,
+  mentionHoldings,
   sheetCreatureCard,
   summonCommandRows,
   summonCommandVariants,
@@ -184,6 +185,7 @@ export function evaluatedBuilderCardSettings(
       cardFor: createSheetPowerCardFinder({ ...evaluation, powers }, entities, {
         resolveAbilityChoices: preferences.resolveAbilityChoices,
         proficientEquipmentOnly: preferences.proficientEquipmentOnly,
+        holdings: mentionHoldings(input.inventory),
       }),
     };
     return ownedPowers;

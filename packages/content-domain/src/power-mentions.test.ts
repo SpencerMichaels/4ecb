@@ -53,6 +53,8 @@ const powers = [
   record("DARK", "Darkness", "Power"),
   record("CLOUD", "Cloud of Darkness", "Power"),
   record("WIND", "Second Wind", "Power"),
+  record("SHIELD", "Shield", "Power"),
+  record("WHIP", "Entangling Whip", "Power"),
 ];
 
 const mentions = (entity: ContentEntity, others = powers) =>
@@ -103,6 +105,35 @@ describe("stored power mentions", () => {
         }),
       ),
     ).toBeUndefined();
+  });
+
+  it('reads a one-word name only as "<name> power"', () => {
+    expect(
+      mentions(
+        record("MASTERY", "Shield Mastery", "Feat", {
+          description: "Your shield bonus also applies to Reflex.",
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("skips a sentence that gains the power", () => {
+    expect(
+      mentions(
+        record("EXPERT", "Whip Specialist", "Feat", {
+          description:
+            "You can swap one 9th-level or higher daily attack power you know for the entangling whip attack power.",
+        }),
+      ),
+    ).toBeUndefined();
+    expect(
+      mentions(
+        record("STRIKE", "Choice", "Feat", {
+          description:
+            "You may choose the entangling whip power as a daily attack power. Your entangling whip slows.",
+        }),
+      ),
+    ).toEqual(["Entangling Whip"]);
   });
 
   it("skips powers the record grants and records of other types", () => {

@@ -34,6 +34,7 @@ import {
   overlaidEntity,
   recordFieldOverlays,
   resolveLoadoutAssignments,
+  type CharacterInventoryEntry,
   type EvaluatedCharacter,
   type EvaluatedPower,
   type FieldOverlay,
@@ -109,6 +110,12 @@ import {
   type SheetDeityReference,
 } from "./deity-reference";
 import { godFragmentPowerCards } from "./god-fragment-card";
+import {
+  powerCardMentionEffects,
+  powerMentionEffects,
+  type PowerMentionEffect,
+  type PowerMentionHolding,
+} from "./power-mention-effects";
 import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
 import { characterClassName } from "./class-identity";
 import { featureNoteHidden, featureNoteText } from "./feature-notes";
@@ -1297,6 +1304,18 @@ function powerVariantName(
     );
 }
 
+/** The holdings whose equipped items' lines go on the powers they name. */
+export function mentionHoldings(
+  inventory: readonly CharacterInventoryEntry[],
+  names: ReadonlyMap<string, string> = new Map(),
+): PowerMentionHolding[] {
+  return inventory.map((entry) => ({
+    id: entry.id,
+    name: names.get(entry.id) ?? entry.name,
+    equipped: entry.equippedQuantity > 0 || entry.wornSymbol === true,
+  }));
+}
+
 function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
@@ -1308,6 +1327,8 @@ function evaluatedPowerCards(
   records: {
     readonly lookup: (id: string) => ContentEntity | undefined;
     readonly spellbookPowerIds: ReadonlySet<string>;
+    /** Feats' and items' lines for the powers they name (D126). */
+    readonly mentions: ReadonlyMap<string, readonly PowerMentionEffect[]>;
   },
 ): SheetCard[] {
   const variantName = powerVariantName(power, inventoryNames);
@@ -1442,10 +1463,20 @@ function evaluatedPowerCards(
             cardOnly: true,
           },
         ];
-  const additionalEffects = [
+  const ownEffects = [
     ...(defaultVariant?.additionalEffects ?? []),
     ...healingEffects,
     ...extraDamageEffects,
+  ];
+  // A feat or item whose text names this power (Wrenching Abjuration's
+  // abjure undead) prints its note here, unless a rider of its already does.
+  const additionalEffects = [
+    ...ownEffects,
+    ...powerCardMentionEffects(
+      records.mentions,
+      entity ?? { name: power.name },
+      ownEffects.map((effect) => effect.provider),
+    ),
   ];
   return [
     {
@@ -1609,7 +1640,11 @@ export function createSheetPowerCardFinder(
   options: Pick<
     SheetModelOptions,
     "resolveAbilityChoices" | "proficientEquipmentOnly"
-  > = {},
+  > & {
+    /** The character's holdings, for its equipped items' lines on the
+     *  powers they name (D126). */
+    readonly holdings?: readonly PowerMentionHolding[];
+  } = {},
 ): (
   entity: ContentEntity,
   power: EvaluatedPower | readonly EvaluatedPower[] | undefined,
@@ -1624,9 +1659,11 @@ export function createSheetPowerCardFinder(
     content,
   );
   const contentById = entityMap(content);
+  const lookup = (id: string) => contentById.get(id.trim().toLocaleLowerCase());
   const records = {
-    lookup: (id: string) => contentById.get(id.trim().toLocaleLowerCase()),
+    lookup,
     spellbookPowerIds: spellbookPowerIds(evaluation),
+    mentions: powerMentionEffects(evaluation, lookup, options.holdings),
   };
   const ownedById = new Map(
     evaluation.powers.map((power) => [
@@ -2685,9 +2722,16 @@ export function buildEvaluatedSheetModel(
     evaluation,
     content,
   );
+  const lookupRecord = (id: string) =>
+    entities.get(id.trim().toLocaleLowerCase());
   const powerRecords = {
-    lookup: (id: string) => entities.get(id.trim().toLocaleLowerCase()),
+    lookup: lookupRecord,
     spellbookPowerIds: spellbookPowerIds(evaluation),
+    mentions: powerMentionEffects(
+      evaluation,
+      lookupRecord,
+      mentionHoldings(evaluationInventory(build.inventory), inventoryNames),
+    ),
   };
   const powerCards = withUniversalActionCards(
     [
@@ -2716,6 +2760,7 @@ export function buildEvaluatedSheetModel(
       ...godFragmentPowerCards(active.map(({ entity }) => entity)),
     ],
     evaluation,
+    powerRecords.mentions,
   );
   // Item cards come after the power cards: hiding inapplicable properties
   // reads the character's Channel Divinity cards.

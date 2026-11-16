@@ -15,10 +15,13 @@
  * packs recomputes it over the composed records.
  *
  * A name counts only where the text marks it as a power the character
- * uses: "your <name>" or "<name> power" / "class feature" / "racial
- * power" / "attack power" / "utility power". At each place the longest
- * such name wins ("your cloud of darkness" is not Darkness). A power the
- * record itself grants is not a mention: its card is the record's own.
+ * uses: "<name> power" / "class feature" / "racial power" / "attack
+ * power" / "utility power", or for a name of several words "your <name>"
+ * ("your shield" is the item). At each place the longest such name wins
+ * ("your cloud of darkness" is not Darkness). A sentence that gains the
+ * power ("swap … for the <name> power", "choose/gain the <name> power") and
+ * a power the record itself grants are no mention: its card is the
+ * record's own.
  */
 
 import { entityNames } from "./aliases";
@@ -27,7 +30,7 @@ import type { ContentEntity } from "./index";
 /** The internal field holding the power names a record mentions. */
 export const POWER_MENTIONS_FIELD = "_Power Mentions IR";
 /** Bump when the matching or the stored shape changes. */
-export const POWER_MENTIONS_VERSION = 1;
+export const POWER_MENTIONS_VERSION = 2;
 
 export interface PowerMentions {
   readonly version: typeof POWER_MENTIONS_VERSION;
@@ -39,6 +42,8 @@ const MENTIONING_TYPES = new Set(["feat", "magic item"]);
 const AFTER_NAME =
   /^ (?:power|class feature|racial power|attack power|utility power)\b/u;
 const WORD = /[a-z0-9][a-z0-9'-]*/gu;
+/** The sentence so far makes the power one the character gains. */
+const ACQUIRING = /\b(?:swap|retrain|replace)\b|\b(?:for|choose|gain) the $/u;
 
 const key = (value: string) => value.trim().toLocaleLowerCase();
 /** Lower case, straight apostrophes, single spaces. */
@@ -134,13 +139,22 @@ function mentionsIn(text: string, index: PowerNameIndex): string[] {
         /[a-z0-9'-]/u.test(source[end] ?? "")
       )
         continue;
-      if (
-        !source.slice(0, start).endsWith("your ") &&
-        !AFTER_NAME.test(source.slice(end))
-      )
-        continue;
-      if (!found.includes(candidate.display)) found.push(candidate.display);
+      const before = source.slice(0, start);
+      // A one-word name ("shield", "virtue") is a common word: only
+      // "<name> power" names the power.
+      const named =
+        AFTER_NAME.test(source.slice(end)) ||
+        (before.endsWith("your ") && candidate.name.includes(" "));
+      if (!named) continue;
       resumeAt = end;
+      // Gaining the power is no rider on it: "swap one … power you know
+      // for the entangling whip attack power", "choose the Power Strike
+      // power as a regular encounter attack power".
+      const sentence = before.slice(
+        Math.max(before.lastIndexOf(". "), before.lastIndexOf("\n")) + 1,
+      );
+      if (ACQUIRING.test(sentence)) break;
+      if (!found.includes(candidate.display)) found.push(candidate.display);
       break;
     }
   }
