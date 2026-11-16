@@ -79,10 +79,23 @@ function linkedStatLabel(value: string): string | undefined {
   if (ability !== undefined)
     return `${abilityNames[ability.trim().toLocaleLowerCase()] ?? ability} modifier`;
   if (/^HALF-LEVEL$/i.test(raw)) return "Half level";
-  if (/^Initiative Misc$/i.test(raw)) return "Miscellaneous";
+  if (/ Misc$/i.test(raw)) return "Miscellaneous";
+  if (/ Trained$/i.test(raw)) return "Trained";
   if (/ Defense Class Bonus$/i.test(raw)) return "Class bonus";
   return undefined;
 }
+
+/** The legacy builder's own rule elements: a level's grants (named by the
+ *  level number) and the core rules elements (`SkillRules`). Their names
+ *  say nothing to a player, so their rows are named by what they add. */
+function coreRulesProvider(provider: string): boolean {
+  return /^\d+$/.test(provider) || /^[A-Za-z]+Rules$/.test(provider);
+}
+
+const baseTenStats =
+  /^(?:AC|Armor Class|(?:Fortitude|Reflex|Will)(?: Defense)?|Passive Insight|Passive Perception)$/i;
+
+const abilityScoreStats = new Set(Object.values(abilityNames));
 
 export function contributionLabel(
   statName: string,
@@ -90,7 +103,7 @@ export function contributionLabel(
 ): string {
   if (contribution.providerId === "base-abilities") return "Base";
   const provider = contribution.providerName.trim();
-  if (!/^\d+$/.test(provider)) return provider;
+  if (!coreRulesProvider(provider)) return provider;
 
   const linked = linkedStatLabel(contribution.value);
   if (linked !== undefined) return linked;
@@ -99,13 +112,15 @@ export function contributionLabel(
   if (/^_PER-LEVEL-HPS$/i.test(raw)) return `Level ${provider} hit points`;
   if (/^Constitution$/i.test(raw) && statName === "Hit Points")
     return "Constitution score";
+  if (baseTenStats.test(statName) && Number(raw) === 10) return "Base";
   if (
-    /^(?:AC|Armor Class|Fortitude Defense|Reflex Defense|Will Defense)$/i.test(
-      statName,
-    ) &&
-    Number(raw) === 10
+    /^\d+$/.test(provider) &&
+    abilityScoreStats.has(statName) &&
+    /^\d+$/.test(raw)
   )
-    return "Base";
+    return `Level ${provider} increase`;
+  // A bare stat name links that stat's total (a passive sense's skill).
+  if (/^[A-Za-z][A-Za-z ]*$/.test(raw)) return raw;
   return "Other contribution";
 }
 
@@ -114,20 +129,74 @@ function formatContributionValue(label: string, value: number): string {
   return value > 0 ? `+${value}` : String(value);
 }
 
-function appliedContributions(stat: EvaluatedStat): readonly {
+interface TooltipContribution {
   readonly label: string;
   readonly value: string;
-}[] {
-  return stat.contributions.flatMap((contribution) => {
+}
+
+/** Child rows are indented under the linked stat they explain. */
+const nestedIndent = "\u2003";
+
+/** The evaluated stat a core-rules contribution links (`+Insight Misc`,
+ *  a passive sense's bare `Insight`), when its applied contributions add
+ *  up to the linked amount, so expanding it stays exact. */
+function linkedStat(
+  contribution: EvaluatedContribution,
+  value: number,
+  stats: HeaderEvaluation["stats"] | undefined,
+): EvaluatedStat | undefined {
+  if (stats === undefined) return undefined;
+  if (!coreRulesProvider(contribution.providerName.trim())) return undefined;
+  const name = contribution.value.trim().replace(/^\+/, "");
+  if (!/^[A-Za-z][A-Za-z ]*$/.test(name)) return undefined;
+  const stat = stats[name];
+  if (stat === undefined) return undefined;
+  const sum = stat.contributions.reduce(
+    (total, child) =>
+      child.applied ? total + (contributionValue(child) ?? 0) : total,
+    0,
+  );
+  return sum === value ? stat : undefined;
+}
+
+function appliedContributions(
+  stat: EvaluatedStat,
+  stats?: HeaderEvaluation["stats"],
+  depth = 0,
+): readonly TooltipContribution[] {
+  const rows = stat.contributions.flatMap((contribution) => {
     if (!contribution.applied) return [];
     const value = contributionValue(contribution);
     if (value === undefined) return [];
     const label = contributionLabel(stat.name, contribution);
-    return [{ label, value: formatContributionValue(label, value) }];
+    const row = { label, value: formatContributionValue(label, value) };
+    const bucket = label === "Miscellaneous" || label === "Class bonus";
+    // Untrained, or an empty bucket: nothing to explain.
+    if (value === 0 && (bucket || label === "Trained")) return [];
+    const named = label === contribution.value.trim().replace(/^\+/, "");
+    const linked =
+      depth < 2 && (bucket || named)
+        ? linkedStat(contribution, value, stats)
+        : undefined;
+    if (linked === undefined) return [row];
+    const children = appliedContributions(linked, stats, depth + 1);
+    // A bucket (`Insight Misc`, a class bonus) is replaced by its sources;
+    // a named stat (a passive sense's skill) heads its own breakdown.
+    if (bucket) return children;
+    return [
+      row,
+      ...children.map((child) => ({
+        ...child,
+        label: `${nestedIndent}${child.label}`,
+      })),
+    ];
   });
+  // The base leads, as on the printed sheet, wherever the rules list it.
+  return [
+    ...rows.filter((row) => row.label === "Base"),
+    ...rows.filter((row) => row.label !== "Base"),
+  ];
 }
-
-type TooltipContribution = ReturnType<typeof appliedContributions>[number];
 
 function collapsePerLevelHitPoints(
   contributions: readonly TooltipContribution[],
@@ -193,10 +262,11 @@ function statTooltip(
   value: string,
   stat: EvaluatedStat,
   conditional: readonly ConditionalModifier[] = [],
+  stats?: HeaderEvaluation["stats"],
 ): string {
   return [
     `${label} ${value}`,
-    ...collapsePerLevelHitPoints(appliedContributions(stat)).map(
+    ...collapsePerLevelHitPoints(appliedContributions(stat, stats)).map(
       contributionLine,
     ),
     ...conditionalLines(conditional),
@@ -231,7 +301,13 @@ function statTile(
     ? {
         label,
         value,
-        title: statTooltip(tooltipLabel, value, stat, conditional),
+        title: statTooltip(
+          tooltipLabel,
+          value,
+          stat,
+          conditional,
+          evaluation?.stats,
+        ),
       }
     : { label, value };
 }
@@ -256,7 +332,7 @@ function surgeValueTile(
       `Quarter of max HP ${healingSurgeValue(hitPoints, 0)}`,
       ...(bonus === undefined
         ? []
-        : appliedContributions(bonus).map(contributionLine)),
+        : appliedContributions(bonus, evaluation?.stats).map(contributionLine)),
       ...conditionalLines(conditional),
     ].join("\n"),
   };
@@ -302,7 +378,15 @@ function abilityTile(
     value,
     ...(scoreStat === undefined || score === undefined
       ? {}
-      : { title: statTooltip(label, String(score), scoreStat) }),
+      : {
+          title: statTooltip(
+            label,
+            String(score),
+            scoreStat,
+            [],
+            evaluation?.stats,
+          ),
+        }),
   };
 }
 

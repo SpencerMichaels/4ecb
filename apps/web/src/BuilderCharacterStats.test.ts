@@ -350,3 +350,146 @@ describe("BuilderCharacterStats conditional bonuses", () => {
     expect(markup).not.toContain("Synthetic aura");
   });
 });
+
+describe("BuilderCharacterStats linked-stat breakdowns", () => {
+  const rules = (value: string, numericValue: number, bonusType?: string) =>
+    contribution({
+      numericValue,
+      providerName: "SkillRules",
+      value,
+      ...(bonusType === undefined ? {} : { bonusType }),
+    });
+
+  it("explains a passive sense as its base and the skill's own breakdown", () => {
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {
+        evaluation: {
+          stats: {
+            "Passive Insight": {
+              name: "Passive Insight",
+              value: 21,
+              contributions: [rules("Insight", 11), rules("+10", 10)],
+            },
+            Insight: {
+              name: "Insight",
+              value: 11,
+              contributions: [
+                rules("+HALF-LEVEL", 4),
+                rules("+ABILITYMOD(Wisdom)", 5, "Ability"),
+                rules("+Insight Trained", 0),
+                rules("+Insight Misc", 2),
+              ],
+            },
+            "Insight Misc": {
+              name: "Insight Misc",
+              value: 2,
+              contributions: [
+                contribution({
+                  numericValue: 2,
+                  providerName: "Level 5 Ordained Priest Feature",
+                  value: "+2",
+                }),
+              ],
+            },
+            "Passive Perception": {
+              name: "Passive Perception",
+              value: 25,
+              contributions: [rules("Perception", 15), rules("+10", 10)],
+            },
+            Perception: {
+              name: "Perception",
+              value: 15,
+              contributions: [
+                rules("+HALF-LEVEL", 4),
+                rules("+ABILITYMOD(Wisdom)", 5, "Ability"),
+                rules("+Perception Trained", 5),
+                rules("+Perception Misc", 1),
+              ],
+            },
+            "Perception Trained": {
+              name: "Perception Trained",
+              value: 5,
+              contributions: [
+                contribution({
+                  numericValue: 5,
+                  providerName: "Perception",
+                  value: "+5",
+                }),
+              ],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(markup).not.toContain("SkillRules");
+    expect(markup).toContain(
+      'title="Passive Insight 21\nBase 10\nInsight +11\n Half level +4\n Wisdom modifier +5\n Level 5 Ordained Priest Feature +2"',
+    );
+    // A misc bonus that can't be traced to its sources keeps one row.
+    expect(markup).toContain(
+      'title="Passive Perception 25\nBase 10\nPerception +15\n Half level +4\n Wisdom modifier +5\n Trained +5\n Miscellaneous +1"',
+    );
+  });
+
+  it("replaces a miscellaneous bucket with its sources and names level increases", () => {
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {
+        evaluation: {
+          stats: {
+            Initiative: {
+              name: "Initiative",
+              value: 5,
+              contributions: [
+                contribution({
+                  numericValue: 4,
+                  providerName: "1",
+                  value: "+HALF-LEVEL",
+                }),
+                contribution({
+                  numericValue: 1,
+                  providerName: "1",
+                  value: "Initiative Misc",
+                }),
+              ],
+            },
+            "Initiative Misc": {
+              name: "Initiative Misc",
+              value: 1,
+              contributions: [
+                contribution({
+                  numericValue: 1,
+                  providerName: "Helm of Battle (heroic tier)",
+                  value: "+1",
+                }),
+              ],
+            },
+            Strength: {
+              name: "Strength",
+              value: 14,
+              contributions: [
+                contribution({
+                  numericValue: 13,
+                  providerId: "base-abilities",
+                  providerName: "Base ability score",
+                  value: "13",
+                }),
+                contribution({
+                  numericValue: 1,
+                  providerName: "11",
+                  value: "+1",
+                }),
+              ],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(markup).toContain(
+      'title="Init +5\nHalf level +4\nHelm of Battle (heroic tier) +1"',
+    );
+    expect(markup).toContain('title="STR 14\nBase 13\nLevel 11 increase +1"');
+    expect(markup).not.toContain("Other contribution");
+  });
+});
