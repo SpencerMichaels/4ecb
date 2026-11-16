@@ -35,44 +35,62 @@ describe("item card descriptions", () => {
       "Dran claimed it",
     );
   });
-  it("prints only an artifact's mechanics after its rules", () => {
-    const artifact = {
+  it("points an artifact's concordance to the reference pages", () => {
+    const artifact: SheetCard = {
       ...item(
         { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
         "Goals: rule the sky.\nConcordance: starting score 5.",
       ),
       rulesText: "Concordance: starting score 5.",
+      rulesTextKind: "concordance",
     };
     const printed = renderToStaticMarkup(<ItemCard card={artifact} />);
-    expect(after(printed, "Your reach is 3.", "Concordance")).toBe(true);
+    expect(after(printed, "Your reach is 3.", "see Reference pages")).toBe(
+      true,
+    );
+    expect(printed).toContain("<strong>Concordance: </strong>");
+    expect(printed).not.toContain("starting score");
     expect(printed).not.toContain("Goals");
     const pane = renderToStaticMarkup(
       <ItemCard card={artifact} layout="panel" />,
     );
     expect(after(pane, "Your reach is 3.", "Goals")).toBe(true);
+    expect(pane).not.toContain("see Reference pages");
+  });
+  it("prints a cursed item's curse rules after its rules", () => {
+    const cursed: SheetCard = {
+      ...item({ Property: "You take a -2 penalty." }, "To remove the curse…"),
+      rulesText: "To remove the curse…",
+      rulesTextKind: "curse",
+    };
+    expect(
+      after(
+        renderToStaticMarkup(<ItemCard card={cursed} />),
+        "-2 penalty",
+        "To remove the curse",
+      ),
+    ).toBe(true);
   });
 });
 
 describe("item card printed in two", () => {
-  const artifact: SheetCard = {
-    ...item(
-      { "Magic Item Type": "Artifact", Property: "Your reach is 3." },
-      "Goals: rule.\nConcordance: starting score 5.",
-    ),
-    rulesText: "Concordance: starting score 5.",
-    rulesTextKind: "concordance",
+  const cursed: SheetCard = {
+    ...item({ Property: "You take a -2 penalty." }, "To remove the curse…"),
+    name: "Synthetic Ring (Cursed)",
+    rulesText: "To remove the curse…",
+    rulesTextKind: "curse",
   };
-  it("leaves its mechanics to the second card", () => {
+  it("leaves a curse's rules to the second card", () => {
     const rules = renderToStaticMarkup(
-      <ItemCard card={{ ...artifact, part: "rules" }} />,
+      <ItemCard card={{ ...cursed, part: "rules" }} />,
     );
-    expect(rules).toContain("Your reach is 3.");
-    expect(rules).not.toContain("starting score");
+    expect(rules).toContain("-2 penalty");
+    expect(rules).not.toContain("To remove");
     const second = renderToStaticMarkup(
-      <ItemCard card={{ ...artifact, part: "rules-text" }} />,
+      <ItemCard card={{ ...cursed, part: "rules-text" }} />,
     );
-    expect(second).toContain("Synthetic Item — Concordance");
-    expect(second).toContain("starting score 5");
-    expect(second).not.toContain("Your reach is 3.");
+    expect(second).toContain("Synthetic Ring (Cursed) — Curse");
+    expect(second).toContain("To remove the curse");
+    expect(second).not.toContain("-2 penalty");
   });
 });

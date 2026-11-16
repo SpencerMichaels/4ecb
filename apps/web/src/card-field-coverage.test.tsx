@@ -414,3 +414,16 @@ describe("card field coverage on each surface", () => {
     },
   );
 });
+
+describe("artifact concordance on the reference pages", () => {
+  const artifact = RECORDS.find((entity) => entity.id === "SYN_ARTIFACT")!;
+  it("prints the card's pointer line and an Artifacts reference entry", () => {
+    const surfaces = cardSurfaceTexts(artifact, content);
+    expect(surfaces.print?.text).toContain("see Reference pages");
+    expect(surfaces.print?.text).not.toContain("Owner slays");
+    expect(surfaces.reference?.text).toContain(
+      "Owner slays a servant of a god",
+    );
+    expect(surfaces.reference?.text).not.toContain("Goals");
+  });
+});

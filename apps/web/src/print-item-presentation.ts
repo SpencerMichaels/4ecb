@@ -439,12 +439,25 @@ export function printItemPresentation(card: SheetCard) {
     // A ritual's description is its rules text, never a repeat.
     description: leadDescription,
     /** What the printed card prints of the description after the rules:
-     *  only its mechanics (an artifact's concordance and states, a cursed
-     *  item's curse rules; `rulesText`). Printed cards are for mechanics,
-     *  not flavor (owner, 2026-11-16); a builder pane shows the whole
-     *  description there instead. */
+     *  only its mechanics, a cursed item's curse rules (`rulesText`).
+     *  Printed cards are for mechanics, not flavor (owner, 2026-11-16); a
+     *  builder pane shows the whole description there instead. */
     trailingDescription:
-      leadDescription === undefined ? card.rulesText : undefined,
+      leadDescription === undefined && card.rulesTextKind === "curse"
+        ? card.rulesText
+        : undefined,
+    /** An artifact's concordance and moods (or roll table) print on the
+     *  Artifacts reference pages, which paginate; its printed card says
+     *  where: "Concordance: see Reference pages" (owner, 2026-11-16). */
+    referencePointer:
+      card.rulesText === undefined || card.rulesTextKind === "curse"
+        ? undefined
+        : card.rulesTextKind === "concordance"
+          ? "Concordance"
+          : card.rulesText
+              .split("\n", 1)[0]!
+              .replace(/<[^>]+>/g, "")
+              .trim(),
     kind,
     /** A ritual's subheader lines read as one block, without dividers. */
     isRitual,

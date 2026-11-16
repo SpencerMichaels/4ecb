@@ -15,6 +15,7 @@ export const SHEET_SECTION_LABELS: Readonly<Record<SheetSectionId, string>> = {
   "reference:power-index": "Power index",
   "reference:rituals": "Rituals & practices",
   "reference:profile": "Character profile",
+  "reference:artifacts": "Artifacts",
   cards: "Power & item cards",
   "session-notes": "Session notes",
 };

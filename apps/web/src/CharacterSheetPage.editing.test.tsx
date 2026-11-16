@@ -674,6 +674,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       "Power index",
       "Rituals & practices",
       "Character profile",
+      "Artifacts",
       "Power & item cards",
       "Session notes",
     ]);
@@ -681,13 +682,14 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     // character (no rituals).
     for (const row of rows) {
       expect(row.disabled, row.name).toBe(false);
-      // The overview, scratchpad and cards by default, plus the
-      // section this layout turned on.
+      // The overview, scratchpad, artifacts and cards by default, plus
+      // the section this layout turned on.
       expect(row.checked, row.name).toBe(
         [
           "Overview",
           "Play scratchpad",
           "Rituals & practices",
+          "Artifacts",
           "Power & item cards",
         ].includes(row.name ?? ""),
       );
@@ -825,6 +827,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
           "reference:power-index",
           "reference:rituals",
           "reference:profile",
+          "reference:artifacts",
           "session-notes",
         ],
       },
@@ -891,6 +894,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
           "reference:power-index",
           "reference:rituals",
           "reference:profile",
+          "reference:artifacts",
           "cards",
         ],
       },
@@ -1036,6 +1040,7 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       "Power index",
       "Rituals & practices",
       "Character profile",
+      "Artifacts",
       "Session notes",
     ]);
     expect(sectionCheckbox("Overview")?.checked).toBe(false);

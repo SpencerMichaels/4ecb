@@ -17,6 +17,7 @@ export const SHEET_REFERENCE_GROUP_IDS = [
   "power-index",
   "rituals",
   "profile",
+  "artifacts",
 ] as const;
 
 export type SheetReferenceGroupId = (typeof SHEET_REFERENCE_GROUP_IDS)[number];
@@ -42,8 +43,9 @@ export const SHEET_SECTION_IDS: readonly SheetSectionId[] = [
 
 /**
  * Whether each section prints by default (D099 amendment, 2026-11-06): the
- * overview, scratchpad and card pages; the reference pages and Session
- * notes only when the player turns them on.
+ * overview, scratchpad and card pages, and the Artifacts reference (empty
+ * without a held artifact); the other reference pages and Session notes
+ * only when the player turns them on.
  */
 export const SHEET_SECTION_DEFAULT_SHOWN: Readonly<
   Record<SheetSectionId, boolean>
@@ -55,6 +57,10 @@ export const SHEET_SECTION_DEFAULT_SHOWN: Readonly<
   "reference:power-index": false,
   "reference:rituals": false,
   "reference:profile": false,
+  // A held artifact's concordance, its moods and its roll tables (owner,
+  // 2026-11-16): on by default, as its card points there; it has no pages
+  // while the character holds no artifact.
+  "reference:artifacts": true,
   cards: true,
   "session-notes": false,
 };

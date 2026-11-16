@@ -14,6 +14,7 @@ import {
 } from "react";
 import {
   SHEET_REFERENCE_GROUP_IDS,
+  type SheetReferenceGroupId,
   SHEET_SECTION_IDS,
   type CharacterPortrait,
   type SheetCopyableSectionId,
@@ -2502,6 +2503,26 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         ),
       ],
     });
+  // A held artifact's concordance, moods and roll tables (its card says
+  // "see Reference pages"; owner, 2026-11-16), one entry per artifact.
+  const artifacts = new Set<string>();
+  for (const item of model.items) {
+    const id = item.id ?? item.name;
+    if (
+      item.rulesText === undefined ||
+      item.rulesTextKind === "curse" ||
+      artifacts.has(id)
+    )
+      continue;
+    artifacts.add(id);
+    result.push({
+      id: `artifact:${id}`,
+      name: item.name,
+      group: "Artifacts",
+      source: item.source ?? "",
+      parts: referenceParts(item.rulesText),
+    });
+  }
   const details = model.identity.filter(
     (value) =>
       /^(?:Gender|Age|Height|Weight|RPGA)$/.test(value.label) &&
@@ -3176,16 +3197,20 @@ export function referenceSections(
   model: CharacterSheetModel,
 ): ReferenceEntry[][] {
   const entries = references(model);
-  const bucket = (entry: ReferenceEntry) =>
+  const groupOf = (entry: ReferenceEntry): SheetReferenceGroupId =>
     entry.group === "Items"
-      ? 1
+      ? "items"
       : /^(?:Power index|Item power index)$/.test(entry.group)
-        ? 2
+        ? "power-index"
         : entry.group === "Rituals & practices"
-          ? 3
+          ? "rituals"
           : entry.group === "Character Profile"
-            ? 4
-            : 0;
+            ? "profile"
+            : entry.group === "Artifacts"
+              ? "artifacts"
+              : "features";
+  const bucket = (entry: ReferenceEntry) =>
+    SHEET_REFERENCE_GROUP_IDS.indexOf(groupOf(entry));
   const groups = [
     "Class features",
     "Racial traits",
@@ -3826,11 +3851,16 @@ export function SheetOverview({
       const index = SHEET_REFERENCE_GROUP_IDS.findIndex(
         (group) => `reference:${group}` === section,
       );
+      const entries = references[index] ?? [];
+      // The Artifacts reference, on by default, has no pages while the
+      // character holds no artifact.
+      if (entries.length === 0 && section === "reference:artifacts")
+        return null;
       pages = (
         <ReferencePages
           model={model}
           name={name}
-          entries={references[index] ?? []}
+          entries={entries}
           wide={index === 1 || index === 2}
           startPage={startPage}
           onPageCount={pageCountSetters.reference[index]!}

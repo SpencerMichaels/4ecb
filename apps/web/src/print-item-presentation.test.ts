@@ -752,7 +752,17 @@ describe("shield weapons", () => {
 });
 
 describe("printed item description mechanics", () => {
-  it("prints only the stored mechanics part after an artifact's rules", () => {
+  it("prints none of a description with no mechanics part", () => {
+    const view = printItemPresentation({
+      ...card("Magic Item", { Property: "A rule." }),
+      description: "Persona: gruff. Communication: speech.",
+    });
+    expect(view.trailingDescription).toBeUndefined();
+  });
+});
+
+describe("artifact reference pointers", () => {
+  it("points an artifact's concordance to the reference pages", () => {
     const view = printItemPresentation({
       ...card("Magic Item", {
         "Magic Item Type": "Artifact",
@@ -761,15 +771,27 @@ describe("printed item description mechanics", () => {
       description:
         "Goals of the Synthetic Spear\nConcordance\nStarting score 5",
       rulesText: "Concordance\nStarting score 5",
-    });
-    expect(view.description).toBeUndefined();
-    expect(view.trailingDescription).toBe("Concordance\nStarting score 5");
-  });
-  it("prints none of a description with no mechanics part", () => {
-    const view = printItemPresentation({
-      ...card("Magic Item", { Property: "A rule." }),
-      description: "Persona: gruff. Communication: speech.",
+      rulesTextKind: "concordance",
     });
     expect(view.trailingDescription).toBeUndefined();
+    expect(view.referencePointer).toBe("Concordance");
+  });
+  it("names an artifact table by its heading", () => {
+    expect(
+      printItemPresentation({
+        ...card("Magic Item", { Property: "A rule." }),
+        rulesText: "Negative Convergence Table\n<table>2d4\tEffect</table>",
+        rulesTextKind: "table",
+      }).referencePointer,
+    ).toBe("Negative Convergence Table");
+  });
+  it("prints a cursed item's curse rules after its rules", () => {
+    expect(
+      printItemPresentation({
+        ...card("Magic Item", { Property: "A rule." }),
+        rulesText: "To remove the curse…",
+        rulesTextKind: "curse",
+      }).trailingDescription,
+    ).toBe("To remove the curse…");
   });
 });

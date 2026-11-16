@@ -33,6 +33,7 @@ import {
   sheetItemCard,
   type CharacterSheetModel,
   type OverviewFeature,
+  type SheetCard,
   type SheetLearnedReference,
   classLeadPhrase,
   withoutDanglingChoiceLeadIn,
@@ -145,6 +146,7 @@ function partStrings(value: unknown): string[] {
 function referenceModel(
   features: readonly OverviewFeature[],
   learned: readonly SheetLearnedReference[],
+  items: readonly SheetCard[] = [],
 ): CharacterSheetModel {
   return {
     source: "authoritative-evaluation",
@@ -157,7 +159,7 @@ function referenceModel(
     equipment: [],
     features: [],
     powers: [],
-    items: [],
+    items,
     companions: [],
     learnedReferences: learned,
     notes: [],
@@ -178,6 +180,7 @@ function referenceEntryText(
   const group = REFERENCE_GROUPS.get(type);
   let features: OverviewFeature[] = [];
   let learned: SheetLearnedReference[] = [];
+  let items: SheetCard[] = [];
   if (group !== undefined) {
     const description = featureReferenceDescription(entity);
     const fields = featureReferenceFields(entity, group, description);
@@ -206,9 +209,19 @@ function referenceEntryText(
         entity,
       ),
     ];
-  else return undefined;
-  const entries = references(referenceModel(features, learned)).filter(
-    (entry) => entry.id === entity.id || entry.id === `learned:${entity.id}`,
+  else if (isItemEntity(entity)) {
+    // A held artifact's concordance and moods (or roll table) print on
+    // the Artifacts reference pages.
+    const card = sheetItemCard({ name: entity.name, entities: [entity] });
+    if (card.rulesText === undefined || card.rulesTextKind === "curse")
+      return undefined;
+    items = [card];
+  } else return undefined;
+  const entries = references(referenceModel(features, learned, items)).filter(
+    (entry) =>
+      entry.id === entity.id ||
+      entry.id === `learned:${entity.id}` ||
+      entry.id === `artifact:${entity.id}`,
   );
   return {
     text: entries
@@ -484,8 +497,8 @@ function referencedNames(
 export interface CardFieldRule {
   /** Lowercase content types; every type when absent. */
   readonly types?: readonly string[];
-  /** Specific names (any case), or "(description)", "(flavor)",
-   *  "(prerequisites)". */
+  /** Specific names (any case), "(description)", "(flavor)",
+   *  "(prerequisites)", or "*" for every field. */
   readonly fields: readonly string[];
   /** The surfaces it covers; every surface the record reaches when absent. */
   readonly surfaces?: readonly CardSurface[];
@@ -535,7 +548,18 @@ export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
     fields: ["(description)"],
     surfaces: ["print"],
     reason:
-      "a printed card prints only the description's mechanics: an artifact's concordance and states, a cursed item's curse rules (_Item Rules Text IR; owner, 2026-11-16)",
+      "a printed card prints only the description's mechanics: a cursed item's curse rules (_Item Rules Text IR; owner, 2026-11-16)",
+    form: (_value, entity) => {
+      const rules = readItemRulesText(entity.specifics);
+      return rules?.kind === "curse" ? rules.text : undefined;
+    },
+  },
+  {
+    types: ITEM_TYPES,
+    fields: ["(description)"],
+    surfaces: ["reference"],
+    reason:
+      "the Artifacts reference entry prints only the description's mechanics: an artifact's concordance and moods, or the table its powers roll on (owner, 2026-11-16)",
     form: (_value, entity) => readItemRulesText(entity.specifics)?.text,
   },
   {
@@ -635,6 +659,13 @@ const PLAY_ONLY =
 
 /** Fields a surface deliberately leaves out. */
 export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
+  {
+    types: ITEM_TYPES,
+    fields: ["*"],
+    surfaces: ["reference"],
+    reason:
+      "an artifact's reference entry holds only its concordance and moods (or roll table); its other fields print on its card",
+  },
   {
     fields: ["(flavor)"],
     surfaces: ["print"],
@@ -770,9 +801,9 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
     types: ITEM_TYPES,
     fields: ["(description)"],
     surfaces: ["print"],
-    records: (entity) => readItemRulesText(entity.specifics) === undefined,
+    records: (entity) => readItemRulesText(entity.specifics)?.kind !== "curse",
     reason:
-      "printed cards are for mechanics, not flavor (owner, 2026-11-16): the builder pane shows an item's description after its rules; a printed card prints it only when the card has no rules (a mundane item's text) or its mechanics part (_Item Rules Text IR)",
+      "printed cards are for mechanics, not flavor (owner, 2026-11-16): the builder pane shows an item's description after its rules; a printed card prints it only when the card has no rules (a mundane item's text) or it is a curse's rules, and an artifact's card says \"Concordance: see Reference pages\"",
   },
   {
     types: ["gear"],
@@ -798,7 +829,9 @@ function ruleFor<Rule extends CardFieldRule>(
       (rule.surfaces === undefined || rule.surfaces.includes(surface)) &&
       (rule.values === undefined || rule.values.test(value.trim())) &&
       (rule.records === undefined || rule.records(entity)) &&
-      rule.fields.some((candidate) => key(candidate) === field),
+      rule.fields.some(
+        (candidate) => candidate === "*" || key(candidate) === field,
+      ),
   );
 }
 

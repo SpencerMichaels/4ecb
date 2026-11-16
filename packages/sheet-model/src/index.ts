@@ -457,7 +457,7 @@ export interface SheetCard {
    * An item card printed in two (D110's companion split, applied to an
    * item whose `rulesText` overflows its card at the minimum text size):
    * `rules` leaves that text out, `rules-text` is that text alone, titled
-   * by `itemRulesTextTitle` ("<name> — Concordance").
+   * by `itemRulesTextTitle` ("<name> — Curse").
    */
   readonly part?: "rules" | "rules-text";
 }
@@ -3093,11 +3093,12 @@ function sumWeights(weights: readonly (number | undefined)[]) {
     : listed.reduce((total, weight) => total + weight, 0);
 }
 
-/** The title of an item's second printed card (`part: "rules-text"`):
- *  "Spear of the Skylord — Concordance", "Ring of Weakness — Curse". */
+/** The title of an item's second printed card (`part: "rules-text"`, a
+ *  curse that overflows its card): "Periapt of Foul Rotting — Curse". */
 export function itemRulesTextTitle(
   card: Pick<SheetCard, "name" | "rulesTextKind">,
   name: string = card.name,
 ): string {
-  return `${name} — ${card.rulesTextKind === "curse" ? "Curse" : "Concordance"}`;
+  const title = { curse: "Curse", concordance: "Concordance", table: "Table" };
+  return `${name} — ${title[card.rulesTextKind ?? "curse"]}`;
 }

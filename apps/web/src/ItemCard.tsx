@@ -216,6 +216,14 @@ export function ItemCard({
             textPresentation={textPresentation}
           />
         )}
+        {/* An artifact's concordance prints on the reference pages. */}
+        {isPanel || item.referencePointer === undefined ? null : (
+          <section className="print-item-rule">
+            <div className="print-item-rule-text">
+              <strong>{`${item.referencePointer}: `}</strong>see Reference pages
+            </div>
+          </section>
+        )}
       </div>
       <footer className="print-item-footer">
         <span>
@@ -239,9 +247,8 @@ export function ItemCard({
 
 /**
  * The second card of an item printed in two (`part: "rules-text"`): its
- * description's mechanics alone (an artifact's concordance and states, a
- * curse), titled "<name> — Concordance" or "— Curse"
- * (`itemRulesTextTitle`), in the item card's frame.
+ * description's printed mechanics alone (a curse's rules), titled
+ * "<name> — Curse" (`itemRulesTextTitle`), in the item card's frame.
  */
 function ItemRulesTextCard({
   card,

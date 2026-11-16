@@ -42,13 +42,25 @@ describe("sheet layout", () => {
     );
   });
 
-  it("prints the overview, scratchpad and cards by default, nothing else", () => {
+  it("prints the overview, scratchpad, artifacts and cards by default, nothing else", () => {
+    const byDefault = ["summary", "scratchpad", "reference:artifacts", "cards"];
     expect(
       SHEET_SECTION_IDS.filter((id) => SHEET_SECTION_DEFAULT_SHOWN[id]),
-    ).toEqual(["summary", "scratchpad", "cards"]);
+    ).toEqual(byDefault);
     expect(
       SHEET_SECTION_IDS.filter((id) => sheetSectionShown(undefined, id)),
-    ).toEqual(["summary", "scratchpad", "cards"]);
+    ).toEqual(byDefault);
+    // A player's hide of the artifacts reference is a stored delta.
+    const hidden = withSheetSectionShown(
+      undefined,
+      "reference:artifacts",
+      false,
+    );
+    expect(hidden).toEqual({
+      version: 1,
+      hiddenSections: ["reference:artifacts"],
+    });
+    expect(sheetSectionShown(hidden, "reference:artifacts")).toBe(false);
   });
 
   it("turns default-hidden sections on through shownSections", () => {
@@ -94,6 +106,7 @@ describe("sheet layout", () => {
       "reference:power-index",
       "reference:rituals",
       "reference:profile",
+      "reference:artifacts",
       "cards",
       "session-notes",
     ]);

@@ -61,6 +61,7 @@ import { BeastCompanionCard } from "./BeastCompanionCard";
 import { CreatureCard } from "./CreatureCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
+import { printItemPresentation } from "./print-item-presentation";
 import { ItemSetCard } from "./ItemSetCard";
 import { LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
@@ -457,10 +458,10 @@ export function CharacterSheetPage({
       return next;
     });
   }, []);
-  // Item cards whose description mechanics (an artifact's concordance and
-  // states, a curse; `rulesText`) make the whole card overflow at the
-  // minimum text size: each prints as a rules card and a "— Concordance"
-  // or "— Curse" card, as a companion splits (D110).
+  // Item cards whose printed description mechanics (a curse's rules; an
+  // artifact's concordance prints on the reference pages instead) make the
+  // whole card overflow at the minimum text size: each prints as a rules
+  // card and a "— Curse" card, as a companion splits (D110).
   const [splitItems, setSplitItems] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -479,7 +480,8 @@ export function CharacterSheetPage({
         ? []
         : sheetCardDeck(model).flatMap((entry) =>
             entry.card.kind === "item" &&
-            (entry.card as SheetCard).rulesText !== undefined
+            printItemPresentation(entry.card as SheetCard)
+              .trailingDescription !== undefined
               ? [{ key: entry.key, card: entry.card as SheetCard }]
               : [],
           ),
