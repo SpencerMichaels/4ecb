@@ -531,6 +531,13 @@ const specificValue = (entity: ContentEntity, name: string) =>
 /** Deliberate merges: the field shows, in another form. */
 export const CARD_FIELD_MERGES: readonly CardFieldMerge[] = [
   {
+    types: ["gear"],
+    fields: ["count"],
+    reason:
+      'the card title, "Arrows (30)", when more than one (owner, 2026-11-16)',
+    form: (value, entity) => `${entity.name} (${value.trim()})`,
+  },
+  {
     types: ["power"],
     fields: ATTACK_LINES,
     reason:
@@ -760,7 +767,8 @@ export const CARD_FIELD_ALLOWLIST: readonly CardFieldRule[] = [
   {
     types: ["gear"],
     fields: ["count"],
-    reason: "OPEN: how many a purchase holds (Arrows: 30)",
+    values: /^[01]$/,
+    reason: "a purchase of one names no count",
   },
   {
     types: ["weapon"],

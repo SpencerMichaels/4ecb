@@ -35,12 +35,19 @@ export function printItemPresentation(card: SheetCard) {
     find([...card.fields].reverse(), names);
   const titleTier = card.name.match(/\s*\((heroic|paragon|epic)\s+tier\)/i);
   const tier = lastField("Tier") ?? titleTier?.[1];
-  const name = titleTier
+  const untiered = titleTier
     ? card.name
         .replace(titleTier[0], "")
         .replace(/\s{2,}/g, " ")
         .trim()
     : card.name;
+  // How many one purchase holds, when more than one: "Arrows (30)" (owner,
+  // 2026-11-16), unless the name already says it.
+  const count = Number(field("count")?.trim());
+  const name =
+    Number.isInteger(count) && count > 1 && !untiered.endsWith(`(${count})`)
+      ? `${untiered} (${count})`
+      : untiered;
   const proficiency = field("Proficiency Bonus", "Proficient");
   const magicType = lastField("Magic Item Type");
   const baseType = card.baseItemType ?? card.itemType;

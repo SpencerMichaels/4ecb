@@ -768,3 +768,20 @@ describe("rules-bearing item descriptions", () => {
     expect(printItemPresentation(item).trailingDescription).toBeUndefined();
   });
 });
+
+describe("gear counts", () => {
+  it("names how many a purchase holds, when more than one", () => {
+    expect(
+      printItemPresentation({
+        ...card("Gear", { count: "30" }),
+        name: "Arrows",
+      }).name,
+    ).toBe("Arrows (30)");
+    expect(
+      printItemPresentation({
+        ...card("Gear", { count: "1" }),
+        name: "Bedroll",
+      }).name,
+    ).toBe("Bedroll");
+  });
+});
