@@ -400,9 +400,7 @@ export function printItemPresentation(card: SheetCard) {
      *  them when no field states one. */
     leadFields:
       card.prerequisites === undefined ||
-      card.fields.some((entry) =>
-        /^prerequisites?$/i.test(entry.label.trim()),
-      )
+      card.fields.some((entry) => /^prerequisites?$/i.test(entry.label.trim()))
         ? placedFields.body
         : [
             { label: "Prerequisite", value: card.prerequisites },
