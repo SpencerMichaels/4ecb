@@ -129,18 +129,18 @@ const sortState = (host: HTMLElement) =>
   );
 
 describe("BuildOverview", () => {
-  it("is one table with the candidate tables' sortable Level and Slot headers", () => {
+  it("is one table with the candidate tables' sortable Level and Category headers", () => {
     const { host } = render();
     expect(host.querySelectorAll("table")).toHaveLength(1);
     expect(sortState(host)).toEqual([
       "Level:ascending",
-      "Slot:none",
+      "Category:none",
       "Pick:-",
       "Status:-",
     ]);
     // No Category column: the slot says what each row is.
     expect(host.querySelectorAll("col")).toHaveLength(4);
-    for (const label of ["Level", "Slot"]) {
+    for (const label of ["Level", "Category"]) {
       const button = sortButton(host, label);
       expect(button.type).toBe("button");
       expect(button.classList.contains("selection-sort-button")).toBe(true);
@@ -181,10 +181,10 @@ describe("BuildOverview", () => {
 
   it("regroups by slot category from its header, showing what the character has now", () => {
     const { host } = render();
-    act(() => sortButton(host, "Slot").click());
+    act(() => sortButton(host, "Category").click());
     expect(sortState(host).slice(0, 2)).toEqual([
       "Level:none",
-      "Slot:ascending",
+      "Category:ascending",
     ]);
     // Every category keeps its band; empty ones say so.
     expect(bandToggles(host).map((toggle) => toggle.textContent)).toEqual([
@@ -216,14 +216,14 @@ describe("BuildOverview", () => {
     ).toEqual({ column: "slot", direction: "ascending" });
 
     // The active header flips the direction: the bands reverse.
-    act(() => sortButton(host, "Slot").click());
-    expect(sortState(host)[1]).toBe("Slot:descending");
+    act(() => sortButton(host, "Category").click());
+    expect(sortState(host)[1]).toBe("Category:descending");
     expect(bandToggles(host)[0]!.textContent).toBe("Features & Other");
 
     act(() => sortButton(host, "Level").click());
     expect(sortState(host).slice(0, 2)).toEqual([
       "Level:ascending",
-      "Slot:none",
+      "Category:none",
     ]);
     expect(bandToggles(host)[0]!.textContent).toBe("Level 1");
   });
@@ -234,7 +234,7 @@ describe("BuildOverview", () => {
       JSON.stringify({ column: "slot", direction: "ascending" }),
     );
     const { host } = render();
-    expect(sortState(host)[1]).toBe("Slot:ascending");
+    expect(sortState(host)[1]).toBe("Category:ascending");
     expect(bandToggles(host)[0]!.textContent).toBe("Character");
   });
 
@@ -251,7 +251,7 @@ describe("BuildOverview", () => {
 
   it("collapses a Powers band with its usage sub-bands", () => {
     const { host } = render();
-    act(() => sortButton(host, "Slot").click());
+    act(() => sortButton(host, "Category").click());
     const powers = bandToggles(host).find(
       (toggle) => toggle.textContent === "Powers",
     )!;
@@ -309,7 +309,7 @@ describe("BuildOverview", () => {
     );
     expect(stops).toEqual([
       "Sort by Level",
-      "Sort by Slot",
+      "Sort by Category",
       "band Level 1",
       "Race",
       "Feat",

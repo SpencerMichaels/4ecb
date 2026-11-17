@@ -81,11 +81,11 @@ function OverviewRow({
 }
 
 /**
- * The Overview tab (D113): every choice in one table (Level, Slot, Pick,
+ * The Overview tab (D113): every choice in one table (Level, Category, Pick,
  * status) that regroups by its sort column (D113 amendment, 2026-11-16).
- * Level and Slot sort with the candidate tables' header control; the chosen
+ * Level and Category sort with the candidate tables' header control; the chosen
  * grouping is remembered like the library's sort. By level, each level is a
- * band holding the full history, retrains included; by slot, each slot
+ * band holding the full history, retrains included; by category (the Category column holds each slot), each slot
  * category is a band holding what the character has now, by level, a
  * retrain noting what it replaced, and the Powers band runs in lighter
  * usage sub-bands (At-Will, Encounter, Daily, Utility). Bands are the
@@ -157,7 +157,7 @@ export function BuildOverview({
                 />
                 <SortHeader
                   column="slot"
-                  label="Slot"
+                  label="Category"
                   sort={sort}
                   onSort={sortBy}
                 />

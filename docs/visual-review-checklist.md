@@ -1771,9 +1771,9 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
   - **Where:** Mellivora-L7, builder Overview tab, light and dark theme, at
     140% zoom with the sidebar docked and parked (window under ~63rem).
   - **Expect:** no hint line above the table; one table: header row
-    LEVEL · SLOT · PICK in the candidate tables' header style (no
+    LEVEL · CATEGORY · PICK in the candidate tables' header style (no
     Category column), a chevron beside LEVEL; navy "Level N" bands with
-    striped rows under each. Click SLOT: the chevron moves to it, bands
+    striped rows under each. Click CATEGORY: the chevron moves to it, bands
     become Character, Ability Scores, Skills, Feats, Powers, Features &
     Other; Powers has lighter navy-tint sub-bands At-Will, Encounter,
     Daily, Utility, slightly indented, with no chevron or line; At-Will
@@ -1782,7 +1782,7 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     starts with Life-Ending Strike (replaced Swift Panther Rage at L3);
     the stripes restart under each sub-band; collapsing Powers hides its
     sub-bands too; Character ends with the L2 Gladiator retrain. Click
-    SLOT again: bands reverse. Reload: the grouping is kept. Tab through: sort headers,
+    CATEGORY again: bands reverse. Reload: the grouping is kept. Tab through: sort headers,
     then each band toggle and its rows' slot buttons, with a visible focus
     underline; Enter opens the choice on the Build tab.
   - **Wrong if:** the Level/Slot columns don't line up across bands, text

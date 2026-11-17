@@ -4703,7 +4703,9 @@ by its sort column", sub-tabs rejected as clunky):
   Encounter, Daily, Utility Powers), so a power row read "Encounter Powers
   | Encounter Power", the slot repeating its category. The Category
   column is gone; sorting by Slot groups by category instead, and the
-  powers are one Powers category whose usages are sub-bands.
+  powers are one Powers category whose usages are sub-bands. The owner
+  then renamed the Slot header "Category" (its cells still hold the slot
+  titles; the stored sort value stays `"slot"`).
 - **Sorting regroups.** Level and Slot headers sort with the candidate
   tables' header control (`th[aria-sort]` around a
   `selection-sort-button` with the chevron indicator); clicking the active
