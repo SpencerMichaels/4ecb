@@ -277,9 +277,12 @@ export {
   soleClassName,
   withoutDanglingChoiceLeadIn,
 } from "./feature-titles";
-export type {
-  SheetProficiencyGroup,
-  SheetProficiencyKind,
+export {
+  type SheetProficiencyGroup,
+  type SheetProficiencyKind,
+  type SheetWeaponCategory,
+  type SheetWeaponCategoryRange,
+  type SheetWeaponCategoryTier,
 } from "./proficiencies";
 export {
   classifyPower,

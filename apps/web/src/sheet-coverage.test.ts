@@ -232,7 +232,9 @@ describe("sheet presence", () => {
         proficiencies: [
           {
             kind: "Weapons",
-            values: ["simple melee"],
+            values: [],
+            categories: [{ tier: "Simple", range: "Melee" }],
+            summary: "simple melee",
             definitionIds: ["ID_SIMPLE", "ID_CLUB"],
           },
         ],

@@ -183,11 +183,14 @@ describe("real-data sheet overview", () => {
         {
           kind: "Armor" as const,
           values: ["cloth", "leather"],
+          summary: "cloth–leather",
           definitionIds: [],
         },
         {
           kind: "Weapons" as const,
-          values: ["simple melee", "pact blade"],
+          values: ["pact blade"],
+          categories: [{ tier: "Simple" as const, range: "Melee" as const }],
+          summary: "simple melee; pact blade",
           definitionIds: [],
         },
       ],
@@ -228,8 +231,8 @@ describe("real-data sheet overview", () => {
     expect(
       items[0]!.proficiencies?.parts.map((part) => [part.label, part.block]),
     ).toEqual([
-      ["Armor", { kind: "paragraph", text: "cloth, leather" }],
-      ["Weapons", { kind: "paragraph", text: "simple melee, pact blade" }],
+      ["Armor", { kind: "paragraph", text: "cloth–leather" }],
+      ["Weapons", { kind: "paragraph", text: "simple melee; pact blade" }],
     ]);
     expect(entries.find((entry) => entry.id === "former-life")?.choice).toBe(
       "Other Ancestry",
@@ -251,8 +254,9 @@ describe("real-data sheet overview", () => {
       'Former life<span class="ov-reference-choice">: Other Ancestry</span>',
     );
     expect(html).toContain("Former life: Other Ancestry</strong>");
-    // Proficiencies are compact: run-in "Armor: cloth, leather" kinds that
-    // flow several to a line, not a label line above each value line.
+    // Proficiencies are one compact run-in line: "Armor cloth–leather ·
+    // Weapons …", bold kind labels, the kinds joined by " · ", not a label
+    // line above each value line.
     // Currency, then Proficiencies, then the loadout: never under the
     // item lists, whose length varies.
     const stack = html.slice(html.indexOf("ov-equipment-stack"));
@@ -269,14 +273,16 @@ describe("real-data sheet overview", () => {
       html.indexOf('data-reference-id="proficiencies"'),
     );
     expect(proficiencies).toMatch(
-      /^[^]*?<div class="sp-feature-body ov-run-in-parts"><div class="ov-reference-part"><strong>Armor: <\/strong><div class="prose-blocks"><p class="prose-paragraph">cloth, leather<\/p><\/div><\/div><div class="ov-reference-part"><strong>Weapons: <\/strong>/,
+      /^[^]*?<div class="sp-feature-body ov-run-in-parts"><div class="ov-reference-part"><strong>Armor<\/strong> <div class="prose-blocks"><p class="prose-paragraph">cloth–leather<\/p><\/div><\/div><span class="ov-run-in-separator" aria-hidden="true"> · <\/span><div class="ov-reference-part"><strong>Weapons<\/strong> <div class="prose-blocks"><p class="prose-paragraph">simple melee; pact blade<\/p><\/div><\/div><\/div>/,
     );
     const sheetStyles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),
       "utf8",
     );
+    // Each kind is a unit the line wraps between, not inside (unless it is
+    // wider than the line on its own).
     expect(sheetStyles).toMatch(
-      /\.ov-run-in-parts \{[^}]*display: flex;[^}]*flex-wrap: wrap;/,
+      /\.ov-run-in-parts > \.ov-reference-part \{[^}]*display: inline-block;[^}]*max-width: 100%;/,
     );
     expect(sheetStyles).toMatch(
       /\.ov-run-in-parts > \.ov-reference-part > \.prose-blocks,\s*\.ov-run-in-parts > \.ov-reference-part > \.prose-blocks > \.prose-paragraph \{\s*display: inline;/,
@@ -3196,6 +3202,7 @@ describe("real-data sheet overview", () => {
         {
           kind: "Armor" as const,
           values: ["cloth", "leather"],
+          summary: "cloth–leather",
           definitionIds: [],
         },
       ],

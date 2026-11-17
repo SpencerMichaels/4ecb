@@ -523,19 +523,17 @@ body:has(.sp-prototype) {
   line-height: 1.35;
   padding: 0.085in;
 }
-/* Proficiencies flow as run-in kinds ("Armor: cloth, leather   Weapons: …"),
-   as many to a line as fit; a kind too long for one line wraps hanging under
-   its label. */
-.ov-run-in-parts {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 0.25in;
-  row-gap: 0.02in;
-}
+/* Proficiencies are one run-in line ("Armor cloth–chainmail · Shields
+   light · …") that wraps between kinds: each kind is an unbreakable unit
+   unless it alone is wider than the line, when it wraps hanging under its
+   label. */
 .ov-run-in-parts > .ov-reference-part {
+  display: inline-block;
+  max-width: 100%;
   padding-bottom: 0;
   padding-left: 0.12in;
   text-indent: -0.12in;
+  vertical-align: top;
 }
 .ov-run-in-parts > .ov-reference-part > .prose-blocks,
 .ov-run-in-parts > .ov-reference-part > .prose-blocks > .prose-paragraph {

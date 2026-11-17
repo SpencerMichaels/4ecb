@@ -2343,8 +2343,10 @@ export function references(
       name: "Proficiencies",
       group: "Equipment",
       source: "",
-      parts: model.proficiencies.flatMap(({ kind, values }) =>
-        referenceParts(values.join(", "), kind),
+      // One run-in line: "Armor cloth–chainmail · Weapons simple & military;
+      // bastard sword", each kind's text worded by sheet-model.
+      parts: model.proficiencies.flatMap(({ kind, summary }) =>
+        summary ? referenceParts(summary, kind) : [],
       ),
     };
   // Ordinary open slots remain useful lookup rows. Conditional implement and
@@ -2822,7 +2824,21 @@ function ReferenceCard({
       <div
         className={`sp-feature-body${entry.id === "proficiencies" ? " ov-run-in-parts" : ""}`}
       >
-        {tables && entry.id.startsWith("inventory:true") ? (
+        {entry.id === "proficiencies" ? (
+          parts.map((part, index) => (
+            <Fragment key={index}>
+              {index ? (
+                <span className="ov-run-in-separator" aria-hidden="true">
+                  {" · "}
+                </span>
+              ) : null}
+              <div className="ov-reference-part">
+                <strong>{part.label}</strong>{" "}
+                <ProseBlocks blocks={[part.block]} />
+              </div>
+            </Fragment>
+          ))
+        ) : tables && entry.id.startsWith("inventory:true") ? (
           <EquippedTables parts={parts} />
         ) : tables ? (
           <table

@@ -7,6 +7,11 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedPower } from "@4ecb/rules-engine";
 
 import { buildEvaluatedSheetModel, featureChoiceText } from "./index";
+import {
+  armorSummary,
+  weaponCategorySummary,
+  type SheetWeaponCategory,
+} from "./proficiencies";
 
 type Occurrence = EvaluatedCharacter["occurrences"][number];
 
@@ -370,9 +375,12 @@ describe("proficiency summary", () => {
     ).toEqual([
       ["Armor", ["cloth", "leather"]],
       ["Shields", ["light"]],
-      ["Weapons", ["simple melee", "light blade group", "pact blade"]],
+      ["Weapons", ["light blade group", "pact blade"]],
       ["Implements", ["rod"]],
     ]);
+    expect(
+      model.proficiencies?.find(({ kind }) => kind === "Weapons")?.categories,
+    ).toEqual([{ tier: "Simple", range: "Melee" }]);
     expect(
       model.proficiencies?.find(({ kind }) => kind === "Weapons")
         ?.definitionIds,
@@ -380,6 +388,159 @@ describe("proficiency summary", () => {
     expect(
       model.proficiencies?.flatMap(({ definitionIds }) => definitionIds),
     ).not.toContain("NOTHING");
+    expect(
+      model.proficiencies?.map(({ kind, summary }) => [kind, summary]),
+    ).toEqual([
+      ["Armor", "cloth–leather"],
+      ["Shields", "light"],
+      ["Weapons", "simple melee; light blade group, pact blade"],
+      ["Implements", "rod"],
+    ]);
+  });
+
+  // Spelled as the content's proficiency records are: whole categories are
+  // "Simple Melee"/"Military Ranged"; "Simple One-Handed Melee" and
+  // "Military Heavy Blade" are parts of one, listed with the lone weapons,
+  // as is every superior weapon (no record grants a whole superior category).
+  it("summarizes whole weapon categories and lists the rest", () => {
+    const content = [
+      entity("CLASS", "Synthetic Class", "Class"),
+      entity("SM", "Simple Melee", "Proficiency", ["CLUB"]),
+      entity("SR", "Simple Ranged", "Proficiency", ["SLING"]),
+      entity("MR", "Military Ranged", "Proficiency", ["LONGBOW"]),
+      entity("CLUB", "Weapon Proficiency (Club)", "Proficiency"),
+      entity("SLING", "Weapon Proficiency (Sling)", "Proficiency"),
+      entity("LONGBOW", "Weapon Proficiency (Longbow)", "Proficiency"),
+      entity("S1H", "Simple One-Handed Melee", "Proficiency", ["CLUB"]),
+      entity("MHB", "Military Heavy Blade", "Proficiency", ["LONGSWORD"]),
+      entity("LONGSWORD", "Weapon Proficiency (Longsword)", "Proficiency"),
+      entity("BASTARD", "Weapon Proficiency (Bastard sword)", "Proficiency"),
+      entity(
+        "SUPXBOW",
+        "Weapon Proficiency (Superior crossbow)",
+        "Proficiency",
+      ),
+      entity("MACE", "Weapon Group (Mace)", "Proficiency"),
+      // Hypothetical (no such record ships): still a listed grant.
+      entity("SUPM", "Superior Melee", "Proficiency", ["CHAIN"]),
+      entity("CHAIN", "Weapon Proficiency (Spiked chain)", "Proficiency"),
+    ];
+    const model = sheet(content, [
+      occurrence("class", "CLASS", undefined, "root"),
+      occurrence("mr", "MR", "class"),
+      occurrence("longbow", "LONGBOW", "mr"),
+      occurrence("sm", "SM", "class"),
+      occurrence("club", "CLUB", "sm"),
+      occurrence("sr", "SR", "class"),
+      occurrence("sling", "SLING", "sr"),
+      occurrence("mhb", "MHB", "class"),
+      occurrence("longsword", "LONGSWORD", "mhb"),
+      occurrence("bastard", "BASTARD", "class"),
+      occurrence("supxbow", "SUPXBOW", "class"),
+      occurrence("mace", "MACE", "class"),
+      occurrence("supm", "SUPM", "class"),
+      occurrence("chain", "CHAIN", "supm"),
+    ]);
+    const weapons = model.proficiencies?.find(({ kind }) => kind === "Weapons");
+    // Tier then range order, whatever order the grants came in.
+    expect(weapons?.categories).toEqual([
+      { tier: "Simple", range: "Melee" },
+      { tier: "Simple", range: "Ranged" },
+      { tier: "Military", range: "Ranged" },
+    ]);
+    expect(weapons?.values).toEqual([
+      "military heavy blade",
+      "bastard sword",
+      "superior crossbow",
+      "mace group",
+      "superior melee",
+    ]);
+    expect(weapons?.summary).toBe(
+      "simple, military ranged; military heavy blade, bastard sword, superior crossbow, mace group, superior melee",
+    );
+    expect(weapons?.definitionIds).toEqual(
+      expect.arrayContaining(["MR", "LONGBOW", "SM", "SR", "MHB", "BASTARD"]),
+    );
+
+    // Categories only: the Weapons group lists no other values; with no
+    // weapon proficiency at all there is no Weapons group.
+    const only = sheet(content, [
+      occurrence("class", "CLASS", undefined, "root"),
+      occurrence("sm", "SM", "class"),
+      occurrence("club", "CLUB", "sm"),
+    ]).proficiencies?.find(({ kind }) => kind === "Weapons");
+    expect(only).toMatchObject({
+      values: [],
+      categories: [{ tier: "Simple", range: "Melee" }],
+      summary: "simple melee",
+    });
+    // No categories: just the specific weapons, no leading "; ".
+    expect(
+      sheet(content, [
+        occurrence("class", "CLASS", undefined, "root"),
+        occurrence("bastard", "BASTARD", "class"),
+        occurrence("mace", "MACE", "class"),
+      ]).proficiencies?.find(({ kind }) => kind === "Weapons")?.summary,
+    ).toBe("bastard sword, mace group");
+    expect(
+      sheet(content, [occurrence("class", "CLASS", undefined, "root")])
+        .proficiencies,
+    ).toEqual([]);
+  });
+
+  it("words every combination of whole weapon categories", () => {
+    const SM = { tier: "Simple", range: "Melee" } as const;
+    const SR = { tier: "Simple", range: "Ranged" } as const;
+    const MM = { tier: "Military", range: "Melee" } as const;
+    const MR = { tier: "Military", range: "Ranged" } as const;
+    const cases: [readonly SheetWeaponCategory[], string][] = [
+      [[], ""],
+      [[SM], "simple melee"],
+      [[SR], "simple ranged"],
+      [[MM], "military melee"],
+      [[MR], "military ranged"],
+      [[SM, SR], "simple"],
+      [[MM, MR], "military"],
+      [[SM, MM], "simple & military melee"],
+      [[SR, MR], "simple & military ranged"],
+      [[SM, MR], "simple melee, military ranged"],
+      [[SR, MM], "simple ranged, military melee"],
+      [[SM, SR, MM], "simple, military melee"],
+      [[SM, SR, MR], "simple, military ranged"],
+      [[SM, MM, MR], "simple melee, military"],
+      [[SR, MM, MR], "simple ranged, military"],
+      [[SM, SR, MM, MR], "simple & military"],
+      // Order of the grants doesn't matter.
+      [[MR, MM, SR, SM], "simple & military"],
+    ];
+    for (const [categories, text] of cases)
+      expect(weaponCategorySummary(categories), text).toBe(text);
+  });
+
+  it("prints a contiguous run of the armor ladder as a range", () => {
+    expect(armorSummary(["cloth"])).toBe("cloth");
+    expect(armorSummary(["leather"])).toBe("leather");
+    expect(armorSummary(["cloth", "leather", "hide", "chainmail"])).toBe(
+      "cloth–chainmail",
+    );
+    // Held order doesn't matter, only the ladder's.
+    expect(armorSummary(["chainmail", "cloth", "leather", "hide"])).toBe(
+      "cloth–chainmail",
+    );
+    expect(
+      armorSummary(["cloth", "leather", "hide", "chainmail", "scale", "plate"]),
+    ).toBe("cloth–plate");
+    expect(armorSummary(["hide", "chainmail"])).toBe("hide–chainmail");
+    // A gap prints the full list, in ladder order.
+    expect(armorSummary(["plate", "cloth", "leather", "hide", "scale"])).toBe(
+      "cloth, leather, hide, scale, plate",
+    );
+    expect(armorSummary(["cloth", "hide"])).toBe("cloth, hide");
+    // A type off the ladder follows the range.
+    expect(armorSummary(["cloth", "leather", "spiked plate"])).toBe(
+      "cloth–leather, spiked plate",
+    );
+    expect(armorSummary([])).toBe("");
   });
 });
 

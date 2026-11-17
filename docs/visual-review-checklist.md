@@ -1810,20 +1810,33 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     "Carried" heading (carried plus stored for each coin: oleander_9 GP
     17,778, the count shrunk to one line in its tile) and
     Proficiencies in the other half, each pane only as tall as its content (no empty space under the coin tiles); then
-    Worn/Held Items and Carried Items. All 58 sample saves fit the
-    Equipment page on one page in both papers (closest: oleander 31 px
+    Worn/Held Items and Carried Items. All 59 sample saves fit the
+    Equipment page on one page in both papers (closest: oleander 40 px
     to spare in Letter).
   - **Expect (separate):** full-width Currency with Carried and Stored
     wallets, Proficiencies full-width under it, then the item lists;
-    oleander_9 and Beldin still continue in Letter.
-  - **Expect (both):** bold run-in kinds ("**Armor:** cloth, leather
-    **Weapons:** simple melee, …"), several to a line where they fit, a
-    long kind's wrapped lines hanging under its label; every kind and value
-    present, in the pane's usual 10 pt text.
+    oleander_8/9 and Beldin still continue in Letter, oleander_8/9 by 4 px
+    in A4 (unchanged by the summary line).
+  - **Expect (both):** one run-in line, wrapping only where it must:
+    bold kind labels without colons joined by " · " ("**Armor**
+    cloth–chainmail · **Shields** light · **Weapons** simple & military;
+    bastard sword · **Implements** holy symbol"). Armor that is an unbroken
+    run of cloth, leather, hide, chainmail, scale, plate prints as a range
+    with an en dash (KrizDevvon: "cloth–chainmail"; tazer face 2, which
+    skips chainmail, lists all five). Weapons name whole categories first
+    (Beldin "simple, military melee"; Erdan "simple & military; superior
+    crossbow"; DV "simple; military light blade, military heavy blade";
+    Edward Kenway, with none, only the weapons). A kind moves to the next
+    line whole rather than splitting, unless it alone is wider than the
+    pane (Edward Kenway's Weapons in the half-width pane), when its wrapped lines
+    hang under its label. Kinds the character lacks are left out. In the
+    half-width pane most saves take two lines; full width, one.
   - **Wrong if:** Proficiencies below either item list, a Stored wallet
     or a group heading with funds merged (or a missing one with them
     separate), a coin count clipped or wrapped, a label on its own line above its values, kinds
-    running together without a gap, or a near-empty continuation page.
+    running together without a " · ", a line starting with " · ", a
+    hyphen instead of an en dash, "simple melee, simple ranged" spelled
+    out, or a near-empty continuation page.
 
 ## Decisions
 
