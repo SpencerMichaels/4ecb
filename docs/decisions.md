@@ -4702,9 +4702,10 @@ by its sort column", sub-tabs rejected as clunky):
   ascending. Slot and Pick don't sort: a sort within a grouping would need
   a second indicator. The chosen sort is remembered per browser in
   localStorage (`4ecb.buildOverviewSort.v1`), as the library remembers
-  its sort; the candidate tables keep none. A muted hint above the table
-  ("Grouped by level — select the Level or Category heading to regroup")
-  says it, since an inactive header shows no indicator.
+  its sort; the candidate tables keep none. There is no hint line above
+  the table: the owner dropped "Grouped by level — select the Level or
+  Category heading to regroup" (2026-11-16); the active header's
+  indicator and the band titles say how it is grouped.
 - **By level** (the default) is the earlier view: a band per level, every
   row, the full history including retrains ("Toughness → Improved
   Initiative").

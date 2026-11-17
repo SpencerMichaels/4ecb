@@ -457,12 +457,6 @@
   gap: 0.6rem;
 }
 
-.build-overview-hint {
-  color: var(--muted);
-  font-size: 0.78rem;
-  margin: 0;
-}
-
 .build-overview-table {
   border-collapse: collapse;
   table-layout: fixed;

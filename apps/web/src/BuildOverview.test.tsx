@@ -145,9 +145,6 @@ describe("BuildOverview", () => {
     }
     // Slot and Pick do not sort.
     expect(host.querySelectorAll("thead button")).toHaveLength(2);
-    expect(host.querySelector(".build-overview-hint")?.textContent).toBe(
-      "Grouped by level — select the Level or Category heading to regroup.",
-    );
   });
 
   it("bands by level with the full history, an empty level compactly", () => {
@@ -183,9 +180,6 @@ describe("BuildOverview", () => {
       "Level:none",
       "Category:ascending",
     ]);
-    expect(host.querySelector(".build-overview-hint")?.textContent).toBe(
-      "Grouped by category — select the Level or Category heading to regroup.",
-    );
     // Every category keeps its band; empty ones say so.
     expect(bandToggles(host).map((toggle) => toggle.textContent)).toEqual([
       "Character",

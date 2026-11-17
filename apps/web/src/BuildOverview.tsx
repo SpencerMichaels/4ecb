@@ -80,132 +80,124 @@ export function BuildOverview({
         {bands === undefined ? (
           <p>Evaluating character…</p>
         ) : (
-          <>
-            <p className="build-overview-hint" id="build-overview-hint">
-              {`Grouped by ${byLevel ? "level" : "category"} — select the Level or Category heading to regroup.`}
-            </p>
-            <table
-              aria-describedby="build-overview-hint"
-              aria-labelledby="build-overview-heading"
-              className="build-overview-table"
-            >
-              <colgroup>
-                <col className="build-overview-col-level" />
-                <col className="build-overview-col-category" />
-                <col className="build-overview-col-slot" />
-                <col />
-                <col className="build-overview-col-status" />
-              </colgroup>
-              <thead>
-                <tr>
-                  {SORT_COLUMNS.map(({ column, label }) => (
-                    <th
-                      aria-sort={
-                        sort.column === column ? sort.direction : "none"
-                      }
-                      key={column}
-                      scope="col"
+          <table
+            aria-labelledby="build-overview-heading"
+            className="build-overview-table"
+          >
+            <colgroup>
+              <col className="build-overview-col-level" />
+              <col className="build-overview-col-category" />
+              <col className="build-overview-col-slot" />
+              <col />
+              <col className="build-overview-col-status" />
+            </colgroup>
+            <thead>
+              <tr>
+                {SORT_COLUMNS.map(({ column, label }) => (
+                  <th
+                    aria-sort={sort.column === column ? sort.direction : "none"}
+                    key={column}
+                    scope="col"
+                  >
+                    <button
+                      aria-label={`Sort by ${label}`}
+                      className="selection-sort-button"
+                      type="button"
+                      onClick={() => sortBy(column)}
                     >
-                      <button
-                        aria-label={`Sort by ${label}`}
-                        className="selection-sort-button"
-                        type="button"
-                        onClick={() => sortBy(column)}
-                      >
-                        {label}
-                        <Icon name="chevron" />
-                      </button>
-                    </th>
-                  ))}
-                  <th scope="col">Slot</th>
-                  <th scope="col">Pick</th>
-                  <th scope="col">
-                    <span className="visually-hidden">Status</span>
+                      {label}
+                      <Icon name="chevron" />
+                    </button>
                   </th>
-                </tr>
-              </thead>
-              {bands.map((band) => {
-                const expanded = !collapsed.has(band.key);
-                const id = `build-overview-${band.key.replace(":", "-")}`;
-                const bodyId = `${id}-choices`;
-                return (
-                  <Fragment key={band.key}>
-                    <tbody className="build-overview-band">
-                      <tr className="table-section-row">
-                        <th colSpan={COLUMN_COUNT} id={id} scope="colgroup">
-                          <button
-                            aria-controls={bodyId}
-                            aria-expanded={expanded}
-                            className="table-section-toggle"
-                            type="button"
-                            onClick={() => toggle(band.key)}
-                          >
-                            <Icon name="chevron" />
-                            <span>{band.title}</span>
-                          </button>
-                        </th>
+                ))}
+                <th scope="col">Slot</th>
+                <th scope="col">Pick</th>
+                <th scope="col">
+                  <span className="visually-hidden">Status</span>
+                </th>
+              </tr>
+            </thead>
+            {bands.map((band) => {
+              const expanded = !collapsed.has(band.key);
+              const id = `build-overview-${band.key.replace(":", "-")}`;
+              const bodyId = `${id}-choices`;
+              return (
+                <Fragment key={band.key}>
+                  <tbody className="build-overview-band">
+                    <tr className="table-section-row">
+                      <th colSpan={COLUMN_COUNT} id={id} scope="colgroup">
+                        <button
+                          aria-controls={bodyId}
+                          aria-expanded={expanded}
+                          className="table-section-toggle"
+                          type="button"
+                          onClick={() => toggle(band.key)}
+                        >
+                          <Icon name="chevron" />
+                          <span>{band.title}</span>
+                        </button>
+                      </th>
+                    </tr>
+                  </tbody>
+                  <tbody
+                    aria-labelledby={id}
+                    className="build-overview-rows"
+                    hidden={!expanded}
+                    id={bodyId}
+                  >
+                    {!expanded ? null : band.rows.length === 0 ? (
+                      <tr>
+                        <td
+                          className="build-overview-none"
+                          colSpan={COLUMN_COUNT}
+                        >
+                          {byLevel
+                            ? "No choices at this level"
+                            : "Nothing in this category"}
+                        </td>
                       </tr>
-                    </tbody>
-                    <tbody
-                      aria-labelledby={id}
-                      className="build-overview-rows"
-                      hidden={!expanded}
-                      id={bodyId}
-                    >
-                      {!expanded ? null : band.rows.length === 0 ? (
-                        <tr>
-                          <td
-                            className="build-overview-none"
-                            colSpan={COLUMN_COUNT}
-                          >
-                            {byLevel
-                              ? "No choices at this level"
-                              : "Nothing in this category"}
+                    ) : (
+                      band.rows.map(({ row, picks, note }) => (
+                        <tr
+                          className={`build-overview-choice${row.status === "unresolved" ? " is-unresolved" : ""}`}
+                          key={`${row.level}:${row.key}`}
+                          onClick={() => onOpen(row.target)}
+                        >
+                          <td className="build-overview-cell-level">
+                            {row.level}
+                          </td>
+                          <td className="build-overview-cell-category">
+                            {buildOverviewGroupTitle(row.kind)}
+                          </td>
+                          <td className="build-overview-title">
+                            {/* The row's one focus stop; a click anywhere
+                                  on the row lands here too (bubbling). */}
+                            <button
+                              className="build-overview-row"
+                              type="button"
+                            >
+                              {row.title}
+                            </button>
+                          </td>
+                          <td className="build-overview-picks">
+                            {picks ?? NO_PICKS_LABEL}
+                            {note === undefined ? null : (
+                              <span className="build-overview-note">
+                                {` (${note})`}
+                              </span>
+                            )}
+                          </td>
+                          <td className="build-overview-status">
+                            <ChoiceStatusIcon status={row.status} />
                           </td>
                         </tr>
-                      ) : (
-                        band.rows.map(({ row, picks, note }) => (
-                          <tr
-                            className={`build-overview-choice${row.status === "unresolved" ? " is-unresolved" : ""}`}
-                            key={`${row.level}:${row.key}`}
-                            onClick={() => onOpen(row.target)}
-                          >
-                            <td className="build-overview-cell-level">
-                              {row.level}
-                            </td>
-                            <td className="build-overview-cell-category">
-                              {buildOverviewGroupTitle(row.kind)}
-                            </td>
-                            <td className="build-overview-title">
-                              {/* The row's one focus stop; a click anywhere
-                                  on the row lands here too (bubbling). */}
-                              <button
-                                className="build-overview-row"
-                                type="button"
-                              >
-                                {row.title}
-                              </button>
-                            </td>
-                            <td className="build-overview-picks">
-                              {picks ?? NO_PICKS_LABEL}
-                              {note === undefined ? null : (
-                                <span className="build-overview-note">
-                                  {` (${note})`}
-                                </span>
-                              )}
-                            </td>
-                            <td className="build-overview-status">
-                              <ChoiceStatusIcon status={row.status} />
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </Fragment>
-                );
-              })}
-            </table>
-          </>
+                      ))
+                    )}
+                  </tbody>
+                </Fragment>
+              );
+            })}
+          </table>
         )}
       </div>
     </section>

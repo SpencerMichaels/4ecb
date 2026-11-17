@@ -1770,12 +1770,11 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
       by `build-overview.test.ts` and `BuildOverview.test.tsx`.
   - **Where:** Mellivora-L7, builder Overview tab, light and dark theme, at
     140% zoom with the sidebar docked and parked (window under ~63rem).
-  - **Expect:** a muted hint, then one table: header row LEVEL · CATEGORY ·
-    SLOT · PICK in the candidate tables' header style, a chevron beside
-    LEVEL; navy "Level N" bands with striped rows under each. Click
-    CATEGORY: the chevron moves to it, the hint says "Grouped by
-    category", bands become Character … Features & Other; At-Will Powers
-    shows Devastating Strike (L1) and "L5 Retraining — Pressing Strike
+  - **Expect:** no hint line above the table; one table: header row
+    LEVEL · CATEGORY · SLOT · PICK in the candidate tables' header style, a
+    chevron beside LEVEL; navy "Level N" bands with striped rows under
+    each. Click CATEGORY: the chevron moves to it, bands become Character
+    … Features & Other; At-Will Powers shows Devastating Strike (L1) and "L5 Retraining — Pressing Strike
     (replaced Foe to Foe at L5)" with the note smaller and muted; Daily
     Powers starts with Life-Ending Strike (replaced Swift Panther Rage at
     L3); Character ends with the L2 Gladiator retrain. Click CATEGORY again:
