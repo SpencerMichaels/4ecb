@@ -1771,20 +1771,25 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
   - **Where:** Mellivora-L7, builder Overview tab, light and dark theme, at
     140% zoom with the sidebar docked and parked (window under ~63rem).
   - **Expect:** no hint line above the table; one table: header row
-    LEVEL · CATEGORY · SLOT · PICK in the candidate tables' header style, a
-    chevron beside LEVEL; navy "Level N" bands with striped rows under
-    each. Click CATEGORY: the chevron moves to it, bands become Character
-    … Features & Other; At-Will Powers shows Devastating Strike (L1) and "L5 Retraining — Pressing Strike
+    LEVEL · SLOT · PICK in the candidate tables' header style (no
+    Category column), a chevron beside LEVEL; navy "Level N" bands with
+    striped rows under each. Click SLOT: the chevron moves to it, bands
+    become Character, Ability Scores, Skills, Feats, Powers, Features &
+    Other; Powers has lighter navy-tint sub-bands At-Will, Encounter,
+    Daily, Utility, slightly indented, with no chevron or line; At-Will
+    shows Devastating Strike (L1) and "L5 Retraining — Pressing Strike
     (replaced Foe to Foe at L5)" with the note smaller and muted; Daily
-    Powers starts with Life-Ending Strike (replaced Swift Panther Rage at
-    L3); Character ends with the L2 Gladiator retrain. Click CATEGORY again:
-    bands reverse. Reload: the grouping is kept. Tab through: sort headers,
+    starts with Life-Ending Strike (replaced Swift Panther Rage at L3);
+    the stripes restart under each sub-band; collapsing Powers hides its
+    sub-bands too; Character ends with the L2 Gladiator retrain. Click
+    SLOT again: bands reverse. Reload: the grouping is kept. Tab through: sort headers,
     then each band toggle and its rows' slot buttons, with a visible focus
     underline; Enter opens the choice on the Build tab.
-  - **Wrong if:** the Level/Category/Slot columns don't line up across
-    bands, text overlaps or the table scrolls sideways at 140% zoom, the
-    hover tint or stripes differ from the candidate tables, the band rows
-    pick up stripes, or the header labels are hard to read in dark theme.
+  - **Wrong if:** the Level/Slot columns don't line up across bands, text
+    overlaps or the table scrolls sideways at 140% zoom, the hover tint or
+    stripes differ from the candidate tables, the band rows pick up
+    stripes, a sub-band looks like a full band or is hard to read in dark
+    theme, or the header labels are hard to read in dark theme.
 - [ ] **Long coin counts fit their tile.** Added 2026-11-16 (`2b4b04b2`).
   - **Where:** oleander_9 `?preview=1`, Equipment page Currency pane
     (Letter and A4); any builder's sidebar Funds at 140% zoom: double-click

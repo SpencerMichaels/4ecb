@@ -374,10 +374,11 @@ Hash routes (parsed/canonicalized in `routes.ts`, code-split per route):
 `tab=` build/overview/details/loadout/inventory/shop/retraining/diagnostics/house-rules, each slug the visible tab name; old `tab=equipment[&loadout=1]` canonicalizes to inventory/loadout, old `tab=rituals` to the Shop's learning categories (D114: rituals, formulas and practices are learned in the Shop and listed in the Inventory, `known-records-ui.tsx`);
 Diagnostics and House rules open from the status badges; Overview (D113,
 `BuildOverview.tsx` over `build-overview.ts`) is one table of every
-choice (Level, Category, Slot, Pick) as the Build tab's folded items, from
-the editor's planning evaluation, regrouped by its sorted column: by level
-the full history, by category what the character has now (a retrain notes
-what it replaced; the sort is remembered in localStorage); each row opens
+choice (Level, Slot, Pick) as the Build tab's folded items, from the
+editor's planning evaluation, regrouped by its sorted column: by level the
+full history, by slot a band per category with what the character has now
+(Powers in At-Will/Encounter/Daily/Utility sub-bands; a retrain notes what
+it replaced; the sort is remembered in localStorage); each row opens
 its choice the way an issue's Review does; a character's
 campaign is the Details tab's Campaign select), `#/characters/:id`
 (sheet; `?preview=1` opens print preview, `?preview=1&edit=1` its Edit mode

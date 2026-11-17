@@ -3,10 +3,10 @@ import { Fragment, useMemo, useState } from "react";
 import type { BuilderIssueTarget } from "./builder-diagnostics";
 import {
   buildOverviewBands,
-  buildOverviewGroupTitle,
   nextBuildOverviewSort,
   readBuildOverviewSort,
   writeBuildOverviewSort,
+  type BuildOverviewBandRow,
   type BuildOverviewLevel,
   type BuildOverviewSort,
   type BuildOverviewSortColumn,
@@ -15,28 +15,84 @@ import { NO_PICKS_LABEL } from "./builder-ui";
 import { ChoiceStatusIcon } from "./ChoiceAccordionItem";
 import { Icon } from "./Icon";
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 4;
 
-const SORT_COLUMNS: readonly {
+/** The sortable header cell, the candidate tables' control. */
+function SortHeader({
+  column,
+  label,
+  sort,
+  onSort,
+}: {
   readonly column: BuildOverviewSortColumn;
   readonly label: string;
-}[] = [
-  { column: "level", label: "Level" },
-  { column: "category", label: "Category" },
-];
+  readonly sort: BuildOverviewSort;
+  readonly onSort: (column: BuildOverviewSortColumn) => void;
+}) {
+  return (
+    <th
+      aria-sort={sort.column === column ? sort.direction : "none"}
+      scope="col"
+    >
+      <button
+        aria-label={`Sort by ${label}`}
+        className="selection-sort-button"
+        type="button"
+        onClick={() => onSort(column)}
+      >
+        {label}
+        <Icon name="chevron" />
+      </button>
+    </th>
+  );
+}
+
+function OverviewRow({
+  entry: { row, picks, note },
+  onOpen,
+}: {
+  readonly entry: BuildOverviewBandRow;
+  readonly onOpen: (target: BuilderIssueTarget) => void;
+}) {
+  return (
+    <tr
+      className={`build-overview-choice${row.status === "unresolved" ? " is-unresolved" : ""}`}
+      onClick={() => onOpen(row.target)}
+    >
+      <td className="build-overview-cell-level">{row.level}</td>
+      <td className="build-overview-title">
+        {/* The row's one focus stop; a click anywhere on the row lands here
+            too (bubbling). */}
+        <button className="build-overview-row" type="button">
+          {row.title}
+        </button>
+      </td>
+      <td className="build-overview-picks">
+        {picks ?? NO_PICKS_LABEL}
+        {note === undefined ? null : (
+          <span className="build-overview-note">{` (${note})`}</span>
+        )}
+      </td>
+      <td className="build-overview-status">
+        <ChoiceStatusIcon status={row.status} />
+      </td>
+    </tr>
+  );
+}
 
 /**
- * The Overview tab (D113): every choice in one table (Level, Category,
- * Slot, Pick, status) that regroups by its sort column (D113 amendment,
- * 2026-11-16). Level and Category sort with the candidate tables' header
- * control; the chosen grouping is remembered like the library's sort. By
- * level, each level is a band holding the full history, retrains included;
- * by category, each category is a band holding what the character has now,
- * by level, a retrain noting what it replaced. Bands are the Inventory's
- * collapsible group band (`table-section-row`), all expanded at first and
- * not remembered. Rows alternate the candidate tables' stripes, restarting
- * under each band; activating one opens that choice where it is edited, as
- * an issue's Review does.
+ * The Overview tab (D113): every choice in one table (Level, Slot, Pick,
+ * status) that regroups by its sort column (D113 amendment, 2026-11-16).
+ * Level and Slot sort with the candidate tables' header control; the chosen
+ * grouping is remembered like the library's sort. By level, each level is a
+ * band holding the full history, retrains included; by slot, each slot
+ * category is a band holding what the character has now, by level, a
+ * retrain noting what it replaced, and the Powers band runs in lighter
+ * usage sub-bands (At-Will, Encounter, Daily, Utility). Bands are the
+ * Inventory's collapsible group band (`table-section-row`), all expanded at
+ * first and not remembered. Rows alternate the candidate tables' stripes,
+ * restarting under each band and sub-band; activating one opens that
+ * choice where it is edited, as an issue's Review does.
  */
 export function BuildOverview({
   levels,
@@ -68,6 +124,7 @@ export function BuildOverview({
     writeBuildOverviewSort(next);
   };
   const byLevel = sort.column === "level";
+  const domId = (key: string) => `build-overview-${key.replaceAll(":", "-")}`;
   return (
     <section
       aria-labelledby="build-overview-heading"
@@ -86,31 +143,24 @@ export function BuildOverview({
           >
             <colgroup>
               <col className="build-overview-col-level" />
-              <col className="build-overview-col-category" />
               <col className="build-overview-col-slot" />
               <col />
               <col className="build-overview-col-status" />
             </colgroup>
             <thead>
               <tr>
-                {SORT_COLUMNS.map(({ column, label }) => (
-                  <th
-                    aria-sort={sort.column === column ? sort.direction : "none"}
-                    key={column}
-                    scope="col"
-                  >
-                    <button
-                      aria-label={`Sort by ${label}`}
-                      className="selection-sort-button"
-                      type="button"
-                      onClick={() => sortBy(column)}
-                    >
-                      {label}
-                      <Icon name="chevron" />
-                    </button>
-                  </th>
-                ))}
-                <th scope="col">Slot</th>
+                <SortHeader
+                  column="level"
+                  label="Level"
+                  sort={sort}
+                  onSort={sortBy}
+                />
+                <SortHeader
+                  column="slot"
+                  label="Slot"
+                  sort={sort}
+                  onSort={sortBy}
+                />
                 <th scope="col">Pick</th>
                 <th scope="col">
                   <span className="visually-hidden">Status</span>
@@ -119,15 +169,24 @@ export function BuildOverview({
             </thead>
             {bands.map((band) => {
               const expanded = !collapsed.has(band.key);
-              const id = `build-overview-${band.key.replace(":", "-")}`;
-              const bodyId = `${id}-choices`;
+              const id = domId(band.key);
+              // Each section's rows are a <tbody> of their own (after its
+              // sub-band's, when titled), so the stripes restart under it.
+              const bodyId = (key: string) => `${domId(key)}-choices`;
+              const controls = band.sections
+                .flatMap(({ key, title }) =>
+                  title === undefined
+                    ? [bodyId(key)]
+                    : [`${domId(key)}-heading`, bodyId(key)],
+                )
+                .join(" ");
               return (
                 <Fragment key={band.key}>
                   <tbody className="build-overview-band">
                     <tr className="table-section-row">
                       <th colSpan={COLUMN_COUNT} id={id} scope="colgroup">
                         <button
-                          aria-controls={bodyId}
+                          aria-controls={controls}
                           aria-expanded={expanded}
                           className="table-section-toggle"
                           type="button"
@@ -139,61 +198,61 @@ export function BuildOverview({
                       </th>
                     </tr>
                   </tbody>
-                  <tbody
-                    aria-labelledby={id}
-                    className="build-overview-rows"
-                    hidden={!expanded}
-                    id={bodyId}
-                  >
-                    {!expanded ? null : band.rows.length === 0 ? (
-                      <tr>
-                        <td
-                          className="build-overview-none"
-                          colSpan={COLUMN_COUNT}
+                  {band.sections.map((section) => {
+                    const headingId = `${domId(section.key)}-heading`;
+                    return (
+                      <Fragment key={section.key}>
+                        {section.title === undefined ? null : (
+                          <tbody
+                            className="build-overview-subband"
+                            hidden={!expanded}
+                            id={headingId}
+                          >
+                            <tr>
+                              <th
+                                colSpan={COLUMN_COUNT}
+                                id={`${headingId}-title`}
+                                scope="colgroup"
+                              >
+                                {section.title}
+                              </th>
+                            </tr>
+                          </tbody>
+                        )}
+                        <tbody
+                          aria-labelledby={
+                            section.title === undefined
+                              ? id
+                              : `${id} ${headingId}-title`
+                          }
+                          className="build-overview-rows"
+                          hidden={!expanded}
+                          id={bodyId(section.key)}
                         >
-                          {byLevel
-                            ? "No choices at this level"
-                            : "Nothing in this category"}
-                        </td>
-                      </tr>
-                    ) : (
-                      band.rows.map(({ row, picks, note }) => (
-                        <tr
-                          className={`build-overview-choice${row.status === "unresolved" ? " is-unresolved" : ""}`}
-                          key={`${row.level}:${row.key}`}
-                          onClick={() => onOpen(row.target)}
-                        >
-                          <td className="build-overview-cell-level">
-                            {row.level}
-                          </td>
-                          <td className="build-overview-cell-category">
-                            {buildOverviewGroupTitle(row.kind)}
-                          </td>
-                          <td className="build-overview-title">
-                            {/* The row's one focus stop; a click anywhere
-                                  on the row lands here too (bubbling). */}
-                            <button
-                              className="build-overview-row"
-                              type="button"
-                            >
-                              {row.title}
-                            </button>
-                          </td>
-                          <td className="build-overview-picks">
-                            {picks ?? NO_PICKS_LABEL}
-                            {note === undefined ? null : (
-                              <span className="build-overview-note">
-                                {` (${note})`}
-                              </span>
-                            )}
-                          </td>
-                          <td className="build-overview-status">
-                            <ChoiceStatusIcon status={row.status} />
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
+                          {!expanded ? null : section.rows.length === 0 ? (
+                            <tr>
+                              <td
+                                className="build-overview-none"
+                                colSpan={COLUMN_COUNT}
+                              >
+                                {byLevel
+                                  ? "No choices at this level"
+                                  : "Nothing in this category"}
+                              </td>
+                            </tr>
+                          ) : (
+                            section.rows.map((entry) => (
+                              <OverviewRow
+                                entry={entry}
+                                key={`${entry.row.level}:${entry.row.key}`}
+                                onOpen={onOpen}
+                              />
+                            ))
+                          )}
+                        </tbody>
+                      </Fragment>
+                    );
+                  })}
                 </Fragment>
               );
             })}

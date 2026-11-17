@@ -46,13 +46,17 @@ const levels: readonly BuildOverviewLevel[] = [
         rows: [row(1, "feats", "feat", "Feat", undefined)],
       },
       {
-        kind: "at-will",
-        title: "At-Will Powers",
-        // Its pick came by the level-3 retrain, so by category it has no
-        // row of its own.
+        kind: "powers",
+        title: "Powers",
         rows: [
-          row(1, "at-will", "power", "At-Will power", "Reaping Strike", {
+          // Its pick came by the level-3 retrain, so by slot it has no row
+          // of its own.
+          row(1, "powers", "power", "At-Will power", "Reaping Strike", {
+            usage: "at-will",
             held: undefined,
+          }),
+          row(1, "powers", "daily", "Daily power", "Sleep", {
+            usage: "daily",
           }),
         ],
       },
@@ -68,19 +72,13 @@ const levels: readonly BuildOverviewLevel[] = [
         rows: [row(3, "feats", "feat-3", "Feat", "Toughness")],
       },
       {
-        kind: "at-will",
-        title: "At-Will Powers",
+        kind: "powers",
+        title: "Powers",
         rows: [
-          row(
-            3,
-            "at-will",
-            "retrain",
-            "Retraining",
-            "Cleave → Reaping Strike",
-            {
-              held: { picks: "Reaping Strike", note: "replaced Cleave at L3" },
-            },
-          ),
+          row(3, "powers", "retrain", "Retraining", "Cleave → Reaping Strike", {
+            usage: "at-will",
+            held: { picks: "Reaping Strike", note: "replaced Cleave at L3" },
+          }),
         ],
       },
     ],
@@ -120,6 +118,10 @@ const sortButton = (host: HTMLElement, label: string) =>
   host.querySelector<HTMLButtonElement>(
     `thead button[aria-label="Sort by ${label}"]`,
   )!;
+const subbands = (host: HTMLElement) =>
+  [...host.querySelectorAll("tbody.build-overview-subband th")].map(
+    (heading) => heading.textContent,
+  );
 const sortState = (host: HTMLElement) =>
   [...host.querySelectorAll("thead th")].map(
     (header) =>
@@ -127,23 +129,24 @@ const sortState = (host: HTMLElement) =>
   );
 
 describe("BuildOverview", () => {
-  it("is one table with the candidate tables' sortable Level and Category headers", () => {
+  it("is one table with the candidate tables' sortable Level and Slot headers", () => {
     const { host } = render();
     expect(host.querySelectorAll("table")).toHaveLength(1);
     expect(sortState(host)).toEqual([
       "Level:ascending",
-      "Category:none",
-      "Slot:-",
+      "Slot:none",
       "Pick:-",
       "Status:-",
     ]);
-    for (const label of ["Level", "Category"]) {
+    // No Category column: the slot says what each row is.
+    expect(host.querySelectorAll("col")).toHaveLength(4);
+    for (const label of ["Level", "Slot"]) {
       const button = sortButton(host, label);
       expect(button.type).toBe("button");
       expect(button.classList.contains("selection-sort-button")).toBe(true);
       expect(button.querySelector(".icon")).not.toBeNull();
     }
-    // Slot and Pick do not sort.
+    // Pick does not sort.
     expect(host.querySelectorAll("thead button")).toHaveLength(2);
   });
 
@@ -161,24 +164,27 @@ describe("BuildOverview", () => {
       "No choices at this level",
     );
     expect(rowText(host)).toEqual([
-      "1 | Character | Race | Revenant · Language: Elven | Complete",
-      "1 | Feats | Feat | none chosen | Incomplete",
-      "1 | At-Will Powers | At-Will power | Reaping Strike | Complete",
-      "3 | Feats | Feat | Toughness | Complete",
-      "3 | At-Will Powers | Retraining | Cleave → Reaping Strike | Complete",
+      "1 | Race | Revenant · Language: Elven | Complete",
+      "1 | Feat | none chosen | Incomplete",
+      "1 | At-Will power | Reaping Strike | Complete",
+      "1 | Daily power | Sleep | Complete",
+      "3 | Feat | Toughness | Complete",
+      "3 | Retraining | Cleave → Reaping Strike | Complete",
     ]);
+    // Usage sub-bands are the slot grouping's only.
+    expect(subbands(host)).toEqual([]);
     // An open required choice carries the Build tab's status mark.
     expect(
       host.querySelector("tr.build-overview-choice.is-unresolved .icon"),
     ).not.toBeNull();
   });
 
-  it("regroups by category from its header, showing what the character has now", () => {
+  it("regroups by slot category from its header, showing what the character has now", () => {
     const { host } = render();
-    act(() => sortButton(host, "Category").click());
+    act(() => sortButton(host, "Slot").click());
     expect(sortState(host).slice(0, 2)).toEqual([
       "Level:none",
-      "Category:ascending",
+      "Slot:ascending",
     ]);
     // Every category keeps its band; empty ones say so.
     expect(bandToggles(host).map((toggle) => toggle.textContent)).toEqual([
@@ -186,20 +192,20 @@ describe("BuildOverview", () => {
       "Ability Scores",
       "Skills",
       "Feats",
-      "At-Will Powers",
-      "Encounter Powers",
-      "Daily Powers",
-      "Utility Powers",
+      "Powers",
       "Features & Other",
     ]);
     expect(host.querySelector(".build-overview-none")?.textContent).toBe(
       "Nothing in this category",
     );
+    // Powers run in lighter usage sub-bands, each by level.
+    expect(subbands(host)).toEqual(["At-Will", "Daily"]);
     expect(rowText(host)).toEqual([
-      "1 | Character | Race | Revenant · Language: Elven | Complete",
-      "1 | Feats | Feat | none chosen | Incomplete",
-      "3 | Feats | Feat | Toughness | Complete",
-      "3 | At-Will Powers | Retraining | Reaping Strike (replaced Cleave at L3) | Complete",
+      "1 | Race | Revenant · Language: Elven | Complete",
+      "1 | Feat | none chosen | Incomplete",
+      "3 | Feat | Toughness | Complete",
+      "3 | Retraining | Reaping Strike (replaced Cleave at L3) | Complete",
+      "1 | Daily power | Sleep | Complete",
     ]);
     expect(host.querySelector(".build-overview-note")?.textContent).toBe(
       " (replaced Cleave at L3)",
@@ -207,17 +213,17 @@ describe("BuildOverview", () => {
     // Remembered for the next visit, like the library's sort.
     expect(
       JSON.parse(window.localStorage.getItem(BUILD_OVERVIEW_SORT_STORAGE_KEY)!),
-    ).toEqual({ column: "category", direction: "ascending" });
+    ).toEqual({ column: "slot", direction: "ascending" });
 
     // The active header flips the direction: the bands reverse.
-    act(() => sortButton(host, "Category").click());
-    expect(sortState(host)[1]).toBe("Category:descending");
+    act(() => sortButton(host, "Slot").click());
+    expect(sortState(host)[1]).toBe("Slot:descending");
     expect(bandToggles(host)[0]!.textContent).toBe("Features & Other");
 
     act(() => sortButton(host, "Level").click());
     expect(sortState(host).slice(0, 2)).toEqual([
       "Level:ascending",
-      "Category:none",
+      "Slot:none",
     ]);
     expect(bandToggles(host)[0]!.textContent).toBe("Level 1");
   });
@@ -225,10 +231,10 @@ describe("BuildOverview", () => {
   it("opens the remembered grouping", () => {
     window.localStorage.setItem(
       BUILD_OVERVIEW_SORT_STORAGE_KEY,
-      JSON.stringify({ column: "category", direction: "ascending" }),
+      JSON.stringify({ column: "slot", direction: "ascending" }),
     );
     const { host } = render();
-    expect(sortState(host)[1]).toBe("Category:ascending");
+    expect(sortState(host)[1]).toBe("Slot:ascending");
     expect(bandToggles(host)[0]!.textContent).toBe("Character");
   });
 
@@ -240,7 +246,37 @@ describe("BuildOverview", () => {
       [...host.querySelectorAll("tbody.build-overview-rows")].map(
         (body) => body.querySelectorAll("tr").length,
       ),
-    ).toEqual([3, 1, 2]);
+    ).toEqual([4, 1, 2]);
+  });
+
+  it("collapses a Powers band with its usage sub-bands", () => {
+    const { host } = render();
+    act(() => sortButton(host, "Slot").click());
+    const powers = bandToggles(host).find(
+      (toggle) => toggle.textContent === "Powers",
+    )!;
+    // The band controls each sub-band and its rows' body, which restarts
+    // the stripes under every sub-band.
+    const controlled = powers
+      .getAttribute("aria-controls")!
+      .split(" ")
+      .map((id) => host.querySelector<HTMLElement>(`#${id}`)!);
+    expect(controlled.map((body) => body.className)).toEqual([
+      "build-overview-subband",
+      "build-overview-rows",
+      "build-overview-subband",
+      "build-overview-rows",
+    ]);
+    // Each sub-band's rows are labelled by the band and the sub-band.
+    expect(
+      controlled[1]!
+        .getAttribute("aria-labelledby")!
+        .split(" ")
+        .map((id) => host.querySelector(`#${id}`)?.textContent),
+    ).toEqual(["Powers", "At-Will"]);
+    act(() => powers.click());
+    expect(controlled.every((body) => body.hidden)).toBe(true);
+    expect(choiceRows(host)).toHaveLength(3);
   });
 
   it("opens a row's choice from its button or anywhere on the row", () => {
@@ -273,11 +309,12 @@ describe("BuildOverview", () => {
     );
     expect(stops).toEqual([
       "Sort by Level",
-      "Sort by Category",
+      "Sort by Slot",
       "band Level 1",
       "Race",
       "Feat",
       "At-Will power",
+      "Daily power",
       "band Level 2",
       "band Level 3",
       "Feat",
@@ -306,7 +343,7 @@ describe("BuildOverview", () => {
 
     act(() => first!.click());
     expect(body.hidden).toBe(false);
-    expect(choiceRows(host)).toHaveLength(5);
+    expect(choiceRows(host)).toHaveLength(6);
 
     // An empty band collapses too: its control is always there.
     act(() => second!.click());

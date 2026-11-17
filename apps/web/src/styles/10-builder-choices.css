@@ -443,15 +443,17 @@
   color: var(--warning);
 }
 
-/* The Overview tab (D113): one table (Level, Category, Slot, Pick, status)
-   whose bands are the Inventory's collapsible group band
-   (`table-section-row`, primitives.css): a band per level or per category,
-   by the sort column (D113 amendment, 2026-11-16). The header row is the
-   candidate tables' (their sort control and indicator,
-   `.selection-sort-button` below). The band is the only line: rows have
-   none and sit flush under it in the candidate tables' alternating stripes
-   and hover tint (11-selection-tables.css). Fixed column widths keep the
-   picks lined up across bands; they narrow with the tab (14-responsive.css). */
+/* The Overview tab (D113): one table (Level, Slot, Pick, status) whose
+   bands are the Inventory's collapsible group band (`table-section-row`,
+   primitives.css): a band per level or per slot category, by the sort
+   column (D113 amendment, 2026-11-16). The header row is the candidate
+   tables' (their sort control and indicator, `.selection-sort-button`
+   below). The band is the only line: rows have none and sit flush under it
+   in the candidate tables' alternating stripes and hover tint
+   (11-selection-tables.css). By slot, the Powers band's usages (At-Will,
+   Encounter, Daily, Utility) are lighter sub-bands: a navy tint, not the
+   band's navy, and no line. Fixed column widths keep the picks lined up
+   across bands; they narrow with the tab (14-responsive.css). */
 .build-overview {
   display: grid;
   gap: 0.6rem;
@@ -465,10 +467,6 @@
 
 .build-overview-col-level {
   width: 4.5rem;
-}
-
-.build-overview-col-category {
-  width: 10rem;
 }
 
 .build-overview-col-slot {
@@ -489,8 +487,19 @@
   vertical-align: bottom;
 }
 
-.build-overview-rows[hidden] {
+.build-overview-rows[hidden],
+.build-overview-subband[hidden] {
   display: none;
+}
+
+.build-overview-subband th {
+  background: color-mix(in srgb, var(--brand-navy) 16%, var(--surface));
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+  padding: 0.3rem 0.8rem 0.3rem 1.6rem;
+  text-align: left;
 }
 
 .build-overview-rows td {
@@ -505,8 +514,7 @@
   font-weight: 600;
 }
 
-.build-overview-cell-level,
-.build-overview-cell-category {
+.build-overview-cell-level {
   color: var(--muted);
   font-weight: 600;
 }
@@ -532,7 +540,7 @@
   font-weight: 600;
 }
 
-/* "(replaced Cleave at L4)" after a retrain's pick, by category. */
+/* "(replaced Cleave at L4)" after a retrain's pick, by slot. */
 .build-overview-note {
   font-size: 0.85em;
   font-weight: 500;

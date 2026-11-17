@@ -4679,38 +4679,51 @@ tables"):
 Amendment (2026-11-16, owner decision: "one sortable table that regroups
 by its sort column", sub-tabs rejected as clunky):
 
-- **One table.** The Overview is one table with the columns Level,
-  Category, Slot, Pick and the status mark. Category is the row's kind,
-  in a fixed order: Character (the Class, Race, Background and Theme
-  tabs' choices and the Details tab's: build preset, class, paragon path,
-  epic destiny, race, background, theme, deity, gender, alignment…),
-  Ability Scores (the point-buy row, racial bonus, increases), Skills,
-  Feats, At-Will, Encounter, Daily and Utility Powers (from the picks',
-  else the offered powers', `classifyPowerEntity` tone; a feature or
-  unknown usage is Other), then Features & Other (companion, the Other
-  tab's choices). A retrain, or a swap the level or a feat offers, is
-  filed by what it picks, as a choice of that record's type would be (a
-  power by usage, a theme under Character). `BuildOverviewGroupKind`
-  carries the nine categories; each row also carries its `level`, `kind`
-  and `held` (below). Rows within a level run by category, then in the
-  Build tab's order (the old Other group's Ability Scores and Skills now
-  sort ahead of Feats, the Details tab's choices with Character).
-- **Sorting regroups.** Level and Category headers sort with the
-  candidate tables' header control (`th[aria-sort]` around a
+- **One table.** The Overview is one table with the columns Level, Slot,
+  Pick and the status mark. Slot is the Build tab's heading for the
+  choice ("Feat", "Race", "Encounter Power", "Retraining", "Swap an
+  encounter attack power"…), unchanged. Each row also carries its
+  category, in a fixed order: Character (the Class, Race, Background and
+  Theme tabs' choices and the Details tab's: build preset, class, paragon
+  path, epic destiny, race, background, theme, deity, gender,
+  alignment…), Ability Scores (the point-buy row, racial bonus,
+  increases), Skills, Feats, Powers, then Features & Other (companion,
+  the Other tab's choices). A power row also carries its usage, At-Will,
+  Encounter, Daily or Utility (from the picks', else the offered powers',
+  `classifyPowerEntity` tone; a feature or unknown usage files the row
+  under Features & Other). A retrain, or a swap the level or a feat
+  offers, is filed by what it picks, as a choice of that record's type
+  would be (a power by usage, a theme under Character).
+  `BuildOverviewGroupKind` carries the six categories and
+  `BuildOverviewPowerUsage` the four usages; each row also carries its
+  `level`, `kind`, `usage` and `held` (below). Rows within a level run by
+  category (powers by usage), then in the Build tab's order.
+- **Revised (owner, 2026-11-16, after a visual check):** the first
+  version had a Category column and four power categories (At-Will,
+  Encounter, Daily, Utility Powers), so a power row read "Encounter Powers
+  | Encounter Power", the slot repeating its category. The Category
+  column is gone; sorting by Slot groups by category instead, and the
+  powers are one Powers category whose usages are sub-bands.
+- **Sorting regroups.** Level and Slot headers sort with the candidate
+  tables' header control (`th[aria-sort]` around a
   `selection-sort-button` with the chevron indicator); clicking the active
   one flips its direction (the bands reverse), the other starts
-  ascending. Slot and Pick don't sort: a sort within a grouping would need
-  a second indicator. The chosen sort is remembered per browser in
-  localStorage (`4ecb.buildOverviewSort.v1`), as the library remembers
-  its sort; the candidate tables keep none. There is no hint line above
-  the table: the owner dropped "Grouped by level — select the Level or
+  ascending. Pick doesn't sort. The chosen sort is remembered per browser
+  in localStorage (`4ecb.buildOverviewSort.v1`, a stored `"category"`
+  from the first version reads as `"slot"`), as the library remembers its
+  sort; the candidate tables keep none. There is no hint line above the
+  table: the owner dropped "Grouped by level — select the Level or
   Category heading to regroup" (2026-11-16); the active header's
   indicator and the band titles say how it is grouped.
 - **By level** (the default) is the earlier view: a band per level, every
   row, the full history including retrains ("Toughness → Improved
   Initiative").
-- **By category:** a band per category, every category listed (an empty
-  one reads "Nothing in this category"), rows by level. It shows only what
+- **By slot:** a band per category, every category listed (an empty one
+  reads "Nothing in this category"), rows by level. The Powers band runs
+  in usage sub-bands, At-Will, Encounter, Daily, Utility (those with
+  rows), each by level: a lighter navy-tint row under the band, not a
+  band of its own (no toggle, no line); the band's toggle collapses them
+  with it, and each sub-band's rows are their own `<tbody>`. It shows only what
   the character has now (owner's option i): a pick a later retrain or swap
   traded away, or that came by one (the evaluator reports a replaced
   slot's pick as the replacement's occurrence), leaves its slot's row

@@ -6,7 +6,7 @@ import {
   type EvaluatedCharacter,
   type EvaluatedChoice,
 } from "@4ecb/rules-engine";
-import { classifyPowerEntity } from "@4ecb/sheet-model";
+import { classifyPowerEntity, type PowerCardTone } from "@4ecb/sheet-model";
 
 import { abilityAbbreviation } from "./ability-abbreviations";
 import type { BuilderIssueTarget } from "./builder-diagnostics";
@@ -42,22 +42,21 @@ import type { ChoiceAccordionStatus } from "./ChoiceAccordionItem";
  * The build overview (D113): every choice the character has made, one
  * section per level, built from the same evaluated choices, units, titles
  * and folded summaries as the Build tab (never re-derived). Each row also
- * carries its category (the kind of thing it picks) and what the character
- * still holds from it, so the tab can regroup by category (D113 amendment,
- * 2026-11-16).
+ * carries its category (the kind of thing it picks), a power's usage, and
+ * what the character still holds from it, so the tab can regroup by slot
+ * category (D113 amendment, 2026-11-16).
  */
 export type BuildOverviewGroupKind =
-  | "character"
-  | "ability-scores"
-  | "skills"
-  | "feats"
-  | "at-will"
-  | "encounter"
-  | "daily"
-  | "utility"
-  | "other";
+  "character" | "ability-scores" | "skills" | "feats" | "powers" | "other";
 
-/** What a row still gives the character, for the category grouping. */
+/** A power row's usage, from its card classification (`classifyPowerEntity`'s
+ *  tone): the Powers band's sub-groups. */
+export type BuildOverviewPowerUsage = Extract<
+  PowerCardTone,
+  "at-will" | "encounter" | "daily" | "utility"
+>;
+
+/** What a row still gives the character, for the slot grouping. */
 export interface BuildOverviewHeld {
   /** The folded picks the character still has (undefined: none chosen). */
   readonly picks: string | undefined;
@@ -71,6 +70,8 @@ export interface BuildOverviewRow {
   readonly level: number;
   /** The row's category: what kind of thing the slot picks. */
   readonly kind: BuildOverviewGroupKind;
+  /** A power row's usage (set exactly when `kind` is "powers"). */
+  readonly usage?: BuildOverviewPowerUsage;
   /** The slot, as its Build-tab heading reads ("Race", "Feat"…). */
   readonly title: string;
   /** The folded picks, or undefined when nothing is picked. */
@@ -99,7 +100,7 @@ export interface BuildOverviewLevel {
   readonly groups: readonly BuildOverviewGroup[];
 }
 
-/** The categories, in the order a level lists them and the category
+/** The categories, in the order a level lists them and the slot
  *  grouping's bands run. */
 export const BUILD_OVERVIEW_GROUPS: readonly {
   readonly kind: BuildOverviewGroupKind;
@@ -109,25 +110,25 @@ export const BUILD_OVERVIEW_GROUPS: readonly {
   { kind: "ability-scores", title: "Ability Scores" },
   { kind: "skills", title: "Skills" },
   { kind: "feats", title: "Feats" },
-  { kind: "at-will", title: "At-Will Powers" },
-  { kind: "encounter", title: "Encounter Powers" },
-  { kind: "daily", title: "Daily Powers" },
-  { kind: "utility", title: "Utility Powers" },
+  { kind: "powers", title: "Powers" },
   { kind: "other", title: "Features & Other" },
 ];
 
-const GROUP_TITLES = new Map(
-  BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => [kind, title]),
-);
+/** The Powers band's sub-groups, in the order they and a level's powers
+ *  run. */
+export const BUILD_OVERVIEW_POWER_USAGES: readonly {
+  readonly usage: BuildOverviewPowerUsage;
+  readonly title: string;
+}[] = [
+  { usage: "at-will", title: "At-Will" },
+  { usage: "encounter", title: "Encounter" },
+  { usage: "daily", title: "Daily" },
+  { usage: "utility", title: "Utility" },
+];
 
-/** A category's band and column title. */
-export function buildOverviewGroupTitle(kind: BuildOverviewGroupKind): string {
-  return GROUP_TITLES.get(kind) ?? kind;
-}
+const POWER_USAGES = BUILD_OVERVIEW_POWER_USAGES.map(({ usage }) => usage);
 
-function sectionKind(
-  section: LegacyChoiceSection,
-): BuildOverviewGroupKind | "powers" {
+function sectionKind(section: LegacyChoiceSection): BuildOverviewGroupKind {
   switch (section) {
     case "Class":
     case "Race":
@@ -149,18 +150,28 @@ function sectionKind(
   }
 }
 
-const POWER_TONE_KINDS: readonly BuildOverviewGroupKind[] = [
-  "at-will",
-  "encounter",
-  "daily",
-  "utility",
-];
+/** A row's category and, for a power, its usage. */
+interface RowKind {
+  readonly kind: BuildOverviewGroupKind;
+  readonly usage?: BuildOverviewPowerUsage;
+}
 
-/** A power's category from its card classification (sheet-model's
- *  `classifyPowerEntity`); a feature or unknown usage is Other. */
-function powerKind(entity: ContentEntity): BuildOverviewGroupKind {
+const OTHER: RowKind = { kind: "other" };
+
+/** A power's usage from its card classification (sheet-model's
+ *  `classifyPowerEntity`); undefined for a feature or unknown usage. */
+function powerUsage(
+  entity: ContentEntity,
+): BuildOverviewPowerUsage | undefined {
   const tone = classifyPowerEntity(entity).tone;
-  return POWER_TONE_KINDS.find((kind) => kind === tone) ?? "other";
+  return POWER_USAGES.find((usage) => usage === tone);
+}
+
+/** A power's category: Powers by usage; a feature or unknown usage is
+ *  Other. */
+function powerKind(entity: ContentEntity): RowKind {
+  const usage = powerUsage(entity);
+  return usage === undefined ? OTHER : { kind: "powers", usage };
 }
 
 /** The records a unit picked, else (nothing picked) the ones it offers. */
@@ -181,19 +192,21 @@ function unitEntities(
   });
 }
 
-/** A power slot's category: the first of at-will, encounter, daily and
+/** A power slot's usage: the first of at-will, encounter, daily and
  *  utility among its picks (else its offered powers); Other when none. */
 function powerUnitKind(
   unit: readonly EvaluatedChoice[],
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
-): BuildOverviewGroupKind {
+): RowKind {
   const ranks = unitEntities(unit, evaluation, byId).flatMap((entity) => {
     if (entity.type.trim().toLocaleLowerCase() !== "power") return [];
-    const rank = POWER_TONE_KINDS.indexOf(powerKind(entity));
-    return rank < 0 ? [] : [rank];
+    const usage = powerUsage(entity);
+    return usage === undefined ? [] : [POWER_USAGES.indexOf(usage)];
   });
-  return ranks.length === 0 ? "other" : POWER_TONE_KINDS[Math.min(...ranks)]!;
+  return ranks.length === 0
+    ? OTHER
+    : { kind: "powers", usage: POWER_USAGES[Math.min(...ranks)]! };
 }
 
 /** A retrain's category: the one of the kind of record it picked, as a
@@ -202,13 +215,13 @@ function retrainKind(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
-): BuildOverviewGroupKind {
+): RowKind {
   const picked = selectedDefinitionId(choice, evaluation);
   const entity =
     picked === undefined ? undefined : byId.get(picked.toLocaleLowerCase());
-  if (entity === undefined) return "other";
+  if (entity === undefined) return OTHER;
   const kind = sectionKind(legacyChoiceSection({ type: entity.type }));
-  return kind === "powers" ? powerKind(entity) : kind;
+  return kind === "powers" ? powerKind(entity) : { kind };
 }
 
 /**
@@ -378,15 +391,14 @@ function unitRow(
   return {
     key: unit[0]!.id,
     level,
-    kind:
-      kind === "powers"
-        ? powerUnitKind(unit, evaluation, byId)
-        : // A swap the level or a feat offers is filed by what it picks.
-          unit.length === 1 && unit[0]!.type === "Replacement"
-          ? unit[0]!.selectedOccurrenceId === undefined
-            ? powerUnitKind(unit, evaluation, byId)
-            : retrainKind(unit[0]!, evaluation, byId)
-          : kind,
+    ...(kind === "powers"
+      ? powerUnitKind(unit, evaluation, byId)
+      : // A swap the level or a feat offers is filed by what it picks.
+        unit.length === 1 && unit[0]!.type === "Replacement"
+        ? unit[0]!.selectedOccurrenceId === undefined
+          ? powerUnitKind(unit, evaluation, byId)
+          : retrainKind(unit[0]!, evaluation, byId)
+        : { kind }),
     title: abilityIncreases
       ? "Ability Increases"
       : powerSlotTitle(
@@ -509,7 +521,7 @@ function levelRows(context: Context): readonly BuildOverviewRow[] {
     rows.push({
       key: choice.id,
       level,
-      kind: retrainKind(choice, evaluation, byId),
+      ...retrainKind(choice, evaluation, byId),
       title: "Retraining",
       picks,
       status: presentationUnitStatus(
@@ -553,7 +565,13 @@ export function buildOverview(
     levels.push({
       level,
       groups: BUILD_OVERVIEW_GROUPS.flatMap(({ kind, title }) => {
-        const groupRows = rows.filter((row) => row.kind === kind);
+        const groupRows =
+          kind === "powers"
+            ? // A level's powers run by usage, then in the Build tab's order.
+              POWER_USAGES.flatMap((usage) =>
+                rows.filter((row) => row.kind === kind && row.usage === usage),
+              )
+            : rows.filter((row) => row.kind === kind);
         return groupRows.length === 0 ? [] : [{ kind, title, rows: groupRows }];
       }),
     });
@@ -561,8 +579,9 @@ export function buildOverview(
   return levels;
 }
 
-/** The Overview's sortable columns; sorting by one groups by it. */
-export type BuildOverviewSortColumn = "level" | "category";
+/** The Overview's sortable columns; sorting by one groups by it (by Slot:
+ *  by the slot's category). */
+export type BuildOverviewSortColumn = "level" | "slot";
 
 export interface BuildOverviewSort {
   readonly column: BuildOverviewSortColumn;
@@ -593,25 +612,37 @@ export function nextBuildOverviewSort(
 export interface BuildOverviewBandRow {
   readonly row: BuildOverviewRow;
   /** The picks this grouping shows: the row's history by level, what the
-   *  character holds now by category. */
+   *  character holds now by slot. */
   readonly picks: string | undefined;
   readonly note?: string;
 }
 
+/** A run of a band's rows, under a sub-heading when titled (the Powers
+ *  band's usages). */
+export interface BuildOverviewBandSection {
+  /** Unique across the bands ("level:3", "slot:powers:daily"). */
+  readonly key: string;
+  readonly title: string | undefined;
+  readonly rows: readonly BuildOverviewBandRow[];
+}
+
 export interface BuildOverviewBand {
-  /** Unique across both groupings ("level:3", "category:feats"). */
+  /** Unique across both groupings ("level:3", "slot:feats"). */
   readonly key: string;
   readonly title: string;
-  readonly rows: readonly BuildOverviewBandRow[];
+  /** One untitled section, except a Powers band with rows: a titled
+   *  section per usage that has rows. */
+  readonly sections: readonly BuildOverviewBandSection[];
 }
 
 /**
  * The Overview's bands for a sort. By level: a band per level, its rows in
  * the overview's order, every row (the full history, retrains included). By
- * category: a band per category, every category listed, its rows by level
- * and showing only what the character has now (a traded-away pick has no
- * row; its replacement's row notes what it replaced). The direction orders
- * the bands.
+ * slot: a band per category, every category listed, its rows by level and
+ * showing only what the character has now (a traded-away pick has no row;
+ * its replacement's row notes what it replaced); the Powers band runs in
+ * usage sub-groups (At-Will, Encounter, Daily, Utility), each by level. The
+ * direction orders the bands.
  */
 export function buildOverviewBands(
   levels: readonly BuildOverviewLevel[],
@@ -619,44 +650,75 @@ export function buildOverviewBands(
 ): readonly BuildOverviewBand[] {
   const bands: BuildOverviewBand[] =
     sort.column === "level"
-      ? levels.map(({ level, groups }) => ({
-          key: `level:${level}`,
-          title: `Level ${level}`,
-          rows: groups.flatMap((group) =>
-            group.rows.map((row) => ({ row, picks: row.picks })),
-          ),
-        }))
-      : BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => ({
-          key: `category:${kind}`,
-          title,
+      ? levels.map(({ level, groups }) => {
+          const key = `level:${level}`;
+          return {
+            key,
+            title: `Level ${level}`,
+            sections: [
+              {
+                key,
+                title: undefined,
+                rows: groups.flatMap((group) =>
+                  group.rows.map((row) => ({ row, picks: row.picks })),
+                ),
+              },
+            ],
+          };
+        })
+      : BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => {
+          const key = `slot:${kind}`;
           // Levels are already in order, so this keeps the build order.
-          rows: levels.flatMap(({ groups }) =>
+          const rows = levels.flatMap(({ groups }) =>
             groups.flatMap((group) =>
-              group.kind !== kind
-                ? []
-                : group.rows.flatMap((row) =>
-                    row.held === undefined
-                      ? []
-                      : [
-                          {
-                            row,
-                            picks: row.held.picks,
-                            ...(row.held.note === undefined
-                              ? {}
-                              : { note: row.held.note }),
-                          },
-                        ],
-                  ),
+              group.kind !== kind ? [] : group.rows.flatMap(heldBandRow),
             ),
-          ),
-        }));
+          );
+          return {
+            key,
+            title,
+            sections:
+              kind !== "powers" || rows.length === 0
+                ? [{ key, title: undefined, rows }]
+                : BUILD_OVERVIEW_POWER_USAGES.flatMap(
+                    ({ usage, title: usageTitle }) => {
+                      const usageRows = rows.filter(
+                        ({ row }) => row.usage === usage,
+                      );
+                      return usageRows.length === 0
+                        ? []
+                        : [
+                            {
+                              key: `${key}:${usage}`,
+                              title: usageTitle,
+                              rows: usageRows,
+                            },
+                          ];
+                    },
+                  ),
+          };
+        });
   return sort.direction === "ascending" ? bands : bands.reverse();
+}
+
+/** A row as the slot grouping shows it: what the character holds now. */
+function heldBandRow(row: BuildOverviewRow): readonly BuildOverviewBandRow[] {
+  return row.held === undefined
+    ? []
+    : [
+        {
+          row,
+          picks: row.held.picks,
+          ...(row.held.note === undefined ? {} : { note: row.held.note }),
+        },
+      ];
 }
 
 export const BUILD_OVERVIEW_SORT_STORAGE_KEY = "4ecb.buildOverviewSort.v1";
 
-/** The remembered grouping (as the library remembers its sort); anything
- *  unreadable falls back to by level. */
+/** The remembered grouping (as the library remembers its sort; a stored
+ *  "category" is the slot grouping's earlier name); anything unreadable
+ *  falls back to by level. */
 export function readBuildOverviewSort(
   storage?: Pick<Storage, "getItem">,
 ): BuildOverviewSort {
@@ -669,9 +731,11 @@ export function readBuildOverviewSort(
     if (typeof value !== "object" || value === null)
       return DEFAULT_BUILD_OVERVIEW_SORT;
     const { column, direction } = value as Record<string, unknown>;
-    return (column === "level" || column === "category") &&
-      (direction === "ascending" || direction === "descending")
-      ? { column, direction }
+    if (direction !== "ascending" && direction !== "descending")
+      return DEFAULT_BUILD_OVERVIEW_SORT;
+    if (column === "level" || column === "slot") return { column, direction };
+    return column === "category"
+      ? { column: "slot", direction }
       : DEFAULT_BUILD_OVERVIEW_SORT;
   } catch {
     return DEFAULT_BUILD_OVERVIEW_SORT;
