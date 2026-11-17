@@ -64,6 +64,16 @@ Follow-ups (same day, cache `evaluated-character-v130`):
   "attack" and class role sentences deliberately unchanged. Known fit
   issue: Crystal of Ebon Flame, Rod of Convergence and Rod of Kruthik
   Command overflow at 6 pt on their rules alone.
+- **Equipment page** (D099 amendment; `615e965e`, `4870766b`): the
+  existing `reference:items` section (currency, worn/held and carried
+  items, proficiencies) prints by default as its own "Equipment" page,
+  second after the overview so duplex backs page 1 (legacy's default
+  sheet had equipment and coins on page 2). Spills to a second page on
+  9/58 sample saves (Letter), mostly long carried lists. Long coin counts
+  shrink to fit their tile (`2b4b04b2`).
+- **Overview table** (D113 amendment, `b1cb8e8a`): one table, Level |
+  Category | Slot | Pick, regrouped by its sorted column (remembered);
+  by Category it shows current picks with "(replaced X at LN)".
 
 ## Evaluated snapshots in .4ecb exports (2026-11-13)
 

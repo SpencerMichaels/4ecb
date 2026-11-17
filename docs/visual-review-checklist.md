@@ -1786,6 +1786,15 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     bands, text overlaps or the table scrolls sideways at 140% zoom, the
     hover tint or stripes differ from the candidate tables, the band rows
     pick up stripes, or the header labels are hard to read in dark theme.
+- [ ] **Long coin counts fit their tile.** Added 2026-11-16 (`2b4b04b2`).
+  - **Where:** oleander_9 `?preview=1`, Equipment page Currency pane
+    (Letter and A4); any builder's sidebar Funds at 140% zoom: double-click
+    a coin, type 1234567, Enter; dark theme.
+  - **Expect:** stored GP "17,689" on one line, slightly smaller, Stored
+    tiles as tall as Carried; the typed count shrinks to one line while
+    typing and after saving.
+  - **Wrong if:** a second line, a taller tile, clipped digits, or the
+    funds grid changing height.
 
 ## Decisions
 
