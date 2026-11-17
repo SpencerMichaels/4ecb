@@ -68,12 +68,17 @@ Follow-ups (same day, cache `evaluated-character-v130`):
   existing `reference:items` section (currency, worn/held and carried
   items, proficiencies) prints by default as its own "Equipment" page,
   second after the overview so duplex backs page 1 (legacy's default
-  sheet had equipment and coins on page 2). Spills to a second page on
-  9/58 sample saves (Letter), mostly long carried lists. Long coin counts
-  shrink to fit their tile (`2b4b04b2`).
-- **Overview table** (D113 amendment, `b1cb8e8a`): one table, Level |
-  Category | Slot | Pick, regrouped by its sorted column (remembered);
-  by Category it shows current picks with "(replaced X at LN)".
+  sheet had equipment and coins on page 2). Proficiencies are compact
+  run-in kinds directly under Currency (`cf2d6fd1`, `88b8c6f0`); with
+  "Merge carried and stored funds" (now passed to the sheet, `6f1a916c`)
+  the wallet is one summed set of coin tiles, half-width beside
+  Proficiencies. Spill on the 58 sample saves: merged 0 (Letter and A4);
+  separate 3 Letter, 2 A4 (was 9 and 7). Long coin counts shrink to fit
+  their tile (`2b4b04b2`).
+- **Overview table** (D113 amendment; `b1cb8e8a`, `ffce69cf`,
+  `2099b4ec`, `7f65d064`): one table, Level | Category | Pick, regrouped
+  by its sorted column (remembered); by Category it shows current picks
+  with "(replaced X at LN)", Powers by level with usages intermixed.
 
 ## Evaluated snapshots in .4ecb exports (2026-11-13)
 
