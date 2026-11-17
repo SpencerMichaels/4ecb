@@ -3238,6 +3238,11 @@ describe("real-data sheet overview", () => {
     ).toMatch(
       /\.ov-wallet-groups\.is-merged \{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
     );
+    expect(
+      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
+    ).toMatch(
+      /\.ov-wallet-groups\.is-merged > \.stat-group \{[^}]*border: 0;[^}]*padding: 0;/,
+    );
   });
   it("restarts inventory stripes per category and uses quantity prefixes with a blank for one", () => {
     const fixture = {

@@ -599,6 +599,11 @@ body:has(.sp-prototype) {
 .ov-wallet-groups.is-merged {
   grid-template-columns: minmax(0, 1fr);
 }
+/* The lone wallet needs no frame of its own inside the Currency pane. */
+.ov-wallet-groups.is-merged > .stat-group {
+  border: 0;
+  padding: 0;
+}
 .ov-funds-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

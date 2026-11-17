@@ -1806,7 +1806,7 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     print dialog), once with Settings → "Merge carried and stored funds"
     on (the default) and once off.
   - **Expect (merged):** one row at the top: a half-width Currency pane
-    whose coin tiles sit right under its header, no "Funds" or
+    whose coin tiles sit right under its header with no inner frame, no "Funds" or
     "Carried" heading (carried plus stored for each coin: oleander_9 GP
     17,778, the count shrunk to one line in its tile) and
     Proficiencies in the other half, both panes the row's height; then
