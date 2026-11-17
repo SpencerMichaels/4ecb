@@ -525,7 +525,7 @@ body:has(.sp-prototype) {
 }
 /* Proficiencies flow as run-in kinds ("Armor: cloth, leather   Weapons: …"),
    as many to a line as fit; a kind too long for one line wraps hanging under
-   its label. Each kind stays one flex item, so the probe can measure it. */
+   its label. */
 .ov-run-in-parts {
   display: flex;
   flex-wrap: wrap;

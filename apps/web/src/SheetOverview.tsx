@@ -2015,6 +2015,8 @@ export interface ReferenceEntry {
   level?: number;
   feature?: boolean;
   currency?: readonly SheetValue[];
+  /** Proficiencies, stacked under the Currency pane (with `currency`). */
+  proficiencies?: ReferenceEntry;
   reminder?: ReminderEntry;
   inventoryColumns?: readonly (readonly ReferencePart[])[];
   encumbrance?: CharacterSheetModel["encumbrance"];
@@ -2325,10 +2327,12 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         })),
       });
   }
+  const equipped = result.find((entry) => entry.id === "inventory:true")!;
   // Proficiencies are mostly applied automatically and rarely looked up, so
-  // they follow the inventory rather than taking page-1 space.
+  // they sit on the Equipment page rather than taking page-1 space: under
+  // Currency, above the item lists, whose length varies.
   if (model.proficiencies?.length)
-    result.push({
+    equipped.proficiencies = {
       id: "proficiencies",
       name: "Proficiencies",
       group: "Equipment",
@@ -2336,8 +2340,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       parts: model.proficiencies.flatMap(({ kind, values }) =>
         referenceParts(values.join(", "), kind),
       ),
-    });
-  const equipped = result.find((entry) => entry.id === "inventory:true")!;
+    };
   // Ordinary open slots remain useful lookup rows. Conditional implement and
   // companion slots appear only when represented in the actual loadout.
   const occupiedParts = equipped.parts;
@@ -2614,7 +2617,7 @@ function ReferenceCard({
   inventoryEndRule?: boolean;
 }) {
   if (entry.currency) {
-    const { currency, ...loadout } = entry;
+    const { currency, proficiencies, ...loadout } = entry;
     const wallet = referenceCurrency(currency);
     return (
       <div
@@ -2654,6 +2657,9 @@ function ReferenceCard({
             ))}
           </div>
         </section>
+        {proficiencies ? (
+          <ReferenceCard entry={proficiencies} measure={measure} nested />
+        ) : null}
         <ReferenceCard entry={loadout} measure={measure} nested />
       </div>
     );
@@ -3486,8 +3492,12 @@ function ReferencePages({
         Array.from(
           container.querySelectorAll<HTMLElement>(".ov-reference-card"),
         ).map((card) => {
+          // Proficiencies, stacked under Currency, count as the stack's
+          // fixed overhead like Currency, not as loadout rows.
           const measuredParts = Array.from(
-            card.querySelectorAll<HTMLElement>(".ov-reference-part"),
+            card.querySelectorAll<HTMLElement>(
+              ".ov-reference-part:not(.ov-run-in-parts > *)",
+            ),
           );
           if (card.querySelector(".ov-inventory-columns"))
             measuredParts.sort(
@@ -3498,19 +3508,6 @@ function ReferencePages({
           let heights = measuredParts.map(
             (part) => part.getBoundingClientRect().height,
           );
-          // Run-in parts share lines, so each counts only the height it adds
-          // below the parts before it; the sum is the body's real height.
-          if (card.querySelector(".ov-run-in-parts")) {
-            let bottom = measuredParts[0]?.getBoundingClientRect().top ?? 0;
-            heights = measuredParts.map((part) => {
-              const added = Math.max(
-                0,
-                part.getBoundingClientRect().bottom - bottom,
-              );
-              bottom = Math.max(bottom, part.getBoundingClientRect().bottom);
-              return added;
-            });
-          }
           if (card.querySelector(".ov-equipped-columns")) {
             const paired = new Map<number, number>();
             measuredParts.forEach((part) => {

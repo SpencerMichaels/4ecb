@@ -176,7 +176,7 @@ describe("real-data sheet overview", () => {
       }),
     );
   });
-  it("lists proficiencies by kind after the inventory and names sub-choices", () => {
+  it("stacks proficiencies by kind under Currency and names sub-choices", () => {
     const fixture = {
       ...model,
       proficiencies: [
@@ -223,9 +223,11 @@ describe("real-data sheet overview", () => {
     expect(items.map((entry) => entry.id)).toEqual([
       "inventory:true",
       "inventory:false",
-      "proficiencies",
     ]);
-    expect(items[2]!.parts.map((part) => [part.label, part.block])).toEqual([
+    expect(items[0]!.currency).toBeDefined();
+    expect(
+      items[0]!.proficiencies?.parts.map((part) => [part.label, part.block]),
+    ).toEqual([
       ["Armor", { kind: "paragraph", text: "cloth, leather" }],
       ["Weapons", { kind: "paragraph", text: "simple melee, pact blade" }],
     ]);
@@ -233,8 +235,9 @@ describe("real-data sheet overview", () => {
       "Other Ancestry",
     );
     expect(
-      references(model).some((entry) => entry.id === "proficiencies"),
-    ).toBe(false);
+      references(model).find((entry) => entry.id === "inventory:true")
+        ?.proficiencies,
+    ).toBeUndefined();
     const html = renderToStaticMarkup(
       <SheetOverview
         hiddenSections={EVERY_SECTION}
@@ -250,6 +253,18 @@ describe("real-data sheet overview", () => {
     expect(html).toContain("Former life: Other Ancestry</strong>");
     // Proficiencies are compact: run-in "Armor: cloth, leather" kinds that
     // flow several to a line, not a label line above each value line.
+    // Currency, then Proficiencies, then the loadout: never under the
+    // item lists, whose length varies.
+    const stack = html.slice(html.indexOf("ov-equipment-stack"));
+    expect(stack.indexOf("Currency</h3>")).toBeLessThan(
+      stack.indexOf('data-reference-id="proficiencies"'),
+    );
+    expect(stack.indexOf('data-reference-id="proficiencies"')).toBeLessThan(
+      stack.indexOf("Worn/Held Items</h3>"),
+    );
+    expect(html.indexOf('data-reference-id="proficiencies"')).toBeLessThan(
+      html.indexOf("Carried Items</h3>"),
+    );
     const proficiencies = html.slice(
       html.indexOf('data-reference-id="proficiencies"'),
     );
