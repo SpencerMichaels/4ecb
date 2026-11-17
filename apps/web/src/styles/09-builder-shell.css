@@ -10,7 +10,6 @@
 }
 .builder-sidebar .funds-pane .stat-tile dd {
   font-size: 1.15em;
-  overflow-wrap: anywhere;
 }
 /* The top-right funds tile is a field (type "-15 gp" or "20pp", then Enter)
    that fills its cell with the tile tint and square edges, like a coin tile. */

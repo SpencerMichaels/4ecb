@@ -95,6 +95,11 @@ import {
 } from "./known-records-ui";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
+import {
+  STAT_TILE_FIT_CLASS,
+  STAT_VALUE_FIT_CLASS,
+  statValueFit,
+} from "./StatTiles";
 import { useArmedAction } from "./useArmedAction";
 import { useFittedTableHeight } from "./use-fitted-table-height";
 import { useReviewLanding, type ReviewLanding } from "./review-landing";
@@ -776,15 +781,20 @@ function FundsPane({
 
   const coinTile = (denomination: keyof CurrencyAmount) => {
     const delta = walletPulse.deltas[denomination];
+    const count = totalWallet[denomination].toLocaleString("en-US");
     return (
       <div
         // A new key per change restarts the pulse and the floating amount.
         key={`${denomination}-${delta === undefined ? 0 : walletPulse.generation}`}
-        className={`stat-tile funds-coin-tile${
+        className={`stat-tile ${STAT_TILE_FIT_CLASS} funds-coin-tile${
           delta === undefined
             ? ""
             : ` is-adjusted is-${delta < 0 ? "decrease" : "increase"}`
         }`}
+        // A long count shrinks to stay on one line, also while it is edited.
+        style={statValueFit(
+          editing?.coin === denomination ? editing.draft : count,
+        )}
         // The whole tile, not just its digits, starts editing on double-click.
         onDoubleClick={() => {
           if (editing?.coin !== denomination) startCoinEdit(denomination);
@@ -796,7 +806,7 @@ function FundsPane({
             <input
               aria-label={`${DENOMINATION_NAMES[denomination]} coins`}
               autoFocus
-              className="funds-coin-input"
+              className={`funds-coin-input ${STAT_VALUE_FIT_CLASS}`}
               inputMode="numeric"
               value={editing.draft}
               onBlur={commitCoinEdit}
@@ -819,8 +829,8 @@ function FundsPane({
             />
           ) : (
             <button
-              aria-label={`${DENOMINATION_NAMES[denomination]}: ${totalWallet[denomination].toLocaleString("en-US")}. Double-click or press Enter to edit`}
-              className="funds-coin-value"
+              aria-label={`${DENOMINATION_NAMES[denomination]}: ${count}. Double-click or press Enter to edit`}
+              className={`funds-coin-value ${STAT_VALUE_FIT_CLASS}`}
               title="Double-click to edit"
               type="button"
               onKeyDown={(event) => {

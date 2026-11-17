@@ -923,7 +923,7 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace).not.toContain('aria-label="Edit funds"');
     expect(equipmentWorkspace).not.toContain("function WalletDialog");
     expect(equipmentWorkspace).toContain(
-      "className={`stat-tile funds-coin-tile",
+      "className={`stat-tile ${STAT_TILE_FIT_CLASS} funds-coin-tile",
     );
     expect(equipmentWorkspace).toContain("startCoinEdit(denomination)");
     expect(equipmentWorkspace).toContain(

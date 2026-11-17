@@ -98,3 +98,15 @@
   margin: 0 0 0.5em;
   padding-left: 0.3em;
 }
+/* A value that can outgrow its tile (a coin count) shrinks with its length
+   instead of wrapping: the tile is a size container, and the value's font is
+   its usual size or the tile's width over its character count, whichever is
+   smaller (0.6em per character covers bold tabular digits; `statValueFit`
+   counts a comma as half). The line box keeps the tile's usual height. */
+.stat-tile-fit {
+  container-type: inline-size;
+}
+.stat-tile-fit .stat-value-fit {
+  font-size: min(1em, 100cqi / (var(--stat-value-chars, 1) * 0.6));
+  white-space: nowrap;
+}

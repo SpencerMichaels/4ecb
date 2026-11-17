@@ -2641,6 +2641,7 @@ function ReferenceCard({
                   values={wallet.rows.map((row) => ({
                     label: row[0] ?? "",
                     value: row[column + 1] ?? "",
+                    fit: true,
                   }))}
                 />
               ))}

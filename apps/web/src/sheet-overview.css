@@ -576,13 +576,11 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.08in;
 }
-/* Shared stat tiles at 8pt with 16pt values. */
+/* Shared stat tiles at 8pt with 16pt values; a long count shrinks to stay
+   on one line (`fit`, stat-tiles.css). */
 .ov-wallet-group {
   --stat-value-size: 2em;
   font-size: 8pt;
-}
-.ov-wallet-group .stat-tile dd {
-  overflow-wrap: anywhere;
 }
 .ov-wallet-group.is-empty {
   opacity: 0.5;
