@@ -4676,6 +4676,58 @@ tables"):
   restart under every band as the Overview's do. Selected rows and the
   hover tint draw over the stripes.
 
+Amendment (2026-11-16, owner decision: "one sortable table that regroups
+by its sort column", sub-tabs rejected as clunky):
+
+- **One table.** The Overview is one table with the columns Level,
+  Category, Slot, Pick and the status mark. Category is the row's kind,
+  in a fixed order: Character (the Class, Race, Background and Theme
+  tabs' choices and the Details tab's: build preset, class, paragon path,
+  epic destiny, race, background, theme, deity, gender, alignment…),
+  Ability Scores (the point-buy row, racial bonus, increases), Skills,
+  Feats, At-Will, Encounter, Daily and Utility Powers (from the picks',
+  else the offered powers', `classifyPowerEntity` tone; a feature or
+  unknown usage is Other), then Features & Other (companion, the Other
+  tab's choices). A retrain, or a swap the level or a feat offers, is
+  filed by what it picks, as a choice of that record's type would be (a
+  power by usage, a theme under Character). `BuildOverviewGroupKind`
+  carries the nine categories; each row also carries its `level`, `kind`
+  and `held` (below). Rows within a level run by category, then in the
+  Build tab's order (the old Other group's Ability Scores and Skills now
+  sort ahead of Feats, the Details tab's choices with Character).
+- **Sorting regroups.** Level and Category headers sort with the
+  candidate tables' header control (`th[aria-sort]` around a
+  `selection-sort-button` with the chevron indicator); clicking the active
+  one flips its direction (the bands reverse), the other starts
+  ascending. Slot and Pick don't sort: a sort within a grouping would need
+  a second indicator. The chosen sort is remembered per browser in
+  localStorage (`4ecb.buildOverviewSort.v1`), as the library remembers
+  its sort; the candidate tables keep none. A muted hint above the table
+  ("Grouped by level — select the Level or Category heading to regroup")
+  says it, since an inactive header shows no indicator.
+- **By level** (the default) is the earlier view: a band per level, every
+  row, the full history including retrains ("Toughness → Improved
+  Initiative").
+- **By category:** a band per category, every category listed (an empty
+  one reads "Nothing in this category"), rows by level. It shows only what
+  the character has now (owner's option i): a pick a later retrain or swap
+  traded away, or that came by one (the evaluator reports a replaced
+  slot's pick as the replacement's occurrence), leaves its slot's row
+  (the row goes when it holds nothing else), and the replacement's row
+  reads its new pick with a small muted note, "Reaping Strike (replaced
+  Cleave at L4)", at the level it was gained. The names come from
+  `builder-ui.ts` `replacementPickNames`, the Build tab's "old → new"
+  source (`replacementPickSummary` now formats it); `replacedDefinitionId`
+  also finds a traded-away retrain's pick in `replacedSelections`.
+- **Unchanged:** rows open their choice like an issue's Review (the Slot
+  cell's button is the row's one focus stop; a click anywhere on the row
+  does the same), each band's rows are a `<tbody>` of their own so the
+  shared stripes restart under every band, bands collapse and aren't
+  remembered, the loading state and no evaluation of its own. Column
+  widths are fixed and narrow under the `builder-tab` container query
+  (42rem), so 140% zoom and the parked sidebar keep the picks lined up.
+  `buildOverviewBands` (build-overview.ts) shapes either grouping.
+
 ### D114 — Rituals are learned in the Shop and listed in the Inventory
 
 Status: accepted (2026-11-05). Supersedes the Rituals tab of the known

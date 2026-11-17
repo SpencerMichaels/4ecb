@@ -32,8 +32,8 @@ describe("table row stripes", () => {
       expect(base?.[0]).toContain(`${table} tbody tr`);
       expect(stripe?.[0]).toContain(`${table} tbody tr:nth-child(even)`);
     }
-    expect(base?.[0]).toContain(".build-overview-group > li");
-    expect(stripe?.[0]).toContain(".build-overview-group > li.is-striped");
+    expect(base?.[0]).toContain(".build-overview-rows > tr");
+    expect(stripe?.[0]).toContain(".build-overview-rows > tr:nth-child(even)");
     expect(base?.[1]).toMatch(/background: var\(--surface\);/);
     expect(stripe?.[1]).toMatch(/background: var\(--surface-subtle\);/);
     // No builder or library table keeps a stripe rule of its own (sheet
@@ -67,7 +67,7 @@ describe("table row stripes", () => {
     for (const hover of [
       ".equipment-table-scroll tbody tr.table-clickable-row:hover > :is(th, td)",
       ".retraining-levels tbody tr.table-clickable-row:hover > td",
-      ".build-overview-row:hover",
+      ".build-overview-rows > tr.build-overview-choice:hover > td",
     ])
       expect(
         rules.some(

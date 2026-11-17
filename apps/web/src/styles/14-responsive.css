@@ -310,6 +310,19 @@
     overflow-y: visible;
     position: static;
   }
+
+  /* The Overview's fixed columns (10-builder-choices.css). */
+  .build-overview-col-level {
+    width: 3.6rem;
+  }
+
+  .build-overview-col-category {
+    width: 6.5rem;
+  }
+
+  .build-overview-col-slot {
+    width: 8.5rem;
+  }
 }
 
 @container builder-tab (min-width: 42.01rem) {

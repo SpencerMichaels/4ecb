@@ -2830,7 +2830,8 @@ export function powerSwapPresentation(
   };
 }
 
-/** The definition a filled replacement gave up, if known. */
+/** The definition a filled replacement gave up, if known, also when that pick
+ *  was itself a replacement a later one traded away. */
 export function replacedDefinitionId(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
@@ -2842,22 +2843,24 @@ export function replacedDefinitionId(
       ?.definitionId ??
     choice.replacementOptions?.find(
       (option) => option.replacesOccurrenceId === selected.replacesId,
-    )?.definitionId
+    )?.definitionId ??
+    evaluation.replacedSelections?.find(({ id }) => id === selected.replacesId)
+      ?.definitionId
   );
 }
 
 /**
- * A filled replacement as "Replaced → New" (just the new pick when the
- * replaced definition is unknown); undefined while unfilled. The saved
- * build's own pick for this slot wins when given; the evaluation reports the
- * same pick, from `replacedSelections` once a later swap traded it away.
+ * A filled replacement's names: what it gave up (undefined when unknown)
+ * and what it picked; undefined while unfilled. The saved build's own pick
+ * for this slot wins when given; the evaluation reports the same pick, from
+ * `replacedSelections` once a later swap traded it away.
  */
-export function replacementPickSummary(
+export function replacementPickNames(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
   build?: CharacterBuild,
-): string | undefined {
+): { readonly from: string | undefined; readonly to: string } | undefined {
   const selected = selectedOccurrence(choice, evaluation);
   if (selected === undefined) return undefined;
   const name = (definitionId: string) =>
@@ -2887,10 +2890,30 @@ export function replacementPickSummary(
     direct?.identity.definitionId !== undefined &&
     directReplaced?.identity.definitionId !== undefined
   )
-    return `${name(directReplaced.identity.definitionId)} → ${name(direct.identity.definitionId)}`;
+    return {
+      from: name(directReplaced.identity.definitionId),
+      to: name(direct.identity.definitionId),
+    };
   const replacedId = replacedDefinitionId(choice, evaluation);
-  const to = name(selected.definitionId);
-  return replacedId === undefined ? to : `${name(replacedId)} → ${to}`;
+  return {
+    from: replacedId === undefined ? undefined : name(replacedId),
+    to: name(selected.definitionId),
+  };
+}
+
+/**
+ * A filled replacement as "Replaced → New" (just the new pick when the
+ * replaced definition is unknown); undefined while unfilled.
+ */
+export function replacementPickSummary(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+  build?: CharacterBuild,
+): string | undefined {
+  const names = replacementPickNames(choice, evaluation, byId, build);
+  if (names === undefined) return undefined;
+  return names.from === undefined ? names.to : `${names.from} → ${names.to}`;
 }
 
 export function contextualChoiceTitle(

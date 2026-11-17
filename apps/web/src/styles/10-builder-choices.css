@@ -443,77 +443,110 @@
   color: var(--warning);
 }
 
-/* The Overview tab (D113): a section per level under the Inventory's
-   collapsible group band (`table-section-row`, primitives.css), its choices
-   as rows shaped like a folded accordion heading (title, picks, status),
-   which open the choice on its tab. Titles share one column so the picks
-   line up. The band is the only line: rows and kind groups have none, and
-   the rows sit flush under it in the candidate tables' alternating stripes
-   and hover tint (11-selection-tables.css), so a gap between groups would
-   break the stripe rhythm. */
+/* The Overview tab (D113): one table (Level, Category, Slot, Pick, status)
+   whose bands are the Inventory's collapsible group band
+   (`table-section-row`, primitives.css): a band per level or per category,
+   by the sort column (D113 amendment, 2026-11-16). The header row is the
+   candidate tables' (their sort control and indicator,
+   `.selection-sort-button` below). The band is the only line: rows have
+   none and sit flush under it in the candidate tables' alternating stripes
+   and hover tint (11-selection-tables.css). Fixed column widths keep the
+   picks lined up across bands; they narrow with the tab (14-responsive.css). */
 .build-overview {
   display: grid;
-  gap: 1.1rem;
+  gap: 0.6rem;
 }
 
-.build-overview-level {
-  display: grid;
-}
-
-.build-overview-level-heading {
+.build-overview-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
   margin: 0;
 }
 
-.build-overview-level-choices {
-  display: grid;
+.build-overview-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
 }
 
-.build-overview-level-choices[hidden] {
+.build-overview-col-level {
+  width: 4.5rem;
+}
+
+.build-overview-col-category {
+  width: 10rem;
+}
+
+.build-overview-col-slot {
+  width: 14rem;
+}
+
+.build-overview-col-status {
+  width: 2.2rem;
+}
+
+.build-overview-table thead th {
+  background: var(--legacy-neutral);
+  font-size: 0.72rem;
+  letter-spacing: 0.035em;
+  padding: 0.45rem 0.8rem;
+  text-align: left;
+  text-transform: uppercase;
+  vertical-align: bottom;
+}
+
+.build-overview-rows[hidden] {
   display: none;
+}
+
+.build-overview-rows td {
+  overflow-wrap: anywhere;
+  padding: 0.45rem 0.8rem;
+  text-align: left;
+  vertical-align: baseline;
 }
 
 .build-overview-none {
   color: var(--muted);
   font-weight: 600;
-  margin: 0;
-  padding: 0.45rem 0.8rem;
 }
 
-.build-overview-group {
-  display: grid;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.build-overview-cell-level,
+.build-overview-cell-category {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.build-overview-cell-level {
+  font-variant-numeric: tabular-nums;
 }
 
 .build-overview-row {
-  align-items: baseline;
   background: transparent;
   border: 0;
   border-radius: 0;
   color: var(--text);
-  column-gap: 0.75rem;
-  display: grid;
   font: inherit;
-  grid-template-columns: minmax(7rem, 15rem) minmax(0, 1fr) 1rem;
-  padding: 0.45rem 0.8rem;
-  text-align: left;
-  width: 100%;
-}
-
-.build-overview-title {
   font-weight: 800;
   overflow-wrap: anywhere;
+  padding: 0;
+  text-align: left;
 }
 
 .build-overview-picks {
   color: var(--muted);
   font-weight: 600;
-  overflow-wrap: anywhere;
 }
 
-.build-overview-row > .choice-accordion-status {
-  align-self: center;
+/* "(replaced Cleave at L4)" after a retrain's pick, by category. */
+.build-overview-note {
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.build-overview-rows td.build-overview-status {
+  padding-inline: 0 0.8rem;
+  vertical-align: middle;
 }
 
 .choice-accordion-status .icon {

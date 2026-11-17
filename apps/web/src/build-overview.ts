@@ -12,6 +12,7 @@ import { abilityAbbreviation } from "./ability-abbreviations";
 import type { BuilderIssueTarget } from "./builder-diagnostics";
 import {
   abilityScoreAdjustment,
+  accordionPicksSummary,
   choicesAtLevel,
   contextualChoiceTitle,
   isAbilityIncreaseChoiceType,
@@ -27,8 +28,11 @@ import {
   presentationUnitTitle,
   presentLevelChoices,
   primaryLevelBuildChoices,
+  legacyChoiceSection,
+  replacementPickNames,
   replacementPickSummary,
   selectedDefinitionId,
+  selectedOccurrence,
   type LegacyChoiceSection,
   type LevelChoicePresentation,
 } from "./builder-ui";
@@ -37,13 +41,36 @@ import type { ChoiceAccordionStatus } from "./ChoiceAccordionItem";
 /**
  * The build overview (D113): every choice the character has made, one
  * section per level, built from the same evaluated choices, units, titles
- * and folded summaries as the Build tab (never re-derived).
+ * and folded summaries as the Build tab (never re-derived). Each row also
+ * carries its category (the kind of thing it picks) and what the character
+ * still holds from it, so the tab can regroup by category (D113 amendment,
+ * 2026-11-16).
  */
-export type BuildOverviewGroupKind = "character" | "feats" | "powers" | "other";
+export type BuildOverviewGroupKind =
+  | "character"
+  | "ability-scores"
+  | "skills"
+  | "feats"
+  | "at-will"
+  | "encounter"
+  | "daily"
+  | "utility"
+  | "other";
+
+/** What a row still gives the character, for the category grouping. */
+export interface BuildOverviewHeld {
+  /** The folded picks the character still has (undefined: none chosen). */
+  readonly picks: string | undefined;
+  /** "replaced Cleave at L4" when the row is a retrain or swap. */
+  readonly note?: string;
+}
 
 export interface BuildOverviewRow {
-  /** Stable within the level: the unit's first choice id, or a fixed key. */
+  /** Stable within the overview: the unit's first choice id, or a fixed key. */
   readonly key: string;
+  readonly level: number;
+  /** The row's category: what kind of thing the slot picks. */
+  readonly kind: BuildOverviewGroupKind;
   /** The slot, as its Build-tab heading reads ("Race", "Feat"…). */
   readonly title: string;
   /** The folded picks, or undefined when nothing is picked. */
@@ -51,6 +78,13 @@ export interface BuildOverviewRow {
   readonly status: ChoiceAccordionStatus | undefined;
   /** Where activating the row lands (an issue Review's target). */
   readonly target: BuilderIssueTarget;
+  /**
+   * What the character has now from this row: its picks without the ones a
+   * later retrain or swap traded away, or that came by a retrain or swap
+   * (those show on the replacement's own row); undefined when it holds none
+   * of what it picked.
+   */
+  readonly held: BuildOverviewHeld | undefined;
 }
 
 export interface BuildOverviewGroup {
@@ -65,23 +99,46 @@ export interface BuildOverviewLevel {
   readonly groups: readonly BuildOverviewGroup[];
 }
 
+/** The categories, in the order a level lists them and the category
+ *  grouping's bands run. */
 export const BUILD_OVERVIEW_GROUPS: readonly {
   readonly kind: BuildOverviewGroupKind;
   readonly title: string;
 }[] = [
   { kind: "character", title: "Character" },
+  { kind: "ability-scores", title: "Ability Scores" },
+  { kind: "skills", title: "Skills" },
   { kind: "feats", title: "Feats" },
-  { kind: "powers", title: "Powers" },
-  { kind: "other", title: "Other" },
+  { kind: "at-will", title: "At-Will Powers" },
+  { kind: "encounter", title: "Encounter Powers" },
+  { kind: "daily", title: "Daily Powers" },
+  { kind: "utility", title: "Utility Powers" },
+  { kind: "other", title: "Features & Other" },
 ];
 
-function groupKind(section: LegacyChoiceSection): BuildOverviewGroupKind {
+const GROUP_TITLES = new Map(
+  BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => [kind, title]),
+);
+
+/** A category's band and column title. */
+export function buildOverviewGroupTitle(kind: BuildOverviewGroupKind): string {
+  return GROUP_TITLES.get(kind) ?? kind;
+}
+
+function sectionKind(
+  section: LegacyChoiceSection,
+): BuildOverviewGroupKind | "powers" {
   switch (section) {
     case "Class":
     case "Race":
     case "Background":
     case "Theme":
+    case "Character Details":
       return "character";
+    case "Ability Scores":
+      return "ability-scores";
+    case "Skills":
+      return "skills";
     case "Feats":
       return "feats";
     case "Powers":
@@ -92,27 +149,27 @@ function groupKind(section: LegacyChoiceSection): BuildOverviewGroupKind {
   }
 }
 
-/** Order inside Other: the Build tab's section order, then the choices that
- *  live on the Details and Retraining tabs. */
-const OTHER_ORDER: readonly string[] = [
-  "Ability Scores",
-  "Companion",
-  "Skills",
-  "Other",
-  "Character Details",
-  "Retraining",
+const POWER_TONE_KINDS: readonly BuildOverviewGroupKind[] = [
+  "at-will",
+  "encounter",
+  "daily",
+  "utility",
 ];
 
-const POWER_TONE_ORDER = ["at-will", "encounter", "daily", "utility"];
+/** A power's category from its card classification (sheet-model's
+ *  `classifyPowerEntity`); a feature or unknown usage is Other. */
+function powerKind(entity: ContentEntity): BuildOverviewGroupKind {
+  const tone = classifyPowerEntity(entity).tone;
+  return POWER_TONE_KINDS.find((kind) => kind === tone) ?? "other";
+}
 
-/** At-will, encounter, daily, then utility, from the power classification of
- *  the unit's picks (else its offered powers). */
-function powerRank(
+/** The records a unit picked, else (nothing picked) the ones it offers. */
+function unitEntities(
   unit: readonly EvaluatedChoice[],
   evaluation: EvaluatedCharacter,
   byId: ReadonlyMap<string, ContentEntity>,
-): number {
-  const entities = unit.flatMap((choice) => {
+): readonly ContentEntity[] {
+  return unit.flatMap((choice) => {
     const picked = selectedDefinitionId(choice, evaluation);
     const ids =
       picked === undefined
@@ -122,12 +179,36 @@ function powerRank(
         : [picked];
     return ids.flatMap((id) => byId.get(id.toLocaleLowerCase()) ?? []);
   });
-  const ranks = entities.flatMap((entity) => {
+}
+
+/** A power slot's category: the first of at-will, encounter, daily and
+ *  utility among its picks (else its offered powers); Other when none. */
+function powerUnitKind(
+  unit: readonly EvaluatedChoice[],
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): BuildOverviewGroupKind {
+  const ranks = unitEntities(unit, evaluation, byId).flatMap((entity) => {
     if (entity.type.trim().toLocaleLowerCase() !== "power") return [];
-    const rank = POWER_TONE_ORDER.indexOf(classifyPowerEntity(entity).tone);
+    const rank = POWER_TONE_KINDS.indexOf(powerKind(entity));
     return rank < 0 ? [] : [rank];
   });
-  return ranks.length === 0 ? POWER_TONE_ORDER.length : Math.min(...ranks);
+  return ranks.length === 0 ? "other" : POWER_TONE_KINDS[Math.min(...ranks)]!;
+}
+
+/** A retrain's category: the one of the kind of record it picked, as a
+ *  choice of that type would be (a power by usage, a theme Character). */
+function retrainKind(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): BuildOverviewGroupKind {
+  const picked = selectedDefinitionId(choice, evaluation);
+  const entity =
+    picked === undefined ? undefined : byId.get(picked.toLocaleLowerCase());
+  if (entity === undefined) return "other";
+  const kind = sectionKind(legacyChoiceSection({ type: entity.type }));
+  return kind === "powers" ? powerKind(entity) : kind;
 }
 
 /**
@@ -182,21 +263,105 @@ function choiceTarget(
   return { kind: "choice", choiceId: (open ?? unit[0]!).id };
 }
 
-interface RankedRow {
-  readonly row: BuildOverviewRow;
-  readonly kind: BuildOverviewGroupKind;
-  /** Sort key inside the group; ties keep the Build tab's order. */
-  readonly rank: number;
+/** Which selections the character still holds and which came by a
+ *  replacement, computed once per overview. */
+interface HeldContext {
+  /** Picks a later replacement traded away (the evaluation's
+   *  `replacedSelections`). */
+  readonly tradedAway: ReadonlySet<string>;
+  /** Picks a reached level's replacement (retrain or swap) made. The
+   *  evaluator also reports one as the pick of the slot it replaced into,
+   *  which then leaves it to the replacement's own row. */
+  readonly replacementPicks: ReadonlySet<string>;
+}
+
+function heldContext(
+  evaluation: EvaluatedCharacter,
+  effectiveLevel: number,
+): HeldContext {
+  return {
+    tradedAway: new Set(
+      (evaluation.replacedSelections ?? []).map(({ id }) => id),
+    ),
+    replacementPicks: new Set(
+      evaluation.choices.flatMap((choice) =>
+        choice.type === "Replacement" &&
+        choice.level <= effectiveLevel &&
+        choice.selectedOccurrenceId !== undefined
+          ? [choice.selectedOccurrenceId]
+          : [],
+      ),
+    ),
+  };
+}
+
+/**
+ * The unit's folded picks as the character holds them now (the Build tab's
+ * folding, over fewer picks): a pick a later replacement traded away, or
+ * one that came by a replacement, is left out; a replacement reads as its
+ * new pick, noted "replaced X at LN". Undefined when the unit picked
+ * something but holds none of it.
+ */
+function heldPicks(
+  unit: readonly EvaluatedChoice[],
+  presentation: LevelChoicePresentation,
+  picks: string | undefined,
+  context: Context,
+): BuildOverviewHeld | undefined {
+  const { level, evaluation, byId, build, held } = context;
+  if (picks === undefined) return { picks };
+  const affected = unit.some((choice) => {
+    const id = choice.selectedOccurrenceId;
+    return (
+      id !== undefined &&
+      (choice.type === "Replacement" ||
+        held.tradedAway.has(id) ||
+        held.replacementPicks.has(id))
+    );
+  });
+  if (!affected) return { picks };
+  const replaced: string[] = [];
+  const summary = accordionPicksSummary(
+    unit,
+    presentation,
+    (choice) => {
+      const selected = selectedOccurrence(choice, evaluation);
+      if (selected === undefined || held.tradedAway.has(selected.id))
+        return undefined;
+      if (choice.type === "Replacement") {
+        const names = replacementPickNames(choice, evaluation, byId, build);
+        if (names?.from !== undefined) replaced.push(names.from);
+        return names?.to;
+      }
+      if (held.replacementPicks.has(selected.id)) return undefined;
+      return (
+        byId.get(selected.definitionId.toLocaleLowerCase())?.name ??
+        selected.definitionId
+      );
+    },
+    (choice) => contextualChoiceTitle(choice, evaluation, byId),
+  );
+  if (summary === undefined) return undefined;
+  return replaced.length === 0
+    ? { picks: summary }
+    : { picks: summary, note: `replaced ${replaced.join(", ")} at L${level}` };
+}
+
+interface Context {
+  readonly level: number;
+  readonly evaluation: EvaluatedCharacter;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly build: CharacterBuild;
+  readonly held: HeldContext;
 }
 
 function unitRow(
   unit: readonly EvaluatedChoice[],
   section: LegacyChoiceSection,
   presentation: LevelChoicePresentation,
-  evaluation: EvaluatedCharacter,
-  byId: ReadonlyMap<string, ContentEntity>,
-  build: CharacterBuild,
-): RankedRow {
+  context: Context,
+): BuildOverviewRow {
+  const { level, evaluation, byId, build } = context;
   const abilityIncreases = unit.every((choice) =>
     isAbilityIncreaseChoiceType(choice.type),
   );
@@ -209,39 +374,43 @@ function unitRow(
   const picks = abilityBonuses
     ? abilityIncreasePicks(unit, evaluation, byId)
     : presentationUnitPicks(unit, presentation, evaluation, byId, build);
-  const kind = groupKind(section);
+  const kind = sectionKind(section);
   return {
-    kind,
-    rank:
+    key: unit[0]!.id,
+    level,
+    kind:
       kind === "powers"
-        ? powerRank(unit, evaluation, byId)
-        : kind === "other"
-          ? OTHER_ORDER.indexOf(section)
-          : 0,
-    row: {
-      key: unit[0]!.id,
-      title: abilityIncreases
-        ? "Ability Increases"
-        : powerSlotTitle(
-            presentationUnitTitle(unit, presentation, evaluation, byId),
-            unit,
-            evaluation,
-            byId,
-          ),
+        ? powerUnitKind(unit, evaluation, byId)
+        : // A swap the level or a feat offers is filed by what it picks.
+          unit.length === 1 && unit[0]!.type === "Replacement"
+          ? unit[0]!.selectedOccurrenceId === undefined
+            ? powerUnitKind(unit, evaluation, byId)
+            : retrainKind(unit[0]!, evaluation, byId)
+          : kind,
+    title: abilityIncreases
+      ? "Ability Increases"
+      : powerSlotTitle(
+          presentationUnitTitle(unit, presentation, evaluation, byId),
+          unit,
+          evaluation,
+          byId,
+        ),
+    picks,
+    status: presentationUnitStatus(
+      unit,
+      evaluation,
+      build.effectiveLevel,
       picks,
-      status: presentationUnitStatus(
-        unit,
-        evaluation,
-        build.effectiveLevel,
-        picks,
-      ),
-      target: choiceTarget(unit, build.effectiveLevel),
-    },
+    ),
+    target: choiceTarget(unit, build.effectiveLevel),
+    held: abilityBonuses
+      ? { picks }
+      : heldPicks(unit, presentation, picks, context),
   };
 }
 
 /** Level 1's point-buy scores: "STR 10, CON 14, …". */
-function baseAbilitiesRow(build: CharacterBuild): RankedRow {
+function baseAbilitiesRow(build: CharacterBuild): BuildOverviewRow {
   const assessment = assessAbilityPointBuy(build.baseAbilities);
   const scores = ABILITY_SCORE_NAMES.flatMap((ability) => {
     const score = build.baseAbilities[ability];
@@ -249,31 +418,27 @@ function baseAbilitiesRow(build: CharacterBuild): RankedRow {
       ? []
       : [`${abilityAbbreviation(ability)} ${score}`];
   });
+  const picks = scores.length === 0 ? undefined : scores.join(", ");
   return {
-    kind: "other",
-    rank: OTHER_ORDER.indexOf("Ability Scores") - 0.5,
-    row: {
-      key: "base-abilities",
-      title: "Ability Scores",
-      picks: scores.length === 0 ? undefined : scores.join(", "),
-      status: !assessment.complete
-        ? "unresolved"
-        : !assessment.legal
-          ? "house-rule"
-          : "complete",
-      target: { kind: "abilities" },
-    },
+    key: "base-abilities",
+    level: 1,
+    kind: "ability-scores",
+    title: "Ability Scores",
+    picks,
+    status: !assessment.complete
+      ? "unresolved"
+      : !assessment.legal
+        ? "house-rule"
+        : "complete",
+    target: { kind: "abilities" },
+    held: { picks },
   };
 }
 
-function levelRows(
-  level: number,
-  evaluation: EvaluatedCharacter,
-  byId: ReadonlyMap<string, ContentEntity>,
-  build: CharacterBuild,
-): readonly RankedRow[] {
+function levelRows(context: Context): readonly BuildOverviewRow[] {
+  const { level, evaluation, byId, build } = context;
   const choices = choicesAtLevel(level, evaluation);
-  const rows: RankedRow[] = [];
+  const rows: BuildOverviewRow[] = [];
   // Build presets sit in the Class tab, ahead of its choices.
   for (const preset of choices.filter(isBuildPresetChoice)) {
     const picks = presentationUnitPicks(
@@ -285,20 +450,19 @@ function levelRows(
     );
     if (picks === undefined && preset.optional) continue;
     rows.push({
+      key: preset.id,
+      level,
       kind: "character",
-      rank: 0,
-      row: {
-        key: preset.id,
-        title: contextualChoiceTitle(preset, evaluation, byId),
+      title: contextualChoiceTitle(preset, evaluation, byId),
+      picks,
+      status: presentationUnitStatus(
+        [preset],
+        evaluation,
+        build.effectiveLevel,
         picks,
-        status: presentationUnitStatus(
-          [preset],
-          evaluation,
-          build.effectiveLevel,
-          picks,
-        ),
-        target: { kind: "level-section", level, section: "Class" },
-      },
+      ),
+      target: { kind: "level-section", level, section: "Class" },
+      held: { picks },
     });
   }
   const presentation = presentLevelChoices(primaryLevelBuildChoices(choices));
@@ -315,9 +479,7 @@ function levelRows(
           presentationUnit(choice, presentation),
           section,
           presentation,
-          evaluation,
-          byId,
-          build,
+          context,
         ),
       );
   }
@@ -335,11 +497,9 @@ function levelRows(
       [choice],
       "Character Details",
       presentLevelChoices([choice]),
-      evaluation,
-      byId,
-      build,
+      context,
     );
-    if (row.row.picks === undefined && choice.optional) continue;
+    if (row.picks === undefined && choice.optional) continue;
     rows.push(row);
   }
   // A used retrain; an unused one is no decision.
@@ -347,20 +507,19 @@ function levelRows(
     const picks = replacementPickSummary(choice, evaluation, byId, build);
     if (picks === undefined) continue;
     rows.push({
-      kind: "other",
-      rank: OTHER_ORDER.indexOf("Retraining"),
-      row: {
-        key: choice.id,
-        title: "Retraining",
+      key: choice.id,
+      level,
+      kind: retrainKind(choice, evaluation, byId),
+      title: "Retraining",
+      picks,
+      status: presentationUnitStatus(
+        [choice],
+        evaluation,
+        build.effectiveLevel,
         picks,
-        status: presentationUnitStatus(
-          [choice],
-          evaluation,
-          build.effectiveLevel,
-          picks,
-        ),
-        target: { kind: "choice", choiceId: choice.id },
-      },
+      ),
+      target: { kind: "choice", choiceId: choice.id },
+      held: heldPicks([choice], presentLevelChoices([choice]), picks, context),
     });
   }
   return rows;
@@ -369,38 +528,166 @@ function levelRows(
 /**
  * The overview of levels 1 to the character's level from the evaluation the
  * editor already holds (its planning evaluation covers every one of them).
- * A level without choices has no groups.
+ * A level's rows run by category, then in the Build tab's order; a level
+ * without choices has no groups.
  */
 export function buildOverview(
   evaluation: EvaluatedCharacter,
   build: CharacterBuild,
   byId: ReadonlyMap<string, ContentEntity>,
 ): readonly BuildOverviewLevel[] {
+  const held = heldContext(evaluation, build.effectiveLevel);
   const levels: BuildOverviewLevel[] = [];
   for (let level = 1; level <= build.effectiveLevel; level += 1) {
     // Empty optional slots of one title read once ("Background — none
     // chosen", not again for the background's own sub-choice).
     const emptyOptional = new Set<string>();
-    const rows = levelRows(level, evaluation, byId, build)
-      .filter(({ row }) => {
+    const rows = levelRows({ level, evaluation, byId, build, held }).filter(
+      (row) => {
         if (row.picks !== undefined || row.status !== undefined) return true;
         if (emptyOptional.has(row.title)) return false;
         emptyOptional.add(row.title);
         return true;
-      })
-      .map((entry, index) => ({ ...entry, index }))
-      .sort(
-        (left, right) => left.rank - right.rank || left.index - right.index,
-      );
+      },
+    );
     levels.push({
       level,
       groups: BUILD_OVERVIEW_GROUPS.flatMap(({ kind, title }) => {
-        const groupRows = rows
-          .filter((entry) => entry.kind === kind)
-          .map(({ row }) => row);
+        const groupRows = rows.filter((row) => row.kind === kind);
         return groupRows.length === 0 ? [] : [{ kind, title, rows: groupRows }];
       }),
     });
   }
   return levels;
+}
+
+/** The Overview's sortable columns; sorting by one groups by it. */
+export type BuildOverviewSortColumn = "level" | "category";
+
+export interface BuildOverviewSort {
+  readonly column: BuildOverviewSortColumn;
+  readonly direction: "ascending" | "descending";
+}
+
+/** By level, first level first: the build's own order. */
+export const DEFAULT_BUILD_OVERVIEW_SORT: BuildOverviewSort = {
+  column: "level",
+  direction: "ascending",
+};
+
+/** A header click: the active column flips direction; the other column
+ *  starts ascending. */
+export function nextBuildOverviewSort(
+  current: BuildOverviewSort,
+  column: BuildOverviewSortColumn,
+): BuildOverviewSort {
+  return {
+    column,
+    direction:
+      current.column === column && current.direction === "ascending"
+        ? "descending"
+        : "ascending",
+  };
+}
+
+export interface BuildOverviewBandRow {
+  readonly row: BuildOverviewRow;
+  /** The picks this grouping shows: the row's history by level, what the
+   *  character holds now by category. */
+  readonly picks: string | undefined;
+  readonly note?: string;
+}
+
+export interface BuildOverviewBand {
+  /** Unique across both groupings ("level:3", "category:feats"). */
+  readonly key: string;
+  readonly title: string;
+  readonly rows: readonly BuildOverviewBandRow[];
+}
+
+/**
+ * The Overview's bands for a sort. By level: a band per level, its rows in
+ * the overview's order, every row (the full history, retrains included). By
+ * category: a band per category, every category listed, its rows by level
+ * and showing only what the character has now (a traded-away pick has no
+ * row; its replacement's row notes what it replaced). The direction orders
+ * the bands.
+ */
+export function buildOverviewBands(
+  levels: readonly BuildOverviewLevel[],
+  sort: BuildOverviewSort,
+): readonly BuildOverviewBand[] {
+  const bands: BuildOverviewBand[] =
+    sort.column === "level"
+      ? levels.map(({ level, groups }) => ({
+          key: `level:${level}`,
+          title: `Level ${level}`,
+          rows: groups.flatMap((group) =>
+            group.rows.map((row) => ({ row, picks: row.picks })),
+          ),
+        }))
+      : BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => ({
+          key: `category:${kind}`,
+          title,
+          // Levels are already in order, so this keeps the build order.
+          rows: levels.flatMap(({ groups }) =>
+            groups.flatMap((group) =>
+              group.kind !== kind
+                ? []
+                : group.rows.flatMap((row) =>
+                    row.held === undefined
+                      ? []
+                      : [
+                          {
+                            row,
+                            picks: row.held.picks,
+                            ...(row.held.note === undefined
+                              ? {}
+                              : { note: row.held.note }),
+                          },
+                        ],
+                  ),
+            ),
+          ),
+        }));
+  return sort.direction === "ascending" ? bands : bands.reverse();
+}
+
+export const BUILD_OVERVIEW_SORT_STORAGE_KEY = "4ecb.buildOverviewSort.v1";
+
+/** The remembered grouping (as the library remembers its sort); anything
+ *  unreadable falls back to by level. */
+export function readBuildOverviewSort(
+  storage?: Pick<Storage, "getItem">,
+): BuildOverviewSort {
+  try {
+    const raw = (storage ?? window.localStorage).getItem(
+      BUILD_OVERVIEW_SORT_STORAGE_KEY,
+    );
+    if (raw === null) return DEFAULT_BUILD_OVERVIEW_SORT;
+    const value: unknown = JSON.parse(raw);
+    if (typeof value !== "object" || value === null)
+      return DEFAULT_BUILD_OVERVIEW_SORT;
+    const { column, direction } = value as Record<string, unknown>;
+    return (column === "level" || column === "category") &&
+      (direction === "ascending" || direction === "descending")
+      ? { column, direction }
+      : DEFAULT_BUILD_OVERVIEW_SORT;
+  } catch {
+    return DEFAULT_BUILD_OVERVIEW_SORT;
+  }
+}
+
+export function writeBuildOverviewSort(
+  sort: BuildOverviewSort,
+  storage?: Pick<Storage, "setItem">,
+): void {
+  try {
+    (storage ?? window.localStorage).setItem(
+      BUILD_OVERVIEW_SORT_STORAGE_KEY,
+      JSON.stringify(sort),
+    );
+  } catch {
+    // Remembering the grouping is a convenience; blocked storage forgets it.
+  }
 }

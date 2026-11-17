@@ -121,7 +121,7 @@ button.dialog-close {
 .selection-table-scroll .table-section-row th,
 .inventory-table .table-section-row th,
 .shop-table .table-section-row th,
-.build-overview h4.table-section-row {
+.build-overview .table-section-row th {
   border-bottom: 1px solid var(--border-strong);
   padding: 0;
 }
