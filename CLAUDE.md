@@ -449,9 +449,12 @@ separate header or level rail.
   new rule in the file of the surface it styles; tests read the combined CSS
   through `test-styles.ts` (`appStyles`).
 - **Print layout.** `SheetOverview.tsx` renders page 1, continuations,
-  scratchpad, reference pages, the card pages (its children) and Session
-  Notes in the layout's section order (D099); by default only the overview,
-  scratchpad and cards print (`SHEET_SECTION_DEFAULT_SHOWN` in
+  the Equipment page, scratchpad, reference pages, the card pages (its
+  children) and Session Notes in the layout's section order (D099); by
+  default only the overview, the Equipment page (section id
+  `reference:items`, second by default so duplex backs page 1), the
+  scratchpad, a held artifact's Artifacts reference and the cards print
+  (`SHEET_SECTION_DEFAULT_SHOWN` in
   character-domain `sheet-layout.ts`; the layout stores `hiddenSections`
   and `shownSections` deltas from it), fitting content by measuring
   hidden "probe" copies (`ov-pane-probe`, `ov-reminder-probe`). Power and

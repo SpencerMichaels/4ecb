@@ -150,7 +150,7 @@ export function sheetReferenceIcon(group: string): IconName {
       return "background";
     case "Deity":
       return "church";
-    case "Items":
+    case "Equipment":
     case "Item properties":
     case "Item power index":
       return "item";

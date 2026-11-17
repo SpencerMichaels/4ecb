@@ -3325,6 +3325,27 @@ Decision:
   with its arm-then-confirm handler (owner: players edit the sheet
   progressively, so resetting to defaults is not a real use case); undo a
   choice by toggling it back.
+- Amendment (owner, 2026-11-16): "the original builder actually shows the
+  equipment page by default … have Equipment be a separate section … and
+  have it display as the 2nd page (ideally being double sided printed
+  with the 1st page)." The `reference:items` section (currency, Worn/Held
+  and Carried Items with encumbrance, proficiencies) is now the Equipment
+  page: Sections-menu label "Equipment", its pages titled, headed and
+  footed "Equipment" rather than "Character Reference" (its reference
+  group is "Equipment"). It is shown by default and is the default second
+  section: `SHEET_SECTION_IDS` is summary, Equipment, scratchpad, the
+  other reference groups, cards, session notes. The id stays
+  `reference:items` (stored layouts name it; no migration). Stored
+  layouts keep their choices: a `shownSections` entry for it (turned on
+  under the old default) is now inert and it still prints; hiding it
+  stores `hiddenSections`; a stored `sectionOrder` keeps it where the
+  player had it. Duplex parity is not enforced: the Equipment page
+  follows the overview and its continuation pages with no blank page
+  inserted, so it backs page 1 only when the overview has no
+  continuation. The legacy viewer's default portrait sheet was likewise
+  two pages, its page 2 holding Powers, Other Equipment, Coins and
+  Wealth, Magic Items, Rituals, the portrait and the character notes
+  (`PageLayout.GetDefaultLayout`, `PortraitPage2`).
 
 Implemented in `packages/character-domain/src/sheet-layout.ts`,
 `packages/browser-storage/src/character-repository.ts`,

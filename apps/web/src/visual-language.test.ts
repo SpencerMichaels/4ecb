@@ -140,7 +140,7 @@ describe("legacy-derived visual language", () => {
     expect(sheetReferenceIcon("Theme")).toBe("background");
     expect(sheetReferenceIcon("Background")).toBe("background");
     expect(sheetReferenceIcon("Deity")).toBe("church");
-    expect(sheetReferenceIcon("Items")).toBe("item");
+    expect(sheetReferenceIcon("Equipment")).toBe("item");
     expect(sheetReferenceIcon("Item properties")).toBe("item");
     expect(sheetReferenceIcon("Item power index")).toBe("item");
     expect(sheetReferenceIcon("Power index")).toBe("power");

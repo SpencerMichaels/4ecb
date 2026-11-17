@@ -668,9 +668,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     );
     expect(rows.map(({ name }) => name)).toEqual([
       "Overview",
+      "Equipment",
       "Play scratchpad",
       "Feature reference",
-      "Item reference",
       "Power index",
       "Rituals & practices",
       "Character profile",
@@ -682,11 +682,12 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     // character (no rituals).
     for (const row of rows) {
       expect(row.disabled, row.name).toBe(false);
-      // The overview, scratchpad, artifacts and cards by default, plus
-      // the section this layout turned on.
+      // The overview, equipment, scratchpad, artifacts and cards by
+      // default, plus the section this layout turned on.
       expect(row.checked, row.name).toBe(
         [
           "Overview",
+          "Equipment",
           "Play scratchpad",
           "Rituals & practices",
           "Artifacts",
@@ -716,7 +717,8 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
 
     // A cards-only sheet starts its card pages at page 1; with the cards
     // hidden too the preview is simply empty, with no notice.
-    // (The reference pages and Session notes are hidden by default.)
+    // (The other reference pages and Session notes are hidden by default.)
+    await tick("Equipment");
     await tick("Play scratchpad");
     expect(
       container.querySelectorAll(".sheet-overview .ov-page-number"),
@@ -821,9 +823,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
         sectionOrder: [
           "cards",
           "summary",
+          "reference:items",
           "scratchpad",
           "reference:features",
-          "reference:items",
           "reference:power-index",
           "reference:rituals",
           "reference:profile",
@@ -875,8 +877,9 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
     await fire(row("Play scratchpad"), "dragover", 0);
     await fire(row("Play scratchpad"), "drop", 0);
     await settle();
-    expect(menuOrder().slice(0, 3)).toEqual([
+    expect(menuOrder().slice(0, 4)).toEqual([
       "Overview",
+      "Equipment",
       "Session notes",
       "Play scratchpad",
     ]);
@@ -887,10 +890,10 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
         shownSections: ["session-notes"],
         sectionOrder: [
           "summary",
+          "reference:items",
           "session-notes",
           "scratchpad",
           "reference:features",
-          "reference:items",
           "reference:power-index",
           "reference:rituals",
           "reference:profile",
@@ -1035,8 +1038,8 @@ describe("character sheet Edit mode", { timeout: 30_000 }, () => {
       "Power & item cards",
       "Play scratchpad",
       "Overview",
+      "Equipment",
       "Feature reference",
-      "Item reference",
       "Power index",
       "Rituals & practices",
       "Character profile",

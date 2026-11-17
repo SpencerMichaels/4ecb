@@ -219,7 +219,7 @@ describe("real-data sheet overview", () => {
       },
     };
     const entries = references(fixture);
-    const items = entries.filter((entry) => entry.group === "Items");
+    const items = entries.filter((entry) => entry.group === "Equipment");
     expect(items.map((entry) => entry.id)).toEqual([
       "inventory:true",
       "inventory:false",
@@ -691,7 +691,7 @@ describe("real-data sheet overview", () => {
     const entry: ReferenceEntry = {
       id: "inventory:false",
       name: "Carried Items",
-      group: "Items",
+      group: "Equipment",
       source: "",
       parts,
     };
@@ -751,7 +751,7 @@ describe("real-data sheet overview", () => {
     const entry: ReferenceEntry = {
       id: "inventory:false",
       name: "Carried Items",
-      group: "Items",
+      group: "Equipment",
       source: "",
       parts,
     };
@@ -1260,7 +1260,7 @@ describe("real-data sheet overview", () => {
       html.indexOf('data-card-start="2"'),
     );
   });
-  it("prints only the overview, scratchpad and cards without a layout", () => {
+  it("prints only the overview, equipment, scratchpad and cards without a layout", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -1274,6 +1274,21 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('aria-label="Character summary"');
     expect(html).toContain('aria-label="Play scratchpad"');
     expect(html).toContain('data-card-position="here"');
+    // The Equipment page is its own section, second (D099 amendment,
+    // 2026-11-16): titled and footed Equipment, not Character Reference.
+    const equipment = html.search(/<article[^>]*aria-label="Equipment"/);
+    expect(equipment).toBeGreaterThan(
+      html.indexOf('aria-label="Character summary"'),
+    );
+    expect(equipment).toBeLessThan(
+      html.indexOf('aria-label="Play scratchpad"'),
+    );
+    const equipmentFooter = html
+      .slice(equipment)
+      .split("<footer")[1]!
+      .split("</footer>")[0]!;
+    expect(equipmentFooter).toContain("<span>Equipment</span>");
+    expect(equipmentFooter).not.toContain("Character Reference");
     expect(html).not.toMatch(/<article[^>]*aria-label="Character reference"/);
     expect(html).not.toContain('aria-label="Session notes"');
   });
@@ -3128,7 +3143,7 @@ describe("real-data sheet overview", () => {
     expect(html.indexOf(">Currency</h3>")).toBeLessThan(
       html.indexOf(">Worn/Held Items</h3>"),
     );
-    expect(equipped.group).toBe("Items");
+    expect(equipped.group).toBe("Equipment");
     expect(html).toContain('aria-label="Carried currency"');
     expect(html).toContain('aria-label="Stored currency"');
     expect(html).not.toContain('aria-label="Total currency"');

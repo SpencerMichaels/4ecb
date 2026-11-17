@@ -377,11 +377,15 @@ Reminders that continue on the overview's next pages toggle the same way.
 
 To choose what prints and in what order, open **Sections** in the Edit
 toolbar. Each row is a section with a checkbox: Overview (page 1, with any
-continuation pages), the play scratchpad, each full-reference group
-(features, item reference, power index, rituals & practices, character
-profile), Power & item cards and session notes. By default only Overview,
-the play scratchpad and Power & item cards are ticked: tick a reference
-group or session notes to print it too. Untick a row to leave that
+continuation pages), Equipment (currency, worn/held and carried items,
+encumbrance and proficiencies), the play scratchpad, each full-reference
+group (features, power index, rituals & practices, character profile,
+artifacts), Power & item cards and session notes. By default Overview,
+Equipment, the play scratchpad, Artifacts (when the character holds one)
+and Power & item cards are ticked, Equipment printing right after page 1
+so a double-sided print puts it on the back of page 1 (unless page 1 runs
+onto a continuation page): tick a reference group or session notes to
+print it too. Untick a row to leave that
 section out of the preview and the printout; untick Overview and the
 scratchpad to reprint only some cards. Drag a row by its grip (or focus it and press
 Alt+Up or Alt+Down) to move it; the sheet prints in the new order and page

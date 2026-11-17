@@ -11,7 +11,7 @@ export const SHEET_SECTION_LABELS: Readonly<Record<SheetSectionId, string>> = {
   summary: "Overview",
   scratchpad: "Play scratchpad",
   "reference:features": "Feature reference",
-  "reference:items": "Item reference",
+  "reference:items": "Equipment",
   "reference:power-index": "Power index",
   "reference:rituals": "Rituals & practices",
   "reference:profile": "Character profile",

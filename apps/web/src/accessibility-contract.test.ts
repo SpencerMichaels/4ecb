@@ -179,7 +179,9 @@ describe("release accessibility contract", () => {
     );
     expect(overview).toContain('title="Character summary"');
     expect(overview).toContain('title="Play scratchpad"');
-    expect(overview).toContain('const title = "Character reference"');
+    expect(overview).toContain(
+      'const title = equipment ? "Equipment" : "Character reference"',
+    );
     expect(overview).toContain("title={title}");
     expect(overview).toContain('scope="row"');
     expect(characterSheet).toContain("print-card-grid");

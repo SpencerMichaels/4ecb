@@ -372,11 +372,11 @@ try {
         ],
         [
           "equipment",
-          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-equipment-stack)',
+          '.sheet-overview > .ov-paper[aria-label="Equipment"]:has(.ov-equipment-stack)',
         ],
         [
           "inventory",
-          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-inventory-columns)',
+          '.sheet-overview > .ov-paper[aria-label="Equipment"]:has(.ov-inventory-columns)',
         ],
         [
           "power-index",
@@ -1020,14 +1020,14 @@ function printCharacter() {
     id: "synthetic-print-character",
     title: "Synthetic print fixture hero",
     notes: "Public synthetic print fixture",
-    // Only the overview, scratchpad and cards print by default (D099
-    // amendment, 2026-11-06): the fixture turns the reference pages and
-    // Session notes on so their print layout is checked too.
+    // Only the overview, Equipment page, scratchpad and cards print by
+    // default (D099 amendments, 2026-11-06 and 2026-11-16): the fixture
+    // turns the other reference pages and Session notes on so their print
+    // layout is checked too.
     sheetLayout: {
       version: 1,
       shownSections: [
         "reference:features",
-        "reference:items",
         "reference:power-index",
         "reference:rituals",
         "reference:profile",
@@ -1266,12 +1266,19 @@ async function checkReferences(client) {
   const state = await evaluate(
     client,
     `(() => {
-    const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]')];
+    const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"], .sheet-overview > .ov-paper[aria-label="Equipment"]')];
     const firstCard=document.querySelector('.print-card-page');
     const physicalPages=[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')];
+    const equipmentPages=physicalPages.filter(p=>p.getAttribute('aria-label')==='Equipment');
     const ids=pages.flatMap(p=>[...p.querySelectorAll('[data-reference-id]')].map(e=>e.dataset.referenceId.replace(/:(?:part\\d+|last)$/,'')));
     const expected=[...document.querySelectorAll('.ov-measure .ov-reference-card')].map(e=>e.dataset.referenceId).filter(id=>!id.startsWith('summary-reminder:'));
-    return {beforeCards:!firstCard || Boolean(pages.at(-1).compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING),
+    return {
+      // The Equipment page is the default second section (D099 amendment,
+      // 2026-11-16): straight after page 1 and its continuations.
+      equipmentSecond:equipmentPages.length>0 && physicalPages.slice(0,physicalPages.indexOf(equipmentPages[0])).every(p=>/^Character summary/.test(p.getAttribute('aria-label'))) &&
+        equipmentPages.every((p,i)=>physicalPages[physicalPages.indexOf(equipmentPages[0])+i]===p) &&
+        equipmentPages[0].querySelector('.ov-reference-group-heading')?.textContent==='Equipment',
+      beforeCards:!firstCard || Boolean(pages.at(-1).compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING),
       continuousNumbers:physicalPages.every((page,_,all)=>${unnumberedPage}(page) ? !page.querySelector('.ov-page-number') : Number(page.querySelector('.ov-page-number')?.textContent)===all.filter(p=>!${unnumberedPage}(p)).indexOf(page)+1),
       notesTemplateLast:physicalPages.at(-1)?.getAttribute('aria-label')==='Session notes' && !physicalPages.at(-1).querySelector('.ov-page-number'),
       cardFooterBounds:[...document.querySelectorAll('.print-card-page')].every(page=>{
@@ -1329,7 +1336,7 @@ async function checkReferences(client) {
         /^\\d+$/.test(p.querySelector('.ov-page-number').textContent.trim()) &&
         p.querySelector('.ov-reference-footer-identity').textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') &&
         // Section title left, identity centered, number right (2d7905f).
-        p.querySelector('.ov-reference-footer > span:first-child').textContent==='Character Reference'),
+        p.querySelector('.ov-reference-footer > span:first-child').textContent===(p.getAttribute('aria-label')==='Equipment'?'Equipment':'Character Reference')),
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
       inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
         body.querySelector('td:first-child .action-type-icon')),
@@ -1348,7 +1355,8 @@ async function checkReferences(client) {
   })()`,
   );
   assert(
-    state.beforeCards &&
+    state.equipmentSecond &&
+      state.beforeCards &&
       state.continuousNumbers &&
       state.notesTemplateLast &&
       state.cardFooterBounds &&
@@ -1758,7 +1766,9 @@ async function checkSummaryContinuation(client) {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')];
       const summary=pages[0], next=pages[1], scratch=pages.find(p=>p.getAttribute('aria-label')==='Play scratchpad');
       const labels=[...summary.querySelectorAll('.ov-reminder-probe [data-reminder-index] > strong')].map(e=>e.textContent.trim());
-      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchAfterContinuation:pages.indexOf(scratch)===2,scratchNumber:scratch?.querySelector('.ov-page-number')?.textContent ?? null,overflow:next?.dataset.overviewOverflow,
+      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),// The Equipment page follows the continuation (no blank page is
+        // inserted for duplex), then the scratchpad.
+        scratchAfterContinuation:pages[2]?.getAttribute('aria-label')==='Equipment' && pages[2].querySelector('.ov-page-number')?.textContent==='3' && pages.indexOf(scratch)>2 && pages.slice(2,pages.indexOf(scratch)).every(p=>p.getAttribute('aria-label')==='Equipment'),scratchNumber:scratch?.querySelector('.ov-page-number')?.textContent ?? null,overflow:next?.dataset.overviewOverflow,
         compact:!!next?.querySelector('.ov-reminder-panels .sp-reminders') && !next?.querySelector('.ov-reference-card, .sp-page-heading'),
         matchingHeaders:getComputedStyle(next.querySelector('.sp-panel > h3')).backgroundColor===getComputedStyle(summary.querySelector('.sp-panel > h3')).backgroundColor};
     })()`,
@@ -1794,7 +1804,7 @@ async function checkSummaryContinuation(client) {
       // The scratchpad prints unnumbered since ab10cf1.
       continuation.scratchAfterContinuation &&
         continuation.scratchNumber === null,
-      `Scratchpad must follow the summary continuation, unnumbered: ${JSON.stringify(continuation)}`,
+      `The Equipment page (page 3) and then the scratchpad, unnumbered, must follow the summary continuation: ${JSON.stringify(continuation)}`,
     );
   } catch (error) {
     const state = await evaluate(
@@ -1807,7 +1817,7 @@ async function checkSummaryContinuation(client) {
   }
   await waitForExpression(
     client,
-    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelectorAll('.sheet-overview > .ov-paper')[1]?.getAttribute('aria-label')==='Play scratchpad' && !document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-page-number')`,
+    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelectorAll('.sheet-overview > .ov-paper')[1]?.getAttribute('aria-label')==='Equipment' && document.querySelector('.sheet-overview > .ov-paper[aria-label="Equipment"] .ov-page-number')?.textContent==='2' && !document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-page-number')`,
   );
 }
 
@@ -2022,6 +2032,7 @@ async function inspectPdf(
   for (const required of [
     "Synthetic print fixture hero",
     "Character reference",
+    "Equipment",
     "Synthetic resilience",
     "Synthetic focus",
     "Conditional modifiers",

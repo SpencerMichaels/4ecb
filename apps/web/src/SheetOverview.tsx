@@ -2280,7 +2280,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       result.push({
         id: `inventory:${equipped}`,
         name: equipped ? "Worn/Held Items" : "Carried Items",
-        group: "Items",
+        group: "Equipment",
         source: "",
         ...(equipped
           ? {
@@ -2331,7 +2331,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     result.push({
       id: "proficiencies",
       name: "Proficiencies",
-      group: "Items",
+      group: "Equipment",
       source: "",
       parts: model.proficiencies.flatMap(({ kind, values }) =>
         referenceParts(values.join(", "), kind),
@@ -2623,7 +2623,7 @@ function ReferenceCard({
       >
         <section
           className="sp-feature-card ov-reference-pane ov-currency-pane"
-          data-reference-category="items"
+          data-reference-category="equipment"
         >
           <header>
             <Icon name="circle-dollar-sign" />
@@ -2664,7 +2664,7 @@ function ReferenceCard({
       <section
         className="sp-feature-card ov-reference-card ov-reference-pane"
         data-reference-id={entry.id}
-        data-reference-category="items"
+        data-reference-category="equipment"
       >
         <header>
           <Icon name="item" />
@@ -3189,16 +3189,16 @@ export function paginateReferenceGroups(
   return pages;
 }
 /**
- * The full-reference entries in their five page groups, in print order
- * (`SHEET_REFERENCE_GROUP_IDS`: features, items, power index, rituals &
- * practices, character profile).
+ * The full-reference entries in their page groups, indexed like
+ * `SHEET_REFERENCE_GROUP_IDS` (features, items — the Equipment page —,
+ * power index, rituals & practices, character profile, artifacts).
  */
 export function referenceSections(
   model: CharacterSheetModel,
 ): ReferenceEntry[][] {
   const entries = references(model);
   const groupOf = (entry: ReferenceEntry): SheetReferenceGroupId =>
-    entry.group === "Items"
+    entry.group === "Equipment"
       ? "items"
       : /^(?:Power index|Item power index)$/.test(entry.group)
         ? "power-index"
@@ -3437,6 +3437,7 @@ function ReferencePages({
   onPageCount,
   wide = false,
   startPage = 1,
+  equipment = false,
 }: {
   model: CharacterSheetModel;
   name: string;
@@ -3444,15 +3445,19 @@ function ReferencePages({
   onPageCount?: (count: number) => void;
   wide?: boolean;
   startPage?: number;
+  /** The Equipment page (`reference:items`, D099 amendment 2026-11-16):
+   *  its own section, titled and footed "Equipment", not part of the
+   *  Character Reference. */
+  equipment?: boolean;
 }) {
   const referenceFooter = {
     footerIdentity: ["Race", "Class", "Level"]
       .map((label) => find(model.identity, label))
       .filter((value) => value !== "—" && value.trim())
       .join(" "),
-    footerTitle: "Character Reference",
+    footerTitle: equipment ? "Equipment" : "Character Reference",
   };
-  const title = "Character reference";
+  const title = equipment ? "Equipment" : "Character reference";
   const probe = useRef<HTMLElement>(null);
   const [columns, setColumns] = useState<
     readonly (readonly ReferenceEntry[])[]
@@ -3862,6 +3867,7 @@ export function SheetOverview({
           name={name}
           entries={entries}
           wide={index === 1 || index === 2}
+          equipment={section === "reference:items"}
           startPage={startPage}
           onPageCount={pageCountSetters.reference[index]!}
         />

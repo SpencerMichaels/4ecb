@@ -6,7 +6,8 @@ walks.
 
 **Reference pages and Session notes are off by default (2026-11-06, D099
 amendment).** A sheet without layout choices prints only the overview, the
-play scratchpad and the cards. For an entry on the Character Reference
+Equipment page (on by default since 2026-11-16, printed second), the play
+scratchpad and the cards. For an entry on the Character Reference
 pages or Session notes, first turn them on: `?preview=1` → Edit →
 **Sections**, tick the reference groups (or Session notes), then back to
 View. Untick them to turn them off again.
@@ -1737,6 +1738,20 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     Artifacts pages without an artifact.
   - **Wrong if:** a clipped table, an orphaned heading, Goals/Roleplaying
     printed.
+- [ ] **Equipment page second.** Added 2026-11-16 (D099 amendment); its
+      order, title, footer and page numbers are checked by `check:print`
+      and `CharacterSheetPage.editing.test.tsx`.
+  - **Where:** a character with no stored sheet layout, `?preview=1`,
+    Letter and A4 (Settings paper), light and dark theme, at 140% zoom;
+    then print duplex (long-edge) from the browser dialog.
+  - **Expect:** page 2 is the Equipment page: an "Equipment" heading with
+    the backpack icon, Currency, Worn/Held Items, Carried Items with
+    encumbrance and Proficiencies, footer "Equipment · name · race class
+    level · 2"; duplex puts it on the back of page 1. Edit → Sections lists
+    "Equipment" second, ticked.
+  - **Wrong if:** the heading still reads "Items", the footer reads
+    "Character Reference", the page overflows its footer, or a blank page
+    appears between page 1 and Equipment.
 - [ ] **Curse cards.** Added 2026-11-16.
   - **Where:** Necklace of Strangulation and Periapt of Foul Rotting
     (Cursed), print.
