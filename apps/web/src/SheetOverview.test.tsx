@@ -3243,6 +3243,9 @@ describe("real-data sheet overview", () => {
     ).toMatch(
       /\.ov-wallet-groups\.is-merged > \.stat-group \{[^}]*border: 0;[^}]*padding: 0;/,
     );
+    expect(
+      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
+    ).toMatch(/\.ov-funds-row \{[^}]*align-items: start;/);
   });
   it("restarts inventory stripes per category and uses quantity prefixes with a blank for one", () => {
     const fixture = {

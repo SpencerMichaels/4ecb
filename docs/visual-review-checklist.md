@@ -1809,7 +1809,7 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     whose coin tiles sit right under its header with no inner frame, no "Funds" or
     "Carried" heading (carried plus stored for each coin: oleander_9 GP
     17,778, the count shrunk to one line in its tile) and
-    Proficiencies in the other half, both panes the row's height; then
+    Proficiencies in the other half, each pane only as tall as its content (no empty space under the coin tiles); then
     Worn/Held Items and Carried Items. All 58 sample saves fit the
     Equipment page on one page in both papers (closest: oleander 31 px
     to spare in Letter).
