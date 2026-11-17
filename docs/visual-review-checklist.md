@@ -1775,21 +1775,22 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     Category column), a chevron beside LEVEL; navy "Level N" bands with
     striped rows under each. Click CATEGORY: the chevron moves to it, bands
     become Character, Ability Scores, Skills, Feats, Powers, Features &
-    Other; Powers has lighter navy-tint sub-bands At-Will, Encounter,
-    Daily, Utility, slightly indented, with no chevron or line; At-Will
-    shows Devastating Strike (L1) and "L5 Retraining — Pressing Strike
-    (replaced Foe to Foe at L5)" with the note smaller and muted; Daily
-    starts with Life-Ending Strike (replaced Swift Panther Rage at L3);
-    the stripes restart under each sub-band; collapsing Powers hides its
-    sub-bands too; Character ends with the L2 Gladiator retrain. Click
+    Other; Powers has no sub-headings: its rows run by level with usages
+    intermixed (Devastating Strike L1, Vault the Fallen L1, Hammer Fall
+    L3, Life-Ending Strike L3 "(replaced Swift Panther Rage at L3)", …,
+    "L5 Retraining — Pressing Strike (replaced Foe to Foe at L5)", …,
+    Curtain of Steel L7), each note smaller and muted, the Category cell
+    still the slot title; the stripes run unbroken down the band;
+    collapsing Powers hides its rows; Character ends with the L2
+    Gladiator retrain. Click
     CATEGORY again: bands reverse. Reload: the grouping is kept. Tab through: sort headers,
     then each band toggle and its rows' slot buttons, with a visible focus
     underline; Enter opens the choice on the Build tab.
   - **Wrong if:** the Level/Slot columns don't line up across bands, text
     overlaps or the table scrolls sideways at 140% zoom, the hover tint or
     stripes differ from the candidate tables, the band rows pick up
-    stripes, a sub-band looks like a full band or is hard to read in dark
-    theme, or the header labels are hard to read in dark theme.
+    stripes, any At-Will/Encounter/Daily/Utility sub-heading appears
+    under Powers, or the header labels are hard to read in dark theme.
 - [ ] **Long coin counts fit their tile.** Added 2026-11-16 (`2b4b04b2`).
   - **Where:** oleander_9 `?preview=1`, Equipment page Currency pane
     (Letter and A4); any builder's sidebar Funds at 140% zoom: double-click

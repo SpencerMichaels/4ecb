@@ -450,9 +450,7 @@
    tables' (their sort control and indicator, `.selection-sort-button`
    below). The band is the only line: rows have none and sit flush under it
    in the candidate tables' alternating stripes and hover tint
-   (11-selection-tables.css). By slot, the Powers band's usages (At-Will,
-   Encounter, Daily, Utility) are lighter sub-bands: a navy tint, not the
-   band's navy, and no line. Fixed column widths keep the picks lined up
+   (11-selection-tables.css). Fixed column widths keep the picks lined up
    across bands; they narrow with the tab (14-responsive.css). */
 .build-overview {
   display: grid;
@@ -487,19 +485,8 @@
   vertical-align: bottom;
 }
 
-.build-overview-rows[hidden],
-.build-overview-subband[hidden] {
+.build-overview-rows[hidden] {
   display: none;
-}
-
-.build-overview-subband th {
-  background: color-mix(in srgb, var(--brand-navy) 16%, var(--surface));
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.025em;
-  padding: 0.3rem 0.8rem 0.3rem 1.6rem;
-  text-align: left;
 }
 
 .build-overview-rows td {

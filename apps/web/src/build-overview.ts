@@ -42,7 +42,8 @@ import type { ChoiceAccordionStatus } from "./ChoiceAccordionItem";
  * The build overview (D113): every choice the character has made, one
  * section per level, built from the same evaluated choices, units, titles
  * and folded summaries as the Build tab (never re-derived). Each row also
- * carries its category (the kind of thing it picks), a power's usage, and
+ * carries its category (the kind of thing it picks), a power's usage (its
+ * order within a level), and
  * what the character still holds from it, so the tab can regroup by slot
  * category (D113 amendment, 2026-11-16).
  */
@@ -50,7 +51,7 @@ export type BuildOverviewGroupKind =
   "character" | "ability-scores" | "skills" | "feats" | "powers" | "other";
 
 /** A power row's usage, from its card classification (`classifyPowerEntity`'s
- *  tone): the Powers band's sub-groups. */
+ *  tone): it orders a level's powers. */
 export type BuildOverviewPowerUsage = Extract<
   PowerCardTone,
   "at-will" | "encounter" | "daily" | "utility"
@@ -114,19 +115,13 @@ export const BUILD_OVERVIEW_GROUPS: readonly {
   { kind: "other", title: "Features & Other" },
 ];
 
-/** The Powers band's sub-groups, in the order they and a level's powers
- *  run. */
-export const BUILD_OVERVIEW_POWER_USAGES: readonly {
-  readonly usage: BuildOverviewPowerUsage;
-  readonly title: string;
-}[] = [
-  { usage: "at-will", title: "At-Will" },
-  { usage: "encounter", title: "Encounter" },
-  { usage: "daily", title: "Daily" },
-  { usage: "utility", title: "Utility" },
+/** The order a level's powers run in, before the Build tab's order. */
+const POWER_USAGES: readonly BuildOverviewPowerUsage[] = [
+  "at-will",
+  "encounter",
+  "daily",
+  "utility",
 ];
-
-const POWER_USAGES = BUILD_OVERVIEW_POWER_USAGES.map(({ usage }) => usage);
 
 function sectionKind(section: LegacyChoiceSection): BuildOverviewGroupKind {
   switch (section) {
@@ -617,22 +612,11 @@ export interface BuildOverviewBandRow {
   readonly note?: string;
 }
 
-/** A run of a band's rows, under a sub-heading when titled (the Powers
- *  band's usages). */
-export interface BuildOverviewBandSection {
-  /** Unique across the bands ("level:3", "slot:powers:daily"). */
-  readonly key: string;
-  readonly title: string | undefined;
-  readonly rows: readonly BuildOverviewBandRow[];
-}
-
 export interface BuildOverviewBand {
   /** Unique across both groupings ("level:3", "slot:feats"). */
   readonly key: string;
   readonly title: string;
-  /** One untitled section, except a Powers band with rows: a titled
-   *  section per usage that has rows. */
-  readonly sections: readonly BuildOverviewBandSection[];
+  readonly rows: readonly BuildOverviewBandRow[];
 }
 
 /**
@@ -640,9 +624,9 @@ export interface BuildOverviewBand {
  * the overview's order, every row (the full history, retrains included). By
  * slot: a band per category, every category listed, its rows by level and
  * showing only what the character has now (a traded-away pick has no row;
- * its replacement's row notes what it replaced); the Powers band runs in
- * usage sub-groups (At-Will, Encounter, Daily, Utility), each by level. The
- * direction orders the bands.
+ * its replacement's row notes what it replaced). The Powers band has no
+ * usage sub-groups: within a level its rows keep the level grouping's
+ * order, so usages intermix. The direction orders the bands.
  */
 export function buildOverviewBands(
   levels: readonly BuildOverviewLevel[],
@@ -650,54 +634,23 @@ export function buildOverviewBands(
 ): readonly BuildOverviewBand[] {
   const bands: BuildOverviewBand[] =
     sort.column === "level"
-      ? levels.map(({ level, groups }) => {
-          const key = `level:${level}`;
-          return {
-            key,
-            title: `Level ${level}`,
-            sections: [
-              {
-                key,
-                title: undefined,
-                rows: groups.flatMap((group) =>
-                  group.rows.map((row) => ({ row, picks: row.picks })),
-                ),
-              },
-            ],
-          };
-        })
-      : BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => {
-          const key = `slot:${kind}`;
+      ? levels.map(({ level, groups }) => ({
+          key: `level:${level}`,
+          title: `Level ${level}`,
+          rows: groups.flatMap((group) =>
+            group.rows.map((row) => ({ row, picks: row.picks })),
+          ),
+        }))
+      : BUILD_OVERVIEW_GROUPS.map(({ kind, title }) => ({
+          key: `slot:${kind}`,
+          title,
           // Levels are already in order, so this keeps the build order.
-          const rows = levels.flatMap(({ groups }) =>
+          rows: levels.flatMap(({ groups }) =>
             groups.flatMap((group) =>
               group.kind !== kind ? [] : group.rows.flatMap(heldBandRow),
             ),
-          );
-          return {
-            key,
-            title,
-            sections:
-              kind !== "powers" || rows.length === 0
-                ? [{ key, title: undefined, rows }]
-                : BUILD_OVERVIEW_POWER_USAGES.flatMap(
-                    ({ usage, title: usageTitle }) => {
-                      const usageRows = rows.filter(
-                        ({ row }) => row.usage === usage,
-                      );
-                      return usageRows.length === 0
-                        ? []
-                        : [
-                            {
-                              key: `${key}:${usage}`,
-                              title: usageTitle,
-                              rows: usageRows,
-                            },
-                          ];
-                    },
-                  ),
-          };
-        });
+          ),
+        }));
   return sort.direction === "ascending" ? bands : bands.reverse();
 }
 

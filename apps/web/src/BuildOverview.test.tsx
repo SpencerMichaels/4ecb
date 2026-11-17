@@ -118,10 +118,6 @@ const sortButton = (host: HTMLElement, label: string) =>
   host.querySelector<HTMLButtonElement>(
     `thead button[aria-label="Sort by ${label}"]`,
   )!;
-const subbands = (host: HTMLElement) =>
-  [...host.querySelectorAll("tbody.build-overview-subband th")].map(
-    (heading) => heading.textContent,
-  );
 const sortState = (host: HTMLElement) =>
   [...host.querySelectorAll("thead th")].map(
     (header) =>
@@ -171,8 +167,6 @@ describe("BuildOverview", () => {
       "3 | Feat | Toughness | Complete",
       "3 | Retraining | Cleave → Reaping Strike | Complete",
     ]);
-    // Usage sub-bands are the slot grouping's only.
-    expect(subbands(host)).toEqual([]);
     // An open required choice carries the Build tab's status mark.
     expect(
       host.querySelector("tr.build-overview-choice.is-unresolved .icon"),
@@ -198,14 +192,14 @@ describe("BuildOverview", () => {
     expect(host.querySelector(".build-overview-none")?.textContent).toBe(
       "Nothing in this category",
     );
-    // Powers run in lighter usage sub-bands, each by level.
-    expect(subbands(host)).toEqual(["At-Will", "Daily"]);
+    // Powers run by level, usages intermixed, with no sub-bands.
+    expect(host.querySelector(".build-overview-subband")).toBeNull();
     expect(rowText(host)).toEqual([
       "1 | Race | Revenant · Language: Elven | Complete",
       "1 | Feat | none chosen | Incomplete",
       "3 | Feat | Toughness | Complete",
-      "3 | Retraining | Reaping Strike (replaced Cleave at L3) | Complete",
       "1 | Daily power | Sleep | Complete",
+      "3 | Retraining | Reaping Strike (replaced Cleave at L3) | Complete",
     ]);
     expect(host.querySelector(".build-overview-note")?.textContent).toBe(
       " (replaced Cleave at L3)",
@@ -249,33 +243,25 @@ describe("BuildOverview", () => {
     ).toEqual([4, 1, 2]);
   });
 
-  it("collapses a Powers band with its usage sub-bands", () => {
+  it("collapses a band's rows from its toggle", () => {
     const { host } = render();
     act(() => sortButton(host, "Category").click());
     const powers = bandToggles(host).find(
       (toggle) => toggle.textContent === "Powers",
     )!;
-    // The band controls each sub-band and its rows' body, which restarts
-    // the stripes under every sub-band.
-    const controlled = powers
-      .getAttribute("aria-controls")!
-      .split(" ")
-      .map((id) => host.querySelector<HTMLElement>(`#${id}`)!);
-    expect(controlled.map((body) => body.className)).toEqual([
-      "build-overview-subband",
-      "build-overview-rows",
-      "build-overview-subband",
-      "build-overview-rows",
-    ]);
-    // Each sub-band's rows are labelled by the band and the sub-band.
+    // The band controls its one rows' body, labelled by the band, so the
+    // stripes run on unbroken under it.
+    const body = host.querySelector<HTMLElement>(
+      `#${powers.getAttribute("aria-controls")!}`,
+    )!;
+    expect(body.className).toBe("build-overview-rows");
+    expect(body.querySelectorAll("tr")).toHaveLength(2);
     expect(
-      controlled[1]!
-        .getAttribute("aria-labelledby")!
-        .split(" ")
-        .map((id) => host.querySelector(`#${id}`)?.textContent),
-    ).toEqual(["Powers", "At-Will"]);
+      host.querySelector(`#${body.getAttribute("aria-labelledby")!}`)
+        ?.textContent,
+    ).toBe("Powers");
     act(() => powers.click());
-    expect(controlled.every((body) => body.hidden)).toBe(true);
+    expect(body.hidden).toBe(true);
     expect(choiceRows(host)).toHaveLength(3);
   });
 

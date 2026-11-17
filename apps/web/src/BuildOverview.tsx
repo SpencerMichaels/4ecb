@@ -87,11 +87,11 @@ function OverviewRow({
  * grouping is remembered like the library's sort. By level, each level is a
  * band holding the full history, retrains included; by category (the Category column holds each slot), each slot
  * category is a band holding what the character has now, by level, a
- * retrain noting what it replaced, and the Powers band runs in lighter
- * usage sub-bands (At-Will, Encounter, Daily, Utility). Bands are the
+ * retrain noting what it replaced (the Powers band by level, usages
+ * intermixed). Bands are the
  * Inventory's collapsible group band (`table-section-row`), all expanded at
  * first and not remembered. Rows alternate the candidate tables' stripes,
- * restarting under each band and sub-band; activating one opens that
+ * restarting under each band; activating one opens that
  * choice where it is edited, as an issue's Review does.
  */
 export function BuildOverview({
@@ -170,23 +170,16 @@ export function BuildOverview({
             {bands.map((band) => {
               const expanded = !collapsed.has(band.key);
               const id = domId(band.key);
-              // Each section's rows are a <tbody> of their own (after its
-              // sub-band's, when titled), so the stripes restart under it.
-              const bodyId = (key: string) => `${domId(key)}-choices`;
-              const controls = band.sections
-                .flatMap(({ key, title }) =>
-                  title === undefined
-                    ? [bodyId(key)]
-                    : [`${domId(key)}-heading`, bodyId(key)],
-                )
-                .join(" ");
+              // The rows are a <tbody> of their own, so the stripes restart
+              // under each band.
+              const bodyId = `${id}-choices`;
               return (
                 <Fragment key={band.key}>
                   <tbody className="build-overview-band">
                     <tr className="table-section-row">
                       <th colSpan={COLUMN_COUNT} id={id} scope="colgroup">
                         <button
-                          aria-controls={controls}
+                          aria-controls={bodyId}
                           aria-expanded={expanded}
                           className="table-section-toggle"
                           type="button"
@@ -198,61 +191,33 @@ export function BuildOverview({
                       </th>
                     </tr>
                   </tbody>
-                  {band.sections.map((section) => {
-                    const headingId = `${domId(section.key)}-heading`;
-                    return (
-                      <Fragment key={section.key}>
-                        {section.title === undefined ? null : (
-                          <tbody
-                            className="build-overview-subband"
-                            hidden={!expanded}
-                            id={headingId}
-                          >
-                            <tr>
-                              <th
-                                colSpan={COLUMN_COUNT}
-                                id={`${headingId}-title`}
-                                scope="colgroup"
-                              >
-                                {section.title}
-                              </th>
-                            </tr>
-                          </tbody>
-                        )}
-                        <tbody
-                          aria-labelledby={
-                            section.title === undefined
-                              ? id
-                              : `${id} ${headingId}-title`
-                          }
-                          className="build-overview-rows"
-                          hidden={!expanded}
-                          id={bodyId(section.key)}
+                  <tbody
+                    aria-labelledby={id}
+                    className="build-overview-rows"
+                    hidden={!expanded}
+                    id={bodyId}
+                  >
+                    {!expanded ? null : band.rows.length === 0 ? (
+                      <tr>
+                        <td
+                          className="build-overview-none"
+                          colSpan={COLUMN_COUNT}
                         >
-                          {!expanded ? null : section.rows.length === 0 ? (
-                            <tr>
-                              <td
-                                className="build-overview-none"
-                                colSpan={COLUMN_COUNT}
-                              >
-                                {byLevel
-                                  ? "No choices at this level"
-                                  : "Nothing in this category"}
-                              </td>
-                            </tr>
-                          ) : (
-                            section.rows.map((entry) => (
-                              <OverviewRow
-                                entry={entry}
-                                key={`${entry.row.level}:${entry.row.key}`}
-                                onOpen={onOpen}
-                              />
-                            ))
-                          )}
-                        </tbody>
-                      </Fragment>
-                    );
-                  })}
+                          {byLevel
+                            ? "No choices at this level"
+                            : "Nothing in this category"}
+                        </td>
+                      </tr>
+                    ) : (
+                      band.rows.map((entry) => (
+                        <OverviewRow
+                          entry={entry}
+                          key={`${entry.row.level}:${entry.row.key}`}
+                          onOpen={onOpen}
+                        />
+                      ))
+                    )}
+                  </tbody>
                 </Fragment>
               );
             })}

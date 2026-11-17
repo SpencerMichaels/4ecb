@@ -301,17 +301,14 @@ describe("build overview by slot", () => {
     ],
   } as unknown as EvaluatedCharacter;
   const levels = buildOverview(retrainEvaluation, build, retrainById);
-  // A band's rows, each section's under its sub-heading ("-- Daily").
+  // A band's rows.
   const band = (bands: ReturnType<typeof buildOverviewBands>, title: string) =>
     bands
       .find((entry) => entry.title === title)!
-      .sections.flatMap((section) => [
-        ...(section.title === undefined ? [] : [`-- ${section.title}`]),
-        ...section.rows.map(
-          ({ row, picks, note }) =>
-            `L${row.level} ${row.title} — ${picks ?? "none chosen"}${note === undefined ? "" : ` (${note})`}`,
-        ),
-      ]);
+      .rows.map(
+        ({ row, picks, note }) =>
+          `L${row.level} ${row.title} — ${picks ?? "none chosen"}${note === undefined ? "" : ` (${note})`}`,
+      );
 
   it("lists the full history by level, the retrain on its own row", () => {
     const bands = buildOverviewBands(levels, DEFAULT_BUILD_OVERVIEW_SORT);
@@ -351,43 +348,45 @@ describe("build overview by slot", () => {
       "Powers",
       "Features & Other",
     ]);
-    // Powers run in usage sub-groups, only those with rows. The retrained
-    // slot has no row of its own: the power the character has now shows
-    // once, at the level it was gained, noting what it replaced.
+    // Powers run by level, usages intermixed, with no sub-groups. The
+    // retrained slot has no row of its own: the power the character has now
+    // shows once, at the level it was gained, noting what it replaced.
     expect(band(bands, "Powers")).toEqual([
-      "-- At-Will",
-      "L4 Retraining — Reaping Strike (replaced Cleave at L4)",
-      "-- Encounter",
       "L1 Encounter power — Spinning Sweep",
+      "L4 Retraining — Reaping Strike (replaced Cleave at L4)",
     ]);
     expect(band(bands, "Feats")).toEqual(["L1 Feat — Toughness"]);
     // An empty category keeps its band.
     expect(band(bands, "Skills")).toEqual([]);
   });
 
-  it("runs each usage sub-group by level, in usage order", () => {
-    const bands = buildOverviewBands(buildOverview(evaluation, build, byId), {
+  it("keeps a level's powers in the level grouping's order", () => {
+    const overview = buildOverview(evaluation, build, byId);
+    const bands = buildOverviewBands(overview, {
       column: "slot",
       direction: "ascending",
     });
-    // Level 1 lists Sleep first; the sub-groups still run by usage.
+    // Level 1 lists Sleep first; both groupings run its powers by usage.
     expect(band(bands, "Powers")).toEqual([
-      "-- At-Will",
       "L1 At-Will power — Magic Missile",
-      "-- Encounter",
       "L1 Encounter power — Burning Hands",
-      "-- Daily",
       "L1 Daily power — Sleep",
-      "-- Utility",
       "L1 Encounter Utility power — Shield",
     ]);
-    // A Powers band without powers is one empty section, no sub-groups.
+    expect(
+      band(bands, "Powers").map((line) => line.replace(/^L1 /, "")),
+    ).toEqual(
+      overview[0]!.groups
+        .find(({ kind }) => kind === "powers")!
+        .rows.map(({ title, picks }) => `${title} — ${picks}`),
+    );
+    // A Powers band without powers is empty.
     expect(
       buildOverviewBands(
         buildOverview({ ...evaluation, choices: [] }, build, byId),
         { column: "slot", direction: "ascending" },
-      ).find(({ title }) => title === "Powers")!.sections,
-    ).toEqual([{ key: "slot:powers", title: undefined, rows: [] }]);
+      ).find(({ title }) => title === "Powers")!.rows,
+    ).toEqual([]);
   });
 
   it("drops a pick a later retrain traded away", () => {
@@ -438,7 +437,6 @@ describe("build overview by slot", () => {
       direction: "ascending",
     });
     expect(band(bands, "Powers")).toEqual([
-      "-- Encounter",
       "L3 Replacement — Burning Hands (replaced Spinning Sweep at L3)",
     ]);
   });
@@ -563,18 +561,11 @@ describe("Overview table styles", () => {
     expect(overviewRules.length).toBeGreaterThan(0);
     for (const [selector, body] of overviewRules)
       expect(body, selector).not.toMatch(/border(-top|-bottom)?\s*:\s*(?!0)/);
-    // A collapsed band's bodies and sub-bands hide.
+    // A collapsed band's body hides.
     expect(appStyles).toMatch(
-      /\.build-overview-rows\[hidden\],\s*\.build-overview-subband\[hidden\] \{\s*display: none;/,
+      /\.build-overview-rows\[hidden\] \{\s*display: none;/,
     );
-  });
-
-  it("draws the Powers usage sub-bands lighter than the band", () => {
-    const subband = ruleFor(".build-overview-subband th")?.[2];
-    expect(subband).toMatch(
-      /background: color-mix\(in srgb, var\(--brand-navy\) 16%, var\(--surface\)\)/,
-    );
-    expect(subband).toMatch(/color: var\(--text\)/);
+    expect(appStyles).not.toMatch(/build-overview-subband/);
   });
 
   it("narrows its fixed columns with the tab, not the viewport", () => {

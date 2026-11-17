@@ -4703,7 +4703,8 @@ by its sort column", sub-tabs rejected as clunky):
   Encounter, Daily, Utility Powers), so a power row read "Encounter Powers
   | Encounter Power", the slot repeating its category. The Category
   column is gone; sorting by Slot groups by category instead, and the
-  powers are one Powers category whose usages are sub-bands. The owner
+  powers are one Powers category (at first in usage sub-bands; see
+  below). The owner
   then renamed the Slot header "Category" (its cells still hold the slot
   titles; the stored sort value stays `"slot"`).
 - **Sorting regroups.** Level and Slot headers sort with the candidate
@@ -4721,11 +4722,15 @@ by its sort column", sub-tabs rejected as clunky):
   row, the full history including retrains ("Toughness → Improved
   Initiative").
 - **By slot:** a band per category, every category listed (an empty one
-  reads "Nothing in this category"), rows by level. The Powers band runs
-  in usage sub-bands, At-Will, Encounter, Daily, Utility (those with
-  rows), each by level: a lighter navy-tint row under the band, not a
-  band of its own (no toggle, no line); the band's toggle collapses them
-  with it, and each sub-band's rows are their own `<tbody>`. It shows only what
+  reads "Nothing in this category"), rows by level. The Powers band is
+  one run of rows like the others, by level, usages intermixed: within a
+  level its powers keep the Level grouping's order (by usage, then the
+  Build tab's order), and the stripes run on unbroken under the band.
+  Revised (owner, 2026-11-16): the band first ran in lighter usage
+  sub-bands (At-Will, Encounter, Daily, Utility); the owner: "Powers
+  should not be split by sub-sub headings. List them in order of level,
+  with usage types intermixed." The row's `usage` now only orders a
+  level's powers. It shows only what
   the character has now (owner's option i): a pick a later retrain or swap
   traded away, or that came by one (the evaluator reports a replaced
   slot's pick as the replacement's occurrence), leaves its slot's row
