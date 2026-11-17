@@ -248,6 +248,24 @@ describe("real-data sheet overview", () => {
       'Former life<span class="ov-reference-choice">: Other Ancestry</span>',
     );
     expect(html).toContain("Former life: Other Ancestry</strong>");
+    // Proficiencies are compact: run-in "Armor: cloth, leather" kinds that
+    // flow several to a line, not a label line above each value line.
+    const proficiencies = html.slice(
+      html.indexOf('data-reference-id="proficiencies"'),
+    );
+    expect(proficiencies).toMatch(
+      /^[^]*?<div class="sp-feature-body ov-run-in-parts"><div class="ov-reference-part"><strong>Armor: <\/strong><div class="prose-blocks"><p class="prose-paragraph">cloth, leather<\/p><\/div><\/div><div class="ov-reference-part"><strong>Weapons: <\/strong>/,
+    );
+    const sheetStyles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    expect(sheetStyles).toMatch(
+      /\.ov-run-in-parts \{[^}]*display: flex;[^}]*flex-wrap: wrap;/,
+    );
+    expect(sheetStyles).toMatch(
+      /\.ov-run-in-parts > \.ov-reference-part > \.prose-blocks,\s*\.ov-run-in-parts > \.ov-reference-part > \.prose-blocks > \.prose-paragraph \{\s*display: inline;/,
+    );
   });
   it("heads a feature row with its title and drops a dangling choice lead-in", () => {
     const feature = {

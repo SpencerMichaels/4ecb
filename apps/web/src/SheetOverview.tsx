@@ -2790,7 +2790,9 @@ function ReferenceCard({
           ) : null}
         </header>
       ) : null}
-      <div className="sp-feature-body">
+      <div
+        className={`sp-feature-body${entry.id === "proficiencies" ? " ov-run-in-parts" : ""}`}
+      >
         {tables && entry.id.startsWith("inventory:true") ? (
           <EquippedTables parts={parts} />
         ) : tables ? (
@@ -3496,6 +3498,19 @@ function ReferencePages({
           let heights = measuredParts.map(
             (part) => part.getBoundingClientRect().height,
           );
+          // Run-in parts share lines, so each counts only the height it adds
+          // below the parts before it; the sum is the body's real height.
+          if (card.querySelector(".ov-run-in-parts")) {
+            let bottom = measuredParts[0]?.getBoundingClientRect().top ?? 0;
+            heights = measuredParts.map((part) => {
+              const added = Math.max(
+                0,
+                part.getBoundingClientRect().bottom - bottom,
+              );
+              bottom = Math.max(bottom, part.getBoundingClientRect().bottom);
+              return added;
+            });
+          }
           if (card.querySelector(".ov-equipped-columns")) {
             const paired = new Map<number, number>();
             measuredParts.forEach((part) => {

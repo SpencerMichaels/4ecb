@@ -523,6 +523,24 @@ body:has(.sp-prototype) {
   line-height: 1.35;
   padding: 0.085in;
 }
+/* Proficiencies flow as run-in kinds ("Armor: cloth, leather   Weapons: …"),
+   as many to a line as fit; a kind too long for one line wraps hanging under
+   its label. Each kind stays one flex item, so the probe can measure it. */
+.ov-run-in-parts {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.25in;
+  row-gap: 0.02in;
+}
+.ov-run-in-parts > .ov-reference-part {
+  padding-bottom: 0;
+  padding-left: 0.12in;
+  text-indent: -0.12in;
+}
+.ov-run-in-parts > .ov-reference-part > .prose-blocks,
+.ov-run-in-parts > .ov-reference-part > .prose-blocks > .prose-paragraph {
+  display: inline;
+}
 .ov-reference-part.is-secondary {
   color: var(--sp-muted);
   font-size: 9pt;
