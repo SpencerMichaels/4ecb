@@ -153,6 +153,7 @@ export function CharacterSheetPage({
   abbreviateAbilityValues = true,
   printCardTextSize = 8,
   countCoinWeight = true,
+  mergeFunds = true,
   hideInapplicableItemProperties = true,
   paper = "letter",
   sheetEditing = false,
@@ -169,6 +170,8 @@ export function CharacterSheetPage({
   readonly abbreviateAbilityValues?: boolean;
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
+  /** One Funds wallet on the Equipment page (the app-wide setting). */
+  readonly mergeFunds?: boolean;
   /** Leave item properties the character can't use off the cards. */
   readonly hideInapplicableItemProperties?: boolean;
   /** The app-wide paper size (a preference, not per-character data). */
@@ -1069,6 +1072,7 @@ export function CharacterSheetPage({
           sectionOrder={resolvedLayout.sectionOrder}
           sectionCopies={resolvedLayout.sectionCopies}
           cardPageCount={printCardPages.length}
+          mergeFunds={mergeFunds}
           {...(reminderRows === undefined ? {} : { reminders: reminderRows })}
           {...(editControls ? { onToggleReminder: toggleReminder } : {})}
         >

@@ -765,6 +765,7 @@ export function App() {
                       onBack={() => returnFromSheet(route.characterId!)}
                       backLabel={sheetBackLabel(entryPreviousHash)}
                       countCoinWeight={countCoinWeight}
+                      mergeFunds={mergeFunds}
                       hideInapplicableItemProperties={
                         hideInapplicableItemProperties
                       }

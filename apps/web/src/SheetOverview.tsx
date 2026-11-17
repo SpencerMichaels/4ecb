@@ -2017,6 +2017,8 @@ export interface ReferenceEntry {
   currency?: readonly SheetValue[];
   /** Proficiencies, stacked under the Currency pane (with `currency`). */
   proficiencies?: ReferenceEntry;
+  /** One Funds wallet, half-width beside Proficiencies (with `currency`). */
+  mergeFunds?: boolean;
   reminder?: ReminderEntry;
   inventoryColumns?: readonly (readonly ReferencePart[])[];
   encumbrance?: CharacterSheetModel["encumbrance"];
@@ -2130,7 +2132,10 @@ export function referenceParts(value: string, label?: string): ReferencePart[] {
     ...(paragraphIds.has(block) ? { paragraph: paragraphIds.get(block)! } : {}),
   }));
 }
-export function references(model: CharacterSheetModel): ReferenceEntry[] {
+export function references(
+  model: CharacterSheetModel,
+  { mergeFunds = false }: { mergeFunds?: boolean } = {},
+): ReferenceEntry[] {
   const o = model.overview!;
   const order = [
     "Class Feature",
@@ -2284,6 +2289,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         name: equipped ? "Worn/Held Items" : "Carried Items",
         group: "Equipment",
         source: "",
+        ...(equipped && mergeFunds ? { mergeFunds } : {}),
         ...(equipped
           ? {
               currency: model.currency ?? [
@@ -2617,49 +2623,66 @@ function ReferenceCard({
   inventoryEndRule?: boolean;
 }) {
   if (entry.currency) {
-    const { currency, proficiencies, ...loadout } = entry;
-    const wallet = referenceCurrency(currency);
+    const { currency, proficiencies, mergeFunds, ...loadout } = entry;
+    const wallet = referenceCurrency(currency, mergeFunds);
+    const currencyPane = (
+      <section
+        className="sp-feature-card ov-reference-pane ov-currency-pane"
+        data-reference-category="equipment"
+      >
+        <header>
+          <Icon name="circle-dollar-sign" />
+          <h3>Currency</h3>
+        </header>
+        <div className="sp-feature-body">
+          <div className={`ov-wallet-groups${mergeFunds ? " is-merged" : ""}`}>
+            {wallet.headers.slice(1).map((label, column) => (
+              <StatGroup
+                key={label}
+                label={mergeFunds ? "Currency" : `${label} currency`}
+                // Merged funds are the pane's only wallet: its coins sit
+                // under the Currency header, with no group heading.
+                {...(mergeFunds ? {} : { heading: label })}
+                tone="abilities"
+                className={`ov-wallet-group${label === "Stored" && wallet.storedEmpty ? " is-empty" : ""}`}
+                values={wallet.rows.map((row) => ({
+                  label: row[0] ?? "",
+                  value: row[column + 1] ?? "",
+                  fit: true,
+                }))}
+              />
+            ))}
+          </div>
+          {wallet.notes.map((note, i) => (
+            <div className="ov-currency-note" key={i}>
+              {note.label ? <strong>{note.label}: </strong> : null}
+              <Prose value={note.value} />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+    const proficienciesPane = proficiencies ? (
+      <ReferenceCard entry={proficiencies} measure={measure} nested />
+    ) : null;
     return (
       <div
         className="ov-reference-card ov-equipment-stack"
         data-reference-id={entry.id}
       >
-        <section
-          className="sp-feature-card ov-reference-pane ov-currency-pane"
-          data-reference-category="equipment"
-        >
-          <header>
-            <Icon name="circle-dollar-sign" />
-            <h3>Currency</h3>
-          </header>
-          <div className="sp-feature-body">
-            <div className="ov-wallet-groups">
-              {wallet.headers.slice(1).map((label, column) => (
-                <StatGroup
-                  key={label}
-                  label={`${label} currency`}
-                  heading={label}
-                  tone="abilities"
-                  className={`ov-wallet-group${label === "Stored" && wallet.storedEmpty ? " is-empty" : ""}`}
-                  values={wallet.rows.map((row) => ({
-                    label: row[0] ?? "",
-                    value: row[column + 1] ?? "",
-                    fit: true,
-                  }))}
-                />
-              ))}
-            </div>
-            {wallet.notes.map((note, i) => (
-              <div className="ov-currency-note" key={i}>
-                {note.label ? <strong>{note.label}: </strong> : null}
-                <Prose value={note.value} />
-              </div>
-            ))}
+        {mergeFunds ? (
+          // One Funds wallet needs half the width: Proficiencies takes the
+          // other half of the row.
+          <div className="ov-funds-row">
+            {currencyPane}
+            {proficienciesPane}
           </div>
-        </section>
-        {proficiencies ? (
-          <ReferenceCard entry={proficiencies} measure={measure} nested />
-        ) : null}
+        ) : (
+          <>
+            {currencyPane}
+            {proficienciesPane}
+          </>
+        )}
         <ReferenceCard entry={loadout} measure={measure} nested />
       </div>
     );
@@ -3204,8 +3227,9 @@ export function paginateReferenceGroups(
  */
 export function referenceSections(
   model: CharacterSheetModel,
+  options: { mergeFunds?: boolean } = {},
 ): ReferenceEntry[][] {
-  const entries = references(model);
+  const entries = references(model, options);
   const groupOf = (entry: ReferenceEntry): SheetReferenceGroupId =>
     entry.group === "Equipment"
       ? "items"
@@ -3728,6 +3752,7 @@ export function SheetOverview({
   sectionOrder = SHEET_SECTION_IDS,
   sectionCopies = NO_SECTION_COPIES,
   cardPageCount = 0,
+  mergeFunds = false,
   reminders,
   onToggleReminder,
   children,
@@ -3744,6 +3769,8 @@ export function SheetOverview({
   sectionCopies?: Readonly<Partial<Record<SheetCopyableSectionId, number>>>;
   /** How many card pages `children` renders. */
   cardPageCount?: number;
+  /** The "Merge carried and stored funds" setting: one Funds wallet. */
+  mergeFunds?: boolean;
   /** Page 1's reminder rows from the sheet layout (D099), in page order;
    *  Edit mode includes hidden rows. Defaults to the model's own. */
   reminders?: readonly ReminderEntry[];
@@ -3773,7 +3800,10 @@ export function SheetOverview({
       ),
     };
   }, []);
-  const references = useMemo(() => referenceSections(model), [model]);
+  const references = useMemo(
+    () => referenceSections(model, { mergeFunds }),
+    [model, mergeFunds],
+  );
   const reminderRows = useMemo(
     () =>
       reminders ??

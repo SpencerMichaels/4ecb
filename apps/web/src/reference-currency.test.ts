@@ -48,6 +48,43 @@ describe("reference wallet", () => {
       { label: "Carried", value: "13 gp; 2 custom coins" },
     ]);
   });
+  it("merges funds into one column, coin by coin, without converting", () => {
+    const wallet = referenceCurrency(
+      [
+        { label: "Carried", value: "13 gp; 2 sp" },
+        { label: "Stored", value: "20 pp; 7 gp" },
+      ],
+      true,
+    );
+    expect(wallet.headers).toEqual(["Coin", "Funds"]);
+    expect(wallet.rows).toEqual([
+      ["AD", "0"],
+      ["PP", "20"],
+      ["GP", "20"],
+      ["SP", "2"],
+      ["CP", "0"],
+    ]);
+    expect(wallet.notes).toEqual([]);
+    expect(wallet.storedEmpty).toBe(false);
+    expect(
+      referenceCurrency([{ label: "Carried", value: "1,200 gp" }], true).rows,
+    ).toContainEqual(["GP", "1,200"]);
+    expect(referenceCurrency([], true).rows).toContainEqual(["GP", "—"]);
+  });
+  it("keeps merged custom wallet text as notes and invents no total", () => {
+    const wallet = referenceCurrency(
+      [
+        { label: "Carried", value: "13 gp; 2 custom coins" },
+        { label: "Stored", value: "2 pp" },
+      ],
+      true,
+    );
+    expect(wallet.rows).toContainEqual(["PP", "—"]);
+    expect(wallet.notes).toEqual([
+      { label: "Carried", value: "13 gp; 2 custom coins" },
+      { label: "Stored", value: "2 pp" },
+    ]);
+  });
   it("keeps unknown balances distinct from a known zero balance", () => {
     expect(referenceCurrency([]).rows).toContainEqual(["GP", "—", "—"]);
     expect(

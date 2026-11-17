@@ -594,6 +594,19 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.08in;
 }
+/* Merged funds: one Funds wallet fills the half-width Currency pane, with
+   Proficiencies in the row's other half, both panes as tall as the row. */
+.ov-wallet-groups.is-merged {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ov-funds-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.18in;
+}
+.ov-funds-row > * {
+  min-width: 0;
+}
 /* Shared stat tiles at 8pt with 16pt values; a long count shrinks to stay
    on one line (`fit`, stat-tiles.css). */
 .ov-wallet-group {

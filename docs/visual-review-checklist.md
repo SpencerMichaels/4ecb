@@ -1800,22 +1800,30 @@ Wrenching Abjuration (e.g. retrain Skill Focus) as in the playtest.
     typing and after saving.
   - **Wrong if:** a second line, a taller tile, clipped digits, or the
     funds grid changing height.
-- [ ] **Compact Proficiencies pane under Currency.** Added 2026-11-17.
+- [ ] **Proficiencies beside or under Currency.** Added 2026-11-17.
   - **Where:** Beldin Hammertongue 11, KrizDevvon and oleander_9
     `?preview=1`, Equipment page (Letter and A4, Print preview and the
-    print dialog).
-  - **Expect:** Proficiencies sits directly under Currency, above
-    Worn/Held Items and Carried Items, with the usual pane gap; one or two
-    lines of bold run-in kinds flowing side by side with a clear gap between
-    them ("**Armor:** cloth, leather, hide, chainmail **Shields:** light
-    **Weapons:** simple melee, …"); every kind and value still there, in the
-    pane's usual 10 pt text. KrizDevvon's Equipment page fits on one page
-    in Letter, Hunzu 10 and Hu Sheng-Ming Level 8 too; oleander_9 and
-    Beldin still continue (Letter).
-  - **Wrong if:** Proficiencies below either item list, a label on its own
-    line above its values, one kind's wrapped lines not hanging under its
-    label, kinds running together without a gap, or a near-empty
-    continuation page.
+    print dialog), once with Settings → "Merge carried and stored funds"
+    on (the default) and once off.
+  - **Expect (merged):** one row at the top: a half-width Currency pane
+    whose coin tiles sit right under its header, no "Funds" or
+    "Carried" heading (carried plus stored for each coin: oleander_9 GP
+    17,778, the count shrunk to one line in its tile) and
+    Proficiencies in the other half, both panes the row's height; then
+    Worn/Held Items and Carried Items. All 58 sample saves fit the
+    Equipment page on one page in both papers (closest: oleander 31 px
+    to spare in Letter).
+  - **Expect (separate):** full-width Currency with Carried and Stored
+    wallets, Proficiencies full-width under it, then the item lists;
+    oleander_9 and Beldin still continue in Letter.
+  - **Expect (both):** bold run-in kinds ("**Armor:** cloth, leather
+    **Weapons:** simple melee, …"), several to a line where they fit, a
+    long kind's wrapped lines hanging under its label; every kind and value
+    present, in the pane's usual 10 pt text.
+  - **Wrong if:** Proficiencies below either item list, a Stored wallet
+    or a group heading with funds merged (or a missing one with them
+    separate), a coin count clipped or wrapped, a label on its own line above its values, kinds
+    running together without a gap, or a near-empty continuation page.
 
 ## Decisions
 

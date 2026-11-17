@@ -1329,7 +1329,13 @@ async function checkReferences(client) {
         const currency=pair.querySelector('.ov-currency-pane');
         return equipped.querySelector('h3').textContent.startsWith('Worn/Held Items') && currency.querySelector('h3').textContent==='Currency' &&
           currency.getBoundingClientRect().bottom < equipped.getBoundingClientRect().top &&
-          Math.abs(equipped.getBoundingClientRect().width-currency.getBoundingClientRect().width)<1 &&
+          // Separate funds: full-width Currency. Merged funds (the default):
+          // a half-width Currency with Proficiencies beside it, same row.
+          (currency.parentElement.classList.contains('ov-funds-row')
+            ? currency.getBoundingClientRect().width < equipped.getBoundingClientRect().width*0.55 &&
+              [...currency.parentElement.children].every(pane=>Math.abs(pane.getBoundingClientRect().top-currency.getBoundingClientRect().top)<1) &&
+              !currency.querySelector('.stat-group-heading')
+            : Math.abs(equipped.getBoundingClientRect().width-currency.getBoundingClientRect().width)<1) &&
           [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
       })),
       pageNumbersOnly:pages.every(p=>!p.querySelector('.sp-running-header') &&

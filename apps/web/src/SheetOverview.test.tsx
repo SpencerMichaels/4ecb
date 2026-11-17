@@ -3185,6 +3185,60 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain('<h4 class="stat-group-heading">Carried</h4>');
   });
+  it("prints merged funds as one half-width Funds wallet beside Proficiencies", () => {
+    const fixture = {
+      ...model,
+      currency: [
+        { label: "Carried", value: "13 gp" },
+        { label: "Stored", value: "20 pp; 7 gp" },
+      ],
+      proficiencies: [
+        {
+          kind: "Armor" as const,
+          values: ["cloth", "leather"],
+          definitionIds: [],
+        },
+      ],
+      overview: { ...model.overview!, inventory: [] },
+    };
+    const render = (mergeFunds: boolean) =>
+      renderToStaticMarkup(
+        <SheetOverview
+          hiddenSections={EVERY_SECTION}
+          model={fixture}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          mergeFunds={mergeFunds}
+        />,
+      );
+    const merged = render(true);
+    // One row: the Currency pane, then Proficiencies, then Worn/Held below.
+    expect(merged).toMatch(
+      /<div class="ov-funds-row"><section class="sp-feature-card ov-reference-pane ov-currency-pane"[^]*?<div class="ov-wallet-groups is-merged">[^]*?<\/section><section class="sp-feature-card ov-reference-pane" data-reference-id="proficiencies"[^]*?<\/section><\/div><section[^>]*data-reference-id="inventory:true"/,
+    );
+    expect(merged).toContain('aria-label="Currency"');
+    // The only wallet: no "Funds" heading between the header and its coins.
+    expect(merged).not.toMatch(/stat-group-heading">(?:Funds|Carried)</);
+    expect(merged).not.toContain('aria-label="Stored currency"');
+    expect(merged).toContain(
+      `<div class="stat-tile stat-tile-fit" style="--stat-value-chars:2"><dt>GP</dt><dd><span class="stat-value-fit">20</span></dd>`,
+    );
+    const separate = render(false);
+    expect(separate).not.toContain("ov-funds-row");
+    expect(separate).toContain('aria-label="Stored currency"');
+    expect(separate).toContain('<h4 class="stat-group-heading">Stored</h4>');
+    expect(
+      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
+    ).toMatch(
+      /\.ov-funds-row \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(
+      readFileSync(new URL("./sheet-overview.css", import.meta.url), "utf8"),
+    ).toMatch(
+      /\.ov-wallet-groups\.is-merged \{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+    );
+  });
   it("restarts inventory stripes per category and uses quantity prefixes with a blank for one", () => {
     const fixture = {
       ...model,
