@@ -64,10 +64,14 @@
 }
 
 /* The library's brand with the running version beside it; without room the
-   version moves under the brand, breaking only between its "·" parts. */
+   version moves under the brand. The brand takes the heading's room left by
+   the actions, as a container, so the version can drop out whole once it no
+   longer fits on one line (about 13.5rem with a long month name). */
 .library-brand {
   align-items: center;
+  container-type: inline-size;
   display: flex;
+  flex: 1 1 0;
   flex-wrap: wrap;
   gap: 0.4rem 0.9rem;
   overflow-wrap: normal;
@@ -75,10 +79,13 @@
 
 .library-brand .build-version {
   text-align: start;
+  white-space: nowrap;
 }
 
-.library-brand .dot-list-item {
-  white-space: nowrap;
+@container (max-width: 14rem) {
+  .library-brand .build-version {
+    display: none;
+  }
 }
 
 /* A name too wide for the heading's room wraps whole onto a second row
