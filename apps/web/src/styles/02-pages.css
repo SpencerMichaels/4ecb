@@ -63,12 +63,32 @@
   inline-size: 2.25rem;
 }
 
-/* The library's brand with the running version beside it. */
+/* The library's brand with the running version beside it; without room the
+   version moves under the brand, breaking only between its "·" parts. */
 .library-brand {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.9rem;
+  overflow-wrap: normal;
+}
+
+.library-brand .build-version {
+  text-align: start;
+}
+
+.library-brand .dot-list-item {
+  white-space: nowrap;
+}
+
+/* A name too wide for the heading's room wraps whole onto a second row
+   under the icon, clipped away, leaving the icon alone rather than
+   breaking the name between letters. */
+.library-brand .app-brand {
+  flex-wrap: wrap;
+  max-block-size: 2.25rem;
+  min-inline-size: 0;
+  overflow: hidden;
 }
 
 .app-brand-name {
@@ -76,6 +96,7 @@
   font-size: 1.4rem;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
 }
 
 /* Flex centering centres line boxes, and a line box carries descender
